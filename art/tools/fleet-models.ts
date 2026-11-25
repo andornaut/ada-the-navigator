@@ -5,8 +5,8 @@
 import type { Point } from "./projection.ts";
 import {
   type Mesh,
-  meshBall,
   meshBox,
+  meshDome,
   meshExtrude,
   meshFace,
   meshLoft,
@@ -496,7 +496,8 @@ export function collar(p: Paint, { at, radius }: FleetMount): Mesh {
 // The pivot of the mount's top: the centre of the collar's upper face.
 export const mountPivot = ({ at }: FleetMount): Point => [at[0], at[1], at[2] + COLLAR_HEIGHT];
 
-// A weapon top about its pivot at the origin, muzzle toward +x, with its shot origins.
+// A weapon top about its pivot at the origin, muzzle toward +x, with its shot origins. A top with
+// round solids is built once per aim, with the light turned into its own space.
 export type FleetTop = { mesh: Mesh; muzzles: Point[] };
 
 // Rapid Missile `pod`: a low flat box launcher with two bright cells on its face and no barrel.
@@ -590,13 +591,19 @@ export function lanceTop(p: Paint, r: number): FleetTop {
 }
 
 // Mine Layer `hopper`: a square tray holding two round mines, each with a bright cap. It holds
-// its aim aft, and its shot origin is the tray's leading edge.
-export function hopperTop(p: Paint, r: number): FleetTop {
+// its aim aft, and its shot origin is the tray's leading edge. `light` is the light in the top's
+// own space at the aim it is drawn at.
+export function hopperTop(p: Paint, r: number, light?: Point): FleetTop {
   const mesh: Mesh = [];
   bx(mesh, -0.9 * r, 0.9 * r, -0.95 * r, 0.95 * r, 0, 0.4 * r, p.turret);
   for (const side of [1, -1]) {
     const [l, w] = [0.15 * r, side * 0.47 * r];
-    meshBall(mesh, [l, w, 0.55 * r], [0.4 * r, 0.4 * r, 0.4 * r], p.dark, 12, 6);
+    meshDome(mesh, [l, w, 0.55 * r], 0.4 * r, p.dark, {
+      sides: 12,
+      bands: 3,
+      full: true,
+      ...(light ? { light } : {}),
+    });
     meshTube(mesh, [l, w, 0.9 * r], [l, w, 1.02 * r], 0.16 * r, 0.16 * r, p.gun, 8);
   }
   return { mesh, muzzles: [[0.9 * r, 0, 0.2 * r]] };
@@ -604,7 +611,10 @@ export function hopperTop(p: Paint, r: number): FleetTop {
 
 // The top designs a class's mounts carry.
 export const HEAVY_TOPS: Readonly<
-  Record<"frigate" | "capital", Readonly<Record<string, (p: Paint, r: number) => FleetTop>>>
+  Record<
+    "frigate" | "capital",
+    Readonly<Record<string, (p: Paint, r: number, light?: Point) => FleetTop>>
+  >
 > = {
   frigate: { gun: gunTop, rail: railTop },
   capital: { spread: spreadTop, lance: lanceTop, hopper: hopperTop },

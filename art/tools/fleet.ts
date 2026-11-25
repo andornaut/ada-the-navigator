@@ -42,7 +42,7 @@ import {
 import { FLECK_DISTANCE, FLECKS, SEEDS } from "./shard-geometry.ts";
 import { shardPalettePack } from "./shard-palette-pack.ts";
 import { check, type Fill, rasterize } from "./silhouette.ts";
-import { type Mesh, meshClip, meshExtrude, meshScale } from "./solid.ts";
+import { LIGHT, type Mesh, meshClip, meshExtrude, meshScale } from "./solid.ts";
 import { svgText } from "./svg-text.ts";
 import { type Fragment, loopArea, outlines, tidy, type V2, visibleFragments } from "./visible.ts";
 
@@ -60,6 +60,18 @@ const MOUTH_SHARE = 0.75;
 const local = ([l, w, z]: Point): Point => [w, -l, z];
 const view = (yaw: number) => (point: Point) => rotate(ENEMY_HEADINGS, yaw, local(point));
 
+// The light in a top's own space when the top is drawn at `aim`: the view's light turned back
+// through the aim's rotation.
+function topLight(aim: number): Point {
+  const angle = -((aim * 2 * Math.PI) / ENEMY_HEADINGS + Math.PI / 2);
+  const [x, y, z] = LIGHT;
+  const turned = [
+    x * Math.cos(angle) - y * Math.sin(angle),
+    x * Math.sin(angle) + y * Math.cos(angle),
+  ] as const;
+  return [-turned[1], turned[0], z];
+}
+
 // A craft scaled to its contract span, in frame units, with its frame size.
 // `length` and `width` are the drawn ship's extents fore and aft and across, in frame units: the
 // hull, and a frigate's or capital's intact engines and command tower.
@@ -73,7 +85,8 @@ export type Scaled = FleetCraft & {
   top?: FleetTop & { frame: number };
   // A frigate's hardpoint layers and the tops its mounts carry, by top design.
   layers?: Layer[];
-  tops?: Record<string, FleetTop & { frame: number }>;
+  // `aims` is the top's mesh per aim, each lit for that aim.
+  tops?: Record<string, FleetTop & { frame: number; aims: Mesh[] }>;
 };
 // One hardpoint of a frigate or capital: its base sprite's centre, its top's pivot when it is a
 // weapon mount, and its base solids by state.
@@ -187,9 +200,17 @@ function scaled(paint: Paint, craft: FleetCraft): Scaled {
         ([name, build]) => {
           const top = build(paint, HEAVY_MOUNT_RADIUS);
           const mesh = scale(top.mesh);
+          const aims = Array.from({ length: ENEMY_HEADINGS }, (_, aim) =>
+            scale(build(paint, HEAVY_MOUNT_RADIUS, topLight(aim)).mesh),
+          );
           return [
             name,
-            { mesh, muzzles: top.muzzles.map((point) => at(k, point)), frame: fit(vertices(mesh)) },
+            {
+              mesh,
+              aims,
+              muzzles: top.muzzles.map((point) => at(k, point)),
+              frame: fit(vertices(mesh)),
+            },
           ];
         },
       ),
@@ -472,12 +493,12 @@ export function layerOrder(craft: Scaled, yaw: number): string[] {
 
 // A frigate top design at one aim, centred on its pivot.
 export function heavyTopFrame(craft: Scaled, name: string, aim: number): Frame {
-  const { frame: size, mesh } = craft.tops![name]!;
+  const { aims, frame: size } = craft.tops![name]!;
   return draw(
     `${craft.key} ${name} top ${aim}`,
     `${craft.design} ${name} top ${aim}`,
     size,
-    shift(visibleFragments(mesh, view(aim)), size / 2, size / 2),
+    shift(visibleFragments(aims[aim]!, view(aim)), size / 2, size / 2),
     PART_TOLERANCES,
   );
 }
@@ -547,8 +568,6 @@ function jets(craft: Scaled, frames: readonly Frame[]): string {
   );
 }
 
-// Staged as `{key}-turret.json`: src/model/muzzles.test.ts reads every `-hardpoints.json` in the
-// enemy folders into the game's muzzle table, so the file takes that name at the switch.
 // The version 1 hardpoints file of a craft with one aimed, indestructible launcher: the collar's
 // anchor and the top's pivot per hull heading, and the top's shot origins and collision per aim,
 // relative to the pivot. `offset` is the mount from the hull pivot in frame px, x to starboard and y
@@ -1133,14 +1152,14 @@ async function main() {
       if (frames.bases && frames.tops) {
         put(
           "/art/enemies/",
-          `${craft.key}-turret.json`,
+          `${craft.key}-hardpoints.json`,
           hardpoints(craft, frames.bases, frames.tops),
         );
       }
       if (frames.heavy) {
         put(
           "/art/enemies/",
-          `${craft.key}-mounts.json`,
+          `${craft.key}-hardpoints.json`,
           heavyHardpoints(craft, frames.hull, frames.heavy),
         );
         continue;
@@ -1179,11 +1198,10 @@ async function main() {
     // carry every family's colours and the hardpoints have none.
     for (const craft of flown) {
       const { manifest, stem } = home(craft, family);
-      const hardpointFile = craft.layers ? "mounts" : "turret";
       (rows[manifest] ??= { assets: [], sidecars: {} }).sidecars[stem] = {
         jets: shared.get(`${craft.key}-jets.json`)!,
         ...(craft.base || craft.layers
-          ? { hardpoints: shared.get(`${craft.key}-${hardpointFile}.json`)! }
+          ? { hardpoints: shared.get(`${craft.key}-hardpoints.json`)! }
           : {}),
         ...(craft.layers ? {} : { shards: shared.get(`${craft.key}-shards-packed.json`)! }),
       };

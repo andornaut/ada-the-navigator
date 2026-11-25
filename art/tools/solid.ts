@@ -523,40 +523,6 @@ export function meshTube(
   if (r1 > 1e-6) meshFace(mesh, ring1, axis, caps.cap1 ?? tones);
 }
 
-// Ellipsoid about `centre` with radii `radii`, in `sides` facets round and `bands` from pole to
-// pole. Its faces are `round`: two tones on the light terminator.
-export function meshBall(
-  mesh: Mesh,
-  centre: Point,
-  radii: Point,
-  tones: Tones,
-  sides = 12,
-  bands = 6,
-): void {
-  const at = (band: number, side: number): Point => {
-    const [a, b] = [(Math.PI * band) / bands - Math.PI / 2, (2 * Math.PI * side) / sides];
-    return [
-      centre[0] + radii[0] * Math.cos(a) * Math.cos(b),
-      centre[1] + radii[1] * Math.cos(a) * Math.sin(b),
-      centre[2] + radii[2] * Math.sin(a),
-    ];
-  };
-  for (let band = 0; band < bands; band++) {
-    for (let side = 0; side < sides; side++) {
-      const quad = [at(band, side), at(band, side + 1), at(band + 1, side + 1), at(band + 1, side)];
-      const facet = band === 0 ? quad.slice(1) : band === bands - 1 ? quad.slice(0, 3) : quad;
-      const out = sub(mean(facet), centre);
-      meshFace(
-        mesh,
-        facet,
-        [out[0] / radii[0], out[1] / radii[1], out[2] / radii[2]],
-        tones,
-        "round",
-      );
-    }
-  }
-}
-
 // The mesh scaled by (kx, ky, kz) about the origin.
 export function meshScale(mesh: Mesh, [kx, ky, kz]: Point): Mesh {
   return mesh.map((face) => ({
