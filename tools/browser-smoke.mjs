@@ -3436,15 +3436,15 @@ try {
   await tapUse(CONTENT.labels.dock);
   await page.locator('[data-action="open-shop"]').waitFor({ state: "visible" });
   await page.locator('[data-action="open-shop"]').click();
-  await page.locator('[data-tab="ship"]').click();
+  // The Shop has no tabs: the hub reserves an Equipment slot for the holodisk.
   await page.getByText(CONTENT.labels.holodiskAbout, { exact: true }).waitFor({ state: "visible" });
   const hubSaved = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey);
   assert.equal(hubSaved.docked, "hub", "Dock at the hub opens its station card");
   assert.equal(hubSaved.progress[2].deposited, hubInput.state.progress[2].deposited + 4);
   await page.screenshot({ path: `${output}/hub-station-shop.png` });
   events.checks.push(
-    "The mining hub deposits the ore Ada carries, then docks with Use, and its shop's Ship tab " +
-      "heads with the holodisk once Cartwheel's space quest is complete",
+    "The mining hub deposits the ore Ada carries, then docks with Use, and its shop offers the " +
+      "holodisk once Cartwheel's space quest is complete",
   );
   // Towing never refuses the local map's Galaxies; leaving the galaxy from the galaxy map ends the
   // flight with the held rescue still held, its craft back where it was stranded.
