@@ -17,6 +17,7 @@ import { writeDebrisFrames } from "./debris-sheets.ts";
 import { svgText } from "./svg-text.ts";
 import { linkData, replaceEntries } from "./manifest.ts";
 import { floorEdge, lift, MARKER, OUT, type Polygon, PUBLIC } from "./needle-common.ts";
+import { stageRows } from "./polish-rows.ts";
 import { json, round } from "./projection.ts";
 import { DISPLAY_SCALE, type Mesh } from "./solid.ts";
 import type { Fragment } from "./visible.ts";
@@ -234,6 +235,25 @@ writeFileSync(
   }),
 );
 writeFileSync(`${OUT}eye.json`, json(eye));
+// The staged looks (art/needle.md, Bolder stitch and Ordered Eye): a bolder stitch, and the
+// Eye's debris on an even spacing with one piece per row and its tumble frame stepping in order.
+stageRows("runtime-stitch", {
+  file: `${PUBLIC}channels.json`,
+  stitch: { width: 2, dash: [10, 8], alpha: 0.6 },
+});
+stageRows("runtime-eye", {
+  file: `${PUBLIC}eye.json`,
+  eyelids: { ...EYE.eyelids, spread: 0 },
+  debris: {
+    ...EYE.debris,
+    spacing: 44,
+    // The piece of each row, from the channel edge outward.
+    pieces: ["needle-debris-plate", "needle-debris-girder", "needle-debris-plate"],
+    // Piece `index` along the path in row `row` starts on tumble frame
+    // (index * frame.index + row * frame.row) mod 8.
+    frame: { index: 1, row: 3 },
+  },
+});
 replaceEntries(
   "needle",
   (id) => id.startsWith("needle-debris-"),

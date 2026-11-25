@@ -129,6 +129,21 @@ Contrast (WCAG) on Whirlpool's `#B8CEC4`:
 The streak stays a field-level mark under every play object, clear of the
 mint `active` (`#65C9BF`) of ore and Stardust.
 
+### Ordered darts
+
+The accepted streak look, staged as `runtime-currents` in
+[polish-rows.json](polish-rows.json) for `currents.json`
+([handoff](polish-handoff.md)). Colour, flow, `minFlow`, drift and reduced
+motion are unchanged.
+
+| Rule  | Shipped                                                      | Ordered darts                                                                                          |
+| ----- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Lanes | 46 apart, each moved up to 0.12 of a lane                    | 56 apart, no jitter                                                                                    |
+| Rows  | 64 apart, odd lanes half a row on, plus an irrational phase  | 72 apart, odd lanes half a row on, no further phase                                                    |
+| Mark  | A two-segment chevron stroke 1.1 to 1.8 px wide, arm 6 to 13 | A filled dart of arm `a`: `(-0.6 a, -a) (0.6 a, 0) (-0.6 a, a) (-0.05 a, 0)` along and across the flow |
+| Size  | Arm `6 + 7 f`, continuous in the flow `f`                    | Arm `6 + 7 q` in three steps: `q` 0.3 under flow 0.34, 0.65 under 0.67, else 1 (8.1, 10.55 and 13)     |
+| Alpha | `0.3 + 0.7 f`                                                | `0.3 + 0.5 q`: 0.45, 0.625 and 0.8                                                                     |
+
 ## River debris
 
 A debris river's pieces are traveling debris and damage on contact, so they

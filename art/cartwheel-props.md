@@ -198,6 +198,12 @@ logical px):
   6 px from the craft end.
 - Cap at the tow point: a `#4F5462` disc of radius 1.8 with a `#B8BFC9` centre
   of radius 0.8.
+- Accepted flat look ([handoff](polish-handoff.md)): the outer stroke is 3 px
+  and the core 1.4 px; the bead row and the round cap are replaced by one
+  clamp block at the craft end, a `#4F5462` rectangle from 3.2 px before the
+  tow point to 2.6 px past it and 5.2 px across the line, with a `#B8BFC9`
+  face over its upper 2.2 px. On a light field the cable draws over a 4.2 px
+  ink stroke and the block takes the ink keyline.
 - `craft[i].headings[k].tow` is the tow point for heading `k` in frame px of
   that craft's frame (the pod's lug, the hauler's nose).
 - Draw the line under both Ada and the craft, so it leaves from under Ada's

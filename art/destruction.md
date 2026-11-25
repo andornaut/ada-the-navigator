@@ -52,6 +52,25 @@ For elapsed `t` and duration `T`, `u = min(1, t / T)` and the ease
   `flashWidth * scale` frame px with alpha per phase: 0 to 20 ms scale 1 and
   alpha 0.922, 20 to 80 ms scale 0.55 and alpha 0.588, then none.
 
+## Flat look
+
+The accepted shard look, staged as `effects-destruction` in
+[polish-rows.json](polish-rows.json) for `destruction.json`
+([handoff](polish-handoff.md)). Drift, spin, shrink, order, durations and the
+flash are unchanged.
+
+| Rule  | Shipped                                               | Flat look                                                                                           |
+| ----- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Cool  | Every family toward coral `#7f4b3d` by `0.55 u`       | Each family toward its own darkest hull tone by `0.55 u` (`shards.cool.families`)                   |
+| Alpha | Opaque to `u` 0.3, then `(1 - (u - 0.3) / 0.7) ^ 1.3` | Held steps (`shards.fade.steps`): 1 to `u` 0.55, 0.6 to 0.8, then 0.3 until the shard ends at `u` 1 |
+
+| Family | Cool target |
+| ------ | ----------- |
+| coral  | `#7f4b3d`   |
+| claim  | `#703921`   |
+| garnet | `#823643`   |
+| needle | `#75313a`   |
+
 ## Stardust release
 
 At `releaseMs` the drop's pickups (counts are Gameplay's) appear at the pivot.

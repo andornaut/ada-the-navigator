@@ -406,6 +406,103 @@ beam is a steady 3 px coral line over a 6 px coral edge at `0.35 a` (ink at
 `0.9 a` on a light field), alpha 1 to 180 ms then linear to 0 at 300 ms. The contact uses the shared still-ring
 reduced-motion fallback over the existing Lance hit window.
 
+## Flat look
+
+The accepted look for every effect on this page: solid shapes in opaque flat
+tones with hard edges, tapers made by geometry and fades in held steps, with
+no alpha ramps, hairlines or blurred discs. Sizes, timings, colour roles,
+light-field keylines, hit tests and reduced-motion rules are unchanged. The
+sections above record what the renderer draws; the values below replace
+their drawing rules when Tech switches the renderer
+([handoff](polish-handoff.md)). Coordinates are `u` along the heading and
+`v` across it, in logical px, as above.
+
+### Bolt, pellet and fan
+
+| Element          | Shipped                              | Flat look                                                                                                                                                     |
+| ---------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Laser bolt       | A 1.5 px amber line 29.7 px long     | A 3 px amber slug 14 px long with a pointed head, a cream core and one amber tail step 1.5 px wide from 14 to 27 px behind the head                           |
+| Slug outline     | None                                 | Amber `(0, 0) (-2.7, -1.5) (-14, -1.5) (-15.5, 0) (-14, 1.5) (-2.7, 1.5)`; cream core `(-1.5, 0) (-3.3, -0.675) (-8.68, -0.675) (-8.68, 0.675) (-3.3, 0.675)` |
+| Scattershot dot  | An amber disc of radius 1.5          | An amber disc of radius 1.7 with a cream disc of radius 0.7 centred 0.45 px up and left of it; positions unchanged                                            |
+| Multi-Laser near | 3 to 5 bolts overlapping at the nose | While neighbouring bolt heads are under 5.6 px apart, one amber wedge across the fan with a cream inner wedge                                                 |
+| Multi-Laser far  | 3 to 5 bolts, 1.5 px lines           | Each bolt a 2.2 px amber slug 10 px long with no core and no tail, so bolts never overlap                                                                     |
+
+The fan wedge, for head distance `h` from the nose (travel plus 29.7): an
+amber annular sector from radius `max(4, h - 11)` to `h` across -10 to 10
+degrees, and a cream one from the inner radius plus 4 to `h - 2.5` across
+-7 to 7 degrees. Neighbouring heads are `h sin(16 / (n - 1) degrees)` apart.
+The wedge covers about the first 50 px of travel at level 3.
+
+### Missiles
+
+Both missiles are small solid models with tops lightest, walls facing left
+mid and walls facing right darkest, drawn at their projected heading, with a
+flat two-tone flame. Lengths are logical px along the heading from the nose.
+
+| Element       | Shipped                                              | Flat look                                                                                                                                   |
+| ------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rapid body    | A flat white dart polygon 7 px long, amber fin flats | A round white body of radius 1.5 from 7 to 2.2 behind the nose, a white cone to a 0.2 tip 0.6 ahead, a dark rear cap                        |
+| Rapid fins    | Two flat triangles                                   | Three amber fin blocks 1 px thick, two level and one upright: roots 7.4 to 4.4 behind the nose, swept to 7.8 to 7, reaching 3.2 (3 upright) |
+| Rapid flame   | Two alpha tapers, 0.5 to 1.6 px                      | An amber wedge 2.6 px wide at the tail, 12 `f` px long (15 `f` in frame 1), with a cream wedge half as wide and half as long                |
+| Heavy body    | A flat white polygon with an ink keyline             | A round white body of radius 2.9 from 13.2 to 4.2 behind the nose, a cream band of radius 2.95 from 7.8 to 6, a dark rear cap               |
+| Heavy warhead | A flat amber polygon                                 | An amber cone from radius 2.9 at 4.2 behind the nose to a 0.3 tip 1 ahead                                                                   |
+| Heavy fins    | Two flat cream polygons                              | Three cream fin blocks 1.4 px thick: roots 13.2 to 8.6 behind the nose, swept to 14.4 to 12.6, reaching 6 (5.4 upright)                     |
+| Heavy flame   | Two alpha tapers and a throat disc                   | An amber wedge 5.6 px wide, 16.8 `f` px long (11.8 `f` in frame 1), with a cream wedge half as wide and half as long                        |
+
+Material tones, top, left and right: white `#ffffff`, `#cfd3e0`, `#9da2b8`;
+cream `#ead4aa`, `#c2ad86`, `#978565`; amber `#f0bd68`, `#b98a40`,
+`#8a6630`; dark `#2a2433`, `#1e1a26`, `#16131c`. Flicker frames and periods
+are unchanged.
+
+### Blast
+
+The envelope and timing are unchanged: radius `r = R (1 - (1 - g)^3)` for
+`g = min(1, t / 180)`, ending at 340 ms.
+
+| Element | Shipped                               | Flat look                                                                                                                                                                     |
+| ------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tint    | A fading fill of the circle           | None                                                                                                                                                                          |
+| Ring    | An expanding ring with a fading alpha | An amber ring `4 - 2 t / 340` px wide at alpha 1 to 180 ms, 0.66 to 260 ms, then 0.33, with a 1.2 px cream line inside it once `r` passes 6                                   |
+| Debris  | Random specks                         | Eight cream wedges at 22.5 degrees and every 45 after, from `r + 3.5` to `r + 10`, 3.2 px wide at the base, at alpha 1 to 108 ms, 0.6 to 220 ms, then none                    |
+| Flash   | Layered soft discs                    | An eight-point amber burst of radius `0.425 R` with a 0.62 waist, a cream one 0.66 of it turned 22.5 degrees and a white core 0.3 of it, to 30 ms; 0.55 of that size to 60 ms |
+
+### Beams
+
+| Element        | Shipped                                                                   | Flat look                                                                                                                                                                                                                                     |
+| -------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Phaser layers  | Amber 12 to 7.5 at `0.38 a`, cream 6 to 3.6, white 2.7 to 1.5, round caps | Opaque bands, butt ends: amber 8 to 5, cream 4.6 to 2.8, white 2.2 to 1.3, each times `w`                                                                                                                                                     |
+| Enemy Phaser   | The same in coral and plate                                               | Coral 8 to 5, plate 4.6 to 2.8, white 2.2 to 1.3                                                                                                                                                                                              |
+| Charged lance  | Its three alpha layers                                                    | Coral 9 to 6.8, plate 5.4 to 4, white 2.4 to 1.6                                                                                                                                                                                              |
+| Alpha          | The keyframed `a`, linear                                                 | One alpha for all bands: 1 while `a` is over 0.6, 0.6 while over 0.3, then 0.3                                                                                                                                                                |
+| Miss end       | A linear fade over the last 28 px                                         | Each band tapers to a point over the last 28 px                                                                                                                                                                                               |
+| Muzzle bloom   | Discs `5 w` at `0.3 a`, `2.9 w`, `1.6 w`                                  | Opaque discs `5 w`, `3.1 w` and `1.6 w` in the three band colours (lance `6.5 w`, `4.2 w`, `2.3 w`)                                                                                                                                           |
+| Aim line       | 1 px dashed                                                               | 1.5 px, dashes 6 on and 4 off, with a chevron `(L + 3, 0) (L - 1, -3) (L - 1, 3)` in place of the end tick                                                                                                                                    |
+| Phaser contact | Three hairline rings                                                      | One cream ring of radius `3 + 13 (1 - (1 - k)^2)` and width `3 - 1.6 k` for `k = age / 160`, at alpha 1 to `k` 0.5, 0.6 to 0.78, then 0.3, with a four-point amber burst `5.5 (1 - k)` and a white core `2.2 (1 - k)` while `k` is under 0.45 |
+| Lance contact  | A soft streak                                                             | A white dart `(-20 a, 0) (0, -2.2 a) (4 a, 0) (0, 2.2 a)` and a cream four-point burst `4.5 a` for `a = 1 - p`, at alpha 1 to `p` 0.5, then 0.6                                                                                               |
+
+### Hit spark
+
+| Element | Shipped                    | Flat look                                                                                                                                                                                                                              |
+| ------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rays    | Thin rays at random angles | Six wedges at 30 degrees and every 60 after about the incoming axis, from `1.5 + 5 k` to `8.5 + 3 k` times the scale for `k = p / 0.6`, 2.6 wide at the base, white to `p` 0.25 then cream, at alpha 1 to `k` 0.5 then 0.6, to `p` 0.6 |
+| Core    | A fading disc              | A white disc of radius `3 (1 - p / 0.35) + 0.5` times the scale, to `p` 0.35                                                                                                                                                           |
+| Flecks  | Random flecks              | Three amber diamonds 3 px across at 60, 180 and 300 degrees, `6 + 5 (1 - (1 - m)^2)` out for `m = (p - 0.2) / 0.8`, at alpha 1 to `m` 0.5 then 0.5, from `p` 0.2                                                                       |
+
+### Ring burst and mine
+
+| Element       | Shipped                                   | Flat look                                                                                                                                                                                                                                         |
+| ------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Emission ring | 1.5 px coral at alpha `1 - t / 180`       | 2 px coral at alpha 1 to 90 ms, then 0.5 to 180 ms                                                                                                                                                                                                |
+| Dart tail     | A coral alpha taper `9 f` long            | A `coralSide` wedge `(-3.2, -1) (-10, 0) (-3.2, 1)`                                                                                                                                                                                               |
+| Dart body     | `(2.2, 0) (-0.6, -2) (-3.6, 0) (-0.6, 2)` | Coral `(2.6, 0) (-0.6, -2.3) (-3.8, 0) (-0.6, 2.3)`, white core `(1, 0) (-0.6, -1) (-2.2, 0) (-0.6, 1)`                                                                                                                                           |
+| Mine          | Eight flat spikes round two offset discs  | One solid: a coral ball of radii 4.7 by 4.7 by 4.5, a dark belt of radius 5 and height 2.2, four coral studs from 4.6 to 7.4 out tapering from radius 1.9 to 1, a dark collar of radius 2.3 from 4.2 to 5 up and an amber lamp dome of radius 1.6 |
+| Mine blink    | A white disc of radius 1.8                | The lamp dome in white `#ffffff` with a `#e8e8f0` shade                                                                                                                                                                                           |
+| Shockwave     | A fading ellipse stroke                   | An amber ground-plane ring `2.4 - 1.2 p` px wide at alpha 1 to `p` 0.5, 0.6 to 0.78, then 0.3, with a cream ellipse 0.55 of its size at alpha 1 to `p` 0.3 then 0.6, to `p` 0.6                                                                   |
+
+The mine's coral tones are `#d68b72`, `#a8654f` and `#7f4b3d`; its spin and
+blink timings are unchanged. The missile and mine models are small enough
+that Art supplies them as frames: they are not yet produced.
+
 ## Pickups
 
 Every upgrade drop is one shared upgrade pickup; what it gives is chosen when

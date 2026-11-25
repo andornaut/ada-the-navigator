@@ -175,6 +175,21 @@ the world plane through the view projection.
 | Motion | None: the stitch is static, so reduced motion needs no change                                                               |
 | Depth  | On the field, above specks, the band and backdrop rocks, below every play object, pickup and effect, as Whirlpool's streaks |
 
+#### Bolder stitch
+
+The accepted stitch, staged as `runtime-stitch` in
+[polish-rows.json](polish-rows.json) for `channels.json`
+([handoff](polish-handoff.md)): the same colour, inset and path rules, with
+
+| Value | Shipped                   | Bolder stitch            |
+| ----- | ------------------------- | ------------------------ |
+| Width | 1 px                      | 2 px                     |
+| Dash  | 6 on, 4 off               | 10 on, 8 off             |
+| Alpha | 0.38, 1.04:1 on the field | 0.6, 1.07:1 on the field |
+
+The renderer reads `width`, `dash` and `alpha` from the data, so the switch
+is the data alone.
+
 ### Debris
 
 Channel debris bumps Ada aside and deals normal scenery bump damage. Gate rims
@@ -229,6 +244,24 @@ the Eye's entry; Gameplay places it in the galaxy.
   first row 12 past the edge and each next 26 farther, drifting along the
   channel at 6 to 12 world units per second.
 
+#### Ordered Eye
+
+The accepted Eye debris, staged as `runtime-eye` in
+[polish-rows.json](polish-rows.json) for `eye.json`
+([handoff](polish-handoff.md)). The path, gates, eyelid base and swell, rows,
+gap, row step and drift are unchanged.
+
+| Rule         | Shipped                                | Ordered Eye                                                                              |
+| ------------ | -------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Spacing      | Pieces 34 apart along the path         | 44 apart                                                                                 |
+| Across       | Each piece moved up to 12.5 either way | No spread (`eyelids.spread` 0)                                                           |
+| Piece        | Plate or girder at random              | One piece per row, from the channel edge outward: plate, girder, plate (`debris.pieces`) |
+| Tumble frame | A random starting frame                | Piece `index` along the path in row `row` starts on frame `(index + 3 row) mod 8`        |
+| Count        | 468 pieces                             | 360 pieces                                                                               |
+
+The lower piece count changes how much the eyelids block: Gameplay accepts
+it before the switch.
+
 ## Space look
 
 Needle's field is in [galaxies.json](../public/art/galaxies.json) (`needle`)
@@ -264,6 +297,20 @@ haze's half-resolution texture and sigma 20 blur. Needle has no haze.
   and the pearl stars 1.62:1, as small and sparse as the field's dust specks.
 - Reduced motion: the band is static, so it is unchanged. The
   [selector preview](galaxies.md#selector-preview) capture includes it.
+
+### Flat band
+
+The accepted band, staged as `runtime-band` in
+[polish-rows.json](polish-rows.json) for `band.json`
+([handoff](polish-handoff.md)). The colour, line, angle, anchor and layer are
+unchanged; distances are px along the band's line from `through` and across
+it.
+
+| Part   | Shipped                                                                | Flat band                                                                                                       |
+| ------ | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Glow   | Three summed Gaussian falloffs: 0.06 at 30, 0.1 at 7 and 0.08 at 1.2   | Two flat strips: 44 px wide at alpha 0.07 and 10 px wide at alpha 0.11 over it (0.18 at the line, against 0.24) |
+| Specks | About 340, 2.2 apart, random across within sigma 12, alpha 0.25 to 0.8 | 85 on a 9 px pitch from -380 to 376, across by the cycle -9, 4, -2, 11, -6, 7, 0, -11, 9, -4, alpha 0.55        |
+| Stars  | 2 px, 240 apart, random across within sigma 7.2                        | Four 2 px stars at -360, -120, 120 and 360, across by 5, -6, 3 and -4                                           |
 
 ## Elder Loom's saucer
 

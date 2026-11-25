@@ -63,7 +63,9 @@ jump. Draw each step bottom to top:
    circle centred on the jump centre when the step has `iris`, else over the
    whole view. The opening's radius is `reach` times the view's half-diagonal,
    or `radius` logical px. A 3 px `#dcc3f2` rim fills radii r to r + 3, and a
-   1 px `#8fe0f2` line sits at r + 5.
+   1 px `#8fe0f2` line sits at r + 5. The accepted rim is bolder: a 5 px
+   `#dcc3f2` rim fills radii r to r + 5 and a 3 px ink `#181425` ring radii
+   r + 5 to r + 8 ([handoff](polish-handoff.md)).
 4. The `quantum-jump-glow` frame named by `glow`, centred on the jump centre.
 5. The warp ship (`ship`), centred on the jump centre, then its whitening:
    a white silhouette of the drawn ship at alpha `white`.

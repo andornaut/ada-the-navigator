@@ -129,6 +129,11 @@ glint, growing from 8 to 28 px across over 1200 ms, its 1 px
 glint shows. On a light field it draws over a 3 px ink ring at the same alpha.
 Reduced motion draws no ping.
 
+Accepted flat look ([handoff](polish-handoff.md)): the same ellipse and
+growth, with a stroke `2 - p` px wide for progress `p`, 2 px narrowing to
+1 px, at alpha 1 to `p` 0.5, 0.6 to 0.8, then 0.3, in place of the 1 px
+stroke fading from 0.9 to 0.
+
 | Mark              | Whirlpool | Cartwheel | Phantom | Sunflower           |
 | ----------------- | --------- | --------- | ------- | ------------------- |
 | Glint rays        | 7.13:1    | 7.28:1    | 8.38:1  | Ink keyline 10.89:1 |

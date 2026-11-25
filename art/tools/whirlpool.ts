@@ -26,6 +26,7 @@ import {
 import { writeDebrisFrames } from "./debris-sheets.ts";
 import { linkData, replaceEntries } from "./manifest.ts";
 import { floorColour } from "./palette.ts";
+import { stageRows } from "./polish-rows.ts";
 import { json } from "./projection.ts";
 import {
   BUOY,
@@ -185,6 +186,25 @@ async function writeJson(path: string, value: unknown): Promise<void> {
 }
 
 await writeJson(`${dir}currents.json`, { version: 1, streaks: STREAKS });
+// The staged streak look (art/whirlpool.md, Ordered darts): solid darts on even lanes and rows,
+// in three flat size and alpha steps of the flow.
+stageRows("runtime-currents", {
+  file: "/art/whirlpool/currents.json",
+  streaks: {
+    lanes: { spacing: 56, min: STREAKS.lanes.min, jitter: 0 },
+    rows: { spacing: 72, stagger: 0.5, phase: 0 },
+    // A filled dart of arm `a`: (-back a, -a), (tip a, 0), (-back a, a), (-notch a, 0), along
+    // the flow and across it.
+    dart: { arm: [6, 7], tip: 0.6, back: 0.6, notch: 0.05 },
+    // The dart's size step `q` by flow: arm `arm[0] + arm[1] q`, alpha `alpha[0] + alpha[1] q`.
+    steps: [
+      { flow: 0, q: 0.3 },
+      { flow: 0.34, q: 0.65 },
+      { flow: 0.67, q: 1 },
+    ],
+    alpha: [0.3, 0.5],
+  },
+});
 await writeJson(`${dir}debris.json`, {
   version: 1,
   displayScale: DISPLAY_SCALE,

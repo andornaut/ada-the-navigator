@@ -62,6 +62,8 @@ Gameplay supplies semantic requirements.
 ## Effects
 
 - [Destruction](destruction.md) and [weapon effects](weapons.md) cover combat.
+- The [polish set](polish-production.md) lists its groups, staging and the
+  [Tech handoff](polish-handoff.md).
 - [Stardust](stardust.md), the [holodisk](holodisk.md) and
   [quantum jump](quantum-jump.md) cover pickups and travel.
 

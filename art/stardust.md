@@ -67,6 +67,15 @@ distances 2.5 to 8.5 px in 0.5 px steps. For `f = (distance - 2.5) / 6`, the col
 is body for `f < 0.5` and shade after, with alpha `(210 (1 - f) + 40) / 255`.
 Reduced motion draws no streak.
 
+The accepted flat look replaces the fading pixels with two flat wedges
+behind the pickup, opposite the pull direction, with `u` along that
+direction from the centre: a body-tone wedge `(-2.5, -1.2) (-9, 0)
+(-2.5, 1.2)` in `#c9a86a` and a lit wedge `(-2.5, -0.6) (-6, 0) (-2.5, 0.6)`
+in `#f6e4b8` over it, both opaque. The shipped streak spans 2.5 to 8.5 px at
+1 px wide with alpha from 0.98 to 0.16; the wedges span 2.5 to 9 px and are
+2.4 px wide at the pickup. On a light field the body wedge takes the ink
+keyline. Reduced motion draws none ([handoff](polish-handoff.md)).
+
 ## HUD icon
 
 | Key                | Size     | Use                                             |

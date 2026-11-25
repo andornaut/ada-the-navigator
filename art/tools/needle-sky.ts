@@ -6,6 +6,7 @@ import { writeFileSync } from "node:fs";
 
 import { linkData } from "./manifest.ts";
 import { contrast, FIELD, MARKER, OUT, over, PUBLIC } from "./needle-common.ts";
+import { stageRows } from "./polish-rows.ts";
 import { json, round } from "./projection.ts";
 
 // The line stays within the backdrop rocks' 1.8:1 cap at its peak.
@@ -37,4 +38,23 @@ writeFileSync(
   }),
 );
 linkData("needle", { needleBand: `${PUBLIC}band.json` });
+// The staged band look (art/needle.md, Flat band): two flat strips, specks on an even pitch
+// with a fixed offset cycle and four stars.
+stageRows("runtime-band", {
+  file: `${PUBLIC}band.json`,
+  // Flat strips across the band's line, `halfWidth` px either side of it.
+  profile: [
+    { name: "haze", halfWidth: 22, alpha: 0.07 },
+    { name: "core", halfWidth: 5, alpha: 0.11 },
+  ],
+  // Speck `i` sits `-extent + i pitch` px along the line and `offsets[i mod 10]` px across it.
+  specks: {
+    pitch: 9,
+    extent: 380,
+    offsets: [-9, 4, -2, 11, -6, 7, 0, -11, 9, -4],
+    alpha: 0.55,
+    size: 1,
+  },
+  stars: { color: "#F1ECE6", pitch: 240, extent: 360, offsets: [5, -6, 3, -4], size: 2 },
+});
 console.log(`band peak alpha ${round(peak)}, ${peakContrast.toFixed(2)}:1`);

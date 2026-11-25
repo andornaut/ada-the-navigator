@@ -5273,6 +5273,36 @@
       }
     }
   },
+  "effects-destruction": {
+    "file": "/art/enemies/destruction.json",
+    "shards": {
+      "cool": {
+        "amount": 0.55,
+        "families": {
+          "coral": "#7f4b3d",
+          "claim": "#703921",
+          "garnet": "#823643",
+          "needle": "#75313a"
+        }
+      },
+      "fade": {
+        "steps": [
+          {
+            "from": 0,
+            "alpha": 1
+          },
+          {
+            "from": 0.55,
+            "alpha": 0.6
+          },
+          {
+            "from": 0.8,
+            "alpha": 0.3
+          }
+        ]
+      }
+    }
+  },
   "field": {
     "manifest": "core",
     "links": {
@@ -5321,5 +5351,98 @@
       "backdrop": "/art/whirlpool/backdrop-lattice.json"
     },
     "replaces": "/art/whirlpool/backdrop.json"
+  },
+  "runtime-band": {
+    "file": "/art/needle/band.json",
+    "profile": [
+      {
+        "name": "haze",
+        "halfWidth": 22,
+        "alpha": 0.07
+      },
+      {
+        "name": "core",
+        "halfWidth": 5,
+        "alpha": 0.11
+      }
+    ],
+    "specks": {
+      "pitch": 9,
+      "extent": 380,
+      "offsets": [-9, 4, -2, 11, -6, 7, 0, -11, 9, -4],
+      "alpha": 0.55,
+      "size": 1
+    },
+    "stars": {
+      "color": "#F1ECE6",
+      "pitch": 240,
+      "extent": 360,
+      "offsets": [5, -6, 3, -4],
+      "size": 2
+    }
+  },
+  "runtime-currents": {
+    "file": "/art/whirlpool/currents.json",
+    "streaks": {
+      "lanes": {
+        "spacing": 56,
+        "min": 3,
+        "jitter": 0
+      },
+      "rows": {
+        "spacing": 72,
+        "stagger": 0.5,
+        "phase": 0
+      },
+      "dart": {
+        "arm": [6, 7],
+        "tip": 0.6,
+        "back": 0.6,
+        "notch": 0.05
+      },
+      "steps": [
+        {
+          "flow": 0,
+          "q": 0.3
+        },
+        {
+          "flow": 0.34,
+          "q": 0.65
+        },
+        {
+          "flow": 0.67,
+          "q": 1
+        }
+      ],
+      "alpha": [0.3, 0.5]
+    }
+  },
+  "runtime-eye": {
+    "file": "/art/needle/eye.json",
+    "eyelids": {
+      "base": 70,
+      "swell": 260,
+      "spread": 0
+    },
+    "debris": {
+      "rows": 3,
+      "spacing": 44,
+      "gap": 12,
+      "rowStep": 26,
+      "drift": [6, 12],
+      "pieces": ["needle-debris-plate", "needle-debris-girder", "needle-debris-plate"],
+      "frame": {
+        "index": 1,
+        "row": 3
+      }
+    }
+  },
+  "runtime-stitch": {
+    "file": "/art/needle/channels.json",
+    "stitch": {
+      "width": 2,
+      "dash": [10, 8],
+      "alpha": 0.6
+    }
   }
 }

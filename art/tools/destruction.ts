@@ -9,6 +9,8 @@ import { recolourGarnet } from "./garnet-drones.ts";
 import { recolourNeedle } from "./needle-drones.ts";
 import { installedShardPacks, shardPalettePack } from "./shard-palette-pack.ts";
 import { sizeReceipts } from "./enemy-size.ts";
+import { FLEET_FAMILIES, FLEET_PAINT } from "./fleet-models.ts";
+import { stageRows } from "./polish-rows.ts";
 import { svgText } from "./svg-text.ts";
 import { mergeSidecars } from "./manifest.ts";
 import { json, round } from "./projection.ts";
@@ -128,6 +130,26 @@ async function main() {
     }
   }
   await writeJson(`${output}destruction.json`, spec());
+  // The staged shard look (art/destruction.md, Flat look): each family's shards cool toward its
+  // own darkest hull tone, and the fade holds in steps.
+  stageRows("effects-destruction", {
+    file: "/art/enemies/destruction.json",
+    shards: {
+      cool: {
+        amount: 0.55,
+        families: Object.fromEntries(
+          FLEET_FAMILIES.map((family) => [family, FLEET_PAINT[family].hull[2]]),
+        ),
+      },
+      fade: {
+        steps: [
+          { from: 0, alpha: 1 },
+          { from: 0.55, alpha: 0.6 },
+          { from: 0.8, alpha: 0.3 },
+        ],
+      },
+    },
+  });
   writeFileSync(`${output}destruction-flash.svg`, svgText(flash()));
   // The coral shards; enemies.ts and heavies.ts write these crafts' other sidecars.
   const names = new Set(crafts.map(({ name }) => name));
