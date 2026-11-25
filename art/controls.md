@@ -152,16 +152,15 @@ keep their on or off art. In forced colors, the row uses `Highlight` with
 
 ## Refusal cue
 
-A control that refuses an action stays in place and plays Archie's shared
+A control that refuses an action stays in place and plays Game Kit's shared
 refusal cue for 320ms:
 
-- Its labels tint red `#e4574e` at 80ms, return at 160ms, tint again at 240ms
-  and return at 320ms.
+- Its labels tint red `#e4574e` from 0 to 80ms and again from 160 to 240ms.
 - The whole control shakes 3px right and back four times, 40ms each way.
 - Reduced motion: the labels hold the red tint for the full 320ms, with no
   shake.
 
-A repeat activation during the cue does not restart it.
+A repeat activation during the cue restarts it.
 
 ## Colour tokens
 
