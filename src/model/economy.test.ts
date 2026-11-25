@@ -716,7 +716,10 @@ describe("Stardust drops", () => {
           spacing - 1e-9,
         );
       }
-      expect(released[index]!.release?.at).toBeCloseTo(0.25);
+      // Released at the first step after the wreck reaches Art's reduced release.
+      const releaseSeconds = ECONOMY.destruction.fighter.reduced.releaseSeconds;
+      expect(released[index]!.release?.at).toBeGreaterThanOrEqual(releaseSeconds);
+      expect(released[index]!.release?.at).toBeLessThanOrEqual(releaseSeconds + 1 / 30);
       expect(released[index]!.release?.from).toEqual({ x: wreck.x, y: wreck.y });
     }
     const positions = released.map(({ id, x, y }) => ({ id, x, y }));
@@ -758,7 +761,7 @@ describe("Stardust drops", () => {
     expect(amount).toBeLessThanOrEqual(10);
   });
 
-  it("makes an asteroid's Stardust collectable at once, drawn in separated positions from 240 ms", () => {
+  it("makes an asteroid's Stardust collectable at once, drawn in separated positions at Art's reduced release", () => {
     const value = flight();
     const shape = [...ASTEROID_SHAPES.values()].find((entry) => entry.size === "huge")!;
     const rock: SpaceObject = {
@@ -781,7 +784,10 @@ describe("Stardust drops", () => {
     expect(released.length).toBeLessThanOrEqual(10);
     for (const pickup of released) {
       // Art's generic reduced destruction (the fighter's reduced timing) at every motion setting.
-      expect(pickup.release?.at).toBeCloseTo(destroyedAt + 1 / 60 + 0.24, 9);
+      expect(pickup.release?.at).toBeCloseTo(
+        destroyedAt + 1 / 60 + ECONOMY.destruction.fighter.reduced.releaseSeconds,
+        9,
+      );
       expect(pickup.release?.from).toBeUndefined();
       const offset = Math.hypot(pickup.x - rock.x, pickup.y - rock.y);
       expect(offset).toBeGreaterThan(0);

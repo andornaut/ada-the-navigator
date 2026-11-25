@@ -226,10 +226,10 @@ export const ECONOMY: EconomyCatalog = {
       spread: 40,
     },
     fighter: {
-      durationSeconds: 0.45,
-      reduced: { durationSeconds: 0.36, releaseSeconds: 0.24, spread: 7.68 },
-      releaseSeconds: 0.15,
-      spread: 19.2,
+      durationSeconds: 0.43,
+      reduced: { durationSeconds: 0.35, releaseSeconds: 0.23, spread: 6.72 },
+      releaseSeconds: 0.14,
+      spread: 16.8,
     },
     frigate: {
       durationSeconds: 0.6,
@@ -238,10 +238,10 @@ export const ECONOMY: EconomyCatalog = {
       spread: 30,
     },
     interceptor: {
-      durationSeconds: 0.44,
-      reduced: { durationSeconds: 0.35, releaseSeconds: 0.23, spread: 7.2 },
-      releaseSeconds: 0.15,
-      spread: 18,
+      durationSeconds: 0.5,
+      reduced: { durationSeconds: 0.39, releaseSeconds: 0.26, spread: 9.6 },
+      releaseSeconds: 0.16,
+      spread: 24,
     },
     // The platform breaks up like the frigate it is sized after.
     platform: {
@@ -257,10 +257,10 @@ export const ECONOMY: EconomyCatalog = {
       spread: 33.6,
     },
     swarm: {
-      durationSeconds: 0.43,
-      reduced: { durationSeconds: 0.35, releaseSeconds: 0.23, spread: 6.72 },
-      releaseSeconds: 0.14,
-      spread: 16.8,
+      durationSeconds: 0.39,
+      reduced: { durationSeconds: 0.32, releaseSeconds: 0.21, spread: 5.28 },
+      releaseSeconds: 0.13,
+      spread: 13.2,
     },
   },
   discoveryStardust: 5,
