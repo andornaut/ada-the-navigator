@@ -14,6 +14,11 @@ export interface AsteroidLootContext {
       }
     >
   >;
+  /**
+   * Expected ore and Stardust relative to the quantity-reduced ore and the original Stardust,
+   * the same in every galaxy (gameplay/economy.md "Earning Stardust").
+   */
+  readonly yieldScale: number;
 }
 
 /** Raw units split independently before the class-wide ore quantity reduction. */
@@ -26,4 +31,5 @@ export const ASTEROID_LOOT: AsteroidLootContext = {
     medium: { minimum: 1, weights: [15, 20, 30, 24, 7, 4] },
     small: { minimum: 0, weights: [15, 10, 37, 36, 2] },
   },
+  yieldScale: 0.8,
 };

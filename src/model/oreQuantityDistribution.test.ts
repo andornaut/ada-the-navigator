@@ -4,18 +4,51 @@ import { describe, expect, it } from "vitest";
 
 import { ASTEROID_SIZES } from "../data/asteroidCatalog.ts";
 import { ASTEROID_LOOT } from "../data/asteroidLoot.ts";
-import { oreQuantityScale, rollAsteroidLoot } from "./asteroidLoot.ts";
+import { oreQuantityScale, rollAsteroidLoot, stardustKeep } from "./asteroidLoot.ts";
 
-const rawContext = { ...ASTEROID_LOOT, oreQuantityMultiplier: 1 };
+const rawContext = { ...ASTEROID_LOOT, oreQuantityMultiplier: 1, yieldScale: 1 };
 
-/** Partitions every classified unit outcome and every residual interval, without sampling. */
+/** Cartesian products of the given choices. */
+function products<T>(choices: readonly (readonly T[])[]): T[][] {
+  return choices.reduce<T[][]>(
+    (combos, options) => combos.flatMap((combo) => options.map((option) => [...combo, option])),
+    [[]],
+  );
+}
+
+/** A residual interval: its midpoint and width. */
+interface Segment {
+  readonly at: number;
+  readonly width: number;
+}
+
+/** The intervals of [0, 1) between sorted cut points, with zero-width intervals left out. */
+function segments(cuts: readonly number[]): Segment[] {
+  const points = [0, ...cuts.filter((cut) => cut > 0 && cut < 1).sort((a, b) => a - b), 1];
+  return points.slice(1).flatMap((end, index) => {
+    const start = points[index]!;
+    return end > start ? [{ at: (start + end) / 2, width: end - start }] : [];
+  });
+}
+
+/**
+ * Partitions every classified unit outcome, the last unit's residual at the ore rounding and
+ * Stardust keep cuts, and every other Stardust unit's residual at the keep cut, without sampling.
+ */
 function distributionProof() {
   const rows = [];
   for (const size of ASTEROID_SIZES) {
     const { minimum, weights } = ASTEROID_LOOT.totals[size];
     const cap = minimum + weights.length - 1;
-    const scale = { huge: 74 / 99, large: 29 / 39, medium: 14 / 19, small: 3 / 4 }[size];
+    const scale = { huge: 59 / 99, large: 23 / 39, medium: 11 / 19, small: 3 / 5 }[size];
     expect(oreQuantityScale(ASTEROID_LOOT, size)).toBeCloseTo(scale, 12);
+    const keep = {
+      huge: 2992197 / 3811397,
+      large: 274789 / 356709,
+      medium: 42461 / 57821,
+      small: 4 / 5,
+    }[size];
+    expect(stardustKeep(ASTEROID_LOOT, size)).toBeCloseTo(keep, 12);
     const p = ASTEROID_LOOT.oreChance;
     const expectedTotal = { huge: 5, large: 4, medium: 3, small: 2 }[size];
     let start = 0,
@@ -48,19 +81,31 @@ function distributionProof() {
         beforeMax += probability * Number(total === cap);
         const protectedOne = minimum === 1 && ore === 1 && stardust === 0;
         const target = protectedOne ? 1 : ore * scale;
-        const intervals = [0, target - Math.floor(target), 1];
+        const isOre = (bit: number) => (mask & (1 << bit)) !== 0;
+        const lastIsOre = total > 0 && isOre(total - 1);
+        const lastCuts = [target - Math.floor(target), ...(total > 0 && !lastIsOre ? [keep] : [])];
+        // Every Stardust unit before the last splits at the keep cut; earlier ore units' residuals
+        // do not matter.
+        const earlier = Array.from({ length: Math.max(0, total - 1) }, (_, bit) =>
+          isOre(bit) ? [{ at: 0.5, width: 1 }] : segments([keep]),
+        );
+        const keptMean = protectedOne
+          ? 0
+          : minimum === 1 && ore <= 1
+            ? 1 + keep * (stardust - 1)
+            : keep * stardust;
         let conditionalOre = 0;
-        for (let segment = 1; segment < intervals.length; segment++) {
-          const width = intervals[segment]! - intervals[segment - 1]!;
-          if (width <= 0) {
-            continue;
-          }
-          const residual = (intervals[segment]! + intervals[segment - 1]!) / 2;
+        let conditionalStardust = 0;
+        for (const units of products([
+          ...earlier,
+          total > 0 ? segments(lastCuts) : [{ at: 0.5, width: 1 }],
+        ])) {
+          const width = units.reduce((product, unit) => product * unit.width, 1);
           const draws = [
             totalDraw,
             ...Array.from({ length: total }, (_, bit) => {
-              const unitResidual = bit === total - 1 ? residual : 0.5;
-              return (mask & (1 << bit)) !== 0 ? p * unitResidual : p + (1 - p) * unitResidual;
+              const unitResidual = units[bit]!.at;
+              return isOre(bit) ? p * unitResidual : p + (1 - p) * unitResidual;
             }),
             0.3141592653589793,
           ];
@@ -72,7 +117,7 @@ function distributionProof() {
           const original = rollAsteroidLoot(rawContext, size, () => draws[rawCalls++]!);
           expect(original).toEqual({ ore, stardust });
           expect(rawCalls).toBe(calls);
-          expect(actual.stardust).toBe(original.stardust);
+          expect(actual.stardust).toBeLessThanOrEqual(original.stardust);
           expect(Number.isSafeInteger(actual.ore)).toBe(true);
           expect(actual.ore).toBeGreaterThanOrEqual(0);
           const actualTotal = actual.ore + actual.stardust;
@@ -80,6 +125,7 @@ function distributionProof() {
           expect(actualTotal).toBeLessThanOrEqual(cap);
           expect(actual.ore).toBeLessThanOrEqual(original.ore);
           conditionalOre += width * actual.ore;
+          conditionalStardust += width * actual.stardust;
           const joint = probability * width;
           mass += joint;
           oreMean += joint * actual.ore;
@@ -91,11 +137,12 @@ function distributionProof() {
           support.add(actualTotal);
         }
         expect(conditionalOre).toBeCloseTo(target, 12);
+        expect(conditionalStardust).toBeCloseTo(keptMean, 12);
       }
     }
     expect(mass).toBeCloseTo(1, 12);
-    expect(oreMean).toBeCloseTo(expectedTotal * 0.75 * 0.75, 12);
-    expect(stardustMean).toBeCloseTo(expectedTotal * 0.25, 12);
+    expect(oreMean).toBeCloseTo(expectedTotal * 0.75 * 0.75 * 0.8, 12);
+    expect(stardustMean).toBeCloseTo(expectedTotal * 0.25 * 0.8, 12);
     expect(afterSingles).toBeCloseTo(oreMean - 5 * afterBundles, 12);
     expect(afterBundles).toBeLessThanOrEqual(beforeBundles);
     rows.push({
@@ -108,6 +155,7 @@ function distributionProof() {
       beforeMax,
       beforeSingles,
       cap,
+      keep,
       minimum,
       oreMean,
       scale,
@@ -121,7 +169,7 @@ function distributionProof() {
 }
 
 describe("reduced ore quantity distribution", () => {
-  it("reduces each class ore mean by 25% with identical Stardust and draw counts", () => {
+  it("scales each class's ore mean to 0.6 and Stardust mean to 0.8, with unchanged draw counts", () => {
     const rows = distributionProof();
     const output = process.env.ORE_QUANTITY_PROOF_OUTPUT;
     if (output) {
@@ -143,6 +191,12 @@ describe("reduced ore quantity distribution", () => {
     expect(() =>
       oreQuantityScale({ ...ASTEROID_LOOT, oreQuantityMultiplier: 0 }, "medium"),
     ).toThrow(/minimum/);
+    for (const yieldScale of [-1, NaN, Infinity, 2]) {
+      expect(() => oreQuantityScale({ ...ASTEROID_LOOT, yieldScale }, "huge")).toThrow(RangeError);
+      expect(() => stardustKeep({ ...ASTEROID_LOOT, yieldScale }, "huge")).toThrow(RangeError);
+    }
+    expect(() => stardustKeep({ ...ASTEROID_LOOT, yieldScale: 0 }, "medium")).toThrow(/minimum/);
     expect(oreQuantityScale(rawContext, "huge")).toBe(1);
+    expect(stardustKeep(rawContext, "huge")).toBe(1);
   });
 });

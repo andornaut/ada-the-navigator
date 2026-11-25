@@ -5,7 +5,7 @@ import { ASTEROID_LOOT } from "../data/asteroidLoot.ts";
 import { rollAsteroidLoot } from "./asteroidLoot.ts";
 import { dropRandom } from "./drops.ts";
 
-const rawContext = { ...ASTEROID_LOOT, oreQuantityMultiplier: 1 };
+const rawContext = { ...ASTEROID_LOOT, oreQuantityMultiplier: 1, yieldScale: 1 };
 
 describe("asteroid destruction loot", () => {
   it("keeps the accepted raw class weights and separate split and quantity controls", () => {
@@ -18,6 +18,7 @@ describe("asteroid destruction loot", () => {
         medium: { minimum: 1, weights: [15, 20, 30, 24, 7, 4] },
         small: { minimum: 0, weights: [15, 10, 37, 36, 2] },
       },
+      yieldScale: 0.8,
     });
   });
 
