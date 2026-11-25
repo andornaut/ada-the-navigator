@@ -46,7 +46,7 @@ export const COLOURS = {
   /** HUD disc faces, the Laser disc face and the quest route panel. */
   navy: "#262b44",
   /** The ore +N tick. */
-  oreTick: "#eaa676",
+  oreTick: "#e798cd",
   /** A pressed or held navigation disc's face. */
   pressedFace: "#3a4466",
   primaryFace: "#bfa06f",

@@ -236,7 +236,7 @@ describe("status pill shield bar", () => {
       low: "#e4574e",
       lowPanel: "#532e35",
       lowPeak: "#ff8a80",
-      oreTick: "#eaa676",
+      oreTick: "#e798cd",
       rim: "#9a96ad",
       shield: "#70ace8",
       shieldDelay: "#4f7aa6",
@@ -273,7 +273,7 @@ describe("status pill shield bar", () => {
     expect(tick).toContain("left:50%");
     expect(tick).toContain("transform:translateX(-50%)");
     expect(tick).toContain(`top:${units(27)}`);
-    expect(rule(".ada-status-tick[data-kind=ore]")).toContain("color:#eaa676");
+    expect(rule(".ada-status-tick[data-kind=ore]")).toContain("color:#e798cd");
   });
 
   it("draws the shield pill as an ink PILL at the bottom centre, apart from the status pill", () => {
