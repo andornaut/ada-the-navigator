@@ -18,7 +18,7 @@ import {
   syncFlightRegion,
 } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { MINE_REACH, mineParts } from "./mineShape.ts";
+import { MINE_PARTS, MINE_REACH } from "./mineShape.ts";
 import { activeNeedleCourses, inNeedleChannel, needleCourses, needleDebris } from "./needle.ts";
 import { newProgress } from "./progress.ts";
 import { restoreSave } from "./save.ts";
@@ -243,7 +243,7 @@ describe("mounted Needle flight physics", () => {
     const { course, flight, gate } = courseFlight();
     const start = course.path[0]!;
     const along = direction({ x: course.path[1]!.x - start.x, y: course.path[1]!.y - start.y });
-    const vertices = mineParts(0).flat().map(fromScreen);
+    const vertices = MINE_PARTS.flat().map(fromScreen);
     const tip = vertices
       .filter(({ x, y }) => x * along.x + y * along.y < 0)
       .sort((a, b) => Math.hypot(b.x, b.y) - Math.hypot(a.x, a.y))[0]!;

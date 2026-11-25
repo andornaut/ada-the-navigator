@@ -13,7 +13,6 @@ import {
   EFFECT_COLOURS,
   type EffectShape,
   fanBolt,
-  fanSpacing,
   fanVolley,
   headingFactor,
   heldAlpha,
@@ -122,51 +121,63 @@ describe("bolt, pellet and fan", () => {
     expect(light!.at.y).toBeCloseTo(9.55, 9);
   });
 
-  it("spaces neighbouring fan heads by h sin(16 / (n - 1)) degrees", () => {
-    expect(fanSpacing(100, 3)).toBeCloseTo(100 * Math.sin((8 * Math.PI) / 180), 9);
-    // The level 3 wedge covers about the first 50 px of travel.
-    expect(fanSpacing(29.7 + 50, 5)).toBeLessThan(5.6);
-    expect(fanSpacing(29.7 + 51, 5)).toBeGreaterThan(5.6);
+  it("draws a close fan as one amber band through its heads over a cream band", () => {
+    const polar = (degrees: number, radius: number) => ({
+      x: radius * Math.cos((degrees * Math.PI) / 180),
+      y: radius * Math.sin((degrees * Math.PI) / 180),
+    });
+    // Out of order across the fan: the band still runs from the clockwise head to the other.
+    const heads = [0, -4, 4].map((degrees) => ({ at: polar(degrees, 20), velocity: heading(14) }));
+    const shapes = fanVolley(origin, heads);
+    expect(shapes.map(({ colour }) => colour)).toEqual([
+      EFFECT_COLOURS.amber,
+      EFFECT_COLOURS.cream,
+    ]);
+    const [amber, cream] = shapes as [PolygonShape, PolygonShape];
+    const angle = ({ x, y }: { x: number; y: number }) => (Math.atan2(y, x) * 180) / Math.PI;
+    // The outer edge lies on the heads; the end heads move 1.1 px outward.
+    expect(amber.points).toHaveLength(6);
+    expect(amber.points[1]!.x).toBeCloseTo(20, 9);
+    expect(amber.points[1]!.y).toBeCloseTo(0, 9);
+    const first = polar(-4, 20);
+    expect(Math.hypot(amber.points[0]!.x - first.x, amber.points[0]!.y - first.y)).toBeCloseTo(
+      1.1,
+      9,
+    );
+    expect(angle(amber.points[0]!)).toBeLessThan(-4);
+    expect(angle(amber.points[2]!)).toBeGreaterThan(4);
+    // It runs back to h - 11 along each head's ray.
+    expect(Math.hypot(amber.points[4]!.x, amber.points[4]!.y)).toBeCloseTo(9, 9);
+    // Cream from h - 2.5 back to the amber's inner edge plus 4, on the outer bolts' rays.
+    const creamRadii = cream.points.map(({ x, y }) => Math.hypot(x, y));
+    [17.5, 17.5, 17.5, 13, 13, 13].forEach((radius, index) =>
+      expect(creamRadii[index]).toBeCloseTo(radius, 9),
+    );
+    expect(angle(cream.points[0]!)).toBeCloseTo(-4, 9);
   });
 
-  it("draws a close fan as one amber wedge over a cream one, centred on the volley", () => {
-    const nose = { x: 0, y: 0 };
-    const heads = [-4, 0, 4].map((degrees) => ({
-      at: {
-        x: 20 * Math.cos((degrees * Math.PI) / 180),
-        y: 20 * Math.sin((degrees * Math.PI) / 180),
-      },
-      velocity: heading(14),
-    }));
-    const [amber, cream] = fanVolley(nose, 5, heads);
-    expect(fanVolley(nose, 5, heads)).toHaveLength(2);
-    expect(amber!.colour).toBe(EFFECT_COLOURS.amber);
-    expect(cream!.colour).toBe(EFFECT_COLOURS.cream);
-    // h is the 20 px travel plus 29.7: amber from h - 11 to h across 20 degrees.
-    const radii = amber!.points.map(({ x, y }) => Math.hypot(x, y));
-    expect(Math.max(...radii)).toBeCloseTo(49.7, 9);
-    expect(Math.min(...radii)).toBeCloseTo(38.7, 9);
-    const angles = amber!.points.map(({ x, y }) => (Math.atan2(y, x) * 180) / Math.PI);
-    expect(Math.max(...angles)).toBeCloseTo(10, 9);
-    expect(Math.min(...angles)).toBeCloseTo(-10, 9);
-    const creamRadii = cream!.points.map(({ x, y }) => Math.hypot(x, y));
-    expect(Math.max(...creamRadii)).toBeCloseTo(47.2, 9);
-    expect(Math.min(...creamRadii)).toBeCloseTo(42.7, 9);
+  it("measures neighbouring heads apart on screen, under 5.6 px for the band", () => {
+    const row = (gap: number) =>
+      [-1, 0, 1].map((index) => ({ at: { x: 100, y: index * gap }, velocity: heading(14) }));
+    expect(fanVolley(origin, row(5.5)).map(({ colour }) => colour)).toEqual([
+      EFFECT_COLOURS.amber,
+      EFFECT_COLOURS.cream,
+    ]);
+    const far = fanVolley(origin, row(5.7));
+    expect(far).toHaveLength(3);
+    expect(far[1]).toEqual(fanBolt({ x: 100, y: 0 }, screenAngle(heading(14))));
   });
 
-  it("splits a far fan into slugs 10 px long and 2.2 px wide with no core or tail", () => {
-    const heads = [0, 1, 2].map((index) => ({
-      at: { x: 100, y: (index - 1) * 14 },
-      velocity: heading(14),
-    }));
-    const bolts = fanVolley(origin, 3, heads);
-    expect(bolts).toHaveLength(3);
-    expect(bolts[1]).toEqual(fanBolt(heads[1]!.at, screenAngle(heading(14))));
+  it("draws slugs 10 px long and 2.2 px wide for a lone bolt or heads at the nose", () => {
     const slug = fanBolt(origin, 0);
     expect(slug.colour).toBe(EFFECT_COLOURS.amber);
     expect(slug.points[2]!.x).toBeCloseTo(-10, 9);
     expect(Math.max(...slug.points.map(({ y }) => y))).toBeCloseTo(1.1, 9);
-    expect(fanVolley(origin, 3, [])).toEqual([]);
+    const lone = [{ at: { x: 30, y: 0 }, velocity: heading(14) }];
+    expect(fanVolley(origin, lone)).toEqual([fanBolt({ x: 30, y: 0 }, screenAngle(heading(14)))]);
+    const start = [0, 1].map((index) => ({ at: { x: 3, y: index }, velocity: heading(14) }));
+    expect(fanVolley(origin, start)).toHaveLength(2);
+    expect(fanVolley(origin, [])).toEqual([]);
   });
 });
 

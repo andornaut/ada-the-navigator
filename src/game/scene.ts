@@ -1069,10 +1069,7 @@ export class GameScene extends Scene {
     const shotEdge = this.light ? LIGHT_FIELD.shotEdge : 0;
     const edged = (shapes: readonly EffectShape[]) =>
       shotEdge ? inkEdges(this.edgeInk, shotEdge, shapes) : [];
-    const fans = new Map<
-      string,
-      { count: number; heads: { at: Vec; velocity: Vec }[]; nose: Vec }
-    >();
+    const fans = new Map<string, { heads: { at: Vec; velocity: Vec }[]; nose: Vec }>();
     const missiles = new Set<string>();
     for (const shot of flight.shots.filter((entry) => entry.enemyWeapon !== "ringBurst")) {
       const point = this.project(shot);
@@ -1121,7 +1118,7 @@ export class GameScene extends Scene {
       } else if (!shot.enemy && shot.projectile !== "missile" && shot.fan) {
         const { count, origin } = shot.fan;
         const key = `${count}:${origin.x}:${origin.y}`;
-        const fan = fans.get(key) ?? { count, heads: [], nose: this.project(origin) };
+        const fan = fans.get(key) ?? { heads: [], nose: this.project(origin) };
         fan.heads.push({ at: point, velocity: shot.velocity });
         fans.set(key, fan);
       } else if (!shot.enemy && shot.projectile !== "missile") {
@@ -1175,8 +1172,8 @@ export class GameScene extends Scene {
         }
       }
     }
-    for (const { count, heads, nose } of fans.values()) {
-      const shapes = fanVolley(nose, count, heads);
+    for (const { heads, nose } of fans.values()) {
+      const shapes = fanVolley(nose, heads);
       drawEffect(this, shapes, edged(shapes));
     }
     for (const [id, sprite] of this.missileSprites) {

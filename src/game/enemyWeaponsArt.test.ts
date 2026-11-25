@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import file from "../../public/art/enemy-weapons.json";
 import manifest from "../../public/art/manifest.json";
-import { ENEMY_WEAPONS_FLAT as file } from "../testing/enemyWeaponsFlat.ts";
 import {
   beamAt,
   dashes,
@@ -180,6 +180,25 @@ describe("mine", () => {
     expect(pop(100, true).shapes).toHaveLength(2);
     expect(pop(100, true).edged).toHaveLength(1);
     expect(pop(200, true).shapes).toEqual([]);
+  });
+
+  it("edges the pop parts and times the reduced fizzle as Art's data says", () => {
+    const at = { x: 0, y: 0 };
+    const changed = JSON.parse(JSON.stringify(file)) as typeof file;
+    changed.mine.pop.edged = ["flash"];
+    changed.mine.reducedMotion.fizzleMs = 100;
+    const other = readEnemyWeaponsArt(changed)!;
+    const popped = { ageMs: 3000, end: { ageMs: 50, kind: "pop" as const }, lifeMs: 20_000 };
+    expect(mine(art, at, popped, false).edged).toHaveLength(1);
+    expect(mine(other, at, popped, false).edged).toEqual([]);
+    const fizzling = {
+      ageMs: 20_000,
+      end: { ageMs: 150, kind: "fizzle" as const },
+      lifeMs: 20_000,
+    };
+    expect(mine(art, at, fizzling, true).solid).toMatchObject({ alpha: 0.25 });
+    expect(mine(other, at, fizzling, true).solid).toBeUndefined();
+    expect(mine(other, at, fizzling, false).solid).toMatchObject({ blink: true });
   });
 });
 

@@ -206,7 +206,7 @@ import {
 import { enemyHull, enemyPartOutline, enemyPhysicalBody } from "./enemyBody.ts";
 import { enemyBeamReach, planEnemyProjectile } from "./enemyProjectiles.ts";
 import { landmarkSites } from "./landmarks.ts";
-import { MINE_REACH, mineParts, mineSpin, mineTouches } from "./mineShape.ts";
+import { MINE_PARTS, MINE_REACH, mineTouches } from "./mineShape.ts";
 import { activeNeedleCourses } from "./needle.ts";
 import {
   clearNeedleEnemies,
@@ -3891,11 +3891,6 @@ const SHOT_PARTS: Parts = [
 
 const shotRadius = (shot: Shot) => (shot.projectile === "missile" ? MISSILE_HIT_RADIUS : 3);
 
-/** The mine's spin for collision, as drawn: still under reduced motion. */
-function spinOf(flight: FlightState, mine: Mine): number {
-  return mineSpin(reducedMotions.get(flight) ?? false, Math.max(0, mine.age));
-}
-
 /** Whether a mine still collides: laid, and neither fizzling nor popped. */
 function armed(mine: Mine): boolean {
   return mine.end === undefined && mine.age >= 0;
@@ -3919,12 +3914,7 @@ function stepMines(content: GameContent, dt: number, flight: FlightState): void 
     } else if (
       armed(mine) &&
       !needleChannelContains({}, flight, flight.player) &&
-      mineTouches(
-        spinOf(flight, mine),
-        mine,
-        body,
-        worldPoint(flightWorldContext(flight), mine, flight.player),
-      )
+      mineTouches(mine, body, worldPoint(flightWorldContext(flight), mine, flight.player))
     ) {
       damage(content, mine.damage, flight);
       mine.end = { age: 0, kind: "pop" };
@@ -3948,23 +3938,18 @@ function strikeMines(
       !shot.hitIds.includes(mine.id) &&
       (shot.projectile === "missile"
         ? outlineContact(
-            mineParts(spinOf(flight, mine)),
+            MINE_PARTS,
             mine,
             worldPoint(flightWorldContext(flight), mine, shot),
             MISSILE_HIT_RADIUS,
           ) !== null
-        : mineTouches(
-            spinOf(flight, mine),
-            mine,
-            SHOT_PARTS,
-            worldPoint(flightWorldContext(flight), mine, shot),
-          ))
+        : mineTouches(mine, SHOT_PARTS, worldPoint(flightWorldContext(flight), mine, shot)))
     ) {
       shot.hitIds.push(mine.id);
       mine.end = { age: 0, kind: "pop" };
       if (shot.blast !== undefined) {
         const contact = outlineContact(
-          mineParts(spinOf(flight, mine)),
+          MINE_PARTS,
           mine,
           worldPoint(flightWorldContext(flight), mine, shot),
           shotRadius(shot),

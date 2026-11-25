@@ -77,6 +77,9 @@ export interface EnemyWeaponsArt {
     readonly blink: readonly { aboveRemainingMs: number; onMs: number; periodMs: number }[];
     readonly fizzleMs: number;
     readonly hint: { ms: number; radius: number; startDeg: number; stroke: number };
+    /** The pop's shape parts that take an ink edge on a light field. */
+    readonly popEdged: readonly string[];
+    readonly reducedFizzleMs: number;
     readonly reducedPopMs: number;
     /** Degrees a second, and degrees per frame of the mine's spin. */
     readonly spin: { readonly degPerSecond: number; readonly stepDeg: number };
@@ -263,6 +266,13 @@ export function readEnemyWeaponsArt(value: unknown): EnemyWeaponsArt | undefined
           startDeg: num(mine, "hint.startDeg"),
           stroke: num(mine, "hint.stroke"),
         },
+        popEdged: list(mine, "pop.edged", (entry) => {
+          if (typeof entry !== "string") {
+            throw new Malformed("mine.pop.edged");
+          }
+          return entry;
+        }),
+        reducedFizzleMs: num(mine, "reducedMotion.fizzleMs"),
         reducedPopMs: num(mine, "reducedMotion.pop.ms"),
         spin: { degPerSecond: num(mine, "spin.degPerSecond"), stepDeg: num(mine, "spin.stepDeg") },
       },
@@ -613,10 +623,11 @@ export function mine(
   }
   if (view.end?.kind === "fizzle") {
     const t = view.end.ageMs;
-    if (t >= spec.fizzleMs) {
+    const duration = reducedMotion ? spec.reducedFizzleMs : spec.fizzleMs;
+    if (t >= duration) {
       return NONE;
     }
-    const p = t / spec.fizzleMs;
+    const p = t / duration;
     if (reducedMotion) {
       return { ...NONE, solid: { alpha: 1 - p, blink: false, scale: 1, step } };
     }
@@ -662,7 +673,10 @@ function minePop(
           },
         );
   return {
-    edged: shapes.filter((shape) => shape.kind !== "ellipse" || shape.stroke !== undefined),
+    edged: shapes.filter(
+      (shape) =>
+        "part" in shape && shape.part !== undefined && art.mine.popEdged.includes(shape.part),
+    ),
     shapes,
   };
 }

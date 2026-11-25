@@ -159,25 +159,6 @@ function radialWedge(
   ]);
 }
 
-/** An annular sector about `at` from radius `inner` to `outer`, `half` radians either side. */
-function sector(
-  at: Vec,
-  angle: number,
-  inner: number,
-  outer: number,
-  half: number,
-  colour: Colour,
-  alpha: number,
-): PolygonShape {
-  const steps = 6;
-  const arc = (radius: number) =>
-    Array.from({ length: steps + 1 }, (_, index) => {
-      const a = angle - half + (2 * half * index) / steps;
-      return { x: at.x + Math.cos(a) * radius, y: at.y + Math.sin(a) * radius };
-    });
-  return { alpha, colour, kind: "polygon", points: [...arc(outer), ...arc(inner).reverse()] };
-}
-
 // ---------------------------------------------------------------------------------------------
 // Bolt, pellet and fan
 
@@ -203,16 +184,15 @@ const SLUG_TAIL = { from: 14, to: 27, width: 1.5 } as const;
 const FAN_SLUG = { length: 10, width: 2.2 } as const;
 
 /**
- * The Multi-Laser fan's wedge (art/weapons.md "Bolt, pellet and fan"): the head distance is the
- * travel plus the shipped bolt's 29.7 px trail, and the wedge shows while neighbouring heads are
- * under 5.6 px apart.
+ * The Multi-Laser fan's wedge (art/weapons.md "Bolt, pellet and fan"), a band through the bolts'
+ * heads on screen while neighbouring heads are under 5.6 px apart there. For each head at
+ * distance `h` from the nose, the amber band runs back to `max(4, h - 11)`, its two outer ends
+ * widened 1.1 px sideways; the cream band runs from `h - 2.5` back to the amber's inner edge plus 4.
  */
 export const FAN = {
-  amber: { halfDeg: 10, inset: 11, minInner: 4 },
-  cream: { halfDeg: 7, inner: 4, outerInset: 2.5 },
-  headStart: 29.7,
+  amber: { inset: 11, minInner: 4, widen: 1.1 },
+  cream: { inner: 4, outerInset: 2.5 },
   nearSpacing: 5.6,
-  spreadDeg: 16,
 } as const;
 
 /** The Laser bolt with its head at `head`, along screen `angle`: tail step, slug and core. */
@@ -244,55 +224,81 @@ export function fanBolt(head: Vec, angle: number, alpha = 1): PolygonShape {
   );
 }
 
-/** The distance between neighbouring heads of an `count`-bolt fan at head distance `h`. */
-export function fanSpacing(h: number, count: number): number {
-  return h * Math.sin(degrees(FAN.spreadDeg / (count - 1)));
-}
-
 /**
- * A Multi-Laser volley of `count` bolts fired from screen point `nose`, with its bolts still in
- * flight at `heads` (screen points and world velocities): one amber wedge with a cream inner
- * wedge while neighbouring heads are under 5.6 px apart, else each bolt as a far slug.
+ * A Multi-Laser volley fired from screen point `nose`, with its bolts still in flight at `heads`
+ * (screen points and world velocities): while neighbouring heads are under 5.6 px apart on
+ * screen, one amber band through the heads with a cream inner band, else each bolt as a far slug.
  */
 export function fanVolley(
   nose: Vec,
-  count: number,
   heads: readonly { readonly at: Vec; readonly velocity: Vec }[],
   alpha = 1,
 ): PolygonShape[] {
-  if (heads.length === 0) {
-    return [];
+  const slugs = () => heads.map(({ at, velocity }) => fanBolt(at, screenAngle(velocity), alpha));
+  const rays = heads.map(({ at }) => {
+    const h = Math.hypot(at.x - nose.x, at.y - nose.y);
+    return {
+      at,
+      h,
+      unit: h > 0 ? { x: (at.x - nose.x) / h, y: (at.y - nose.y) / h } : { x: 0, y: 0 },
+    };
+  });
+  if (rays.length < 2 || rays.some(({ h }) => h <= FAN.amber.minInner)) {
+    return slugs();
   }
-  const mean = {
-    x: heads.reduce((sum, { at }) => sum + at.x, 0) / heads.length,
-    y: heads.reduce((sum, { at }) => sum + at.y, 0) / heads.length,
-  };
-  const travel =
-    heads.reduce((sum, { at }) => sum + Math.hypot(at.x - nose.x, at.y - nose.y), 0) / heads.length;
-  const h = travel + FAN.headStart;
-  if (count < 2 || fanSpacing(h, count) >= FAN.nearSpacing) {
-    return heads.map(({ at, velocity }) => fanBolt(at, screenAngle(velocity), alpha));
+  // Order the heads across the fan, from the clockwise edge to the anticlockwise one.
+  const mean = rays.reduce((sum, { unit }) => ({ x: sum.x + unit.x, y: sum.y + unit.y }), {
+    x: 0,
+    y: 0,
+  });
+  const side = ({ unit }: (typeof rays)[number]) => mean.x * unit.y - mean.y * unit.x;
+  rays.sort((a, b) => side(a) - side(b));
+  const near = rays.every(
+    ({ at }, index) =>
+      index === 0 ||
+      Math.hypot(at.x - rays[index - 1]!.at.x, at.y - rays[index - 1]!.at.y) < FAN.nearSpacing,
+  );
+  if (!near) {
+    return slugs();
   }
-  const angle = Math.atan2(mean.y - nose.y, mean.x - nose.x);
-  const inner = Math.max(FAN.amber.minInner, h - FAN.amber.inset);
-  const { amber, cream } = FAN;
-  const shapes = [
-    sector(nose, angle, inner, h, degrees(amber.halfDeg), EFFECT_COLOURS.amber, alpha),
+  const along = ({ unit }: (typeof rays)[number], radius: number, sideways = 0): Vec => ({
+    x: nose.x + unit.x * radius - unit.y * sideways,
+    y: nose.y + unit.y * radius + unit.x * sideways,
+  });
+  const inner = rays.map(({ h }) => Math.max(FAN.amber.minInner, h - FAN.amber.inset));
+  const last = rays.length - 1;
+  // The ends move outward: clockwise for the first head, anticlockwise for the last.
+  const widen = (index: number) =>
+    index === 0 ? -FAN.amber.widen : index === last ? FAN.amber.widen : 0;
+  const band = (
+    outer: (index: number) => number,
+    from: (index: number) => number,
+    ends: boolean,
+  ) => [
+    ...rays.map((ray, index) => along(ray, outer(index), ends ? widen(index) : 0)),
+    ...rays.map((ray, index) => along(ray, from(index), ends ? widen(index) : 0)).reverse(),
   ];
-  const creamOuter = h - cream.outerInset;
-  const creamInner = inner + cream.inner;
-  if (creamOuter > creamInner) {
-    shapes.push(
-      sector(
-        nose,
-        angle,
-        creamInner,
-        creamOuter,
-        degrees(cream.halfDeg),
-        EFFECT_COLOURS.cream,
-        alpha,
+  const shapes: PolygonShape[] = [
+    {
+      alpha,
+      colour: EFFECT_COLOURS.amber,
+      kind: "polygon",
+      points: band(
+        (index) => rays[index]!.h,
+        (index) => inner[index]!,
+        true,
       ),
-    );
+    },
+  ];
+  const creamOuter = (index: number) => rays[index]!.h - FAN.cream.outerInset;
+  const creamInner = (index: number) => inner[index]! + FAN.cream.inner;
+  if (rays.every((_, index) => creamOuter(index) > creamInner(index))) {
+    shapes.push({
+      alpha,
+      colour: EFFECT_COLOURS.cream,
+      kind: "polygon",
+      points: band(creamOuter, creamInner, false),
+    });
   }
   return shapes;
 }
