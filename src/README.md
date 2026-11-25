@@ -49,10 +49,18 @@ describes their implementation.
   the landing page and web manifest, the Phaser build, the stylesheet module, the
   icons, the precache and the security headers. No runtime module imports it.
 - **Phaser boundary:** only `src/main.ts` and the Phaser modules
-  (`game/playCamera`, `game/scene`, `game/touchChrome`, `input/controls`) import
+  (`PHASER_MODULES` in [`eslint.config.mjs`](../eslint.config.mjs)) import
   Phaser, the kit's `phaser/` modules or one another, enforced by ESLint's
-  `no-restricted-imports`. The model, data, layout, interface and the rest of
-  `src/game/` are Phaser-free, so they unit-test without a renderer.
+  `no-restricted-imports` and, by resolved path, `import-x/no-restricted-paths`. The model, data, layout, interface and the rest
+  of `src/game/` are Phaser-free, so they unit-test without a renderer.
+- **Layers:** [`tools/imports-check.ts`](../tools/imports-check.ts) places every
+  module of `src/` and `tools/` in a layer of the shared source-structure bands,
+  lowest first: lib and data, model, art (the Phaser-free `src/game/` modules),
+  layout and input state, platform (loading, PWA, crash), ui, scene, entries,
+  then support (build, tests, tools). Imports point down only, type-only imports
+  included, and form no runtime cycle; type-only imports may close a cycle within
+  one layer. `src/tests/importsCheck.test.ts` fails on any finding outside its
+  known-violations table and on a listed violation that no longer occurs.
 - **Test helpers:** [`src/testing/`](testing/) is importable only from tests and
   `src/testSetup.ts`: `launch.ts` pins launch seeds and drives a model through the
   opening and story pages, and `public-art.ts` reads Art's manifests from

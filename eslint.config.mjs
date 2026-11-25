@@ -4,6 +4,7 @@ import { defineConfig } from "eslint/config";
 import { createNodeResolver } from "eslint-plugin-import-x/node-resolver";
 import extensions from "eslint-plugin-import-x/rules/extensions";
 import noCycle from "eslint-plugin-import-x/rules/no-cycle";
+import noRestrictedPaths from "eslint-plugin-import-x/rules/no-restricted-paths";
 import globals from "globals";
 import ts from "typescript-eslint";
 
@@ -15,13 +16,18 @@ const SOURCE_FILES = ["src/**/*.ts"];
 const PHASER_MODULES = [
   "game/playCamera",
   "game/scene",
+  "game/sceneAndromeda",
   "game/sceneAssets",
   "game/sceneBackdrop",
   "game/sceneEffects",
   "game/sceneEnemies",
+  "game/sceneGuideLights",
   "game/sceneHud",
   "game/sceneJump",
   "game/sceneObjects",
+  "game/scenePhantom",
+  "game/scenePhantomJump",
+  "game/scenePhantomSong",
   "game/sceneShared",
   "game/sceneSprites",
   "game/sceneUi",
@@ -29,6 +35,9 @@ const PHASER_MODULES = [
   "game/touchChrome",
   "input/controls",
 ];
+const PHASER_MESSAGE =
+  `Only src/main.ts and the Phaser modules (${PHASER_MODULES.join(", ")}) may import ` +
+  "Phaser, the kit's phaser/ modules or a Phaser module.";
 const PHASER_FILES = [
   "src/main.ts",
   ...PHASER_MODULES.flatMap((module) => [`src/${module}.ts`, `src/${module}.test.ts`]),
@@ -36,22 +45,13 @@ const PHASER_FILES = [
 const TEST_FILES = ["src/**/*.test.ts", "src/testSetup.ts"];
 
 // The import boundaries, one row each: the files outside `except` may not import what `forbid`
-// names. The model, data, layout, DOM interface and the rest of src/game/ stay free of Phaser and
-// the Phaser modules, so they run in unit tests without a renderer.
+// names. The model, data, layout, DOM interface and the rest of src/game/ stay free of Phaser, so
+// they run in unit tests without a renderer; phaserModuleConfig keeps them free of the Phaser
+// modules.
 const BOUNDARIES = [
   {
     except: PHASER_FILES,
-    forbid: {
-      group: [
-        "phaser",
-        "phaser/*",
-        "**/phaser/*",
-        ...PHASER_MODULES.map((module) => `**/${module}.ts`),
-      ],
-      message:
-        `Only src/main.ts and the Phaser modules (${PHASER_MODULES.join(", ")}) may import ` +
-        "Phaser, the kit's phaser/ modules or a Phaser module.",
-    },
+    forbid: { group: ["phaser", "phaser/*", "**/phaser/*"], message: PHASER_MESSAGE },
   },
   {
     except: TEST_FILES,
@@ -96,6 +96,27 @@ function boundaryConfigs() {
     });
 }
 
+// Production modules outside PHASER_FILES import no Phaser module, by resolved path, so a
+// same-directory import is caught as well. Tests may import any module.
+const phaserModuleConfig = {
+  files: SOURCE_FILES,
+  ignores: [...PHASER_FILES, ...TEST_FILES],
+  rules: {
+    "import-x/no-restricted-paths": [
+      "error",
+      {
+        zones: [
+          {
+            from: PHASER_MODULES.map((module) => `./src/${module}.ts`),
+            message: PHASER_MESSAGE,
+            target: "./src",
+          },
+        ],
+      },
+    ],
+  },
+};
+
 export default defineConfig(
   {
     // .claude/ and .worktrees/ hold agent and role worktrees: full copies of the repo that CI
@@ -116,10 +137,15 @@ export default defineConfig(
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
   { files: SOURCE_FILES, plugins, rules: sourceRules },
   ...boundaryConfigs(),
+  phaserModuleConfig,
   { files: ["*.{ts,js,mjs}", "tools/**/*.{ts,js,mjs}"], plugins, rules: toolingRules },
   {
     files: ["**/*.{ts,js,mjs}"],
-    plugins: { "import-x": { rules: { extensions, "no-cycle": noCycle } } },
+    plugins: {
+      "import-x": {
+        rules: { extensions, "no-cycle": noCycle, "no-restricted-paths": noRestrictedPaths },
+      },
+    },
     settings: {
       "import-x/extensions": [".ts"],
       "import-x/resolver-next": [createNodeResolver({ extensions: [".ts", ".js"] })],
