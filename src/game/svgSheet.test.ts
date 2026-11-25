@@ -91,6 +91,13 @@ it.each([
   );
 });
 
+it("accepts a display-sized part authored at its raw frame size, as the fleet producer writes", () => {
+  recordExtractedAttributes();
+  const raw = { ...authored, height: "120", width: "120" };
+  const source = vectorSheetSource(root([frame(raw)]), path, part);
+  expect(JSON.parse(atob(source.split(",")[1]!))).toEqual(raw);
+});
+
 it("retains the raw intrinsic default for an existing hull or rock and rejects duplicate IDs", () => {
   vi.stubGlobal(
     "XMLSerializer",

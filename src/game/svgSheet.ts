@@ -49,6 +49,13 @@ export function vectorSheetSource(
   const station = archetype === "hostileStation";
   const expectedWidth = intrinsicWidth ?? (station ? displayWidth : undefined) ?? width;
   const expectedHeight = intrinsicHeight ?? (station ? displayHeight : undefined) ?? height;
+  // A display-sized root may instead be authored at its raw frame size, as the enemy fleet
+  // producer writes every hull and part root.
+  const rootWidth = Number(frame?.getAttribute("width"));
+  const rootHeight = Number(frame?.getAttribute("height"));
+  const sized =
+    (rootWidth === expectedWidth && rootHeight === expectedHeight) ||
+    (intrinsicWidth !== undefined && rootWidth === width && rootHeight === height);
   if (
     matches.length !== 1 ||
     frame?.localName !== "svg" ||
@@ -58,8 +65,7 @@ export function vectorSheetSource(
     viewBox[1] !== 0 ||
     viewBox[2] !== width ||
     viewBox[3] !== height ||
-    Number(frame.getAttribute("width")) !== expectedWidth ||
-    Number(frame.getAttribute("height")) !== expectedHeight
+    !sized
   ) {
     throw new Error(`Invalid frame ${id} in vector sheet: ${path}`);
   }
