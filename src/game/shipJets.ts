@@ -364,15 +364,16 @@ export function readEngineJets(value: unknown): EngineJets | undefined {
 }
 
 /**
- * Plumes whose every mouth carries hull occluders draw above the hull, which is then redrawn
- * inside the occluders; others draw behind the hull.
+ * Plumes whose every mouth carries an occluders list draw above the hull, which is then redrawn
+ * inside the occluders; an empty list means no hull surface is nearer than that mouth's plume.
+ * Plumes with any mouth lacking the list draw behind the hull.
  */
 export function jetsInFront(jets: JetGeometry | undefined, heading: number): boolean {
   const mouths = jets?.headings[heading];
   return (
     mouths !== undefined &&
     mouths.length > 0 &&
-    mouths.every((mouth) => mouth.occluders !== undefined && mouth.occluders.length > 0)
+    mouths.every((mouth) => mouth.occluders !== undefined)
   );
 }
 

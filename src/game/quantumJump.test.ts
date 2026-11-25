@@ -90,7 +90,7 @@ describe("quantum jump data", () => {
         expect(jetsInFront(pose.jets, 0)).toBe(true);
         for (const mouth of pose.jets.headings[0]!) {
           const plumes = jetShapePolygons(mouth, layers, pose.jets.length.base, 1, JET_PROFILE);
-          expect(plumes.map(({ layerIndex }) => layerIndex)).toEqual([0, 1]);
+          expect(plumes.map(({ layerIndex }) => layerIndex)).toEqual(layers.map((_, i) => i));
           for (const { layerIndex, points } of plumes) {
             const expected = plumePolygon(
               JET_PROFILE,
@@ -109,6 +109,9 @@ describe("quantum jump data", () => {
         }
       }
     }
+    // One settle-10 mouth has no nearer hull surface; its empty list still draws in front.
+    const settle = jump.warp.poses.find(({ id }) => id === "settle-10")!.jets!;
+    expect(settle.headings[0]!.some(({ occluders }) => occluders?.length === 0)).toBe(true);
     expect(jump.warp.poses.find(({ id }) => id === "bank-8")?.jets).toBeUndefined();
     expect(jump.warp.poses.find(({ id }) => id === "settle-5")?.jets).toBeUndefined();
   });

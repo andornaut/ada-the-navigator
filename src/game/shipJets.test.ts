@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { SHIP_HEADINGS as ART_SHIP_HEADINGS } from "../../art/tools/projection.ts";
-import { JET_LEVELS, JET_PROFILE, JET_SHAPE } from "../../art/tools/ship-jet-layers.ts";
+import {
+  JET_LENGTH,
+  JET_LEVELS,
+  JET_PROFILE,
+  JET_SHAPE,
+  plumeReach,
+} from "../../art/tools/ship-jet-layers.ts";
 import { forwardJetMouths, FRAME } from "../../art/tools/ship-model.ts";
 import { jetLength as artJetLength, plumePolygon } from "../../art/tools/ship-plume.ts";
 import manifest from "../../public/art/manifest.json";
@@ -13,6 +19,7 @@ import {
   type JetDisplay,
   jetLength,
   jetPlumes,
+  jetsInFront,
   jetTriangles,
   layerAlpha,
   layerColor,
@@ -26,7 +33,9 @@ import {
 const ada = readEngineJets(art)!;
 // Engine level 1, the base style the shape tests check.
 const jets = engineJets(ada, 1);
-const [outer, core] = jets.layers;
+const [halo, outer, core] = jets.layers;
+// Layer shapes in draw order.
+const SHAPES = [JET_SHAPE.halo, JET_SHAPE.outer, JET_SHAPE.core];
 // Identity mapping keeps plume coordinates in heading-frame pixels.
 const framePixels: JetDisplay = { displayHeight: 96, displayWidth: 96, pivot: { x: 0, y: 0 } };
 const shipDisplay: JetDisplay = { displayHeight: 42, displayWidth: 42, pivot: { x: 0.5, y: 0.5 } };
@@ -65,11 +74,11 @@ const shoelace = (points: readonly { x: number; y: number }[]) =>
   ) / 2;
 
 describe("ship jet metadata", () => {
-  it("reads 64 headings of two mouths, the outer and core layers and the teardrop profile", () => {
+  it("reads 64 headings of two mouths, the halo, outer and core layers and the teardrop profile", () => {
     expect(jets.frame).toBe(96);
     expect(jets.headings).toHaveLength(64);
     expect(jets.headings.every((mouths) => mouths.length === 2)).toBe(true);
-    expect(jets.layers.map(({ name }) => name)).toEqual(["outer", "core"]);
+    expect(jets.layers.map(({ name }) => name)).toEqual(["halo", "outer", "core"]);
     expect(jets.profile).toEqual(JET_PROFILE);
     const [x, y] = art.headings[0]!.mouths[0]!.anchor;
     expect(jets.headings[0]![0]!.anchor).toEqual({ x, y });
@@ -143,7 +152,9 @@ describe("authored jet occlusion", () => {
     });
 
   it("reads every forward mouth's occluders and omits them unless a consumer asks", () => {
-    expect(jets.headings.every((mouths) => mouths.every((m) => m.occluders?.length))).toBe(true);
+    expect(jets.headings.every((mouths) => mouths.every((m) => m.occluders !== undefined))).toBe(
+      true,
+    );
     expect(readEngineJets(masked(undefined))!.headings[0]![0]).not.toHaveProperty("occluders");
     expect(jetTriangles(jets, framePixels, 0, 0.8)[0]).not.toHaveProperty("occluders");
   });
@@ -156,10 +167,11 @@ describe("authored jet occlusion", () => {
       x: ((x! - 48) * 42) / 96,
       y: ((y! - 48) * 42) / 96,
     }));
-    // Mouth 0: outer and core share its occluders; mouth 1 has none.
+    // Mouth 0: its halo, outer and core share its occluders; mouth 1 has none.
     expect(plumes[0]!.occluders).toEqual([expected]);
     expect(plumes[1]!.occluders).toBe(plumes[0]!.occluders);
-    expect(plumes[2]).not.toHaveProperty("occluders");
+    expect(plumes[2]!.occluders).toBe(plumes[0]!.occluders);
+    expect(plumes[3]).not.toHaveProperty("occluders");
     const craft = {
       ...masked([polygon]),
       engineLevels: undefined,
@@ -190,6 +202,36 @@ describe("authored jet occlusion", () => {
   ])("rejects malformed optional occluders %j rather than revealing the whole plume", (value) =>
     expect(readEngineJets(masked(value))).toBeUndefined(),
   );
+
+  // Art's headings where one mouth has an empty occluders list: no hull surface is nearer than
+  // that plume, so it still draws in front.
+  it.each([30, 31, 49, 50])(
+    "draws heading %i's plumes in front where a mouth has no nearer hull surface",
+    (heading) => {
+      const mouths = art.headings.find(({ index }) => index === heading)!.mouths;
+      expect(mouths.some(({ occluders }) => occluders.length === 0)).toBe(true);
+      expect(jetsInFront(jets, heading)).toBe(true);
+    },
+  );
+
+  it("draws in front with an empty occluders list and behind when a mouth lacks the list", () => {
+    const lists = (occluders: readonly unknown[]) =>
+      readEngineJets(
+        withHeading({
+          ...art.headings[0],
+          mouths: art.headings[0]!.mouths.map(({ anchor, axis, half }, index) => ({
+            anchor,
+            axis,
+            half,
+            occluders: occluders[index],
+          })),
+        }),
+      );
+    expect(jetsInFront(lists([[], [polygon]]), 0)).toBe(true);
+    expect(jetsInFront(lists([[], []]), 0)).toBe(true);
+    // Mouth 1 has no list.
+    expect(jetsInFront(readEngineJets(masked([])), 0)).toBe(false);
+  });
 });
 
 describe("jet interpolation", () => {
@@ -198,34 +240,41 @@ describe("jet interpolation", () => {
     [0.5, 12, 0x8ac0e6, 0xc6e2f8],
     [0.75, 19.5, 0xa2d6f2, 0xe2f0fb],
     [1, 30, 0xb9ecff, 0xffffff],
-  ])("at f = %s has length %s, outer %s and core %s, both opaque", (f, length, out, inner) => {
+  ])("at f = %s has length %s, outer %s and core %s, all opaque", (f, length, out, inner) => {
     expect(jetLength(jets, f)).toBeCloseTo(length);
+    expect(layerColor(halo!, f)).toBe(color(JET_LEVELS[0].halo[0]));
     expect(layerColor(outer!, f)).toBe(out);
     expect(layerColor(core!, f)).toBe(inner);
-    expect(layerAlpha(outer!, f)).toBe(1);
-    expect(layerAlpha(core!, f)).toBe(1);
+    for (const layer of jets.layers) {
+      expect(layerAlpha(layer, f)).toBe(1);
+    }
   });
 
-  it("reaches the outer tip at the jet length and the core tip at half of it", () => {
-    const [outerPlume, corePlume] = jetPlumes(single, framePixels, 0, 1);
-    expect(Math.max(...outerPlume!.points.map(({ y }) => y)) - 60).toBeCloseTo(30);
-    expect(Math.max(...corePlume!.points.map(({ y }) => y)) - 60).toBeCloseTo(15);
+  it("reaches each layer's tip at its multiple of the jet length", () => {
+    const length = JET_LENGTH.base + JET_LENGTH.scale;
+    const plumes = jetPlumes(single, framePixels, 0, 1);
+    expect(plumes).toHaveLength(SHAPES.length);
+    plumes.forEach((plume, layer) =>
+      expect(Math.max(...plume.points.map(({ y }) => y)) - 60).toBeCloseTo(
+        length * SHAPES[layer]!.length,
+      ),
+    );
   });
 });
 
 describe("jets by Engine level", () => {
   it.each(JET_LEVELS)(
     "draws engine $level in the canonical palette with unchanged layer geometry",
-    ({ core: coreColors, level, outer: outerColors }) => {
+    ({ core: coreColors, halo: haloColors, level, outer: outerColors }) => {
       const { layers } = engineJets(ada, level);
       expect(layers.map(({ colors }) => colors)).toEqual([
+        haloColors.map(color),
         outerColors.map(color),
         coreColors.map(color),
       ]);
-      expect(layers.map(({ length, width }) => [length, width])).toEqual([
-        [JET_SHAPE.outer.length, JET_SHAPE.outer.width],
-        [JET_SHAPE.core.length, JET_SHAPE.core.width],
-      ]);
+      expect(layers.map(({ length, width }) => [length, width])).toEqual(
+        SHAPES.map(({ length, width }) => [length, width]),
+      );
     },
   );
 
@@ -260,9 +309,10 @@ describe("teardrop plumes", () => {
     expect(jetTriangles(jets, shipDisplay, 0, 0)).toEqual([]);
   });
 
-  it("orders outer then core per mouth, in their interpolated colours", () => {
+  it("orders halo, outer then core per mouth, in their interpolated colours", () => {
     const plumes = jetPlumes(jets, framePixels, 3, 1);
     const one = [
+      [color(JET_LEVELS[0].halo[1]), 1],
       [color(JET_LEVELS[0].outer[1]), 1],
       [color(JET_LEVELS[0].core[1]), 1],
     ];
@@ -274,10 +324,10 @@ describe("teardrop plumes", () => {
       const length = artJetLength(art.length, f);
       jets.headings.forEach((mouths, heading) => {
         const plumes = jetPlumes(jets, framePixels, heading, f);
-        expect(plumes).toHaveLength(4);
+        expect(plumes).toHaveLength(mouths.length * SHAPES.length);
         mouths.forEach((_, index) => {
           const { anchor, axis, half } = art.headings[heading]!.mouths[index]!;
-          for (const [layer, shape] of [JET_SHAPE.outer, JET_SHAPE.core].entries()) {
+          for (const [layer, shape] of SHAPES.entries()) {
             const expected = plumePolygon(
               JET_PROFILE,
               {
@@ -288,7 +338,7 @@ describe("teardrop plumes", () => {
               shape,
               length,
             );
-            const actual = plumes[index * 2 + layer]!.points;
+            const actual = plumes[index * SHAPES.length + layer]!.points;
             expect(actual).toHaveLength(expected.length);
             flat(actual).forEach((value, at) => expect(value).toBeCloseTo(expected.flat()[at]!, 9));
           }
@@ -311,41 +361,45 @@ describe("teardrop plumes", () => {
   });
 
   it("spans the profile across the half vector times the layer width", () => {
-    const [outerPlume] = jetPlumes(single, framePixels, 0, 0.5);
-    // Length 12; outer half width 5.8: root at 0.8 of it, full at 0.1 to 0.22, tip at 12.
+    const [, outerPlume] = jetPlumes(single, framePixels, 0, 0.5);
+    // Jet length 12 at f = 0.5: the outer layer's samples from its root along one side.
+    const length = 12 * JET_SHAPE.outer.length;
+    const { width } = JET_SHAPE.outer;
     expect(flat(outerPlume!.points.slice(0, 3))).toEqual(
-      [50 + 5.8 * 0.8, 60, 50 + 5.8, 61.2, 50 + 5.8, 62.64].map((value) =>
-        expect.closeTo(value, 9),
-      ),
+      JET_PROFILE.slice(0, 3)
+        .flatMap(([along, across]) => [50 + width * across, 60 + length * along])
+        .map((value) => expect.closeTo(value, 9)),
     );
-    expect(outerPlume!.points[5]).toEqual({ x: 50, y: 72 });
-    expect(outerPlume!.points.at(-1)!.x).toBeCloseTo(50 - 5.8 * 0.8);
+    expect(outerPlume!.points[5]).toEqual({ x: 50, y: 60 + length });
+    expect(outerPlume!.points.at(-1)!.x).toBeCloseTo(50 - width * JET_PROFILE[0][1]);
   });
 
   it("maps frame pixels into the 42px display relative to the sprite origin", () => {
-    const [outerPlume] = jetPlumes(single, shipDisplay, 0, 0.5);
+    const [, outerPlume] = jetPlumes(single, shipDisplay, 0, 0.5);
     const scale = 42 / 96;
-    expect(outerPlume!.points[0]!.x).toBeCloseTo((50 + 5.8 * 0.8 - 48) * scale);
-    expect(outerPlume!.points[5]!.y).toBeCloseTo((72 - 48) * scale);
+    const root = 50 + JET_SHAPE.outer.width * JET_PROFILE[0][1];
+    expect(outerPlume!.points[0]!.x).toBeCloseTo((root - 48) * scale);
+    expect(outerPlume!.points[5]!.y).toBeCloseTo((60 + 12 * JET_SHAPE.outer.length - 48) * scale);
   });
 
   it("draws one triangle per layer for a craft file without a profile", () => {
     const { frame, headings, layers, length } = single;
     const triangle: ShipJets = { frame, headings, layers, length };
-    const [outerTriangle, coreTriangle] = jetTriangles(triangle, framePixels, 0, 0.5);
-    expect(jetTriangles(triangle, framePixels, 0, 0.5)).toHaveLength(2);
-    flat(outerTriangle!.points).forEach((value, at) =>
-      expect(value).toBeCloseTo([55.8, 60, 50, 72, 44.2, 60][at]!),
-    );
-    flat(coreTriangle!.points).forEach((value, at) =>
-      expect(value).toBeCloseTo([51.6, 60, 50, 66, 48.4, 60][at]!),
-    );
+    const triangles = jetTriangles(triangle, framePixels, 0, 0.5);
+    expect(triangles).toHaveLength(SHAPES.length);
+    // Each layer: one mouth side, the tip at its share of jet length 12, the other mouth side.
+    triangles.forEach(({ points }, layer) => {
+      const { length, width } = SHAPES[layer]!;
+      flat(points).forEach((value, at) =>
+        expect(value).toBeCloseTo([50 + width, 60, 50, 60 + 12 * length, 50 - width, 60][at]!),
+      );
+    });
   });
 
   it("matches the current canonical producer mouth geometry at every heading", () => {
     expect(jets.frame).toBe(FRAME);
     expect(jets.headings).toHaveLength(ART_SHIP_HEADINGS);
-    const reach = { halfWidth: JET_SHAPE.outer.width, length: 30 };
+    const reach = plumeReach(JET_LENGTH.base + JET_LENGTH.scale);
     jets.headings.forEach((mouths, heading) => {
       expect(mouths).toHaveLength(2);
       forwardJetMouths(FRAME / 2, { yaw: heading }, reach).forEach((mouth, index) => {

@@ -69,7 +69,7 @@ describe("velocity-directed ship jets", () => {
 });
 
 describe("canonical reverse jet data", () => {
-  it("reads the teardrop at 0.85 of the forward widths and half the earlier reach", () => {
+  it("reads the teardrop at the retro share of the forward widths and the retro reach", () => {
     expect(retro.headings).toHaveLength(SHIP_HEADINGS);
     expect(retro.headings.every((mouths) => mouths.length === 2)).toBe(true);
     expect(retro.frame).toBe(rear.frame);
