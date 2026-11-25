@@ -156,12 +156,8 @@ export const CONVERSATION_STYLE = `
   touch-action:manipulation
 }
 
-/* The page's base button style changes its background on hover; the panel keeps its own. */
 .ada-conversation[data-emergency]{
   z-index:${EMERGENCY_RETURN.layers.dialogue}
-}
-.ada-conversation:hover{
-  background:${FLIGHT_PANEL_BACKGROUND}
 }
 
 .ada-conversation[hidden]{

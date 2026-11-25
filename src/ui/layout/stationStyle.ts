@@ -388,6 +388,9 @@ export const STATION_STYLE = `
   pointer-events:auto;
   scroll-margin:${units(FOCUS_RING.outset)}
 }
+.ada-controls .ada-shop-row:disabled{
+  opacity:0.5
+}
 .ada-controls .ada-shop-row:active:not([data-state=unaffordable]){
   padding:${units(TEXT_BUTTON.pressedSink)} ${ROW_SIDE} ${PRESSED_BOTTOM};
   border-image-source:var(${buttonProperty("ui-button-tile", "pressed")})

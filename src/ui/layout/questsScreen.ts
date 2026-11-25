@@ -20,6 +20,10 @@ export const QUEST_ICON = 24;
 const QUEST_ROUTE_TYPE = { lineHeight: 18, size: 14 } as const;
 // On smaller views, scale the endpoint with its route up to the shared 48px button minimum.
 const QUEST_ENDPOINT_MIN_HEIGHT = 48;
+// The endpoint's corner radius in CSS px, which rounds its focus and press face.
+const QUEST_ENDPOINT_RADIUS = 8;
+// An unavailable endpoint's keyboard focus: a white outline this wide and this far out, in CSS px.
+const QUEST_ENDPOINT_UNAVAILABLE_FOCUS = { offset: 3, width: 3 } as const;
 
 // The quest detail: two columns (objective, reward) split by a rule inset from the top and
 // bottom, the route row's arrow column and its padding on a NARROW_VIEWPORT, and the quest disc's
@@ -93,10 +97,16 @@ export const QUESTS_SCREEN_STYLE = `
   text-align:left;
   background:none;
   border:0;
+  border-radius:${pixels(QUEST_ENDPOINT_RADIUS)};
   padding:0;
-  cursor:pointer}
+  cursor:pointer;
+  pointer-events:auto}
 .ada-controls .ada-quest-endpoint:is(:disabled,[aria-disabled=true]){opacity:1;
   cursor:default}
+.ada-controls .ada-quest-endpoint:is(:disabled,[aria-disabled=true]):focus-visible{
+  outline:${pixels(QUEST_ENDPOINT_UNAVAILABLE_FOCUS.width)} solid #ffffff;
+  outline-offset:${pixels(QUEST_ENDPOINT_UNAVAILABLE_FOCUS.offset)}
+}
 .ada-controls .ada-quest-endpoint:not(:disabled,[aria-disabled=true]):is(:focus-visible,:active){
   outline:none;
   --ada-endpoint-cue-ink:${TEXT_TOKENS.buttonLabel};

@@ -25,3 +25,13 @@
     color: ButtonFace;
   }
 }
+
+/* Crash buttons darken on hover and draw at half opacity while disabled. */
+button:hover:where(.crash-button) {
+  background: #373737;
+}
+
+button:disabled:where(.crash-button) {
+  opacity: 0.5;
+  cursor: default;
+}

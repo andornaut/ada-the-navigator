@@ -13,16 +13,12 @@ import {
 } from "../ui/actionBinding.ts";
 import { SCROLL } from "../ui/layout/contentCard.ts";
 import { readViewUnit } from "../ui/layout/viewScale.ts";
-import { refuse } from "../ui/refusal.ts";
-import { createStandardTextAction } from "../ui/standardTextAction.ts";
 import { createStartScreen } from "../ui/startScreen.ts";
 import type { TitleScreenArt } from "../ui/titleScreen.ts";
 
 export interface ShellActions {
-  choose: (id: string) => void;
   continueGame: () => void;
   dismissNotice: () => void;
-  reducedMotion: () => boolean;
   restart: () => void;
   start: () => void;
 }
@@ -30,10 +26,8 @@ export interface ShellActions {
 export class StoryShell {
   private readonly savingStatus = document.createElement("div");
   private readonly status = document.createElement("div");
-  private readonly panel = document.createElement("section");
   private signature = "";
   private disposed = false;
-  private readonly choiceDisposals: (() => void)[] = [];
   private readonly noticeAction: ReturnType<typeof bindAdaAction>;
   // A newer save's forced update, while it runs: Start stays closed.
   private requiredUpdate: RequiredUpdateState | undefined;
@@ -43,7 +37,7 @@ export class StoryShell {
   private startScreen: ReturnType<typeof createStartScreen> | undefined;
   // Art's title art, once the scene has read it; the start screen draws without it until then.
   private titleArt: TitleScreenArt | null = null;
-  // Whether the shown screen takes a default focus: the start screen or a dialogue.
+  // Whether the shown screen takes a default focus: the start screen.
   private focusesDefault = false;
 
   private readonly actions: ShellActions;
@@ -70,13 +64,10 @@ export class StoryShell {
       },
       this.status,
     );
-    this.panel.className = "story-panel";
-    document.getElementById("app")?.append(this.status, this.savingStatus, this.panel);
-    for (const element of [this.status, this.panel]) {
-      assertAdaActionMetadata(element);
-      if (element.isConnected) {
-        assertAdaActionBindings(element);
-      }
+    document.getElementById("app")?.append(this.status, this.savingStatus);
+    assertAdaActionMetadata(this.status);
+    if (this.status.isConnected) {
+      assertAdaActionBindings(this.status);
     }
   }
 
@@ -96,7 +87,6 @@ export class StoryShell {
     const nextSignature = JSON.stringify([
       screen,
       canContinue,
-      state.dialogue,
       state.economy.paint,
       this.titleArt !== null,
       this.requiredUpdate ?? null,
@@ -105,60 +95,12 @@ export class StoryShell {
       return;
     }
     this.signature = nextSignature;
-    this.focusesDefault = screen === "start" || Boolean(state.dialogue);
+    this.focusesDefault = screen === "start";
     const active = document.activeElement as HTMLElement | null;
     const focusedAction = active?.dataset.action;
-    const focusedChoice = active?.dataset.choice;
     this.startScreen?.dispose();
     this.startScreen = undefined;
-    this.clearChoices();
-    this.panel.replaceChildren();
-    // The panel holds space dialogue; the start screen and storybook pages draw their own.
-    this.panel.hidden = !(screen === "space" && state.dialogue);
-    this.panel.dataset.context = state.dialogue?.context.split(":")[0] ?? "";
-    if (screen === "space" && state.dialogue) {
-      const heading = document.createElement("h2");
-      heading.textContent = state.dialogue.title;
-      const text = document.createElement("p");
-      text.textContent = state.dialogue.text;
-      this.panel.append(heading, text);
-      for (const choice of state.dialogue.choices) {
-        // A refused choice looks disabled but stays enabled, focusable and tappable, so a tap
-        // plays the shared refusal; aria-disabled would announce it as unusable.
-        let stopRefusal: (() => void) | undefined;
-        const current = (node: HTMLButtonElement) =>
-          !this.disposed && !this.panel.hidden && node.isConnected;
-        const run = (node: HTMLButtonElement) => {
-          if (choice.refused) {
-            stopRefusal = refuse(node, this.actions.reducedMotion());
-          } else {
-            this.actions.choose(choice.id);
-          }
-        };
-        // The save decoder accepts blank labels. Keep their existing control without inventing
-        // a name, since the standard text factory requires a nonempty name.
-        const action = choice.label.trim()
-          ? createStandardTextAction(this.host, choice.label, {
-              availability: (button) =>
-                button?.disabled ? { kind: "disabled" } : { kind: "available" },
-              current: (): boolean => current(action.element),
-              run: () => run(action.element),
-            })
-          : this.unnamedChoice(choice.label, current, run);
-        const node = action.element;
-        this.choiceDisposals.push(() => {
-          action.dispose();
-          stopRefusal?.();
-        });
-        if (choice.refused) {
-          node.dataset.refused = "true";
-        }
-        node.dataset.choice = choice.id;
-        node.dataset.action = "dialogue-choice";
-        this.panel.append(node);
-      }
-      this.panel.setAttribute("aria-label", state.dialogue.title);
-    } else if (screen === "start") {
+    if (screen === "start") {
       // Continue resumes a held story or flight; Restart stays secondary on its left.
       const actions = this.requiredUpdate
         ? []
@@ -195,16 +137,9 @@ export class StoryShell {
         title: CONTENT.labels.home ?? "",
       });
     }
-    assertAdaActionMetadata(this.panel);
-    if (this.panel.isConnected) {
-      assertAdaActionBindings(this.panel);
-    }
-    const shown = this.startScreen?.root ?? this.panel;
-    const restore = [...shown.querySelectorAll<HTMLButtonElement>("button")].find((node) =>
-      focusedChoice
-        ? node.dataset.choice === focusedChoice
-        : Boolean(focusedAction) && node.dataset.action === focusedAction,
-    );
+    const restore = [
+      ...(this.startScreen?.root.querySelectorAll<HTMLButtonElement>("button") ?? []),
+    ].find((node) => Boolean(focusedAction) && node.dataset.action === focusedAction);
     // An open modal, such as the update offer shown as the launch's start screen first draws,
     // keeps focus, so a key press never acts on the screen behind it.
     if (active?.closest(".ada-modal:not([hidden])")) {
@@ -218,7 +153,7 @@ export class StoryShell {
   }
 
   /**
-   * Gives the shown start screen or dialogue its default focus where focus has fallen to the page.
+   * Gives the shown start screen its default focus where focus has fallen to the page.
    * A focus call while the play area is inert, as it is until the boot reveal shows the first
    * screen, does not land, and nothing else moves focus there afterwards.
    */
@@ -231,10 +166,10 @@ export class StoryShell {
 
   // Focus starts on the primary action, else the first.
   private focusShownDefault(): void {
-    const shown = this.startScreen?.root ?? this.panel;
+    const shown = this.startScreen?.root;
     const first =
-      shown.querySelector<HTMLButtonElement>("button.ada-primary:not([hidden])") ??
-      shown.querySelector<HTMLButtonElement>("button");
+      shown?.querySelector<HTMLButtonElement>("button.ada-primary:not([hidden])") ??
+      shown?.querySelector<HTMLButtonElement>("button");
     if (first) {
       focusTarget(first);
     }
@@ -308,41 +243,11 @@ export class StoryShell {
     }
   }
 
-  private unnamedChoice(
-    label: string,
-    current: (node: HTMLButtonElement) => boolean,
-    run: (node: HTMLButtonElement) => void,
-  ) {
-    const node = document.createElement("button");
-    node.type = "button";
-    node.textContent = label;
-    const binding = bindAdaAction(
-      {
-        click: {
-          availability: () => (node.disabled ? { kind: "omitted" } : { kind: "available" }),
-          run: () => run(node),
-        },
-        current: () => current(node),
-        slopPx: () => SCROLL.dragThreshold * readViewUnit(node),
-      },
-      node,
-    );
-    return { dispose: binding.dispose, element: node };
-  }
-
-  private clearChoices(): void {
-    for (const dispose of this.choiceDisposals.splice(0)) {
-      dispose();
-    }
-  }
-
   dispose(): void {
     this.disposed = true;
-    this.clearChoices();
     this.noticeAction.dispose();
     this.startScreen?.dispose();
     this.savingStatus.remove();
     this.status.remove();
-    this.panel.remove();
   }
 }

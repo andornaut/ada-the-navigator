@@ -47,7 +47,6 @@ describe("conversation box style", () => {
 
   it("uses the new ink only for in-flight speech and game notices", () => {
     expect(css.get(".ada-conversation")).toContain("background:#1814258c");
-    expect(css.get(".ada-conversation:hover")).toContain("background:#1814258c");
     expect(css.get(".ada-conversation")).not.toContain("opacity:");
     const notices = rules(NOTICE_STYLE);
     expect(notices.get("#game-status")).toContain("background:#1814258c");

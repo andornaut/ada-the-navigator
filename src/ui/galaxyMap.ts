@@ -24,6 +24,7 @@ import {
   font,
   fromAreaLeft,
   fromAreaTop,
+  pixels,
   safeEdge,
   slice,
   units,
@@ -261,9 +262,13 @@ ${mapCloseActionStyle(".ada-controls .ada-route > .ada-close")}
   position:absolute;
   width:${units(GALAXY_MAP.press)};
   height:${units(GALAXY_MAP.press)};
+  min-width:${pixels(GALAXY_MAP.press)};
+  min-height:${pixels(GALAXY_MAP.press)};
   margin:0;
   padding:0;
   border:0;
+  font:inherit;
+  color:inherit;
   background:transparent;
   display:grid;
   place-items:center;
@@ -757,17 +762,17 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     jetCanvas.hidden = !jets;
     jetCanvas.style.zIndex = normalJetsInFront(jets, heading) ? "1" : "";
     if (jets) {
-      const pixels = Math.max(
+      const side = Math.max(
         1,
         Math.ceil(SHIP.size * readViewUnit(root) * (window.devicePixelRatio || 1)),
       );
-      if (jetCanvas.width !== pixels || jetCanvas.height !== pixels) {
-        jetCanvas.width = pixels;
-        jetCanvas.height = pixels;
+      if (jetCanvas.width !== side || jetCanvas.height !== side) {
+        jetCanvas.width = side;
+        jetCanvas.height = side;
       }
       const context = jetCanvas.getContext("2d");
       if (context) {
-        context.setTransform(pixels / SHIP.size, 0, 0, pixels / SHIP.size, 0, 0);
+        context.setTransform(side / SHIP.size, 0, 0, side / SHIP.size, 0, 0);
         context.clearRect(0, 0, SHIP.size, SHIP.size);
         drawShipJets(
           context,

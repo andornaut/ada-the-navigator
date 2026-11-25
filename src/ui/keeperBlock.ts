@@ -98,10 +98,8 @@ export const KEEPER_STYLE = `
 }
 .ada-controls button.ada-keeper{
   cursor:pointer;
+  pointer-events:auto;
   touch-action:manipulation
-}
-.ada-controls button.ada-keeper:hover{
-  background:${PANEL_BACKGROUND}
 }
 .ada-controls .ada-keeper:focus-visible{${FOCUS_STYLE}
 }

@@ -147,6 +147,7 @@ ${button}{
   place-items:center;
   border:0;
   border-radius:0;
+  font:inherit;
   background:transparent;
   color:${HUD_DISC_STATES.idle.glyph};
   cursor:pointer;
@@ -324,6 +325,7 @@ ${PRESSED_WEAPON}{
   border-color:${HUD_DISC_STATES.selected.glyph}
 }
 .ada-controls .ada-weapon:disabled{
+  opacity:0.5;
   cursor:default
 }
 /* Levels 2 and 3 show two or three pips centred on the bottom ring stroke; level 1 has none. */

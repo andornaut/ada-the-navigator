@@ -51,7 +51,11 @@ ${UI_SCOPE} .ada-ship-row{
   font:${font(TYPE.body)};
   line-height:${units(SHIP_CARD.row)};
   color:${TEXT_TOKENS.label};
-  cursor:pointer
+  cursor:pointer;
+  pointer-events:auto
+}
+${UI_SCOPE} .ada-ship-row:disabled{
+  opacity:0.5
 }
 /* Keep the inventory's scroll gutter and column positions. */
 ${UI_SCOPE} .ada-card[data-dialog=ship] > .ada-card-body{

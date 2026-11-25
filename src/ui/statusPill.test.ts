@@ -291,7 +291,7 @@ describe("status pill shield bar", () => {
     expect(fromHudEdge("bottom")).toBe("var(--ada-hud-bottom)");
   });
 
-  it("keeps the shield pill button at its own size, clear of the base button's 48 minimum", () => {
+  it("keeps the shield pill button at its own size, with no minimum", () => {
     const button = STATUS_PILL_STYLE.split("}").find((part) =>
       part.includes(".ada-controls button.ada-shield{"),
     );

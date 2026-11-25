@@ -3,7 +3,7 @@ import { SCREEN } from "../../data/screen.ts";
 import { NO_INSETS, type Side } from "./playView.ts";
 
 // CSS for logical sizes. The view-scale bridge (viewScale.ts) sets these custom properties on the
-// play area (#app: the canvas, the controls overlay, notices and the story panel); every DOM UI
+// play area (#app: the canvas, the controls overlay and notices); every DOM UI
 // size is a logical value through these helpers, never raw CSS px.
 export const VIEW_HOST_ID = "app";
 

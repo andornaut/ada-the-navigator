@@ -329,12 +329,17 @@ ${UI_SCOPE} .ada-close{
   padding:0;
   border:0;
   border-radius:0;
+  font:inherit;
+  color:inherit;
   background:transparent;
   display:grid;
   place-items:center;
   isolation:isolate;
   cursor:pointer;
   pointer-events:auto
+}
+${UI_SCOPE} .ada-close:disabled{
+  opacity:0.5
 }
 ${standardCloseActionStyle(`${UI_SCOPE} .ada-close`)}
 ${UI_SCOPE} .ada-close::before{
@@ -415,6 +420,7 @@ ${UI_SCOPE} .ada-button:disabled{
   background:${BUTTON_FACE.disabled};
   border-color:${BUTTON_FACE.disabled};
   border-image-source:var(--ui-button-disabled);
+  opacity:0.5;
   cursor:default
 }
 ${UI_SCOPE} .ada-button.ada-primary:disabled{
@@ -532,11 +538,17 @@ ${UI_SCOPE} .ada-pause{
   padding:0;
   border:0;
   border-radius:0;
+  font:inherit;
+  color:inherit;
   background:transparent;
   display:grid;
   place-items:center;
+  cursor:pointer;
   pointer-events:auto;
   touch-action:none
+}
+${UI_SCOPE} .ada-pause:disabled{
+  opacity:0.5
 }
 ${UI_SCOPE} .ada-pause::before{
   content:"";

@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { GameModel } from "../model/game.ts";
-import { restoreSave } from "../model/save.ts";
 import { resolveAdaHoldAction } from "../ui/actionBinding.ts";
 import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
 import { rootPressGuard } from "../ui/pressScope.ts";
@@ -176,10 +175,8 @@ let shell: StoryShell;
 let actionRoot: ReturnType<typeof bindAdaActionRoot> | undefined;
 function setup(model = new GameModel(CONTENT)) {
   const actions = {
-    choose: vi.fn(),
     continueGame: vi.fn(() => model.continueGame()),
     dismissNotice: vi.fn(),
-    reducedMotion: () => false,
     restart: vi.fn(),
     start: vi.fn(() => model.start()),
   };
@@ -429,79 +426,15 @@ function holdFixture() {
     }
     return click;
   };
-  const dialogue = (id = "choice", refused = false, label = "Choice") => {
-    ui.model.state.dialogue = {
-      choices: [{ id, label, refused }],
-      context: "fixture",
-      text: "Text",
-      title: "Title",
-    };
-    ui.shell.render(ui.model.state, "space");
-    return ui.buttons()[0]!;
-  };
   return {
     ...ui,
-    dialogue,
     down,
     release,
     resolve: (node: Element) => resolveAdaHoldAction(root, node),
   };
 }
-it("holds the current dialogue callback once and keeps keyboard activation and refusal feedback", () => {
-  const f = holdFixture(),
-    button = f.dialogue();
-  f.down(button);
-  vi.advanceTimersByTime(499);
-  expect(f.actions.choose).not.toHaveBeenCalled();
-  const current = vi.fn();
-  f.actions.choose = current;
-  vi.advanceTimersByTime(1);
-  expect(current).toHaveBeenCalledExactlyOnceWith("choice");
-  expect(f.release(button).defaultPrevented).toBe(true);
-  expect(current).toHaveBeenCalledOnce();
-  button.click();
-  expect(current).toHaveBeenCalledTimes(2);
-  const refused = f.dialogue("locked", true);
-  expect(refused.className.split(" ")).toContain("ui-standard-button");
-  expect(refused.textContent).toBe("Choice");
-  expect(refused.disabled).toBe(false);
-  expect(refused.hidden).toBe(false);
-  expect(refused.getAttribute("aria-disabled")).toBeNull();
-  expect(refused.dataset.refused).toBe("true");
-  expect(f.resolve(refused)?.available()).toBe(true);
-  f.down(refused);
-  vi.advanceTimersByTime(500);
-  expect(f.release(refused).defaultPrevented).toBe(true);
-  expect(current).toHaveBeenCalledTimes(2);
-  expect(refused.hasAttribute("data-ui-refusal-red")).toBe(true);
-  f.dialogue("replace-refusal");
-  expect(refused.hasAttribute("data-ui-refusal-red")).toBe(false);
-});
-it("keeps the existing activation for blank choice labels accepted by the save decoder", () => {
+it("unregisters disposed notice actions without replaying stale captures", () => {
   const f = holdFixture();
-  const button = f.dialogue("unnamed", false, " ");
-  expect(button.textContent).toBe(" ");
-  expect(restoreSave(f.model.save())?.dialogue?.choices).toEqual([
-    { id: "unnamed", label: " ", refused: false },
-  ]);
-  button.click();
-  expect(f.actions.choose).toHaveBeenCalledExactlyOnceWith("unnamed");
-});
-
-it("unregisters replaced dialogue choices and disposed notice actions without replaying stale captures", () => {
-  const f = holdFixture(),
-    old = f.dialogue("old");
-  f.down(old);
-  const next = f.dialogue("next");
-  expect(f.resolve(old)).toBeNull();
-  vi.advanceTimersByTime(500);
-  f.release(old);
-  old.click();
-  expect(f.actions.choose).not.toHaveBeenCalled();
-  f.down(next);
-  vi.advanceTimersByTime(500);
-  f.release(next);
-  expect(f.actions.choose).toHaveBeenCalledExactlyOnceWith("next");
   f.model.state.notice = "Current notice";
   f.shell.render(f.model.state, "space");
   const status = host.children.find((node) => node.id === "game-status")!;
@@ -518,11 +451,8 @@ it("unregisters replaced dialogue choices and disposed notice actions without re
   expect(dismiss).toHaveBeenCalledOnce();
   f.shell.dispose();
   expect(f.resolve(status)).toBeNull();
-  expect(f.resolve(next)).toBeNull();
   status.click();
-  next.click();
   expect(dismiss).toHaveBeenCalledOnce();
-  expect(f.actions.choose).toHaveBeenCalledOnce();
 });
 
 it("checks constructor-owned notice controls after semantic registration", () => {
@@ -542,33 +472,6 @@ it("checks constructor-owned notice controls after semantic registration", () =>
   });
   expect(() => setup()).toThrow("no registered action binding");
   expect(focusTarget).not.toHaveBeenCalled();
-});
-
-it("checks complete choice rebuilding before focus and retains original callback ownership", () => {
-  const f = setup();
-  const panel = host.children.find((node) => node.className === "story-panel")!;
-  const append = panel.append.bind(panel);
-  const rogue = Object.assign(new Element(), {
-    disabled: true,
-    hidden: true,
-    tagName: "BUTTON",
-    type: "button",
-  });
-  vi.spyOn(panel, "append").mockImplementation((...nodes) => {
-    append(...nodes);
-    if (nodes.some((node) => node.type === "button")) {
-      append(rogue);
-    }
-  });
-  f.model.state.dialogue = {
-    choices: [{ id: "choice", label: "Choice" }],
-    context: "fixture",
-    text: "Text",
-    title: "Title",
-  };
-  expect(() => f.shell.render(f.model.state, "space")).toThrow("no registered action binding");
-  expect(focusTarget).not.toHaveBeenCalled();
-  expect(f.actions.choose).not.toHaveBeenCalled();
 });
 
 it("checks notice reconciliation against the actual live App root", () => {

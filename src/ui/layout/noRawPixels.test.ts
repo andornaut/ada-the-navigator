@@ -20,16 +20,6 @@ interface Allowed {
 
 const ALLOWED: readonly Allowed[] = [
   {
-    file: "settings.ts",
-    reason: "The base button under the weapon buttons",
-    selectors: /^\.ada-controls button(:focus-visible)?$/u,
-  },
-  {
-    file: "../style.css",
-    reason: "The global button base and the legacy story panel",
-    selectors: /^(button(:hover|:focus-visible|:disabled)?|\.story-panel\b.*)$/u,
-  },
-  {
     file: "layout/bootSplash.css",
     reason: "Loads before the interface script, so it cannot read the layout module",
   },
@@ -172,8 +162,9 @@ describe("DOM UI sizes", () => {
   });
 
   it("allow only the listed files and rules", () => {
-    expect(rawPixelFindings("settings.ts", "`.ada-controls button{gap:4px}`")).toEqual([]);
-    expect(rawPixelFindings("settings.ts", "`.ada-controls .ada-use{gap:4px}`")).toHaveLength(1);
+    expect(rawPixelFindings("layout/bootSplash.css", "#boot-splash img{width:4px}")).toEqual([]);
+    expect(rawPixelFindings("settings.ts", "`.ada-controls button{gap:4px}`")).toHaveLength(1);
+    expect(rawPixelFindings("../style.css", "button{min-height:44px}")).toHaveLength(1);
     expect(rawPixelFindings("station.ts", "`.ada-controls .ada-shop-row{gap:4px}`")).toHaveLength(
       1,
     );

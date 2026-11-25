@@ -465,14 +465,12 @@ export function buildScene(scene: UiContext): void {
     }
   };
   scene.shell = new StoryShell({
-    choose: (id) => apply(() => scene.model.choose(id)),
     continueGame: () => apply(() => scene.model.continueGame()),
     // A tap on a notice dismisses it without touching flight input.
     dismissNotice: () => {
       scene.model.dismissNotice();
       refreshScene(scene);
     },
-    reducedMotion: () => scene.controls.reducedMotion(),
     restart: () => scene.restartCard.open(),
     start: () => apply(() => scene.model.start()),
   });
@@ -1544,12 +1542,6 @@ export function refreshScene(scene: UiContext, covered = false): void {
       { galaxy: interactionGalaxy, progress: state.progress[interactionGalaxy] },
       interactionPanel,
     );
-  if (interactionPanel) {
-    const legacy = document.querySelector<HTMLElement>(".story-panel");
-    if (legacy) {
-      legacy.hidden = true;
-    }
-  }
   const flightGalaxy =
     (state.mode === "space" ? state.flight?.galaxy : undefined) ??
     aboardGalaxy(state, scene.model.storyView?.page);

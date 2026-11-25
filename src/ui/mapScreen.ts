@@ -396,6 +396,7 @@ export const MAP_SCREEN_STYLE = `
   border-radius:50%;
   background:var(--face);
   box-shadow:inset 0 0 0 ${units(MAP_SYMBOL.edge)} var(--map-place-rim,${MAP_COLORS.ink});
+  font:inherit;
   color:${MAP_COLORS.ink};
   pointer-events:none
 }

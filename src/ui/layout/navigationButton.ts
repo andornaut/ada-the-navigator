@@ -41,6 +41,8 @@ ${UI_SCOPE} .ada-exit-open{
   place-items:center;
   border:0;
   border-radius:0;
+  font:inherit;
+  color:inherit;
   background:transparent;
   cursor:pointer;
   pointer-events:auto;

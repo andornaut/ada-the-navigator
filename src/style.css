@@ -51,88 +51,9 @@ body {
   display: block;
   image-rendering: pixelated;
 }
-button {
-  font: inherit;
-  cursor: pointer;
-  color: inherit;
-  background: #252525;
-  border: 1px solid #969696;
-  border-radius: 6px;
-  min-height: 44px;
-  padding: 10px 14px;
-}
-button:hover {
-  background: #373737;
-}
-button:focus-visible {
-  outline: 3px solid #fff;
-  outline-offset: 3px;
-}
-button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
 [hidden] {
   display: none !important;
 }
-.story-panel {
-  position: absolute;
-  z-index: 20;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(36rem, calc(100% - 32px));
-  max-height: calc(100% - 32px);
-  overflow-y: auto;
-  padding: clamp(18px, 4cqw, 32px);
-  border: 2px solid #a3a3a3;
-  border-radius: 10px;
-  background: #181818;
-  box-shadow: 0 12px 60px #000a;
-}
-.story-panel h1,
-.story-panel h2 {
-  margin: 0 0 18px;
-  font-size: clamp(22px, 5cqw, 32px);
-}
-.story-panel p {
-  line-height: 1.55;
-  white-space: pre-line;
-}
-.story-panel button {
-  display: block;
-  width: 100%;
-  margin-top: 12px;
-  text-align: left;
-}
-/* A refused choice keeps a flat disabled face and stays tappable. */
-.story-panel button[data-refused] {
-  border-color: #555;
-  background: #202020;
-  box-shadow: none;
-  color: #8a8a8a;
-}
-
-/* Keep the choice label's original inline flow inside the Kit button. */
-.story-panel button[data-action="dialogue-choice"] > .ui-control-label {
-  display: inline;
-  overflow-wrap: inherit;
-  text-align: inherit;
-}
-
-/* A keyboard choice changes face colour inside the existing border. */
-.story-panel button[data-action="dialogue-choice"]:focus-visible {
-  outline: none;
-  background: #373737;
-}
-@media (forced-colors: active) {
-  .story-panel button[data-action="dialogue-choice"]:focus-visible {
-    forced-color-adjust: none;
-    color: HighlightText;
-    background: Highlight;
-  }
-}
-
 @media (orientation: portrait) and (pointer: coarse) {
   html #game-canvas {
     display: flex;

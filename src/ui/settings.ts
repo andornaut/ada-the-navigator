@@ -136,23 +136,9 @@ ${viewStyle(WHOLE_PX_EDGES)}
   z-index:10
 }
 
-/* An open card covers the story panel (z-index 20) and the save status (21). */
+/* An open card covers the save status (z-index 21). */
 .ada-controls.ada-modal-open{
   z-index:30
-}
-
-/* The base button of the weapon selector and the station rows. */
-.ada-controls button{
-  font:inherit;
-  min-height:48px;
-  min-width:48px;
-  color:inherit;
-  border:2px solid #172335;
-  border-radius:8px;
-  background:#fff8e6;
-  cursor:pointer;
-  pointer-events:auto;
-  padding:8px 16px
 }
 
 /* These controls paint their focus in their own rules. */
@@ -224,6 +210,8 @@ ${hudDiscStyle(".ada-controls .ada-achievements-open", ".ada-disc")}
   padding:0;
   border:0;
   border-radius:50%;
+  font:inherit;
+  color:inherit;
   background:transparent;
   pointer-events:none
 }
