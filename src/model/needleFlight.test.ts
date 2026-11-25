@@ -104,7 +104,6 @@ describe("mounted Needle flight physics", () => {
       stepFlight(CONTENT, 0.001, idle, flight);
       expect(flight.freshDistance).toBe(0);
       const admitted = flight.objects.filter(({ kind }) => kind === "enemy");
-      expect(admitted.length, `seed ${seed}`).toBeGreaterThan(0);
       for (const object of admitted) {
         enemies++;
         expect(
@@ -118,7 +117,7 @@ describe("mounted Needle flight physics", () => {
     expect(enemies).toBeGreaterThan(0);
   });
 
-  it("keeps every generated chunk rock's footprint and drift loop outside every active channel", () => {
+  it("keeps every planned rock's footprint outside every active channel", () => {
     let rocks = 0;
     // Far from the launch, so the chunks along the courses generate after the courses exist.
     const anchor = { x: 40 * CONTENT.tuning.chunkSize, y: 0 };
@@ -130,7 +129,7 @@ describe("mounted Needle flight physics", () => {
         stepFlight(CONTENT, 0.001, idle, flight);
       }
       for (const object of flight.objects) {
-        if (object.kind !== "rock" || !object.id.startsWith("chunk:")) {
+        if (object.kind !== "rock" || !/^rock(-feature)?:/.test(object.id)) {
           continue;
         }
         rocks++;

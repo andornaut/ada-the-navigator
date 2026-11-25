@@ -738,7 +738,6 @@ export const CONTENT: GameContent = {
     encounterFreshDistance: 600,
     flight: {
       arrivalCalm: 2000,
-      asteroidDensity: 1.7,
       damageInterval: 1,
       enemyFireInterval: 2.5,
       enemyHp: 2,
@@ -760,8 +759,8 @@ export const CONTENT: GameContent = {
       sceneryRecoil: 24,
       sceneryRestitution: 0.4,
       shipRadius: 10,
-      // Enemy slots stay empty (encounters come from the director), so rare caches leave gaps
-      // instead of adding rocks and the rock share alone sets the static rock count.
+      // Chunk template slot rolls: only a pickup roll places a discovery cache, so the pickup
+      // share sets the cache rate. Rocks and enemies come from the spawn planner.
       spawnWeights: { enemy: 0.6064, pickup: 0.0136, rock: 0.38 },
     },
     hazardDamage: 1,

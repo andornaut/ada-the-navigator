@@ -14,13 +14,13 @@ import { createEnemy } from "./enemyAi.ts";
 import { createFlight, stepFlight } from "./flight.ts";
 import {
   engagementAdmissions,
-  fitsEncounter,
   groupReach,
   memberPosition,
-  selectEncounter,
+  worldFitsEncounter,
   worldRegionalEngagementAdmissions,
   worldSpawnerStage,
 } from "./spawner.ts";
+import { spawnRules } from "./spawnTargets.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 
 function occupant(
@@ -44,6 +44,12 @@ function occupant(
 
 const policy = SPAWNER_POLICIES[1];
 const centre = { x: 4000, y: 0 };
+const fitsEncounter = (
+  policy: Parameters<typeof worldFitsEncounter>[1],
+  stage: Parameters<typeof worldFitsEncounter>[2],
+  objects: readonly SpaceObject[],
+  plan: Parameters<typeof worldFitsEncounter>[6],
+) => worldFitsEncounter({}, policy, stage, 10, objects, centre, plan);
 
 describe("spawner admission", () => {
   it("uses geographic region boundaries without changing enemy physics", () => {
@@ -168,11 +174,10 @@ describe("spawner admission", () => {
           occupant(`occupied:${index}`, centre),
         );
         const before = structuredClone(objects);
-        expect(selectEncounter(policy, stage, 10, objects, centre, 0, 0)).toBeNull();
-        expect(objects).toEqual(before);
         const single = { archetype: "fighter", count: 1 } as const;
-        expect(fitsEncounter(policy, stage, 10, objects.slice(1), centre, single)).toBe(true);
-        expect(fitsEncounter(policy, stage, 10, objects, centre, single)).toBe(false);
+        expect(fitsEncounter(policy, stage, objects.slice(1), single)).toBe(true);
+        expect(fitsEncounter(policy, stage, objects, single)).toBe(false);
+        expect(objects).toEqual(before);
       }
     }
   });
@@ -208,18 +213,6 @@ describe("spawner admission", () => {
     }
   });
 
-  it("excludes later archetypes from the first stage across seeded encounter rolls", () => {
-    const seen = new Set<string>();
-    let seed = 12345;
-    const next = () => (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 2 ** 32;
-    for (let i = 0; i < 32; i++) {
-      const plan = selectEncounter(policy, spawnerStage(1, 0), 10, [], centre, next(), next())!;
-      seen.add(plan.archetype);
-      expect(plan.count).toBeLessThanOrEqual(plan.archetype === "swarm" ? 2 : 3);
-    }
-    expect([...seen].sort()).toEqual(["fighter", "swarm"]);
-  });
-
   it("counts a chasing adjacent pack using its live location, including a required guard", () => {
     const stage = spawnerStage(1, 0);
     const objects = Array.from({ length: 3 }, (_, i) =>
@@ -227,84 +220,28 @@ describe("spawner admission", () => {
     );
     objects[0]!.routeId = "required";
     objects[1]!.enemy!.engaged = true;
-    expect(selectEncounter(policy, stage, 10, objects, centre, 0, 0)).toBeNull();
+    const single = { archetype: "fighter", count: 1 } as const;
+    expect(fitsEncounter(policy, stage, objects, single)).toBe(false);
     objects.forEach((object) => {
       object.x += 3000;
     });
-    expect(selectEncounter(policy, stage, 10, objects, centre, 0, 0)).not.toBeNull();
+    expect(fitsEncounter(policy, stage, objects, single)).toBe(true);
     expect(objects[0]!.routeId).toBe("required");
     expect(objects[1]!.enemy!.engaged).toBe(true);
   });
 
-  it("uses available space for the current type rather than silently adding another type", () => {
-    const objects = [occupant("old", centre)];
-    const plan = selectEncounter(policy, spawnerStage(1, 0), 10, objects, centre, 0.99, 0)!;
-    expect(plan).toMatchObject({ archetype: "fighter", count: 2 });
-    expect(objects).toHaveLength(1);
-  });
-
-  it("admits configured swarm maxima within every galaxy region's budget", () => {
+  it("plans swarm maxima and target-four fighters within every galaxy region's budget", () => {
     for (const galaxy of GALAXY_NUMBERS) {
-      const policy = SPAWNER_POLICIES[galaxy];
-      for (const stage of policy.stages) {
+      const bands = spawnRules(galaxy).bands;
+      SPAWNER_POLICIES[galaxy].stages.forEach((stage, index) => {
+        const target = (kind: string) => bands[index]!.enemies.find((enemy) => enemy.kind === kind);
         const swarm = stage.roster.find(({ archetype }) => archetype === "swarm")!;
-        const plan = selectEncounter(policy, { ...stage, roster: [swarm] }, 10, [], centre, 0, 0);
-        expect(plan).toMatchObject({
-          archetype: "swarm",
-          count: Math.min(stage.localCap, swarm.groupSize[1]),
-        });
-        expect(plan!.count).toBeGreaterThanOrEqual(2);
-      }
-    }
-  });
-
-  it("fits occupied swarm capacity down to two without singleton, cap raises or max growth", () => {
-    const policy = SPAWNER_POLICIES[6];
-    const stage = policy.stages[2]!;
-    const swarm = stage.roster.find(({ archetype }) => archetype === "swarm")!;
-    for (const [occupied, expected] of [
-      [8, null],
-      [7, null],
-      [6, 2],
-      [5, 3],
-    ] as const) {
-      const objects = Array.from({ length: occupied }, (_, i) => occupant(`old:${i}`, centre));
-      const before = structuredClone({ objects, stage });
-      const plan = selectEncounter(
-        policy,
-        { ...stage, roster: [swarm] },
-        10,
-        objects,
-        centre,
-        0,
-        0,
-      );
-      if (expected === null) {
-        expect(plan).toBeNull();
-      } else {
-        expect(plan).toMatchObject({ archetype: "swarm", count: expected });
-      }
-      expect({ objects, stage }).toEqual(before);
-    }
-  });
-
-  it("fits target-four fighters to available slots without exceeding or raising the budget", () => {
-    for (const [stageIndex, occupants, expected] of [
-      [0, 0, 3],
-      [1, 0, 4],
-      [1, 1, 3],
-      [2, 0, 4],
-    ] as const) {
-      const stage = policy.stages[stageIndex]!;
-      const fighter = stage.roster.find(({ archetype }) => archetype === "fighter")!;
-      const objects = Array.from({ length: occupants }, (_, index) =>
-        occupant(`old:${index}`, centre),
-      );
-      const before = structuredClone(stage);
-      expect(
-        selectEncounter(policy, { ...stage, roster: [fighter] }, 10, objects, centre, 0, 0),
-      ).toMatchObject({ archetype: "fighter", count: expected });
-      expect(stage).toEqual(before);
+        const size = Math.min(stage.localCap, swarm.groupSize[1]);
+        expect(target("swarm")?.groupSize, `${galaxy}:${index}`).toEqual([size, size]);
+        expect(size).toBeGreaterThanOrEqual(2);
+        const fighter = target("fighter")!.groupSize[1];
+        expect(fighter).toBe(Math.min(FIGHTER_GROUP_TARGET, stage.localCap));
+      });
     }
   });
 
@@ -316,53 +253,35 @@ describe("spawner admission", () => {
       count: 1,
       escorts: { archetype: "fighter", count: 4 },
     } as const;
-    expect(fitsEncounter(laterPolicy, spawnerStage(3, 0), 10, [], centre, plan)).toBe(true);
-    expect(fitsEncounter(laterPolicy, stage, 10, [], centre, plan)).toBe(true);
-    // Exercise admission with an explicit capital entry even though Whirlpool no longer rolls it.
+    expect(fitsEncounter(laterPolicy, spawnerStage(3, 0), [], plan)).toBe(true);
+    expect(fitsEncounter(laterPolicy, stage, [], plan)).toBe(true);
     const capital = encounterTable(5).find(({ archetype }) => archetype === "capital")!;
-    expect(
-      selectEncounter(
-        laterPolicy,
-        { ...spawnerStage(3, 0), roster: [capital] },
-        10,
-        [],
-        centre,
-        0,
-        0,
-      ),
-    ).toEqual(plan);
-    expect(
-      selectEncounter(laterPolicy, { ...stage, roster: [capital] }, 10, [], centre, 0, 0),
-    ).toEqual(plan);
     expect(capital.escorts).toEqual(plan.escorts);
     const objects = [occupant("old:0", centre), occupant("old:1", centre)];
-    expect(fitsEncounter(laterPolicy, stage, 10, objects, centre, plan)).toBe(true);
-    expect(
-      fitsEncounter(laterPolicy, stage, 10, [...objects, occupant("old:2", centre)], centre, plan),
-    ).toBe(false);
-    expect(
-      fitsEncounter(laterPolicy, stage, 10, [occupant("capital", centre, "capital")], centre, plan),
-    ).toBe(false);
+    expect(fitsEncounter(laterPolicy, stage, objects, plan)).toBe(true);
+    expect(fitsEncounter(laterPolicy, stage, [...objects, occupant("old:2", centre)], plan)).toBe(
+      false,
+    );
+    expect(fitsEncounter(laterPolicy, stage, [occupant("capital", centre, "capital")], plan)).toBe(
+      false,
+    );
     const reach = groupReach(laterPolicy, 10, plan);
     expect(reach).toBeGreaterThan(100);
     const edge = occupant("edge", {
       x: centre.x + laterPolicy.localRadius * 2 + reach + 5,
       y: centre.y,
     });
-    expect(fitsEncounter(laterPolicy, stage, 10, [...objects, edge], centre, plan)).toBe(false);
+    expect(fitsEncounter(laterPolicy, stage, [...objects, edge], plan)).toBe(false);
     edge.x += edge.radius;
-    expect(fitsEncounter(laterPolicy, stage, 10, [...objects, edge], centre, plan)).toBe(true);
+    expect(fitsEncounter(laterPolicy, stage, [...objects, edge], plan)).toBe(true);
   });
 
   it("uses Whirlpool's remaining ambient weights at every stage and transition", () => {
-    const whirlpool = SPAWNER_POLICIES[3];
     for (const distance of [0, 9500, 10000, 20000, 24500, 25000, 40000]) {
       const stage = spawnerStage(3, distance);
       expect(stage.roster.some(({ archetype }) => archetype === "capital")).toBe(false);
       expect(stage.roster.reduce((total, { weight }) => total + weight, 0)).toBeCloseTo(0.95);
-      const last = selectEncounter(whirlpool, stage, 10, [], centre, 0, 1 - Number.EPSILON);
-      expect(last?.archetype).toBe("frigate");
-      expect(last?.escorts).toEqual({ archetype: "fighter", count: 2 });
+      expect(stage.roster.filter(({ weight }) => weight > 0).at(-1)?.archetype).toBe("frigate");
     }
   });
 

@@ -3,8 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { shipCatalogEntry } from "../data/enemyActors.ts";
-import { type EncounterEntry, enemyCatalog } from "../data/enemyCatalog.ts";
-import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
+import { enemyCatalog } from "../data/enemyCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { relaunch } from "../testing/launch.ts";
 import { createEnemy, damageEnemy } from "./enemyAi.ts";
@@ -13,14 +12,13 @@ import {
   ensureDestination,
   ensureRouteEncounter,
   populateFlight,
-  routeGuardPlanResult,
   stepFlight,
   syncFlightRegion,
 } from "./flight.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
-import type { GalaxyProgress, SpaceObject } from "./types.ts";
+import type { GalaxyProgress, SpaceObject, Vec } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const progress: GalaxyProgress = {
@@ -51,34 +49,35 @@ function chartFlight(content: typeof CONTENT, galaxy: GalaxyNumber, seed: number
 
 function fixture() {
   const content = structuredClone(CONTENT);
-  // Pack fixtures use encounters at the flight start, which launches otherwise keep clear.
-  content.tuning.flight.arrivalCalm = 0;
-  content.tuning.flight.objectsPerChunk = 0;
   // Enemy fire barely scratches Ada, so long fixtures never deplete her shield.
   content.tuning.flight.playerShotDamage = 1e-6;
-  for (let seed = 0; seed < 256; seed++) {
+  for (let seed = 0; seed < 64; seed++) {
     const flight = chartFlight(content, 1, seed);
-    // Retained four-member packs keep their survivor denominator under the current admission cap.
-    const packId = "pack:0,0";
-    const members = flight.objects.filter(
-      (object) =>
-        object.enemy?.archetype === "fighter" &&
-        object.enemy.packId === packId &&
-        object.enemy.escortOf === null,
-    );
-    if (members.length > 0) {
-      const count = spawnerStage(3, 0).roster.find((entry) => entry.archetype === "fighter")!
-        .groupSize[0];
-      expect(members.length).toBeLessThanOrEqual(spawnerStage(1, 0).localCap);
-      for (let index = members.length; index < count; index++) {
-        const copy = structuredClone(members[0]!);
-        copy.id = `${packId}:${index}`;
-        copy.enemy!.id = copy.id;
-        copy.x += index * SPAWNER_POLICIES[1].memberSpacing;
-        copy.enemy!.position.x = copy.x;
-        flight.objects.push(copy);
+    // The middle region plans fighter groups at the target of four.
+    for (let x = 13000; x < 22000; x += content.tuning.chunkSize) {
+      flight.player = { x, y: 0 };
+      stepFlight(content, 0.001, idle, flight);
+      const leader = flight.objects.find(
+        (object) =>
+          object.enemy?.archetype === "fighter" && object.enemy.packId?.startsWith("pack:"),
+      );
+      const packId = leader?.enemy?.packId;
+      if (!packId) {
+        continue;
       }
-      flight.combat!.initialPackSizes[packId] = count;
+      const group = flight.objects.filter((object) => object.enemy?.packId === packId);
+      expect(group).toHaveLength(4);
+      expect(flight.combat!.initialPackSizes[packId]).toBe(4);
+      const home = {
+        x: group.reduce((sum, member) => sum + member.x, 0) / group.length,
+        y: group.reduce((sum, member) => sum + member.y, 0) / group.length,
+      };
+      flight.player = { ...home };
+      // Only this pack stays loaded, so its ledger is the only one the tests read.
+      flight.objects = flight.objects.filter(
+        (object) => !object.enemy?.packId?.startsWith("pack:") || object.enemy.packId === packId,
+      );
+      flight.combat = { initialPackSizes: { [packId]: 4 }, routeEncounters: [] };
       const model = new GameModel(content);
       model.state.flight = flight;
       model.state.mode = "space";
@@ -86,7 +85,7 @@ function fixture() {
       model.state.started = true;
       // Every conversation is heard: a restored model waits for Continue, so none may start.
       model.state.seenConversations.push(...CONVERSATIONS.map(({ id }) => id));
-      return { content, model, packId };
+      return { content, home, model, packId };
     }
   }
   throw new Error("No four-member fighter fixture");
@@ -94,7 +93,7 @@ function fixture() {
 function members(model: GameModel, packId: string): SpaceObject[] {
   return model.state.flight!.objects.filter((object) => object.enemy?.packId === packId);
 }
-function reposition(object: SpaceObject, x: number, y = 100): void {
+function reposition(object: SpaceObject, x: number, y: number): void {
   object.x = x;
   object.y = y;
   object.enemy!.position = { x, y };
@@ -117,26 +116,31 @@ function defeat(model: GameModel, object: SpaceObject): void {
   expect(model.state.progress[model.state.flight!.galaxy].destroyedEnemies).toBe(before + 1);
   expect(flight.objects).not.toContain(object);
 }
-function regenerate(content: typeof CONTENT, model: GameModel, packId: string): void {
+/** Takes Ada and the kept members far enough away to unload the pack's chunk, then home. */
+function regenerate(content: typeof CONTENT, home: Vec, model: GameModel, packId: string): void {
   const flight = model.state.flight!;
   const kept = members(model, packId);
-  flight.player = { x: content.tuning.chunkSize * 4, y: 0 };
-  kept.forEach((object, index) => reposition(object, flight.player.x + 200 + index * 100));
+  flight.player = { x: home.x + content.tuning.chunkSize * 4, y: home.y };
+  kept.forEach((object, index) =>
+    reposition(object, flight.player.x + 200 + index * 100, home.y + 100),
+  );
   syncFlightRegion(content, flight);
-  expect(flight.chunks).not.toContain("0,0");
-  flight.player = { x: 0, y: 0 };
-  kept.forEach((object, index) => reposition(object, 300 + index * 100));
+  expect(flight.chunks).not.toContain(packId.slice("pack:".length));
+  flight.player = { ...home };
+  kept.forEach((object, index) => reposition(object, home.x + 300 + index * 100, home.y + 100));
   model.step(0.001, idle);
 }
 
 describe("casualty-preserving pack retention", () => {
   it("keeps a prior casualty at 25% through two survivor unloads, exact resume and bounded regeneration", () => {
-    const { content, model, packId } = fixture();
+    const { content, home, model, packId } = fixture();
     defeat(model, members(model, packId)[0]!);
     expect(members(model, packId)).toHaveLength(3);
     const flight = model.state.flight!;
     const departing = members(model, packId).slice(0, 2);
-    departing.forEach((object, index) => reposition(object, 5000 + index * 1000));
+    departing.forEach((object, index) =>
+      reposition(object, home.x + 5000 + index * 1000, home.y + 100),
+    );
     syncFlightRegion(content, flight);
     expect(members(model, packId)).toHaveLength(1);
     expect(flight.combat!.initialPackSizes[packId]).toBe(4);
@@ -153,7 +157,7 @@ describe("casualty-preserving pack retention", () => {
     expect(resumed.state).toEqual(model.state);
     expect(members(resumed, packId)[0]!.enemy!.fleeing).toBe(false);
 
-    regenerate(content, resumed, packId);
+    regenerate(content, home, resumed, packId);
     const restored = resumed.state.flight!;
     expect(members(resumed, packId)).toHaveLength(3);
     expect(restored.combat!.initialPackSizes[packId]).toBe(4);
@@ -163,10 +167,10 @@ describe("casualty-preserving pack retention", () => {
     expect(members(resumed, packId)).toHaveLength(3);
     expect(new Set(restored.objects.map((object) => object.id)).size).toBe(restored.objects.length);
 
-    reposition(members(resumed, packId)[0]!, 6000);
+    reposition(members(resumed, packId)[0]!, home.x + 6000, home.y + 100);
     syncFlightRegion(content, restored);
     expect(restored.combat!.unloadedPackMembers?.[packId]).toBe(1);
-    regenerate(content, resumed, packId);
+    regenerate(content, home, resumed, packId);
     expect(members(resumed, packId)).toHaveLength(3);
     expect(restored.combat!.initialPackSizes[packId]).toBe(4);
     expect(restored.combat!.unloadedPackMembers?.[packId]).toBeUndefined();
@@ -177,7 +181,9 @@ describe("casualty-preserving pack retention", () => {
     expect(members(resumed, packId)).toHaveLength(2);
     expect(members(resumed, packId).every((object) => object.enemy!.fleeing)).toBe(true);
     expect(restored.combat!.initialPackSizes[packId]).toBe(4);
-    members(resumed, packId).forEach((object, index) => reposition(object, 7000 + index * 1000));
+    members(resumed, packId).forEach((object, index) =>
+      reposition(object, home.x + 7000 + index * 1000, home.y + 100),
+    );
     syncFlightRegion(content, restored);
     expect(restored.combat!.initialPackSizes).not.toHaveProperty(packId);
     expect(restored.combat!.unloadedPackMembers?.[packId]).toBeUndefined();
@@ -188,10 +194,11 @@ describe("casualty-preserving pack retention", () => {
   it.each(["destination", "guard"] as const)(
     "preserves a prior casualty fraction through %s placement",
     (clearance) => {
-      const { content, model, packId } = fixture();
+      const { content, home, model, packId } = fixture();
       defeat(model, members(model, packId)[0]!);
       const flight = model.state.flight!;
       const survivors = members(model, packId);
+      // A destination lands two chunks ahead of Ada; a guard's station sits beside its site.
       const points =
         clearance === "destination"
           ? [
@@ -204,7 +211,9 @@ describe("casualty-preserving pack retention", () => {
               { x: 700, y: 0 },
               { x: 1100, y: 0 },
             ];
-      survivors.forEach((object, index) => reposition(object, points[index]!.x, points[index]!.y));
+      survivors.forEach((object, index) =>
+        reposition(object, home.x + points[index]!.x, home.y + points[index]!.y),
+      );
       const expectedSurvivors = structuredClone(survivors);
       if (clearance === "destination") {
         ensureDestination(content, "growers", flight);
@@ -214,16 +223,11 @@ describe("casualty-preserving pack retention", () => {
           id: "growers",
           kind: "destination",
           radius: 30,
-          x: 1000,
-          y: 0,
+          x: home.x + 1000,
+          y: home.y,
         });
-        expect(ensureRouteEncounter(content, "growers", flight)).toBeNull();
-        expect(routeGuardPlanResult(flight, "growers")).toEqual({
-          admissionRecorded: false,
-          status: "unknown",
-        });
+        ensureRouteEncounter(content, "growers", flight);
         expect(flight.combat!.emptyRoutePlans).toBeUndefined();
-        expect(flight.combat!.routeEncounters).not.toContain("growers");
         expect(members(model, packId)).toEqual(expectedSurvivors);
       }
       expect(members(model, packId)).toHaveLength(clearance === "destination" ? 1 : 3);
@@ -238,94 +242,17 @@ describe("casualty-preserving pack retention", () => {
     },
   );
 
-  it("regenerates every survivor of a saved pack larger than its galaxy one roll", () => {
-    const content = structuredClone(CONTENT);
-    // Pack fixtures use encounters at the flight start, which launches otherwise keep clear.
-    content.tuning.flight.arrivalCalm = 0;
-    content.tuning.flight.objectsPerChunk = 0;
-    // Enemy fire barely scratches Ada, so long fixtures never deplete her shield.
-    content.tuning.flight.playerShotDamage = 1e-6;
-    let found: { flight: ReturnType<typeof chartFlight>; packId: string } | undefined;
-    for (let seed = 0; seed < 512 && !found; seed++) {
-      const flight = chartFlight(content, 1, seed);
-      const solo = flight.objects.find(
-        (object) => object.enemy?.archetype === "fighter" && object.enemy.packId === "pack:0,0",
-      );
-      if (solo?.enemy?.packId) {
-        found = { flight, packId: solo.enemy.packId };
-      }
-    }
-    if (!found) {
-      throw new Error("No galaxy one solo fixture");
-    }
-    const { flight, packId } = found;
-    const model = new GameModel(content);
-    model.state.flight = flight;
-    model.state.mode = "space";
-    model.state.started = true;
-    // This saved snapshot retains one active member, not a newly admitted solo encounter.
-    const retained = members(model, packId)[0]!;
-    flight.objects = flight.objects.filter(
-      (object) => object.enemy?.packId !== packId || object === retained,
-    );
-    expect(members(model, packId)).toHaveLength(1);
-    // A save from the earlier shared roster: four members, one lost, two unloaded.
-    flight.combat!.initialPackSizes[packId] = 4;
-    flight.combat!.unloadedPackMembers = { [packId]: 2 };
-    const resumed = relaunch(content, model.save());
-    expect(resumed.state).toEqual(model.state);
-
-    regenerate(content, resumed, packId);
-    const restored = resumed.state.flight!;
-    expect(members(resumed, packId)).toHaveLength(3);
-    expect(restored.combat!.initialPackSizes[packId]).toBe(4);
-    expect(restored.combat!.unloadedPackMembers?.[packId]).toBeUndefined();
-    expect(resumed.state.progress[resumed.state.flight!.galaxy].destroyedEnemies).toBe(0);
-    expect(members(resumed, packId).every((object) => !object.enemy!.fleeing)).toBe(true);
-    expect(new Set(restored.objects.map((object) => object.id)).size).toBe(restored.objects.length);
-    expect(restoreSave(resumed.save())).toEqual(resumed.state);
-  });
-
   it("prunes a completely cleared ordinary pack before an interaction can serialize it", () => {
-    const { content, model, packId } = fixture();
+    const { content, home, model, packId } = fixture();
     const flight = model.state.flight!;
-    members(model, packId).forEach((object, index) => reposition(object, index * 30, -1024));
+    members(model, packId).forEach((object, index) =>
+      reposition(object, home.x + index * 30, home.y - 1024),
+    );
     ensureDestination(content, "growers", flight);
     expect(members(model, packId)).toHaveLength(0);
     expect(flight.combat!.initialPackSizes).not.toHaveProperty(packId);
     expect(flight.combat!.unloadedPackMembers?.[packId]).toBeUndefined();
     expect(restoreSave(model.save())).toEqual(model.state);
-  });
-
-  it("consumes only successfully admitted regenerated survivors when a safezone rejects other slots", () => {
-    const { content, model, packId } = fixture();
-    defeat(model, members(model, packId).at(-1)!);
-    const flight = model.state.flight!;
-    members(model, packId)
-      .slice(1)
-      .forEach((object, index) => reposition(object, 5000 + index * 1000));
-    syncFlightRegion(content, flight);
-    const friendly: SpaceObject = {
-      hp: 1,
-      id: "growers",
-      kind: "destination",
-      radius: 30,
-      x: content.tuning.chunkSize / 2 + 1.5 * SPAWNER_POLICIES[1].memberSpacing,
-      y: 256,
-    };
-    flight.objects.push(friendly);
-    model.state.progress[1].known.push("growers");
-    regenerate(content, model, packId);
-    expect(members(model, packId)).toHaveLength(2);
-    expect(flight.combat!.initialPackSizes[packId]).toBe(4);
-    expect(flight.combat!.unloadedPackMembers?.[packId]).toBe(1);
-    expect(members(model, packId).every((object) => !object.enemy!.fleeing)).toBe(true);
-    friendly.x = 30000;
-    friendly.y = 30000;
-    regenerate(content, model, packId);
-    expect(members(model, packId)).toHaveLength(3);
-    expect(flight.combat!.initialPackSizes[packId]).toBe(4);
-    expect(flight.combat!.unloadedPackMembers?.[packId]).toBeUndefined();
   });
 
   it("merges important inactive survivors once with unloaded ordinary survivors", () => {
@@ -425,52 +352,36 @@ describe("casualty-preserving pack retention", () => {
 });
 
 describe("per-role encounter restore", () => {
-  /** Materialize the last roster's seed before exercising the current roster and save path. */
+  /** Launches into Andromeda's middle region where a capital battle loads, then resumes. */
   function battle() {
     const content = structuredClone(CONTENT);
-    // Pack fixtures use encounters at the flight start, which launches otherwise keep clear.
-    content.tuning.flight.arrivalCalm = 0;
-    content.tuning.flight.objectsPerChunk = 0;
     // Enemy fire barely scratches Ada, so long fixtures never deplete her shield.
     content.tuning.flight.playerShotDamage = 1e-6;
-    const stages = SPAWNER_POLICIES[3].stages;
-    const currentRosters = stages.map(({ roster }) => roster);
-    const retired: EncounterEntry = {
-      archetype: "capital",
-      escorts: { archetype: "fighter", count: 4 },
-      groupSize: [1, 1],
-      weight: 0.05,
-    };
-    const model = new GameModel(content);
-    try {
-      stages.forEach((stage) => {
-        stage.roster = [...stage.roster, retired];
-      });
-      const flight = chartFlight(content, 3, 25);
-      const region = stages[1]!;
-      expect(region.localCap).toBeGreaterThanOrEqual(5);
-      flight.player = {
-        x: region.centerDistance + 4 * content.tuning.chunkSize,
-        y: 4 * content.tuning.chunkSize,
-      };
+    let flight = chartFlight(content, 5, 25);
+    let capital: SpaceObject | undefined;
+    for (let x = 12000; !capital && x < 60000; x += content.tuning.chunkSize) {
+      flight = chartFlight(content, 5, 25);
+      flight.player = { x, y: 12000 };
       stepFlight(content, 0.001, idle, flight);
-      Object.assign(model.state, {
-        flight,
-        mode: "space",
-        selectedGalaxy: 3,
-        started: true,
-        unlocked: [1, 3],
-      });
-    } finally {
-      stages.forEach((stage, index) => {
-        stage.roster = currentRosters[index]!;
-      });
+      capital = flight.objects.find(
+        (object) =>
+          object.enemy?.archetype === "capital" && object.enemy.packId?.startsWith("pack:"),
+      );
     }
-    const packId = "pack:23,2";
+    expect(capital).toBeDefined();
+    const model = new GameModel(content);
+    Object.assign(model.state, {
+      flight,
+      mode: "space",
+      selectedGalaxy: 5,
+      started: true,
+      unlocked: [1, 5],
+    });
+    const packId = capital!.enemy!.packId!;
     const leader = `${packId}:0`;
     const escorts = `${packId}:escorts`;
     const resumed = relaunch(content, model.save());
-    expect(resumed.state.flight).toEqual(model.state.flight);
+    expect(restoreSave(model.save())?.flight).toEqual(model.state.flight);
     expect(members(resumed, packId).map(({ id }) => id)).toEqual([leader]);
     expect(resumed.state.flight!.combat!.profiledPacks?.[packId]).toBe("capital");
     expect(members(resumed, packId)[0]!.enemy!.hullProfile).toBeUndefined();

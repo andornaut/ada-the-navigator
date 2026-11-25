@@ -173,7 +173,7 @@ describe("regenerating ordinary chunks and persistent notables", () => {
   it("recreates ordinary template scenery and pickups after leaving retention range", () => {
     const flight = createFlight(CONTENT, 1, 173, progress);
     const original = flight.objects.filter(
-      (object) => object.id.startsWith("chunk:0,0:") && !persistentObject(object),
+      (object) => /^(rock|rock-feature|chunk):0,0:/.test(object.id) && !persistentObject(object),
     );
     expect(original.length).toBeGreaterThan(0);
     const ids = new Set(original.map((object) => object.id));

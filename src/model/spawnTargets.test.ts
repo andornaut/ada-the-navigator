@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { CONTENT } from "../data/content.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { SLOT_ROCKS_PER_AREA, SPAWN_AREA_CHUNKS, SPAWN_TARGETS } from "../data/spawnTargets.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
@@ -11,8 +10,7 @@ import {
   bandAcceptance,
 } from "../testing/spawnAcceptance.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { encounterSpacing } from "./flight.ts";
-import { encounterLatticeSpacing, spawnRules } from "./spawnTargets.ts";
+import { spawnRules } from "./spawnTargets.ts";
 
 /**
  * Spawn targets the planner does not deliver, by kind, as `galaxy:band`. Each runs as an
@@ -21,12 +19,6 @@ import { encounterLatticeSpacing, spawnRules } from "./spawnTargets.ts";
 const KNOWN_FAILURES: Readonly<Record<string, readonly string[]>> = {};
 
 describe("spawn target catalog", () => {
-  it("measures gathering reach on flight's encounter lattice", () => {
-    for (const galaxy of GALAXY_NUMBERS) {
-      expect(encounterLatticeSpacing(galaxy)).toBe(encounterSpacing(CONTENT, galaxy));
-    }
-  });
-
   it("requests every positive table density from a roster group, per chunk", () => {
     for (const galaxy of GALAXY_NUMBERS) {
       spawnRules(galaxy).bands.forEach((band, index) => {

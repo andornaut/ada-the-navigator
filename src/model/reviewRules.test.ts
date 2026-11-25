@@ -6,7 +6,7 @@ import { playOpening, seedLaunches } from "../testing/launch.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { BUMP_DAMAGE, createFlight, inDanger, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import type { FlightState } from "./types.ts";
+import type { FlightState, SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
@@ -50,27 +50,33 @@ describe("reviewed rules", () => {
   });
 
   it("deals bump damage from generated play rocks of every kind, 1 a bump, at most every 0.5 s", () => {
-    // Stable IDs select actual generated small, medium, large and moving debris fixtures.
+    // The nearest generated small, medium and large rock and moving rock of one launch.
+    const kindOf = (object: SpaceObject) =>
+      object.velocity
+        ? "drifting"
+        : `${object.kind}:${object.asteroid ? ASTEROID_SHAPES.get(object.asteroid)?.size : ""}`;
     const kinds = new Set<string>();
-    for (const [seed, id, expectedKind] of [
-      [173, "chunk:0,0:0", "rock:small"],
-      [174, "chunk:0,0:feature", "rock:large"],
-      [176, "chunk:0,-1:0", "rock:medium"],
-      [173, "ballistic:0,0:4", "drifting"],
-    ] as const) {
-      seedLaunches(seed);
+    for (const expectedKind of ["rock:small", "rock:medium", "rock:large", "drifting"]) {
+      seedLaunches(173);
       const model = new GameModel(CONTENT);
       model.startGalaxy(1);
       playOpening(model);
       const flight = model.state.flight!;
       model.step(1 / 60, idle);
-      expect(flight.seed).toBe(seed);
-      const target = flight.objects.find((object) => object.id === id)!;
-      expect(target).toBeDefined();
+      expect(flight.seed).toBe(173);
+      const target = flight.objects
+        .filter(
+          (object) =>
+            /^(rock|rock-feature|moving):/.test(object.id) && kindOf(object) === expectedKind,
+        )
+        .sort(
+          (a, b) =>
+            Math.hypot(a.x - flight.player.x, a.y - flight.player.y) -
+            Math.hypot(b.x - flight.player.x, b.y - flight.player.y),
+        )[0]!;
+      expect(target, expectedKind).toBeDefined();
       expect(target.hp).toBeGreaterThan(0);
-      const size = target.asteroid ? ASTEROID_SHAPES.get(target.asteroid)?.size : undefined;
-      const kind = target.velocity ? "drifting" : `${target.kind}:${size}`;
-      expect(kind).toBe(expectedKind);
+      const kind = kindOf(target);
       if (expectedKind === "drifting") {
         expect(Math.hypot(target.velocity!.x, target.velocity!.y)).toBeGreaterThan(0);
       }

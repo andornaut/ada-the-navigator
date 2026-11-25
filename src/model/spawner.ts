@@ -4,15 +4,12 @@ import {
   type EnemyArchetype,
   enemyCatalog,
   escortTuning,
-  FRIGATE_ESCORT_COUNT,
 } from "../data/enemyCatalog.ts";
 import {
-  FIGHTER_GROUP_TARGET,
   HOSTILE_LOCAL_ALLOWANCE,
   type SpawnerPolicy,
   type SpawnerStage,
   spawnerStageAtDistance,
-  SWARM_GROUP_MINIMUM,
 } from "../data/spawnerCatalog.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 import type { WorldCellContext } from "./worldCells.ts";
@@ -193,74 +190,6 @@ export function worldFitsHostileStation(
 }
 
 /**
- * Fighters and swarms take their largest fitting group, respecting the swarm minimum.
- * Other groups and every escort
- * remain atomic. Samples only positive entries with an admissible plan. Encounter-cell
- * frequency is independent; occupancy limits cannot select an excluded or unaffordable type.
- */
-export function worldSelectEncounter(
-  context: SpawnerContext,
-  policy: SpawnerPolicy,
-  stage: SpawnerStage,
-  shipRadius: number,
-  objects: readonly SpaceObject[],
-  centre: Vec,
-  countRoll: number,
-  archetypeRoll: number,
-): EncounterPlan | null {
-  const choices = stage.roster.flatMap((entry) => {
-    if (entry.weight <= 0) {
-      return [];
-    }
-    const plans: EncounterPlan[] = [];
-    const flexibleFighters = entry.archetype === "fighter" && entry.escorts === undefined;
-    const flexibleSwarm = entry.archetype === "swarm" && entry.escorts === undefined;
-    const minimum = flexibleFighters ? 1 : flexibleSwarm ? SWARM_GROUP_MINIMUM : entry.groupSize[0];
-    const maximum = flexibleFighters
-      ? Math.min(FIGHTER_GROUP_TARGET, entry.groupSize[1])
-      : entry.groupSize[1];
-    for (let count = minimum; count <= maximum; count++) {
-      const plan = {
-        archetype: entry.archetype,
-        count,
-        ...(entry.archetype === "frigate"
-          ? { escorts: { archetype: "fighter" as const, count: count * FRIGATE_ESCORT_COUNT } }
-          : entry.escorts
-            ? { escorts: entry.escorts }
-            : {}),
-      };
-      if (worldFitsEncounter(context, policy, stage, shipRadius, objects, centre, plan)) {
-        plans.push(plan);
-      }
-    }
-    return plans.length
-      ? [
-          {
-            plans: flexibleFighters || flexibleSwarm ? plans.slice(-1) : plans,
-            weight: entry.weight,
-          },
-        ]
-      : [];
-  });
-  const total = choices.reduce((sum, choice) => sum + choice.weight, 0);
-  if (!total) {
-    return null;
-  }
-  let threshold = archetypeRoll * total;
-  let chosen = choices.at(-1)!;
-  for (const choice of choices) {
-    if (threshold < choice.weight) {
-      chosen = choice;
-      break;
-    }
-    threshold -= choice.weight;
-  }
-  return chosen.plans[
-    Math.min(chosen.plans.length - 1, Math.floor(countRoll * chosen.plans.length))
-  ]!;
-}
-
-/**
  * Reserves new sight engagements against current live combatants. Required guards and already
  * engaged ships keep their normal AI even when they converge above this admission budget.
  */
@@ -341,36 +270,6 @@ function admittedAt(
   return admitted;
 }
 
-export function fitsEncounter(
-  policy: SpawnerPolicy,
-  stage: SpawnerStage,
-  shipRadius: number,
-  objects: readonly SpaceObject[],
-  centre: Vec,
-  plan: EncounterPlan,
-): boolean {
-  return worldFitsEncounter({}, policy, stage, shipRadius, objects, centre, plan);
-}
-export function selectEncounter(
-  policy: SpawnerPolicy,
-  stage: SpawnerStage,
-  shipRadius: number,
-  objects: readonly SpaceObject[],
-  centre: Vec,
-  countRoll: number,
-  archetypeRoll: number,
-): EncounterPlan | null {
-  return worldSelectEncounter(
-    {},
-    policy,
-    stage,
-    shipRadius,
-    objects,
-    centre,
-    countRoll,
-    archetypeRoll,
-  );
-}
 export function engagementAdmissions(
   policy: SpawnerPolicy,
   stage: SpawnerStage,

@@ -106,10 +106,16 @@ it("matches canonical frames across time, identity, shape, motion settings and d
 
 it("deduplicates frame hashing in the actual capital encounter AI and projectile slice", () => {
   const flight = createFlight(CONTENT, 5, 0, newProgress());
-  flight.player = { x: 24 * CONTENT.tuning.chunkSize, y: 24 * CONTENT.tuning.chunkSize };
   const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
-  stepFlight(CONTENT, 1 / 60, idle, flight);
-  expect(flight.objects.some((o) => o.enemy?.archetype === "capital")).toBe(true);
+  // Andromeda's middle region plans capital battles; fly until one loads.
+  const capital = () => flight.objects.find((o) => o.enemy?.archetype === "capital");
+  for (let x = 12000; !capital() && x < 60000; x += CONTENT.tuning.chunkSize) {
+    flight.player = { x, y: 12000 };
+    flight.shield = Infinity;
+    stepFlight(CONTENT, 1 / 60, idle, flight);
+  }
+  expect(capital()).toBeDefined();
+  flight.player = { x: capital()!.x, y: capital()!.y + 300 };
   const compute = vi.spyOn(asteroids, "rockFrame");
   stepFlight(CONTENT, 1 / 60, idle, flight);
   expect(compute).toHaveBeenCalled();

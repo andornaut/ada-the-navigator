@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import GALAXIES_FILE from "../../public/art/galaxies.json" with { type: "json" };
 import { ASTEROID_LOOT } from "../data/asteroidLoot.ts";
-import { CHUNK_CATALOG } from "../data/chunkCatalog.ts";
+import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
 import { CONTENT } from "../data/content.ts";
 import {
   ECONOMY,
@@ -21,7 +21,7 @@ import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import * as asteroidLoot from "./asteroidLoot.ts";
 import { oreQuantityScale, rollAsteroidLoot } from "./asteroidLoot.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { planChunk } from "./chunkTemplates.ts";
+import { planChunkCaches } from "./chunkCaches.ts";
 import { type Parts, toScreen, worldParts } from "./convex.ts";
 import {
   dropRandom,
@@ -1791,33 +1791,27 @@ describe("shop purchases", () => {
 });
 
 describe("discovery cache rarity", () => {
-  const tuning = CONTENT.tuning;
-  const plan = (spawnWeights: typeof tuning.flight.spawnWeights, x: number, y: number) =>
-    planChunk(CHUNK_CATALOG, {
-      clearance: tuning.flight.shipRadius,
-      galaxy: 1,
-      objectsPerChunk: tuning.flight.objectsPerChunk,
-      rockRadius: tuning.flight.rockRadius,
-      seed: 99,
-      shipRadius: tuning.flight.shipRadius,
-      size: tuning.chunkSize,
-      spawnWeights,
-      x,
-      y,
-    });
-
-  it("leaves rare caches' freed weight empty, so rocks are unchanged", () => {
+  it("places caches on template slots at the pickup share", () => {
+    const tuning = CONTENT.tuning;
     const weights = tuning.flight.spawnWeights;
-    const common = { ...weights, enemy: weights.enemy + weights.pickup - 0.12, pickup: 0.12 };
     let caches = 0;
     let chunks = 0;
     for (let x = -20; x < 20; x++) {
       for (let y = -20; y < 20; y++) {
-        const now = plan(weights, x, y).placements;
-        const scenery = (placements: typeof now) =>
-          placements.filter((placement) => placement.kind !== "pickup");
-        expect(scenery(now)).toEqual(scenery(plan(common, x, y).placements));
-        caches += now.length - scenery(now).length;
+        caches += planChunkCaches(CHUNK_CATALOG, {
+          clearance: tuning.flight.shipRadius,
+          field: ASTEROID_FIELDS[1]!,
+          galaxy: 1,
+          objectsPerChunk: tuning.flight.objectsPerChunk,
+          radius: tuning.flight.rockRadius,
+          seed: 99,
+          shapes: [...ASTEROID_SHAPES.values()],
+          shipRadius: tuning.flight.shipRadius,
+          size: tuning.chunkSize,
+          spawnWeights: weights,
+          x,
+          y,
+        }).length;
         chunks++;
       }
     }

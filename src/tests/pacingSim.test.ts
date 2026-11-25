@@ -13,18 +13,15 @@ import {
   summarise,
 } from "../../tools/pacing-sim.ts";
 import { ASTEROID_SIZES } from "../data/asteroidCatalog.ts";
-import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
+import { ASTEROID_FIELDS } from "../data/chunkCatalog.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { galaxyEncounters } from "../data/enemyCatalog.ts";
-import { byPosition } from "../data/galaxies.ts";
 import { JOB_REWARDS } from "../data/jobs.ts";
 import { questReward } from "../data/questRewards.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { weaponAt } from "../data/weaponCatalog.ts";
-import { ASTEROID_SHAPES, asteroidSize } from "../model/asteroids.ts";
-import { planChunk } from "../model/chunkTemplates.ts";
+import { asteroidSize } from "../model/asteroids.ts";
 import { createFlight } from "../model/flight.ts";
 
 const spawnWeights = CONTENT.tuning.flight.spawnWeights;
@@ -35,13 +32,7 @@ describe("pacing simulation world", () => {
     for (const galaxy of [1, 2] as const satisfies readonly GalaxyNumber[]) {
       for (let seed = 1; seed <= 30; seed++) {
         const flight = createFlight(CONTENT, galaxy, seed, { known: [] });
-        const world = {
-          catalog: ECONOMY,
-          encounters: byPosition(galaxyEncounters, galaxy),
-          galaxy,
-          seed,
-          spawnWeights,
-        };
+        const world = { catalog: ECONOMY, galaxy, seed, spawnWeights };
         const expected = { caches: [] as string[], packs: [] as string[], rocks: [] as string[] };
         for (let x = -2; x <= 2; x++) {
           for (let y = -2; y <= 2; y++) {
@@ -167,7 +158,6 @@ describe("pacing simulation runs", () => {
 
   describe("meets large and huge asteroids at the generated world's share", () => {
     const seeds = [1, 2, 3, 4];
-    const asteroids = { field: ASTEROID_FIELDS[1]!, shapes: [...ASTEROID_SHAPES.values()] };
     const samples = new Map<
       number,
       { flight: ReturnType<typeof runSeed>; large: number; rocks: number }
@@ -177,28 +167,14 @@ describe("pacing simulation runs", () => {
     it.each(seeds)("samples generated and simulated rocks for seed %i", (seed) => {
       let large = 0;
       let rocks = 0;
-      for (let x = -20; x < 20; x++) {
-        for (let y = -20; y < 20; y++) {
-          const plan = planChunk(CHUNK_CATALOG, {
-            asteroidDensity: CONTENT.tuning.flight.asteroidDensity,
-            asteroids,
-            clearance: CONTENT.tuning.flight.shipRadius,
-            galaxy: 1,
-            objectsPerChunk: CONTENT.tuning.flight.objectsPerChunk,
-            rockRadius: CONTENT.tuning.flight.rockRadius,
-            seed,
-            shipRadius: CONTENT.tuning.flight.shipRadius,
-            size: CONTENT.tuning.chunkSize,
-            spawnWeights,
-            x,
-            y,
-          });
-          for (const placement of plan.placements) {
-            if (placement.kind === "rock") {
-              const size = ASTEROID_SHAPES.get(placement.asteroid!)!.size;
-              rocks++;
-              large += size === "large" || size === "huge" ? 1 : 0;
-            }
+      const world = { catalog: ECONOMY, galaxy: 1 as const, seed, spawnWeights };
+      // Ada far away, so every planned rock counts.
+      const away = { x: 1e9, y: 1e9 };
+      for (let x = -12; x < 12; x++) {
+        for (let y = -12; y < 12; y++) {
+          for (const rock of generateChunk(world, away, x, y).rocks) {
+            rocks++;
+            large += rock.size === "large" || rock.size === "huge" ? 1 : 0;
           }
         }
       }
@@ -211,7 +187,7 @@ describe("pacing simulation runs", () => {
       const worldLarge = results.reduce((sum, sample) => sum + sample.large, 0);
       const worldRocks = results.reduce((sum, sample) => sum + sample.rocks, 0);
       const seen = summaryOf(results.map((sample) => sample.flight)).asteroidSizeShare.seen;
-      expect(worldLarge / worldRocks).toBeGreaterThan(0.05);
+      expect(worldLarge / worldRocks).toBeGreaterThan(0.02);
       expect(seen.large + seen.huge).toBeCloseTo(worldLarge / worldRocks, 1);
     });
   });
@@ -362,11 +338,12 @@ describe("pacing simulation runs", () => {
     });
   });
 
-  it("meets galaxy one's frigates and escorted capital battles from the catalog", () => {
+  it("meets Cartwheel's frigates and escorted capital battles from the spawn targets", () => {
     const { summary } = run({
       ...options,
+      galaxy: 2,
       minutes: 60,
-      scenario: { behaviour: {}, description: "", economy: {}, name: "one", prices: {} },
+      scenario: { behaviour: {}, description: "", economy: {}, name: "two", prices: {} },
       seeds: 6,
     });
     expect(summary.metPerMinute.frigate ?? 0).toBeGreaterThan(0);

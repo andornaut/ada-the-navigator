@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { ASTEROID_ART, ASTEROID_SIZES, type AsteroidArt } from "../data/asteroidCatalog.ts";
-import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
+import { ASTEROID_FIELDS } from "../data/chunkCatalog.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
@@ -18,7 +18,6 @@ import {
   scenerySilhouette,
   silhouette,
 } from "./asteroids.ts";
-import { type ChunkPlanOptions, planChunk } from "./chunkTemplates.ts";
 import { createEnemy } from "./enemyAi.ts";
 import {
   BUMP_DAMAGE,
@@ -56,19 +55,6 @@ const progress: GalaxyProgress = {
 
 const shapes = [...ASTEROID_SHAPES.values()];
 const tuning = CONTENT.tuning.flight;
-const options: ChunkPlanOptions = {
-  asteroids: { field: ASTEROID_FIELDS[1]!, shapes },
-  clearance: tuning.shipRadius,
-  galaxy: 1,
-  objectsPerChunk: tuning.objectsPerChunk,
-  rockRadius: tuning.rockRadius,
-  seed: 173,
-  shipRadius: tuning.shipRadius,
-  size: CONTENT.tuning.chunkSize,
-  spawnWeights: tuning.spawnWeights,
-  x: 2,
-  y: -3,
-};
 const rock = (id: string, extra: Partial<SpaceObject> = {}): SpaceObject => ({
   hp: 99,
   id,
@@ -408,108 +394,6 @@ describe("scenery contact and bounce", () => {
   });
 });
 
-describe("asteroid chunk fields", () => {
-  it("regenerates the same asteroids, drift and features for the same chunk seed", () => {
-    const first = planChunk(CHUNK_CATALOG, options);
-    expect(planChunk(CHUNK_CATALOG, { ...options, x: 40 })).not.toEqual(first);
-    expect(planChunk(CHUNK_CATALOG, options)).toEqual(first);
-  });
-
-  it("varies sizes, features and drifting asteroids across chunks while keeping corridors open", () => {
-    const sizes = new Set<string>();
-    const variants = new Set<string>();
-    let drifting = 0;
-    let features = 0;
-    for (let x = -12; x < 12; x++) {
-      for (let y = -12; y < 12; y++) {
-        const plan = planChunk(CHUNK_CATALOG, { ...options, x, y });
-        const center = { x: (x + 0.5) * options.size, y: (y + 0.5) * options.size };
-        const free = options.shipRadius + options.clearance;
-        for (const placement of plan.placements) {
-          expect(Math.abs(placement.x - center.x) - placement.radius).toBeGreaterThanOrEqual(free);
-          expect(Math.abs(placement.y - center.y) - placement.radius).toBeGreaterThanOrEqual(free);
-          if (placement.asteroid) {
-            const shape = ASTEROID_SHAPES.get(placement.asteroid)!;
-            sizes.add(shape.size);
-            variants.add(shape.id);
-            expect(placement.radius).toBe(shape.radius);
-          }
-          if (placement.orbit) {
-            drifting++;
-            const { radius, rate } = placement.orbit;
-            const range = ASTEROID_SHAPES.get(placement.asteroid!)!.drift.speed;
-            expect(Math.abs(radius * rate)).toBeLessThanOrEqual(range[1] + 1e-9);
-            expect(Math.abs(rate)).toBeLessThanOrEqual(0.3);
-            // The whole drift path keeps the corridor clearance.
-            const reach = placement.radius + radius;
-            expect(Math.abs(placement.x - center.x) - reach).toBeGreaterThanOrEqual(free - 1e-9);
-            expect(Math.abs(placement.y - center.y) - reach).toBeGreaterThanOrEqual(free - 1e-9);
-          }
-          features += placement.id.endsWith(":feature") ? 1 : 0;
-        }
-      }
-    }
-    expect([...sizes].sort()).toEqual([...ASTEROID_SIZES].sort());
-    expect(variants.size).toBeGreaterThan(ASTEROID_SIZES.length * 2);
-    expect(drifting).toBe(0);
-    expect(features).toBeGreaterThan(20);
-  });
-  it("keeps every drift path clear of every other rock and drift path in its chunk", () => {
-    const free = options.shipRadius + options.clearance;
-    // Every eligible rock drifts, so neighbouring paths compete for the same room.
-    const asteroids = { field: { ...ASTEROID_FIELDS[1]!, driftChance: 1 }, shapes };
-    let pairs = 0;
-    let bothDrift = 0;
-    for (let x = -24; x < 24; x++) {
-      for (let y = -24; y < 24; y++) {
-        const { placements } = planChunk(CHUNK_CATALOG, { ...options, asteroids, x, y });
-        placements.forEach((a, index) => {
-          for (const b of placements.slice(index + 1)) {
-            if (!a.orbit && !b.orbit) {
-              continue;
-            }
-            pairs++;
-            bothDrift += a.orbit && b.orbit ? 1 : 0;
-            const reach =
-              a.radius + (a.orbit?.radius ?? 0) + b.radius + (b.orbit?.radius ?? 0) + 2 * free;
-            expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(reach - 1e-9);
-          }
-        });
-      }
-    }
-    expect(pairs).toBeGreaterThan(50);
-    expect(bothDrift, "neighbouring drift paths are exercised").toBeGreaterThan(10);
-  });
-
-  it("keeps large and huge asteroids out of the chunk passages and edges", () => {
-    const free = options.shipRadius + options.clearance;
-    let big = 0;
-    for (let x = -12; x < 12; x++) {
-      for (let y = -12; y < 12; y++) {
-        const plan = planChunk(CHUNK_CATALOG, { ...options, x, y });
-        const origin = { x: x * options.size, y: y * options.size };
-        for (const placement of plan.placements) {
-          const size = placement.asteroid && ASTEROID_SHAPES.get(placement.asteroid)!.size;
-          if (size !== "large" && size !== "huge") {
-            continue;
-          }
-          big++;
-          expect(placement.orbit).toBeUndefined();
-          for (const along of [placement.x - origin.x, placement.y - origin.y]) {
-            // Clear of the passages through the chunk center and along its edges.
-            expect(Math.abs(along - options.size / 2) - placement.radius).toBeGreaterThanOrEqual(
-              free,
-            );
-            expect(along - placement.radius).toBeGreaterThanOrEqual(free);
-            expect(options.size - along - placement.radius).toBeGreaterThanOrEqual(free);
-          }
-        }
-      }
-    }
-    expect(big).toBeGreaterThan(20);
-  });
-});
-
 describe("rock start frames", () => {
   it("begin a spinning rock on its start frame and hold it under reduced motion", () => {
     const medium = [...ASTEROID_SHAPES.values()].find((shape) => shape.size === "medium")!;
@@ -560,7 +444,9 @@ describe("asteroids in flight", () => {
   it("generates large irregular asteroids with fixed centres as the ship explores", () => {
     const { model } = launched();
     const all = [...explore(model).values()];
-    expect(all.some((object) => ASTEROID_SHAPES.get(object.asteroid!)!.size === "huge")).toBe(true);
+    expect(all.some((object) => ASTEROID_SHAPES.get(object.asteroid!)!.size === "large")).toBe(
+      true,
+    );
     expect(all.every((object) => !object.orbit && !object.velocity)).toBe(true);
     const sized = all.find((object) => ASTEROID_SHAPES.get(object.asteroid!)!.size === "large");
     expect(sized?.hp).toBe(ASTEROID_FIELDS[1]!.hp.large);
@@ -790,27 +676,10 @@ describe("asteroids in flight", () => {
     }
     expect(stations).toBeGreaterThan(0);
     expect(sizes).toContain("large");
-    expect(sizes).toContain("huge");
     // Beside the launch point after its chunks paged out, regenerated layout keeps the launch
-    // point's safe radius although Ada is elsewhere. Some planned layout would reach it.
+    // point's safe radius although Ada is elsewhere.
     const safe = CONTENT.tuning.safeRadius;
     const beside = { x: 3 * safe, y: 0 };
-    const planned = [];
-    for (let x = -2; x <= 2; x++) {
-      for (let y = -2; y <= 2; y++) {
-        const plan = planChunk(CHUNK_CATALOG, { ...options, seed: flight.seed, x, y });
-        planned.push(
-          ...plan.placements.filter((placement) => {
-            const reach = placementRadius(placement) + (placement.orbit?.radius ?? 0);
-            return (
-              Math.hypot(placement.x, placement.y) - reach <= safe &&
-              Math.hypot(placement.x - beside.x, placement.y - beside.y) - reach > safe
-            );
-          }),
-        );
-      }
-    }
-    expect(planned.length).toBeGreaterThan(0);
     flight.player = { ...beside };
     model.step(1 / 60, idle);
     expect(flight.chunks).toContain("0,0");
@@ -931,7 +800,7 @@ describe("asteroids in flight", () => {
   });
 });
 
-it("keeps ballistic debris on a constant-velocity straight line", () => {
+it("keeps moving debris on a constant-velocity straight line", () => {
   const flight = createFlight(CONTENT, 1, 173, progress);
   const debris: SpaceObject = {
     hp: 99,

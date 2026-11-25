@@ -26,7 +26,7 @@ import {
   hardpointOffset,
   stepEnemy,
 } from "./enemyAi.ts";
-import { encounterSpacing, hostsEncounterCell } from "./flight.ts";
+import { encounterLatticeSpacing } from "./spawnTargets.ts";
 
 const dt = 1 / 60;
 /** `vector` turned by `angle` radians, as a ship's aim drift turns its line of fire. */
@@ -513,18 +513,9 @@ describe("galaxy difficulty", () => {
       expect(rate / rates[0]!).toBeCloseTo(1 + index * 0.1, 12);
       expect(encounterQuiet(galaxy).distance).toBeCloseTo(1800 / rate, 9);
       expect(encounterQuiet(galaxy).seconds).toBeCloseTo(12 / rate, 9);
-      const spacing = encounterSpacing(CONTENT, galaxy);
+      const spacing = encounterLatticeSpacing(galaxy);
       expect(spacing).toBeCloseTo(4 / Math.sqrt(rate), 9);
-      const hosts = (value: number) =>
-        Array.from({ length: 20000 }, (_, index) => index - 10000).filter((index) =>
-          hostsEncounterCell(value, index),
-        );
-      const active = hosts(spacing),
-        base = hosts(4);
-      expect((active.length / base.length) ** 2).toBeCloseTo(rate, 2);
-      expect(base.every((index) => index % 4 === 0)).toBe(true);
-      const gaps = active.slice(1).map((index, at) => index - active[at]!);
-      expect(Math.min(...gaps) * CONTENT.tuning.chunkSize).toBeGreaterThanOrEqual(
+      expect(spacing * CONTENT.tuning.chunkSize).toBeGreaterThanOrEqual(
         encounterQuiet(galaxy).distance,
       );
     }

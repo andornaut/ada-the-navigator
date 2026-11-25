@@ -88,8 +88,16 @@ it("excludes a real seeded optional footprint at an authored swarm's current hul
     actor.x = candidate.x;
     actor.y = candidate.y;
   });
-  expect(stationPopulationObjects(flight).find(({ id }) => id === actorId)).toBeDefined();
-  expect(stationPopulationObjects(flight).some(({ id }) => id === candidate.id)).toBe(false);
+  const actor = stationPopulationObjects(flight).find(({ id }) => id === actorId)!;
+  expect(actor).toBeDefined();
+  // The planned rock there takes another place or drops; no rock touches the hull.
+  expect(
+    stationPopulationObjects(flight).some(
+      (object) =>
+        object.kind === "rock" &&
+        Math.hypot(object.x - actor.x, object.y - actor.y) < object.radius + actor.radius,
+    ),
+  ).toBe(false);
 });
 
 it("does not recreate the authored exit encounter on a completed-holodisk fresh entry", () => {

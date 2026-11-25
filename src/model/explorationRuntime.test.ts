@@ -49,6 +49,8 @@ function fixture(kind: "resources" | "salvage") {
   };
   // The fixture supplies a real near-threshold saved ledger. Content admission comes from step.
   model.step(0.01, idle);
+  // Ambient groups would fill the wreck's local admission budget; this fixture clears them.
+  flight.objects = flight.objects.filter((object) => !object.enemy?.packId?.startsWith("pack:"));
   expect(progress.explorationSites).toBeUndefined();
   expect(flight.exploration.pacing?.freshSeconds).toBe(ROUTE_OPPORTUNITY_SECONDS - 0.001);
   model.step(0.01, pilot);

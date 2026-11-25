@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
 import { CONTENT } from "../data/content.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
-import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { type ChunkPlanOptions, planChunk } from "./chunkTemplates.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createFlight } from "./flight.ts";
 import {
@@ -17,23 +14,8 @@ import {
   worldRetainedPackMembers,
   worldSyncFlightRegion,
 } from "./geography.ts";
-import { rocksOverlap } from "./rockSpacing.ts";
 import type { SpaceObject } from "./types.ts";
-import { nearestImage } from "./worldGeometry.ts";
 const context = { worldSide: 1152000 };
-const options: ChunkPlanOptions = {
-  asteroids: { field: ASTEROID_FIELDS[1]!, shapes: [...ASTEROID_SHAPES.values()] },
-  clearance: CONTENT.tuning.flight.shipRadius,
-  galaxy: 1,
-  objectsPerChunk: CONTENT.tuning.flight.objectsPerChunk,
-  rockRadius: CONTENT.tuning.flight.rockRadius,
-  seed: 173,
-  shipRadius: CONTENT.tuning.flight.shipRadius,
-  size: 512,
-  spawnWeights: CONTENT.tuning.flight.spawnWeights,
-  x: 1124,
-  y: 0,
-};
 function empty() {
   const flight = createFlight(CONTENT, 1, 173, { known: [] });
   flight.objects = [];
@@ -61,49 +43,7 @@ function enemy(id: string, x: number): SpaceObject {
     radius: 10,
   };
 }
-describe("periodic chunk plans and retention", () => {
-  it("regenerates the same canonical plan, IDs and ports through positive and negative aliases", () => {
-    const expected = planChunk(CHUNK_CATALOG, { ...options, ...context });
-    expect(expected.placements.length).toBeGreaterThan(0);
-    for (const period of [-2, -1, 1, 2]) {
-      expect(
-        planChunk(CHUNK_CATALOG, {
-          ...options,
-          ...context,
-          x: options.x + 2250 * period,
-          y: options.y - 2250 * period,
-        }),
-      ).toEqual(expected);
-    }
-    expect(new Set(expected.placements.map((p) => p.id)).size).toBe(expected.placements.length);
-    expect(planChunk(CHUNK_CATALOG, { ...options, x: 4, y: 3 })).toEqual(
-      planChunk(CHUNK_CATALOG, { ...options, ...context, x: 4, y: 3 }),
-    );
-    expect(() => planChunk(CHUNK_CATALOG, { ...options, worldSide: 511 })).toThrow(RangeError);
-  });
-  it("keeps cross-seam drawn rocks separate using one image of the canonical neighbour", () => {
-    for (const y of [-2, 0, 2]) {
-      const left = planChunk(CHUNK_CATALOG, { ...options, ...context, y });
-      const right = planChunk(CHUNK_CATALOG, {
-        ...options,
-        ...context,
-        x: -1125,
-        y,
-      });
-      const east = nearestImage(
-        context.worldSide,
-        left.ports.east.center,
-        right.ports.west.center,
-      ).point;
-      expect(east).toEqual(left.ports.east.center);
-      for (const a of left.placements.filter((p) => p.kind === "rock")) {
-        for (const b of right.placements.filter((p) => p.kind === "rock")) {
-          const image = { ...b, ...nearestImage(context.worldSide, a, b).point };
-          expect(rocksOverlap(a, image)).toBe(false);
-        }
-      }
-    }
-  });
+describe("periodic chunk retention", () => {
   it("retains ordinary seam neighbours and canonicalizes chunk aliases until genuine departure", () => {
     const flight = empty();
     const rock = object("ordinary", -575990);

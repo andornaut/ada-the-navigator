@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
-import { SPAWNER_POLICIES, SPAWNER_REGIONS, spawnerStage } from "../data/spawnerCatalog.ts";
+import { SPAWNER_POLICIES, SPAWNER_REGIONS } from "../data/spawnerCatalog.ts";
 import { createEnemy, stepEnemy } from "./enemyAi.ts";
 import {
   createFlight,
@@ -17,7 +17,6 @@ import { GameModel } from "./game.ts";
 import { recordObjectRemoval } from "./geography.ts";
 import { newProgress } from "./progress.ts";
 import { restoreSave } from "./save.ts";
-import { selectEncounter } from "./spawner.ts";
 import type { SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -93,29 +92,8 @@ it("retains exact required followers through saving, region reentry and a casual
   expect(loaded.world.notables[escort[0]!.id]).toBeNull();
 });
 
-it("admits each ambient frigate and its full two-fighter escort without trimming", () => {
-  const policy = SPAWNER_POLICIES[6];
-  const stage = spawnerStage(6, 30000);
-  const entry = stage.roster.find((entry) => entry.archetype === "frigate")!;
+it("places each ambient frigate with its full two-fighter escort", () => {
   const point = { x: 30000, y: 0 };
-  const occupants = (count: number) =>
-    Array.from({ length: count }, (_, index): SpaceObject => ({
-      ...point,
-      hp: 1,
-      id: `occupied:${index}`,
-      kind: "enemy",
-      radius: 10,
-    }));
-  expect(
-    selectEncounter(policy, { ...stage, roster: [entry] }, 10, occupants(5), point, 0.99, 0),
-  ).toEqual({
-    archetype: "frigate",
-    count: 1,
-    escorts: { archetype: "fighter", count: 2 },
-  });
-  expect(
-    selectEncounter(policy, { ...stage, roster: [entry] }, 10, occupants(6), point, 0, 0),
-  ).toBeNull();
   let seen = 0;
   for (let seed = 0; seed < 12; seed++) {
     const flight = createFlight(CONTENT, 6, seed, newProgress());

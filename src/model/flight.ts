@@ -1,3 +1,5 @@
+import { randomStream } from "@andornaut/game-kit/runtime/random";
+
 import { ASTEROID_LOOT } from "../data/asteroidLoot.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
 import { SCENERY_IMPACT_SECONDS, sceneryImpactDamage } from "../data/collisionDamage.ts";
@@ -7,14 +9,10 @@ import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
 import type { EnemyActorKind } from "../data/enemyActors.ts";
 import {
   AUTHORED_PURSUIT_HOME_RADIUS,
-  type EncounterEntry,
-  encounterRate,
   ENEMY_AIM,
   type EnemyArchetype,
   enemyCatalog,
-  enemyEncounterTuning,
   enemyOnly,
-  escortTuning,
   FRIGATE_ESCORT_COUNT,
   LANCE_TELL,
   MINE_LAYER,
@@ -54,7 +52,6 @@ import {
   ASTEROID_SHAPES,
   asteroidSize,
   bounce,
-  orbitMotion,
   placementRadius,
   reflectDirection,
   sceneryBound,
@@ -65,12 +62,7 @@ import {
   worldSceneryBodyContact,
   worldSceneryContact,
 } from "./asteroids.ts";
-import {
-  assignBallisticVelocities,
-  hostsEncounterCell,
-  planBallisticAsteroids,
-} from "./ballisticAsteroids.ts";
-import { planChunk } from "./chunkTemplates.ts";
+import { planChunkCaches } from "./chunkCaches.ts";
 import { onScreen } from "./conversations.ts";
 import {
   pointOnCurrent,
@@ -154,6 +146,7 @@ import {
 import { requiredRouteGeometry } from "./requiredRouteGeometry.ts";
 import {
   type OptionalWorldFootprint,
+  type RequiredWorldOccupants,
   requiredWorldOccupantsPlacementClear,
   requiredWorldOccupantsPopulation,
   requiredWorldPlacementClear,
@@ -174,6 +167,7 @@ import { stationFormationClear } from "./stationPlacement.ts";
 import { type ImpactFamily, impactFamily, type WeaponImpact } from "./weaponImpacts.ts";
 import {
   periodicWorldGrid,
+  worldCell,
   worldCellAt,
   worldCellCenter,
   worldCellKey,
@@ -183,7 +177,6 @@ import {
 import { type WorldContext, worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 import { wrapPoint } from "./worldGeometry.ts";
 
-export { hostsEncounterCell } from "./ballisticAsteroids.ts";
 export { activateRouteEncounter, syncFlightRegion } from "./geography.ts";
 import {
   type Contact,
@@ -210,6 +203,7 @@ import { enemyHull, enemyPartOutline, enemyPhysicalBody } from "./enemyBody.ts";
 import { enemyBeamReach, planEnemyProjectile } from "./enemyProjectiles.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { MINE_REACH, mineParts, mineSpin, mineTouches } from "./mineShape.ts";
+import { activeNeedleCourses } from "./needle.ts";
 import {
   clearNeedleEnemies,
   ensureNeedleDebris,
@@ -220,12 +214,7 @@ import {
   needleRims,
 } from "./needleFlight.ts";
 import { nosePoint } from "./nose.ts";
-import {
-  isOreFieldRock,
-  ORE_FIELD_ROLE,
-  worldClearOfOreFields,
-  worldOreFieldsNear,
-} from "./oreFields.ts";
+import { isOreFieldRock, ORE_FIELD_ROLE, worldOreFieldsNear } from "./oreFields.ts";
 import {
   orePickupSize,
   pickupOutline,
@@ -247,13 +236,24 @@ import {
 } from "./shipBody.ts";
 import { direction, speedFraction, stepShipMotion, turnToward } from "./shipPhysics.ts";
 import {
-  groupReach,
-  memberPosition,
   worldFitsEncounter,
   worldRegionalEngagementAdmissions,
-  worldSelectEncounter,
   worldSpawnerStage,
 } from "./spawner.ts";
+import {
+  type ExclusionZone,
+  planRegion,
+  type SpawnPlacement,
+  type SpawnRules,
+} from "./spawnPlanner.ts";
+import {
+  chunkSpawnReach,
+  chunkSpawnRegion,
+  spawnGatherReach,
+  spawnRules,
+  worldSpawnExclusions,
+  worldSpawnSites,
+} from "./spawnTargets.ts";
 import {
   flightStationContext,
   HUB_STATION,
@@ -344,12 +344,11 @@ function requiredPopulation(flight: FlightState): readonly SpaceObject[] {
   ]);
 }
 
-function requiredFootprintClear(
-  content: GameContent,
-  flight: FlightState,
-  footprint: OptionalWorldFootprint,
-): boolean {
-  const context = { ...flightWorldContext(flight), content, galaxy: flight.galaxy };
+/**
+ * Authored story actors and sites and Phantom's pending and future geometry, which optional
+ * placements keep clear of beside the required routes.
+ */
+function requiredOccupants(content: GameContent, flight: FlightState): RequiredWorldOccupants {
   const authored =
     flight.galaxy === 2 ||
     flight.galaxy === 3 ||
@@ -357,31 +356,36 @@ function requiredFootprintClear(
     (flight.galaxy === 4 && flight.needle)
       ? stationPopulationObjects(flight)
       : [];
+  return {
+    actors: [
+      ...phantomRequiredActors(flight),
+      ...phantomFutureFlagshipGeometry(content, flight),
+      ...authored.filter(
+        (object) =>
+          liveEnemy(object) &&
+          (flight.galaxy === 4
+            ? object.enemy?.packId === "needle:exit"
+            : object.routeId !== undefined ||
+              object.enemy?.packId?.startsWith("route:") ||
+              object.enemy?.escortOf?.startsWith("route:")),
+      ),
+    ],
+    sites: [
+      ...authored.filter((object) => object.kind === "destination"),
+      ...cartwheelSiteGeometry(flight),
+    ],
+  };
+}
+
+function requiredFootprintClear(
+  content: GameContent,
+  flight: FlightState,
+  footprint: OptionalWorldFootprint,
+): boolean {
+  const context = { ...flightWorldContext(flight), content, galaxy: flight.galaxy };
   return (
     requiredWorldPlacementClear(context, requiredRouteGeometry(content, flight), footprint) &&
-    requiredWorldOccupantsPlacementClear(
-      context,
-      {
-        actors: [
-          ...phantomRequiredActors(flight),
-          ...phantomFutureFlagshipGeometry(content, flight),
-          ...authored.filter(
-            (object) =>
-              liveEnemy(object) &&
-              (flight.galaxy === 4
-                ? object.enemy?.packId === "needle:exit"
-                : object.routeId !== undefined ||
-                  object.enemy?.packId?.startsWith("route:") ||
-                  object.enemy?.escortOf?.startsWith("route:")),
-          ),
-        ],
-        sites: [
-          ...authored.filter((object) => object.kind === "destination"),
-          ...cartwheelSiteGeometry(flight),
-        ],
-      },
-      footprint,
-    )
+    requiredWorldOccupantsPlacementClear(context, requiredOccupants(content, flight), footprint)
   );
 }
 
@@ -446,6 +450,8 @@ function clearOfLandmarks(object: SpaceObject, flight: FlightState): boolean {
   );
 }
 const SCENERY = ["rock", "debris"];
+/** Flight ids of planned moving rocks, which arrival disks also absorb. */
+const MOVING_ROCK_PREFIX = "moving:";
 const ASTEROID_SHAPE_LIST = [...ASTEROID_SHAPES.values()];
 /**
  * Push a circle out of overlapping scenery along each contact normal and report every contact
@@ -900,99 +906,352 @@ function generate(content: GameContent, point: Vec, flight: FlightState): void {
   ensureNeedleDebris(content, flight);
   clearNeedleEnemies(flight);
   const size = content.tuning.chunkSize;
-  const tuning = content.tuning.flight;
   const generated = generatedChunks(flight);
   const existing = new Set(flight.objects.map((object) => object.id));
   const grid = periodicWorldGrid(flightWorldContext(flight), size);
-  const cells: Vec[] = [];
+  // Generated chunks may hold packs, whose sizes the combat record keeps.
+  combat(flight);
   for (const cell of worldCellsNear(grid, grid.pitch * 2, point)) {
     const key = worldCellKey(grid, cell);
-    const { x, y } = cell;
     if (generated.has(key)) {
       continue;
     }
-    cells.push(cell);
     flight.chunks.push(key);
     generated.add(key);
     chunkIndexes.get(flight)!.length = flight.chunks.length;
-    const field = byPosition(ASTEROID_FIELDS, flight.galaxy);
-    const plan = planChunk(CHUNK_CATALOG, {
-      ...flightWorldContext(flight),
-      asteroidDensity: tuning.asteroidDensity,
-      asteroids: { field, shapes: ASTEROID_SHAPE_LIST },
-      clearance: content.tuning.flight.shipRadius,
-      galaxy: flight.galaxy,
-      objectsPerChunk: tuning.objectsPerChunk,
-      rockRadius: tuning.rockRadius,
-      seed: flight.seed,
-      shipRadius: tuning.shipRadius,
-      size,
-      spawnWeights: tuning.spawnWeights,
-      x,
-      y,
-    });
-    generateRegion(content, grid, cell, flight);
-    for (const placement of plan.placements) {
-      const shape = placement.asteroid ? ASTEROID_SHAPES.get(placement.asteroid) : undefined;
-      const object: SpaceObject = {
-        hp: placement.kind === "pickup" ? 1 : shape ? field.hp[shape.size] : tuning.rockHp,
-        id: placement.id,
-        kind: placement.kind,
-        radius: placement.kind === "pickup" ? tuning.pickupRadius : placement.radius,
-        x: placement.x,
-        y: placement.y,
-        ...(shape ? { asteroid: shape.id } : {}),
-      };
-      // A drifting asteroid's place on its seeded path follows flight time, so paging and
-      // saves resume it where it would be.
-      if (placement.orbit) {
-        object.orbit = { ...placement.orbit, x: placement.x, y: placement.y };
-        const motion = orbitMotion(flight.time, object.orbit);
-        object.x = motion.position.x;
-        object.y = motion.position.y;
-        object.velocity = motion.velocity;
-      }
-      if (object.kind !== "rock") {
-        object.role = "discovery";
-      }
-      // Keep the child namespace so a retained older diamond prevents refill.
-      const pickup = object.kind === "pickup";
-      const pickupPrefix = `${object.id}:stardust:`;
-      if (pickup) {
-        object.amount = ECONOMY.discoveryStardust;
-        object.id = discoveryStardustId(object.id, 0);
-        object.radius = stardustPickupReach(ECONOMY.stardustPickupRadius, object.amount);
-        object.role = "stardust";
-      }
-      // Asteroids are not placed in currents, ore fields or an active Needle channel, drift loops
-      // included; an ore field holds only its own rocks.
-      const footprint = placementRadius(object) + (object.orbit?.radius ?? 0);
-      const at = object.orbit ?? object;
-      if (
-        !existing.has(object.id) &&
-        (!pickup ||
-          (!flight.objects.some((candidate) => candidate.id.startsWith(pickupPrefix)) &&
-            !Object.hasOwn(flight.world.notables, placement.id))) &&
-        !Object.hasOwn(flight.world.notables, object.id) &&
-        clearOf(flight, content.tuning.safeRadius, flight.player, object) &&
-        clearOfSafeAreas(content, object, flight) &&
-        clearOfLandmarks(object, flight) &&
-        (object.kind === "pickup" ||
-          (!worldInCurrent(flightWorldContext(flight), flight.galaxy, footprint, object) &&
-            worldClearOfOreFields(flightWorldContext(flight), flight.galaxy, footprint, at) &&
-            !needleChannelContains({ radius: footprint }, flight, at)))
-      ) {
-        canonicalObject(flight, object);
-        flight.objects.push(object);
-        existing.add(object.id);
-      }
-    }
+    placeAmbient(content, grid, worldCell(grid, cell), existing, flight);
+    placeCaches(content, cell, existing, flight);
     placeOreFields(content, grid, cell, existing, flight);
   }
-  // Required sites, enemies and authored fields have the first claim on these chunks.
-  const clearance: BallisticClearance = { existing };
-  for (const cell of cells) {
-    generateBallisticRegion(content, grid, cell, clearance, flight);
+}
+
+const ambientRules = new Map<string, SpawnRules>();
+
+/**
+ * The spawn rules for a flight's galaxy and world: the target catalog, with no enemy groups once
+ * Phantom's flagship is salvaged.
+ */
+function flightSpawnRules(flight: FlightState): SpawnRules {
+  const { worldSide } = flightWorldContext(flight);
+  const quiet = flight.galaxy === 6 && flight.phantom?.phase === "salvaged";
+  const key = `${flight.galaxy}:${worldSide}:${quiet}`;
+  let rules = ambientRules.get(key);
+  if (!rules) {
+    const catalog = spawnRules(flight.galaxy, worldSide);
+    rules = quiet
+      ? { ...catalog, bands: catalog.bands.map((band) => ({ ...band, enemies: [] })) }
+      : catalog;
+    ambientRules.set(key, rules);
+  }
+  return rules;
+}
+
+/** An actor's whole reach: its physical hull and parts, else its radius. */
+function actorReach(flight: FlightState, actor: SpaceObject): number {
+  const body = actor.enemy && enemyPhysicalBody(ROUTE_POSITION[flight.galaxy], actor.enemy);
+  return body ? Math.max(actor.radius, partsReach(worldParts(body))) : placementRadius(actor);
+}
+
+/**
+ * The exclusion zones within `radius` of `point`: the seeded world's (station protected areas,
+ * launch and arrival radii, landmarks, currents and ore fields), Ada's safe radius for rocks,
+ * the protected areas of placed stations and destinations, required routes and their hulls,
+ * with each required hull's local admission neighbourhood for enemies, and the Needle channel.
+ */
+function flightSpawnExclusions(
+  content: GameContent,
+  flight: FlightState,
+  radius: number,
+  point: Vec,
+): ExclusionZone[] {
+  const context = flightWorldContext(flight);
+  const near = (at: Vec, reach: number) => worldDistance(context, at, point) <= radius + reach;
+  const disc = (
+    rule: string,
+    applies: ExclusionZone["applies"],
+    at: Vec,
+    reach: number,
+  ): ExclusionZone[] =>
+    near(at, reach)
+      ? [{ applies, rule, shape: { kind: "disc", radius: reach, x: at.x, y: at.y } }]
+      : [];
+  const occupants = requiredOccupants(content, flight);
+  const routes = requiredRouteGeometry(content, flight);
+  const required = {
+    actors: [...routes.map(({ guard }) => guard), ...occupants.actors],
+    sites: [...routes.map(({ site }) => site), ...occupants.sites],
+  };
+  return [
+    ...worldSpawnExclusions(context, flight.galaxy, arrivalPoints(flight), radius, point),
+    ...disc("player-safe", ["rock", "moving"], flight.player, content.tuning.safeRadius),
+    ...flight.objects.flatMap((object) => {
+      const reach = protectedRadius(content, object);
+      return reach === null
+        ? []
+        : disc(object.kind, ["rock", "moving", "path", "enemy"], object, reach);
+    }),
+    ...required.sites.flatMap((site) => {
+      const reach = protectedRadius(content, site);
+      return reach === null ? [] : disc("required", ["rock", "moving", "enemy"], site, reach);
+    }),
+    ...required.actors.flatMap((actor) => [
+      ...disc("required", ["rock", "moving"], actor, actorReach(flight, actor)),
+      // Ambient groups stay out of a required hull's local admission neighbourhood, so its
+      // budget remains for the required encounter.
+      ...disc(
+        "required",
+        ["enemy"],
+        actor,
+        2 * SPAWNER_POLICIES[flight.galaxy].localRadius + actorReach(flight, actor),
+      ),
+    ]),
+    ...activeNeedleCourses(flight).map((course) => ({
+      applies: ["rock", "moving", "enemy"] as const,
+      rule: "needle-channel",
+      shape: { halfWidth: course.width / 2, kind: "path" as const, points: course.path },
+    })),
+  ];
+}
+
+/**
+ * Plans one chunk's enemy groups, rocks and moving rocks, and adds each placement that is not
+ * already present or recorded as removed. Rocks follow the galaxy's seed and enemy groups the
+ * flight's encounter identity.
+ */
+function placeAmbient(
+  content: GameContent,
+  grid: WorldGrid,
+  cell: Vec,
+  existing: Set<string>,
+  flight: FlightState,
+): void {
+  const rules = flightSpawnRules(flight);
+  const centre = worldCellCenter(grid, cell);
+  const reach = chunkSpawnReach(rules);
+  const region = chunkSpawnRegion(
+    rules,
+    flightSpawnExclusions(content, flight, reach, centre),
+    worldSpawnSites(
+      flightWorldContext(flight),
+      flight.galaxy,
+      reach + spawnGatherReach(rules),
+      centre,
+    ),
+    cell,
+  );
+  const key = worldCellKey(grid, cell);
+  const { placements } = planRegion(
+    rules,
+    { encounter: flightEncounterSeed(flight), world: flight.seed },
+    region,
+  );
+  const groups = new Map<string, SpawnPlacement[]>();
+  for (const placement of placements) {
+    if (placement.chunk !== key) {
+      continue;
+    }
+    if (placement.category === "enemy") {
+      const group = groups.get(placement.group!) ?? [];
+      group.push(placement);
+      groups.set(placement.group!, group);
+      continue;
+    }
+    placeRock(placement, existing, flight);
+  }
+  for (const group of groups.values()) {
+    placeGroup(content, `pack:${key}`, group, existing, flight);
+  }
+}
+
+/** A planned rock as a static asteroid, or as moving debris with its planned velocity. */
+function placeRock(placement: SpawnPlacement, existing: Set<string>, flight: FlightState): void {
+  const shape = ASTEROID_SHAPES.get(placement.shape!)!;
+  const id = placement.moving ? `${MOVING_ROCK_PREFIX}${placement.id}` : placement.id;
+  if (existing.has(id) || Object.hasOwn(flight.world.notables, id)) {
+    return;
+  }
+  const object: SpaceObject = {
+    asteroid: shape.id,
+    hp: byPosition(ASTEROID_FIELDS, flight.galaxy).hp[shape.size],
+    id,
+    kind: placement.moving ? "debris" : "rock",
+    radius: shape.radius,
+    x: placement.x,
+    y: placement.y,
+    ...(placement.moving ? { velocity: { ...placement.moving.velocity } } : {}),
+  };
+  canonicalObject(flight, object);
+  flight.objects.push(object);
+  existing.add(id);
+}
+
+/**
+ * A planned enemy group as one pack of members on its line and, for frigates and capitals, an
+ * escort pack. A pack seen before adds back only its unloaded survivors, preserving its
+ * casualty count.
+ */
+function placeGroup(
+  content: GameContent,
+  packId: string,
+  group: readonly SpawnPlacement[],
+  existing: Set<string>,
+  flight: FlightState,
+): void {
+  const leaders = group.filter((placement) => placement.leader === undefined);
+  const archetype = leaders[0]!.archetype as EnemyArchetype;
+  const ids = new Map(leaders.map((placement, index) => [placement.id, `${packId}:${index}`]));
+  const phase = (id: string) =>
+    randomStream(flightEncounterSeed(flight), `ambient-phase:${id}`)() * 2 * Math.PI;
+  placePack(
+    content,
+    existing,
+    flight,
+    { archetype, escort: false, id: packId },
+    (id) => ({ escortOf: null, phase: phase(id) }),
+    leaders,
+  );
+  const escorts = group.filter((placement) => placement.leader !== undefined);
+  if (!escorts.length) {
+    return;
+  }
+  placePack(
+    content,
+    existing,
+    flight,
+    { archetype: escorts[0]!.archetype as EnemyArchetype, escort: true, id: escortPackId(packId) },
+    (_, placement) => {
+      const leader = leaders.find((member) => member.id === placement.leader)!;
+      return {
+        escortOf: ids.get(leader.id)!,
+        phase: Math.atan2(placement.y - leader.y, placement.x - leader.x),
+        ...(archetype === "frigate" ? { role: FRIGATE_ESCORT_ROLE } : {}),
+      };
+    },
+    escorts,
+  );
+}
+
+/** Adds one pack's members, by index, up to its unloaded survivors when seen before. */
+function placePack(
+  content: GameContent,
+  existing: Set<string>,
+  flight: FlightState,
+  pack: { readonly archetype: EnemyArchetype; readonly escort: boolean; readonly id: string },
+  member: (
+    id: string,
+    placement: SpawnPlacement,
+  ) => { escortOf: string | null; phase: number; role?: string },
+  placements: readonly SpawnPlacement[],
+): void {
+  const { archetype, id: packId } = pack;
+  const state = combat(flight);
+  const initialized = Object.hasOwn(state.initialPackSizes, packId);
+  const profiled =
+    !pack.escort &&
+    ordinaryHeavy(archetype) &&
+    (initialized ? state.profiledPacks?.[packId] === archetype : true);
+  let budget = initialized ? (state.unloadedPackMembers?.[packId] ?? 0) : placements.length;
+  let admitted = 0;
+  for (const [index, placement] of placements.entries()) {
+    if (budget <= 0) {
+      break;
+    }
+    const id = `${packId}:${index}`;
+    if (existing.has(id) || Object.hasOwn(flight.world.notables, id)) {
+      continue;
+    }
+    const { escortOf, phase, role } = member(id, placement);
+    const object = spawnEnemy(
+      content,
+      flight,
+      archetype,
+      id,
+      { x: placement.x, y: placement.y },
+      packId,
+      phase,
+      escortOf,
+    );
+    if (role) {
+      object.role = role;
+    }
+    if (persistentObject(object)) {
+      object.persistent = false;
+    }
+    canonicalObject(flight, object);
+    flight.objects.push(object);
+    existing.add(id);
+    admitted++;
+    budget--;
+  }
+  if (!initialized) {
+    state.initialPackSizes[packId] = admitted;
+    if (profiled && admitted > 0) {
+      (state.profiledPacks ??= {})[packId] = archetype;
+    }
+  } else if (admitted && state.unloadedPackMembers) {
+    if (budget > 0) {
+      state.unloadedPackMembers[packId] = budget;
+    } else {
+      delete state.unloadedPackMembers[packId];
+      if (!Object.keys(state.unloadedPackMembers).length) {
+        delete state.unloadedPackMembers;
+      }
+    }
+  }
+}
+
+/**
+ * The chunk's discovery caches on their template slots, clear of Ada, safe areas and landmark
+ * charting ranges.
+ */
+function placeCaches(
+  content: GameContent,
+  cell: Vec,
+  existing: Set<string>,
+  flight: FlightState,
+): void {
+  const tuning = content.tuning.flight;
+  const caches = planChunkCaches(CHUNK_CATALOG, {
+    ...flightWorldContext(flight),
+    clearance: tuning.shipRadius,
+    field: byPosition(ASTEROID_FIELDS, flight.galaxy),
+    galaxy: flight.galaxy,
+    objectsPerChunk: tuning.objectsPerChunk,
+    radius: tuning.rockRadius,
+    seed: flight.seed,
+    shapes: ASTEROID_SHAPE_LIST,
+    shipRadius: tuning.shipRadius,
+    size: content.tuning.chunkSize,
+    spawnWeights: tuning.spawnWeights,
+    x: cell.x,
+    y: cell.y,
+  });
+  for (const cache of caches) {
+    // Keep the child namespace so a retained older diamond prevents refill.
+    const prefix = `${cache.id}:stardust:`;
+    const object: SpaceObject = {
+      amount: ECONOMY.discoveryStardust,
+      hp: 1,
+      id: discoveryStardustId(cache.id, 0),
+      kind: "pickup",
+      radius: stardustPickupReach(ECONOMY.stardustPickupRadius, ECONOMY.discoveryStardust),
+      role: "stardust",
+      x: cache.x,
+      y: cache.y,
+    };
+    if (
+      !existing.has(object.id) &&
+      !flight.objects.some((candidate) => candidate.id.startsWith(prefix)) &&
+      !Object.hasOwn(flight.world.notables, cache.id) &&
+      !Object.hasOwn(flight.world.notables, object.id) &&
+      clearOf(flight, content.tuning.safeRadius, flight.player, object) &&
+      clearOfSafeAreas(content, object, flight) &&
+      clearOfLandmarks(object, flight)
+    ) {
+      canonicalObject(flight, object);
+      flight.objects.push(object);
+      existing.add(object.id);
+    }
   }
 }
 
@@ -1705,18 +1964,6 @@ export function spawnChapterEnemy(
   return object;
 }
 
-/**
- * Chunk spacing of encounter cells. Areal density follows the galaxy's encounter rate, so
- * the spacing shrinks with its square root; adjacent cells stay a quiet distance apart.
- */
-export function encounterSpacing(content: GameContent, galaxy: GalaxyNumber): number {
-  const base = Math.max(
-    3,
-    Math.ceil(enemyEncounterTuning.quietDistance / content.tuning.chunkSize),
-  );
-  return base / Math.sqrt(encounterRate(galaxy));
-}
-
 /** Ships too heavy to drift with a current, and the fixed platform. */
 const DRIFT_PROOF: readonly EnemyActorKind[] = ["frigate", "capital", "platform", "hostileStation"];
 
@@ -1725,384 +1972,6 @@ function arrivalPoints(flight: FlightState): Vec[] {
   return [FLIGHT_START, ...(flight.arrivals ?? [])];
 }
 const FLIGHT_START: Vec = { x: 0, y: 0 };
-
-/** Complete encounter footprint; callers without a galaxy use Sunflower's policy. */
-export function encounterReach(
-  content: GameContent,
-  archetype: EnemyArchetype,
-  count: number,
-  escorts: EncounterEntry["escorts"],
-  galaxy: GalaxyNumber = 1,
-): number {
-  return groupReach(SPAWNER_POLICIES[galaxy], content.tuning.flight.shipRadius, {
-    archetype,
-    count,
-    ...(escorts ? { escorts } : {}),
-  });
-}
-
-/** Whether ships placed within `reach` of `point` could come within the calm radius. */
-function nearArrival(
-  content: GameContent,
-  flight: FlightState,
-  reach: number,
-  point: Vec,
-): boolean {
-  return arrivalPoints(flight).some(
-    (arrival) =>
-      worldDistance(flightWorldContext(flight), arrival, point) <
-      content.tuning.flight.arrivalCalm + reach,
-  );
-}
-
-interface BallisticClearance {
-  readonly existing: Set<string>;
-  occupied?: ReturnType<typeof footprint>[];
-}
-
-function generateBallisticRegion(
-  content: GameContent,
-  grid: WorldGrid,
-  cell: Vec,
-  clearance: BallisticClearance,
-  flight: FlightState,
-): void {
-  const requested = planBallisticAsteroids(
-    {
-      galaxy: flight.galaxy,
-      rockHp: content.tuning.flight.rockHp,
-      worldSeed: flight.seed,
-    },
-    grid,
-    cell,
-  );
-  const center = worldCellCenter(grid, cell);
-  if (
-    !requested.length ||
-    worldDistance(grid, center, flight.player) < content.tuning.safeRadius * 2 ||
-    safe(content, center, flight)
-  ) {
-    return;
-  }
-  // Geometry is fixed in this generation pass. Stage each admitted rock in the same order.
-  const occupied = (clearance.occupied ??= flight.objects
-    .filter((other) => other.hp > 0)
-    .map(footprint));
-  const admitted: SpaceObject[] = [];
-  for (const object of requested) {
-    const radius = placementRadius(object);
-    if (
-      clearance.existing.has(object.id) ||
-      Object.hasOwn(flight.world.notables, object.id) ||
-      worldDistance(grid, object, flight.player) <= content.tuning.safeRadius + radius ||
-      !clearOfSafeAreas(content, object, flight) ||
-      needleChannelContains({ radius }, flight, object) ||
-      worldInCurrent(grid, flight.galaxy, radius, object) ||
-      !worldClearOfOreFields(grid, flight.galaxy, radius, object) ||
-      occupied.some((other) => {
-        const reach = radius + other.radius;
-        const { x, y } = worldDelta(grid, other, object);
-        return Math.abs(x) <= reach && Math.abs(y) <= reach && Math.hypot(x, y) <= reach;
-      })
-    ) {
-      continue;
-    }
-    admitted.push(object);
-    canonicalObject(flight, object);
-    flight.objects.push(object);
-    occupied.push({ radius, x: object.x, y: object.y });
-    clearance.existing.add(object.id);
-  }
-  assignBallisticVelocities(flight.seed, admitted);
-}
-
-function generateRegion(
-  content: GameContent,
-  grid: WorldGrid,
-  cell: Vec,
-  flight: FlightState,
-): void {
-  const { x, y } = cell;
-  const size = grid.pitch;
-  // One encounter cell per quiet-distance grid; adjacent chunk traversal cannot duplicate it.
-  const spacing = encounterSpacing(content, flight.galaxy);
-  if (!hostsEncounterCell(spacing, x) || !hostsEncounterCell(spacing, y)) {
-    return;
-  }
-  const next = random(hash(flightEncounterSeed(flight) ^ 9173, x, y));
-  const center = worldCellCenter(grid, cell);
-  if (
-    worldDistance(flightWorldContext(flight), center, flight.player) <
-      content.tuning.safeRadius * 2 ||
-    safe(content, center, flight)
-  ) {
-    return;
-  }
-  // Preserve the original vacancy and draw count for the independent enemy stream.
-  if (Math.floor(next() * 4) === 3) {
-    return;
-  }
-  const packId = `pack:${x},${y}`;
-  const countRoll = next();
-  const archetypeRoll = next();
-  const policy = SPAWNER_POLICIES[flight.galaxy];
-  const stage = worldSpawnerStage(flightWorldContext(flight), policy, center);
-  const previous = flight.objects.find((object) => object.enemy?.packId === packId)?.enemy;
-  const escortObject = flight.objects.find(
-    (object) => object.enemy?.packId === escortPackId(packId),
-  );
-  const escort = escortObject?.enemy;
-  const initialized = Object.hasOwn(combat(flight).initialPackSizes, packId);
-  // A represented pack keeps its original composition across geographic region changes.
-  const plan =
-    initialized && (previous || escort)
-      ? {
-          archetype:
-            (previous?.archetype === "hostileStation" ? undefined : previous?.archetype) ??
-            (escortObject?.role === FRIGATE_ESCORT_ROLE
-              ? ("frigate" as const)
-              : ("capital" as const)),
-          count: combat(flight).initialPackSizes[packId] ?? 0,
-          ...(previous?.archetype === "capital" || previous?.archetype === "frigate" || escort
-            ? {
-                escorts: {
-                  archetype:
-                    (escort?.archetype === "hostileStation" ? undefined : escort?.archetype) ??
-                    ("fighter" as const),
-                  count: combat(flight).initialPackSizes[escortPackId(packId)] ?? 0,
-                },
-              }
-            : {}),
-        }
-      : worldSelectEncounter(
-          hostileStationContext(flight),
-          policy,
-          stage,
-          content.tuning.flight.shipRadius,
-          requiredPopulation(flight),
-          center,
-          countRoll,
-          archetypeRoll,
-        );
-  if (!plan) {
-    return;
-  }
-  const { archetype, count, escorts } = plan;
-  // Half of Cartwheel's claim jumpers gather at the nearest ore field within this cell's reach.
-  if (ORE_FIELDS.galaxies.includes(flight.galaxy) && archetype === "fighter") {
-    const reach = (spacing * size) / 2;
-    const field = worldOreFieldsNear(flightWorldContext(flight), flight.galaxy, reach, center).sort(
-      (a, b) =>
-        worldDistance(flightWorldContext(flight), a, center) -
-        worldDistance(flightWorldContext(flight), b, center),
-    )[0];
-    const angle = next() * Math.PI * 2;
-    if (field && next() < ORE_FIELDS.jumperShare) {
-      const edge = ORE_FIELDS.diameter / 2;
-      center.x = field.x + Math.cos(angle) * edge;
-      center.y = field.y + Math.sin(angle) * edge;
-    }
-  }
-  // Launches and jump arrivals begin calm: the whole encounter stays clear of them.
-  if (
-    nearArrival(
-      content,
-      flight,
-      encounterReach(content, archetype, count, escorts, flight.galaxy),
-      center,
-    )
-  ) {
-    return;
-  }
-  // Reserve the complete optional formation before creating any of its mandatory escorts.
-  if (
-    !requiredFootprintClear(content, flight, {
-      center,
-      radius: encounterReach(content, archetype, count, escorts, flight.galaxy),
-    })
-  ) {
-    return;
-  }
-  // Relocated claim jumpers must also fit the actual destination neighbourhood.
-  if (
-    !initialized &&
-    !worldFitsEncounter(
-      hostileStationContext(flight),
-      policy,
-      stage,
-      content.tuning.flight.shipRadius,
-      requiredPopulation(flight),
-      center,
-      plan,
-    )
-  ) {
-    return;
-  }
-  if (archetype === "frigate" && !initialized) {
-    const leaders = Array.from({ length: count }, (_, index) => {
-      const id = `${packId}:${index}`;
-      const leader = spawnEnemy(
-        content,
-        flight,
-        "frigate",
-        id,
-        memberPosition(policy.memberSpacing, count, center, index),
-        packId,
-        next() * Math.PI * 2,
-        null,
-      );
-      leader.persistent = false;
-      return leader;
-    });
-    const followers = leaders.flatMap((leader, leaderIndex) =>
-      createFrigateEscorts(
-        {
-          encounterSeed: flightEncounterSeed(flight),
-          galaxy: flight.galaxy,
-          id: (index) => `${escortPackId(packId)}:${leaderIndex * FRIGATE_ESCORT_COUNT + index}`,
-          packId: escortPackId(packId),
-          persistent: false,
-          shipRadius: content.tuning.flight.shipRadius,
-        },
-        leader,
-      ),
-    );
-    const whole = [...leaders, ...followers];
-    if (
-      whole.some(
-        (member) =>
-          safe(content, member, flight) ||
-          !requiredPlacementClear(content, flight, member) ||
-          needleChannelContains({ radius: member.radius }, flight, member) ||
-          flight.objects.some((other) => !clearOf(flight, member.radius, member, other)),
-      )
-    ) {
-      return;
-    }
-    if (
-      whole.some((member, index) =>
-        whole.slice(index + 1).some((other) => !clearOf(flight, member.radius, member, other)),
-      )
-    ) {
-      return;
-    }
-    for (const member of whole) {
-      canonicalObject(flight, member);
-      flight.objects.push(member);
-    }
-    const state = combat(flight);
-    state.initialPackSizes[packId] = leaders.length;
-    state.initialPackSizes[escortPackId(packId)] = followers.length;
-    (state.profiledPacks ??= {})[packId] = archetype;
-    return;
-  }
-  admitGroup(content, flight, next, { archetype, count, escortOf: null, packId }, (index) =>
-    memberPosition(policy.memberSpacing, count, center, index),
-  );
-  if (escorts) {
-    // Escorts form their own pack, so regeneration restores each group's survivors by count.
-    const gap =
-      enemyCatalog[archetype].sizeRatio * content.tuning.flight.shipRadius +
-      escortTuning.stationGap;
-    admitGroup(
-      content,
-      flight,
-      next,
-      {
-        ...escorts,
-        escortOf:
-          archetype === "frigate"
-            ? (index: number) => `${packId}:${Math.floor(index / FRIGATE_ESCORT_COUNT)}`
-            : `${packId}:0`,
-        packId: escortPackId(packId),
-        ...(archetype === "frigate" ? { role: FRIGATE_ESCORT_ROLE } : {}),
-      },
-      (_, phase) => ({ x: center.x + Math.cos(phase) * gap, y: center.y + Math.sin(phase) * gap }),
-    );
-  }
-}
-
-/**
- * Admits a seeded group as one pack. A pack seen before admits only its unloaded survivor
- * budget, preserving its casualty count; escorts start on their stations.
- */
-function admitGroup(
-  content: GameContent,
-  flight: FlightState,
-  next: () => number,
-  group: {
-    archetype: EnemyArchetype;
-    count: number;
-    escortOf: string | null | ((index: number) => string);
-    packId: string;
-    role?: string;
-  },
-  place: (index: number, phase: number) => Vec,
-): void {
-  if (flight.galaxy === 6 && flight.phantom?.phase === "salvaged") {
-    return;
-  }
-  const { archetype, count, escortOf, packId } = group;
-  const state = combat(flight);
-  const initialized = Object.hasOwn(state.initialPackSizes, packId);
-  const profiled =
-    escortOf === null &&
-    ordinaryHeavy(archetype) &&
-    (initialized ? state.profiledPacks?.[packId] === archetype : true);
-  let budget = initialized ? (state.unloadedPackMembers?.[packId] ?? 0) : count;
-  let admitted = 0;
-  const existing = flight.objects.filter(
-    (object) => object.hp > 0 && object.enemy?.packId === packId,
-  ).length;
-  // A pack recorded under an earlier roster can exceed this cell's roll; keep its slots.
-  const slots = initialized ? Math.max(count, state.initialPackSizes[packId] ?? 0) : count;
-  for (let i = 0; i < slots && budget > 0; i++) {
-    const phase = next() * Math.PI * 2;
-    const id = `${packId}:${i}`;
-    const object = spawnEnemy(
-      content,
-      flight,
-      archetype,
-      id,
-      place(i, phase),
-      packId,
-      phase,
-      typeof escortOf === "function" ? escortOf(i) : escortOf,
-    );
-    if (group.role) {
-      object.role = group.role;
-    }
-    if (persistentObject(object)) {
-      object.persistent = false;
-    }
-    if (
-      !safe(content, object, flight) &&
-      !needleChannelContains({ radius: object.radius }, flight, object) &&
-      !flight.objects.some((other) => other.id === object.id) &&
-      !Object.hasOwn(flight.world.notables, object.id)
-    ) {
-      canonicalObject(flight, object);
-      flight.objects.push(object);
-      admitted++;
-      budget--;
-    }
-  }
-  if (!initialized) {
-    state.initialPackSizes[packId] = existing + admitted;
-    if (profiled && admitted > 0) {
-      (state.profiledPacks ??= {})[packId] = archetype;
-    }
-  } else if (admitted && state.unloadedPackMembers) {
-    if (budget > 0) {
-      state.unloadedPackMembers[packId] = budget;
-    } else {
-      delete state.unloadedPackMembers[packId];
-      if (!Object.keys(state.unloadedPackMembers).length) {
-        delete state.unloadedPackMembers;
-      }
-    }
-  }
-}
 
 /** Layout clearance changes the roster without recording a combat casualty. */
 function clearLayoutObjects(keep: (object: SpaceObject) => boolean, flight: FlightState): void {
@@ -4184,7 +4053,7 @@ function moveDebris(
       continue;
     }
     const next = stepDebris(dt, { id: object.id, position: object, velocity: object.velocity });
-    // Existing protected objects absorb all moving debris. Only ballistic encounters use arrival disks.
+    // Existing protected objects absorb all moving debris; moving rocks also end at arrival disks.
     if (!protectedAreas) {
       protectedAreas = [];
       for (const area of flight.objects) {
@@ -4199,7 +4068,7 @@ function moveDebris(
       segmentDistance(worldPoint(world, object, area), object, next.position) < radius + reach;
     if (
       protectedAreas.some(crosses) ||
-      (object.id.startsWith("ballistic:") &&
+      (object.id.startsWith(MOVING_ROCK_PREFIX) &&
         (arrivalDisks ??= arrivalPoints(flight).map((area) => ({
           area,
           radius: content.tuning.safeRadius,

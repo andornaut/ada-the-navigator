@@ -12,12 +12,7 @@ import {
   worldFlowAt,
   worldNearestOnCurrent,
 } from "./currents.ts";
-import {
-  fitsEncounter,
-  worldEngagementAdmissions,
-  worldFitsEncounter,
-  worldSelectEncounter,
-} from "./spawner.ts";
+import { worldEngagementAdmissions, worldFitsEncounter } from "./spawner.ts";
 import { worldStationsNear } from "./stations.ts";
 import type { SpaceObject } from "./types.ts";
 import { periodicWorldGrid, worldCellChance } from "./worldCells.ts";
@@ -88,8 +83,7 @@ describe("explicit periodic currents and encounter budgets", () => {
     }));
     const plan = { archetype: "fighter" as const, count: 1 };
     expect(worldFitsEncounter(context, policy, stage, 10, objects, centre, plan)).toBe(false);
-    expect(fitsEncounter(policy, stage, 10, objects, centre, plan)).toBe(true);
-    expect(worldSelectEncounter(context, policy, stage, 10, objects, centre, 0, 0)).toBeNull();
+    expect(worldFitsEncounter({}, policy, stage, 10, objects, centre, plan)).toBe(true);
   });
   it("reserves nearest seam contacts before farther candidates without exceeding the cap", () => {
     const policy = SPAWNER_POLICIES[1],

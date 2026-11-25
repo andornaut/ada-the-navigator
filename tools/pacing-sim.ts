@@ -1,8 +1,8 @@
 /**
  * Headless Stardust pacing simulation for Gameplay review.
  *
- * World content comes from the game's own generators and drop rolls: chunk plans
- * (asteroids and discovery caches), encounter cells and their galaxy tables, station
+ * World content comes from the game's own generators and drop rolls: the spawn planner's
+ * asteroids and enemy groups, the chunk templates' discovery caches, station
  * sites, enemy and asteroid drops and pickup splitting. A scripted player explores,
  * fights encounters met in passing, shoots some asteroids and collects pickups inside
  * tractor range. Multi-Laser spends one unit per bolt and other upgrades one per volley.
@@ -28,7 +28,6 @@ import { ECONOMY, type EconomyCatalog, type UpgradeWeapon } from "../src/data/ec
 import type { EnemyActorKind } from "../src/data/enemyActors.ts";
 import {
   type EncounterEntry,
-  encounterTable,
   type EnemyArchetype,
   enemyCatalog,
   enemyDefinition,
@@ -42,8 +41,8 @@ import { SCREEN } from "../src/data/screen.ts";
 import type { GalaxyNumber, Weapon } from "../src/data/types.ts";
 import { weaponAt } from "../src/data/weaponCatalog.ts";
 import { rollAsteroidLoot } from "../src/model/asteroidLoot.ts";
-import { ASTEROID_SHAPES, orbitMotion, placementRadius } from "../src/model/asteroids.ts";
-import { planChunk } from "../src/model/chunkTemplates.ts";
+import { ASTEROID_SHAPES } from "../src/model/asteroids.ts";
+import { type ChunkCache, planChunkCaches } from "../src/model/chunkCaches.ts";
 import {
   dropRandom,
   rollAmmoDrop,
@@ -51,15 +50,7 @@ import {
   rollSalvageDrop,
   splitResourcePickup,
 } from "../src/model/drops.ts";
-import {
-  createFlight,
-  encounterReach,
-  encounterSpacing,
-  hostsEncounterCell,
-  rollEncounter,
-  stepFlight,
-  wreckId,
-} from "../src/model/flight.ts";
+import { createFlight, stepFlight, wreckId } from "../src/model/flight.ts";
 import {
   acceptJob,
   type BoardContext,
@@ -71,8 +62,16 @@ import {
   stationBoard,
 } from "../src/model/jobs.ts";
 import { chartLandmarks, landmarkById } from "../src/model/landmarks.ts";
-import { clearOfOreFields } from "../src/model/oreFields.ts";
 import { stardustPickupReach } from "../src/model/pickupBody.ts";
+import { planRegion, type SpawnPlacement, type SpawnRules } from "../src/model/spawnPlanner.ts";
+import {
+  chunkSpawnReach,
+  chunkSpawnRegion,
+  spawnGatherReach,
+  spawnRules,
+  worldSpawnExclusions,
+  worldSpawnSites,
+} from "../src/model/spawnTargets.ts";
 import { discoveryStardustId } from "../src/model/stardustPlacement.ts";
 import { stationById, type StationSite, stationsNear } from "../src/model/stations.ts";
 import type { FlightState, JobTarget } from "../src/model/types.ts";
@@ -190,8 +189,6 @@ export interface Scenario {
   economy: EconomyOverrides;
   /** Chunk spawn weight for discovery caches; the base is CONTENT's. */
   cacheSpawnWeight?: number;
-  /** Replacement encounter tables per galaxy; the base is the catalog's galaxyEncounters. */
-  encounters?: Partial<Record<GalaxyNumber, readonly EncounterEntry[]>>;
   /** Weapons owned at the start, as carried over from earlier galaxies. */
   startWeapons?: UpgradeWeapon[];
   prices: Partial<Prices>;
@@ -343,19 +340,11 @@ export interface RunResult {
   balance: number[];
 }
 
-/** Mirrors flight.ts's private encounter-cell hash; the test checks it against createFlight. */
+/** A seed hash for the simulation's own streams. */
 function cellHash(seed: number, x: number, y: number): number {
   let n = seed ^ Math.imul(x, 374761393) ^ Math.imul(y, 668265263);
   n = Math.imul(n ^ (n >>> 13), 1274126177);
   return (n ^ (n >>> 16)) >>> 0;
-}
-/** Mirrors flight.ts's private encounter-cell LCG. */
-function lcg(seed: number): () => number {
-  let n = seed;
-  return () => {
-    n = (Math.imul(n, 1664525) + 1013904223) >>> 0;
-    return n / 4294967296;
-  };
 }
 /** The player's behaviour stream, independent of the world's seeded content. */
 function mulberry(seed: number): () => number {
@@ -384,10 +373,14 @@ export interface WorldOptions {
   galaxy: GalaxyNumber;
   seed: number;
   spawnWeights: typeof CONTENT.tuning.flight.spawnWeights;
-  encounters: readonly EncounterEntry[];
 }
 
-type CellPlans = Map<string, ReturnType<typeof planChunk>>;
+/** A chunk's planned rocks and enemy group, and its discovery caches. */
+interface CellPlan {
+  readonly caches: readonly ChunkCache[];
+  readonly placements: readonly SpawnPlacement[];
+}
+type CellPlans = Map<string, CellPlan>;
 type PlansForWorld = (world: WorldOptions) => CellPlans;
 
 /**
@@ -421,9 +414,53 @@ export function onScreen(dx: number, dy: number, margin = 0): boolean {
 /** Where every flight launches; layout and encounters keep clear of it. */
 const FLIGHT_START = { x: 0, y: 0 };
 
+const worldRules = new Map<GalaxyNumber, SpawnRules>();
+
+/**
+ * A chunk's planned content as flight.ts plans it: the spawn planner's placements in the chunk
+ * and the template's discovery caches, before Ada's clearance.
+ */
+function planCell(options: WorldOptions, cell: { x: number; y: number }): CellPlan {
+  const { galaxy, seed } = options;
+  let rules = worldRules.get(galaxy);
+  if (!rules) {
+    rules = spawnRules(galaxy);
+    worldRules.set(galaxy, rules);
+  }
+  const centre = { x: (cell.x + 0.5) * size, y: (cell.y + 0.5) * size };
+  const reach = chunkSpawnReach(rules);
+  const region = chunkSpawnRegion(
+    rules,
+    worldSpawnExclusions({}, galaxy, [FLIGHT_START], reach, centre),
+    worldSpawnSites({}, galaxy, reach + spawnGatherReach(rules), centre),
+    cell,
+  );
+  const key = `${cell.x},${cell.y}`;
+  const flight = tuning.flight;
+  return {
+    caches: planChunkCaches(CHUNK_CATALOG, {
+      clearance: flight.shipRadius,
+      field: byPosition(ASTEROID_FIELDS, galaxy),
+      galaxy,
+      objectsPerChunk: flight.objectsPerChunk,
+      radius: flight.rockRadius,
+      seed,
+      shapes: [...ASTEROID_SHAPES.values()],
+      shipRadius: flight.shipRadius,
+      size,
+      spawnWeights: options.spawnWeights,
+      ...cell,
+    }),
+    placements: planRegion(rules, { encounter: seed, world: seed }, region).placements.filter(
+      (placement) => placement.chunk === key,
+    ),
+  };
+}
+
 /**
  * One chunk's layout objects and encounter pack, as flight.ts generates them with Ada at
- * `player`. Debris drops nothing, so it is omitted.
+ * `player`: the spawn planner's rocks and enemy group, and the template's discovery caches.
+ * Moving rocks are debris, which drops nothing, so they are omitted.
  */
 export function generateChunk(
   options: WorldOptions,
@@ -432,95 +469,52 @@ export function generateChunk(
   y: number,
   plans?: CellPlans,
 ): Chunk {
-  const { catalog, galaxy, seed } = options;
-  const flight = tuning.flight;
-  const stationSafe = (point: { x: number; y: number }) =>
-    stationsNear(catalog, galaxy, catalog.station.safeRadius, point).length > 0;
+  const { catalog, galaxy } = options;
+  const key = `${x},${y}`;
+  const plan = plans?.get(key) ?? planCell(options, { x, y });
+  plans?.set(key, plan);
   const chunk: Chunk = { caches: [], dust: [], pack: null, rocks: [] };
-  const spacing = encounterSpacing(CONTENT, galaxy);
-  if (hostsEncounterCell(spacing, x) && hostsEncounterCell(spacing, y)) {
-    const next = lcg(cellHash(seed ^ 9173, x, y));
-    const center = { x: (x + 0.5) * size, y: (y + 0.5) * size };
-    if (distance(center, player) >= tuning.safeRadius * 2 && !stationSafe(center)) {
-      if (Math.floor(next() * 4) !== 3) {
-        const countRoll = next();
-        const roll = rollEncounter(options.encounters, countRoll, next());
-        const { archetype, count } = roll;
-        const escorts = roll.escorts ?? null;
-        // A flight's start begins calm: the whole encounter stays clear of it.
-        const reach = encounterReach(CONTENT, archetype, count, roll.escorts);
-        if (distance(center, FLIGHT_START) >= tuning.flight.arrivalCalm + reach) {
-          chunk.pack = {
-            archetype,
-            count,
-            decided: false,
-            escorts,
-            id: `pack:${x},${y}`,
-            ...center,
-          };
-        }
-      }
+  const enemies = plan.placements.filter((placement) => placement.category === "enemy");
+  const leaders = enemies.filter((placement) => placement.leader === undefined);
+  const escorts = enemies.filter((placement) => placement.leader !== undefined);
+  if (leaders.length) {
+    chunk.pack = {
+      archetype: leaders[0]!.archetype as EnemyArchetype,
+      count: leaders.length,
+      decided: false,
+      escorts: escorts.length
+        ? { archetype: escorts[0]!.archetype as EnemyArchetype, count: escorts.length }
+        : null,
+      id: `pack:${key}`,
+      x: leaders.reduce((sum, leader) => sum + leader.x, 0) / leaders.length,
+      y: leaders.reduce((sum, leader) => sum + leader.y, 0) / leaders.length,
+    };
+  }
+  for (const placement of plan.placements) {
+    if (placement.category === "rock" && !placement.moving) {
+      chunk.rocks.push({
+        id: placement.id,
+        size: ASTEROID_SHAPES.get(placement.shape!)!.size,
+        x: placement.x,
+        y: placement.y,
+      });
     }
   }
-  const key = `${x},${y}`;
-  const plan =
-    plans?.get(key) ??
-    planChunk(CHUNK_CATALOG, {
-      asteroidDensity: flight.asteroidDensity,
-      asteroids: {
-        field: byPosition(ASTEROID_FIELDS, galaxy),
-        shapes: [...ASTEROID_SHAPES.values()],
-      },
-      clearance: flight.shipRadius,
-      objectsPerChunk: flight.objectsPerChunk,
-      rockRadius: flight.rockRadius,
-      galaxy,
-      seed,
-      shipRadius: flight.shipRadius,
-      size,
-      spawnWeights: options.spawnWeights,
-      x,
-      y,
-    });
-  plans?.set(key, plan);
-  for (const placement of plan.placements) {
-    // A drifting asteroid keeps clear of Ada and safe areas over its whole path, a drawn rock by
-    // its silhouette radius, as in flight.ts.
-    const reach =
-      (placement.kind === "pickup" ? flight.pickupRadius : placementRadius(placement)) +
-      (placement.orbit?.radius ?? 0);
-    // Asteroids keep out of ore fields, as in flight.ts; caches may lie there.
-    const clear =
-      distance(placement, player) - reach > tuning.safeRadius &&
-      distance(placement, FLIGHT_START) - reach > tuning.safeRadius &&
-      stationsNear(catalog, galaxy, catalog.station.safeRadius + reach, placement).length === 0 &&
-      (placement.kind === "pickup" || clearOfOreFields(galaxy, reach, placement));
-    if (!clear) {
-      continue;
-    }
-    // Positions are taken at flight time 0; the sim does not move drifting asteroids.
-    const at = placement.orbit
-      ? orbitMotion(0, { ...placement.orbit, x: placement.x, y: placement.y }).position
-      : placement;
-    if (placement.kind === "rock") {
-      const size = placement.asteroid ? ASTEROID_SHAPES.get(placement.asteroid)?.size : undefined;
-      chunk.rocks.push({ id: placement.id, size: size ?? "small", x: at.x, y: at.y });
-    } else if (placement.kind === "pickup") {
-      const amount = catalog.discoveryStardust;
-      const radius = stardustPickupReach(catalog.stardustPickupRadius, amount);
-      if (
-        distance(at, player) > tuning.safeRadius + radius &&
-        distance(at, FLIGHT_START) > tuning.safeRadius + radius &&
-        stationsNear(catalog, galaxy, catalog.station.safeRadius + radius, at).length === 0
-      ) {
-        chunk.caches.push({
-          amount,
-          id: discoveryStardustId(placement.id, 0),
-          source: "caches",
-          x: at.x,
-          y: at.y,
-        });
-      }
+  const amount = catalog.discoveryStardust;
+  const radius = stardustPickupReach(catalog.stardustPickupRadius, amount);
+  for (const cache of plan.caches) {
+    if (
+      distance(cache, player) > tuning.safeRadius + radius &&
+      distance(cache, FLIGHT_START) > tuning.safeRadius + radius &&
+      stationsNear(catalog, galaxy, catalog.station.safeRadius + radius, cache).length === 0
+    ) {
+      chunk.caches.push({
+        amount,
+        id: discoveryStardustId(cache.id, 0),
+        source: "caches",
+        x: cache.x,
+        y: cache.y,
+      });
     }
   }
   return chunk;
@@ -642,7 +636,6 @@ export interface SimulationInput {
   galaxy: GalaxyNumber;
   seed: number;
   spawnWeights: typeof CONTENT.tuning.flight.spawnWeights;
-  encounters: readonly EncounterEntry[];
   /** Weapons owned at the start, from earlier galaxies. */
   startWeapons: readonly UpgradeWeapon[];
 }
@@ -790,7 +783,6 @@ export function simulate(input: SimulationInput, plansForWorld?: PlansForWorld):
     flightSeed = cellHash(0x0f17, input.seed, result.jumps + galaxy * 1000) || 1;
     world = {
       catalog,
-      encounters: input.encounters,
       galaxy,
       seed: flightSeed,
       spawnWeights: input.spawnWeights,
@@ -1561,7 +1553,6 @@ export function runScenario(
         catalog,
         minutes: options.minutes,
         prices,
-        encounters: scenario.encounters?.[options.galaxy] ?? encounterTable(options.galaxy),
         startWeapons: scenario.startWeapons ?? [],
         galaxy: options.galaxy,
         seed,
@@ -1931,9 +1922,6 @@ function main(argv: readonly string[]): void {
     ...(scenario.cacheSpawnWeight === undefined
       ? {}
       : { cacheSpawnWeight: scenario.cacheSpawnWeight as number }),
-    ...(scenario.encounters === undefined
-      ? {}
-      : { encounters: scenario.encounters as NonNullable<Scenario["encounters"]> }),
     ...(scenario.startWeapons === undefined
       ? {}
       : { startWeapons: scenario.startWeapons as UpgradeWeapon[] }),

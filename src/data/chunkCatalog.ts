@@ -7,9 +7,11 @@ export type ChunkCatalog = Readonly<
   Partial<Record<RoutePosition, readonly { id: ChunkTemplateId; weight: number }[]>>
 >;
 
-/** A galaxy's asteroid mix: slot and feature size weights, feature chance per template. */
+/**
+ * A galaxy's asteroid mix: planned slot rock size weights and HP by size, and the template
+ * feature chance and sizes whose quadrant discovery caches keep clear of.
+ */
 export interface AsteroidField {
-  readonly driftChance: number;
   readonly featureChance: Readonly<Record<ChunkTemplateId, number>>;
   readonly featureSizes: Readonly<Partial<Record<AsteroidSize, number>>>;
   /** Shot hit points by size class. */
@@ -19,8 +21,6 @@ export interface AsteroidField {
 
 // Provisional playtest field shared by every galaxy until galaxies are themed.
 const SHARED_ASTEROID_FIELD: AsteroidField = {
-  // Ordinary asteroids hold their centres; eligible art still spins at its seeded rate.
-  driftChance: 0,
   featureChance: { cluster: 0.35, passage: 0.2, poi: 0, quiet: 0.45 },
   featureSizes: { huge: 0.35, large: 0.65 },
   hp: { huge: 16, large: 10, medium: 5, small: 3 },

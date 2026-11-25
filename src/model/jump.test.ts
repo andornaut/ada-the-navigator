@@ -116,8 +116,11 @@ describe("picked-up weapons", () => {
   it("equips consecutive new weapons through the game step in combat", () => {
     const model = launched();
     const flight = model.state.flight!;
-    // Fire in flight inside the battle square keeps Ada in danger for the whole check.
+    // Fire in flight inside the battle square keeps Ada in danger for the whole check. The
+    // chunks load first, and are then cleared so no rock stops the shot.
     flight.player = { x: 5000, y: 5000 };
+    model.step(0.01, idle);
+    flight.objects = [];
     incoming(flight);
     flight.shots.at(-1)!.y += 300;
     model.step(0.01, idle);

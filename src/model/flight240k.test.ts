@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
@@ -8,17 +7,14 @@ import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { planChunk } from "./chunkTemplates.ts";
 import { createUnpopulatedFlight, stepFlight } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
 import { worldOreFieldInCell, worldOreFieldsNear } from "./oreFields.ts";
 import { retaliatorAsteroidQuery } from "./retaliatorAsteroids.ts";
-import { rocksOverlap } from "./rockSpacing.ts";
 import { worldStationsNear } from "./stations.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 import { periodicWorldGrid, worldCellAt, worldCellKey, worldCellsNear } from "./worldCells.ts";
-import { nearestImage } from "./worldGeometry.ts";
 
 vi.mock("../data/world.ts", () => ({ GALAXY_SIDE: 240_000 }));
 
@@ -40,50 +36,10 @@ function openFlight(player: Vec, generated = false, galaxy: GalaxyNumber = 1) {
 }
 
 describe("240,000-unit periodic flight ownership", () => {
-  it("plans the same corner from every image and aligns ports and rocks across both seams", () => {
+  it("divides the 240,000-unit world into whole chunks", () => {
     expect(nominal).toBe(512);
     expect(grid.periodCells).toBe(468);
     expect(grid.pitch * grid.periodCells!).toBe(GALAXY_SIDE);
-    const plan = (x: number, y: number) =>
-      planChunk(CHUNK_CATALOG, {
-        ...context,
-        asteroidDensity: CONTENT.tuning.flight.asteroidDensity,
-        asteroids: {
-          field: ASTEROID_FIELDS[1]!,
-          shapes: [...ASTEROID_SHAPES.values()],
-        },
-        clearance: CONTENT.tuning.flight.shipRadius,
-        galaxy: 1,
-        objectsPerChunk: CONTENT.tuning.flight.objectsPerChunk,
-        rockRadius: CONTENT.tuning.flight.rockRadius,
-        seed: 173,
-        shipRadius: CONTENT.tuning.flight.shipRadius,
-        size: nominal,
-        spawnWeights: CONTENT.tuning.flight.spawnWeights,
-        x,
-        y,
-      });
-    const corner = plan(233, 233);
-    expect(corner.placements.length).toBeGreaterThan(0);
-    expect(plan(233 + 468, 233 - 468)).toEqual(corner);
-    expect(corner.ports.east.center.x).toBeCloseTo(half, 8);
-    expect(corner.ports.south.center.y).toBeCloseTo(half, 8);
-    const east = plan(-234, 233);
-    const south = plan(233, -234);
-    for (const [ours, other] of [
-      [corner.ports.east.center, east.ports.west.center],
-      [corner.ports.south.center, south.ports.north.center],
-    ] as const) {
-      expect(nearestImage(GALAXY_SIDE, ours, other).point).toEqual(ours);
-    }
-    for (const a of corner.placements.filter(({ kind }) => kind === "rock")) {
-      expect(worldCellAt(grid, a)).toEqual({ x: 233, y: 233 });
-      for (const b of [...east.placements, ...south.placements].filter(
-        ({ kind }) => kind === "rock",
-      )) {
-        expect(rocksOverlap(a, { ...b, ...nearestImage(GALAXY_SIDE, a, b).point })).toBe(false);
-      }
-    }
   });
 
   it("generates the same cells and IDs from both corner images, then crosses without a world-sized trip", () => {
@@ -100,7 +56,8 @@ describe("240,000-unit periodic flight ownership", () => {
     );
     expect(flight.chunks).toEqual(keys);
     expect(image.chunks).toEqual(keys);
-    const ambient = (objects: SpaceObject[]) => objects.filter(({ id }) => id.startsWith("chunk:"));
+    const ambient = (objects: SpaceObject[]) =>
+      objects.filter(({ id }) => /^rock(-feature)?:/.test(id));
     expect(ambient(flight.objects).length).toBeGreaterThan(0);
     expect(ambient(image.objects)).toEqual(ambient(flight.objects));
     for (const object of ambient(flight.objects)) {

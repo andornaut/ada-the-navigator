@@ -930,7 +930,7 @@ describe("integrated combat", () => {
     expect(flight.shots.some((shot) => shot.enemy)).toBe(true);
   });
 
-  it("generates deterministic small packs, separated encounter cells, terrain and ballistic regions", () => {
+  it("generates deterministic small packs, separated encounter cells, rocks and moving rocks", () => {
     const flight = empty();
     // Generate distinct distant near-fields without advancing combat or encounter time.
     for (let i = 1; i <= 12; i++) {
@@ -942,21 +942,34 @@ describe("integrated combat", () => {
     // Galaxy one's largest group is a swarm pack of 4 to 6 with the position's +1 bonus.
     expect(Object.values(packs).every((size) => size >= 1 && size <= 7)).toBe(true);
     expect(
-      flight.objects.some((object) => object.id.startsWith("chunk:") && object.kind === "rock"),
+      flight.objects.some((object) => object.id.startsWith("rock:") && object.kind === "rock"),
     ).toBe(true);
     expect(
-      flight.objects.some((object) => object.id.startsWith("ballistic:") && object.velocity),
+      flight.objects.some((object) => object.id.startsWith("moving:") && object.velocity),
     ).toBe(true);
-    // A capital battle's escorts share their capital's encounter cell.
-    const cells = new Set(Object.keys(packs).map((id) => id.split(":")[1]!));
-    const origins = [...cells].map((cell) => cell.split(",").map(Number));
-    for (let i = 0; i < origins.length; i++) {
-      for (let j = i + 1; j < origins.length; j++) {
-        const first = origins[i]!;
-        const second = origins[j]!;
-        expect(
-          Math.hypot(first[0]! - second[0]!, first[1]! - second[1]!) * CONTENT.tuning.chunkSize,
-        ).toBeGreaterThanOrEqual(encounterQuiet(1).distance);
+    // Each group's members sit on a line centred on its lattice anchor, and anchors keep the
+    // quiet distance apart.
+    const anchors = Object.keys(packs)
+      .filter((id) => !id.endsWith(":escorts"))
+      .flatMap((id) => {
+        const members = flight.objects.filter((object) => object.enemy?.packId === id);
+        return members.length
+          ? [
+              {
+                x: members.reduce((sum, member) => sum + member.x, 0) / members.length,
+                y: members.reduce((sum, member) => sum + member.y, 0) / members.length,
+              },
+            ]
+          : [];
+      });
+    expect(anchors.length).toBeGreaterThan(2);
+    for (let i = 0; i < anchors.length; i++) {
+      for (let j = i + 1; j < anchors.length; j++) {
+        const first = anchors[i]!;
+        const second = anchors[j]!;
+        expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(
+          encounterQuiet(1).distance,
+        );
       }
     }
     const replay = empty();
@@ -992,18 +1005,20 @@ describe("rotating hulls", () => {
 
 describe("galaxy encounters", () => {
   it("generates a capital battle as a capital pack and a four-fighter escort pack on station", () => {
-    // This seeded middle-region cell admits a capital and its four escorts in one step.
+    // Andromeda's middle region plans capital battles; fly until one loads.
     const flight = createFlight(CONTENT, 5, 17, progress);
-    flight.player = {
-      x: 24 * CONTENT.tuning.chunkSize,
-      y: 24 * CONTENT.tuning.chunkSize,
-    };
-    stepFlight(CONTENT, 0.001, idle, flight);
-    const leader = flight.objects.find((object) => object.id === "pack:24,24:0");
+    let leader: SpaceObject | undefined;
+    for (let x = 12000; !leader && x < 60000; x += CONTENT.tuning.chunkSize) {
+      flight.player = { x, y: 12000 };
+      flight.shield = Infinity;
+      stepFlight(CONTENT, 0.001, idle, flight);
+      leader = flight.objects.find(
+        (object) =>
+          object.enemy?.archetype === "capital" && object.enemy.packId?.startsWith("pack:"),
+      );
+    }
     expect(leader).toBeDefined();
-    expect(leader!.enemy?.archetype).toBe("capital");
     const packId = leader!.enemy!.packId!;
-    expect(packId).toBe("pack:24,24");
     expect(leader!.id).toBe(`${packId}:0`);
     expect(leader!.radius).toBe(ENEMY_SIZE_RATIOS.capital * CONTENT.tuning.flight.shipRadius);
     const escorts = flight.objects.filter((object) => object.enemy?.packId === `${packId}:escorts`);
@@ -1014,10 +1029,13 @@ describe("galaxy encounters", () => {
     });
     for (const escort of escorts) {
       expect(escort.enemy).toMatchObject({ archetype: "fighter", escortOf: leader!.id });
-      expect(Math.hypot(escort.x - leader!.x, escort.y - leader!.y)).toBeCloseTo(
-        leader!.radius + escortTuning.stationGap,
-        0,
-      );
+      // Each escort starts on its ring, at least the station gap beyond the capital's hull, and
+      // its phase points at its station.
+      const offset = { x: escort.x - leader!.x, y: escort.y - leader!.y };
+      const distance = Math.hypot(offset.x, offset.y);
+      expect(distance).toBeGreaterThanOrEqual(leader!.radius + escortTuning.stationGap - 1);
+      expect(Math.cos(escort.enemy!.phase)).toBeCloseTo(offset.x / distance);
+      expect(Math.sin(escort.enemy!.phase)).toBeCloseTo(offset.y / distance);
     }
   });
 
@@ -1194,45 +1212,6 @@ function pack(flight: FlightState, points: Vec[]): SpaceObject[] {
 }
 
 describe("combat admission and subframe firing", () => {
-  it("records only admitted pack members when a safezone excludes part of a seeded group", () => {
-    // The fixture uses an encounter at the flight start, which launches otherwise keep clear.
-    const content = structuredClone(CONTENT);
-    content.tuning.flight.arrivalCalm = 0;
-    let template: FlightState | undefined;
-    let members: SpaceObject[] = [];
-    for (let seed = 0; seed < 64; seed++) {
-      const candidate = createFlight(content, 1, seed, progress);
-      const group = candidate.objects.filter((object) => object.enemy?.archetype === "swarm");
-      if (group.length === 2) {
-        template = candidate;
-        members = group;
-        break;
-      }
-    }
-    expect(template).toBeDefined();
-    const flight = template!;
-    const packId = members[0]!.enemy!.packId!;
-    const last = members.at(-1)!;
-    flight.chunks = [];
-    flight.combat = { initialPackSizes: {}, routeEncounters: [] };
-    flight.objects = [
-      {
-        hp: 1,
-        id: "safe",
-        kind: "destination",
-        radius: 30,
-        x: last.x + content.tuning.safeRadius * 0.75,
-        y: last.y,
-      },
-    ];
-    stepFlight(content, 0.001, idle, flight);
-    const admitted = flight.objects.filter((object) => object.enemy?.packId === packId);
-    expect(admitted.length).toBeGreaterThan(0);
-    expect(admitted.length).toBeLessThan(members.length);
-    expect(flight.combat!.initialPackSizes[packId]).toBe(admitted.length);
-    expect(admitted.every((object) => !object.enemy!.fleeing)).toBe(true);
-  });
-
   it.each(["destination", "guard"] as const)(
     "keeps %s clearance separate from a later combat casualty",
     (clearance) => {
