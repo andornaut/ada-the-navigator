@@ -2,8 +2,8 @@
 
 Production plan for the enemy fleet: fourteen ship designs and nine weapon tops,
 each built as one model of connected solids and drawn at 16 headings with
-depth-resolved occlusion. Stage 1 (the model layer and the three small craft) is
-built; the other stages are planned.
+depth-resolved occlusion. Stages 1 and 2 (the model layer, the three small
+craft and the three retaliator hulls) are built; the other stages are planned.
 
 ## Rules
 
@@ -17,6 +17,7 @@ built; the other stages are planned.
 - No flat-plate hulls. Wings are thick wedges that taper.
 - Small-craft weapons are flush hull ports.
 - No ship is recognisable as a specific film or television ship.
+- No insignia on any ship.
 
 ## Fleet
 
@@ -43,7 +44,7 @@ Spans are Ada widths from `src/data/enemyDimensions.ts`.
   (Cartwheel), Broad wing (Andromeda), Crossbow (Needle), Forked fortress
   (Phantom).
 - The `frigateNarrow`, `frigateCompact`, `capitalNarrow` and `capitalCompact`
-  profile variants retire with their hulls. General Gadget's flagship keeps its
+  profile variants retire with their hulls. Admiral Archie's flagship keeps its
   shipped design.
 - Health and speed are unchanged.
 
@@ -105,7 +106,7 @@ Layers per class:
 | Destruction shards                    | Palette pack                 | Palette pack        | None                     |
 | Family recolours                      | claim, garnet, needle        | Top and jets only   | Armour per family        |
 
-## Stage 1 output
+## Output
 
 `node art/tools/fleet.ts` writes these files and rows. Reruns are byte-identical.
 
@@ -115,10 +116,43 @@ Layers per class:
 | Arrowhead    | `fleetFighter`     |    80 |      35 |      2 |       54.51 |      42.88 |  27.26 |
 | Spear        | `fleetInterceptor` |   128 |      56 |      1 |       96.25 |      42.88 |  48.13 |
 
-Hull sizes are frame px; display px are 0.4375 times them.
+| Craft            | Key                              | Stem                        | Frame | Display | Hull length | Hull width | Radius | Mount offset | Collar frame | Top frame |
+| ---------------- | -------------------------------- | --------------------------- | ----: | ------: | ----------: | ---------: | -----: | ------------ | -----------: | --------: |
+| Manta gunship    | `fleetRetaliator`                | `retaliator`                |   160 |      70 |       77.69 |     128.64 |  64.32 | `[0, 11.43]` |           32 |        40 |
+| Cargo Hauler     | `fleetRetaliatorCargoHauler`     | `retaliatorCargoHauler`     |   184 |    80.5 |      137.09 |     128.64 |  68.55 | `[0, 9.14]`  |           24 |        32 |
+| Mining Freighter | `fleetRetaliatorMiningFreighter` | `retaliatorMiningFreighter` |   176 |      77 |      114.25 |     128.64 |  64.32 | `[0, 11.43]` |           32 |        40 |
 
-- `/art/enemies/{key}-sheet.svg`, `{key}-jets.json` and
-  `{key}-shards-packed.json`: the coral sheet and the data every family reads.
+Hull sizes and offsets are frame px; display px are 0.4375 times them. Each
+retaliator has three stern mouths.
+
+Each retaliator is its own hull: the three share no frames, jets, collision,
+hardpoints or shards. Its launcher is the `turret` hardpoint, with one `intact`
+state and the `pod` top, named `turret` in its rows and file:
+
+- `{key}-turret-intact-sheet.svg`: the mount's collar at the 16 hull headings,
+  centred on its anchor. Each frame is the part of the collar the hull leaves
+  visible at that heading.
+- `{key}-turret-top-sheet.svg`: the top at 16 aims, centred on its pivot. It
+  draws over the hull and collar at every heading.
+- `{key}-hardpoints.json`, version 1, in the shipped retaliator's schema:
+  `headings[k]` gives the collar's `anchor`, the top's `pivot` and the collar's
+  convex `collision`; `tops.turret[i]` gives the two shot origins (one per
+  bright cell) and the top's convex collision at aim `i`, relative to the
+  pivot. It adds `hull` and the hardpoint's `offset` from the hull pivot, x to
+  port and y aft.
+- The shards add the launcher, collar and top aimed ahead, as one loose part.
+- The Manta gunship wears the family's hull paint. The stems keep their role
+  paint; their collar, top, jets, nozzle glow and dark works take the family's,
+  so the garnet and needle rows name the coral stem sheets and claim has its
+  own.
+
+A sheet whose frames equal one already written ships once: its rows name that
+file and its nested roots with `svgSheetMember`. The Mining Freighter's top is
+the Manta gunship's.
+
+- `/art/enemies/{key}-sheet.svg`, `{key}-jets.json`, `{key}-shards-packed.json`
+  and a retaliator's `{key}-hardpoints.json`: the coral sheet and the data
+  every family reads. A shard pack's `archetype` is its sidecar key, the stem.
 - `/art/cartwheel/enemies/{key}-sheet.svg`, `/art/andromeda/enemies/{key}-sheet.svg`
   and `/art/needle/enemies/{key}-sheet.svg`: the claim, garnet and needle sheets.
 - [fleet-rows.json](fleet-rows.json): per manifest, the `assets` rows and
@@ -131,8 +165,9 @@ with a `family` load with their galaxy, and Cartwheel's manifest test accepts
 no id outside its known groups, so the rows cannot sit in the manifests under
 other ids.
 
-`node art/tools/fleet-contact-sheet.ts <dir>` writes a review sheet of every
-heading at 1x and 2x on each family's field.
+`node art/tools/fleet-contact-sheet.ts <dir>` writes review sheets of every
+heading at 1x and 2x on each family's field, the retaliators composed with
+their collar and top at two aims.
 
 ## Switch
 
@@ -150,6 +185,23 @@ Tech replaces, from `fleet-rows.json`:
   span times 1.98 (33.96 for the swarm, 42.45 for the fighter and interceptor);
   durations and `spread` follow the new frame sizes.
 
+For the retaliators, from the same file:
+
+- The hull, `-turret-intact-` and `-turret-top-` rows of `retaliator`,
+  `retaliatorCargoHauler` and `retaliatorMiningFreighter`: 144 rows in the core
+  manifest and 144 in each of the Cartwheel, Andromeda and Needle manifests.
+  Sizes change for every row, and the Cargo Hauler no longer aliases the
+  `retaliator` rows.
+- `sidecars.retaliator`, `sidecars.retaliatorCargoHauler` and
+  `sidecars.retaliatorMiningFreighter`: each names its own `jets`, `hardpoints`
+  and `shards`.
+- Each top has two shot origins where the shipped launcher has three tips.
+- `destruction.json` needs an entry per stem, or the three share one:
+  `flashWidth` is 127.35 for each.
+- Gameplay rolls the three hulls with equal weight in every galaxy and takes
+  each hull's `hull.radius` for spacing and footprint: 64.32, 68.55 and 64.32
+  frame px.
+
 Art then moves the craft into `enemies.ts`, `destruction.ts` and the family
 generators' ownership, renames the files to the `{archetype}-` stems and
 removes `fleet-rows.json` and the replaced sheets and models.
@@ -165,6 +217,9 @@ Tests that assert the replaced art and need Tech's changes at the switch:
 - `src/game/familyManifest.test.ts`, `src/game/claimArtLoad.test.ts` and
   `src/game/cartwheelArt.test.ts`: family sheet paths, Cartwheel's shared
   `claim-stock-hulls-sheet.svg` among them.
+- `src/data/enemyHardpoints.test.ts`, `src/model/muzzles.test.ts` and
+  `src/model/enemyAssetPair.test.ts`: the retaliator stems' files, sizes and
+  launch tips.
 - `art/tools/enemy-assets.test.ts` (jet mouths against `crafts.ts`) and
   `art/tools/enemy-size.test.ts` (size receipts), which move to the fleet
   models with the craft.
@@ -184,10 +239,9 @@ and `fleet-contact-sheet.ts`.
 ## Stages
 
 1. Small craft: Pincer drone, Arrowhead, Spear. Built.
-2. Retaliator hulls: Manta gunship, Cargo Hauler, Mining Freighter. Adds the
-   thick wedge wing solid, the turret base with intact and destroyed states,
-   the `pod` top at 16 aims with its muzzles, and `{craft}-hardpoints.json`
-   with hull size and the turret offset. All three ship in every family.
+2. Retaliator hulls: Manta gunship, Cargo Hauler, Mining Freighter, in every
+   family, with the launcher's collar, the `pod` top at 16 aims and
+   `{craft}-hardpoints.json`. Built.
 3. Frigates: Slim delta and Twin hull in cold armour, with engine, and `port`,
    `starboard`, `spine` and `bow` mounts in intact, destroyed and capped states.
 4. Capitals: six hulls with `command`, two engines and eight mounts. The
@@ -204,8 +258,6 @@ manifest rows, and the tests in `src/data/enemyHardpoints.test.ts`,
 
 ## Decisions needed
 
-- Whether the redesigned craft carry General Gadget's insignia. The models have
-  none.
 - Jet length follows frame size, so the tighter frames change it: the swarm's
   base length falls from 5.48 to 4.58 frame px and the interceptor's rises from
   5.74 to 6.93.
