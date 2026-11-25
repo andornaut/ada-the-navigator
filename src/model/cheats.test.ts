@@ -120,21 +120,21 @@ describe("cheats", () => {
     expect(flying.cheatAvailable("addStardust")).toBe(true);
   });
 
-  it("in a cheat session earns no achievement and records nothing toward one", () => {
+  it("earns achievements and counts statistics after cheats, marking no story progress", () => {
     const model = launched();
     model.state.economy.paints = [...ECONOMY.paintOrder.slice(0, 1)];
-    model.cheatSession = true;
-    const achievements = structuredClone(model.state.achievements);
+    const { activities, jobs } = model.state.achievements;
     const progress = structuredClone(model.state.progress);
     for (const id of CHEAT_IDS) {
       model.cheat(id);
     }
-    // Owned paints would otherwise count toward the paints achievement at the next sync.
     model.recordAchievement({ kind: "jobCompleted" });
     model.recordAchievement({ kind: "activityCompleted" });
     model.step(0.01, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
-    expect(model.state.achievements).toEqual(achievements);
+    expect(model.state.achievements.jobs).toBe(jobs + 1);
+    expect(model.state.achievements.activities).toBe(activities + 1);
+    // Every paint the equipment cheat grants counts toward the paints achievement.
+    expect(model.state.achievements.unlocked).toContain("fullPalette");
     expect(model.state.progress).toEqual(progress);
-    expect(model.achievements.every(({ unlocked }) => !unlocked)).toBe(true);
   });
 });

@@ -504,11 +504,6 @@ export class GameModel {
   } | null = null;
   /** Achievements unlocked whose notice has not shown yet; notices show in flight. */
   private achievementNotices: string[] = [];
-  /**
-   * A cheat session is running (gameplay/cheats.md "Cheat session"): nothing is earned, so no
-   * achievement records or unlocks. The scene owns the session and suspends saving.
-   */
-  cheatSession = false;
   private previousSeed = 0;
   // Every launch shows the title. Continue restores a saved story cursor or the held flight.
   private startShown = true;
@@ -2332,9 +2327,29 @@ export class GameModel {
   }
   /**
    * Applies a cheat to the current play, in flight or not; false when it has nothing left to
-   * grant. The caller has started the cheat session, so nothing it grants is earned or saved.
+   * grant. It acts on the real save like normal play.
    */
   cheat(id: CheatId): boolean {
+    const held = this.heldFlight;
+    if (held) {
+      // On Start, a flight held for Continue carries the loadout and ore the cheat changes.
+      const { dialogue, docked, flight, mode, notice } = this.state;
+      Object.assign(this.state, held);
+      this.heldFlight = null;
+      try {
+        return this.cheat(id);
+      } finally {
+        const state = this.state;
+        this.heldFlight = {
+          dialogue: state.dialogue,
+          docked: state.docked,
+          flight: state.flight,
+          mode: state.mode,
+          notice: state.notice,
+        };
+        Object.assign(this.state, { dialogue, docked, flight, mode, notice });
+      }
+    }
     if (!this.cheatAvailable(id)) {
       return false;
     }
@@ -4796,9 +4811,6 @@ export class GameModel {
   }
   /** Unlocks every achievement now reached, queueing its notice for the next flight step. */
   private syncAchievements(): void {
-    if (this.cheatSession) {
-      return;
-    }
     const unlocked = unlockAchievements(
       ACHIEVEMENTS,
       ACHIEVEMENT_TOTALS,
@@ -4809,9 +4821,6 @@ export class GameModel {
   }
   /** Records an achievement event from a system that counts toward one (data/achievements.ts). */
   recordAchievement(event: AchievementEvent): void {
-    if (this.cheatSession) {
-      return;
-    }
     recordAchievement(this.state.achievements, event);
     this.syncAchievements();
   }

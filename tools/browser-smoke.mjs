@@ -2026,20 +2026,21 @@ try {
     const beforeCheat = await readSave();
     const unlock = cheatDialog.locator('[data-cheat="unlockAllWeapons"]');
     await unlock.click();
-    // The cheat applies to play at once and disables itself, but the save keeps play as it was.
+    // The cheat applies to play at once, disables itself and saves like normal play.
     await page.waitForFunction(
       () => document.querySelector('[data-cheat="unlockAllWeapons"]')?.disabled === true,
     );
     await page.waitForTimeout(1200);
     const afterCheat = await readSave();
     assert.deepEqual(afterCheat.progress, beforeCheat.progress);
+    const allWeapons = ["heavyMissile", "multiLaser", "phaser", "rapidMissile", "scattershot"];
     assert.deepEqual(
-      afterCheat.economy,
-      beforeCheat.economy,
-      "A cheat session saves nothing: ownership, levels and Stardust stay as saved",
+      [...afterCheat.economy.ownedWeapons].sort(),
+      allWeapons,
+      "A cheat saves its grant to the real save",
     );
-    assert.deepEqual(afterCheat.flight.ownedWeapons ?? [], beforeCheat.flight.ownedWeapons ?? []);
-    assert.deepEqual(afterCheat.achievements, beforeCheat.achievements);
+    assert.deepEqual([...afterCheat.flight.ownedWeapons].sort(), allWeapons);
+    assert.equal(afterCheat.economy.stardust, beforeCheat.economy.stardust);
     await cheatDialog.locator('[data-action="dismiss-cheats"]').click();
     await page.locator('[data-action="pause-cheats"]:focus').waitFor();
     await resumeIfPaused();

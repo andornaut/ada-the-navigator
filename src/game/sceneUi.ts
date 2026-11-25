@@ -73,7 +73,6 @@ import { loadStoryArt } from "../ui/storyArt.ts";
 import { createStorybook, storyPageView } from "../ui/storybook.ts";
 import { readTitleScreen, type TitleScreenArt } from "../ui/titleScreen.ts";
 import { type CoreManifest, galaxyManifestKey, readGalaxyManifest } from "./artManifest.ts";
-import { beginCheatSession, endsCheatSession, NO_CHEAT_SESSION } from "./cheatSession.ts";
 import { readDestruction } from "./destructionArt.ts";
 import { EDGE_MARKER_DEPTH, HIT_FLASH_DEPTH } from "./drawOrder.ts";
 import { enemyPartFrame, GALAXY_FAMILIES } from "./enemyArt.ts";
@@ -159,7 +158,6 @@ export type UiContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
     | "cache"
     | "cacheArt"
     | "cameras"
-    | "cheatSession"
     | "children"
     | "controls"
     | "conversationBox"
@@ -397,7 +395,7 @@ export function buildScene(scene: UiContext): void {
     if (!scene.entryCurrent() || !requiredReady()) {
       return;
     }
-    if (newer || scene.emergencyReturn.active || scene.cheatSession.ending) {
+    if (newer || scene.emergencyReturn.active) {
       return;
     }
     const before = scene.model.screen;
@@ -407,31 +405,20 @@ export function buildScene(scene: UiContext): void {
       scene.controls.reset();
     }
     flushScene(scene);
-    if (endsCheatSession(scene.cheatSession, before, scene.model.screen)) {
-      void endCheatSession(scene);
-    }
     refreshScene(scene);
     if ((before === "start") !== (scene.model.screen === "start")) {
       requestUpdateCheck();
     }
   };
-  // A cheat joins the cheat session, starting it after saving play so far (cheatSession.ts).
+  // A cheat acts on the real save like any other action: apply saves it.
   const cheat = (id: CheatId) => ({
-    available: () => !scene.cheatSession.ending && scene.model.cheatAvailable(id),
+    available: () => scene.model.cheatAvailable(id),
     id,
     label: CHEAT_COPY[id],
     ...(id === "addOre" || id === "addStardust"
       ? {}
-      : { refusalReason: () => (scene.cheatSession.ending ? null : "Action unavailable.") }),
-    run: () =>
-      apply(() => {
-        scene.cheatSession = beginCheatSession(
-          () => void flushScene(scene),
-          scene.model,
-          scene.cheatSession,
-        );
-        scene.model.cheat(id);
-      }),
+      : { refusalReason: () => "Action unavailable." }),
+    run: () => apply(() => scene.model.cheat(id)),
   });
   scene.fpsCounter = createFpsCounter(
     document.getElementById(VIEW_HOST_ID) ?? document.body,
@@ -561,7 +548,6 @@ export function buildScene(scene: UiContext): void {
       onOpenChange: authorizeCampaignRewind,
       rows: [
         ...CHEAT_IDS.map(cheat),
-        // Rewinding the stored campaign starts no cheat session.
         {
           available: () => rewindSource !== null && canRewind(),
           id: "selectiveReset",
@@ -1626,10 +1612,9 @@ export function armBack(scene: UiContext): void {
   setBackArmed(!backReleased(scene.startShown, scene.settingsOpen));
 }
 
-/** The one save write: suspended for a cheat session, so every save path stops at once. */
+/** The one save write, so every save path shares its admission. */
 export async function flushScene(scene: UiContext): Promise<void> {
   if (
-    scene.cheatSession.active ||
     writingCampaignRewinds.has(scene) ||
     openCampaignRewinds.get(scene)?.() ||
     !requiredReady() ||
@@ -1670,7 +1655,6 @@ function campaignRewindAllowed(scene: UiContext): boolean {
     scene.entryCurrent() &&
     scene.sys.isActive() &&
     !scene.savingUnavailable &&
-    !scene.cheatSession.ending &&
     !scene.emergencyReturn.active &&
     !scene.jumping &&
     !scene.model.galaxyMapOpen &&
@@ -1712,7 +1696,6 @@ async function commitCampaignRewind(
           // Closing navigation calls onPauseChange, which can request a save of the old model.
           scene.controls.closeSettings();
           scene.controls.closePause();
-          scene.cheatSession = NO_CHEAT_SESSION;
           adoptGeneration();
           replaceModel(next, scene);
         }
@@ -1725,28 +1708,4 @@ async function commitCampaignRewind(
       writingCampaignRewinds.delete(scene);
     }
   }
-}
-
-/**
- * Ends the cheat session back on the start screen: the pre-cheat save loads in place of the
- * session's play, so Continue resumes it. Saving and actions wait until it has loaded.
- */
-export async function endCheatSession(scene: UiContext): Promise<void> {
-  const { before } = scene.cheatSession;
-  scene.cheatSession = { ...scene.cheatSession, ending: true };
-  restoreBeforeCheats(before, await saves.load(), scene);
-}
-
-/** The pre-cheat save, or the copy taken at the first cheat when the store could not read it. */
-function restoreBeforeCheats(
-  before: string | null,
-  loaded: Awaited<ReturnType<typeof saves.load>>,
-  scene: UiContext,
-): void {
-  const save =
-    loaded.status === "unavailable" || loaded.status === "newer"
-      ? before && (JSON.parse(before) as unknown)
-      : loaded.save;
-  scene.cheatSession = NO_CHEAT_SESSION;
-  replaceModel(new GameModel(CONTENT, save ?? undefined), scene);
 }
