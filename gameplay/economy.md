@@ -174,6 +174,9 @@ the medium, large and huge asteroid minimum-reward guarantee. Without ammo,
 small asteroids may yield zero resources; the other sizes yield at least one
 combined resource unit, but neither ore nor Stardust is individually guaranteed.
 Loot is released once on destruction, never for an intact or indestructible rock.
+A destroyed asteroid's drops release 240 ms after destruction, spread up to 7.68
+world units from its centre, at every motion setting. This timing is the
+asteroids' own and does not follow enemy destruction timing.
 
 Every static rock is an ordinary asteroid. Its contents are decided by this
 roll when it is destroyed: ore and Stardust, an ammo pack or nothing. Ore comes
