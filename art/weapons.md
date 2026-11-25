@@ -429,14 +429,19 @@ their drawing rules when Tech switches the renderer
 | Laser bolt       | A 1.5 px amber line 29.7 px long     | A 3 px amber slug 14 px long with a pointed head, a cream core and one amber tail step 1.5 px wide from 14 to 27 px behind the head                           |
 | Slug outline     | None                                 | Amber `(0, 0) (-2.7, -1.5) (-14, -1.5) (-15.5, 0) (-14, 1.5) (-2.7, 1.5)`; cream core `(-1.5, 0) (-3.3, -0.675) (-8.68, -0.675) (-8.68, 0.675) (-3.3, 0.675)` |
 | Scattershot dot  | An amber disc of radius 1.5          | An amber disc of radius 1.7 with a cream disc of radius 0.7 centred 0.45 px up and left of it; positions unchanged                                            |
-| Multi-Laser near | 3 to 5 bolts overlapping at the nose | While neighbouring bolt heads are under 5.6 px apart, one amber wedge across the fan with a cream inner wedge                                                 |
+| Multi-Laser near | 3 to 5 bolts overlapping at the nose | While neighbouring bolt heads are under 5.6 px apart on screen, one amber wedge through the heads with a cream inner wedge                                    |
 | Multi-Laser far  | 3 to 5 bolts, 1.5 px lines           | Each bolt a 2.2 px amber slug 10 px long with no core and no tail, so bolts never overlap                                                                     |
 
-The fan wedge, for head distance `h` from the nose (travel plus 29.7): an
-amber annular sector from radius `max(4, h - 11)` to `h` across -10 to 10
-degrees, and a cream one from the inner radius plus 4 to `h - 2.5` across
--7 to 7 degrees. Neighbouring heads are `h sin(16 / (n - 1) degrees)` apart.
-The wedge covers about the first 50 px of travel at level 3.
+The fan wedge is a band through the bolts' heads on screen. For each head at
+distance `h` from the nose (its travel), the amber band runs from the head back
+toward the nose to `max(4, h - 11)`, its two outer ends widened 1.1 px sideways
+(half a far slug); the cream band runs from `h - 2.5` back to the amber's inner
+edge plus 4, its ends on the outer bolts' centrelines. Its outer edge lies on
+the heads, so the far slugs replace it in place. The fan's 16 degree world
+spread projects to 8 to 31 degrees on screen and puts its heads at screen
+distances up to 13 px apart, so a sector of one angle and one radius cannot
+match them. The wedge covers 20 to 80 px of travel with 3 bolts and 41 to
+160 px with 5, by heading.
 
 ### Missiles
 
@@ -473,17 +478,20 @@ The envelope and timing are unchanged: radius `r = R (1 - (1 - g)^3)` for
 
 ### Beams
 
-| Element        | Shipped                                                                   | Flat look                                                                                                                                                                                                                                     |
-| -------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Phaser layers  | Amber 12 to 7.5 at `0.38 a`, cream 6 to 3.6, white 2.7 to 1.5, round caps | Opaque bands, butt ends: amber 8 to 5, cream 4.6 to 2.8, white 2.2 to 1.3, each times `w`                                                                                                                                                     |
-| Enemy Phaser   | The same in coral and plate                                               | Coral 8 to 5, plate 4.6 to 2.8, white 2.2 to 1.3                                                                                                                                                                                              |
-| Charged lance  | Its three alpha layers                                                    | Coral 9 to 6.8, plate 5.4 to 4, white 2.4 to 1.6                                                                                                                                                                                              |
-| Alpha          | The keyframed `a`, linear                                                 | One alpha for all bands: 1 while `a` is over 0.6, 0.6 while over 0.3, then 0.3                                                                                                                                                                |
-| Miss end       | A linear fade over the last 28 px                                         | Each band tapers to a point over the last 28 px                                                                                                                                                                                               |
-| Muzzle bloom   | Discs `5 w` at `0.3 a`, `2.9 w`, `1.6 w`                                  | Opaque discs `5 w`, `3.1 w` and `1.6 w` in the three band colours (lance `6.5 w`, `4.2 w`, `2.3 w`)                                                                                                                                           |
-| Aim line       | 1 px dashed                                                               | 1.5 px, dashes 6 on and 4 off, with a chevron `(L + 3, 0) (L - 1, -3) (L - 1, 3)` in place of the end tick                                                                                                                                    |
-| Phaser contact | Three hairline rings                                                      | One cream ring of radius `3 + 13 (1 - (1 - k)^2)` and width `3 - 1.6 k` for `k = age / 160`, at alpha 1 to `k` 0.5, 0.6 to 0.78, then 0.3, with a four-point amber burst `5.5 (1 - k)` and a white core `2.2 (1 - k)` while `k` is under 0.45 |
-| Lance contact  | A soft streak                                                             | A white dart `(-20 a, 0) (0, -2.2 a) (4 a, 0) (0, 2.2 a)` and a cream four-point burst `4.5 a` for `a = 1 - p`, at alpha 1 to `p` 0.5, then 0.6                                                                                               |
+| Element        | Shipped                                                                   | Flat look                                                                                                                                                                                                                                                      |
+| -------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Phaser layers  | Amber 12 to 7.5 at `0.38 a`, cream 6 to 3.6, white 2.7 to 1.5, round caps | Opaque bands, butt ends: amber 8 to 5, cream 4.6 to 2.8, white 2.2 to 1.3, each times `w`                                                                                                                                                                      |
+| Enemy Phaser   | The same in coral and plate                                               | Coral 8 to 5, plate 4.6 to 2.8, white 2.2 to 1.3                                                                                                                                                                                                               |
+| Charged lance  | Its three alpha layers                                                    | Coral 9 to 6.8, plate 5.4 to 4, white 2.4 to 1.6                                                                                                                                                                                                               |
+| Alpha          | The keyframed `a`, linear                                                 | One alpha for all bands: 1 while `a` is over 0.6, 0.6 while over 0.3, then 0.3                                                                                                                                                                                 |
+| Miss end       | A linear fade over the last 28 px                                         | Each band tapers to a point over the last 28 px                                                                                                                                                                                                                |
+| Muzzle bloom   | Discs `5 w` at `0.3 a`, `2.9 w`, `1.6 w`                                  | Opaque discs `5 w`, `3.1 w` and `1.6 w` in the three band colours (lance `6.5 w`, `4.2 w`, `2.3 w`)                                                                                                                                                            |
+| Aim line       | 1 px dashed                                                               | 1.5 px, dashes 6 on and 4 off, with a chevron `(L + 3, 0) (L - 1, -3) (L - 1, 3)` in place of the end tick                                                                                                                                                     |
+| Phaser contact | Three hairline rings                                                      | One cream ring of radius `3 + 13 (1 - (1 - k)^2)` and width `3 - 1.6 k` for `k = age / 160`, at alpha 1 to `k` 0.5, 0.6 to 0.78, then 0.3, with a four-point amber burst `5.5 (1 - k)` with a 0.3 waist and a white core `2.2 (1 - k)` while `k` is under 0.45 |
+| Lance contact  | A soft streak                                                             | A white dart `(-20 a, 0) (0, -2.2 a) (4 a, 0) (0, 2.2 a)` and a cream four-point burst `4.5 a` with a 0.3 waist for `a = 1 - p`, at alpha 1 to `p` 0.5, then 0.6                                                                                               |
+
+A four-point burst has its notches at 0.3 of its point radius, as the
+[quantum jump](quantum-jump.md) star does.
 
 ### Hit spark
 
