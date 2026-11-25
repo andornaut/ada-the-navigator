@@ -108,22 +108,27 @@ missile does not suppress the wreck's own flash.
   `-8 + 16 i / (n - 1)` degrees. Offsets apply in the projected aim plane, then
   each bolt's screen direction unprojects to its world velocity, so screen
   length and speed vary per bolt. All bolts leave the nose together.
-- Multi-Laser near: while any two neighbouring heads are under 5.6 px apart on
-  screen, one amber wedge through the heads with a cream inner wedge.
-- Multi-Laser far: each bolt the slug scaled to 1.87 px wide with its
-  shoulder 6 px behind the head, with no core and no tail, so bolts never
+- Multi-Laser near: while two or more bolts fly, every head is more than 4 px
+  from the nose on screen and each pair of neighbouring heads, ordered across
+  the fan, is under 5.6 px apart on screen: one amber band through the heads
+  over a cream inner band.
+- Multi-Laser far: otherwise each bolt is the slug scaled to 1.87 px wide with
+  its shoulder 6 px behind the head, with no core and no tail, so bolts never
   overlap.
 
-The fan wedge is a band through the bolts' heads on screen. For each head at
-distance `h` from the nose (its travel), the amber band runs from the head back
-toward the nose to `max(4, h - 6.6)`, its two outer ends widened 0.935 px
-sideways (half a far slug); the cream band runs from `h - 1.5` back to the
-amber's inner edge plus 2.4, its ends on the outer bolts' centrelines. Its outer edge lies on
-the heads, so the far slugs replace it in place. The fan's 16 degree world
-spread projects to 8 to 31 degrees on screen and puts its heads at screen
-distances up to 13 px apart, so a sector of one angle and one radius cannot
-match them. The wedge covers 20 to 80 px of travel with 3 bolts and 41 to
-160 px with 5, by heading.
+The fan band runs through the bolts' heads on screen. For each head at screen
+distance `h` from the nose, the amber band runs from the head back toward the
+nose to `max(4, h - 6.6)`, and its edges at the first and last heads move
+0.935 px outward sideways (half a far slug). The cream band runs from `h - 1.5`
+back to the amber's inner edge plus 2.4, its ends on the outer bolts'
+centrelines, and draws only while it has depth at every head. Each edge is a
+polyline through one point per head. The amber band's outer edge lies on the
+heads, so the far slugs replace it in place. The 16 degree spread is the same on
+screen at every heading, but screen speed varies with heading, so at one travel
+the outer heads' screen distances differ by up to 23 percent and a sector of one
+radius cannot match them. With Ada at rest, the band gives way to far slugs once
+the farthest head is 34 to 40 px from the nose with 3 bolts and 66 to 80 px with
+5, by heading.
 
 ## Missiles
 
