@@ -35,6 +35,16 @@ import {
   ringGate,
   WORLD_UNIT,
 } from "./friendly-models.ts";
+import {
+  drawnWhales,
+  type ShippedWhales,
+  WHALE_DATA_FILE,
+  WHALE_MANIFEST,
+  whaleData,
+  whaleRows,
+  whaleSheet,
+  whaleSheetFile,
+} from "./friendly-whales.ts";
 import { type Sidecars, writeOnce } from "./manifest.ts";
 import { json, type Point, projectAt, round } from "./projection.ts";
 import { type Fill, TOLERANCES } from "./silhouette.ts";
@@ -129,17 +139,20 @@ export function draw(object: FriendlyObject): DrawnObject {
       ...fragment,
       points: fragment.points.map(([x, y]): V2 => [x * scale + origin[0], y * scale + origin[1]]),
     }));
-    const traced = object.collision
-      ? traceEnemyFills(
-          id,
-          placed.map((fragment): Fill => ({
-            color: colour(fragment),
-            points: fragment.points.map(([x, y]): V2 => [px(x), px(y)]),
-          })),
-          [width, height],
-          TOLERANCES,
-        )
-      : undefined;
+    // A strip's frames share the first frame's collision parts, so the pickup's body holds
+    // still through its loop.
+    const traced =
+      object.collision && !(object.strip && index > 0)
+        ? traceEnemyFills(
+            id,
+            placed.map((fragment): Fill => ({
+              color: colour(fragment),
+              points: fragment.points.map(([x, y]): V2 => [px(x), px(y)]),
+            })),
+            [width, height],
+            TOLERANCES,
+          )
+        : undefined;
     const { svg, silhouette } = frameSvg(width, height, title, placed, traced?.tips);
     const box = extents(placed);
     return {
@@ -321,12 +334,26 @@ function sheetText(objects: readonly DrawnObject[]): string {
   const namespace = 'xmlns="http://www.w3.org/2000/svg"';
   let x = 0;
   const roots: string[] = [];
-  for (const { width, height, drawn } of objects) {
+  for (const { width, height, drawn, strip } of objects) {
     const root = `<svg ${namespace} width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`;
     for (const { id, svg } of drawn) {
       if (!svg.startsWith(root) || !svg.endsWith("</svg>")) {
         throw new Error(`Unexpected frame root: ${id}`);
       }
+    }
+    if (strip) {
+      // One root holding the frames side by side.
+      const wide = width * drawn.length;
+      const inner = drawn.map(
+        ({ svg }, index) => `<svg x="${index * width}" y="0" ${svg.slice("<svg ".length)}`,
+      );
+      roots.push(
+        `<svg id="${drawn[0]!.id}" x="${x}" y="0" ${namespace} width="${wide}" height="${height}" viewBox="0 0 ${wide} ${height}">${inner.join("")}</svg>`,
+      );
+      x += wide;
+      continue;
+    }
+    for (const { id, svg } of drawn) {
       roots.push(`<svg id="${id}" x="${x}" y="0" ${svg.slice("<svg ".length)}`);
       x += width;
     }
@@ -353,15 +380,18 @@ function moorings({ origin, scale }: DrawnObject) {
 // The manifest rows that replace the shipped rows of the same objects at the switch.
 function rows(object: DrawnObject, path: string) {
   const { width, height, pivot } = object;
-  return object.drawn.map(({ id, row }) => ({
+  const frames = object.strip ? object.drawn.slice(0, 1) : object.drawn;
+  return frames.map(({ id, row }) => ({
     id,
     path,
     svgSheet: true,
-    width,
+    // A strip's row spans its frames; its display size and pivot are one frame's.
+    width: object.strip ? width * object.drawn.length : width,
     height,
     displayWidth: width * DISPLAY_SCALE,
     displayHeight: height * DISPLAY_SCALE,
     pivot: { x: pivot[0] / width, y: pivot[1] / height },
+    ...(object.strip ? { frameWidth: width, frameHeight: height } : {}),
     ...object.row,
     ...row,
     ...(object.key === "mooringBuoy" ? { moorings: moorings(object) } : {}),
@@ -376,8 +406,9 @@ function collisionFile(objects: readonly DrawnObject[]): string {
     frames: Object.fromEntries(
       objects
         .filter(({ collision }) => collision)
-        .flatMap(({ width, height, pivot, drawn }) =>
-          drawn.map(({ id, drawn: box, collision }) => [
+        .flatMap(({ width, height, pivot, drawn, strip }) =>
+          // A strip is keyed by its row: its first frame's extents and parts.
+          (strip ? drawn.slice(0, 1) : drawn).map(({ id, drawn: box, collision }) => [
             id,
             { frame: [width, height], pivot, drawn: box, collision },
           ]),
@@ -451,6 +482,38 @@ function stageCrafts(
   return crafts;
 }
 
+// Writes each whale kind's sheets, one per heading, and the whale data, and stages their rows
+// and the `whales` link of every manifest that carries one.
+function stageWhales(staged: Record<string, { assets: unknown[]; data?: Record<string, string> }>) {
+  const whales = drawnWhales();
+  const files = new Map<string, string>();
+  for (const whale of whales) {
+    for (const yaw of whale.headings.keys()) {
+      files.set(whaleSheetFile(whale.kind, yaw), whaleSheet(whale, yaw));
+    }
+  }
+  const paths = writeOnce("/art/whales/", new Map(), files);
+  for (const whale of whales) {
+    const entry = (staged[WHALE_MANIFEST[whale.kind]] ??= { assets: [] });
+    for (const yaw of whale.headings.keys()) {
+      entry.assets.push(...whaleRows(whale, yaw, paths.get(whaleSheetFile(whale.kind, yaw))!));
+    }
+  }
+  const shipped = JSON.parse(
+    readFileSync(fileURLToPath(new URL("../../public/art/whales.json", import.meta.url)), "utf8"),
+  ) as ShippedWhales;
+  const data = writeOnce(
+    "/art/",
+    new Map(),
+    new Map([[WHALE_DATA_FILE, json(whaleData(whales, shipped))]]),
+  ).get(WHALE_DATA_FILE)!;
+  for (const manifest of ["whirlpool", "phantom"]) {
+    const entry = (staged[manifest] ??= { assets: [] });
+    entry.data = { ...entry.data, whales: data };
+  }
+  return whales;
+}
+
 const ROWS = fileURLToPath(new URL("../friendly-rows.json", import.meta.url));
 const PICKUPS = "pickups.json";
 const GATE_SHEET = "ring-gates-sheet.svg";
@@ -489,6 +552,7 @@ function main() {
   needle.assets.push(...gateRows(gates.frames, gatePaths.get(GATE_SHEET)!));
   needle.data = { needleGates: gatePaths.get(GATE_DATA)! };
   const crafts = stageCrafts(staged);
+  const whales = stageWhales(staged);
   const text = json(staged);
   if (!existsSync(ROWS) || readFileSync(ROWS, "utf8") !== text) writeFileSync(ROWS, text);
   for (const { name, width, height, pivot, drawn } of objects) {
@@ -501,6 +565,12 @@ function main() {
     const [x0, y0, x1, y1] = frames[0]!.drawn;
     console.log(
       `craft-${name}: frame ${frame}, drawn ${round((x1 - x0) * DISPLAY_SCALE)} x ${round((y1 - y0) * DISPLAY_SCALE)} display px at heading 0, ${frames.length} frames`,
+    );
+  }
+  for (const { kind, frame, headings } of whales) {
+    const [x0, y0, x1, y1] = headings[0]!.frames[0]!.drawn;
+    console.log(
+      `whale-${kind}: frame ${frame}, drawn ${round((x1 - x0) * DISPLAY_SCALE)} x ${round((y1 - y0) * DISPLAY_SCALE)} display px at heading 0, footprint ${headings[0]!.footprintRadius}`,
     );
   }
   console.log(

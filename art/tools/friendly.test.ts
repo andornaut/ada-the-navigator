@@ -4,6 +4,8 @@ import { test } from "node:test";
 
 import { DISPLAY_SCALE } from "./crafts.ts";
 import { drawnCrafts } from "./friendly-craft.ts";
+import { WHALE_KINDS, WHALE_LOOP_FRAMES } from "./friendly-whale-models.ts";
+import { drawWhale, whaleFootprint, whaleFrame } from "./friendly-whales.ts";
 import { drawGates, drawnObjects } from "./friendly.ts";
 import { GATE_AXES, GATE_RIM, WORLD_UNIT } from "./friendly-models.ts";
 import { readManifest } from "./manifest.ts";
@@ -56,7 +58,9 @@ test("Stardust and ore draw 14 display px tall", () => {
 
 test("an object's frames share one outline unless its shape changes", () => {
   for (const { key, drawn } of objects) {
-    if (key === "guideBeacon") continue;
+    if (key === "guideBeacon" || key === "stardust" || key === "huntGlint" || key === "holodisk") {
+      continue;
+    }
     assert.equal(new Set(drawn.map(({ silhouette }) => silhouette)).size, 1, key);
   }
 });
@@ -79,7 +83,15 @@ test("each staged row replaces a shipped row or one frame of a split row", () =>
       .flatMap(({ assets }) => assets.map(({ id }) => id))
       .toSorted(),
     [
-      ...objects.flatMap(({ drawn }) => drawn.map(({ id }) => id)),
+      ...objects.flatMap(({ drawn, strip }) =>
+        (strip ? drawn.slice(0, 1) : drawn).map(({ id }) => id),
+      ),
+      ...WHALE_KINDS.flatMap((kind) =>
+        Array.from({ length: 16 * WHALE_LOOP_FRAMES }, (_, index) => {
+          const [yaw, loop] = [Math.floor(index / WHALE_LOOP_FRAMES), index % WHALE_LOOP_FRAMES];
+          return `whale-${kind}-${yaw}-${loop}`;
+        }),
+      ),
       ...gates.frames.map(({ id }) => id),
       ...crafts.flatMap(({ frames }) => frames.map(({ id }) => id)),
     ].toSorted(),
@@ -117,7 +129,9 @@ test("every pickup frame ships strictly convex collision parts inside its frame"
   const collected = objects.filter(({ collision }) => collision);
   assert.deepEqual(
     Object.keys(file.frames),
-    collected.flatMap(({ drawn }) => drawn.map(({ id }) => id)),
+    collected.flatMap(({ drawn, strip }) =>
+      (strip ? drawn.slice(0, 1) : drawn).map(({ id }) => id),
+    ),
   );
   for (const [id, { frame, collision }] of Object.entries(file.frames)) {
     assert.ok(collision.length > 0, id);
@@ -295,4 +309,114 @@ test("each stranded craft stages a tow point and collision per heading in its ga
   }
   const shipped = json("/art/cartwheel/tow.json") as { line: unknown };
   assert.deepEqual((json(staged.core!.data!.tow!) as { line: unknown }).line, shipped.line);
+});
+
+type StripRow = Row & {
+  frameWidth?: number;
+  frameHeight?: number;
+  displayWidth: number;
+  frames?: Record<string, number>;
+  loop?: { frame: number; name: string; ms: number }[];
+  climb?: { ms: number; lit?: string }[];
+};
+type ShippedRow = StripRow & { displayHeight: number };
+
+test("each animated pickup stages the shipped frame names and loop timings on one strip row", () => {
+  const shipped = readManifest("core").assets as ShippedRow[];
+  const rows = staged.core!.assets as StripRow[];
+  const sheet = read(`../../public${rows[0]!.path}`);
+  for (const id of ["stardust", "hunt-glint", "ammo-pack", "holodisk", "upgrade-chevron"]) {
+    const was = shipped.find((row) => row.id === id)!;
+    const now = rows.find((row) => row.id === id)!;
+    const object = objects.find(({ drawn }) => drawn[0]!.id === id)!;
+    assert.deepEqual(now.loop, was.loop, id);
+    assert.deepEqual(now.climb, was.climb, id);
+    if (was.frames) assert.deepEqual(now.frames, was.frames, id);
+    // The strip holds every frame the loop names, each one frame wide.
+    const count = now.width / now.frameWidth!;
+    assert.equal(count, object.drawn.length, id);
+    assert.equal(now.frameHeight, now.height, id);
+    assert.ok(Math.abs(now.displayWidth - now.frameWidth! * DISPLAY_SCALE) < 1e-9, id);
+    for (const { frame } of now.loop ?? []) assert.ok(frame < count, id);
+    for (const { lit } of now.climb ?? []) assert.ok(now.frames![lit ?? "rest"]! < count, id);
+    const root = sheet.split(`<svg id="${id}" `)[1]!.split(/<svg id="/u)[0]!;
+    assert.equal(root.split("<svg x=").length - 1, count, id);
+    // Every frame differs from the rest frame.
+    const [rest, ...others] = object.drawn.map(({ svg }) =>
+      svg.replace(/<title>.*?<\/title>/u, ""),
+    );
+    for (const other of others) assert.notEqual(other, rest, id);
+  }
+  assert.deepEqual(rows.find(({ id }) => id === "ore-nugget")!.frames, { rest: 0 });
+});
+
+type WhaleData = {
+  headings: number;
+  family: unknown;
+  reducedMotion: unknown;
+  kinds: {
+    kind: string;
+    loop: unknown;
+    stationaryHeading: number;
+    headings: {
+      index: number;
+      frame: { width: number; height: number };
+      display: { width: number; height: number };
+      pivot: [number, number];
+      footprintRadius: number;
+    }[];
+  }[];
+};
+
+test("each whale kind stages 16 headings of 8 loop frames in one square frame", () => {
+  for (const kind of WHALE_KINDS) {
+    const frame = whaleFrame(kind);
+    assert.equal(frame % 8, 0, kind);
+    const manifest = kind === "whale" || kind === "adult" ? "core" : "whirlpool";
+    const rows = staged[manifest]!.assets.filter(({ id }) => id.startsWith(`whale-${kind}-`));
+    assert.equal(rows.length, 16 * WHALE_LOOP_FRAMES, kind);
+    for (const { id, width, height, pivot } of rows) {
+      assert.deepEqual([width, height, pivot.x, pivot.y], [frame, frame, 0.5, 0.5], id);
+    }
+    // The loop moves: the tail's frames differ, and the drawn whale stays inside its frame.
+    for (const yaw of [0, 2, 10, 14]) {
+      const loop = Array.from({ length: WHALE_LOOP_FRAMES }, (_, index) =>
+        drawWhale(kind, frame, yaw, index),
+      );
+      assert.equal(new Set(loop.map(({ silhouette }) => silhouette)).size, WHALE_LOOP_FRAMES);
+      for (const { id, drawn } of loop) {
+        assert.ok(drawn[0] >= 1 && drawn[1] >= 1, id);
+        assert.ok(drawn[2] <= frame - 1 && drawn[3] <= frame - 1, id);
+      }
+    }
+  }
+});
+
+test("the whale data keeps the shipped loop, family and still headings, with a footprint per heading", () => {
+  const shipped = json("/art/whales.json") as WhaleData;
+  for (const manifest of ["whirlpool", "phantom"]) {
+    const data = json(staged[manifest]!.data!.whales!) as WhaleData;
+    assert.equal(data.headings, 16);
+    assert.deepEqual(data.family, shipped.family);
+    assert.deepEqual(data.reducedMotion, shipped.reducedMotion);
+    assert.deepEqual(
+      data.kinds.map(({ kind }) => kind),
+      [...WHALE_KINDS],
+    );
+    for (const [index, entry] of data.kinds.entries()) {
+      const was = shipped.kinds[index]!;
+      assert.deepEqual([entry.loop, entry.stationaryHeading], [was.loop, was.stationaryHeading]);
+      const frame = whaleFrame(WHALE_KINDS[index]!);
+      assert.equal(entry.headings.length, 16);
+      for (const heading of entry.headings) {
+        assert.deepEqual(heading.frame, { width: frame, height: frame });
+        assert.equal(heading.display.width, frame * DISPLAY_SCALE);
+        assert.deepEqual(heading.pivot, [0.5, 0.5]);
+      }
+      // The footprint holds the whale's plan: at least half its length, inside its frame.
+      const radius = entry.headings[0]!.footprintRadius;
+      assert.equal(radius, whaleFootprint(WHALE_KINDS[index]!, 0));
+      assert.ok(radius > 0 && radius < frame * DISPLAY_SCALE);
+    }
+  }
 });

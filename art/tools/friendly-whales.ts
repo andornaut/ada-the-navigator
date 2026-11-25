@@ -2,8 +2,16 @@
 // headings by 8 swim loop frames, drawn in one square frame per kind.
 import { DISPLAY_SCALE } from "./crafts.ts";
 import { tonePaths } from "./fleet.ts";
-import { whale, WHALE_LOOP_FRAMES, type WhaleKind, WHALES } from "./friendly-whale-models.ts";
-import { ENEMY_HEADINGS, type Point, projectAt } from "./projection.ts";
+import {
+  CALF,
+  WHALE,
+  whale,
+  WHALE_KINDS,
+  WHALE_LOOP_FRAMES,
+  type WhaleKind,
+  WHALES,
+} from "./friendly-whale-models.ts";
+import { ENEMY_HEADINGS, type Point, projectAt, round } from "./projection.ts";
 import { LIGHT, meshPlace } from "./solid.ts";
 import { svgText } from "./svg-text.ts";
 import { type V2, visibleFragments } from "./visible.ts";
@@ -71,5 +79,138 @@ export function drawWhale(kind: WhaleKind, frame: number, yaw: number, loop?: nu
     svg: svgText(svg),
     silhouette: pathData(paths[0]!.loops),
     drawn: [px(Math.min(...xs)), px(Math.min(...ys)), px(Math.max(...xs)), px(Math.max(...ys))],
+  };
+}
+
+// World units from the pivot to the farthest point of the whale's plan at heading `yaw`, over
+// every loop frame: the art's ground offsets at display scale through the inverse of the game's
+// (x - y, (x + y) / 2).
+export function whaleFootprint(kind: WhaleKind, yaw: number): number {
+  let radius = 0;
+  for (let loop = 0; loop < WHALE_LOOP_FRAMES; loop++) {
+    for (const face of built(kind, yaw, loop)) {
+      for (const point of face.points) {
+        const [x, y] = view(yaw)(point);
+        const [sx, sy] = projectAt(0, 0, [x, y, 0]).map((v) => v * DISPLAY_SCALE);
+        radius = Math.max(radius, Math.hypot(sx! / 2 + sy!, sy! - sx! / 2));
+      }
+    }
+  }
+  return round(radius);
+}
+
+export type DrawnWhale = {
+  kind: WhaleKind;
+  frame: number;
+  // Per heading, its loop frames and its footprint radius in world units.
+  headings: { frames: WhaleFrame[]; footprintRadius: number }[];
+};
+
+export const drawnWhale = (kind: WhaleKind): DrawnWhale => {
+  const frame = whaleFrame(kind);
+  return {
+    kind,
+    frame,
+    headings: Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => ({
+      frames: Array.from({ length: WHALE_LOOP_FRAMES }, (_, loop) =>
+        drawWhale(kind, frame, yaw, loop),
+      ),
+      footprintRadius: whaleFootprint(kind, yaw),
+    })),
+  };
+};
+export const drawnWhales = (): DrawnWhale[] => WHALE_KINDS.map(drawnWhale);
+
+// The manifest that holds each kind's rows, as shipped.
+export const WHALE_MANIFEST = {
+  whale: "core",
+  adult: "core",
+  calf: "whirlpool",
+  youngCalf: "whirlpool",
+} as const;
+export const whaleSheetFile = (kind: WhaleKind, yaw: number) => `friendly-${kind}-${yaw}-sheet.svg`;
+export const WHALE_DATA_FILE = "friendly-whales.json";
+
+// One heading's loop frames as a sheet of nested roots in a row, each carrying its manifest id.
+export function whaleSheet({ frame, headings }: DrawnWhale, yaw: number): string {
+  const namespace = 'xmlns="http://www.w3.org/2000/svg"';
+  const root = `<svg ${namespace} width="${frame}" height="${frame}" viewBox="0 0 ${frame} ${frame}">`;
+  const roots = headings[yaw]!.frames.map(({ id, svg }, index) => {
+    if (!svg.startsWith(root) || !svg.endsWith("</svg>")) {
+      throw new Error(`Unexpected frame root: ${id}`);
+    }
+    return `<svg id="${id}" x="${index * frame}" y="0" ${svg.slice("<svg ".length)}`;
+  });
+  const width = roots.length * frame;
+  return `<svg ${namespace} width="${width}" height="${frame}" viewBox="0 0 ${width} ${frame}">${roots.join("")}</svg>\n`;
+}
+
+export function whaleRows({ kind, frame, headings }: DrawnWhale, yaw: number, path: string) {
+  return headings[yaw]!.frames.map(({ id }, loopFrame) => ({
+    id,
+    path,
+    width: frame,
+    height: frame,
+    displayWidth: frame * DISPLAY_SCALE,
+    displayHeight: frame * DISPLAY_SCALE,
+    facing: `world-${yaw}`,
+    directionIndex: yaw,
+    pivot: { x: 0.5, y: 0.5 },
+    kind,
+    loopFrame,
+    svgSheet: true,
+  }));
+}
+
+type ShippedKind = {
+  kind: WhaleKind;
+  title: string;
+  loop: { frames: number; idleMs: number; swimMs: number };
+  stationaryHeading: number;
+};
+export type ShippedWhales = { reducedMotion: unknown; family: unknown; kinds: ShippedKind[] };
+
+// The whale data in the shape of the shipped whales.json. The loop timings, the heading each
+// kind holds while still, the reduced motion frame and the family's offsets are the shipped
+// file's.
+export function whaleData(whales: readonly DrawnWhale[], shipped: ShippedWhales) {
+  return {
+    version: 1,
+    displayScale: DISPLAY_SCALE,
+    headings: ENEMY_HEADINGS,
+    sheets: "/art/whales/friendly-{kind}-{heading}-sheet.svg",
+    palette: {
+      hull: WHALE.hull,
+      throat: WHALE.throat,
+      fin: WHALE.fin,
+      spots: WHALE.glow[0],
+      calfHull: CALF.hull,
+      calfThroat: CALF.throat,
+      calfFin: CALF.fin,
+      calfSpots: CALF.glow[0],
+    },
+    reducedMotion: shipped.reducedMotion,
+    family: shipped.family,
+    kinds: whales.map(({ kind, frame, headings }) => {
+      const was = shipped.kinds.find((entry) => entry.kind === kind)!;
+      if (was.loop.frames !== WHALE_LOOP_FRAMES) throw new Error(`${kind} loop length differs`);
+      const { length, spots, pairs } = WHALES[kind];
+      return {
+        kind,
+        title: was.title,
+        // Display px from the fluke's tips to the snout.
+        length,
+        spots: { count: spots.length * (pairs ? 2 : 1), pattern: pairs ? "pairs" : "row" },
+        loop: was.loop,
+        stationaryHeading: was.stationaryHeading,
+        headings: headings.map(({ footprintRadius }, index) => ({
+          index,
+          frame: { width: frame, height: frame },
+          display: { width: frame * DISPLAY_SCALE, height: frame * DISPLAY_SCALE },
+          pivot: [0.5, 0.5],
+          footprintRadius,
+        })),
+      };
+    }),
   };
 }

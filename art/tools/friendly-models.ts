@@ -612,19 +612,32 @@ function wreck(): Mesh {
 
 // ------------------------------------------------------------------ pickups and caches
 
-// A crystal of two pyramids on a square girdle.
-function crystal(tones: Tones, radius: number, height: number): Mesh {
+// A crystal of two pyramids on a square girdle, turned `turn` degrees about its axis.
+function crystal(tones: Tones, radius: number, height: number, turn = 0): Mesh {
   const mesh: Mesh = [];
   const square = (r: number, z: number) =>
-    [0, 1, 2, 3].map((i): Point => [...polar(r, 45 + 90 * i), z]);
+    [0, 1, 2, 3].map((i): Point => [...polar(r, 45 + turn + 90 * i), z]);
   for (const s of [1, -1]) meshLoft(mesh, [square(radius, 0), square(0.05, s * height)], tones);
   return mesh;
 }
 
+// A twinkle: the crystal turns an eighth, then a quarter of a facet, as its tones catch the
+// light, and turns back. Frames in strip order: rest, glint 1, glint 2, glint 1.
+const TWINKLE = [
+  [0, 0],
+  [22.5, 1],
+  [45, 2],
+  [22.5, 1],
+] as const;
+const twinkle = (tones: readonly [Tones, Tones, Tones], radius: number, height: number) =>
+  TWINKLE.map(([turn, level]) => crystal(tones[level], radius, height, turn));
+
 // Stardust: one eight-faced crystal.
-const stardust = () => crystal(STARDUST, 6, 8);
+const stardust = () =>
+  twinkle([STARDUST, ["#ffffff", "#fff2cc", "#f4d98a"], ["#ffffff", "#fffbe9", "#fff2cc"]], 6, 8);
 // Lost item glint: one slim crystal.
-const huntGlint = () => crystal(GLINT, 4.5, 9);
+const huntGlint = () =>
+  twinkle([GLINT, ["#ffffff", "#f1eaf4", "#e3d6ea"], ["#ffffff", "#ffffff", "#f1eaf4"]], 4.5, 9);
 
 // Ore: a squat six-sided crystal with a bevelled crown.
 function oreNugget(): Mesh {
@@ -649,16 +662,25 @@ function section(l: number, half: number, bottom: number, top: number, chamfer: 
   ];
 }
 
-// Ammo pack: a chamfered crate with one dark band.
-function ammoPack(): Mesh {
+// Ammo pack: a chamfered crate with one dark band. Its glint crosses the crate in three frames:
+// the top, the top and the lit side, then the lit side alone.
+const AMMO_GLINT: readonly Tones[] = [
+  AMMO,
+  ["#ffffff", AMMO[1], AMMO[2]],
+  ["#ffffff", AMMO[0], AMMO[2]],
+  [AMMO[0], AMMO[0], AMMO[2]],
+];
+function ammoPack(tones: Tones): Mesh {
   const mesh: Mesh = [];
-  meshLoft(mesh, [section(-7, 5, -4.5, 4.5, 1.6), section(7, 5, -4.5, 4.5, 1.6)], AMMO);
+  meshLoft(mesh, [section(-7, 5, -4.5, 4.5, 1.6), section(7, 5, -4.5, 4.5, 1.6)], tones);
   meshLoft(mesh, [section(-1.6, 5.4, -4.9, 4.9, 1.7), section(1.6, 5.4, -4.9, 4.9, 1.7)], INK);
   return mesh;
 }
 
-// Upgrade pickup: two chevron blocks, as deep as they are tall, facing the viewer.
-function upgradeChevrons(): Mesh {
+// Upgrade pickup: two chevron blocks, as deep as they are tall, facing the viewer. The climbing
+// light lights the lower block, then the upper.
+const AMBER_LIT: Tones = ["#ffffff", "#ffe9c0", "#f0bd68"];
+function upgradeChevrons(lit?: "lower" | "upper"): Mesh {
   const mesh: Mesh = [];
   const chevron = [
     [-8, 0],
@@ -668,7 +690,10 @@ function upgradeChevrons(): Mesh {
     [0, 1.6],
     [-8, -4.4],
   ] as const;
-  for (const z of [0, 7]) {
+  for (const [name, z] of [
+    ["lower", 0],
+    ["upper", 7],
+  ] as const) {
     meshExtrude(
       mesh,
       chevron.map(([x, y]): Point => {
@@ -676,17 +701,19 @@ function upgradeChevrons(): Mesh {
         return [across[0] - NEAR[0] * 3, across[1] - NEAR[1] * 3, across[2]];
       }),
       along(NEAR, 6),
-      AMBER,
+      lit === name ? AMBER_LIT : AMBER,
     );
   }
   return mesh;
 }
 
-// Holodisk: one thick disc on edge, facing the viewer: pearl rim, hologram face, dark hub.
-function holodisk(): Mesh {
+// Holodisk: one thick disc on edge: pearl rim, hologram face, dark hub. It faces the viewer at
+// rest and turns `turn` degrees about its upright diameter.
+function holodisk(turn = 0): Mesh {
   const mesh: Mesh = [];
+  const axis: Point = [...polar(1, 45 + turn), 0];
   const disc = (half: number, radius: number, tones: Tones, sides: number) =>
-    meshTube(mesh, along(NEAR, -half), along(NEAR, half), radius, radius, tones, sides, {
+    meshTube(mesh, along(axis, -half), along(axis, half), radius, radius, tones, sides, {
       kind: "flat",
     });
   disc(2.2, 8, HOLO.body, 32);
@@ -694,6 +721,8 @@ function holodisk(): Mesh {
   disc(3, 2.2, INK, 16);
   return mesh;
 }
+// The turn's frames in strip order: rest, turn 1, edge-on, turn 2.
+const HOLODISK_TURN = [0, 50, 90, 130] as const;
 
 // Holodisk waypoint beacon: a keel, a pearl dish tier, a dark collar and one hologram lamp.
 function holodiskBeacon(lit: boolean): Mesh {
@@ -743,6 +772,9 @@ export type FriendlyObject = {
   row: Readonly<Record<string, unknown>>;
   // Convex collision parts ship for objects Ada collects.
   collision?: boolean;
+  // The frames are one manifest row: a strip in one nested root, left to right, indexed by the
+  // row's `frames` names as the shipped strips are. The row takes the first frame's id.
+  strip?: true;
 };
 
 const blink = (id: string, name: string, model: (lit: boolean) => Mesh) => [
@@ -750,59 +782,105 @@ const blink = (id: string, name: string, model: (lit: boolean) => Mesh) => [
   { id: `${id}-b`, title: `${name} B`, mesh: model(false) },
 ];
 
+// The twinkle's frames and loop, as the shipped Stardust and lost item strips define them: the
+// strip's fourth frame repeats glint 1.
+const GLINT_LOOP = {
+  frames: { rest: 0, glint1: 1, glint2: 2 },
+  loop: [
+    { frame: 0, name: "rest", ms: 420 },
+    { frame: 1, name: "glint1", ms: 60 },
+    { frame: 2, name: "glint2", ms: 80 },
+    { frame: 3, name: "glint1", ms: 60 },
+  ],
+} as const;
+
 export function friendlyObjects(): FriendlyObject[] {
   const pickup = { manifest: "core", sheet: "pickups", pivot: "centre", collision: true } as const;
+  const strip = { ...pickup, strip: true } as const;
+  // The frames of a strip: the first takes the row's id.
+  const frames = (id: string, name: string, meshes: readonly Mesh[]) =>
+    meshes.map((mesh, index) => ({
+      id: index === 0 ? id : `${id}-${index}`,
+      title: `${name} ${index}`,
+      mesh,
+    }));
   const beacon = { sheet: "beacons", pivot: "ground" } as const;
   const front = { facing: "front" };
   const fixed = { facing: "fixed" };
   return [
     {
-      ...pickup,
+      ...strip,
       key: "stardust",
       name: "Stardust",
       fit: [14, 14],
-      frames: [{ id: "stardust", title: "Stardust", mesh: stardust() }],
-      row: front,
+      frames: frames("stardust", "Stardust", stardust()),
+      row: { ...front, ...GLINT_LOOP },
     },
     {
-      ...pickup,
+      ...strip,
       key: "oreNugget",
       name: "Ore",
       fit: [14, 14],
-      frames: [{ id: "ore-nugget", title: "Ore", mesh: oreNugget() }],
-      row: front,
+      frames: frames("ore-nugget", "Ore", [oreNugget()]),
+      row: { ...front, frames: { rest: 0 } },
     },
     {
-      ...pickup,
+      ...strip,
       key: "ammoPack",
       name: "Ammo pack",
       fit: [16, 16],
-      frames: [{ id: "ammo-pack", title: "Ammo pack", mesh: ammoPack() }],
-      row: front,
+      frames: frames("ammo-pack", "Ammo pack", AMMO_GLINT.map(ammoPack)),
+      row: {
+        ...front,
+        frames: { rest: 0, glint1: 1, glint2: 2, glint3: 3 },
+        loop: [
+          { frame: 0, name: "rest", ms: 1100 },
+          { frame: 1, name: "glint1", ms: 70 },
+          { frame: 2, name: "glint2", ms: 70 },
+          { frame: 3, name: "glint3", ms: 70 },
+        ],
+      },
     },
     {
-      ...pickup,
+      ...strip,
       key: "upgradeChevrons",
       name: "Upgrade pickup",
       fit: [16, 16],
-      frames: [{ id: "upgrade-chevron", title: "Upgrade pickup", mesh: upgradeChevrons() }],
-      row: fixed,
+      frames: frames("upgrade-chevron", "Upgrade pickup", [
+        upgradeChevrons(),
+        upgradeChevrons("lower"),
+        upgradeChevrons("upper"),
+      ]),
+      row: {
+        ...fixed,
+        frames: { rest: 0, lower: 1, upper: 2 },
+        climb: [{ ms: 900 }, { ms: 120, lit: "lower" }, { ms: 120, lit: "upper" }],
+      },
     },
     {
-      ...pickup,
+      ...strip,
       key: "huntGlint",
       name: "Lost item glint",
       fit: [15, 15],
-      frames: [{ id: "hunt-glint", title: "Lost item glint", mesh: huntGlint() }],
-      row: front,
+      frames: frames("hunt-glint", "Lost item glint", huntGlint()),
+      row: { ...front, ...GLINT_LOOP },
     },
     {
-      ...pickup,
+      ...strip,
       key: "holodisk",
       name: "Holodisk",
       fit: [16, 16],
-      frames: [{ id: "holodisk", title: "Holodisk", mesh: holodisk() }],
-      row: front,
+      frames: frames("holodisk", "Holodisk", HOLODISK_TURN.map(holodisk)),
+      row: {
+        ...front,
+        frames: { rest: 0, turn1: 1, edge: 2, turn2: 3 },
+        loop: [
+          { frame: 0, name: "rest", ms: 600 },
+          { frame: 1, name: "turn1", ms: 70 },
+          { frame: 2, name: "edge", ms: 70 },
+          { frame: 3, name: "turn2", ms: 70 },
+        ],
+      },
     },
     {
       ...pickup,

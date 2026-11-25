@@ -10,21 +10,23 @@ export const WHALE_KINDS = ["whale", "adult", "calf", "youngCalf"] as const;
 export type WhaleKind = (typeof WHALE_KINDS)[number];
 export const WHALE_LOOP_FRAMES = 8;
 
-type Palette = { hull: Tones; throat: Tones; fin: Tones; glow: Tones; eye: Tones };
+type Palette = { hull: Tones; throat: Tones; fin: Tones; glow: Tones; eye: Tones; blow: Tones };
 const INK: Tones = ["#181425", "#181425", "#181425"];
-const WHALE: Palette = {
+export const WHALE: Palette = {
   hull: mat("#aaa5e6", "#7f78c2", "#544d91"),
   throat: mat("#e6e0f8", "#c9c0e8", "#9a90c4"),
   fin: mat("#9d97dd", "#746db8", "#4c4585"),
   glow: glow("#f7f2ff"),
   eye: INK,
+  blow: ["#544d91", "#544d91", "#4c4585"],
 };
-const CALF: Palette = {
+export const CALF: Palette = {
   hull: mat("#bfbaef", "#958ecc", "#6b64a6"),
   throat: mat("#eeeafb", "#d6cfef", "#a9a0ce"),
   fin: mat("#afa9e6", "#827bc0", "#504a87"),
   glow: glow("#fbf8ff"),
   eye: INK,
+  blow: ["#6b64a6", "#6b64a6", "#504a87"],
 };
 
 type Shape = {
@@ -145,6 +147,7 @@ const FLIPPER = [
   [0.1, 0.1],
 ] as const;
 const FLIPPER_STATION = 0.1;
+const BLOWHOLE = 0.375;
 const SLAB = 0.04;
 
 // A whale at loop frame `frame` of `WHALE_LOOP_FRAMES`, or at rest without one. `light` is the
@@ -188,6 +191,9 @@ export function whale(kind: WhaleKind, light: Point, frame?: number): Mesh {
       tones,
       { sides, bands, light },
     );
+  // The blowhole: one dark oval on the crown, which marks the head from above and behind.
+  const crown = stations[5]![3] + stations[5]![2] + (stations[6]![3] + stations[6]![2]);
+  ball([BLOWHOLE, 0, crown / 2 - 0.004], [0.022, 0.014, 0.008], palette.blow, 10, 6);
   // The low back hump.
   ball([-0.14, 0, 0.088], [0.07, 0.03, 0.035], palette.fin, 12, 8);
   // The notched fluke: one horizontal slab, turned with the end of the stock.

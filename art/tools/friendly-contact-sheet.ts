@@ -6,7 +6,8 @@
 // rows show each axis lit and dark with a stand-in for Ada between the back and front layers,
 // then each layer alone. `<dir>/friendly-craft.svg` shows each craft's 16 headings at the same
 // scales on its home galaxy's field, blink frames B after frames A, and the finale allies again
-// on Phantom's field.
+// on Phantom's field. `<dir>/friendly-pickup-loops.svg` shows each animated pickup's strip, frame
+// by frame, at 1x and 4x on the lightest field and on Phantom's, with its loop's timings.
 import { mkdirSync, writeFileSync } from "node:fs";
 
 import { DISPLAY_SCALE } from "./crafts.ts";
@@ -209,8 +210,62 @@ function craftSheet(out: string, scales: readonly number[]) {
   );
 }
 
+// Each animated pickup's strip frames at 1x and 4x, on a light field and on Phantom's.
+function pickupLoops(out: string) {
+  const strips = drawnObjects().filter(({ strip, drawn }) => strip && drawn.length > 1);
+  const parts: string[] = [];
+  let y = 0;
+  let width = 760;
+  for (const field of ["sunflower", "phantom"] as const) {
+    const { name, field: fill, edge } = FIELDS[field];
+    const top = y;
+    const rows: string[] = [];
+    y += GAP;
+    for (const object of strips) {
+      const row = object.row as {
+        frames: Record<string, number>;
+        loop?: { frame: number; name: string; ms: number }[];
+        climb?: { ms: number; lit?: string }[];
+      };
+      const timing = row.loop
+        ? row.loop.map((step) => `${step.frame} ${step.name} ${step.ms} ms`)
+        : row.climb!.map(({ ms, lit }) => `${row.frames[lit ?? "rest"]} ${lit ?? "rest"} ${ms} ms`);
+      rows.push(
+        `<text x="${GAP}" y="${y + 10}" font-family="DejaVu Sans" font-size="10" fill="${edge}">${name}: ${object.name} (${object.drawn[0]!.id}), ${object.drawn.length} strip frames; loop: ${timing.join(", ")}</text>`,
+      );
+      y += LABEL;
+      let x = GAP;
+      let tall = 0;
+      for (const scale of [1, 4]) {
+        const [w, h] = [
+          object.width * DISPLAY_SCALE * scale,
+          object.height * DISPLAY_SCALE * scale,
+        ];
+        for (const { silhouette, svg } of object.drawn) {
+          const inner = svg.replace(/^<svg[^>]*>|<title>.*?<\/title>|<\/svg>$/gu, "");
+          const keyline = `<path d="${silhouette}" fill="none" stroke="${edge}" stroke-width="${2 / DISPLAY_SCALE / scale}" stroke-linejoin="miter" stroke-miterlimit="2.5"/>`;
+          rows.push(
+            `<svg x="${x}" y="${y}" width="${w}" height="${h}" viewBox="0 0 ${object.width} ${object.height}" overflow="visible">${keyline}${inner}</svg>`,
+          );
+          x += w + GAP;
+        }
+        x += GAP * 2;
+        tall = Math.max(tall, h);
+      }
+      width = Math.max(width, x);
+      y += tall + GAP;
+    }
+    parts.push(`<rect x="0" y="${top}" width="100%" height="${y - top}" fill="${fill}"/>`, ...rows);
+  }
+  writeFileSync(
+    `${out}/friendly-pickup-loops.svg`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${y}">${parts.join("")}</svg>\n`,
+  );
+}
+
 main();
 {
   const [out, ...rest] = process.argv.slice(2);
   craftSheet(out!, rest.length ? rest.map(Number) : [1, 2]);
+  pickupLoops(out!);
 }
