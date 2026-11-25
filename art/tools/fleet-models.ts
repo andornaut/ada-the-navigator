@@ -945,19 +945,20 @@ function driveCone(
   if (state === "ember") bx(m, cut - 0.4, cut, w - ember, w + ember, z - ember, z + ember, p.gun);
 }
 
-// Slim delta: one broad deep hull with a blunt stepped bow block, a thick weapon shoulder close
-// against each flank, a raised citadel aft and twin drive cones in one stern block. `port` and
-// `starboard` stand on the shoulders, `spine` on the main hull aft of the citadel and `bow` on the
-// bow block.
+// The single-hull frigate, the Shoulder frigate: one broad low hull with a blunt stepped bow block,
+// a short thick weapon shoulder close against each flank, a raised citadel aft and twin drive
+// cones in one stern block. `port` and `starboard` stand on the shoulders, `spine` on the main
+// hull aft of the citadel and `bow` on the bow block.
 function slimDelta(p: Paint): FleetCraft {
-  const shoulder = { l: -12, w: 33.4, hw: 13.5, z: 14 };
+  const deck = 16.5;
+  const shoulder = { l: -20, w: 32.9, hw: 14, z: 9.5 };
   const body = solid("body", (m) => {
     hull(
       m,
       [
-        [40, 6, -4, 3],
-        [28, 12, -6, 3],
-        [-40, 12, -6, 3],
+        [42, 6, -3, 3],
+        [30, 11, -5, 3],
+        [-40, 11, -5, 3],
       ],
       p.under,
     );
@@ -965,17 +966,17 @@ function slimDelta(p: Paint): FleetCraft {
     hull(
       m,
       [
-        [58, 12, 3, 12, 2, 2],
-        [50, 16, 0, 15, 3, 2],
-        [30, 16, 0, 15, 3, 2],
+        [60, 11, 3, 10, 2, 2],
+        [52, 15, 0, 12.5, 3, 2],
+        [30, 15, 0, 12.5, 3, 2],
       ],
       p.armour,
     );
     hull(
       m,
       [
-        [34, 20, 0, 20, 4, 3],
-        [-40, 20, 0, 20, 4, 3],
+        [34, 19, 0, deck, 3.5, 3],
+        [-40, 19, 0, deck, 3.5, 3],
       ],
       p.armour,
     );
@@ -983,28 +984,28 @@ function slimDelta(p: Paint): FleetCraft {
     hull(
       m,
       [
-        [28, 20.3, -0.1, 20.3, 4.1, 3.1],
-        [23, 20.3, -0.1, 20.3, 4.1, 3.1],
+        [28, 19.3, -0.1, deck + 0.3, 3.6, 3.1],
+        [23, 19.3, -0.1, deck + 0.3, 3.6, 3.1],
       ],
       p.hull,
     );
     hull(
       m,
       [
-        [4, 10, 20, 25, 2, 2],
-        [-17, 11, 20, 26.5, 2, 2],
+        [4, 9, deck, deck + 4.5, 2, 2],
+        [-17, 10, deck, deck + 6, 2, 2],
       ],
       p.armour,
     );
-    bx(m, 4, 4.8, -6.5, 6.5, 21.4, 23.4, p.dark);
+    bx(m, 4, 4.8, -5.8, 5.8, deck + 1.2, deck + 3, p.dark);
     for (const side of [1, -1]) {
       hull(
         m,
         [
-          [14, 9.5, 2, 10, 2, 2],
-          [6, shoulder.hw, 0, shoulder.z, 3, 2],
-          [-34, shoulder.hw, 0, shoulder.z, 3, 2],
-          [-40, 11, 2, 11, 2, 2],
+          [-1, 11.5, 2, 7, 1.5, 1.5],
+          [-6, shoulder.hw, 0, shoulder.z, 2.5, 2],
+          [-34, shoulder.hw, 0, shoulder.z, 2.5, 2],
+          [-38, 12.5, 2, 7.5, 1.5, 1.5],
         ],
         p.armour,
         side * shoulder.w,
@@ -1013,25 +1014,25 @@ function slimDelta(p: Paint): FleetCraft {
   });
   const engine = (wrecked: boolean): Mesh => {
     const m: Mesh = [];
-    bx(m, -48, -36, -14, 14, 1, 17, p.dark);
-    driveCone(m, p, 6.6, 9, -59, -46, wrecked ? "ember" : "intact");
-    driveCone(m, p, -6.6, 9, -59, -46, wrecked ? "destroyed" : "intact");
+    bx(m, -48, -36, -14, 14, 1, 14.6, p.dark);
+    driveCone(m, p, 6.6, 7.8, -59, -46, wrecked ? "ember" : "intact");
+    driveCone(m, p, -6.6, 7.8, -59, -46, wrecked ? "destroyed" : "intact");
     return m;
   };
   return {
     archetype: "frigate",
     stem: "frigate",
     key: "fleetFrigate",
-    design: "Slim delta",
+    design: "Shoulder frigate",
     families: ["coral", "claim"],
     parts: [body],
-    mouths: [6.6, -6.6].map((w) => ({ at: [-59, w, 9] as Point, radius: 6.6 })),
+    mouths: [6.6, -6.6].map((w) => ({ at: [-59, w, 7.8] as Point, radius: 6.6 })),
     heavy: {
       blocks: [
         {
           id: "engine",
           role: "engine",
-          at: [-42, 0, 9],
+          at: [-42, 0, 7.8],
           intact: engine(false),
           destroyed: engine(true),
         },
@@ -1039,8 +1040,8 @@ function slimDelta(p: Paint): FleetCraft {
       mounts: [
         { id: "port", at: [shoulder.l, -shoulder.w, shoulder.z], capped: false },
         { id: "starboard", at: [shoulder.l, shoulder.w, shoulder.z], capped: false },
-        { id: "spine", at: [-33, 0, 20], capped: true },
-        { id: "bow", at: [42, 0, 15], capped: true },
+        { id: "spine", at: [-33, 0, deck], capped: true },
+        { id: "bow", at: [43, 0, 12.5], capped: true },
       ],
     },
     fleck: p.armour,

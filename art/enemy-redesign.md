@@ -31,7 +31,7 @@ Spans are Ada widths from `src/data/enemyDimensions.ts`.
 | `interceptor` | Spear                                  |    1 | Phaser, flush emitter nose cap. One drive cone            |     1 |
 | `retaliator`  | Manta gunship                          |    3 | Rapid Missile, one aimed `pod` top. Three stern mouths    |     2 |
 | `retaliator`  | Cargo Hauler (2.5), Mining Freighter   |    3 | Rapid Missile, one aimed `pod` top. Three nozzles         |     2 |
-| `frigate`     | Slim delta, Twin hull                  |    5 | Heavy Missile `rail` on `port`, Laser `gun` on the others |     3 |
+| `frigate`     | Shoulder frigate, Twin hull            |    5 | Heavy Missile `rail` on `port`, Laser `gun` on the others |     3 |
 | `capital`     | Six designs, one per galaxy            |    6 | Charged Lance or Mine Layer, Scattershot elsewhere        |     4 |
 | Weapon tops   | `gun`, `triple`, `dish`, `pod`, `rail` |      | Aimed tops with capped and destroyed mount states         |     5 |
 |               | `spread`, `lance`, `hopper`, `dome`    |      |                                                           |       |
@@ -39,7 +39,7 @@ Spans are Ada widths from `src/data/enemyDimensions.ts`.
 - Retaliators roll Manta gunship, Cargo Hauler and Mining Freighter with equal
   weight in every galaxy, so each of the three ships in every family. The two
   stems keep their role paint, with the launcher top and jets in the family's.
-- Frigates: Slim delta in Sunflower, Cartwheel and Phantom; Twin hull in
+- Frigates: Shoulder frigate in Sunflower, Cartwheel and Phantom; Twin hull in
   Whirlpool, Andromeda and Needle.
 - Capitals: Hammer (Sunflower), Manta dreadnought (Whirlpool), Outrigger carrier
   (Cartwheel), Broad wing (Andromeda), Crossbow (Needle), Forked fortress
@@ -155,32 +155,33 @@ state and the `pod` top, named `turret` in its rows and file:
 
 ### Frigates
 
-| Craft      | Key                | Frame | Display | Hull length | Hull width | Radius | Engine frame | Mount frame | `gun` frame | `rail` frame |
-| ---------- | ------------------ | ----: | ------: | ----------: | ---------: | -----: | -----------: | ----------: | ----------: | -----------: |
-| Slim delta | `fleetFrigate`     |   344 |   150.5 |      267.43 |      214.4 | 133.71 |          128 |          32 |          40 |           48 |
-| Twin hull  | `fleetFrigateTwin` |   400 |     175 |      246.86 |      214.4 | 123.43 |          256 |          32 |          40 |           48 |
+| Craft            | Key                | Frame | Display | Hull length | Hull width | Radius | Engine frame | Mount frame | `gun` frame | `rail` frame |
+| ---------------- | ------------------ | ----: | ------: | ----------: | ---------: | -----: | -----------: | ----------: | ----------: | -----------: |
+| Shoulder frigate | `fleetFrigate`     |   344 |   150.5 |         272 |      214.4 |    136 |          128 |          32 |          40 |           48 |
+| Twin hull        | `fleetFrigateTwin` |   400 |     175 |      246.86 |      214.4 | 123.43 |          256 |          32 |          40 |           48 |
 
-| Hardpoint   | Slim delta offset | Twin hull offset   | States                    |
-| ----------- | ----------------- | ------------------ | ------------------------- |
-| `engine`    | `[0, 96]`         | `[0, 109.71]`      | intact, destroyed         |
-| `port`      | `[-76.34, 27.43]` | `[-87.77, -22.86]` | intact, destroyed         |
-| `starboard` | `[76.34, 27.43]`  | `[87.77, -22.86]`  | intact, destroyed         |
-| `spine`     | `[0, 75.43]`      | `[0, 20.57]`       | intact, destroyed, capped |
-| `bow`       | `[0, -96]`        | `[0, -18.29]`      | intact, destroyed, capped |
+| Hardpoint   | Shoulder frigate offset | Twin hull offset   | States                    |
+| ----------- | ----------------------- | ------------------ | ------------------------- |
+| `engine`    | `[0, 96]`               | `[0, 109.71]`      | intact, destroyed         |
+| `port`      | `[-75.2, 45.71]`        | `[-87.77, -22.86]` | intact, destroyed         |
+| `starboard` | `[75.2, 45.71]`         | `[87.77, -22.86]`  | intact, destroyed         |
+| `spine`     | `[0, 75.43]`            | `[0, 20.57]`       | intact, destroyed, capped |
+| `bow`       | `[0, -98.29]`           | `[0, -18.29]`      | intact, destroyed, capped |
 
 Offsets are frame px from the hull pivot, x to starboard and y aft, as in the
 shipped layout: `port` is the mount to port on screen. The reference sheets
 draw the Heavy Missile on the other wing, because their model axes mirror on
 screen.
 
-The Slim delta is one broad deep hull with a blunt stepped bow block, a thick
-weapon shoulder close against each flank, a raised citadel aft and a stern
-engine block with twin mouths. It is 117 by 93.8 display px, and its `port` and
-`starboard` mounts stand on the shoulders.
+The Shoulder frigate (key `fleetFrigate`) is one broad low hull with a blunt
+stepped bow block, a short thick weapon shoulder against each flank at the
+stern, a raised citadel aft and a stern engine block with twin mouths. It is
+119 by 93.8 display px, and its `port` and `starboard` mounts stand on the
+shoulders.
 
 - The hull sheet has no hardpoints. Each hardpoint base is its own layer per
   state, centred on its anchor and cut by the hull at each heading: the engine
-  (the stern block and twin cones on the Slim delta, one cone per hull on the
+  (the stern block and twin cones on the Shoulder frigate, one cone per hull on the
   Twin hull, as one `engine` hardpoint), and each mount's collar.
 - Destroyed: a mount is a low scorched stump with a breach; an engine keeps its
   block, its cones lose their flared lips and glow, and one mouth holds an
@@ -200,17 +201,17 @@ engine block with twin mouths. It is 117 by 93.8 display px, and its `port` and
 Each galaxy flies one frigate, and the rows are staged so that the frame key
 selects it:
 
-| Galaxy             | Frigate    | Manifest  | Rows                       | Sidecar key   |
-| ------------------ | ---------- | --------- | -------------------------- | ------------- |
-| Sunflower, Phantom | Slim delta | core      | `enemy-frigate-...`        | `frigate`     |
-| Cartwheel          | Slim delta | Cartwheel | `enemy-claim-frigate-...`  | `frigate`     |
-| Whirlpool          | Twin hull  | Whirlpool | `enemy-frigateTwin-...`    | `frigateTwin` |
-| Andromeda          | Twin hull  | Andromeda | `enemy-garnet-frigate-...` | `frigate`     |
-| Needle             | Twin hull  | Needle    | `enemy-needle-frigate-...` | `frigate`     |
+| Galaxy             | Frigate          | Manifest  | Rows                       | Sidecar key   |
+| ------------------ | ---------------- | --------- | -------------------------- | ------------- |
+| Sunflower, Phantom | Shoulder frigate | core      | `enemy-frigate-...`        | `frigate`     |
+| Cartwheel          | Shoulder frigate | Cartwheel | `enemy-claim-frigate-...`  | `frigate`     |
+| Whirlpool          | Twin hull        | Whirlpool | `enemy-frigateTwin-...`    | `frigateTwin` |
+| Andromeda          | Twin hull        | Andromeda | `enemy-garnet-frigate-...` | `frigate`     |
+| Needle             | Twin hull        | Needle    | `enemy-needle-frigate-...` | `frigate`     |
 
 A family's own `frigate` rows are that family's design, so Cartwheel,
 Andromeda and Needle select as they do now. Whirlpool flies the coral family,
-whose `frigate` is the Slim delta, so the coral Twin hull is the new frame key
+whose `frigate` is the Shoulder frigate, so the coral Twin hull is the new frame key
 `frigateTwin` in Whirlpool's manifest, its only user. The `frigateNarrow` and
 `frigateCompact` rows and sidecars have no replacement.
 
@@ -466,7 +467,7 @@ and `fleet-contact-sheet.ts`.
 2. Retaliator hulls: Manta gunship, Cargo Hauler, Mining Freighter, in every
    family, with the launcher's collar, the `pod` top at 16 aims and
    `{craft}-hardpoints.json`. Built.
-3. Frigates: Slim delta and Twin hull in cold armour, with engine, and `port`,
+3. Frigates: Shoulder frigate and Twin hull in cold armour, with engine, and `port`,
    `starboard`, `spine` and `bow` mounts in intact, destroyed and capped
    states, and the `gun` and `rail` tops. Built.
 4. Capitals: six hulls with `command`, two engines and eight mounts, and the
