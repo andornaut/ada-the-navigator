@@ -134,7 +134,9 @@ state and the `pod` top, named `turret` in its rows and file:
   visible at that heading.
 - `{key}-turret-top-sheet.svg`: the top at 16 aims, centred on its pivot. It
   draws over the hull and collar at every heading.
-- `{key}-hardpoints.json`, version 1, in the shipped retaliator's schema:
+- `{key}-turret.json`, version 1, in the shipped retaliator's
+  `{craft}-hardpoints.json` schema, which name it takes at the switch (the
+  game's muzzle test reads every `-hardpoints.json` in the enemy folders):
   `headings[k]` gives the collar's `anchor`, the top's `pivot` and the collar's
   convex `collision`; `tops.turret[i]` gives the two shot origins (one per
   bright cell) and the top's convex collision at aim `i`, relative to the
@@ -151,7 +153,7 @@ file and its nested roots with `svgSheetMember`. The Mining Freighter's top is
 the Manta gunship's.
 
 - `/art/enemies/{key}-sheet.svg`, `{key}-jets.json`, `{key}-shards-packed.json`
-  and a retaliator's `{key}-hardpoints.json`: the coral sheet and the data
+  and a retaliator's `{key}-turret.json`: the coral sheet and the data
   every family reads. A shard pack's `archetype` is its sidecar key, the stem.
 - `/art/cartwheel/enemies/{key}-sheet.svg`, `/art/andromeda/enemies/{key}-sheet.svg`
   and `/art/needle/enemies/{key}-sheet.svg`: the claim, garnet and needle sheets.

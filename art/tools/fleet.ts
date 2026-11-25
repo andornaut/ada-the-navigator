@@ -279,6 +279,8 @@ function jets(craft: Scaled, frames: readonly Frame[]): string {
   );
 }
 
+// Staged as `{key}-turret.json`: src/model/muzzles.test.ts reads every `-hardpoints.json` in the
+// enemy folders into the game's muzzle table, so the file takes that name at the switch.
 // The version 1 hardpoints file of a craft with one aimed, indestructible launcher: the collar's
 // anchor and the top's pivot per hull heading, and the top's shot origins and collision per aim,
 // relative to the pivot. `offset` is the mount from the hull pivot in frame px, x to port and y
@@ -627,7 +629,7 @@ async function main() {
       if (family !== "coral") continue;
       files.set(`${craft.key}-jets.json`, jets(craft, frames.hull));
       if (frames.bases && frames.tops) {
-        files.set(`${craft.key}-hardpoints.json`, hardpoints(craft, frames.bases, frames.tops));
+        files.set(`${craft.key}-turret.json`, hardpoints(craft, frames.bases, frames.tops));
       }
       const core = shards(craft);
       const file = `${craft.key}-shards-packed.json`;
@@ -653,7 +655,7 @@ async function main() {
           stem,
           {
             jets: shared.get(`${key}-jets.json`)!,
-            ...(base ? { hardpoints: shared.get(`${key}-hardpoints.json`)! } : {}),
+            ...(base ? { hardpoints: shared.get(`${key}-turret.json`)! } : {}),
             shards: shared.get(`${key}-shards-packed.json`)!,
           },
         ]),

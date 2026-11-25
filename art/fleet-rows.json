@@ -3249,17 +3249,17 @@
       },
       "retaliator": {
         "jets": "/art/enemies/fleetRetaliator-jets.json",
-        "hardpoints": "/art/enemies/fleetRetaliator-hardpoints.json",
+        "hardpoints": "/art/enemies/fleetRetaliator-turret.json",
         "shards": "/art/enemies/fleetRetaliator-shards-packed.json"
       },
       "retaliatorCargoHauler": {
         "jets": "/art/enemies/fleetRetaliatorCargoHauler-jets.json",
-        "hardpoints": "/art/enemies/fleetRetaliatorCargoHauler-hardpoints.json",
+        "hardpoints": "/art/enemies/fleetRetaliatorCargoHauler-turret.json",
         "shards": "/art/enemies/fleetRetaliatorCargoHauler-shards-packed.json"
       },
       "retaliatorMiningFreighter": {
         "jets": "/art/enemies/fleetRetaliatorMiningFreighter-jets.json",
-        "hardpoints": "/art/enemies/fleetRetaliatorMiningFreighter-hardpoints.json",
+        "hardpoints": "/art/enemies/fleetRetaliatorMiningFreighter-turret.json",
         "shards": "/art/enemies/fleetRetaliatorMiningFreighter-shards-packed.json"
       }
     }
@@ -6706,17 +6706,17 @@
       },
       "retaliator": {
         "jets": "/art/enemies/fleetRetaliator-jets.json",
-        "hardpoints": "/art/enemies/fleetRetaliator-hardpoints.json",
+        "hardpoints": "/art/enemies/fleetRetaliator-turret.json",
         "shards": "/art/enemies/fleetRetaliator-shards-packed.json"
       },
       "retaliatorCargoHauler": {
         "jets": "/art/enemies/fleetRetaliatorCargoHauler-jets.json",
-        "hardpoints": "/art/enemies/fleetRetaliatorCargoHauler-hardpoints.json",
+        "hardpoints": "/art/enemies/fleetRetaliatorCargoHauler-turret.json",
         "shards": "/art/enemies/fleetRetaliatorCargoHauler-shards-packed.json"
       },
       "retaliatorMiningFreighter": {
         "jets": "/art/enemies/fleetRetaliatorMiningFreighter-jets.json",
-        "hardpoints": "/art/enemies/fleetRetaliatorMiningFreighter-hardpoints.json",
+        "hardpoints": "/art/enemies/fleetRetaliatorMiningFreighter-turret.json",
         "shards": "/art/enemies/fleetRetaliatorMiningFreighter-shards-packed.json"
       }
     }
@@ -10195,17 +10195,17 @@
       },
       "retaliator": {
         "jets": "/art/enemies/fleetRetaliator-jets.json",
-        "hardpoints": "/art/enemies/fleetRetaliator-hardpoints.json",
+        "hardpoints": "/art/enemies/fleetRetaliator-turret.json",
         "shards": "/art/enemies/fleetRetaliator-shards-packed.json"
       },
       "retaliatorCargoHauler": {
         "jets": "/art/enemies/fleetRetaliatorCargoHauler-jets.json",
-        "hardpoints": "/art/enemies/fleetRetaliatorCargoHauler-hardpoints.json",
+        "hardpoints": "/art/enemies/fleetRetaliatorCargoHauler-turret.json",
         "shards": "/art/enemies/fleetRetaliatorCargoHauler-shards-packed.json"
       },
       "retaliatorMiningFreighter": {
         "jets": "/art/enemies/fleetRetaliatorMiningFreighter-jets.json",
-        "hardpoints": "/art/enemies/fleetRetaliatorMiningFreighter-hardpoints.json",
+        "hardpoints": "/art/enemies/fleetRetaliatorMiningFreighter-turret.json",
         "shards": "/art/enemies/fleetRetaliatorMiningFreighter-shards-packed.json"
       }
     }
@@ -13684,17 +13684,17 @@
       },
       "retaliator": {
         "jets": "/art/enemies/fleetRetaliator-jets.json",
-        "hardpoints": "/art/enemies/fleetRetaliator-hardpoints.json",
+        "hardpoints": "/art/enemies/fleetRetaliator-turret.json",
         "shards": "/art/enemies/fleetRetaliator-shards-packed.json"
       },
       "retaliatorCargoHauler": {
         "jets": "/art/enemies/fleetRetaliatorCargoHauler-jets.json",
-        "hardpoints": "/art/enemies/fleetRetaliatorCargoHauler-hardpoints.json",
+        "hardpoints": "/art/enemies/fleetRetaliatorCargoHauler-turret.json",
         "shards": "/art/enemies/fleetRetaliatorCargoHauler-shards-packed.json"
       },
       "retaliatorMiningFreighter": {
         "jets": "/art/enemies/fleetRetaliatorMiningFreighter-jets.json",
-        "hardpoints": "/art/enemies/fleetRetaliatorMiningFreighter-hardpoints.json",
+        "hardpoints": "/art/enemies/fleetRetaliatorMiningFreighter-turret.json",
         "shards": "/art/enemies/fleetRetaliatorMiningFreighter-shards-packed.json"
       }
     }
