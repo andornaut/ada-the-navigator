@@ -86,11 +86,11 @@ const FADE = {
 // The enemy bolt, the ring dart's construction stretched to a bolt: a coral body with a white
 // core over a coralSide tail wedge, its head at the shot's point.
 const BOLT = {
-  outer: [point(0, 0), point(-3.6, -2.1), point(-12, 0), point(-3.6, 2.1)],
+  outer: [point(0, 0), point(-2.16, -1.785), point(-7.2, 0), point(-2.16, 1.785)],
   outerColour: "obstacle",
-  inner: [point(-1.2, 0), point(-3.6, -0.95), point(-7, 0), point(-3.6, 0.95)],
+  inner: [point(-0.72, 0), point(-2.16, -0.95), point(-4.2, 0), point(-2.16, 0.95)],
   innerColour: "white",
-  tail: { colour: "coralSide", points: [point(-8, -1.1), point(-20, 0), point(-8, 1.1)] },
+  tail: { colour: "coralSide", points: [point(-4.8, -0.935), point(-12, 0), point(-4.8, 0.935)] },
 } as const;
 
 // The enemy Multi-Laser: far bolts are small coral darts; near the nose the volley draws Ada's
@@ -99,17 +99,17 @@ const BOLT = {
 const FAN = {
   far: {
     colour: "obstacle",
-    points: [point(0, 0), point(-3, -1.3), point(-10, 0), point(-3, 1.3)],
+    points: [point(0, 0), point(-1.8, -1.105), point(-6, 0), point(-1.8, 1.105)],
   },
   near: {
     spacing: 5.6,
     colour: "obstacle",
-    depth: 11,
+    depth: 6.6,
     minRadius: 4,
-    widen: 1.3,
+    widen: 1.105,
     innerColour: "white",
-    inner: { inset: 2.5, offset: 4 },
-    notch: 3,
+    inner: { inset: 1.5, offset: 2.4 },
+    notch: 1.8,
   },
 } as const;
 

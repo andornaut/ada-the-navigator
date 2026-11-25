@@ -96,10 +96,11 @@ missile does not suppress the wreck's own flash.
 
 ## Bolt, pellet and fan
 
-- Laser bolt: a 3 px amber slug 14 px long with a pointed head, a cream core
-  and one amber tail step 1.5 px wide from 14 to 27 px behind the head. Slug
-  `(0, 0) (-2.7, -1.5) (-14, -1.5) (-15.5, 0) (-14, 1.5) (-2.7, 1.5)`; core
-  `(-1.5, 0) (-3.3, -0.675) (-8.68, -0.675) (-8.68, 0.675) (-3.3, 0.675)`.
+- Laser bolt: a 2.55 px amber slug 8.4 px long with a pointed head, a cream
+  core and one amber tail step 1.275 px wide from 8.4 to 16.2 px behind the
+  head. Slug `(0, 0) (-1.62, -1.275) (-8.4, -1.275) (-9.3, 0) (-8.4, 1.275)
+(-1.62, 1.275)`; core `(-0.9, 0) (-1.98, -0.675) (-5.208, -0.675)
+(-5.208, 0.675) (-1.98, 0.675)`, 1.35 px wide so it stays visible.
 - Scattershot pellet: an amber disc of radius 1.7 with a cream disc of radius
   0.7 centred 0.45 px up and left of it. Past its fade point it fades by the
   [held fade](#conventions).
@@ -109,14 +110,15 @@ missile does not suppress the wreck's own flash.
   length and speed vary per bolt. All bolts leave the nose together.
 - Multi-Laser near: while any two neighbouring heads are under 5.6 px apart on
   screen, one amber wedge through the heads with a cream inner wedge.
-- Multi-Laser far: each bolt a 2.2 px amber slug 10 px long with no core and no
-  tail, so bolts never overlap.
+- Multi-Laser far: each bolt the slug scaled to 1.87 px wide with its
+  shoulder 6 px behind the head, with no core and no tail, so bolts never
+  overlap.
 
 The fan wedge is a band through the bolts' heads on screen. For each head at
 distance `h` from the nose (its travel), the amber band runs from the head back
-toward the nose to `max(4, h - 11)`, its two outer ends widened 1.1 px sideways
-(half a far slug); the cream band runs from `h - 2.5` back to the amber's inner
-edge plus 4, its ends on the outer bolts' centrelines. Its outer edge lies on
+toward the nose to `max(4, h - 6.6)`, its two outer ends widened 0.935 px
+sideways (half a far slug); the cream band runs from `h - 1.5` back to the
+amber's inner edge plus 2.4, its ends on the outer bolts' centrelines. Its outer edge lies on
 the heads, so the far slugs replace it in place. The fan's 16 degree world
 spread projects to 8 to 31 degrees on screen and puts its heads at screen
 distances up to 13 px apart, so a sector of one angle and one radius cannot
@@ -254,18 +256,20 @@ in [enemy-weapons.json](../public/art/enemy-weapons.json); the
 [enemy-only conventions](#enemy-only-conventions) apply, and each shape turns
 to its projected heading as Ada's shots do.
 
-- Bolt (`bolt`): the ring dart's construction stretched to a bolt, its head at
-  the shot's point. Body `(0, 0) (-3.6, -2.1) (-12, 0) (-3.6, 2.1)` in
-  `obstacle`, core `(-1.2, 0) (-3.6, -0.95) (-7, 0) (-3.6, 0.95)` in white, over
-  a `coralSide` tail wedge `(-8, -1.1) (-20, 0) (-8, 1.1)`. The body and core
+- Bolt (`bolt`): the ring dart's construction stretched to a bolt, matched to
+  Ada's bolt in length and width, its head at the shot's point. Body
+  `(0, 0) (-2.16, -1.785) (-7.2, 0) (-2.16, 1.785)` in `obstacle`, core
+  `(-0.72, 0) (-2.16, -0.95) (-4.2, 0) (-2.16, 0.95)` in white, over a
+  `coralSide` tail wedge `(-4.8, -0.935) (-12, 0) (-4.8, 0.935)`. The body and core
   take the field edge; the tail does not.
 - Multi-Laser (`fan`): the volley follows Ada's [fan](#bolt-pellet-and-fan)
   rules. Near the nose it draws her band through the heads in `obstacle` with a
-  white inner band, its ends widened 1.3 px (half a far dart), and both bands'
-  trailing edges brought 3 px forward at the middle head, falling to 0 at the
-  outer heads, so the wedge reads as a chevron while its leading edge stays on
-  the heads. Far, each bolt is a coral dart `(0, 0) (-3, -1.3) (-10, 0)
-(-3, 1.3)`. Every part takes the field edge.
+  white inner band, its ends widened 1.105 px (half a far dart), and both
+  bands' trailing edges brought 1.8 px forward at the middle head, falling to 0
+  at the outer heads, so the wedge reads as a chevron while its leading edge
+  stays on the heads. Far, each bolt is a coral dart
+  `(0, 0) (-1.8, -1.105) (-6, 0) (-1.8, 1.105)`. Every part takes the field
+  edge.
 - Scattershot pellet (`pellet`): a coral diamond
   `(2.4, 0) (0, -1.9) (-2.4, 0) (0, 1.9)` with a white core
   `(1.2, 0) (0.2, -0.8) (-0.8, 0) (0.2, 0.8)`, turned to its heading. Both take
