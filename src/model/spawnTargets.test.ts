@@ -19,6 +19,13 @@ import { spawnRules } from "./spawnTargets.ts";
 const KNOWN_FAILURES: Readonly<Record<string, readonly string[]>> = {};
 
 describe("spawn target catalog", () => {
+  it("fills lattice cells at 0.75 times each galaxy's enemy density factor", () => {
+    const occupancy = { 1: 0.4575, 2: 0.405, 3: 0.375, 4: 0.375, 5: 0.39, 6: 0.5775 } as const;
+    for (const galaxy of GALAXY_NUMBERS) {
+      expect(spawnRules(galaxy).lattice!.occupancy).toBeCloseTo(occupancy[galaxy], 12);
+    }
+  });
+
   it("requests every positive table density from a roster group, per chunk", () => {
     for (const galaxy of GALAXY_NUMBERS) {
       spawnRules(galaxy).bands.forEach((band, index) => {

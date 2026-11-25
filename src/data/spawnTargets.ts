@@ -28,6 +28,21 @@ export const SLOT_ROCKS_PER_AREA = 29.84;
  * in world units per second (gameplay/rules.md "Space encounters and feedback").
  */
 export const MOVING_ROCKS = { groupShare: 0.75, speed: [10, 80] } as const;
+/**
+ * Each galaxy's enemy density factor: the share of encounter lattice cells that hold a group is
+ * 0.75 times it (gameplay/ships.md "Ambient admission"). It scales enemy densities only; the
+ * encounter rate, lattice pitch and minimum group distance do not change with it.
+ */
+export const ENEMY_DENSITY_FACTORS: Readonly<Record<GalaxyNumber, number>> = {
+  1: 0.61,
+  2: 0.54,
+  3: 0.5,
+  4: 0.5,
+  5: 0.52,
+  6: 0.77,
+};
+/** Share of encounter lattice cells that hold a group at a density factor of 1. */
+export const LATTICE_OCCUPANCY = 0.75;
 /** Composition blends linearly across this width centred on each region boundary. */
 export const SPAWN_BLEND_WIDTH = 2000;
 
@@ -57,38 +72,38 @@ export const SPAWN_TARGETS: Readonly<
 > = {
   // Sunflower
   1: [
-    region(1.5, 3.64, [0.4, 0.327, 0, 0, 0, 0]),
-    region(1.6, 3.64, [0.327, 0.291, 0, 0.109, 0, 0]),
-    region(1.5, 3.64, [0.291, 0.255, 0.073, 0.109, 0, 0]),
+    region(1.5, 2.15, [0.244, 0.2, 0, 0, 0, 0]),
+    region(1.6, 2.15, [0.2, 0.178, 0, 0.067, 0, 0]),
+    region(1.5, 2.15, [0.178, 0.155, 0.044, 0.067, 0, 0]),
   ],
   // Cartwheel
   2: [
-    region(1.4, 5.09, [0.242, 0.387, 0.116, 0.097, 0.136, 0.041]),
-    region(1.4, 5.09, [0.242, 0.387, 0.116, 0.097, 0.136, 0.041]),
-    region(1.3, 5.09, [0.242, 0.387, 0.116, 0.097, 0.136, 0.041]),
+    region(1.4, 2.34, [0.131, 0.209, 0.063, 0.052, 0.073, 0.022]),
+    region(1.4, 2.34, [0.131, 0.209, 0.063, 0.052, 0.073, 0.022]),
+    region(1.3, 2.34, [0.131, 0.209, 0.063, 0.052, 0.073, 0.022]),
   ],
   // Whirlpool
   3: [
-    region(1.3, 4.0, [0.211, 0.253, 0.126, 0.084, 0.126, 0]),
-    region(1.2, 4.0, [0.211, 0.253, 0.126, 0.084, 0.126, 0]),
-    region(1.1, 4.0, [0.211, 0.253, 0.126, 0.084, 0.126, 0]),
+    region(1.3, 2.52, [0.105, 0.126, 0.063, 0.042, 0.063, 0]),
+    region(1.2, 2.52, [0.105, 0.126, 0.063, 0.042, 0.063, 0]),
+    region(1.1, 2.52, [0.105, 0.126, 0.063, 0.042, 0.063, 0]),
   ],
   // Needle
   4: [
-    region(1.3, 4.37, [0.167, 0.209, 0.209, 0.067, 0.151, 0.07]),
-    region(1.4, 4.37, [0.167, 0.209, 0.209, 0.067, 0.151, 0.07]),
-    region(1.4, 4.37, [0.167, 0.209, 0.209, 0.067, 0.151, 0.07]),
+    region(1.3, 2.49, [0.084, 0.105, 0.105, 0.033, 0.075, 0.035]),
+    region(1.4, 2.49, [0.084, 0.105, 0.105, 0.033, 0.075, 0.035]),
+    region(1.4, 2.49, [0.084, 0.105, 0.105, 0.033, 0.075, 0.035]),
   ],
   // Andromeda
   5: [
-    region(1.4, 4.73, [0.176, 0.264, 0.132, 0.088, 0.206, 0.08]),
-    region(1.5, 4.73, [0.176, 0.264, 0.132, 0.088, 0.206, 0.08]),
-    region(1.4, 4.73, [0.176, 0.264, 0.132, 0.088, 0.206, 0.08]),
+    region(1.4, 2.41, [0.092, 0.137, 0.069, 0.046, 0.107, 0.042]),
+    region(1.5, 2.41, [0.092, 0.137, 0.069, 0.046, 0.107, 0.042]),
+    region(1.4, 2.41, [0.092, 0.137, 0.069, 0.046, 0.107, 0.042]),
   ],
   // Phantom
   6: [
-    region(1.4, 5.46, [0.167, 0.232, 0.139, 0.065, 0.348, 0.139]),
-    region(1.4, 5.46, [0.167, 0.232, 0.139, 0.065, 0.348, 0.139]),
-    region(1.3, 5.46, [0.167, 0.232, 0.139, 0.065, 0.348, 0.139]),
+    region(1.4, 3.66, [0.129, 0.179, 0.107, 0.05, 0.268, 0.107]),
+    region(1.4, 3.66, [0.129, 0.179, 0.107, 0.05, 0.268, 0.107]),
+    region(1.3, 3.66, [0.129, 0.179, 0.107, 0.05, 0.268, 0.107]),
   ],
 };

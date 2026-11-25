@@ -21,7 +21,9 @@ import {
   SWARM_GROUP_MINIMUM,
 } from "../data/spawnerCatalog.ts";
 import {
+  ENEMY_DENSITY_FACTORS,
   type EnemyGroupTargets,
+  LATTICE_OCCUPANCY,
   MOVING_ROCKS,
   SLOT_ROCKS_PER_AREA,
   SPAWN_AREA_CHUNKS,
@@ -53,8 +55,6 @@ import type { WorldCellContext } from "./worldCells.ts";
 import { wrappedDistance } from "./worldGeometry.ts";
 
 const MOVING_KIND = "moving-rock";
-/** Flight's encounter director leaves one encounter lattice cell in four vacant. */
-const ENCOUNTER_OCCUPANCY = 0.75;
 /** Region site kind that Cartwheel's claim jumpers gather beside. */
 export const ORE_FIELD_SITE = "ore-field";
 /**
@@ -184,8 +184,9 @@ function enemyTargets(
  * first, then feature and slot rocks, all ordinary asteroids, then moving rocks chosen from them.
  * Slot rocks follow their rule in every region; Large-only features, moving rocks and enemy groups
  * follow the table. Enemy groups sit on the encounter lattice, one seeded anchor per occupied
- * cell with the kind drawn by the table's densities, and keep the quiet distance over the root of
- * the encounter rate apart. Densities count per open area and blend across the region
+ * cell (at the galaxy's cell occupancy) with the kind drawn by the table's densities, and keep the
+ * quiet distance over the root of the encounter rate apart. Salvage sites, among the world's
+ * exclusion zones, come first. Densities count per open area and blend across the region
  * boundaries; budgets and archetype limits switch at the boundaries.
  */
 export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules {
@@ -234,7 +235,7 @@ export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules
     gap: SPAWN_GAP,
     lattice: {
       cell: encounterLatticeSpacing(galaxy) * tuning.chunkSize,
-      occupancy: ENCOUNTER_OCCUPANCY,
+      occupancy: LATTICE_OCCUPANCY * ENEMY_DENSITY_FACTORS[galaxy],
       spacing: enemyEncounterTuning.quietDistance / Math.sqrt(encounterRate(galaxy)),
     },
     openArea: true,
