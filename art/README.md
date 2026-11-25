@@ -47,6 +47,8 @@ Gameplay supplies semantic requirements.
   capital, destructible hardpoints, aimed turrets and capped weapon mounts.
 - [Cartwheel claim jumpers and turret platform](heavies.md#cartwheel-claim-jumpers)
   and [Andromeda garnet drones](andromeda.md#garnet-drones) cover regional enemies.
+- The [enemy fleet redesign](enemy-redesign.md) plans the replacement fleet and
+  documents its producer.
 - [Whirlpool whales](whales.md), [portrait provenance](portraits.md) and
   [conversation portraits](conversation.md) cover the cast.
 - [Finale allies](allies.md) covers the Phantom battle's allies, Marlo's song
