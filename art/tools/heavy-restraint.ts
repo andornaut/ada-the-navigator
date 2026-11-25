@@ -50,7 +50,7 @@ function capitalHull(hull: HeavyPart[], profile: Profile): HeavyPart[] {
   return [slab, keel, recess];
 }
 
-function gadgetHull(hull: HeavyPart[]): HeavyPart[] {
+function archieHull(hull: HeavyPart[]): HeavyPart[] {
   const slab = clipped(hull[0]!, [0, 1, 3, 4, 5, 7, 9, 11, 15, 17, 18, 20, 21], 22);
   const ridge = hull.find((part) => part.z0 !== part.z1 && part.top === coralRear)!;
   const flank = "#655966";
@@ -58,7 +58,7 @@ function gadgetHull(hull: HeavyPart[]): HeavyPart[] {
   return [armour(slab, "#8a808b", flank, rear), armour(ridge, "#746879", flank, rear)];
 }
 
-function gadgetMounts(craft: HeavyCraft): HeavyCraft["hardpoints"] {
+function archieMounts(craft: HeavyCraft): HeavyCraft["hardpoints"] {
   const quiet = (parts: HeavyPart[]) => parts.map((part) => armour(part, "#746879", "#655966"));
   return craft.hardpoints.map((hardpoint) => {
     const model = hardpoint.model;
@@ -84,8 +84,8 @@ export function restrainHeavyHull(
       return { ...craft, hull: frigateHull(craft.hull, profile), hardpoints: frigateMounts(craft) };
     case "capital":
       return { ...craft, hull: capitalHull(craft.hull, profile) };
-    case "gadget":
-      return { ...craft, hull: gadgetHull(craft.hull), hardpoints: gadgetMounts(craft) };
+    case "archie":
+      return { ...craft, hull: archieHull(craft.hull), hardpoints: archieMounts(craft) };
     default:
       return craft;
   }

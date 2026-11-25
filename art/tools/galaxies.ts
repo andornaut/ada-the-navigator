@@ -107,9 +107,9 @@ const LIGHT_FIELD = {
     // Whirlpool's project world changes, whose lamps meet Whirlpool's floor through the keyline.
     "nurseryBeacon",
     "currentBuoy",
-    // Enemies outside the drone and heavy archetypes: Gadget's capital, the hostile station and
+    // Enemies outside the drone and heavy archetypes: Archie's capital, the hostile station and
     // Cartwheel's turret platform.
-    "gadget",
+    "archie",
     "hostileStation",
     "platform",
     // Non-hostile story craft: Pip, the miner, the visitors, the blocker and Elder Loom's saucer.

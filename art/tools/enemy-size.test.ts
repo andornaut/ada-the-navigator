@@ -29,7 +29,7 @@ import {
   PLATFORM_TIERS,
   STATION_FILL,
   STATION_TIERS,
-  gadget,
+  archie,
   type HeavyCraft,
   heavies,
   industrialHeavies,
@@ -43,7 +43,7 @@ import { retroMouthAxis } from "./ship-model.ts";
 const close = (actual: number, expected: number) =>
   assert.ok(Math.abs(actual - expected) <= 1e-10, `${actual} differs from ${expected}`);
 
-const models = [...crafts, retaliatorVariants.mining, ...heavies, gadget, platform];
+const models = [...crafts, retaliatorVariants.mining, ...heavies, archie, platform];
 
 test("each intact physical assembly meets the canonical ratio from existing Ada source wing corners", () => {
   const wings = [retroMouthAxis(-1).corner[0], retroMouthAxis(1).corner[0]];
@@ -220,7 +220,7 @@ test("heavy top exports contain only the adopted canonical signature weapons", (
   const frigate = heavies.find(({ name }) => name === "frigate")!;
   const capital = heavies.find(({ name }) => name === "capital")!;
   assert.deepEqual(Object.keys(frigate.mounts!.weapons).sort(), ["heavyMissile", "laser"]);
-  for (const model of [capital, gadget]) {
+  for (const model of [capital, archie]) {
     assert.deepEqual(Object.keys(model.mounts!.weapons).sort(), [
       "chargedLance",
       "mineLayer",

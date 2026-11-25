@@ -124,7 +124,7 @@ const platformHull: HeavyPart[] = [
   paint(RAIL[0], claim.rust),
   ...teeth,
   ...lights,
-  // The steel hopper hub with Gadget's claw on its rust cap.
+  // The steel hopper hub with Archie's claw on its rust cap.
   {
     plan: ring(0, 0, 19, 16, Math.PI / 16),
     z0: DECK,

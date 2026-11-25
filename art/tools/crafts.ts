@@ -67,7 +67,7 @@ export const box = (x0: number, y0: number, x1: number, y1: number): Plan => [
 export const ink = "#181425";
 export const turretTop = "#c27a62";
 
-// General Gadget's insignia: a horseshoe claw opening forward (negative y), prong tips hooked
+// Admiral Archie's insignia: a horseshoe claw opening forward (negative y), prong tips hooked
 // inward, closing on an amber disc. Unit outline of the right half from the rear centre.
 const CLAW_HALF: Plan = [
   [0, 1],
@@ -520,7 +520,7 @@ export type JetMouth = {
 
 // Outer and core colour ramps, slow to fast.
 export type JetColors = { outer: [string, string]; core: [string, string] };
-export const gadgetJets: JetColors = {
+export const archieJets: JetColors = {
   outer: ["#b8644c", "#f0a07c"],
   core: ["#d68b72", "#ffe2c8"],
 };
@@ -531,7 +531,7 @@ export const gadgetJets: JetColors = {
 export function jetsFile(
   frame: number,
   mouths: (yaw: number) => JetMouth[],
-  colors: JetColors = gadgetJets,
+  colors: JetColors = archieJets,
   extra: Readonly<Record<string, unknown>> = {},
   heading: (yaw: number) => Readonly<Record<string, unknown>> = () => ({}),
 ): string {

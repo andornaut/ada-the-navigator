@@ -10,7 +10,7 @@ export const ADA_MODEL_SPAN = Math.max(...adaCorners) - Math.min(...adaCorners);
 
 type SizeKey = keyof typeof ENEMY_SIZE_RATIOS;
 export function enemySizeKey(name: string): SizeKey {
-  const key = name === "gadget" ? "flagship" : name;
+  const key = name === "archie" ? "flagship" : name;
   if (!Object.hasOwn(ENEMY_SIZE_RATIOS, key)) throw new Error(`Unknown enemy size ${name}`);
   return key as SizeKey;
 }

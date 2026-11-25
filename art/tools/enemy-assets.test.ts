@@ -42,7 +42,7 @@ const stems = ["frigate", "capital", "retaliator", ...Object.values(INDUSTRIAL_S
 const files = families.flatMap((family) =>
   [
     ...stems,
-    ...(family === "core" ? ["gadget"] : []),
+    ...(family === "core" ? ["archie"] : []),
     ...(family === "cartwheel" ? ["platform"] : []),
     ...(family !== "needle" ? ["hostileStation"] : []),
   ].map((stem) => {

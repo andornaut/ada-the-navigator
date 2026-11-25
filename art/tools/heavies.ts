@@ -1,4 +1,4 @@
-// Heavies (frigate, capital and Gadget's capital): hull frames, per-hardpoint state sprites and
+// Heavies (frigate, capital and Archie's capital): hull frames, per-hardpoint state sprites and
 // capped plates, shared aimed turret tops, `{craft}-hardpoints.json` with the mount tiers and
 // `{craft}-jets.json`. Art's layout holds every hardpoint and weapon mount position; the catalog
 // export, tools/enemy-hardpoints.json, must agree wherever it lists one. Each hardpoint model is
@@ -1127,10 +1127,10 @@ function mounts(deck: number, pairs: readonly (readonly [number, number])[]) {
   });
 }
 
-// Gadget: General Gadget's own capital in Phantom. A serrated claw hull with a raised dorsal
+// Archie: Admiral Archie's own capital in Phantom. A serrated claw hull with a raised dorsal
 // ridge; the command tower carries two stepped ear fins. The capital's mounts and tiers.
-const GADGET_Z = 12;
-const GADGET_TOWER: Plan = [
+const ARCHIE_Z = 12;
+const ARCHIE_TOWER: Plan = [
   [-16, -26],
   [16, -26],
   [25, -12],
@@ -1159,16 +1159,16 @@ const EAR: Plan = [
   [6, 24],
   [22, -4],
 ];
-const gadgetCommand: Model = (() => {
-  const top = GADGET_Z + 16;
-  const wreckTop = GADGET_Z + 9;
+const archieCommand: Model = (() => {
+  const top = ARCHIE_Z + 16;
+  const wreckTop = ARCHIE_Z + 9;
   return {
     role: "command",
     z: top,
     intact: [
       {
-        plan: GADGET_TOWER,
-        z0: GADGET_Z,
+        plan: ARCHIE_TOWER,
+        z0: ARCHIE_Z,
         z1: top,
         top: coral,
         side: coralSide,
@@ -1181,8 +1181,8 @@ const gadgetCommand: Model = (() => {
     ],
     destroyed: [
       {
-        plan: GADGET_TOWER,
-        z0: GADGET_Z,
+        plan: ARCHIE_TOWER,
+        z0: ARCHIE_Z,
         z1: wreckTop,
         top: scorch,
         side: scorchSide,
@@ -1212,17 +1212,17 @@ const gadgetCommand: Model = (() => {
         top: breach,
         side: breach,
       },
-      ...wreck(-6, 4, 10, GADGET_Z, { key: "wreck", z: wreckTop }, true),
+      ...wreck(-6, 4, 10, ARCHIE_Z, { key: "wreck", z: wreckTop }, true),
     ],
   };
 })();
 
-export const gadget: HeavyCraft = normalizeHeavy({
-  name: "gadget",
-  title: "Gadget",
+export const archie: HeavyCraft = normalizeHeavy({
+  name: "archie",
+  title: "Archie",
   frame: 560,
   source: "heavies",
-  hullTop: GADGET_Z,
+  hullTop: ARCHIE_Z,
   hull: [
     {
       plan: mirror([
@@ -1250,7 +1250,7 @@ export const gadget: HeavyCraft = normalizeHeavy({
         [0, 104],
       ]),
       z0: 0,
-      z1: GADGET_Z,
+      z1: ARCHIE_Z,
       top: coral,
       side: coralSide,
       rear: coralRear,
@@ -1267,21 +1267,21 @@ export const gadget: HeavyCraft = normalizeHeavy({
       ];
       return {
         plan: side < 0 ? flipX(panel) : panel,
-        z0: GADGET_Z,
-        z1: GADGET_Z + 1,
+        z0: ARCHIE_Z,
+        z1: ARCHIE_Z + 1,
         top: coral,
         side: coralSide,
       };
     }),
-    { plan: box(-5, 30, 5, 78), z0: GADGET_Z, z1: GADGET_Z + 3, top: coralRear, side: coralSide },
-    ...insignia(0, -36, 8, GADGET_Z),
+    { plan: box(-5, 30, 5, 78), z0: ARCHIE_Z, z1: ARCHIE_Z + 3, top: coralRear, side: coralSide },
+    ...insignia(0, -36, 8, ARCHIE_Z),
   ],
   sizeRatio: 5,
   hardpoints: [
-    { id: "command", offset: [0, 0], model: gadgetCommand },
+    { id: "command", offset: [0, 0], model: archieCommand },
     { id: "engine-left", offset: [-0.27, 0.44], model: nacelle("plated", true, 1.1) },
     { id: "engine-right", offset: [0.27, 0.44], model: nacelle("plated", false, 1.1) },
-    ...mounts(GADGET_Z, [
+    ...mounts(ARCHIE_Z, [
       [-0.36, -0.3],
       [-0.44, 0.1],
       [-0.16, -0.48],
@@ -1291,7 +1291,7 @@ export const gadget: HeavyCraft = normalizeHeavy({
   mounts: {
     fill: CAPITAL_FILL,
     tiers: CAPITAL_TIERS,
-    weapons: weapons(GADGET_Z, CAPITAL_POOL),
+    weapons: weapons(ARCHIE_Z, CAPITAL_POOL),
   },
 });
 
@@ -1711,7 +1711,7 @@ export const STATION_TIERS = producerTiers(hostileStationSignatureTiers());
 const ARMED: Readonly<Record<string, { fill: readonly string[]; tiers: readonly Tier[] }>> = {
   frigate: { fill: FRIGATE_FILL, tiers: FRIGATE_TIERS },
   capital: { fill: CAPITAL_FILL, tiers: CAPITAL_TIERS },
-  gadget: { fill: CAPITAL_FILL, tiers: CAPITAL_TIERS },
+  archie: { fill: CAPITAL_FILL, tiers: CAPITAL_TIERS },
   platform: { fill: PLATFORM_FILL, tiers: PLATFORM_TIERS },
   hostileStation: { fill: STATION_FILL, tiers: STATION_TIERS },
 };
@@ -1893,8 +1893,8 @@ export const industrialHeavies = [
   ...industrialCrafts.map((source) => retaliatorCraft(source)),
 ];
 // The enemy fleet producer (art/tools/fleet.ts) draws the frigates, capitals and retaliators; this
-// tool draws Gadget's own capital.
-const drawn: HeavyCraft[] = [gadget];
+// tool draws Archie's own capital.
+const drawn: HeavyCraft[] = [archie];
 
 // Manifest ids this tool owns: every `enemy-{craft}-` entry of the crafts it draws.
 const owns = (id: string) =>
@@ -1912,7 +1912,7 @@ const ownsSidecar = (craft: string, kind: SidecarKind) =>
       name === craft && (kind === "hardpoints" || (kind === "jets" && source === "heavies")),
   );
 
-const PART_GROUPS = { gadget: 29 } as const;
+const PART_GROUPS = { archie: 29 } as const;
 type SheetCraft = keyof typeof PART_GROUPS;
 type HeadingSelection = { craft: SheetCraft; section: "part" | "hull" };
 
@@ -2179,13 +2179,13 @@ function packInstalledHeavyParts(files: Map<string, string>, entries: readonly E
   const text = (file: string) => files.get(file);
   const parts = heavyHeadingSheets(
     corePartTarget,
-    { craft: "gadget", section: "part" },
+    { craft: "archie", section: "part" },
     text,
     entries,
   );
   const hull = heavyHeadingSheets(
     corePartTarget,
-    { craft: "gadget", section: "hull" },
+    { craft: "archie", section: "hull" },
     text,
     entries,
   );
