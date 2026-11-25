@@ -96,7 +96,6 @@ function rapidMissile(): Mesh {
 function heavyMissile(): Mesh {
   const mesh: Mesh = [];
   meshTube(mesh, [-13.2, 0, 0], [-4.2, 0, 0], 2.9, 2.9, WHITE, 14, { kind: "round", cap0: DARK });
-  meshTube(mesh, [-7.8, 0, 0], [-6, 0, 0], 2.95, 2.95, CREAM, 14, { kind: "round" });
   meshTube(mesh, [-4.2, 0, 0], [1, 0, 0], 2.9, 0.3, AMBER, 14, { kind: "round" });
   fins(mesh, {
     root: [-13.2, -8.6],
