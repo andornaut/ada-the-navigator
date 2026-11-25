@@ -1510,12 +1510,17 @@ apply to the planner's output.
   planner tries other anchors, then drops the group. Group sizes follow each
   galaxy's roster in [Ships](ships.md); only fighter and swarm groups shrink to
   fit an admission budget, and a group is placed whole at its admitted size.
-- Ambient enemy groups keep at least one
-  [encounter spacing](ships.md#ambient-admission) from each other, checked
-  against groups in neighbouring chunks. Budgets and densities do not change
-  with it.
+- Ambient enemy group anchors sit on the encounter lattice, one cell per
+  [encounter spacing](ships.md#ambient-admission). Each cell keeps the vacancy
+  roll (three in four cells hold a group) and the per-kind selection by roster
+  weight. Its anchor takes a seeded offset inside the cell, bounded so that
+  neighbouring anchors keep the minimum group distance derived from the
+  encounter spacing. Budgets and densities do not change with it.
 - Adjacent group members are spaced, centre to centre, by the sum of their hull
   radii plus the 20-world-unit gap: two frigates sit 120 world units apart.
+  Escorts sit on a ring that starts 60 world units beyond their leader's hull
+  (the escort station) and widens as needed so each escort keeps the 20-unit gap
+  from its leader and its neighbours.
 - Stations and points of interest never block a spawn. The existing exclusion
   zones still apply, including the arrival calm radius, protected areas, the
   Needle channel, currents and ore fields.
@@ -1525,14 +1530,18 @@ apply to the planner's output.
   shapes; Huge shapes do not fit.
 - Two planner rules have no table entry: Cartwheel's claim jumpers gather at ore
   fields ([Ships](ships.md#cartwheel-roster)), and each moving rock's straight
-  path over the next 30 seconds is checked against station protected areas and
-  launch and arrival safe radii; the Needle channel is not checked.
+  path over the next 30 seconds, up to 2400 world units, is checked against
+  station protected areas and launch and arrival safe radii; the Needle channel
+  is not checked. A failed path redraws the rock's velocity, up to 24 times.
 - Once moving, a moving rock may overlap or hit any object.
 
 Densities are mean counts per open 3x3-chunk area, one ninth per chunk: each
 kind's request shrinks by the fraction of the area covered by the exclusion zones
 that apply to that kind. Enemy columns count groups; `frigate` and `capital`
-groups include their escorts. Regions are the
+groups include their escorts. Each galaxy's enemy densities derive from its
+encounter lattice: 0.75 groups per lattice cell, split by roster composition
+weight after the heavy share multiplies the `frigate` and `capital` weights
+([Ships](ships.md#difficulty)). Regions are the
 [geographic regions](ships.md#ambient-admission) by distance from the galactic
 center: inner below 10000 world units, middle from 10000 to below 25000 and
 outer from 25000 (planner bands 0, 1 and 2). Resource and feature targets are
@@ -1544,28 +1553,29 @@ Group sizes switch at 10000 and 25000, as budgets and archetype limits do in
 
 | Galaxy    | Region | Slot rocks | Resources | Features | Moving rocks | `swarm` | `fighter` | `interceptor` | `retaliator` | `frigate` | `capital` |
 | --------- | ------ | ---------: | --------: | -------: | -----------: | ------: | --------: | ------------: | -----------: | --------: | --------: |
-| Sunflower | inner  |      29.84 |      12.2 |      1.5 |         3.64 |   0.363 |     0.306 |             0 |            0 |         0 |         0 |
-|           | middle |      29.84 |      12.3 |      1.6 |         3.64 |   0.244 |     0.288 |             0 |        0.150 |         0 |         0 |
-|           | outer  |      29.84 |      12.1 |      1.5 |         3.64 |   0.356 |     0.231 |         0.100 |        0.050 |         0 |         0 |
-| Whirlpool | inner  |      29.84 |       9.9 |      1.3 |         4.00 |   0.181 |     0.231 |         0.094 |        0.131 |     0.113 |         0 |
-|           | middle |      29.84 |      10.4 |      1.2 |         4.00 |   0.231 |     0.175 |         0.144 |        0.081 |     0.169 |         0 |
-|           | outer  |      29.84 |       9.9 |      1.1 |         4.00 |   0.231 |     0.275 |         0.138 |        0.063 |     0.138 |         0 |
-| Needle    | inner  |      29.84 |      12.4 |      1.3 |         4.37 |   0.206 |     0.238 |         0.194 |        0.075 |     0.138 |     0.063 |
-|           | middle |      29.84 |      12.7 |      1.4 |         4.37 |   0.163 |     0.244 |         0.188 |        0.075 |     0.169 |     0.069 |
-|           | outer  |      29.84 |      12.6 |      1.4 |         4.37 |   0.144 |     0.238 |         0.213 |        0.069 |     0.131 |     0.100 |
-| Andromeda | inner  |      29.84 |      12.5 |      1.4 |         4.73 |   0.138 |     0.313 |         0.100 |        0.106 |     0.181 |     0.069 |
-|           | middle |      29.84 |      12.2 |      1.5 |         4.73 |   0.150 |     0.244 |         0.138 |        0.056 |     0.213 |     0.088 |
-|           | outer  |      29.84 |      12.3 |      1.4 |         4.73 |   0.169 |     0.275 |         0.094 |        0.094 |     0.256 |     0.094 |
-| Cartwheel | inner  |      29.84 |      12.1 |      1.4 |         5.09 |   0.238 |     0.419 |         0.125 |        0.119 |     0.131 |     0.050 |
-|           | middle |      29.84 |      11.7 |      1.4 |         5.09 |   0.275 |     0.356 |         0.081 |        0.100 |     0.175 |     0.044 |
-|           | outer  |      29.84 |      12.0 |      1.3 |         5.09 |   0.225 |     0.369 |         0.119 |        0.113 |     0.125 |     0.038 |
-| Phantom   | inner  |      29.84 |      12.3 |      1.4 |         5.46 |   0.156 |     0.219 |         0.194 |        0.094 |     0.356 |     0.119 |
-|           | middle |      29.84 |      12.2 |      1.4 |         5.46 |   0.156 |     0.238 |         0.131 |        0.075 |     0.350 |     0.144 |
-|           | outer  |      29.84 |      12.3 |      1.3 |         5.46 |   0.150 |     0.231 |         0.131 |        0.069 |     0.400 |     0.106 |
+| Sunflower | inner  |      29.84 |      12.2 |      1.5 |         3.64 |   0.400 |     0.327 |             0 |            0 |         0 |         0 |
+|           | middle |      29.84 |      12.3 |      1.6 |         3.64 |   0.327 |     0.291 |             0 |        0.109 |         0 |         0 |
+|           | outer  |      29.84 |      12.1 |      1.5 |         3.64 |   0.291 |     0.255 |         0.073 |        0.109 |         0 |         0 |
+| Whirlpool | inner  |      29.84 |       9.9 |      1.3 |         4.00 |   0.211 |     0.253 |         0.126 |        0.084 |     0.126 |         0 |
+|           | middle |      29.84 |      10.4 |      1.2 |         4.00 |   0.211 |     0.253 |         0.126 |        0.084 |     0.126 |         0 |
+|           | outer  |      29.84 |       9.9 |      1.1 |         4.00 |   0.211 |     0.253 |         0.126 |        0.084 |     0.126 |         0 |
+| Needle    | inner  |      29.84 |      12.4 |      1.3 |         4.37 |   0.167 |     0.209 |         0.209 |        0.067 |     0.151 |     0.070 |
+|           | middle |      29.84 |      12.7 |      1.4 |         4.37 |   0.167 |     0.209 |         0.209 |        0.067 |     0.151 |     0.070 |
+|           | outer  |      29.84 |      12.6 |      1.4 |         4.37 |   0.167 |     0.209 |         0.209 |        0.067 |     0.151 |     0.070 |
+| Andromeda | inner  |      29.84 |      12.5 |      1.4 |         4.73 |   0.176 |     0.264 |         0.132 |        0.088 |     0.206 |     0.080 |
+|           | middle |      29.84 |      12.2 |      1.5 |         4.73 |   0.176 |     0.264 |         0.132 |        0.088 |     0.206 |     0.080 |
+|           | outer  |      29.84 |      12.3 |      1.4 |         4.73 |   0.176 |     0.264 |         0.132 |        0.088 |     0.206 |     0.080 |
+| Cartwheel | inner  |      29.84 |      12.1 |      1.4 |         5.09 |   0.242 |     0.387 |         0.116 |        0.097 |     0.136 |     0.041 |
+|           | middle |      29.84 |      11.7 |      1.4 |         5.09 |   0.242 |     0.387 |         0.116 |        0.097 |     0.136 |     0.041 |
+|           | outer  |      29.84 |      12.0 |      1.3 |         5.09 |   0.242 |     0.387 |         0.116 |        0.097 |     0.136 |     0.041 |
+| Phantom   | inner  |      29.84 |      12.3 |      1.4 |         5.46 |   0.167 |     0.232 |         0.139 |        0.065 |     0.348 |     0.139 |
+|           | middle |      29.84 |      12.2 |      1.4 |         5.46 |   0.167 |     0.232 |         0.139 |        0.065 |     0.348 |     0.139 |
+|           | outer  |      29.84 |      12.3 |      1.3 |         5.46 |   0.167 |     0.232 |         0.139 |        0.065 |     0.348 |     0.139 |
 
 A target passes when at least 90% of sampled 3x3-chunk areas, over fixed seeds
-in every galaxy and region, deliver at least 90% of their requested count. The
-check runs in the default test suite.
+in every galaxy and region, deliver at least 90% of their requested count. A
+delivered spawn is placed and admitted. The check runs in the default test
+suite.
 
 ### Hostile station sites and map knowledge
 
