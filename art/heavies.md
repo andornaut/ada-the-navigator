@@ -564,8 +564,12 @@ every other active base has a Rapid Missile pod. The native designs retain
 eight RingBurst tips and four Rapid Missile tips per aim. The station has
 no engine or command parts. Runtime hull/part HP and selection remain Tech data.
 
-The UI mask `public/art/ui/icons/map-hostile-station.svg` uses the complete
-native eight-mount silhouette in a 24px viewport. The map consumes its direct
-path with key `map-hostile-station`; no shared manifest entry is added.
-`--icon-only` updates that file without rerunning the family body exporters.
+The Map glyph `map-hostile-station` is an authored 24 px ink mask in
+[hostile-station-icon.ts](tools/hostile-station-icon.ts): a hexagonal ring
+2.6 px wide round a solid hexagonal core, with a 4 px square gun pod at each
+of its four corners. It is the one view of
+`public/art/ui/icons/icons-24x24.svg`, with a 24 by 24 view box; no shared
+manifest entry is added. `node art/tools/hostile-station-icon.ts` writes its
+source, as `hostile-station-export.ts` does with or without `--icon-only`,
+and `node art/tools/ui-icon-sheets.ts --out <scratch directory>` packs it.
 Friendly station assets and UI caller wiring remain separate.

@@ -4,162 +4,56 @@ import { fileURLToPath } from "node:url";
 import type { Frame } from "@andornaut/art-kit/build/grid";
 
 import { json } from "./projection.ts";
-import { hasUiIcon, readUiIcon, writeUiIcon } from "./ui-icon-sources.ts";
+import { hasUiIcon, writeUiIcon } from "./ui-icon-sources.ts";
 import { svgText } from "./svg-text.ts";
 import { prettify, writeSprites } from "./sprite-sheet.ts";
 
-// Weapon and ammunition glyphs on the 20 px grid: "#" is an opaque pixel, "." is clear. One grid per
-// weapon writes both the HUD mask SVG (public/art/ui/icons/weapon-<id>.svg) and the shop sheet
-// (public/art/ui/sprites/icon-shop-weapon-<id>), frame 0 cream and frame 1 disabled; one grid per
-// ammunition kind writes ammo-<kind>.svg and icon-shop-ammo-<kind> the same way. A weapon in
-// HAND_AUTHORED keeps its existing SVG and verifies its rectangles against the grid.
+// Weapon and ammunition glyphs in the 20 px box. Each weapon is a bold vector mask of filled
+// shapes and round-capped strokes 2.4 to 2.8 px wide, written as the HUD and shop mask
+// (weapon-<id>.svg). Each ammunition kind is a pixel grid, "#" an opaque pixel and "." clear,
+// written as ammo-<kind>.svg and, where the UI manifest registers it, as the shop sheet
+// icon-shop-ammo-<kind>, frame 0 cream and frame 1 disabled.
 const CREAM = "ead4aa";
 const DISABLED = "9a96ad";
 const ui = fileURLToPath(new URL("../../public/art/ui/", import.meta.url));
 const E = "....................";
 
-const GLYPHS: Readonly<Record<string, readonly string[]>> = {
-  // A bolt with a short trail: a 4 px capsule head on a 2 px trail, one piece.
-  laser: [
-    E,
-    E,
-    E,
-    E,
-    E,
-    E,
-    E,
-    E,
-    "..........#######...",
-    "..################..",
-    "..################..",
-    "..........#######...",
-    E,
-    E,
-    E,
-    E,
-    E,
-    E,
-    E,
-    E,
-  ],
-  // One deep missile body with a warhead seam, small rear fins and a heavy exhaust block.
+const fill = (d: string) => `<path fill="#${CREAM}" d="${d}"/>`;
+const dot = (cx: number, cy: number, r: number) =>
+  `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#${CREAM}"/>`;
+const stroke = (d: string, width: number) =>
+  `<path fill="none" stroke="#${CREAM}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round" d="${d}"/>`;
+
+// Every weapon glyph is fire travelling right.
+const WEAPONS: Readonly<Record<string, readonly string[]>> = {
+  // One bolt: a round-nosed slug on a short trail.
+  laser: [stroke("M3.2 10H9", 2.4), fill("M9 7.4h6.4a2.6 2.6 0 0 1 0 5.2H9Z")],
+  // One heavy warhead with a swept tail fin block behind it.
   heavyMissile: [
-    E,
-    E,
-    E,
-    E,
-    E,
-    "....###.............",
-    ".....###............",
-    ".....#######.##.....",
-    "..##.#######.####...",
-    "..##.#######.#####..",
-    "..##.#######.#####..",
-    "..##.#######.####...",
-    ".....#######.##.....",
-    ".....###............",
-    "....###.............",
-    E,
-    E,
-    E,
-    E,
-    E,
+    fill("M5.5 6.6h6.3l5.6 3.4-5.6 3.4H5.5Z"),
+    fill("M2.4 3.8h2.6l2.8 2.8H5.2v6.8h2.6l-2.8 2.8H2.4Z"),
   ],
-  // Three 2 px bolts fanning from one origin.
-  multiLaser: [
-    E,
-    E,
-    "...............###..",
-    "............######..",
-    ".........######.....",
-    "......######........",
-    "...######...........",
-    "...###..............",
-    E,
-    "...###############..",
-    "...###############..",
-    E,
-    "...###..............",
-    "...######...........",
-    "......######........",
-    ".........######.....",
-    "............######..",
-    "...............###..",
-    E,
-    E,
-  ],
-  // A thin beam ending in a starburst: a 2 px line with five rays fanned off its tip.
+  // Three bolts fanning from one muzzle dot.
+  multiLaser: [dot(4, 10, 2), stroke("M9.6 6.2L16.2 3.4M10.4 10H17.2M9.6 13.8L16.2 16.6", 2.6)],
+  // A short beam and two widening arcs ahead of it.
   phaser: [
-    E,
-    E,
-    E,
-    E,
-    ".............##.....",
-    ".............##.....",
-    "................##..",
-    "...............##...",
-    E,
-    "..#############.##..",
-    "..#############.##..",
-    E,
-    "...............##...",
-    "................##..",
-    ".............##.....",
-    ".............##.....",
-    E,
-    E,
-    E,
-    E,
+    fill("M2.6 8.6H10.4v2.8H2.6Z"),
+    stroke("M12.2 7.2A4 4 0 0 1 12.2 12.8M14.6 4.4A7.6 7.6 0 0 1 14.6 15.6", 2.4),
   ],
-  // Seven separate 2 px dots in a wide fan.
+  // Two staggered darts.
+  rapidMissile: [fill("M6.4 3.2h6.4l4 2.8-4 2.8H6.4Z"), fill("M2.4 11.2h6.4l4 2.8-4 2.8H2.4Z")],
+  // Six round pellets spreading in a cone: one, two, three.
   scattershot: [
-    E,
-    E,
-    "...............##...",
-    "...............##...",
-    E,
-    ".........##.........",
-    ".........##.........",
-    E,
-    E,
-    "...##....##....##...",
-    "...##....##....##...",
-    E,
-    E,
-    ".........##.........",
-    ".........##.........",
-    E,
-    "...............##...",
-    "...............##...",
-    E,
-    E,
-  ],
-  // Two slim darts, staggered, each with a thin trail dash.
-  rapidMissile: [
-    E,
-    E,
-    E,
-    ".........##.........",
-    ".........########...",
-    "...####..#########..",
-    "...####..########...",
-    ".........##.........",
-    E,
-    E,
-    E,
-    E,
-    ".......##...........",
-    ".......########.....",
-    ".####..#########....",
-    ".####..########.....",
-    ".......##...........",
-    E,
-    E,
-    E,
+    dot(4.4, 10, 1.7),
+    dot(10, 7.4, 1.7),
+    dot(10, 12.6, 1.7),
+    dot(15.6, 4.6, 1.7),
+    dot(15.6, 10, 1.7),
+    dot(15.6, 15.4, 1.7),
   ],
 };
 
-// Ammunition kinds stand upright as stock; every weapon glyph is fire travelling right.
+// Ammunition kinds stand upright as stock.
 const AMMO: Readonly<Record<string, readonly string[]>> = {
   // An upright energy cell: terminal cap, 2 px case, three charge bars.
   energy: [
@@ -232,8 +126,6 @@ const AMMO: Readonly<Record<string, readonly string[]>> = {
   ],
 };
 
-const HAND_AUTHORED: ReadonlySet<string> = new Set(["scattershot"]);
-
 interface Sprite {
   readonly key: string;
   readonly png: string;
@@ -252,35 +144,15 @@ function path(rows: readonly string[]): string {
     .join("");
 }
 
-function svg(rows: readonly string[]): string {
-  return [
+const document = (shapes: readonly string[]) =>
+  [
     '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">',
-    `  <path fill="#${CREAM}" d="${path(rows)}" />`,
+    ...shapes.map((shape) => `  ${shape}`),
     "</svg>",
     "",
   ].join("\n");
-}
 
-// The pixel grid of a hand-authored SVG drawn only as "Mx yHx2Vy2Hx" rectangles.
-function rectangles(text: string): string[] {
-  const d = /\sd="([^"]*)"/.exec(text)?.[1] ?? "";
-  const cells = Array.from({ length: 20 }, () => Array.from({ length: 20 }, () => "."));
-  const pattern = /M(\d+) (\d+)H(\d+)V(\d+)H(\d+)Z/g;
-  if (d.replace(pattern, "") !== "") {
-    throw new Error(`unexpected path data: ${d}`);
-  }
-  for (const [, x0, y0, x1, y1, x2] of d.matchAll(pattern)) {
-    if (x2 !== x0) {
-      throw new Error(`open rectangle in path data: ${d}`);
-    }
-    for (let y = Number(y0); y < Number(y1); y += 1) {
-      for (let x = Number(x0); x < Number(x1); x += 1) {
-        cells[y]![x] = "#";
-      }
-    }
-  }
-  return cells.map((row) => row.join(""));
-}
+const svg = (rows: readonly string[]) => document([`<path fill="#${CREAM}" d="${path(rows)}" />`]);
 
 function frame(rows: readonly string[], colour: string): Frame {
   return rows.map((row) => [...row].map((cell) => (cell === "#" ? colour : null)));
@@ -316,16 +188,8 @@ async function writeSheet(
   emitted.add(key);
 }
 
-for (const [id, rows] of Object.entries(GLYPHS)) {
-  check(id, rows);
-  const icon = `weapon-${id}`;
-  const maskWasPresent = hasUiIcon(icon);
-  if (!HAND_AUTHORED.has(id)) {
-    writeUiIcon(icon, svgText(svg(rows)));
-  } else if (maskWasPresent && rectangles(readUiIcon(icon)).join("\n") !== rows.join("\n")) {
-    throw new Error(`${id}: the grid does not match weapon-${id}.svg`);
-  }
-  await writeSheet(`icon-shop-weapon-${id}`, rows, maskWasPresent);
+for (const [id, shapes] of Object.entries(WEAPONS)) {
+  writeUiIcon(`weapon-${id}`, svgText(document(shapes)));
 }
 
 for (const [kind, rows] of Object.entries(AMMO)) {

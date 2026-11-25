@@ -648,7 +648,7 @@ async function main() {
   );
   const result = iconOnly ? undefined : build(craft, place({ version: 1, archetypes: {} }, craft));
   if (!claimHullsOnly) {
-    writeUiIcon("map-hostile-station", svgText(hostileStationIcon(craft)));
+    writeUiIcon("map-hostile-station", svgText(hostileStationIcon()));
   }
   if (!result) return;
   const layoutFile = `${craft.name}-hardpoints.json`;

@@ -1,45 +1,46 @@
 # Weapon icons
 
 Native SVG source, 20 × 20 px, `viewBox="0 0 20 20"`, transparent background.
-Warm cream (`#ead4aa`) paths follow Chibi's compact navigation icon style, with
-at least 2 px padding except for Rapid Missile, whose lower trail dash starts
-1 px from the left edge. Its two darts span columns 1 through 17 and rows 3
-through 16, zero-indexed.
-Laser strokes and scatter dots are 2 px thick.
+Warm cream (`#ead4aa`) masks follow Chibi's compact navigation icon style.
+Weapon glyphs are bold vector shapes: filled bodies and round-capped strokes
+2.4 to 2.8 px wide, with no part thinner than 2.4 px. Each spans 14.4 to
+16.5 px of the box and keeps at least 2.4 px of padding on every side.
+Ammunition glyphs are whole-pixel grids with 2 px padding.
 
 ## Current roster
 
 Six weapons share their 20 px SVG masks across the HUD, [Shop](shop-icons.md),
 and weapon details. Filename case follows the runtime IDs in
-`src/data/weaponGlyphs.ts`.
+`src/data/weaponGlyphs.ts`. Every weapon glyph is fire travelling right.
 
-| ID             | Path                                          | Icon semantics                                        |
-| -------------- | --------------------------------------------- | ----------------------------------------------------- |
-| `laser`        | `public/art/ui/icons/weapon-laser.svg`        | One bolt: a 4 px capsule head on a 2 px trail         |
-| `rapidMissile` | `public/art/ui/icons/weapon-rapidMissile.svg` | Two slim staggered darts, each with a trail dash      |
-| `multiLaser`   | `public/art/ui/icons/weapon-multiLaser.svg`   | Three 2 px bolts fanning from one origin              |
-| `heavyMissile` | `public/art/ui/icons/weapon-heavyMissile.svg` | One deep body, warhead seam, rear fins, heavy exhaust |
-| `scattershot`  | `public/art/ui/icons/weapon-scattershot.svg`  | Seven separate solid dots in a wide fan               |
-| `phaser`       | `public/art/ui/icons/weapon-phaser.svg`       | A 2 px beam ending in a five-ray starburst            |
+| ID             | Path                                          | Icon semantics                                         | Drawn extent (px) |
+| -------------- | --------------------------------------------- | ------------------------------------------------------ | ----------------- |
+| `laser`        | `public/art/ui/icons/weapon-laser.svg`        | One bolt: a round-nosed slug on a short trail          | 16.0 by 5.2       |
+| `rapidMissile` | `public/art/ui/icons/weapon-rapidMissile.svg` | Two staggered darts                                    | 14.4 by 13.6      |
+| `multiLaser`   | `public/art/ui/icons/weapon-multiLaser.svg`   | Three bolts fanning from one muzzle dot                | 16.5 by 15.8      |
+| `heavyMissile` | `public/art/ui/icons/weapon-heavyMissile.svg` | One heavy warhead with a swept tail fin block          | 15.0 by 12.4      |
+| `scattershot`  | `public/art/ui/icons/weapon-scattershot.svg`  | Six round pellets spreading in a cone: one, two, three | 14.6 by 14.2      |
+| `phaser`       | `public/art/ui/icons/weapon-phaser.svg`       | A short beam and two widening arcs ahead of it         | 15.7 by 13.6      |
 
-## Pixel grids
+## Sources
 
-Every weapon and ammunition glyph is a 20 × 20 pixel grid in
-`art/tools/weapon-icons.ts`. The ammunition grids and five weapon grids
-write the SVG masks as whole-pixel runs. Scattershot retains its authored SVG.
-Rebuild with `node art/tools/weapon-icons.ts`.
+`art/tools/weapon-icons.ts` holds every weapon glyph as vector shapes and
+every ammunition glyph as a 20 × 20 pixel grid written as whole-pixel runs.
+Rebuild with `node art/tools/weapon-icons.ts`, then pack the sheets with
+`node art/tools/ui-icon-sheets.ts --out <scratch directory>`. The views
+`weapon-<id>` and `ammo-<kind>` are in `public/art/ui/icons/icons-20x20.svg`.
 
-| SVG                       | SHA-256                                                            |
+| SVG source                | SHA-256                                                            |
 | ------------------------- | ------------------------------------------------------------------ |
 | `ammo-energy.svg`         | `6266a54397ac19f829fee0b1dbe57095815ce5400537d9f17dad5d0a3e143c33` |
 | `ammo-missile.svg`        | `3f0091ae0affb1bdf98023513f28e6910b696518a05243a21dc457530fcf3e22` |
 | `ammo-shell.svg`          | `5cfe832ed7a152f1ab5457625d78d0c168fe03f4893b4d8b37c4512a43f5acd1` |
-| `weapon-laser.svg`        | `fcc831f563cccad2bf12512f32ee757c58cad3cabd4c4b9e9a95cba6df754a34` |
-| `weapon-heavyMissile.svg` | `e43fe516d9e3f7503504f83502ed51564fbb17bfcd167e59d7b535e9c3ac6509` |
-| `weapon-multiLaser.svg`   | `154d7be25169bb8e3619dd7d331cfb3a3e6be93941a4f4695666b93b5cc42318` |
-| `weapon-phaser.svg`       | `fcf71d5cff54072faa7d5ed9d69d8c4470f6dc16c648a5ab71f025dd5841d5fe` |
-| `weapon-rapidMissile.svg` | `b93e057f1757b37d5892f1f384f3aff741dd1ec38d553fa9ab826dbcf1710d71` |
-| `weapon-scattershot.svg`  | `e580a47402045f782c4d43b51060d8c096186455f45f5cd8312dea4d694920fd` |
+| `weapon-laser.svg`        | `0e8e66d2cd82f8ddb19986a8f6f900c759aeabb56a1178ecd5d29706d96559ca` |
+| `weapon-heavyMissile.svg` | `e65e28b5c00c24a6286d24ebe0f2763a5c71d5e9be1eee6be91e1f2936b31126` |
+| `weapon-multiLaser.svg`   | `dacc3d7606e7cc68b66ccc8e36b1fd8a6e8d81de82c4b692a66b1d5bea4fc6ae` |
+| `weapon-phaser.svg`       | `1b3f82ce820236672f5de3c87fcd3f863829eecfadda25b90bbf093ef7d52ce0` |
+| `weapon-rapidMissile.svg` | `7d5cee78397439d76cca412dd0abae48d2c5d9b48c81d7de5c1eb5e29be51799` |
+| `weapon-scattershot.svg`  | `ca3ed172c200e61312a0a8da46fa38b3a87d001e0790ee4cd07a32cd0bf8be6f` |
 
 ## Ammunition icons
 

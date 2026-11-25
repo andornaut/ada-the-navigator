@@ -356,7 +356,7 @@ footer, tools and panel. Within a layer, later places in the map's order draw on
 ### Glyphs
 
 Seventeen 20 x 20 pixel grids in `art/tools/map-icons.ts`, written as one path of
-whole-pixel runs each, like the [weapon icons](weapon-icons.md). The tool
+whole-pixel runs each, like the [ammunition icons](weapon-icons.md#ammunition-icons). The tool
 fails if a symbol pixel reaches past the chip's 13 face radius. The fill is
 each file's default colour only (ink for symbols, cream for tools); the
 runtime draws every glyph as a CSS mask in its state colour, with smooth
@@ -364,6 +364,12 @@ sampling, so it stays sharp at fractional scales. Every SVG is decorative
 (`aria-hidden="true"`). The four `map-job-*` grids are the job board's row
 icons, shared from `art/tools/job-glyphs.ts`. Rebuild with
 `node art/tools/map-icons.ts`.
+
+The hostile station's symbol, `map-hostile-station`, is a 24 px vector mask
+drawn at 24 px: a hexagonal ring round a solid hexagonal core with a square
+gun pod at each of its four corners
+([heavies](heavies.md#hostile-station)). Its ring and core lie inside the
+face; the pods' outer corners reach the face's 13 radius.
 
 ### Search area
 
