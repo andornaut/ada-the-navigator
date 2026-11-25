@@ -19,9 +19,13 @@ timed against them. `src/data/weaponCatalog.ts` holds the current tuning.
 | Scattershot   | 1 s              | 600          | 0.8/1/1.2 per pellet | Fan of 7/9/11 pellets                |
 | Phaser        | 1 s              | n/a          | 4/6/8                | Instant beam, fire-time coverage     |
 
-Levels 2 and 3 change intervals, damage, blast radius and beam range as the
-catalogue sets them. The effects below take the level's blast radius and beam
-range; their strokes and timings do not change by level.
+Levels 2 and 3 change only these: Laser interval, bolt speed and damage; Rapid
+Missile interval and missile speed; Heavy Missile and Phaser damage;
+Multi-Laser bolt count and bolt speed; Scattershot pellet count and damage.
+Blast radii and ranges are the same at every level: blast R 30 (Rapid) and 60
+(Heavy); range 220 wu for missiles, 370 wu for Laser and Multi-Laser bolts, 100
+wu for Scattershot and 370 wu for the Phaser (Ada's beam reaches her fire-time
+coverage). The effects' strokes and timings do not change by level.
 
 ## Conventions
 
