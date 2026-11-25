@@ -5,7 +5,7 @@ import test from "node:test";
 
 import { decodePng } from "@andornaut/art-kit/build/png";
 
-import { gadget } from "./core-busts.ts";
+import { archie } from "./core-busts.ts";
 import { catSitting } from "./family-sprites.ts";
 
 const file = (path: string) => readFileSync(new URL(path, import.meta.url));
@@ -16,9 +16,9 @@ test("the named officer retains the approved neutral source and animates only hi
     hash(file("../sources/admiral-archie-neutral.png")),
     "cccdc6efeeeb954c57958eaf4856dc7c187ba0b0317abc0aa84f18275d6b70d1",
   );
-  const idle = gadget(true, null, false);
+  const idle = archie(true, null, false);
   for (const step of [0, 1, 2, 3]) {
-    const frame = gadget(true, step, false);
+    const frame = archie(true, step, false);
     for (let y = 0; y < 32; y++)
       for (let x = 0; x < 32; x++) {
         if (x < 13 || x > 18 || y < 19 || y > 23) assert.equal(frame[y]![x], idle[y]![x]);
@@ -29,8 +29,8 @@ test("the named officer retains the approved neutral source and animates only hi
 test("all ten officer frames retain the 32px and 22px reveal ordering", () => {
   for (const named of [false, true])
     for (const step of [null, 0, 1, 2, 3]) {
-      const full = gadget(named, step, false),
-        compact = gadget(named, step, true);
+      const full = archie(named, step, false),
+        compact = archie(named, step, true);
       assert.equal(full.length, 32);
       assert(full.every((row) => row.length === 32));
       assert.equal(compact.length, 22);
@@ -41,7 +41,7 @@ test("all ten officer frames retain the 32px and 22px reveal ordering", () => {
     }
   // The sheets' frames and loops as the manifest publishes them; no runtime reads their sprite data.
   const { assets } = JSON.parse(file("../../public/art/manifest.json").toString());
-  for (const id of ["gadget-portrait", "gadget-portrait-compact"]) {
+  for (const id of ["archie-portrait", "archie-portrait-compact"]) {
     const entry = assets.find((asset: { id: string }) => asset.id === id);
     assert.equal(Object.keys(entry.frames).length, 10);
     assert.equal(entry.frames["unknown-idle"], 0);
@@ -73,8 +73,8 @@ test("household sitting sprites retain the approved pixel drawings and compatibi
 test("portrait manifest paths and display size retain the existing consumer contract", () => {
   const { assets } = JSON.parse(file("../../public/art/manifest.json").toString());
   for (const [id, key, size] of [
-    ["gadget-portrait", "gadget", 32],
-    ["gadget-portrait-compact", "gadget-compact", 22],
+    ["archie-portrait", "archie", 32],
+    ["archie-portrait-compact", "archie-compact", 22],
   ] as const) {
     const entry = assets.find((asset: { id: string }) => asset.id === id);
     assert.equal(entry.path, `/art/portraits/${key}.png`);

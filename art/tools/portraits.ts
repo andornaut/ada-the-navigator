@@ -6,7 +6,7 @@ import { decodePng } from "@andornaut/art-kit/build/png";
 import type { Tag } from "@andornaut/art-kit/build/raster";
 
 import { crop } from "./bust.ts";
-import { gadget, grandma, GRANDMA_CROP } from "./core-busts.ts";
+import { archie, grandma, GRANDMA_CROP } from "./core-busts.ts";
 import { editManifest } from "./manifest.ts";
 import { writeSheet } from "./sprite-sheet.ts";
 
@@ -261,12 +261,12 @@ function astraTags(g: Astra): Tag[] {
   ];
 }
 
-function gadgetTags(compact: boolean): Tag[] {
+function archieTags(compact: boolean): Tag[] {
   return [false, true].flatMap((named): Tag[] => {
     const state = named ? "named" : "unknown";
     return [
-      [`${state}-idle`, [gadget(named, null, compact)], IDLE_MS],
-      [`${state}-speaking`, SPEAKING.map((i) => gadget(named, i, compact)), SPEAK_MS],
+      [`${state}-idle`, [archie(named, null, compact)], IDLE_MS],
+      [`${state}-speaking`, SPEAKING.map((i) => archie(named, i, compact)), SPEAK_MS],
     ];
   });
 }
@@ -312,7 +312,7 @@ type Sheet = { id: string; key: string; size: number; tags: Tag[] };
 
 const sheets: Sheet[] = [
   { id: "astra-portrait", key: "astra", size: FULL, tags: astraTags(ASTRA.full) },
-  { id: "gadget-portrait", key: "gadget", size: FULL, tags: gadgetTags(false) },
+  { id: "archie-portrait", key: "archie", size: FULL, tags: archieTags(false) },
   { id: "grandma-portrait", key: "grandma", size: FULL, tags: grandmaTags(false) },
   {
     id: "ada-portrait-compact",
@@ -327,10 +327,10 @@ const sheets: Sheet[] = [
     tags: astraTags(ASTRA.compact),
   },
   {
-    id: "gadget-portrait-compact",
-    key: "gadget-compact",
+    id: "archie-portrait-compact",
+    key: "archie-compact",
     size: COMPACT,
-    tags: gadgetTags(true),
+    tags: archieTags(true),
   },
   {
     id: "grandma-portrait-compact",

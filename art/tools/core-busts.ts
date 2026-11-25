@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { decodePng } from "@andornaut/art-kit/build/png";
-// Admiral Archie and Grandma bust frames. The legacy gadget export and asset keys retain the
-// ten-frame reveal contract. The unknown officer is the same dog bust without facial details.
+// Admiral Archie and Grandma bust frames in the ten-frame reveal contract. The unknown officer is
+// the same dog bust without facial details.
 import type { Frame } from "@andornaut/art-kit/build/grid";
 
 import {
@@ -127,18 +127,18 @@ function trace(frame: Frame, row: number, x0: number, x1: number, step: number |
 }
 
 /** The officer's compact window in the 32 frame: the ear tips to the collar. */
-export const GADGET_CROP: Point = [5, 1];
+export const ARCHIE_CROP: Point = [5, 1];
 const MOUTHS: readonly Mouth[] = ["open", "half", "open", "closed"];
 
 /** An officer frame: unnamed or named, idle (`step` null) or speaking frame `step` 0 to 3. */
-export function gadget(named: boolean, step: number | null, compact: boolean): Frame {
+export function archie(named: boolean, step: number | null, compact: boolean): Frame {
   if (named) {
     const frame = dog(step === null ? null : MOUTHS[step]!);
-    return compact ? crop(frame, GADGET_CROP) : frame;
+    return compact ? crop(frame, ARCHIE_CROP) : frame;
   }
   const frame = silhouette(step ?? 0);
   if (compact) {
-    const small = crop(frame, GADGET_CROP);
+    const small = crop(frame, ARCHIE_CROP);
     trace(small, 20, 1, 20, step);
     return small;
   }
