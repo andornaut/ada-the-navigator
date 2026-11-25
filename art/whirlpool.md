@@ -282,7 +282,7 @@ the whale glow; B dims both to the whale fin shadows.
 
 ## Stranded craft
 
-Two craft for Whirlpool's rescue tows, in the whale lilac, glow and buoy cream. Rebuild with `node art/tools/stranded-craft.ts`. Each craft follows
+Two craft for Whirlpool's rescue tows, in the whale lilac, glow and buoy cream., drawn by `node art/tools/friendly.ts`. Each craft follows
 Cartwheel's [stranded craft](cartwheel-props.md#stranded-craft) schema: the
 sixteen enemy headings, the smallest square frame (a multiple of 16 px) with
 4 px padding round a centred pivot, no jets and no collision parts. Files are

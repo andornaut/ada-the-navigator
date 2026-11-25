@@ -230,7 +230,7 @@ outward.
 
 ## Replaced producers
 
-| Shipped producer                         | Replaced by                                                    | Stage |
+| Producer                                 | Replaced by                                                    | Stage |
 | ---------------------------------------- | -------------------------------------------------------------- | ----: |
 | `station.ts`                             | `flower` in the station producer                               |     1 |
 | `whirlpool-station.ts`                   | `whirl`                                                        |     1 |
@@ -241,14 +241,11 @@ outward.
 | `outposts.ts`, outposts and their frames | `leafFlower` (growers, salvagers) and `flower` (workshop)      |     2 |
 | `hostile-station-export.ts` and its kin  | Three family models at 16 headings, and the Claim platform     |     3 |
 
-`andromeda.ts`, `outposts.ts` and `hostile-station-export.ts` with its field,
-surface and variant modules are removed. `node art/tools/hostile-station-icon.ts`
+The station producer's models replace these producers, which are removed with
+their shared sheet and model modules. `node art/tools/hostile-station-icon.ts`
 writes the Map mask `map-hostile-station` from the assembly in
-`hostile-station.ts`. `primary-station-sheets.ts`, `station-model.ts` and
-`station-sidecars.ts` retire with the producers that use them. The Needle ring
-gate (`needle-gates.ts`), beacons, buoys and lamps belong to the friendly
-objects set. The other entries of `cartwheel.ts` and `phantom.ts` stay with
-their producers.
+`hostile-station.ts`. The Needle ring gate, beacons, buoys and lamps belong to
+the friendly objects set.
 
 ## Runtime values
 

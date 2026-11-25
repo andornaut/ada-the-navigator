@@ -5,13 +5,12 @@ The allies of the Phantom fleet battle and flagship fight
 reused story craft and whales that draw the rest, Marlo's song and the ally
 jump.
 
-- Rebuild with `node art/tools/allies.ts`. It writes `public/art/phantom/`
-  (the frames, `story-craft-jets.json` and `allies.json`), replaces its own
-  `craft-` entries in [Phantom's manifest](../public/art/phantom/manifest.json)
-  and registers their jet sidecars. It links `allies.json` as `allies`. Reruns
-  are byte-identical.
-- Round hulls (cylinders, balls, rings and pills) come from
-  [art/tools/hull-shapes.ts](tools/hull-shapes.ts), shared with the story craft.
+- `node art/tools/friendly.ts` draws the ally craft into
+  [Phantom's manifest](../public/art/phantom/manifest.json) with their jets in
+  `friendly-craft-jets.json` ([Friendly object redesign](friendly-redesign.md)).
+- `node art/tools/allies.ts` writes `public/art/phantom/allies.json` (the
+  roster, Marlo's song and the ally jump) and links it from Phantom's manifest
+  as `allies`. Reruns are byte-identical.
 - Nothing is labelled: no text, signs or letters are drawn on or beside any
   craft.
 - Phantom is a dark field, `#514955`, with a white foreground edge

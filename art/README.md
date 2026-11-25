@@ -197,7 +197,6 @@ names each exception:
 | Set                                                          | Decimals | Reason at one decimal                                                |
 | ------------------------------------------------------------ | -------: | -------------------------------------------------------------------- |
 | Classic landing, boot, Local Map and Shop                    |        2 | 99th percentile 4 levels at display size, 6 at 2x                    |
-| Core station frames                                          |        2 | 99th percentile 6 levels at display size, 8 at 2x                    |
 | Job landmarks                                                |        3 | The beacon arcs, authored to 3 decimals, shift along their length    |
 | Start screen nav glyphs (`achievements`, `exit`, `settings`) |        3 | The trophy handles, authored to 3 decimals, shift along their length |
 

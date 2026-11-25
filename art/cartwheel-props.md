@@ -161,17 +161,16 @@ plane. Neither has jets. Files are `/art/cartwheel/{craft}-{k}[-{a,b}].svg`.
   and 5 degrees nose down. Its tow point is the drill tip.
 - Each entry has `directionIndex` `k`, `facing` `world-{k}` and `craft`.
 
-Every galaxy's stranded craft share this schema and one export,
-[art/tools/stranded.ts](tools/stranded.ts). Each galaxy manifest links its own
-`tow.json` as `tow`, holding its `craft` in the shape above (`id`, `frame`,
+Every galaxy's stranded craft share this schema and one producer,
+`node art/tools/friendly.ts`. Each galaxy manifest links its own
+`friendly-tow.json` as `tow`, holding its `craft` in the shape above (`id`, `frame`,
 `display`, `blink` and `frameMs` for a blinking craft, and `headings[k].tow`);
 the core `tow` link keeps the line below and Cartwheel's craft. Pods and buoys
 blink a waiting light, `a` lit and `b` dim at 700 ms; crewed craft show one
 frame with their power off, dark glass, dim lamps and a list. No stranded craft
 has jets or collision parts: it takes no hits and passes through scenery. On a
 light field every stranded craft draws over the ink keyline (`strandedCraft`
-in `lightField.keylined`). The other galaxies' craft are
-`node art/tools/stranded-craft.ts`:
+in `lightField.keylined`). The other galaxies' craft:
 
 | Galaxy    | Craft                                                              |
 | --------- | ------------------------------------------------------------------ |

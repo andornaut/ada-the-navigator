@@ -5,13 +5,11 @@ three Blurb settlements. Each uses folded or faceted organic material in a
 distinct colour family. Gadget's home guard is the shared [coral family](enemies.md) and his
 flagship the [Gadget capital](heavies.md#gadget), both in core.
 
-- Rebuild the settlements with `node art/tools/phantom.ts` and the station
-  with `node art/tools/phantom-station.ts`. Each writes its files to
-  `public/art/phantom/` and replaces its own entries in place in
-  [Phantom's manifest](../public/art/phantom/manifest.json).
-- [art/tools/phantom-models.ts](tools/phantom-models.ts) holds the solid
-  settlement models in the [station](station.md) projection, with sealed
-  membranes and local windows.
+- `node art/tools/stations.ts` draws the station and the settlements into
+  [Phantom's manifest](../public/art/phantom/manifest.json)
+  ([Station redesign](station-redesign.md)), and `node art/tools/friendly.ts`
+  the stranded craft and the finale ally craft
+  ([Friendly object redesign](friendly-redesign.md)).
 - Nothing is labelled: no text, signs or letters are drawn on or beside any
   asset.
 
@@ -117,7 +115,7 @@ blue lights and warm windows carry the settlement read.
 
 ## Stranded craft
 
-One craft for Phantom's rescue tows: travelers stranded by the blockades. Rebuild with `node art/tools/stranded-craft.ts`. Each craft follows
+One craft for Phantom's rescue tows: travelers stranded by the blockades, drawn by `node art/tools/friendly.ts`. Each craft follows
 Cartwheel's [stranded craft](cartwheel-props.md#stranded-craft) schema: the
 sixteen enemy headings, the smallest square frame (a multiple of 16 px) with
 4 px padding round a centred pivot, no jets and no collision parts. Files are

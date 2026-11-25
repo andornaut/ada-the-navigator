@@ -12,10 +12,6 @@ portraits of Pip and the settlers.
   `craft-pip-` entries are in the [core manifest](../public/art/manifest.json),
   since the Phantom finale draws the scooter too; its files stay in
   `public/art/andromeda/`.
-- [art/tools/andromeda-models.ts](tools/andromeda-models.ts) holds the solid
-  models in the [station](station.md) projection. The station and settlements
-  have sealed service faces and warm lit windows `#ffe9b8`. The courier
-  school's berth has a mouth, lit floor strip and blue corner lights.
 - Nothing is labelled: no text, signs or letters are drawn on or beside any
   asset.
 - The space look adds a [backdrop haze](galaxies.md#backdrop-haze): two soft
@@ -320,7 +316,7 @@ integer nearest-neighbour scale follow
 
 ## Stranded craft
 
-Two craft for Andromeda's rescue tows, in the settlers' pearl, slate-blue and marker colours. Rebuild with `node art/tools/stranded-craft.ts`. Each craft follows
+Two craft for Andromeda's rescue tows, in the settlers' pearl, slate-blue and marker colours., drawn by `node art/tools/friendly.ts`. Each craft follows
 Cartwheel's [stranded craft](cartwheel-props.md#stranded-craft) schema: the
 sixteen enemy headings, the smallest square frame (a multiple of 16 px) with
 4 px padding round a centred pivot, no jets and no collision parts. Files are

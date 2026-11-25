@@ -1,15 +1,13 @@
 # Cartwheel hub and story craft
 
-- Rebuild with `node art/tools/cartwheel.ts`. It writes `public/art/cartwheel/`
-  and replaces its own entries in place in
-  [Cartwheel's manifest](../public/art/cartwheel/manifest.json): the hub and
-  the mooring buoy open it; the story craft follow the claim jumpers. The
-  miner's `craft-miner-` entries are in the
-  [core manifest](../public/art/manifest.json), since the Phantom finale
-  draws it too; their files stay in `public/art/cartwheel/`.
-- `node art/tools/cartwheel.ts --alternates <dir>` also writes the unused
-  designs (the pale cream visitor `visitor3` and the plough blocker
-  `blocker-plough`) with their entries to `<dir>`, outside `public/art/`.
+- `node art/tools/stations.ts` draws the hub with its docking bay
+  ([Station redesign](station-redesign.md)), and `node art/tools/friendly.ts`
+  the mooring buoy and the story craft
+  ([Friendly object redesign](friendly-redesign.md)), into
+  [Cartwheel's manifest](../public/art/cartwheel/manifest.json). The miner's
+  `craft-miner-` entries are in the [core manifest](../public/art/manifest.json),
+  since the Phantom finale draws it too; their files stay in
+  `public/art/cartwheel/`.
 - [art/tools/solid.ts](tools/solid.ts) holds the station family's solid-model
   helpers, shared with the [station](station.md) and the
   [outposts](outposts.md). Craft use the [enemy](enemies.md) heading convention

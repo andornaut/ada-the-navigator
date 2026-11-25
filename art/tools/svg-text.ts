@@ -35,8 +35,6 @@ export const SVG_DECIMALS = {
   navGlyphs: 3,
   /** Ada's ship frames, 96 units drawn at 42 px. */
   ship: 2,
-  /** The core station frames. */
-  station: 2,
 } as const;
 
 const NUMBER = /-?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?/gu;

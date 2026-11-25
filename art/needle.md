@@ -32,10 +32,9 @@ palette are in [art/tools/needle-common.ts](tools/needle-common.ts).
 
 ## Weavers' station
 
-Needle's station, the Whorl, entered by Use. Rebuild with
-`node art/tools/needle-station.ts`; it writes `station-{a,b}.svg` and
-`station-hall-{a,b}.svg` and replaces its `needle-station-` entries, which
-open Needle's manifest.
+Needle's station, the Whorl, entered by Use. `node art/tools/stations.ts`
+draws it and the Loom hall, the `needle-station-` and `needle-station-hall-`
+rows that open Needle's manifest ([Station redesign](station-redesign.md)).
 
 - A long faceted pearl habitat, with a lavender dorsal band, smoked glazing
   and rose fittings. A slotted thermal blade sweeps out to the left above
@@ -97,9 +96,10 @@ right berth at the chamber's outer end, 114 units from the pivot.
 
 ## Ring gates
 
-Rebuild with `node art/tools/needle-gates.ts`. It writes the gate frames and
-[gates.json](../public/art/needle/gates.json) and replaces its `needle-gate-`
-entries; Needle's manifest links the data as `needleGates`.
+`node art/tools/friendly.ts` draws the gates, the `needle-gate-` rows on
+`ring-gates-sheet.svg`, and writes
+[ring-gates.json](../public/art/needle/ring-gates.json), which Needle's manifest
+links as `needleGates` ([Friendly object redesign](friendly-redesign.md)).
 
 An upright hoop with its axis along the channel: rim radius 40 and depth 7
 model units, 32 flat-shaded segments in the world light of the debris model,
@@ -314,10 +314,9 @@ it.
 
 ## Elder Loom's saucer
 
-Rebuild with `node art/tools/needle-craft.ts`. It writes `glider-{0..15}.svg`
-and `glider-jets.json` and replaces its `craft-glider-` entries; the craft keeps
-its `glider` ids and files. The model is
-[art/tools/saucer-model.ts](tools/saucer-model.ts).
+`node art/tools/friendly.ts` draws the saucer, the `craft-glider-` rows on
+`friendly-glider-sheet.svg`, with its jets in `friendly-glider-jets.json`
+([Friendly object redesign](friendly-redesign.md)).
 
 A pearl saucer with a lavender thread band round its rim, a raised upper deck
 and a smoked lavender bridge dome with a warm pane; two short pearl nacelles
@@ -505,7 +504,7 @@ through `art/tools/projects.ts` ([World changes](projects.md#world-changes)). Bo
 
 ## Stranded craft
 
-Two craft for Needle's rescue tows, in the Weavers' silver, pearl, lavender and rose. Rebuild with `node art/tools/stranded-craft.ts`. Each craft follows
+Two craft for Needle's rescue tows, in the Weavers' silver, pearl, lavender and rose., drawn by `node art/tools/friendly.ts`. Each craft follows
 Cartwheel's [stranded craft](cartwheel-props.md#stranded-craft) schema: the
 sixteen enemy headings, the smallest square frame (a multiple of 16 px) with
 4 px padding round a centred pivot, no jets and no collision parts. Files are
