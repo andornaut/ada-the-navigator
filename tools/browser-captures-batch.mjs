@@ -1,0 +1,820 @@
+import assert from "node:assert/strict";
+
+import { pauseClock, toWorld } from "./browser-support.mjs";
+
+// The visible-art batch review sets for tools/browser-captures.mjs: canonical saves of each view
+// the batch redraws (the fleet, stations, pickups, landmarks, Needle, craft and whales,
+// backdrops, Ada's ship, weapons, effects and controls), held still on a paused page clock.
+// Each set stays within the run's 120 second limit; name the sets in separate runs.
+
+const [
+  { GameModel },
+  { CONTENT },
+  { ECONOMY },
+  { playOpening },
+  { restoreSave },
+  { enemyActorDefinition },
+  { createEnemy },
+  { retaliatorVariant },
+  { activateRequiredWhirlpoolRoute, ensureDestination, ensureStation },
+  { stationsNear },
+  { settlementsNear },
+  { landmarkSites },
+  { guideBeaconSlots },
+  { needleCourses },
+  { ensureNeedleDebris },
+  { phantomAllyRoster, rotatePhantomAllies },
+  { SHIP_REACH },
+  { currentsNear, pointOnCurrent },
+  { JOB_POOL },
+  { PROJECTS },
+  { GALAXY_ID },
+  { readAsteroidCatalog },
+  { backdropFixture },
+] = await Promise.all([
+  import(new URL("../src/model/game.ts", import.meta.url)),
+  import(new URL("../src/data/content.ts", import.meta.url)),
+  import(new URL("../src/data/economy.ts", import.meta.url)),
+  import(new URL("../src/testing/launch.ts", import.meta.url)),
+  import(new URL("../src/model/save.ts", import.meta.url)),
+  import(new URL("../src/data/enemyActorDefinition.ts", import.meta.url)),
+  import(new URL("../src/model/enemyAi.ts", import.meta.url)),
+  import(new URL("../src/data/enemyIdentity.ts", import.meta.url)),
+  import(new URL("../src/model/flight.ts", import.meta.url)),
+  import(new URL("../src/model/stations.ts", import.meta.url)),
+  import(new URL("../src/model/legacySettlements.ts", import.meta.url)),
+  import(new URL("../src/model/landmarks.ts", import.meta.url)),
+  import(new URL("../src/model/guideBeacons.ts", import.meta.url)),
+  import(new URL("../src/model/needle.ts", import.meta.url)),
+  import(new URL("../src/model/needleFlight.ts", import.meta.url)),
+  import(new URL("../src/model/phantomAllies.ts", import.meta.url)),
+  import(new URL("../src/model/shipBody.ts", import.meta.url)),
+  import(new URL("../src/model/currents.ts", import.meta.url)),
+  import(new URL("../src/data/jobs.ts", import.meta.url)),
+  import(new URL("../src/data/projects.ts", import.meta.url)),
+  import(new URL("../src/data/galaxies.ts", import.meta.url)),
+  import(new URL("../src/data/asteroidCatalog.ts", import.meta.url)),
+  import("./browser-support.mjs"),
+]);
+
+const ALL = [1, 2, 3, 4, 5, 6];
+const scope = "Canonical visible-art batch fixture for before/after review";
+
+/** Runs `step` for each item in turn, one renderer at a time. */
+const inTurn = (items, step) =>
+  items.reduce((previous, item) => previous.then(() => step(item)), Promise.resolve());
+
+/**
+ * The destination `id` in the model's flight, placed as Ada's arrival places it: a required
+ * site reserved in a role plan moves into the flight with its guards.
+ */
+function located(model, id) {
+  const flight = model.state.flight;
+  const place = ensureDestination(CONTENT, id, flight);
+  activateRequiredWhirlpoolRoute(CONTENT, model.state.progress[flight.galaxy], flight, id);
+  return place;
+}
+/** A flight in `galaxy` with its opening played, no dialogue and no shots, held at rest. */
+function flightModel(galaxy, { unlocked = ALL } = {}) {
+  const model = new GameModel(CONTENT);
+  model.state.unlocked = unlocked;
+  // The highest shield outlasts every capture's hits on Ada.
+  model.state.economy.levels.shield = 3;
+  model.startGalaxy(galaxy);
+  playOpening(model);
+  const flight = model.state.flight;
+  assert.ok(flight, `The fixture requires galaxy ${galaxy}'s flight`);
+  model.state.progress[galaxy].introduced = true;
+  model.state.dialogue = null;
+  flight.shots = [];
+  flight.mines = [];
+  flight.velocity = { x: 0, y: 0 };
+  return model;
+}
+const withoutEnemies = (flight) => {
+  flight.objects = flight.objects.filter(({ kind }) => kind !== "enemy");
+};
+/** The world point at a screen offset from Ada. */
+function at(flight, screen) {
+  const offset = toWorld(screen);
+  return { x: flight.player.x + offset.x, y: flight.player.y + offset.y };
+}
+/** Moves Ada so `point` draws at the screen offset `screen` from her. */
+function beside(flight, point, screen) {
+  const offset = toWorld(screen);
+  flight.player = { x: point.x - offset.x, y: point.y - offset.y };
+}
+/** Funds and reveals `ids` of the galaxy's community projects, as a finished project stands. */
+function fund(model, galaxy, ids) {
+  const progress = model.state.progress[galaxy];
+  progress.donated = { ...progress.donated };
+  for (const id of ids) {
+    const project = PROJECTS[galaxy].find((entry) => entry.id === id);
+    assert.ok(project, `Galaxy ${galaxy} has project ${id}`);
+    progress.donated[id] = project.cost;
+  }
+  progress.revealed = [...new Set([...(progress.revealed ?? []), ...ids])];
+}
+/** An enemy held at a screen offset from Ada, holding its fire unless its hardpoints are listed. */
+function addEnemy(model, { archetype, fire = [], id, screen, setup, weaponLevel = 1 }) {
+  const flight = model.state.flight;
+  const galaxy = flight.galaxy;
+  const actorId = id ?? `browser-art:${archetype}:${screen.x}:${screen.y}`;
+  const definition = enemyActorDefinition(galaxy, archetype, actorId, weaponLevel);
+  const position = at(flight, screen);
+  const enemy = createEnemy(
+    definition,
+    { archetype, id: actorId, packId: null, phase: 0, weaponLevel },
+    position,
+  );
+  enemy.engaged = true;
+  enemy.primaryCooldown = 999;
+  for (const part of enemy.hardpoints) {
+    part.cooldown = fire.includes(part.id) ? 0.6 : 999;
+  }
+  setup?.(enemy);
+  flight.objects.push({
+    ...position,
+    enemy,
+    hp: enemy.hp,
+    id: enemy.id,
+    kind: "enemy",
+    persistent: false,
+    radius: CONTENT.tuning.flight.shipRadius * definition.sizeRatio,
+  });
+  return enemy;
+}
+const destroyWeapons = (enemy) => {
+  for (const part of enemy.hardpoints) {
+    if (!["command", "engine", "engine-left", "engine-right"].includes(part.id)) {
+      part.hp = 0;
+    }
+  }
+  enemy.disabled = true;
+};
+
+/**
+ * Builds the visible-art batch sets over the runner's fixture helpers: `ctx` supplies
+ * openFixture, openHome, frames, shot, pageShot, release, awaitGalaxyArt, fixtureFile and page.
+ */
+export function batchCaptures(ctx) {
+  /** The model's canonical save, checked by restore and kept as fixture evidence. */
+  function canonical(model, name) {
+    const serialized = model.save();
+    assert.deepEqual(restoreSave(serialized), model.state, `Canonical restore accepts ${name}`);
+    ctx.fixtureFile(name, scope, serialized);
+    return serialized;
+  }
+  /** Lets lazily loaded art (whales, paints, allies) arrive on a running clock, then pauses. */
+  async function settle(ms = 1500) {
+    const page = ctx.page();
+    await page.clock.resume();
+    await page.waitForTimeout(ms);
+    await pauseClock(page);
+    await page.clock.runFor(100);
+  }
+  /** Opens a fixture and waits for its galaxy's art. */
+  async function open(serialized, options) {
+    await ctx.openFixture(serialized, options);
+    await ctx.awaitGalaxyArt();
+  }
+  async function still(name, model, options) {
+    await open(canonical(model, name), options);
+    await ctx.frames(name);
+  }
+
+  // The enemy fleet: each galaxy's frigate and capital intact, its frigate with every weapon
+  // destroyed and disabled, and its capital disabled and salvaged.
+  async function fleet() {
+    await inTurn(ALL, async (galaxy) => {
+      const model = flightModel(galaxy);
+      model.state.flight.objects = [];
+      addEnemy(model, { archetype: "frigate", screen: { x: -170, y: -20 } });
+      addEnemy(model, { archetype: "capital", screen: { x: 150, y: -40 } });
+      addEnemy(model, {
+        archetype: "frigate",
+        screen: { x: -160, y: 130 },
+        setup: destroyWeapons,
+      });
+      addEnemy(model, {
+        archetype: "capital",
+        screen: { x: 160, y: 140 },
+        setup: (enemy) => {
+          destroyWeapons(enemy);
+          enemy.salvaged = true;
+        },
+      });
+      await still(`fleet-heavies-${GALAXY_ID[galaxy]}`, model);
+    });
+  }
+  // The weapon tops each tier mounts: Phantom's frigate and capital at weapon levels 2 and 3.
+  async function fleetTops() {
+    await inTurn([1, 2, 3], async (weaponLevel) => {
+      const model = flightModel(6);
+      model.state.flight.objects = [];
+      addEnemy(model, { archetype: "frigate", screen: { x: -170, y: -20 }, weaponLevel });
+      addEnemy(model, { archetype: "capital", screen: { x: 150, y: -40 }, weaponLevel });
+      await still(`fleet-tops-phantom-level-${weaponLevel}`, model);
+    });
+  }
+  // The retaliators (each hull the tree rolls), fighters, interceptors and swarm craft of each
+  // galaxy, held still.
+  function retaliatorIds() {
+    const ids = [];
+    const seen = new Set();
+    for (let n = 0; n < 400 && ids.length < 3; n++) {
+      const id = `browser-art:retaliator:${n}`;
+      const variant = String(retaliatorVariant({ archetype: "retaliator", id }));
+      if (!seen.has(variant)) {
+        seen.add(variant);
+        ids.push(id);
+      }
+    }
+    for (let n = 400; ids.length < 3; n++) {
+      ids.push(`browser-art:retaliator:${n}`);
+    }
+    return ids;
+  }
+  async function fleetCraft() {
+    const ids = retaliatorIds();
+    await inTurn(ALL, async (galaxy) => {
+      const model = flightModel(galaxy);
+      model.state.flight.objects = [];
+      ids.forEach((id, index) =>
+        addEnemy(model, { archetype: "retaliator", id, screen: { x: -220 + 220 * index, y: -95 } }),
+      );
+      addEnemy(model, { archetype: "fighter", screen: { x: -150, y: 80 } });
+      addEnemy(model, { archetype: "interceptor", screen: { x: 30, y: 95 } });
+      addEnemy(model, { archetype: "swarm", screen: { x: 170, y: 80 } });
+      await still(`fleet-craft-${GALAXY_ID[galaxy]}`, model);
+    });
+  }
+  // Hostile stations and the Claim platform: the Claim station and platform in Cartwheel, intact
+  // and with their weapons destroyed, the garnet station in Andromeda and the coral station and
+  // the platform in Phantom.
+  async function hostile() {
+    const cases = [
+      ["cartwheel", 2, true, false],
+      ["cartwheel-destroyed", 2, true, true],
+      ["andromeda", 5, false, false],
+      ["phantom", 6, true, false],
+    ];
+    await inTurn(cases, async ([name, galaxy, platform, destroyed]) => {
+      const model = flightModel(galaxy);
+      model.state.flight.objects = [];
+      const setup = destroyed ? destroyWeapons : undefined;
+      addEnemy(model, { archetype: "hostileStation", screen: { x: -150, y: -20 }, setup });
+      if (platform) {
+        addEnemy(model, { archetype: "platform", screen: { x: 200, y: 40 }, setup });
+      }
+      await still(`hostile-${name}`, model);
+    });
+  }
+
+  /** A flight beside the galaxy's nearest seeded station, its art drawn at screen (-120, -20). */
+  function stationModel(galaxy, projects = []) {
+    const model = flightModel(galaxy);
+    const flight = model.state.flight;
+    const origin = { x: 0, y: 0 };
+    const [site] = stationsNear(ECONOMY, galaxy, 40000, origin).sort(
+      (a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y),
+    );
+    assert.ok(site, `Galaxy ${galaxy} has a seeded station`);
+    const station = ensureStation(CONTENT, site.id, flight);
+    beside(flight, station, { x: -120, y: -20 });
+    fund(model, galaxy, projects);
+    withoutEnemies(flight);
+    return model;
+  }
+  /** A flight beside the destination `id`, its art drawn at `screen`. */
+  function destinationModel(galaxy, id, { projects = [], screen = { x: -110, y: -20 } } = {}) {
+    const model = flightModel(galaxy);
+    const flight = model.state.flight;
+    fund(model, galaxy, projects);
+    const place = located(model, id);
+    beside(flight, place, screen);
+    withoutEnemies(flight);
+    return model;
+  }
+  /** Cartwheel's hub with its story resolved, Ada below it, with the projects funded. */
+  function hubModel(projects) {
+    const model = new GameModel(CONTENT);
+    model.state.unlocked = [1, 2];
+    Object.assign(model.state.progress[2], {
+      introduced: true,
+      questComplete: true,
+      resolved: true,
+      stage: 5,
+    });
+    model.startGalaxy(2);
+    playOpening(model);
+    model.state.dialogue = null;
+    Object.assign(model.state.progress[2], { known: ["hub"], stations: ["hub"] });
+    fund(model, 2, projects);
+    const flight = model.state.flight;
+    delete flight.storyScene;
+    withoutEnemies(flight);
+    flight.shots = [];
+    const hub = ensureDestination(CONTENT, "hub", flight);
+    beside(flight, hub, { x: -150, y: -10 });
+    flight.velocity = { x: 0, y: 0 };
+    return model;
+  }
+  // Sunflower's station and outposts (the growers' leaf hull, its greenhouse ring, the workshop
+  // crane and the salvage beacons) and Cartwheel's hub worn, worn with its docking bay and
+  // repaired with it.
+  async function stationsSunflowerCartwheel() {
+    await still("stations-sunflower-station", stationModel(1));
+    await still("stations-sunflower-growers", destinationModel(1, "growers"));
+    await still(
+      "stations-sunflower-growers-greenhouse",
+      destinationModel(1, "growers", { projects: ["greenhouseRing"] }),
+    );
+    await still(
+      "stations-sunflower-workshop-crane",
+      destinationModel(1, "workshop", { projects: ["workshopCrane"] }),
+    );
+    await still(
+      "stations-sunflower-salvagers-beacons",
+      destinationModel(1, "salvagers", { projects: ["salvageBeacons"] }),
+    );
+    await still("stations-cartwheel-hub-worn", hubModel([]));
+    await still("stations-cartwheel-hub-worn-bay", hubModel(["dockingBay"]));
+    await still("stations-cartwheel-hub-repaired-bay", hubModel(["dockingBay", "hubRepairs"]));
+  }
+  // Whirlpool's and Needle's stations, the Needle station as the Loom hall, and Needle's Elder
+  // Loom.
+  async function stationsWhirlpoolNeedle() {
+    await still("stations-whirlpool-station", stationModel(3));
+    await still("stations-needle-station", stationModel(4));
+    await still("stations-needle-loom-hall", stationModel(4, ["loomHall"]));
+    await still("stations-needle-elder-loom", destinationModel(4, "elderLoom"));
+  }
+  // Andromeda's station, a hamlet and a lamphouse settlement and the dark beacon, and Phantom's
+  // station and settlements cracked and mended.
+  async function stationsAndromedaPhantom() {
+    await still("stations-andromeda-station", stationModel(5));
+    const model = flightModel(5);
+    const flight = model.state.flight;
+    const sites = settlementsNear(ECONOMY, 20000, flight.player);
+    await inTurn([0, 1], async (parity) => {
+      const site = sites.find((entry) => {
+        const [cx, cy] = entry.id.slice("settlement:".length).split(",").map(Number);
+        return Math.abs(cx + cy) % 2 === parity;
+      });
+      assert.ok(site, `Andromeda has a settlement of variant ${parity}`);
+      const settled = flightModel(5);
+      const settledFlight = settled.state.flight;
+      const place = ensureDestination(CONTENT, site.id, settledFlight);
+      place.role = "settlement";
+      beside(settledFlight, place, { x: -110, y: -20 });
+      withoutEnemies(settledFlight);
+      await still(`stations-andromeda-settlement-${parity ? "lamphouse" : "hamlet"}`, settled);
+    });
+    await still("stations-andromeda-dark-beacon", destinationModel(5, "darkBeacon"));
+    await still("stations-phantom-station", stationModel(6));
+    await inTurn([false, true], async (mended) => {
+      const phantom = flightModel(6);
+      phantom.state.progress[6].questComplete = mended;
+      const phantomFlight = phantom.state.flight;
+      const homes = ensureDestination(CONTENT, "phantomSettlement1", phantomFlight);
+      beside(phantomFlight, homes, { x: -110, y: -20 });
+      withoutEnemies(phantomFlight);
+      await still(`stations-phantom-homes-${mended ? "mended" : "cracked"}`, phantom);
+    });
+  }
+
+  // Pickups: Stardust of one and five, ore of one and five, the ammo pack, the upgrade chevron
+  // and a discovery cache lit and hidden, across the climb and glint loops; then Needle's black
+  // holodisk with its waypoint beacon.
+  async function pickups() {
+    const model = flightModel(1);
+    const flight = model.state.flight;
+    flight.objects = [];
+    const pickup = (id, screen, fields) =>
+      flight.objects.push({ hp: 1, id, kind: "pickup", ...at(flight, screen), ...fields });
+    pickup("stardust:browser-1", { x: -220, y: -70 }, { amount: 1, radius: 10, role: "stardust" });
+    pickup("stardust:browser-5", { x: -140, y: -70 }, { amount: 5, radius: 12, role: "stardust" });
+    pickup("piece:browser-1", { x: -60, y: -70 }, { amount: 1, radius: 7, role: "cargo" });
+    pickup("piece:browser-5", { x: 20, y: -70 }, { amount: 5, radius: 7, role: "cargo" });
+    pickup(
+      "drop:browser-ammo",
+      { x: 100, y: -70 },
+      { ammoPack: true, radius: CONTENT.tuning.flight.pickupRadius, role: "drop" },
+    );
+    pickup(
+      "drop:browser-upgrade",
+      { x: 180, y: -70 },
+      { radius: CONTENT.tuning.flight.pickupRadius, role: "drop", upgrade: true },
+    );
+    pickup("browser-cache:lit", { x: -120, y: 70 }, { amount: 5, radius: 10, role: "discovery" });
+    pickup("browser-cache:hidden", { x: 300, y: 10 }, { amount: 5, radius: 10, role: "discovery" });
+    await open(canonical(model, "pickups"));
+    // The climb loops every 1140 ms: twelve frames 95 ms apart sample it evenly.
+    await ctx.frames("pickups", { every: 95, shots: 12 });
+    const disk = flightModel(4);
+    const diskFlight = disk.state.flight;
+    const holodisk = ensureDestination(CONTENT, "holodisk", diskFlight);
+    beside(diskFlight, holodisk, { x: -90, y: -30 });
+    withoutEnemies(diskFlight);
+    await open(canonical(disk, "pickups-holodisk"));
+    await ctx.frames("pickups-holodisk", { every: 150, shots: 6 });
+  }
+
+  // Beacons and landmarks: the survey beacon, wreck and nebula landmarks, Andromeda's guide
+  // beacons, Needle's channel lamps and practice berth, Whirlpool's current buoys, nursery beacon
+  // and quiet crossing.
+  async function landmarks() {
+    await inTurn(["beacon", "wreck", "nebula"], async (kind) => {
+      const galaxy = [1, 2, 3, 4, 5].find((g) => landmarkSites(g).some((s) => s.kind === kind));
+      assert.ok(galaxy, `Some galaxy has a ${kind} landmark`);
+      const site = landmarkSites(galaxy).find((entry) => entry.kind === kind);
+      const model = flightModel(galaxy);
+      const flight = model.state.flight;
+      beside(flight, site, { x: -110, y: -20 });
+      withoutEnemies(flight);
+      await still(`landmarks-${kind}`, model);
+    });
+    const guide = flightModel(5);
+    const guideFlight = guide.state.flight;
+    const distance = ({ point }) =>
+      Math.hypot(point.x - guideFlight.player.x, point.y - guideFlight.player.y);
+    const [slot] = guideBeaconSlots(guideFlight.player, 20000).sort(
+      (a, b) => distance(a) - distance(b),
+    );
+    assert.ok(slot, "Andromeda has a guide beacon near Ada");
+    beside(guideFlight, slot.point, { x: -110, y: -20 });
+    withoutEnemies(guideFlight);
+    await still("landmarks-andromeda-guide-beacon", guide);
+    await still(
+      "landmarks-needle-lamps-berth",
+      destinationModel(4, "needlePractice", {
+        projects: ["channelLights", "practiceBerth"],
+        screen: { x: 0, y: 0 },
+      }),
+    );
+    await still(
+      "landmarks-whirlpool-buoys-nursery",
+      destinationModel(3, "family", {
+        projects: ["currentBuoys", "nurseryBeacon", "quietCrossing"],
+        screen: { x: -60, y: -40 },
+      }),
+    );
+  }
+
+  // Needle's ring gates with Ada passing through practice gate 0 (the steep axis) and the Eye's
+  // gate 4 (the shallow axis), and the band over the Eye's ordered debris at its midpoint.
+  async function needle() {
+    const cases = [
+      ["practice", 0],
+      ["eye", 4],
+    ];
+    await inTurn(cases, async ([course, index]) => {
+      const model = flightModel(4);
+      const flight = model.state.flight;
+      const gate = needleCourses(flight)[course].gates[index];
+      flight.player = {
+        x: gate.point.x - gate.tangent.x * 12,
+        y: gate.point.y - gate.tangent.y * 12,
+      };
+      flight.facing = { ...gate.tangent };
+      flight.velocity = { x: gate.tangent.x * 60, y: gate.tangent.y * 60 };
+      ensureNeedleDebris(CONTENT, flight);
+      withoutEnemies(flight);
+      await still(`needle-gate-${course}-${index}`, model);
+    });
+    const model = flightModel(4);
+    const flight = model.state.flight;
+    const { path } = needleCourses(flight).eye;
+    flight.player = { ...path[Math.floor(path.length / 2)] };
+    ensureNeedleDebris(CONTENT, flight);
+    withoutEnemies(flight);
+    await still("needle-eye-band", model);
+  }
+
+  // Friendly craft and whales: Whirlpool's Marlo and the whale family, Cartwheel's blocking
+  // pilot, and Phantom's allies in three turns of eight, the last with the finale whale pair.
+  async function craft() {
+    await inTurn(["whale", "family"], async (id) => {
+      const model = destinationModel(3, id, { screen: { x: -40, y: -40 } });
+      await open(canonical(model, `craft-whirlpool-${id}`));
+      await settle();
+      await ctx.frames(`craft-whirlpool-${id}`, { every: 250, shots: 3 });
+    });
+    const story = new GameModel(CONTENT);
+    story.state.unlocked = [1, 2];
+    story.startGalaxy(2);
+    playOpening(story);
+    story.state.progress[2].introduced = true;
+    story.state.dialogue = null;
+    const storyFlight = story.state.flight;
+    storyFlight.shots = [];
+    storyFlight.velocity = { x: 0, y: 0 };
+    const hub = located(story, "hub");
+    withoutEnemies(storyFlight);
+    beside(storyFlight, hub, { x: -150, y: -10 });
+    await still("craft-cartwheel-hub-moored", story);
+    const specs = [1, 2, 3, 4, 5].map((galaxy) => ({
+      activityCompleted: true,
+      galaxy,
+      projects: (PROJECTS[galaxy] ?? []).map(({ ally, id }) => ({ ally, project: id })),
+    }));
+    const roster = phantomAllyRoster(specs, SHIP_REACH);
+    await inTurn([0, 1, 2], async (turn) => {
+      const model = flightModel(6);
+      const flight = model.state.flight;
+      withoutEnemies(flight);
+      assert.ok(flight.phantom, "Phantom's flight carries its chapter state");
+      const allies = rotatePhantomAllies(roster, turn, flight).map((ally) => ({
+        ...ally,
+        jumpAge: 1,
+        velocity: { x: 0, y: -20 },
+      }));
+      flight.phantom.allies = allies;
+      await open(canonical(model, `craft-phantom-allies-${turn + 1}`));
+      await settle();
+      await ctx.frames(`craft-phantom-allies-${turn + 1}`);
+    });
+  }
+
+  // Each galaxy's backdrop with its motif field and decorations, no play objects.
+  async function backdrops() {
+    const manifest = await ctx.served("/art/manifest.json");
+    const { debris } = await ctx.served(manifest.backdropLayers);
+    const rockArt = readAsteroidCatalog(await ctx.served("/art/asteroids.json"));
+    assert.ok(rockArt, "Art's asteroid catalog must read as version 1");
+    await inTurn(ALL, async (galaxy) => {
+      const serialized = backdropFixture(rockArt, debris, galaxy);
+      const name = `backdrops-${GALAXY_ID[galaxy]}`;
+      ctx.fixtureFile(name, scope, serialized);
+      await open(serialized);
+      await ctx.frames(name);
+    });
+  }
+
+  /** A save with Ada's ship in the paint scheme `paint`. */
+  function painted(model, paint) {
+    model.state.economy.paints = [...new Set(["classic", paint])];
+    model.state.economy.paint = paint;
+    return model;
+  }
+  // Ada's ship: the start screen in two schemes, in flight under way with her plumes in three
+  // schemes and two engine levels, the galaxy map and the quantum jump.
+  async function ship() {
+    await inTurn(["classic", "iris"], async (paint) => {
+      const model = painted(flightModel(1), paint);
+      const serialized = canonical(model, `ship-title-${paint}`);
+      const page = await ctx.openHome(serialized);
+      await page.locator(".ada-start-actions > button").first().waitFor();
+      await page.waitForFunction(() => document.querySelector(".ada-start-ship")?.complete);
+      await page.waitForTimeout(500);
+      await ctx.pageShot(`ship-title-${paint}.png`);
+    });
+    const cases = [
+      ["classic", 1],
+      ["classic", 3],
+      ["iris", 3],
+      ["amber", 3],
+    ];
+    await inTurn(cases, async ([paint, engine]) => {
+      const model = painted(flightModel(1), paint);
+      const flight = model.state.flight;
+      flight.objects = [];
+      flight.facing = { x: 1, y: 0 };
+      flight.velocity = { x: 250, y: 0 };
+      flight.levels.engine = engine;
+      model.state.economy.levels.engine = engine;
+      await open(canonical(model, `ship-flight-${paint}-engine-${engine}`));
+      await settle();
+      // Thrust held for 400 ms of clock time draws her plumes at full burn.
+      const page = ctx.page();
+      await ctx.release();
+      await page.keyboard.down("KeyW");
+      await page.clock.runFor(400);
+      await ctx.frames(`ship-flight-${paint}-engine-${engine}`, { every: 120, shots: 2 });
+      await page.keyboard.up("KeyW");
+    });
+    // The galaxy map from flight, and the quantum jump to Whirlpool from it.
+    const model = flightModel(1, { unlocked: [1, 3] });
+    // The Paused card offers Map once the prologue and the opening are seen.
+    model.state.prologueSeen = true;
+    model.state.progress[1].opened = true;
+    model.state.progress[3].opened = true;
+    model.state.flight.objects = [];
+    const serialized = canonical(model, "ship-map");
+    await ctx.openFixture(serialized, { frozen: false });
+    const page = ctx.page();
+    await page.clock.resume();
+    await page.locator('[data-action="pause"]').click();
+    await page.locator('[data-action="pause-map"]').click();
+    await page.locator('[data-dialog="map"] [data-action="map-galaxies"]').click();
+    await page.locator('.ada-route[data-dialog="galaxies"]').waitFor();
+    await page.waitForTimeout(800);
+    await ctx.pageShot("ship-map.png");
+    await page.locator('[data-action="galaxy-jump"]').focus();
+    await page.keyboard.press("ArrowRight");
+    await page.waitForTimeout(400);
+    await ctx.pageShot("ship-map-whirlpool.png");
+    await pauseClock(page);
+    await page.locator('[data-action="galaxy-jump"]').click();
+    // The plume poses run from 300 to 750 ms of the 1000 ms jump.
+    await page.clock.runFor(300);
+    await inTurn([0, 1, 2, 3], async (step) => {
+      await ctx.pageShot(`ship-jump-${step + 1}.png`);
+      await page.clock.runFor(150);
+    });
+  }
+
+  /** A galaxy-one flight with `weapon` equipped and a retaliator held to Ada's screen right. */
+  function armed(weapon, level = 1) {
+    const model = flightModel(1);
+    const flight = model.state.flight;
+    flight.objects = [];
+    const right = toWorld({ x: 1, y: 0 });
+    const length = Math.hypot(right.x, right.y);
+    flight.facing = { x: right.x / length, y: right.y / length };
+    // The laser is always aboard and needs no ammo.
+    if (weapon !== "laser") {
+      flight.ownedWeapons = [...new Set([...flight.ownedWeapons, weapon])];
+      flight.ammo[weapon] = Math.max(flight.ammo[weapon], 20);
+    }
+    flight.weapon = weapon;
+    flight.levels.weapons = { ...flight.levels.weapons, [weapon]: level };
+    flight.fireCooldown = 0;
+    addEnemy(model, {
+      archetype: "retaliator",
+      id: "browser-art:target",
+      screen: { x: 190, y: 0 },
+    });
+    return model;
+  }
+  // Ada's weapons in their flat look, each fired once at a held retaliator, with the missiles'
+  // frames and blasts; then the Phantom capital's mines held in their spin frames.
+  async function weapons() {
+    const cases = [
+      ["laser", 1],
+      ["scattershot", 1],
+      ["multiLaser", 3],
+      ["rapidMissile", 1],
+      ["heavyMissile", 1],
+      ["phaser", 1],
+    ];
+    await inTurn(cases, async ([weapon, level]) => {
+      const name = `weapons-${weapon}`;
+      await open(canonical(armed(weapon, level), name));
+      const page = ctx.page();
+      await ctx.release();
+      await page.keyboard.down("Space");
+      await page.clock.runFor(20);
+      await page.keyboard.up("Space");
+      await ctx.frames(name, { after: 40, every: 110, shots: 5 });
+    });
+    const model = flightModel(6);
+    const flight = model.state.flight;
+    flight.objects = [];
+    const owner = addEnemy(model, { archetype: "capital", screen: { x: 160, y: -60 } });
+    [-150, -60, 30].forEach((x, index) =>
+      flight.mines.push({
+        age: 1 + index * 0.4,
+        damage: 1,
+        id: `browser-art:mine:${index}`,
+        ownerId: owner.id,
+        ...at(flight, { x, y: 90 }),
+      }),
+    );
+    await open(canonical(model, "weapons-mines"));
+    await ctx.frames("weapons-mines", { every: 120, shots: 3 });
+  }
+
+  /** A held job in galaxy 2, taken at the hub. */
+  function job(model, fields) {
+    model.state.tasks[2] = {
+      id: `job:browser-${fields.type}`,
+      kind: "job",
+      reward: 20,
+      station: "hub",
+      ...fields,
+    };
+  }
+  // Effects: the destruction shards of each small craft at three ages, Whirlpool's current
+  // darts, the tow line to a stranded craft and the lost item glint's ping.
+  async function effects() {
+    const model = flightModel(1);
+    const flight = model.state.flight;
+    flight.objects = [];
+    const kinds = ["swarm", "fighter", "interceptor", "retaliator"];
+    kinds.forEach((archetype, row) =>
+      [0.05, 0.15, 0.3].forEach((age, column) => {
+        const id = `browser-art:${archetype}:${column}`;
+        flight.objects.push({
+          hp: 1,
+          id: `wreck:${id}`,
+          kind: "wreck",
+          radius: CONTENT.tuning.flight.shipRadius,
+          wreck: { age, archetype, facing: { x: 1, y: 0 } },
+          ...at(flight, { x: -200 + 200 * column, y: -120 + 80 * row }),
+        });
+      }),
+    );
+    await still("effects-shards", model);
+    const river = flightModel(3);
+    const riverFlight = river.state.flight;
+    const [current] = currentsNear(3, 20000, riverFlight.player);
+    assert.ok(current, "Whirlpool has a current near Ada");
+    riverFlight.player = { ...pointOnCurrent(current, current.length / 2).point };
+    withoutEnemies(riverFlight);
+    await open(canonical(river, "effects-current"));
+    await ctx.release();
+    await ctx.frames("effects-current", { after: 200, every: 300, shots: 3 });
+    const tow = flightModel(2);
+    const towFlight = tow.state.flight;
+    withoutEnemies(towFlight);
+    towFlight.facing = { x: 1, y: 0 };
+    towFlight.tow = { x: towFlight.player.x - 80, y: towFlight.player.y };
+    job(tow, {
+      item: JOB_POOL[2].craft[0],
+      target: { id: "", ...at(towFlight, { x: 200, y: 0 }) },
+      type: "rescue",
+    });
+    await still("effects-tow", tow);
+    const hunt = flightModel(2);
+    const huntFlight = hunt.state.flight;
+    withoutEnemies(huntFlight);
+    job(hunt, {
+      item: JOB_POOL[2].lost[0],
+      spot: at(huntFlight, { x: 0, y: -80 }),
+      target: { id: "", ...at(huntFlight, { x: 0, y: -40 }) },
+      type: "hunt",
+    });
+    await open(canonical(hunt, "effects-ping"));
+    await ctx.frames("effects-ping", { every: 300, shots: 4 });
+  }
+
+  // Controls: the settings card with its close and switches, the pressed close, the disabled
+  // close and the disabled switches; then the paint notice's ship swatch.
+  async function controls() {
+    const serialized = canonical(flightModel(1), "controls-settings");
+    const page = await ctx.openHome(serialized);
+    await page.locator('[data-action="menu"]').click();
+    await page.locator('[data-dialog="menu"] [data-action="menu-settings"]').click();
+    const close = page.locator('[data-action="close-settings"]');
+    await close.waitFor();
+    await page.waitForTimeout(300);
+    await ctx.pageShot("controls-settings.png");
+    const box = await close.boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(100);
+    await ctx.pageShot("controls-settings-close-pressed.png");
+    await page.mouse.move(0, 0);
+    await page.mouse.up();
+    await page.evaluate(() => {
+      document.querySelector('[data-action="close-settings"]')?.setAttribute("disabled", "");
+      for (const toggle of document.querySelectorAll("[data-setting] .ada-switch")) {
+        toggle.dataset.tag = `${toggle.dataset.tag}-disabled`;
+      }
+    });
+    await page.waitForTimeout(100);
+    await ctx.pageShot("controls-settings-disabled.png");
+    // The paint notice: every scheme but Amber owned and every level held, so unlocking all
+    // equipment notices Amber alone.
+    const model = flightModel(1);
+    model.state.flight.objects = [];
+    model.state.economy.paints = ["classic", "cobalt", "seafoam", "graphite", "iris"];
+    for (const name of ["shield", "engine", "tractor"]) {
+      model.state.economy.levels[name] = 3;
+      model.state.flight.levels[name] = 3;
+    }
+    await ctx.openFixture(canonical(model, "controls-paint-notice"), { frozen: false });
+    const flightPage = ctx.page();
+    await flightPage.clock.resume();
+    await flightPage.locator('[data-action="pause"]').click();
+    await flightPage.locator('[data-action="pause-cheats"]').click();
+    await flightPage.locator('[data-cheat="unlockAllEquipment"]').click();
+    await flightPage.locator('[data-action="dismiss-cheats"]').click();
+    await flightPage.locator('[data-action="pause-resume"]').click();
+    // The notice fades in over 180 ms; its swatch shows once the ship's materials load.
+    await flightPage.locator(".ada-item-notice").first().waitFor({ state: "visible" });
+    await flightPage.waitForTimeout(500);
+    await ctx.pageShot("controls-paint-notice.png");
+  }
+
+  return {
+    backdrops,
+    controls,
+    craft,
+    effects,
+    fleet,
+    "fleet-craft": fleetCraft,
+    "fleet-tops": fleetTops,
+    hostile,
+    landmarks,
+    needle,
+    pickups,
+    ship,
+    "stations-andromeda-phantom": stationsAndromedaPhantom,
+    "stations-sunflower-cartwheel": stationsSunflowerCartwheel,
+    "stations-whirlpool-needle": stationsWhirlpoolNeedle,
+    weapons,
+  };
+}

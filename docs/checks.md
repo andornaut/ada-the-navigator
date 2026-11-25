@@ -263,14 +263,20 @@ Art's review screenshots run separately from the gating smoke, against the same
 gate evidence and in the same containers:
 
 ```bash
-node tools/browser-check.mjs start --captures .check-results/ada-check-UUID
+node tools/browser-check.mjs start --captures .check-results/ada-check-UUID [set ...]
 node tools/browser-check.mjs collect ada-captures-UUID
 ```
 
-The run (`tools/browser-captures.mjs`) has its own 120 second limit. It captures
-the heavies by mount tier, the disabled and salvaged heavies, the enemy weapons at
-full and reduced motion, the upgrade pickup's climb, and galaxy one's rock spin and
-footprint overlay. Each fixture is a canonical save. The flight is held still
+The run (`tools/browser-captures.mjs`) has its own 120 second limit, so name a
+few capture sets per run. With no set named it runs `heavies`, `rocks`,
+`keylines` and `hub`: the heavies by mount tier, the disabled and salvaged
+heavies, the enemy weapons at full and reduced motion, the upgrade pickup's
+climb, galaxy one's rock spin and footprint overlay, and the light-field
+keylines. The visible-art sets (`tools/browser-captures-batch.mjs`) are `fleet`,
+`fleet-tops`, `fleet-craft`, `hostile`, `stations-sunflower-cartwheel`,
+`stations-whirlpool-needle`, `stations-andromeda-phantom`, `pickups`,
+`landmarks`, `needle`, `craft`, `backdrops`, `ship`, `weapons`, `effects` and
+`controls`. Each fixture is a canonical save. The flight is held still
 until every enemy and rock in view draws Art's frames (`data-enemies` and
 `data-asteroids` on `#game-status`). Frames are then taken at stepped times on a
 paused page clock. A capture run fails only on a page error, a failed request or

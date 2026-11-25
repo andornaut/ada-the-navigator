@@ -66,7 +66,7 @@ const RUNS = {
   captures: { prefix: "ada-captures", script: "/source/tools/browser-captures.mjs" },
 };
 
-function start(argument, mode = "browser") {
+function start(argument, mode = "browser", sets = []) {
   guard(false);
   const gate = realpathSync(resolve(root, argument ?? ""));
   if (!gate.startsWith(`${realpathSync(evidenceRoot)}${sep}`)) {
@@ -145,6 +145,7 @@ function start(argument, mode = "browser") {
       `CHECK_REVISION=${source.head}`,
       "mcr.microsoft.com/playwright/mcp:v0.0.83",
       RUNS[mode].script,
+      ...sets,
     ]);
     created.push(name);
     guard(false);
@@ -333,16 +334,21 @@ try {
   const [command, ...rest] = process.argv.slice(2);
   const captures = rest[0] === "--captures";
   const argument = captures ? rest[1] : rest[0];
+  // Art review capture sets to run, by name (tools/browser-captures.mjs); none runs the default.
+  const sets = captures ? rest.slice(2) : [];
+  if (sets.some((set) => !/^[a-z][a-z0-9-]*$/.test(set))) {
+    throw new Error("Capture set names are lowercase words joined by hyphens");
+  }
   if (command === "start") {
-    start(argument, captures ? "captures" : "browser");
+    start(argument, captures ? "captures" : "browser", sets);
   } else if (command === "collect") {
     collect(argument);
   } else if (command === "serve") {
     serve();
   } else {
     throw new Error(
-      "Usage: node tools/browser-check.mjs start [--captures] <gate-evidence-directory> | " +
-        "collect <run-name>",
+      "Usage: node tools/browser-check.mjs start <gate-evidence-directory> | " +
+        "start --captures <gate-evidence-directory> [set ...] | collect <run-name>",
     );
   }
 } catch (error) {

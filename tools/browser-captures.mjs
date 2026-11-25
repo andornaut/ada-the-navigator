@@ -3,6 +3,7 @@ import { writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 
 import { SCREEN } from "../src/data/screen.ts";
+import { batchCaptures } from "./browser-captures-batch.mjs";
 import {
   asteroidFixture,
   hideOverCanvas,
@@ -17,6 +18,7 @@ import {
   previewOrigin,
   reportViolations,
   save,
+  served,
   storageKey,
   toScreen,
   toWorld,
@@ -25,9 +27,10 @@ import {
 
 // Art review captures (art/heavies.md, art/weapons.md, art/asteroids.md): screenshots of
 // canonical fixtures for Art to review, outside the gating smoke. A run fails only on a page
-// error, a failed request or a fixture that never draws Art's frames.
+// error, a failed request or a fixture that never draws Art's frames. The arguments name the
+// capture sets to run (SETS below); none runs DEFAULT_SETS.
 const events = { errors: [], failedRequests: [], badResponses: [], captures: [] };
-const CAPTURE_LIMIT_SECONDS = 300;
+const CAPTURE_LIMIT_SECONDS = 120;
 const watchdog = setTimeout(() => {
   save("events.json", events);
   save("result.json", {
@@ -80,6 +83,15 @@ function freezable() {
 let browser;
 let context;
 let page;
+/** Art's JSON at `path` as the installed build serves it, opening the start screen if needed. */
+async function servedJson(path) {
+  if (!page) {
+    await openHome(null);
+  }
+  const response = await served(page, path);
+  assert.equal(response.status(), 200, `${path} must be served`);
+  return response.json();
+}
 /**
  * Opens a canonical save in a fresh context, one renderer at a time, with the flight held still
  * (`frozen`) and the page clock under the run's control, then continues into the flight and
@@ -322,12 +334,10 @@ async function captureHeavies() {
 }
 
 async function captureRocks() {
-  const response = await page.request.get(`${previewOrigin}/art/asteroids.json`);
-  assert.equal(response.status(), 200, "Art's asteroid catalog must be served");
-  const rockArt = readAsteroidCatalog(await response.json());
+  const rockArt = readAsteroidCatalog(await servedJson("/art/asteroids.json"));
   assert.ok(rockArt, "Art's asteroid catalog must read as version 1");
-  const backdrop = await page.request.get(`${previewOrigin}/art/backdrop-lattice.json`);
-  const { debris } = await backdrop.json();
+  // The core manifest links the backdrop layers, with both rock depths' debris rules.
+  const { debris } = await servedJson((await servedJson("/art/manifest.json")).backdropLayers);
   // Galaxy one's rocks turning: small and medium rocks turn 4 to 18 degrees a second, so 15
   // degree frames change within two seconds of clock time.
   const spinning = asteroidFixture(rockArt, debris, 1);
@@ -491,14 +501,72 @@ async function captureHub() {
   await shot("keylines-cartwheel-hub-720x360-insets.png");
 }
 
+/**
+ * Opens a canonical save, or with null the browser's own, at the start screen without
+ * continuing, one renderer at a time.
+ */
+async function openHome(serialized, { viewport = { width: 1280, height: 720 } } = {}) {
+  await closeFixture();
+  const opened = await browser.newContext({ viewport, hasTouch: true });
+  context = opened;
+  await opened.addInitScript(reportViolations);
+  await opened.route("**/*", previewOnly);
+  await opened.addInitScript(
+    ({ key, value }) => {
+      if (value !== null && !sessionStorage.getItem("ada-captures.seeded")) {
+        localStorage.setItem(key, value);
+        sessionStorage.setItem("ada-captures.seeded", "1");
+      }
+    },
+    { key: storageKey, value: serialized },
+  );
+  page = await opened.newPage();
+  page.setDefaultTimeout(30000);
+  observe(events, page);
+  await page.clock.install();
+  await page.goto(`${previewOrigin}/play/`);
+  await page.locator('#game-status[data-mode="home"]').waitFor({ state: "attached" });
+  return page;
+}
+
+/** Saves the whole page, HTML over the canvas included, as `file`. */
+async function pageShot(file) {
+  await page.screenshot({ path: `${output}/${file}` });
+  events.captures.push(file);
+}
+
+// The capture sets by name. The four review sets that predate the named sets run by default.
+const SETS = {
+  heavies: captureHeavies,
+  hub: captureHub,
+  keylines: () => captureKeylines(),
+  rocks: captureRocks,
+  ...batchCaptures({
+    awaitGalaxyArt,
+    fixtureFile,
+    frames,
+    heavyFixture,
+    openFixture,
+    openHome,
+    page: () => page,
+    pageShot,
+    phoneInsets,
+    release,
+    served: servedJson,
+    shot,
+  }),
+};
+const DEFAULT_SETS = ["heavies", "rocks", "keylines", "hub"];
+
 try {
+  const names = process.argv.length > 2 ? process.argv.slice(2) : DEFAULT_SETS;
+  const unknown = names.filter((name) => !Object.hasOwn(SETS, name));
+  assert.deepEqual(unknown, [], `Capture sets are ${Object.keys(SETS).join(", ")}`);
   const require = createRequire("/app/package.json");
   const { chromium } = require("playwright");
   browser = await launchBrowser(chromium);
-  await captureHeavies();
-  await captureRocks();
-  await captureKeylines();
-  await captureHub();
+  // Each set runs after the last, one renderer at a time.
+  await names.reduce((previous, name) => previous.then(() => SETS[name]()), Promise.resolve());
   await closeFixture();
   assert.deepEqual(events.errors, [], "Captured pages must report no errors");
   assert.deepEqual(
@@ -511,6 +579,7 @@ try {
   save("result.json", {
     passed: true,
     scope: "Rendered canonical fixtures; screenshot review by Art required",
+    sets: process.argv.length > 2 ? process.argv.slice(2) : DEFAULT_SETS,
     captures: events.captures,
   });
 } catch (error) {
