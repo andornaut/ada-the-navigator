@@ -313,11 +313,8 @@ export function wheels(lit: boolean, options: Wheels = {}): Mesh {
     const [z0, outer, inner, spokes, hub] = wheel;
     const z1 = z0 + 8;
     const open = wheel === big ? options.gap : undefined;
-    const gap = open && ([open[0] * RADIAN, open[1] * RADIAN] as const);
-    meshRing(mesh, ORIGIN, z0, z1, outer, inner, RIM, { ...(gap && { gap }) });
-    meshRing(mesh, ORIGIN, z0 + 2.4, z0 + 5.6, outer + 0.5, outer - 1.5, HUB, {
-      ...(gap && { gap }),
-    });
+    meshRing(mesh, ORIGIN, z0, z1, outer, inner, RIM, 64, open);
+    meshRing(mesh, ORIGIN, z0 + 2.4, z0 + 5.6, outer + 0.5, outer - 1.5, HUB, 64, open);
     cyl(mesh, ORIGIN, z0 - 3, z1 + 3, hub, HUB, 32);
     for (let k = 0; k < spokes; k++) {
       const a = (k * 360) / spokes + 30;
@@ -363,39 +360,26 @@ export function whirl(lit: boolean): Mesh {
   const radius = (t: number) => r0 + ((r1 - r0) * t) / sweep;
   const width = (t: number) => w0 + ((w1 - w0) * t) / sweep;
   const deck = (t: number) => 15 - (11 * t) / sweep;
-  const degrees = (f: (t: number) => number) => (travelled: number) => f(travelled / RADIAN);
   cyl(mesh, ORIGIN, -8, top, core, CORE);
   drum(mesh, ORIGIN, -8, -8 - stalk, core * 0.66, 6, CORE, 32);
   cyl(mesh, ORIGIN, -14, -8, core * 0.8, CORE);
   for (let i = 0; i < arms; i++) {
     const turn = 20 + (i * 360) / arms;
-    meshSpiral(
-      mesh,
-      {
-        turn: turn * RADIAN,
-        from: 0,
-        to: sweep * RADIAN,
-        radius: degrees(radius),
-        width: degrees(width),
-        top: degrees(deck),
-        bottom: () => -5,
-      },
-      ARM,
-    );
+    meshSpiral(mesh, turn, 0, sweep, { radius, width, top: deck, bottom: () => -5 }, ARM);
     const end = pol(radius(sweep), turn + sweep);
     cyl(mesh, end, -7, deck(sweep) + 3, 8.5, CORE, 24);
     cyl(mesh, end, deck(sweep) + 3, deck(sweep) + 4.5, 5, coral, 20);
     // One lamp band along the ramp's outer wall.
     meshSpiral(
       mesh,
+      turn,
+      62,
+      sweep - 8,
       {
-        turn: turn * RADIAN,
-        from: 62 * RADIAN,
-        to: (sweep - 8) * RADIAN,
-        radius: degrees((t) => radius(t) + width(t) / 2),
+        radius: (t) => radius(t) + width(t) / 2,
         width: () => 1,
-        top: degrees((t) => deck(t) - 2.2),
-        bottom: degrees((t) => deck(t) - 4.8),
+        top: (t) => deck(t) - 2.2,
+        bottom: (t) => deck(t) - 4.8,
       },
       coral,
     );

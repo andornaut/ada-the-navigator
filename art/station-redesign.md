@@ -262,6 +262,3 @@ in [projects](projects.md) and the Use callout tops in
 - Display scales follow the shipped rows, so the hub, the outposts and the
   settlements each keep a factor of their own. One destination scale for every
   structure would change only the frame px values.
-- `tidy` in `visible.ts` drops a corner that lies between two points rounding
-  onto each other. `tonePaths` removes such points first; the enemy fleet
-  producer's own copy of the tone path step does not.
