@@ -187,10 +187,13 @@ describe("drawn muzzles", () => {
 
   it("reads every hardpoints file Art exports, at Art's enemy display scale", () => {
     // The claim family adds the platform's file; every fleet design reads its own
-    // fleet{Key}-hardpoints.json in the core folder.
+    // fleet{Key}-hardpoints.json in the core folder. Each hostile station reads its own design's
+    // file: the Claim station for the claim family, garnet for Andromeda and coral for Phantom.
     const variants = new Map([
-      ["hostileStation-andromeda", "hostileStationAndromeda"],
-      ["hostileStation-phantom", "hostileStationPhantom"],
+      ["hostileStationClaim", "hostileStation"],
+      ["hostileStationGarnet", "hostileStationAndromeda"],
+      ["hostileStationCoral", "hostileStationPhantom"],
+      ["platformWheel", "platform"],
     ]);
     const key = (name: string) =>
       name.startsWith("fleet") ? `${name[5]!.toLowerCase()}${name.slice(6)}` : name;
@@ -218,7 +221,9 @@ describe("drawn muzzles", () => {
     for (const archetype of Object.keys(MUZZLE_ART)) {
       const station = stations.get(archetype);
       const ids =
-        station === undefined ? [`enemy-${archetype}-0`, `enemy-claim-${archetype}`] : [station];
+        station === undefined
+          ? [`enemy-${archetype}-0`, `enemy-claim-${archetype}-0`, `enemy-claim-${archetype}`]
+          : [station];
       const hull = manifest.assets.find((asset) => ids.includes(asset.id))!;
       expect(hull.displayWidth! / hull.width).toBe(ENEMY_DISPLAY_SCALE);
     }

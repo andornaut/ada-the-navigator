@@ -29,7 +29,8 @@ describe("claim jumper art loading", () => {
     const hulls = enemyFrameSets(claim, CLAIM);
     expect([...hulls.keys()].sort()).toEqual([...CLAIM_WIRED].sort());
     for (const [archetype, frames] of hulls) {
-      expect(frames.length, archetype).toBe(archetype === "platform" ? 1 : 16);
+      // The platform's hull turns with its heading too.
+      expect(frames.length, archetype).toBe(16);
       for (const frame of frames) {
         expect(present(frame.path), frame.path).toBe(true);
       }
@@ -60,10 +61,14 @@ describe("claim jumper art loading", () => {
       for (const part of due) {
         expect(part.id.startsWith(`enemy-claim-${body}-`), part.id).toBe(true);
         // Each fleet body's parts are its design's files: the claim capital is the Outrigger
-        // carrier, and the Mining Freighter draws the Manta gunship's top.
+        // carrier, and the Mining Freighter draws the Manta gunship's top. The Claim station's
+        // and the wheel platform's bases are their designs' files and their tops the class's.
+        const top = part.id.includes("-top-");
         const fleet: Readonly<Record<string, string>> = {
           capital: "fleetCapitalOutrigger",
           frigate: "fleetFrigate",
+          hostileStation: top ? "hostileStation" : "hostileStationClaim",
+          platform: top ? "platform" : "platformWheel",
           retaliator: "fleetRetaliator",
           retaliatorCargoHauler: "fleetRetaliatorCargoHauler",
           retaliatorMiningFreighter: part.id.includes("-turret-top-")
