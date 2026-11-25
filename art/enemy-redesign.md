@@ -30,7 +30,7 @@ Spans are Ada widths from `src/data/enemyDimensions.ts`.
 | `fighter`     | Arrowhead                              |    1 | Multi-Laser, three flush ports. Two engine pods           |     1 |
 | `interceptor` | Spear                                  |    1 | Phaser, flush emitter nose cap. One drive cone            |     1 |
 | `retaliator`  | Manta gunship                          |    3 | Rapid Missile, one aimed `pod` top. Three stern mouths    |     2 |
-| `retaliator`  | Cargo Hauler, Mining Freighter         |    3 | Rapid Missile, one aimed `pod` top. Three nozzles         |     2 |
+| `retaliator`  | Cargo Hauler (2.5), Mining Freighter   |    3 | Rapid Missile, one aimed `pod` top. Three nozzles         |     2 |
 | `frigate`     | Slim delta, Twin hull                  |    5 | Heavy Missile `rail` on `port`, Laser `gun` on the others |     3 |
 | `capital`     | Six designs, one per galaxy            |    6 | Charged Lance or Mine Layer, Scattershot elsewhere        |     4 |
 | Weapon tops   | `gun`, `triple`, `dish`, `pod`, `rail` |      | Aimed tops with capped and destroyed mount states         |     5 |
@@ -120,11 +120,16 @@ Layers per class:
 | Craft            | Key                              | Stem                        | Frame | Display | Hull length | Hull width | Radius | Mount offset | Collar frame | Top frame |
 | ---------------- | -------------------------------- | --------------------------- | ----: | ------: | ----------: | ---------: | -----: | ------------ | -----------: | --------: |
 | Manta gunship    | `fleetRetaliator`                | `retaliator`                |   160 |      70 |       77.69 |     128.64 |  64.32 | `[0, 11.43]` |           32 |        40 |
-| Cargo Hauler     | `fleetRetaliatorCargoHauler`     | `retaliatorCargoHauler`     |   184 |    80.5 |      137.09 |     128.64 |  68.55 | `[0, 9.14]`  |           24 |        32 |
+| Cargo Hauler     | `fleetRetaliatorCargoHauler`     | `retaliatorCargoHauler`     |   280 |   122.5 |         192 |      107.2 |     96 | `[0, -6.86]` |           24 |        32 |
 | Mining Freighter | `fleetRetaliatorMiningFreighter` | `retaliatorMiningFreighter` |   176 |      77 |      114.25 |     128.64 |  64.32 | `[0, 11.43]` |           32 |        40 |
 
 Hull sizes and offsets are frame px; display px are 0.4375 times them. Each
 retaliator has three stern mouths.
+
+The Cargo Hauler is sized per hull: its span is 2.5 Ada widths, below the
+retaliator's 3, and it is the longest of the three at 84 by 46.9 display px.
+Its spacing and footprint radius is 96 frame px (42 display px), against 64.32
+(28.1) for the other two.
 
 Each retaliator is its own hull: the three share no frames, jets, collision,
 hardpoints or shards. Its launcher is the `turret` hardpoint, with one `intact`
@@ -259,8 +264,9 @@ For the retaliators, from the same file:
 - `destruction.json` needs an entry per stem, or the three share one:
   `flashWidth` is 127.35 for each.
 - Gameplay rolls the three hulls with equal weight in every galaxy and takes
-  each hull's `hull.radius` for spacing and footprint: 64.32, 68.55 and 64.32
-  frame px.
+  each hull's `hull.radius` for spacing and footprint: 64.32, 96 and 64.32
+  frame px. The Cargo Hauler's 2.5 width span is its own; `ENEMY_SIZE_RATIOS`
+  keeps `retaliator` at 3 for the other two.
 
 For the frigates, from the same file:
 
