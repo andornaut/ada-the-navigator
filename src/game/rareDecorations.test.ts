@@ -61,7 +61,7 @@ describe("optional rare decoration data", () => {
     expect(decorationRasterSize(768, 2048)).toEqual({ height: 1024, width: 384 });
     expect(decorationRasterSize(0, 768)).toBeUndefined();
     expect(decorationRasterSize(Infinity, 768)).toBeUndefined();
-    expect(18 * 1024 * 768 * 4).toBe(54 * 1024 ** 2);
+    expect(24 * 1024 * 768 * 4).toBe(72 * 1024 ** 2);
   });
 
   it("decodes weighted sizes and normalized polygon unions without changing legacy recipes", () => {

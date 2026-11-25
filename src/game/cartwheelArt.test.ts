@@ -45,14 +45,14 @@ describe("Cartwheel art", () => {
     // Every galaxy manifest with entries; a placeholder galaxy's holds none.
     const drawn = [...GALAXY_MANIFESTS].filter(([, galaxy]) => galaxy.assets.length > 0);
     expect([...sets.keys()].sort()).toEqual([...drawn.map(([galaxy]) => galaxy), null].sort());
-    const decorationIds = (galaxy: GalaxyNumber): ReadonlySet<string> => {
+    const decorationIds = (galaxy: GalaxyNumber, frames: number): ReadonlySet<string> => {
       const backdrop = readGalaxyBackdrop(json(GALAXY_MANIFESTS.get(galaxy)!.links.backdrop!));
-      expect(backdrop?.decorations?.sprites, `galaxy ${galaxy}`).toHaveLength(3);
+      expect(backdrop?.decorations?.sprites, `galaxy ${galaxy}`).toHaveLength(frames);
       return new Set(backdrop!.decorations!.sprites.map(({ asset }) => asset));
     };
-    const cartwheelDecorations = decorationIds(2);
-    const sunflowerDecorations = decorationIds(1);
-    const whirlpoolDecorations = decorationIds(3);
+    const cartwheelDecorations = decorationIds(2, 3);
+    const sunflowerDecorations = decorationIds(1, 6);
+    const whirlpoolDecorations = decorationIds(3, 3);
     const cartwheel = sets.get(2)!;
     expect(cartwheel).toEqual(
       expect.arrayContaining([

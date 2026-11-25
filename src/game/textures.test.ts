@@ -71,53 +71,28 @@ describe("vector raster size", () => {
   });
 
   it("covers every SVG through manifest display dimensions or canonical rare-decoration recipes", () => {
+    // Sunflower and Andromeda keep three planet frames beside their three solid formations.
+    const frameCounts: Record<string, number> = {
+      andromeda: 6,
+      cartwheel: 3,
+      needle: 3,
+      phantom: 3,
+      sunflower: 6,
+      whirlpool: 3,
+    };
     const decorations = new Map(
       [...GALAXY_MANIFESTS.values()].flatMap(({ links }) => {
-        const backdrop = readGalaxyBackdrop(publicJson(links.backdrop!));
-        expect(backdrop?.decorations?.sprites).toHaveLength(3);
-        return backdrop!.decorations!.sprites.map((sprite) => [sprite.asset, sprite] as const);
+        const backdrop = readGalaxyBackdrop(publicJson(links.backdrop!))!;
+        expect(backdrop.decorations?.sprites, backdrop.galaxy).toHaveLength(
+          frameCounts[backdrop.galaxy]!,
+        );
+        return backdrop.decorations!.sprites.map((sprite, index) => {
+          expect(sprite.asset).toBe(`backdrop-decoration-${backdrop.galaxy}-${index + 1}`);
+          return [sprite.asset, sprite] as const;
+        });
       }),
     );
-    expect(decorations.size).toBe(18);
-    const authoredSizes = {
-      andromeda: [
-        [842.61, 631.95],
-        [842.61, 631.95],
-        [842.61, 631.95],
-      ],
-      cartwheel: [
-        [805.51, 604.13],
-        [798.2, 598.65],
-        [1116.53, 837.4],
-      ],
-      needle: [
-        [755.36, 566.52],
-        [755.36, 566.52],
-        [755.36, 566.52],
-      ],
-      phantom: [
-        [880.35, 660.27],
-        [863.7, 647.77],
-        [784.4, 588.3],
-      ],
-      sunflower: [
-        [720, 540],
-        [720, 540],
-        [720, 540],
-      ],
-      whirlpool: [
-        [878.07, 658.55],
-        [882.12, 661.59],
-        [870.11, 652.58],
-      ],
-    };
-    for (const [galaxy, sizes] of Object.entries(authoredSizes)) {
-      sizes.forEach((size, index) => {
-        const id = `backdrop-decoration-${galaxy}-${index + 1}`;
-        const recipe = decorations.get(id);
-        expect([recipe?.width, recipe?.height], id).toEqual(size);
-      });
-    }
+    expect(decorations.size).toBe(24);
     const seen = new Set<string>();
     const svgs = ART_MANIFEST.assets.filter(({ path }) => path.endsWith(".svg"));
     expect(svgs.length).toBeGreaterThan(1000);
@@ -127,6 +102,8 @@ describe("vector raster size", () => {
         expect(recipe, asset.id).toBeDefined();
         expect([asset.displayWidth, asset.displayHeight], asset.id).toEqual([undefined, undefined]);
         expect([asset.width, asset.height], asset.id).toEqual([1024, 768]);
+        // The recipe's display size scales the whole frame, so it keeps the frame's 4:3 shape.
+        expect(recipe!.width / recipe!.height, asset.id).toBeCloseTo(4 / 3, 3);
         expect(decorationRasterSize(asset.width, asset.height), asset.id).toEqual({
           height: 768,
           width: 1024,

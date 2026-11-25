@@ -15788,7 +15788,7 @@
     },
     {
       "id": "backdrop-decoration-andromeda-1",
-      "path": "/art/andromeda/decoration-sheet.svg",
+      "path": "/art/andromeda/decoration-set-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
@@ -15801,7 +15801,7 @@
     },
     {
       "id": "backdrop-decoration-andromeda-2",
-      "path": "/art/andromeda/decoration-sheet.svg",
+      "path": "/art/andromeda/decoration-set-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
@@ -15814,7 +15814,46 @@
     },
     {
       "id": "backdrop-decoration-andromeda-3",
-      "path": "/art/andromeda/decoration-sheet.svg",
+      "path": "/art/andromeda/decoration-set-sheet.svg",
+      "width": 1024,
+      "height": 768,
+      "kind": "backdrop-decoration",
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "svgSheet": true
+    },
+    {
+      "id": "backdrop-decoration-andromeda-4",
+      "path": "/art/andromeda/decoration-set-sheet.svg",
+      "width": 1024,
+      "height": 768,
+      "kind": "backdrop-decoration",
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "svgSheet": true
+    },
+    {
+      "id": "backdrop-decoration-andromeda-5",
+      "path": "/art/andromeda/decoration-set-sheet.svg",
+      "width": 1024,
+      "height": 768,
+      "kind": "backdrop-decoration",
+      "facing": "fixed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "svgSheet": true
+    },
+    {
+      "id": "backdrop-decoration-andromeda-6",
+      "path": "/art/andromeda/decoration-set-sheet.svg",
       "width": 1024,
       "height": 768,
       "kind": "backdrop-decoration",
