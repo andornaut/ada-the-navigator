@@ -88,14 +88,14 @@ diameter.
 | `retaliator`  | Manta gunship                 |        34 x 56 |                           30 |
 | `retaliator`  | Cargo Hauler                  |      84 x 46.9 |                           45 |
 | `retaliator`  | Mining Freighter              |        50 x 56 |                           30 |
-| `frigate`     | Slim delta                    |     106 x 93.8 |                           57 |
-| `frigate`     | Twin hull                     |      97 x 93.8 |                           52 |
-| `capital`     | Hammer (Sunflower)            |      159 x 113 |                           85 |
-| `capital`     | Manta dreadnought (Whirlpool) |      153 x 113 |                           82 |
-| `capital`     | Crossbow (Needle)             |      166 x 113 |                           89 |
-| `capital`     | Broad wing (Andromeda)        |      140 x 113 |                           75 |
-| `capital`     | Outrigger carrier (Cartwheel) |      152 x 113 |                           81 |
-| `capital`     | Forked fortress (Phantom)     |      170 x 113 |                           91 |
+| `frigate`     | Slim delta                    |     117 x 93.8 |                           62 |
+| `frigate`     | Twin hull                     |     108 x 93.8 |                           58 |
+| `capital`     | Hammer (Sunflower)            |  158.9 x 112.6 |                           85 |
+| `capital`     | Manta dreadnought (Whirlpool) |  152.9 x 112.6 |                           82 |
+| `capital`     | Crossbow (Needle)             |  165.9 x 112.6 |                           88 |
+| `capital`     | Broad wing (Andromeda)        |  139.9 x 112.6 |                           75 |
+| `capital`     | Outrigger carrier (Cartwheel) |  151.9 x 112.6 |                           81 |
+| `capital`     | Forked fortress (Phantom)     |  169.9 x 112.6 |                           91 |
 | Flagship      | Admiral Archie's own design   |  122.5 x 112.6 |                           65 |
 | `platform`    | Ore-field platform            |        75 x 75 |                           40 |
 
@@ -107,7 +107,11 @@ diameter.
   rings and capital spacing, never hits.
 - **Frigates:** the Slim delta in Sunflower, Cartwheel and Phantom; the Twin hull
   in Whirlpool, Andromeda and Needle. Each galaxy has one capital, listed above.
-  Every frigate and capital in a galaxy uses that galaxy's hull.
+  Every frigate and capital in a galaxy uses that galaxy's hull. The Twin hull's
+  length includes its engines.
+- **Capital mounts:** each capital's mount positions come from its hull's
+  design; the mount IDs and fill order are unchanged. A mount the hull hides at
+  some headings still fires and takes hits as usual.
 - **Retaliators:** each rolls the Manta gunship, Cargo Hauler or Mining Freighter
   with equal weight in every galaxy, from its ship ID. All three keep the
   `retaliator` values, Rapid Missile and one aimed launcher.
@@ -361,6 +365,11 @@ part, with no hull damage or overflow. Hull hits damage only the hull. A station
 has no hull floor: zero hull destroys it, and disabling every weapon disables it.
 Friendly stations retain one HP. Existing ship hull HP and the flagship hull floor
 remain unchanged.
+
+Each galaxy has one hostile station design: two six-sided decks in Andromeda, an
+eight-sided wheel over a deck in Cartwheel and four arms over four in Phantom.
+Each design has eight mount bases at its own positions. The armed counts (6, 7
+and 8) and the `weapon-0` through `weapon-7` fill order are unchanged.
 
 ## Hostile station defenders and encounter lifetime
 
@@ -672,7 +681,9 @@ with its galaxy. Each galaxy still gives its enemy ships one coherent visual
 family: coral in Sunflower, Whirlpool and Phantom, claim in Cartwheel, garnet in
 Andromeda and crimson in Needle. The small craft and the three retaliator bodies
 each have one model in every galaxy, recoloured per family; frigate and capital
-hulls follow [Hulls](#hulls). Sunflower keeps its three outposts. The current
+hulls follow [Hulls](#hulls). Sunflower keeps its three outposts; the growers'
+outpost is drawn as the leaf-petal station hull, with no new destination or
+mechanic. The current
 trading station and discovery cache art is tuned for Cartwheel; Sunflower draws
 its stations and caches with pastel-tuned versions that read on its yellow
 field, reusing the shared Cartwheel-tuned assets until those exist. Asteroid sprites
