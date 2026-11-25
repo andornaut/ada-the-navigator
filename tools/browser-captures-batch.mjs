@@ -423,6 +423,108 @@ export function batchCaptures(ctx) {
     await ctx.frames("pickups-holodisk", { every: 150, shots: 6 });
   }
 
+  // Resources (art/stardust.md): Stardust and ore of one and five in flight on
+  // Phantom's dark field and Sunflower's light field, one Stardust inside Ada's tractor radius
+  // with its pull streak, each with the HUD status pill; then the Ship card, the station's
+  // welcome balances, Shop price pills, buy confirm, Jobs pane hints and Exchange, and the
+  // Quests detail of Cartwheel's ore objective, each drawing the Stardust or ore icons.
+  async function resources() {
+    await inTurn(
+      [
+        [6, "dark"],
+        [1, "light"],
+      ],
+      async ([galaxy, field]) => {
+        const model = flightModel(galaxy);
+        const flight = model.state.flight;
+        flight.objects = [];
+        flight.cargo = 12;
+        model.state.economy.stardust = 345;
+        const pickup = (id, screen, fields) =>
+          flight.objects.push({ hp: 1, id, kind: "pickup", ...at(flight, screen), ...fields });
+        pickup(
+          "stardust:browser-1",
+          { x: -180, y: -60 },
+          { amount: 1, radius: 10, role: "stardust" },
+        );
+        pickup(
+          "stardust:browser-5",
+          { x: -100, y: -60 },
+          { amount: 5, radius: 12, role: "stardust" },
+        );
+        pickup("piece:browser-1", { x: 100, y: -60 }, { amount: 1, radius: 7, role: "cargo" });
+        pickup("piece:browser-5", { x: 180, y: -60 }, { amount: 5, radius: 7, role: "cargo" });
+        // About 52 world px from Ada, inside the base 60 tractor radius: the pull streak trails it.
+        pickup(
+          "stardust:browser-pulled",
+          { x: 70, y: 10 },
+          { amount: 1, radius: 10, role: "stardust" },
+        );
+        await open(canonical(model, `resources-flight-${field}`));
+        await ctx.frames(`resources-flight-${field}`, { every: 160, shots: 4 });
+        await ctx.pageShot(`resources-flight-${field}-page.png`);
+      },
+    );
+    // The Ship card's Stardust and ore rows.
+    const ship = flightModel(1);
+    ship.state.flight.objects = [];
+    ship.state.flight.cargo = 12;
+    ship.state.economy.stardust = 345;
+    await open(canonical(ship, "resources-ship"));
+    const shipPage = ctx.page();
+    await shipPage.clock.resume();
+    await shipPage.locator('[data-action="pause"]').click();
+    await shipPage.locator('[data-action="pause-ship"]').click();
+    await shipPage.locator('[data-dialog="ship"]').waitFor({ state: "visible" });
+    await shipPage.waitForTimeout(300);
+    await ctx.pageShot("resources-ship-card.png");
+    // Docked at Sunflower's nearest station: welcome balances, Shop, a buy confirm, Jobs and
+    // Exchange.
+    const docked = stationModel(1);
+    docked.state.economy.stardust = 345;
+    const nearest = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 }).sort(
+      (a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y),
+    )[0];
+    docked.state.docked = nearest.id;
+    docked.state.flight.cargo = 12;
+    await open(canonical(docked, "resources-station"));
+    const station = ctx.page();
+    await station.clock.resume();
+    const view = async (action, file) => {
+      await station.locator(`[data-action="${action}"]`).click();
+      await station.waitForTimeout(300);
+      await ctx.pageShot(file);
+    };
+    await station.locator('[data-action="open-shop"]').waitFor({ state: "visible" });
+    await ctx.pageShot("resources-station-welcome.png");
+    await view("open-shop", "resources-station-shop.png");
+    await station.locator(".ada-shop-row:has(.ada-price)").first().click();
+    await station.waitForTimeout(300);
+    await ctx.pageShot("resources-station-confirm.png");
+    await view("confirm-cancel-x", "resources-station-shop-again.png");
+    await view("shop-back", "resources-station-welcome-again.png");
+    await view("open-jobs", "resources-station-jobs.png");
+    await view("jobs-back", "resources-station-welcome-after-jobs.png");
+    await view("open-exchange", "resources-station-exchange.png");
+    // Cartwheel's story at its first mining milestone: the Quests detail's ore objectives.
+    const quest = flightModel(2);
+    Object.assign(quest.state.progress[2], { deposited: 3, stage: 1 });
+    quest.state.flight.cargo = 4;
+    withoutEnemies(quest.state.flight);
+    await open(canonical(quest, "resources-quest"));
+    const questPage = ctx.page();
+    await questPage.clock.resume();
+    await questPage.locator('[data-action="pause"]').click();
+    await questPage.locator('[data-action="pause-quests"]').click();
+    const quests = questPage.locator(".ada-quests-screen");
+    await quests.waitFor({ state: "visible" });
+    await questPage.waitForTimeout(300);
+    await ctx.pageShot("resources-quests-list.png");
+    await quests.locator(".ada-quest-list .ada-button").first().click();
+    await questPage.waitForTimeout(300);
+    await ctx.pageShot("resources-quests-detail.png");
+  }
+
   // Beacons and landmarks: the survey beacon, wreck and nebula landmarks, Andromeda's guide
   // beacons, Needle's channel lamps and practice berth, Whirlpool's current buoys, nursery beacon
   // and quiet crossing.
@@ -880,6 +982,7 @@ export function batchCaptures(ctx) {
     landmarks,
     needle,
     pickups,
+    resources,
     ship,
     "ship-fixes": shipFixes,
     "ship-fixes-l": plumeSet("l"),

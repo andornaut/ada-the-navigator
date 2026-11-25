@@ -276,7 +276,8 @@ keylines. The visible-art sets (`tools/browser-captures-batch.mjs`) are `fleet`,
 `fleet-tops`, `fleet-craft`, `hostile`, `stations-sunflower-cartwheel`,
 `stations-whirlpool-needle`, `stations-andromeda-phantom`, `pickups`,
 `landmarks`, `needle`, `craft`, `backdrops`, `ship`, `weapons`, `effects` and
-`controls`. Each fixture is a canonical save. The flight is held still
+`controls`. `resources` captures the Stardust and ore pickups on a dark and a
+light field and every UI view that draws their icons. Each fixture is a canonical save. The flight is held still
 until every enemy and rock in view draws Art's frames (`data-enemies` and
 `data-asteroids` on `#game-status`). Frames are then taken at stepped times on a
 paused page clock. A capture run fails only on a page error, a failed request or
