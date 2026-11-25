@@ -97,16 +97,22 @@ async function servedJson(path) {
  * (`frozen`) and the page clock under the run's control, then continues into the flight and
  * waits until every enemy and rock in view draws Art's frames. The clock is then paused, so
  * each frame is taken at a stepped time rather than whenever its screenshot lands.
+ * `deviceScaleFactor` sets the device pixels per CSS px; the game renders at up to 2.
  */
 async function closeFixture() {
   await context?.close();
 }
 async function openFixture(
   serialized,
-  { frozen = true, reducedMotion = false, viewport = { width: 1280, height: 720 } } = {},
+  {
+    deviceScaleFactor = 1,
+    frozen = true,
+    reducedMotion = false,
+    viewport = { width: 1280, height: 720 },
+  } = {},
 ) {
   await closeFixture();
-  const opened = await browser.newContext({ viewport, hasTouch: true });
+  const opened = await browser.newContext({ deviceScaleFactor, viewport, hasTouch: true });
   context = opened;
   await opened.addInitScript(reportViolations);
   await opened.addInitScript(freezable);
@@ -169,6 +175,28 @@ async function shot(file) {
   await showOverCanvas();
   events.captures.push(file);
   return image;
+}
+/**
+ * Saves a square of the page `side` CSS px wide, without the HTML drawn over the canvas, centred
+ * on the element `selector` (by default the canvas, where Ada draws), as `file`. Without `side`
+ * the square is twice the element's larger dimension.
+ */
+async function closeUp(file, { selector = "#game-canvas > canvas", side } = {}) {
+  const box = await page.locator(selector).boundingBox();
+  assert.ok(box, `${selector} must be laid out for its close-up`);
+  const width = side ?? 2 * Math.max(box.width, box.height);
+  const showOverCanvas = await hideOverCanvas(page);
+  await page.screenshot({
+    clip: {
+      height: width,
+      width,
+      x: box.x + box.width / 2 - width / 2,
+      y: box.y + box.height / 2 - width / 2,
+    },
+    path: `${output}/${file}`,
+  });
+  await showOverCanvas();
+  events.captures.push(file);
 }
 /**
  * Saves `shots` frames of the open fixture as art-<name>[-n].png: the first `after` ms of
@@ -505,9 +533,12 @@ async function captureHub() {
  * Opens a canonical save, or with null the browser's own, at the start screen without
  * continuing, one renderer at a time.
  */
-async function openHome(serialized, { viewport = { width: 1280, height: 720 } } = {}) {
+async function openHome(
+  serialized,
+  { deviceScaleFactor = 1, viewport = { width: 1280, height: 720 } } = {},
+) {
   await closeFixture();
-  const opened = await browser.newContext({ viewport, hasTouch: true });
+  const opened = await browser.newContext({ deviceScaleFactor, viewport, hasTouch: true });
   context = opened;
   await opened.addInitScript(reportViolations);
   await opened.route("**/*", previewOnly);
@@ -543,6 +574,7 @@ const SETS = {
   rocks: captureRocks,
   ...batchCaptures({
     awaitGalaxyArt,
+    closeUp,
     fixtureFile,
     frames,
     heavyFixture,

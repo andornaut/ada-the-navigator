@@ -282,6 +282,12 @@ until every enemy and rock in view draws Art's frames (`data-enemies` and
 paused page clock. A capture run fails only on a page error, a failed request or
 a fixture that never draws Art's frames; Art reviews the images.
 
+The ship-fix sets run at 2 device px per CSS px, each view with a close-up of
+Ada's canopy, tail and plume roots. `ship-fixes` takes the start screen and the
+warp's settle-24, settle-16 and settle-10 poses. `ship-fixes-l`, `ship-fixes-m`
+and `ship-fixes-s` take her plumes at 1, 0.6 and 0.25 of her top speed, forward
+and in reverse, at headings 0, 16, 32 and 48 of 64: eight fixtures per set.
+
 Browser smoke coverage supports prototype integration review; it does not
 establish story completeness or gameplay balance. Review the collected results
 for the exact source revision before claiming a behavior is verified.

@@ -4,7 +4,8 @@ import { pauseClock, toWorld } from "./browser-support.mjs";
 
 // The visible-art batch review sets for tools/browser-captures.mjs: canonical saves of each view
 // the batch redraws (the fleet, stations, pickups, landmarks, Needle, craft and whales,
-// backdrops, Ada's ship, weapons, effects and controls), held still on a paused page clock.
+// backdrops, Ada's ship and its fixes, weapons, effects and controls), held still on a paused
+// page clock.
 // Each set stays within the run's 120 second limit; name the sets in separate runs.
 
 const [
@@ -16,7 +17,7 @@ const [
   { enemyActorDefinition },
   { createEnemy },
   { retaliatorVariant },
-  { activateRequiredWhirlpoolRoute, ensureDestination, ensureStation },
+  { activateRequiredWhirlpoolRoute, ensureDestination, ensureStation, shipSpeedFraction },
   { stationsNear },
   { settlementsNear },
   { landmarkSites },
@@ -155,7 +156,8 @@ const destroyWeapons = (enemy) => {
 
 /**
  * Builds the visible-art batch sets over the runner's fixture helpers: `ctx` supplies
- * openFixture, openHome, frames, shot, pageShot, release, awaitGalaxyArt, fixtureFile and page.
+ * openFixture, openHome, frames, shot, closeUp, pageShot, release, awaitGalaxyArt, fixtureFile
+ * and page.
  */
 export function batchCaptures(ctx) {
   /** The model's canonical save, checked by restore and kept as fixture evidence. */
@@ -552,6 +554,89 @@ export function batchCaptures(ctx) {
     });
   }
 
+  /**
+   * Opens a galaxy-one flight, with Whirlpool unlocked, as the fixture `name` and goes to the
+   * galaxy map's Galaxies view on the running page clock.
+   */
+  async function galaxyMap(name, options) {
+    const model = flightModel(1, { unlocked: [1, 3] });
+    // The Paused card offers Map once the prologue and the opening are seen.
+    model.state.prologueSeen = true;
+    model.state.progress[1].opened = true;
+    model.state.progress[3].opened = true;
+    model.state.flight.objects = [];
+    await ctx.openFixture(canonical(model, name), { ...options, frozen: false });
+    const page = ctx.page();
+    await page.clock.resume();
+    await page.locator('[data-action="pause"]').click();
+    await page.locator('[data-action="pause-map"]').click();
+    await page.locator('[data-dialog="map"] [data-action="map-galaxies"]').click();
+    await page.locator('.ada-route[data-dialog="galaxies"]').waitFor();
+    await page.waitForTimeout(800);
+    return page;
+  }
+  /** Moves the open Galaxies view's selection from galaxy one to Whirlpool. */
+  async function selectWhirlpool(page) {
+    await page.locator('[data-action="galaxy-jump"]').focus();
+    await page.keyboard.press("ArrowRight");
+    await page.waitForTimeout(400);
+  }
+
+  // Ada's ship fixes at 2 device px per CSS px: the start screen and the warp's settle poses,
+  // then, in one set per plume size, her plumes at headings 0, 16, 32 and 48 under way forward
+  // and in reverse. Each view adds a close-up of her canopy, tail and plume roots.
+  const FIX_SCALE = { deviceScaleFactor: 2 };
+  const FIX_HEADINGS = [0, 16, 32, 48];
+  // Plume sizes as fractions of her top speed.
+  const PLUME_SIZES = { l: 1, m: 0.6, s: 0.25 };
+  /**
+   * A galaxy-one flight with nothing in view, Ada facing `heading` of 64 and moving at `fraction`
+   * of her top speed along it, or against it in `reverse`.
+   */
+  function underWay(fraction, reverse, heading) {
+    const model = flightModel(1);
+    const flight = model.state.flight;
+    flight.objects = [];
+    const angle = (heading * 2 * Math.PI) / 64;
+    // Adding zero maps -0 to 0, so the save restores unchanged.
+    flight.facing = { x: Math.cos(angle) + 0, y: Math.sin(angle) + 0 };
+    const unit = { levels: flight.levels, velocity: { x: 1, y: 0 } };
+    const speed = ((reverse ? -1 : 1) * fraction) / shipSpeedFraction(CONTENT, unit);
+    flight.velocity = { x: speed * flight.facing.x + 0, y: speed * flight.facing.y + 0 };
+    return model;
+  }
+  async function shipFixes() {
+    const title = canonical(painted(flightModel(1), "classic"), "ship-fixes-title");
+    const home = await ctx.openHome(title, FIX_SCALE);
+    await home.locator(".ada-start-actions > button").first().waitFor();
+    await home.waitForFunction(() => document.querySelector(".ada-start-ship")?.complete);
+    await home.waitForTimeout(500);
+    await ctx.pageShot("ship-fixes-title.png");
+    await ctx.closeUp("ship-fixes-title-close.png", { selector: ".ada-start-ship" });
+    const page = await galaxyMap("ship-fixes-jump", FIX_SCALE);
+    await selectWhirlpool(page);
+    await pauseClock(page);
+    await page.locator('[data-action="galaxy-jump"]').click();
+    // settle-24, settle-16 and settle-10 each hold 50 ms from 600 ms of the jump; one shot apiece
+    // at its midpoint.
+    await page.clock.runFor(625);
+    await inTurn([24, 16, 10], async (pose) => {
+      await ctx.pageShot(`ship-fixes-settle-${pose}.png`);
+      await ctx.closeUp(`ship-fixes-settle-${pose}-close.png`, { side: 320 });
+      await page.clock.runFor(50);
+    });
+  }
+  const plumeSet = (size) => () =>
+    inTurn(
+      FIX_HEADINGS.flatMap((heading) => [false, true].map((reverse) => [reverse, heading])),
+      async ([reverse, heading]) => {
+        const name = `ship-fixes-${reverse ? "retro" : "forward"}-${size}-${heading}`;
+        await open(canonical(underWay(PLUME_SIZES[size], reverse, heading), name), FIX_SCALE);
+        await ctx.frames(name);
+        await ctx.closeUp(`art-${name}-close.png`, { side: 160 });
+      },
+    );
+
   /** A save with Ada's ship in the paint scheme `paint`. */
   function painted(model, paint) {
     model.state.economy.paints = [...new Set(["classic", paint])];
@@ -595,25 +680,9 @@ export function batchCaptures(ctx) {
       await page.keyboard.up("KeyW");
     });
     // The galaxy map from flight, and the quantum jump to Whirlpool from it.
-    const model = flightModel(1, { unlocked: [1, 3] });
-    // The Paused card offers Map once the prologue and the opening are seen.
-    model.state.prologueSeen = true;
-    model.state.progress[1].opened = true;
-    model.state.progress[3].opened = true;
-    model.state.flight.objects = [];
-    const serialized = canonical(model, "ship-map");
-    await ctx.openFixture(serialized, { frozen: false });
-    const page = ctx.page();
-    await page.clock.resume();
-    await page.locator('[data-action="pause"]').click();
-    await page.locator('[data-action="pause-map"]').click();
-    await page.locator('[data-dialog="map"] [data-action="map-galaxies"]').click();
-    await page.locator('.ada-route[data-dialog="galaxies"]').waitFor();
-    await page.waitForTimeout(800);
+    const page = await galaxyMap("ship-map");
     await ctx.pageShot("ship-map.png");
-    await page.locator('[data-action="galaxy-jump"]').focus();
-    await page.keyboard.press("ArrowRight");
-    await page.waitForTimeout(400);
+    await selectWhirlpool(page);
     await ctx.pageShot("ship-map-whirlpool.png");
     await pauseClock(page);
     await page.locator('[data-action="galaxy-jump"]').click();
@@ -812,6 +881,10 @@ export function batchCaptures(ctx) {
     needle,
     pickups,
     ship,
+    "ship-fixes": shipFixes,
+    "ship-fixes-l": plumeSet("l"),
+    "ship-fixes-m": plumeSet("m"),
+    "ship-fixes-s": plumeSet("s"),
     "stations-andromeda-phantom": stationsAndromedaPhantom,
     "stations-sunflower-cartwheel": stationsSunflowerCartwheel,
     "stations-whirlpool-needle": stationsWhirlpoolNeedle,
