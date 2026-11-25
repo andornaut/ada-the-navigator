@@ -2770,10 +2770,13 @@ try {
       order: emptyMap ? { centred: ["center", "center"], emptyAbove: true } : null,
       reason: [CONTENT.labels.travelUnavailable],
       row: true,
-      // maxWidth: Quests' left less SPACING.gap and the page inset (378 - 8 - 16).
-      width: 354,
+      // The danger line is narrower than the floor, so the panel takes
+      // min(MAP_PANEL.minWidth, maxWidth); maxWidth is the label-sized footer's Quests left less
+      // SPACING.gap and the page inset.
+      width: Math.min(360, Math.round((hudRow.quests.left / hudRow.unit - 8 - 16) * 10) / 10),
     },
-    "In danger with nothing selected the reason-only panel is 354 by 52, or 80 with the empty note",
+    "In danger with nothing selected the reason-only panel takes the floor width by 52, or 80 " +
+      "with the empty note",
   );
   await page.screenshot({ path: `${output}/map-earth-danger.png` });
   // Map proofs: the local map in danger with nothing mapped, its header, tools, empty panel and
