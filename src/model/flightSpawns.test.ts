@@ -246,7 +246,7 @@ describe("flight spawns from the planner", () => {
           radius: spacingRadius(ROUTE_POSITION[GALAXY], {
             archetype: seen.archetype as EnemyArchetype,
             id,
-          })!,
+          }),
         })),
     );
     const rocks = (chunk: ReadonlyMap<string, Seen>) =>

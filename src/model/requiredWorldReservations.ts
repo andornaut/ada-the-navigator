@@ -1,12 +1,10 @@
 import { spacingRadius } from "../data/enemySpacing.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
-import { outlineContact } from "./convex.ts";
-import { enemyPhysicalBody } from "./enemyBody.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import { protectedRadius } from "./protectedPlaces.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
-import { worldDistance, worldPoint } from "./worldContacts.ts";
+import { worldDistance } from "./worldContacts.ts";
 
 /** Transient outputs of the authoritative required-site planner, never discovery records. */
 export interface RequiredWorldReservation {
@@ -53,28 +51,15 @@ export function requiredWorldOccupantsPlacementClear(
         worldDistance(context, site, footprint.center) > protection + footprint.radius
       );
     }) &&
-    occupants.actors.every((actor) => {
-      const position = ROUTE_POSITION[context.galaxy];
-      // An enemy's footprint is a circle of its design's spacing radius; a design without one
-      // reserves its assembled hull.
-      const spacing = actor.kind === "enemy" && actor.enemy && spacingRadius(position, actor.enemy);
-      if (typeof spacing === "number") {
-        return worldDistance(context, actor, footprint.center) > spacing + footprint.radius;
-      }
-      const body =
-        actor.kind === "enemy" && actor.enemy && enemyPhysicalBody(position, actor.enemy);
-      return (
-        body !== false &&
-        body !== undefined &&
-        body !== null &&
-        outlineContact(
-          body,
-          actor,
-          worldPoint(context, actor, footprint.center),
-          footprint.radius,
-        ) === null
-      );
-    })
+    // An enemy's footprint is a circle of its design's spacing radius; an actor that is not an
+    // enemy has no footprint to clear.
+    occupants.actors.every(
+      (actor) =>
+        actor.kind === "enemy" &&
+        actor.enemy !== undefined &&
+        worldDistance(context, actor, footprint.center) >
+          spacingRadius(ROUTE_POSITION[context.galaxy], actor.enemy) + footprint.radius,
+    )
   );
 }
 

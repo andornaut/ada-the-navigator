@@ -18,7 +18,7 @@ export function frigateEscortStation(
   leader: SpaceObject,
   phase: number,
 ): Vec {
-  const radius = (leader.enemy && spacingRadius(position, leader.enemy)) ?? leader.radius;
+  const radius = leader.enemy ? spacingRadius(position, leader.enemy) : leader.radius;
   const gap = radius + escortTuning.stationGap;
   return { x: leader.x + Math.cos(phase) * gap, y: leader.y + Math.sin(phase) * gap };
 }

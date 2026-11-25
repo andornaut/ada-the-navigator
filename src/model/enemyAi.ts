@@ -10,7 +10,6 @@ import {
   type RetreatPolicy,
   RING_BOLTS,
 } from "../data/enemyCatalog.ts";
-import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
 import type { HeavyHullProfile } from "../data/enemyIdentity.ts";
 import { MUZZLE_ART, muzzleArtForDefinition, muzzleLayout } from "../data/enemyMuzzles.ts";
 import { ENEMY_STEERING, ENEMY_STRAFE } from "../data/enemyNavigation.ts";
@@ -565,17 +564,6 @@ function navigate(
 }
 
 /** The live capital an escort guards, if it is loaded and not disabled. */
-/**
- * An escort leader's spacing radius, which its escorts' stations sit beyond, or half its drawn
- * span for a design without one.
- */
-function escortLeaderRadius(context: EnemyContext, leader: EnemyState): number {
-  return (
-    spacingRadius(context.routePosition, leader) ??
-    (ENEMY_SIZE_RATIOS[leader.archetype] * context.adaWidth) / 2
-  );
-}
-
 function escorted(context: EnemyContext, state: EnemyState): EnemyState | undefined {
   return state.escortOf === null
     ? undefined
@@ -792,8 +780,9 @@ function steering(
   };
   const capital = escorted(context, state);
   if (capital) {
-    // Escorts hold a station beside the capital and intercept Ada when she comes close to it.
-    const hull = escortLeaderRadius(context, capital);
+    // Escorts hold a station beyond the capital's spacing radius and intercept Ada when she
+    // comes close to it.
+    const hull = spacingRadius(context.routePosition, capital);
     const reach = worldDistance(context, capital.position, context.player);
     if (reach <= escortTuning.interceptRadius + hull) {
       return hold();

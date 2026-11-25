@@ -8,7 +8,7 @@ import {
   escortTuning,
   FRIGATE_ESCORT_COUNT,
 } from "../data/enemyCatalog.ts";
-import { classSpacingRadius, shipSpacingRadius } from "../data/enemySpacing.ts";
+import { classSpacingRadius, spacingRadius } from "../data/enemySpacing.ts";
 import { byPosition, ROUTE_POSITION } from "../data/galaxies.ts";
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { LANDMARK_TUNING } from "../data/jobs.ts";
@@ -33,6 +33,7 @@ import type { GalaxyNumber } from "../data/types.ts";
 import { ASTEROID_SHAPES, placementRadius } from "./asteroids.ts";
 import { worldCurrentsNear } from "./currents.ts";
 import { ambientPackId, packMemberId } from "./geography.ts";
+import { hostileStationSites } from "./hostileStationSites.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { ORE_FIELD_CLEAR_RADIUS, worldOreFieldsNear } from "./oreFields.ts";
 import { proceduralPoisNear } from "./proceduralPois.ts";
@@ -153,7 +154,7 @@ function enemyTargets(
               archetype: escorts.archetype,
               kind: `${entry.archetype}-escort`,
               perLeader: escorts.perLeader,
-              radius: shipSpacingRadius(position, { archetype: escorts.archetype }),
+              radius: spacingRadius(position, { archetype: escorts.archetype }),
               ring: hull + escortTuning.stationGap,
             },
           }
@@ -172,7 +173,7 @@ function enemyTargets(
       kind: entry.archetype,
       // Each member's ship id, and so its hull, follows from its pack's chunk and its index.
       memberRadius: (chunk, member) =>
-        shipSpacingRadius(position, {
+        spacingRadius(position, {
           archetype: entry.archetype,
           id: packMemberId(ambientPackId(chunk), member),
         }),
@@ -260,12 +261,12 @@ const disc = (rule: string, applies: ExclusionZone["applies"], at: Vec, radius: 
 /**
  * The seeded world's exclusion zones within `radius` of a point, as `generate` applies them:
  * station protected areas, quantum and launch arrivals (a safe radius for rocks, the calm radius
- * for enemies), landmark charting ranges, currents, ore fields and salvage sites. A salvage
- * site's disabled frigate keeps rocks the spawn gap from its footprint and enemy groups out of
- * its local admission neighbourhood, so the site is planned before them. Protected areas and
- * arrival safe radii also bound moving rocks' paths, since they absorb moving rocks. Flight-state
- * zones (the player, story destinations, required routes and the Needle channel) are the
- * caller's.
+ * for enemies), landmark charting ranges, currents, ore fields, salvage sites and hostile station
+ * sites. A salvage site's disabled frigate and a hostile station keep rocks the spawn gap from
+ * their footprint and enemy groups out of their local admission neighbourhood, so their sites
+ * are planned before them. Protected areas and arrival safe radii also bound moving rocks'
+ * paths, since they absorb moving rocks. Flight-state zones (the player, story destinations,
+ * required routes and the Needle channel) are the caller's.
  */
 export function worldSpawnExclusions(
   context: WorldCellContext,
@@ -275,9 +276,13 @@ export function worldSpawnExclusions(
   radius: number,
   point: Vec,
 ): ExclusionZone[] {
+  const position = ROUTE_POSITION[galaxy];
+  const local = 2 * SPAWNER_POLICIES[galaxy].localRadius;
   // A salvage site's disabled frigate: its footprint is its galaxy's frigate design.
-  const wreck = shipSpacingRadius(ROUTE_POSITION[galaxy], { archetype: "frigate" });
-  const neighbourhood = 2 * SPAWNER_POLICIES[galaxy].localRadius + wreck;
+  const wreck = spacingRadius(position, { archetype: "frigate" });
+  const neighbourhood = local + wreck;
+  const station = spacingRadius(position, { archetype: "hostileStation" });
+  const stationReach = radius + local + station;
   const near = (at: Vec, reach: number) =>
     (context.worldSide === undefined
       ? Math.hypot(at.x - point.x, at.y - point.y)
@@ -319,6 +324,21 @@ export function worldSpawnExclusions(
         // Rocks keep the spawn gap from the wreck's footprint.
         disc("salvage", ["rock", "moving"], site, wreck + SPAWN_GAP),
         disc("salvage", ["enemy"], site, neighbourhood),
+      ]),
+    ...hostileStationSites(
+      { ...context, galaxy, geographySeed: seed },
+      {
+        height: 2 * stationReach,
+        width: 2 * stationReach,
+        x: point.x - stationReach,
+        y: point.y - stationReach,
+      },
+    )
+      .filter((site) => near(site, local + station))
+      .flatMap((site) => [
+        // Rocks keep the spawn gap from the station's footprint.
+        disc("hostile-station", ["rock", "moving"], site, station + SPAWN_GAP),
+        disc("hostile-station", ["enemy"], site, local + station),
       ]),
   ];
 }

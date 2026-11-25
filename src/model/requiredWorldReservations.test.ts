@@ -64,7 +64,7 @@ describe("required world reservations", () => {
       false,
     );
     // The guard's footprint is its Shoulder frigate's spacing radius.
-    const reach = spacingRadius(1, guard.enemy!)!;
+    const reach = spacingRadius(1, guard.enemy!);
     expect(reach).toBe(63);
     expect(
       requiredWorldPlacementClear(context, reservations, {
@@ -194,7 +194,7 @@ describe("independent required world occupants", () => {
         },
       ),
     ).toBe(false);
-    const reach = spacingRadius(3, actor.enemy)!;
+    const reach = spacingRadius(3, actor.enemy);
     expect(
       requiredWorldOccupantsPlacementClear(
         needle,

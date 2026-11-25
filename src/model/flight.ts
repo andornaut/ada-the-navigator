@@ -949,18 +949,11 @@ function flightSpawnRules(flight: FlightState): SpawnRules {
   return rules;
 }
 
-/**
- * A required actor's footprint: its design's spacing radius, else, for a design without one, its
- * whole reach (its physical hull and parts, else its radius).
- */
+/** A required actor's footprint: an enemy's spacing radius, else its placement radius. */
 function actorFootprint(flight: FlightState, actor: SpaceObject): number {
-  const position = ROUTE_POSITION[flight.galaxy];
-  const spacing = actor.enemy && spacingRadius(position, actor.enemy);
-  if (spacing !== undefined) {
-    return spacing;
-  }
-  const body = actor.enemy && enemyPhysicalBody(position, actor.enemy);
-  return body ? Math.max(actor.radius, partsReach(worldParts(body))) : placementRadius(actor);
+  return actor.enemy
+    ? spacingRadius(ROUTE_POSITION[flight.galaxy], actor.enemy)
+    : placementRadius(actor);
 }
 
 /**

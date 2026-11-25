@@ -13,6 +13,7 @@ import {
   bandAcceptance,
 } from "../testing/spawnAcceptance.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
+import { hostileStationSites } from "./hostileStationSites.ts";
 import type { ExclusionZone, SpawnCategory } from "./spawnPlanner.ts";
 import { spawnRules, worldSpawnExclusions } from "./spawnTargets.ts";
 
@@ -74,6 +75,35 @@ describe("spawn target catalog", () => {
     // Andromeda's wreck is a Twin hull (58).
     expect(shape("enemy")).toMatchObject({ radius: 2 * local + 58 });
     expect(shape("rock")).toMatchObject({ radius: 58 + spawnRules(5).gap });
+  });
+
+  it("keeps hostile station zones around each seeded station site's footprint", () => {
+    const context = { galaxy: 5 as const, geographySeed: 11, worldSide: GALAXY_SIDE };
+    const half = GALAXY_SIDE / 2;
+    const site = hostileStationSites(context, {
+      height: GALAXY_SIDE,
+      width: GALAXY_SIDE,
+      x: -half,
+      y: -half,
+    })[0]!;
+    const zones = worldSpawnExclusions({ worldSide: GALAXY_SIDE }, 5, 11, [], 100, site).filter(
+      (zone) => zone.rule === "hostile-station",
+    );
+    const shape = (category: SpawnCategory) =>
+      zones.find((zone) => zone.applies.includes(category))!.shape;
+    // Andromeda's station spans 131.3 x 113.7 display px, r 70.
+    expect(shape("enemy")).toMatchObject({
+      radius: 2 * SPAWNER_POLICIES[5].localRadius + 70,
+      x: site.x,
+      y: site.y,
+    });
+    expect(shape("rock")).toMatchObject({ radius: 70 + spawnRules(5).gap });
+    // A galaxy without hostile stations has no station zones.
+    expect(
+      worldSpawnExclusions({ worldSide: GALAXY_SIDE }, 1, 11, [], 100, site).some(
+        (zone) => zone.rule === "hostile-station",
+      ),
+    ).toBe(false);
   });
 
   it("requests every positive table density from a roster group, per chunk", () => {

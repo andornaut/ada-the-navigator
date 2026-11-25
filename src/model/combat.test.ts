@@ -1029,7 +1029,7 @@ describe("galaxy encounters", () => {
       [`${packId}:escorts`]: 4,
     });
     // Andromeda's Broad wing capital.
-    const spacing = spacingRadius(ROUTE_POSITION[5], leader!.enemy!)!;
+    const spacing = spacingRadius(ROUTE_POSITION[5], leader!.enemy!);
     expect(spacing).toBe(75);
     for (const escort of escorts) {
       expect(escort.enemy).toMatchObject({ archetype: "fighter", escortOf: leader!.id });
