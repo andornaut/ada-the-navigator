@@ -197,15 +197,12 @@ function attachRoot(host: Element, requiredReady = () => true) {
   ).dispose;
 }
 
-const triangle = {
-  alpha: 1,
-  color: 0xffffff,
-  points: [
-    { x: -160, y: 0 },
-    { x: -180, y: 20 },
-    { x: -160, y: 40 },
-  ] as const,
-};
+const points = [
+  { x: -160, y: 0 },
+  { x: -180, y: 20 },
+  { x: -160, y: 40 },
+] as const;
+const triangle = { alpha: 1, color: 0xffffff, points, triangles: [points] };
 const occluders = [
   [
     { x: -150, y: 5 },

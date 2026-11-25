@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 
+import { JET_PROFILE } from "../../art/tools/ship-jet-layers.ts";
 import { plumePolygon } from "../../art/tools/ship-plume.ts";
 import manifest from "../../public/art/manifest.json";
 import data from "../../public/art/quantum-jump.json";
 import jetData from "../../public/art/ship-jets.json";
 import { type SheetArt, sheetFrame } from "../ui/jumpOverlay.ts";
-import { AUTHORED_JET_LENGTH, type JetProfile, jetShapePolygons } from "./jetGeometry.ts";
+import { AUTHORED_JET_LENGTH, jetShapePolygons } from "./jetGeometry.ts";
 import {
   canvasFit,
   emergencyGlow,
@@ -85,19 +86,14 @@ describe("quantum jump data", () => {
         expect(pose.jets.headings[0]).toHaveLength(2);
         const layers = jetData.engineLevels[0]!.layers;
         // Every warp mouth draws its plume above the hull and redraws the hull in its occluders.
+        expect(jetData.profile).toEqual(JET_PROFILE);
         expect(jetsInFront(pose.jets, 0)).toBe(true);
         for (const mouth of pose.jets.headings[0]!) {
-          const plumes = jetShapePolygons(
-            mouth,
-            layers,
-            pose.jets.length.base,
-            1,
-            jetData.profile as JetProfile,
-          );
+          const plumes = jetShapePolygons(mouth, layers, pose.jets.length.base, 1, JET_PROFILE);
           expect(plumes.map(({ layerIndex }) => layerIndex)).toEqual([0, 1]);
           for (const { layerIndex, points } of plumes) {
             const expected = plumePolygon(
-              jetData.profile,
+              JET_PROFILE,
               {
                 anchor: [mouth.anchor.x, mouth.anchor.y],
                 axis: [mouth.axis.x, mouth.axis.y],
