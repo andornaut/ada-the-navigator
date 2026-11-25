@@ -104,12 +104,21 @@ cache and guard income are unchanged. Expected units per resource outcome are:
 
 A non-small raw ore-only-one payout stays one. For each size, let Y be the
 expected raw ore and p the probability of that protected payout. Derive the
-remaining ore scale as `(0.75 * Y - p) / (Y - p)`; small rocks have p = 0.
-Otherwise multiply the raw ore by that scale and round to an integer without
-bias, using the last unit's conditional uniform residual without another random
-draw. The derived scales are 3/4, 14/19, 29/39 and 74/99 from small to huge.
-Stardust is unchanged on every event. All non-small scales exceed one half, so
-ore-only payouts of at least two cannot round to zero. Size caps and the
+remaining ore scale as `(0.6 * Y - p) / (Y - p)`, where 0.6 is the 0.75 ore
+reduction times the 0.8 rock scaling; small rocks have p = 0. Otherwise multiply
+the raw ore by that scale and round to an integer without bias, using the last
+unit's conditional uniform residual without another random draw. The derived
+ore scales are 3/5, 11/19, 23/39 and 59/99 from small to huge. All non-small
+ore scales exceed one half, so ore-only payouts of at least two cannot round to
+zero.
+
+A non-small rock whose raw ore is at most one always keeps its first Stardust
+unit, so no non-small payout is ever empty. Let S be the expected raw Stardust
+and P the probability that raw ore is at most one with at least one Stardust
+unit (0 for small rocks). Every other Stardust unit is kept at rate
+`(0.8 * S - P) / (S - P)`: 4/5 for small rocks and about 0.734, 0.770 and 0.785
+for medium, large and huge, rounded the same way without another random draw.
+Expected units per resource outcome are exactly those in the table above. Size caps and the
 non-small minimum remain unchanged. Five-unit pickups have no selection bias.
 Ammo remains an exclusive outcome under its own rules.
 
