@@ -1,6 +1,6 @@
 import { isDeepStrictEqual } from "node:util";
 
-import { type ManifestFile, readManifest, type Sidecars } from "./manifest.ts";
+import { fleetArchetypes, type ManifestFile, readManifest, type Sidecars } from "./manifest.ts";
 
 const bodies = [
   "fighter",
@@ -16,25 +16,30 @@ type Family = (typeof families)[number];
 
 const pathFor = (body: string) => `/art/enemies/${body}-shards-packed.json`;
 
-/** The optional format is selected as a unit across all six bodies and all four manifests. */
+/**
+ * The optional format is selected as a unit across the six bodies and all four manifests. The
+ * enemy fleet's bodies carry the fleet's own packs (art/tools/fleet.ts) and are left out.
+ */
 export function installedShardPacks(): ReadonlyMap<string, string> {
+  const fleet = fleetArchetypes("core");
+  const own = bodies.filter((body) => !fleet.has(body));
   const selections = manifests.map((name) => (readManifest(name).sidecars ?? {}) as Sidecars);
   if (
     !selections.some((sidecars) =>
-      bodies.some((body) => sidecars[body]?.shards?.endsWith("-shards-packed.json")),
+      own.some((body) => sidecars[body]?.shards?.endsWith("-shards-packed.json")),
     )
   ) {
     return new Map();
   }
 
   for (const [index, sidecars] of selections.entries()) {
-    for (const body of bodies) {
+    for (const body of own) {
       if (sidecars[body]?.shards !== pathFor(body)) {
         throw new Error(`Incomplete shard palette selection: ${manifests[index]} / ${body}`);
       }
     }
   }
-  return new Map(bodies.map((body) => [body, pathFor(body)]));
+  return new Map(own.map((body) => [body, pathFor(body)]));
 }
 
 /** Restore the selected shard sidecar keys after the regular family writer emits its other files. */

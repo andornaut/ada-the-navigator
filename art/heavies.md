@@ -439,7 +439,9 @@ armour with the existing rust, steel and ember weapon and wreck colours.
   `--offsets <file.json>` as `heavies.ts`. It draws the shared models in
   process, writes `public/art/cartwheel/enemies/` and replaces its own entries
   in place in [Cartwheel's manifest](../public/art/cartwheel/manifest.json),
-  after the hub and buoy and before the story craft.
+  after the hub and buoy and before the story craft. Of the platform it draws
+  the gun top; the hull and bases are the
+  [hostile station producer's](station-redesign.md#hostile-stations).
 - Models, parts, frames, headings, hardpoints, anchors and muzzles match the
   core family. The intact armour uses the heavy surface palette. Other SVGs
   and shards use the claim colours, and jets use the claim jet colours.

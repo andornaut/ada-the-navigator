@@ -48,6 +48,7 @@ import {
 } from "./heavies.ts";
 import {
   craftIds,
+  fleetArchetypes,
   mergeEntries,
   mergeSidecars,
   sidecarCopies,
@@ -209,7 +210,10 @@ async function main() {
 
   const files = new Map<string, string>();
   const entries: Entry[] = [];
-  for (const craft of crafts) {
+  // The enemy fleet's craft are the fleet producer's (art/tools/fleet.ts).
+  const fleet = fleetArchetypes("needle");
+  const own = crafts.filter(({ name }) => !fleet.has(name));
+  for (const craft of own) {
     // The coral silhouettes: notch tips drawn into the frames and collision in the jets file.
     const traced = silhouettes(craft);
     for (let yaw = 0; yaw < ENEMY_HEADINGS; yaw++) {
@@ -273,12 +277,12 @@ async function main() {
     "needle",
     craftIds(
       PREFIX,
-      [...crafts, ...heavies, ...industrialHeavies].map(({ name }) => name),
+      [...own, ...heavies, ...industrialHeavies].map(({ name }) => name),
     ),
     outputEntries.map((entry) => storedAt(paths, entry)),
     (id) => id.startsWith("craft-"),
   );
-  const names = new Set([...crafts, ...heavies, ...industrialHeavies].map(({ name }) => name));
+  const names = new Set([...own, ...heavies, ...industrialHeavies].map(({ name }) => name));
   linkShardPacks(paths, packs);
   mergeSidecars("needle", (craft) => names.has(craft), sidecarsIn(paths));
   console.log(`${files.size} files, ${entries.length} entries; offsets from ${offsetsPath}`);

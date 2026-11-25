@@ -2,7 +2,10 @@
 
 - Rebuild with `node art/tools/enemies.ts`. It writes `public/art/enemies/` and
   replaces its own `enemy-{archetype}-{index}` entries in place in the root
-  manifest.
+  manifest. The swarm, fighter and interceptor are the enemy fleet's
+  ([Enemy fleet redesign](enemy-redesign.md)): a craft whose `jets` sidecar
+  names a fleet file is left to `art/tools/fleet.ts`, here and in the family
+  producers.
   [art/tools/crafts.ts](tools/crafts.ts) holds the craft models, shared with the
   [destruction effect](destruction.md).
   [art/tools/projection.ts](tools/projection.ts) holds the rotation, culling,

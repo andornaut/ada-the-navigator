@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   type Craft,
-  exportCrafts as crafts,
+  exportCrafts as allCrafts,
   drawOrder,
   faces,
   gadgetJets,
@@ -16,6 +16,7 @@ import { packInstalledIndustrialHulls } from "./industrial-sheets.ts";
 import { svgText } from "./svg-text.ts";
 import {
   GALAXIES,
+  fleetArchetypes,
   mergeEntries,
   mergeSidecars,
   readManifest,
@@ -145,7 +146,9 @@ function familyHullSheets(
   const registered = new Map(installed.map((row) => [row.id, row]));
   const input = new Map(entries.map((row) => [row.id, row]));
   const groups = [];
-  for (const name of SHEET_HULLS) {
+  // The enemy fleet's craft have their own sheets (art/tools/fleet.ts).
+  const fleet = fleetArchetypes(manifest);
+  for (const name of SHEET_HULLS.filter((hull) => !fleet.has(hull))) {
     const family = SMALL_FAMILIES[manifest];
     const prefix = `enemy-${family}-${name}-`;
     const file = `${name}-sheet.svg`;
@@ -311,7 +314,10 @@ function main() {
     );
   }
   const core = readManifest("core").assets;
-  const sheetCrafts = SHEET_HULLS.map((name) => crafts.find((craft) => craft.name === name)!);
+  // The enemy fleet's craft are its own; this tool draws the rest.
+  const fleet = fleetArchetypes("core");
+  const crafts = allCrafts.filter(({ name }) => !fleet.has(name));
+  const sheetCrafts = SHEET_HULLS.flatMap((name) => crafts.filter((craft) => craft.name === name));
   if (selectedName) {
     const craft = sheetCrafts.find(({ name }) => name === selectedName)!;
     sheetInstalled(core, true, craft);

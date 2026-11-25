@@ -2,7 +2,7 @@ import { isDeepStrictEqual } from "node:util";
 
 import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
 
-import { GALAXIES, readManifest } from "./manifest.ts";
+import { fleetArchetypes, GALAXIES, readManifest } from "./manifest.ts";
 import { ENEMY_HEADINGS } from "./projection.ts";
 
 type Row = { id: string; path?: string } & Record<string, unknown>;
@@ -13,9 +13,12 @@ const path = directory + filename;
 const prefix = "enemy-claim-";
 // Largest intrinsic cells first. The installed eager reader uses display dimensions for the
 // stock heavies, and raw dimensions for the small hulls and the Retaliator/Cargo Hauler.
-const groups = ["capital", "retaliator", "frigate", "fighter", "interceptor", "swarm"] as const;
+// The enemy fleet's craft (art/tools/fleet.ts) have their own sheets and leave the page.
+const stock = ["capital", "retaliator", "frigate", "fighter", "interceptor", "swarm"] as const;
 
 export function packInstalledClaimHullPage(files: Map<string, string>, entries: readonly Row[]) {
+  const fleet = fleetArchetypes("cartwheel");
+  const groups = stock.filter((craft) => !fleet.has(craft));
   const manifest: Row[] = readManifest("cartwheel").assets;
   const selected = manifest.filter((row) => row.path === path);
   if (!selected.length) return undefined;

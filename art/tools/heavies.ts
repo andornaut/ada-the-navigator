@@ -1942,7 +1942,9 @@ const ownsSidecar = (craft: string, kind: SidecarKind) =>
       name === craft && (kind === "hardpoints" || (kind === "jets" && source === "heavies")),
   );
 
-const PART_GROUPS = { capital: 29, frigate: 14, gadget: 29, platform: 10 } as const;
+// The platform's hull and bases are the hostile station producer's (art/tools/hostile-stations.ts);
+// its turret top is its one part here.
+const PART_GROUPS = { capital: 29, frigate: 14, gadget: 29, platform: 1 } as const;
 type SheetCraft = keyof typeof PART_GROUPS;
 type HullCraft = Exclude<SheetCraft, "platform">;
 type HeadingSelection =
@@ -2052,9 +2054,14 @@ function heavyHeadingSheets(
   const { manifest, prefix, directory } = target;
   const { craft, section } = selection;
   const expectedGroups = selection.section === "part" ? PART_GROUPS[selection.craft] : 1;
+  const part = (entry: Entry) =>
+    craft === "platform"
+      ? entry.top !== undefined
+      : entry.hardpoint !== undefined || entry.top !== undefined;
   const owns = (entry: Entry) =>
     entry.archetype === craft &&
-    (entry.hardpoint !== undefined || entry.top !== undefined) === (section === "part");
+    part(entry) === (section === "part") &&
+    (craft !== "platform" || part(entry));
   const installed: Entry[] = readManifest(manifest).assets;
   const current = installed.filter(owns);
   const currentById = new Map(current.map((entry) => [entry.id, entry]));
