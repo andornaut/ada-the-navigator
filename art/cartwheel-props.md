@@ -105,8 +105,13 @@ lightness, in greyscale too.
 - Manifest `ore-nugget`: a 9 by 9 sheet with one `rest` frame, displayed at
   9 by 9 logical px for one ore and 18 by 18 for five ore, with the pivot at
   the centre, nearest-neighbour filtered. The same 9 px size as Stardust.
-- One image: the ore icon in every UI draws this frame at 18 by 18 px
-  ([Shared image](stardust.md#shared-image)).
+- One design: `icon-ore-20` in
+  [icons-20x20.svg](../public/art/ui/icons/icons-20x20.svg), from
+  `node art/tools/currency-svg.ts`, is this nugget drawn as a vector, never
+  the pickup upscaled: its raised left shoulder, stepped right edge and low
+  belly, the light mauve rim turning to the rim shade below and right, a lit
+  facet at the upper left and the shade and deep facets to the lower right,
+  under a 2 px ink outline. The UI draws it at 20 px.
 - Pixel art from a character grid; every pixel is opaque or clear. Lit from
   the upper left, with no white or glint pixel: a lit facet at the upper left,
   a two-pixel crease down the crown, the body, and one shade facet with a deep

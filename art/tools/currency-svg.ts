@@ -6,11 +6,16 @@ import { writeUiIcon } from "./ui-icon-sources.ts";
 
 const size = 20;
 
-// Trace the four tips and the concave shoulders of the shared idle Stardust star.
+// The Stardust and ore icons draw the 9 px pickups' glyphs (resource-glyphs.ts) as vectors: the
+// same silhouette, facets and colours under the same upper-left light.
+
+// Trace the four tips and the concave shoulders of the shared idle Stardust star. As on the
+// pickup, the top and left rays and the upper-left quarter take the body tone, and the right and
+// bottom rays and the other quarters the shade.
 const stardustOutline =
   "M10 1C10.6 6.5 13.8 9 19 10C13.8 11 10.6 13.5 10 19C9.4 13.5 6.2 11 1 10C6.2 9 9.4 6.5 10 1Z";
 const stardust = `
-  <path fill="#${STARDUST_PALETTE.D}" d="M10 1H19V19H1V10L7 10.8 10 9Z"/>
+  <path fill="#${STARDUST_PALETTE.D}" d="M11 0H20V20H0V11H11Z"/>
   <path fill="#${STARDUST_PALETTE.L}" d="M10 4.5Q10.6 8.8 15.5 10Q10.6 11.2 10 15.5Q9.4 11.2 4.5 10Q9.4 8.8 10 4.5Z"/>
   <path fill="#${STARDUST_PALETTE.W}" d="M10 7.4 11.2 8.8 13 10 11.2 11.2 10 12.6 8.8 11.2 7 10 8.8 8.8Z"/>
 `;

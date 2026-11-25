@@ -8,8 +8,8 @@
 - Pixel art from character grids, like the [settings icons](settings-icons.md).
   Every pixel is opaque or clear; draw with nearest-neighbour filtering, at
   whole multiples of 9 px.
-- One image: the world pickup and every UI icon draw this sheet, the UI its
-  `rest` frame ([Shared image](#shared-image)).
+- One design: the UI's vector icon draws this pickup's `rest` frame cleanly
+  ([UI icon](#ui-icon)).
 
 ## Colour
 
@@ -74,19 +74,23 @@ second is `#f6e4b8` over `(-2.5, -0.6) (-6, 0) (-2.5, 0.6)`. The wedges start
 inside the 9 px star and reach 4.5 px past its tips. `reducedMotion` is
 `false`: reduced motion draws no streak ([handoff](polish-handoff.md)).
 
-## Shared image
+## UI icon
 
-The Stardust and ore icons in the HUD status pill, the station balances, the
-Shop's price pills and confirm price, the Exchange, the ship card and the
-Penny markers are the pickups' own images: the `rest` frame of
-`/art/stardust.png` and the frame of `/art/ore-nugget.png`, drawn at 18 by 18
-px (2x) with nearest-neighbour filtering, centred in the 20 px icon slot. A
-light-field outline, where one applies, is drawn around the image; no outline
-is baked into it.
+`icon-stardust-20`, a 20 by 20 view of
+[icons-20x20.svg](../public/art/ui/icons/icons-20x20.svg) from
+`node art/tools/currency-svg.ts` (packed with
+`node art/tools/ui-icon-sheets.ts --out <scratch directory>`), shares the
+pickup's design reference: the `rest` frame's four-point star with its concave
+shoulders traced as a vector, a white core in a light star, the top and left
+rays and the upper-left quarter in the body tone, the right and bottom rays
+and the other quarters in shade, the four Stardust colours under a 2 px ink
+outline. It is a vector, never the pickup upscaled.
 
-The shipped UI still draws `icon-stardust-20` and `icon-ore-20` from
-`public/art/ui/icons/icons-20x20.svg` until it switches to the shared image;
-the two vector icons then leave the sheet.
+| Drawn at | Use                                                                                         |
+| -------- | ------------------------------------------------------------------------------------------- |
+| 20 px    | HUD status pill, station balances, confirm price, Exchange, ship card and the Penny markers |
+| 16 px    | Shop price pills                                                                            |
+| 12 px    | Station pane count hint                                                                     |
 
 ## HUD count
 
