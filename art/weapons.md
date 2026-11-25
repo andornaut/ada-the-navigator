@@ -139,7 +139,7 @@ Reduced motion holds frame 0.
 Rapid and Heavy contacts, Ada's and enemies', both use the shared
 `BLASTS.heavy` recipe through `impactEffect`; only the actual event radius
 changes their spatial envelope. Every blast draws as an on-screen circle of
-radius `R` (30 Rapid, 60 Heavy, or the level's radius), centred on the actual
+radius `R` (30 Rapid, 60 Heavy), centred on the actual
 contact or the projectile position at range expiry. It covers the same area as
 the ground-plane ellipse it replaces. Hits test the drawn ship shapes against
 that same circle. Screen-space strokes do not scale with `R`.
