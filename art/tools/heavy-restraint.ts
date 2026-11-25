@@ -1,7 +1,5 @@
-import type { claim } from "./claim-jumpers.ts";
 import { coralRear, coralSide, mirror } from "./crafts.ts";
 import type { HeavyCraft, HeavyPart } from "./heavies.ts";
-import { ngon } from "./solid.ts";
 
 type Profile = "maximum" | "narrow" | "compact";
 
@@ -76,34 +74,10 @@ function gadgetMounts(craft: HeavyCraft): HeavyCraft["hardpoints"] {
   });
 }
 
-function platformHull(craft: HeavyCraft, paint: typeof claim): HeavyPart[] {
-  const base = craft.hull[0]!;
-  const radius = Math.max(...craft.hull.flatMap(({ plan }) => plan.map(([x]) => Math.abs(x))));
-  const slab = { ...base, plan: ngon(32, radius) };
-  const hubZ = Math.max(...craft.hull.map(({ z1 }) => z1));
-  const hub = craft.hull.find(
-    (part) => part.z0 === slab.z1 && part.top === paint.steel && part.z1 === hubZ,
-  )!;
-  const rimZ = craft.hull.find((part) => part.z0 === slab.z1 && part.top === paint.steel)!.z1;
-  // Four adjoining sections read as one ring. Its outline stays inside the existing slab.
-  const rim = Array.from({ length: 4 }, (_, quadrant): HeavyPart => {
-    const start = quadrant * 8;
-    const arc = Array.from({ length: 9 }, (_, i) => slab.plan[(start + i) % slab.plan.length]!);
-    return {
-      plan: [...arc, ...arc.toReversed().map(([x, y]) => [x * 0.87, y * 0.87] as const)],
-      z0: slab.z1,
-      z1: rimZ,
-      top: paint.steelSide,
-      side: paint.rustRear,
-    };
-  });
-  return [slab, ...rim, hub];
-}
-
 /** Candidate primary planes and finishes. Build normally to trace collision for the selected hull. */
 export function restrainHeavyHull(
   craft: HeavyCraft,
-  { profile = "maximum", platformPaint }: { profile?: Profile; platformPaint?: typeof claim } = {},
+  { profile = "maximum" }: { profile?: Profile } = {},
 ): HeavyCraft {
   switch (craft.name) {
     case "frigate":
@@ -112,9 +86,6 @@ export function restrainHeavyHull(
       return { ...craft, hull: capitalHull(craft.hull, profile) };
     case "gadget":
       return { ...craft, hull: gadgetHull(craft.hull), hardpoints: gadgetMounts(craft) };
-    case "platform":
-      if (!platformPaint) throw new Error("The platform finish needs the Claim palette");
-      return { ...craft, hull: platformHull(craft, platformPaint) };
     default:
       return craft;
   }

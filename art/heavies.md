@@ -328,8 +328,7 @@ convex parts, each an array of `[x, y]` in frame px, the schema of the ship's
 `collision[k]`. Positions follow the file's rule: hull frame px, except tops,
 which are relative to the pivot like muzzles.
 
-- `headings[k].collision`: the hull layer drawn for heading `k`. The platform's
-  hull never turns, so every heading holds `platform.svg`'s.
+- `headings[k].collision`: the hull layer drawn for heading `k`.
 - `headings[k].hardpoints[j].collision`: `{ "intact": parts, "destroyed": parts }`,
   one per state in `states`, plus `capped` for a cappable mount, for that
   hardpoint's base at heading `k`, placed at its `anchor` in hull frame px.
@@ -434,41 +433,18 @@ The Cartwheel family contains the four sector one drones, the frigate, the
 capital and the turret platform. Its frigate and capital wear muted green
 armour with the existing rust, steel and ember weapon and wreck colours.
 
-- Rebuild with `node art/tools/claim-jumpers.ts`, which takes the same
-  `--offsets <file.json>` as `heavies.ts`. It draws the shared models in
-  process, writes `public/art/cartwheel/enemies/` and replaces its own entries
-  in place in [Cartwheel's manifest](../public/art/cartwheel/manifest.json),
-  after the hub and buoy and before the story craft. The platform's hull and
-  bases are the
-  [hostile station producer's](station-redesign.md#hostile-stations), and its
-  turret top is the enemy fleet's `gun`
-  ([Weapon tops](enemy-redesign.md#weapon-tops)).
-- Models, parts, frames, headings, hardpoints, anchors and muzzles match the
-  core family. The intact armour uses the heavy surface palette. Other SVGs
-  and shards use the claim colours, and jets use the claim jet colours.
-- Jets files keep the coral shape, lengths, layers, mouth data and
-  [collision](enemies.md#collision); hardpoints files, mounts, tiers and
-  collision included, are the coral family's, unchanged. Claim frames draw the
-  coral notch tips, capped plates and tops. Gadget has no claim version.
-  Andromeda and Needle use their own heavy armour colours over the same
-  frigate and capital models. Destruction uses the shared
-  `destruction.json` timing and flash with the claim shards.
-
-### Claim files and entries
-
-- File names are the coral names in `public/art/cartwheel/enemies/`:
-  `{a}-{k}.svg`, `{a}-jets.json` and `{a}-shards.json` for `swarm`, `fighter`,
-  `interceptor` and `retaliator`; every [file](#files) of the frigate and the
-  capital; and the platform's files. Each data file sits beside its frames as
-  `{a}-{name}.json`, and Cartwheel's `sidecars` map lists it, except the
-  [shared files](README.md#ada-contract-and-validation): every layout but the
-  platform's is the coral `/art/enemies/{a}-hardpoints.json`, and the cargo
-  hauler uses the retaliator's files.
-- Ids are the coral ids with `enemy-claim-` in place of `enemy-`, such as
-  `enemy-claim-frigate-3` and `enemy-claim-capital-turret-top-9`. Each entry has
-  the coral entry's fields, its own `path`, the coral `archetype` and `family`
-  `claim`. No claim id matches `enemy-{archetype}-{index}`, so the coral heading
-  sets stay complete.
+- The [enemy fleet producer](enemy-redesign.md) draws the drones, the
+  frigate, the capital, the retaliators and the platform's turret top in the
+  claim colours, and the
+  [hostile station producer](station-redesign.md#hostile-stations) the
+  platform's hull and bases.
+- `art/tools/claim-jumpers.ts` holds the claim palette and the recolour from
+  the coral family that the destruction producer applies to the claim shards.
+- Rows sit in [Cartwheel's manifest](../public/art/cartwheel/manifest.json)
+  under the coral ids with `enemy-claim-` in place of `enemy-`, such as
+  `enemy-claim-frigate-3` and `enemy-claim-capital-turret-top-9`, with the
+  coral `archetype` and `family` `claim`. No claim id matches
+  `enemy-{archetype}-{index}`, so the coral heading sets stay complete.
 
 ### Claim palette
 
@@ -509,31 +485,28 @@ silhouette.
 The outer tail is the ember side; the hot core end is a warm near-white (OKLab
 L 0.95, C 0.03).
 
-The platform adds deep rust `#7d4427` (painted spokes, 3.07:1) and steel side
-`#85786a` (1.71:1). Claim scorch is 3.29:1 on rust, so wrecks read on the hull;
-the wreck ember is 5.93:1 on claim scorch. Steel turret heads are 3.96:1 on the
-platform's rail track `#703921`.
-
 ### Turret platform
 
-An immobile rust wheel deck with a steel-toothed rim, ember work lights,
-painted spokes, Gadget's claw on a steel hopper hub and a dark rail track.
-Its assembled body spans 4 Ada source widths.
+An open eight-sided wheel on a heavy hub, Cartwheel's immobile gun platform,
+drawn by the [hostile station producer](station-redesign.md#hostile-stations)
+as `platformWheel`. Its body spans 4 Ada widths.
 
-- Archetype `platform`, body ratio 4, hull frame 248 (display 108.5).
-  Hardpoints `port`, `starboard`, `aft` are all `turret` role. Physical
-  origins and top pivots derive from the normalized assembly.
-- The hull never turns. One frame, `platform.svg` (`enemy-claim-platform`,
-  `facing` `fixed`, no `directionIndex`), is the `hull` layer for every seeded
-  facing `k`; `headings[k]` of `platform-hardpoints.json` places the turrets and
-  orders the layers.
-- Bases `platform-{port,starboard,aft}-{intact,destroyed,capped}-{k}.svg`
-  use frame 80 (display 35). There are no engines.
-- Intact bases have a steel pad and rust collar under the aimed top.
-  Destroyed bases have a soot stump, breach, ember and burn paint. Unused
-  bases keep a capped pad without a top.
-- The hardpoints and offsets come from the catalog's `platform` entry in
-  `tools/enemy-hardpoints.json`, like every other craft's.
+- Archetype `platform`. The hull turns with its heading: 16 rows
+  `enemy-claim-platform-{k}` in `platformWheel-sheet.svg`, frame 216 (display
+  94.5).
+- Hardpoints `port`, `starboard` and `aft` on the wheel's corners, all
+  `turret` role. Bases `enemy-claim-platform-{mount}-{state}-{k}` in
+  `platformWheel-bases-sheet.svg`, frame 32 (display 14), in the `intact`,
+  `capped` and `destroyed` states. There are no engines.
+- The platform fires lasers and arms 2 mounts at route position 5 and 3 at
+  position 6. Its turret top is the enemy fleet's `gun`: 16 rows
+  `enemy-claim-platform-turret-top-{i}` in `fleetTop-gun-sheet.svg`, frame 40
+  (display 17.5), one shot origin per aim
+  ([Weapon tops](enemy-redesign.md#weapon-tops)).
+- `platformWheel-hardpoints.json` holds the layout, tiers, per-heading
+  collision and the `gun` top's shot origins and collision under `tops`.
+- `platform` in `art/tools/claim-jumpers.ts` is a test model the enemy size
+  test checks for its span, mounts and tiers; it ships no art.
 
 ## Hostile station
 

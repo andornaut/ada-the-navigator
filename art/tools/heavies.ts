@@ -4,8 +4,8 @@
 // export, tools/enemy-hardpoints.json, must agree wherever it lists one. Each hardpoint model is
 // drawn around its own origin. Contract: art/heavies.md.
 // Usage: node art/tools/heavies.ts [--offsets <file.json>] [--out <dir> | --capital-part-sheets]
-// Pack retained parts with --noncore-capital-part-sheets, --frigate-part-sheets,
-// --gadget-part-sheets or --platform-part-sheets.
+// Pack retained parts with --noncore-capital-part-sheets, --frigate-part-sheets or
+// --gadget-part-sheets.
 // Use --heavy-hull-sheets to write review sheets and print candidate manifest rows.
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -1942,18 +1942,14 @@ const ownsSidecar = (craft: string, kind: SidecarKind) =>
       name === craft && (kind === "hardpoints" || (kind === "jets" && source === "heavies")),
   );
 
-// The platform's hull and bases are the hostile station producer's (art/tools/hostile-stations.ts);
-// its turret top is its one part here.
-const PART_GROUPS = { capital: 29, frigate: 14, gadget: 29, platform: 1 } as const;
+const PART_GROUPS = { capital: 29, frigate: 14, gadget: 29 } as const;
 type SheetCraft = keyof typeof PART_GROUPS;
-type HullCraft = Exclude<SheetCraft, "platform">;
-type HeadingSelection =
-  { craft: SheetCraft; section: "part" } | { craft: HullCraft; section: "hull" };
+type HeadingSelection = { craft: SheetCraft; section: "part" | "hull" };
 
 // Use the checked Frigate viewport as the ceiling for hull sheet XML.
 const HULL_SHEET_EDGE = 1728;
 
-function hullCrafts(manifest: ManifestFile): readonly HullCraft[] {
+function hullCrafts(manifest: ManifestFile): readonly SheetCraft[] {
   return manifest === "core" ? ["capital", "frigate", "gadget"] : ["capital", "frigate"];
 }
 
@@ -2054,14 +2050,8 @@ function heavyHeadingSheets(
   const { manifest, prefix, directory } = target;
   const { craft, section } = selection;
   const expectedGroups = selection.section === "part" ? PART_GROUPS[selection.craft] : 1;
-  const part = (entry: Entry) =>
-    craft === "platform"
-      ? entry.top !== undefined
-      : entry.hardpoint !== undefined || entry.top !== undefined;
-  const owns = (entry: Entry) =>
-    entry.archetype === craft &&
-    part(entry) === (section === "part") &&
-    (craft !== "platform" || part(entry));
+  const part = (entry: Entry) => entry.hardpoint !== undefined || entry.top !== undefined;
+  const owns = (entry: Entry) => entry.archetype === craft && part(entry) === (section === "part");
   const installed: Entry[] = readManifest(manifest).assets;
   const current = installed.filter(owns);
   const currentById = new Map(current.map((entry) => [entry.id, entry]));
@@ -2264,7 +2254,6 @@ export function packInstalledHeavyParts(
   manifest: "core" | keyof typeof familyPartTargets,
   files: Map<string, string>,
   entries: readonly Entry[],
-  { packStockHulls = true } = {},
 ) {
   const target = manifest === "core" ? corePartTarget : familyPartTargets[manifest];
   const text = (file: string) => files.get(file);
@@ -2282,18 +2271,16 @@ export function packInstalledHeavyParts(
     entries,
     false,
   );
-  const extra = manifest === "core" ? "gadget" : manifest === "cartwheel" ? "platform" : undefined;
-  const extraPack = extra
-    ? heavyHeadingSheets(target, { craft: extra, section: "part" }, text, entries, false)
-    : undefined;
-  const hulls = packStockHulls
-    ? hullCrafts(manifest).map((craft) =>
-        heavyHeadingSheets(target, { craft, section: "hull" }, text, entries, false),
-      )
-    : [];
+  const gadgetPack =
+    manifest === "core"
+      ? heavyHeadingSheets(target, { craft: "gadget", section: "part" }, text, entries, false)
+      : undefined;
+  const hulls = hullCrafts(manifest).map((craft) =>
+    heavyHeadingSheets(target, { craft, section: "hull" }, text, entries, false),
+  );
   let outputEntries = applyHeavySheets(files, entries, capitalPack);
   outputEntries = applyHeavySheets(files, outputEntries, frigatePack);
-  outputEntries = applyHeavySheets(files, outputEntries, extraPack);
+  outputEntries = applyHeavySheets(files, outputEntries, gadgetPack);
   for (const hull of hulls) outputEntries = applyHeavySheets(files, outputEntries, hull);
   return { outputEntries, retiredCapital: capitalPack?.retired ?? [] };
 }
@@ -2364,16 +2351,13 @@ async function main() {
     (arg) =>
       arg === "--noncore-capital-part-sheets" ||
       arg === "--frigate-part-sheets" ||
-      arg === "--gadget-part-sheets" ||
-      arg === "--platform-part-sheets",
+      arg === "--gadget-part-sheets",
   );
   if (retained) {
     if (args.length !== 1) throw new Error(`${retained} takes no other options`);
     const families = Object.values(familyPartTargets);
     if (retained === "--gadget-part-sheets") {
       packRetainedHeavyParts("gadget", [corePartTarget]);
-    } else if (retained === "--platform-part-sheets") {
-      packRetainedHeavyParts("platform", [familyPartTargets.cartwheel]);
     } else if (retained === "--frigate-part-sheets") {
       packRetainedHeavyParts("frigate", [corePartTarget, ...families]);
     } else {

@@ -1,16 +1,7 @@
-// Cartwheel's claim jumpers: the shared drone and heavy models recoloured into rust, steel and
-// ember. The enemy fleet producer draws the small craft and the platform's gun top, and the
-// hostile station producer the platform's hull and bases. Contract: art/heavies.md (Cartwheel
-// claim jumpers).
-// Usage: node art/tools/claim-jumpers.ts [--offsets <file.json>]
-import { packInstalledClaimHullPage } from "./claim-hull-page.ts";
-import { writeEnemyAssets } from "./enemy-jet-output.ts";
-import { claimStationPaint } from "./claim-station-paint.ts";
-import { mkdirSync, readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-
-import { format, resolveConfig } from "prettier";
-
+// Cartwheel's claim jumper palette, the recolour from the coral family that the destruction
+// producer applies to claim shards, and the turret platform model the enemy size test checks. The
+// enemy fleet producer draws Cartwheel's craft and the platform's gun top, and the hostile station
+// producer the platform's hull and bases. Contract: art/heavies.md (Cartwheel claim jumpers).
 import { PLATFORM_SIGNATURE } from "../../src/data/enemySignatures.ts";
 
 import {
@@ -20,66 +11,36 @@ import {
   coral,
   coralRear,
   coralSide,
-  exportCrafts as crafts,
-  gadgetJets,
-  hullEntries,
   ink,
   insignia,
-  type JetColors,
   type Plan,
   plate,
   turretTop,
   visor,
   visorSide,
 } from "./crafts.ts";
-import { shards } from "./shard-geometry.ts";
-import { installedShardPacks, linkShardPacks } from "./shard-palette-pack.ts";
-import { restrainHeavyHull } from "./heavy-restraint.ts";
-import { heavySurface } from "./heavy-surface.ts";
-import { svgText } from "./svg-text.ts";
-import {
-  packInstalledIndustrialHulls,
-  packInstalledIndustrialTurrets,
-} from "./industrial-sheets.ts";
-import { jets, packInstalledSmallHullSheets, silhouettes, svg } from "./enemies.ts";
+import { normalizeHeavy } from "./enemy-size.ts";
 import {
   ADA_WIDTH,
-  build,
   burn,
   ember as wreckEmber,
   type HeavyCraft,
   type HeavyPart,
-  heavies,
-  industrialHeavies,
-  packInstalledHeavyParts,
   type Model,
-  place,
   PLATFORM_FILL,
   PLATFORM_TIERS,
-  readOffsets,
   ring,
   scorch,
   scorchSide,
   wreck,
 } from "./heavies.ts";
-import { normalizeHeavy } from "./enemy-size.ts";
-import {
-  craftIds,
-  fleetArchetypes,
-  mergeEntries,
-  mergeSidecars,
-  sidecarCopies,
-  sidecarsIn,
-  storedAt,
-} from "./manifest.ts";
-import { ENEMY_HEADINGS } from "./projection.ts";
 import { isIndustrialHullColor } from "./retaliator-models.ts";
 
 // ---------------------------------------------------------------- palette
 
 // Rust hulls, warm steel plates, ember guns and lights. Rust is darker and yellower than coral;
 // ember is far more saturated than player amber.
-export const claim = {
+const claim = {
   rust: "#bd7042",
   rustSide: "#924e28",
   rustRear: "#703921",
@@ -132,7 +93,7 @@ const swarmFighterSwap = {
 } satisfies Readonly<Record<`#${string}`, `#${string}`>>;
 
 // Coral family colour to claim-jumper colour, applied to every drawn file.
-export const swap: Readonly<Record<string, string>> = {
+const swap: Readonly<Record<string, string>> = {
   ...smallCraftSwap,
   ...swarmFighterSwap,
   [coral]: claim.rust,
@@ -158,20 +119,6 @@ const family = new Set<string>([
   wreckEmber,
 ]);
 
-// Speed jets, slow to fast: a dark ember tail opening to ember, round an ember core that runs
-// to a near-white hot centre (OKLab L 0.95, C 0.03, warm).
-export const claimJets: JetColors = {
-  outer: [claim.emberSide, claim.ember],
-  core: [claim.ember, "#ffebda"],
-};
-// Gadget's jet colour to claim jet colour, ramp stop by ramp stop.
-const jetSwap: Readonly<Record<string, string>> = Object.fromEntries(
-  (["outer", "core"] as const).flatMap((layer) =>
-    gadgetJets[layer].map((color, i) => [color, claimJets[layer][i]!]),
-  ),
-);
-const jetFamily = new Set<string>([...claimJets.outer, ...claimJets.core]);
-
 // Swaps every coral colour in a file through `map` and fails on any colour outside `allowed`,
 // so a new coral colour cannot slip through unmapped.
 function swapColours(
@@ -190,12 +137,8 @@ function swapColours(
   return result;
 }
 
-// An SVG or shards file in the claim-jumper palette.
-export const recolour = (file: string, text: string) =>
-  claimStationPaint(file, swapColours(swap, family, file, text));
-// A jets file in the claim jet colours; shape, lengths and anchors are unchanged.
-export const recolourJets = (file: string, text: string) =>
-  swapColours(jetSwap, jetFamily, file, text);
+// A shards file in the claim-jumper palette.
+export const recolour = (file: string, text: string) => swapColours(swap, family, file, text);
 
 // ---------------------------------------------------------------- turret platform
 
@@ -401,113 +344,3 @@ export const platform: HeavyCraft = normalizeHeavy({
   },
   fixed: true,
 });
-
-// ---------------------------------------------------------------- export
-
-type Entry = Record<string, unknown> & { id: string; path?: string };
-
-const PATH = "/art/cartwheel/enemies/";
-const PREFIX = "enemy-claim-";
-
-// A coral family entry as its claim-jumper entry: its own id and path, tagged with the family.
-const claimEntry = (entry: Entry): Entry => ({
-  ...entry,
-  id: `${PREFIX}${entry.id.slice("enemy-".length)}`,
-  path: `${PATH}${entry.path!.slice("/art/enemies/".length)}`,
-  family: "claim",
-});
-
-async function main() {
-  const packs = installedShardPacks();
-  const args = process.argv.slice(2);
-  const at = args.indexOf("--offsets");
-  const root = fileURLToPath(new URL("../../", import.meta.url));
-  const offsetsPath = at === -1 ? `${root}tools/enemy-hardpoints.json` : args[at + 1]!;
-  const offsets = readOffsets(JSON.parse(readFileSync(offsetsPath, "utf8")));
-
-  // The enemy fleet's craft and the platform's top are the fleet producer's, and the platform's
-  // hull and bases the hostile station producer's (art/tools/hostile-stations.ts); this tool draws
-  // the rest.
-  const fleet = fleetArchetypes("cartwheel");
-  const own = crafts.filter(({ name }) => !fleet.has(name));
-  const files = new Map<string, string>();
-  const entries: Entry[] = [];
-  for (const craft of own) {
-    const traced = silhouettes(craft);
-    for (let yaw = 0; yaw < ENEMY_HEADINGS; yaw++) {
-      files.set(`${craft.name}-${yaw}.svg`, svg(craft, yaw, traced[yaw]!.tips));
-    }
-    files.set(
-      `${craft.name}-jets.json`,
-      jets(craft, (yaw) => traced[yaw]!.collision),
-    );
-    if (!packs.has(craft.name)) files.set(`${craft.name}-shards.json`, shards(craft));
-    entries.push(...hullEntries(craft.name, craft.frame).map(claimEntry));
-  }
-  for (const craft of [...heavies, ...industrialHeavies]) {
-    const styled = restrainHeavyHull(craft);
-    const result = build(styled, place(offsets, styled));
-    for (const [file, content] of result.files) {
-      files.set(file, content);
-    }
-    entries.push(...result.entries.map(claimEntry));
-  }
-
-  const dir = `${root}public/art/cartwheel/enemies/`;
-  mkdirSync(dir, { recursive: true });
-  const texts = new Map<string, string>();
-  for (const [file, content] of files) {
-    const path = `${dir}${file}`;
-    // Hardpoint layouts carry no colour.
-    const drawn = file.endsWith(".svg") || file.endsWith("-shards.json");
-    const text = file.endsWith("-jets.json")
-      ? recolourJets(file, content)
-      : drawn
-        ? (heavySurface("cartwheel", file, content) ?? recolour(file, content))
-        : content;
-    // JSON goes through the project's Prettier settings so the files stay Prettier-clean.
-    texts.set(
-      file,
-      file.endsWith(".json")
-        ? await format(text, { ...(await resolveConfig(path)), filepath: path })
-        : file.endsWith(".svg")
-          ? svgText(text)
-          : text,
-    );
-  }
-  // The shared heavies' layouts are the coral ones in /art/enemies/, and a craft drawn like
-  // another (the cargo hauler is the retaliator) uses that craft's files.
-  const shared = [...heavies, ...industrialHeavies].map(({ name }) => name);
-  const claimHulls = packInstalledClaimHullPage(texts, entries);
-  const heavy = packInstalledHeavyParts("cartwheel", texts, claimHulls ?? entries, {
-    packStockHulls: !claimHulls,
-  });
-  const small = claimHulls
-    ? heavy.outputEntries
-    : packInstalledSmallHullSheets("cartwheel", texts, heavy.outputEntries);
-  const turrets = packInstalledIndustrialTurrets("cartwheel", texts, small);
-  const copies = sidecarCopies("core", "hardpoints", shared);
-  const outputEntries = packInstalledIndustrialHulls("cartwheel", texts, turrets, copies, {
-    packClaimRetaliator: !claimHulls,
-  });
-  const paths = writeEnemyAssets("cartwheel", PATH, copies, texts);
-  // In Cartwheel's manifest after the hub and buoy, before the story craft.
-  // Only these crafts' ids; hostile-stations.ts writes `enemy-claim-hostileStation-`.
-  mergeEntries(
-    "cartwheel",
-    craftIds(
-      PREFIX,
-      [...own, ...heavies, ...industrialHeavies].map(({ name }) => name),
-    ),
-    outputEntries.map((entry) => storedAt(paths, entry)),
-    (id) => id.startsWith("craft-"),
-  );
-  const names = new Set([...own, ...heavies, ...industrialHeavies].map(({ name }) => name));
-  linkShardPacks(paths, packs);
-  mergeSidecars("cartwheel", (craft) => names.has(craft), sidecarsIn(paths));
-  console.log(`${files.size} files, ${entries.length} entries; offsets from ${offsetsPath}`);
-}
-
-if (import.meta.url === `file://${process.argv[1]}`) {
-  await main();
-}

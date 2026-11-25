@@ -231,8 +231,7 @@ and the small enemy craft from `art/tools/fleet.ts`
 SVGs are deterministic exports from `art/tools/enemies.ts`,
 `art/tools/asteroids.ts`, `art/tools/whales.ts`, `art/tools/cartwheel-props.ts`
 and `art/tools/whirlpool.ts`, with the heavies' layered sprites from
-`art/tools/heavies.ts`, Cartwheel's claim jumpers from
-`art/tools/claim-jumpers.ts` and Andromeda's garnet drones from
+`art/tools/heavies.ts` and Andromeda's garnet drones from
 `art/tools/garnet-drones.ts`. Needle's channels, sky, portraits and drones come
 from `art/tools/needle-channels.ts`, `needle-sky.ts`, `needle-portraits.ts` and
 `needle-drones.ts`, and the finale allies' data from `art/tools/allies.ts`. The
