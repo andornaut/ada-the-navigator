@@ -147,7 +147,7 @@ context-specific return and focus restoration.
 
 Each action sizes to its label plus 16 logical px on each side, subject to
 the standard button minimum. A single-line action is 48 logical px high
-and its whole box is the press area. Faces are 16 logical px apart
+and its whole box is the press area. Faces are `BUTTON_GAP` (16) apart
 (`MAP_SCREEN.hudRow.gap`). The footer dismissal's right edge aligns with
 the top X target's right edge. The fit region stops `SPACING.gap` above
 the footer.
@@ -246,7 +246,9 @@ unavailable.
 The Map footer's Quests action delegates from `src/ui/mapScreen.ts` through
 `src/ui/pauseCard.ts` to the shared screen in `src/ui/questsScreen.ts`.
 The list opens over the dimmed Map. Dismissing the list restores focus to
-the Map's Quests button and keeps the Map's view and selection.
+the Map's Quests button and keeps the Map's view and selection. Its footer
+follows the [footer pattern](layout.md#groups), with neighbouring faces
+`BUTTON_GAP` (16) apart.
 
 The shared list groups “Story quests” before “Station jobs” and shows
 `QUEST_LIST_PAGE_SIZE` (2) entries per page. Selecting a quest opens its

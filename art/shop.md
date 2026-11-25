@@ -34,8 +34,10 @@ The shared Stardust and Ore group anchors at the top left of each Station
 page. Its top and left margins match the content inset. Both icons have
 spoken resource names paired with their displayed amounts.
 
-The footer places available Shop and Jobs & Projects actions, then Exchange,
-on the left. Primary Undock sits on the right. The current service button
+The footer follows the [footer pattern](layout.md#groups). It places
+available Shop and Jobs & Projects actions, then Exchange, on the left,
+`BUTTON_GAP` (16) apart. Primary Undock sits on the right. The current
+service button
 uses the flat disabled face colour, yellow text and a thick underline in the
 primary colour. Keyboard focus remains visible on the face, with a brighter
 and thicker underline on the current page.

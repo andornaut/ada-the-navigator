@@ -89,7 +89,7 @@ icon whose drawn pixels sit 3 inside its 20 box takes 3 less on that side.
 | Group gap         | 8     | Between card groups and row parts                                                                      | `SPACING.gap`, `tokens.ts`                                    |
 | Column gap        | 8     | Between columns that are not buttons                                                                   | `SPACING.columnGap`, `tokens.ts`                              |
 | Mark gap          | 6     | From an inline icon to its label inside one control or pill                                            | `SPACING.markGap`, `tokens.ts`                                |
-| Button gap        | 16    | Between standard button faces side by side: action rows and grid columns                               | `BUTTON_GAP`, `tokens.ts` (game-kit `BUTTON_GAP`)             |
+| Button gap        | 16    | Between standard button faces side by side: action rows, footers and grid columns                      | `BUTTON_GAP`, `tokens.ts` (game-kit `BUTTON_GAP`)             |
 | Small button gap  | 24    | Between faces when either is a small button (face under 48 high), in any direction                     | `SMALL_BUTTON_GAP`, `tokens.ts` (game-kit `SMALL_BUTTON_GAP`) |
 | Stack button gap  | 8     | Between standard button faces stacked vertically: action stacks, control rows, grid rows, line buttons | `STACK_BUTTON_GAP`, `tokens.ts` (game-kit `STACK_BUTTON_GAP`) |
 | HUD edge          | 12    | Game area edge to the drawn art of the HUD's outermost elements                                        | `HUD_EDGE`, `playView.ts` (Chibi's value)                     |
@@ -144,6 +144,11 @@ space nor a gap.
   wrapping row. Keep the primary last in visual order and rightmost on its
   line. Centre a row's sole visible action, including a dismissal footer.
   Count visible buttons inside their wrappers and skip hidden controls.
+- Footer: the second row pattern, beside the centred or right-aligned action
+  row, for a page or card footer that spans the inner width. Pin the
+  secondary actions to the left edge and the primary to the right edge; the
+  spare width falls between the two ends. Neighbouring faces at either end
+  stay `BUTTON_GAP` apart.
 - Action stack: buttons stretch to the group's shared inner width,
   `STACK_BUTTON_GAP` apart, with the primary at the bottom.
 - Control grid: non-action tiles keep equal widths in up to two columns,
@@ -1038,8 +1043,9 @@ shows services immediately with no Continue or Skip.
 The shared Stardust and Ore balances sit at `SPACING.panelPadding` (16) from
 the top and left. Each 20 px resource icon is `BALANCE.markGap` (6) from its
 amount, and the two balances are `SPACING.gap` (8) apart. The footer anchors
-at the bottom with a 1 px separator, 8 px vertical padding and 8 px between
-service buttons. Primary Undock aligns to the right. See
+at the bottom with a 1 px separator and `SPACING.gap` (8) vertical padding.
+It follows the [footer pattern](#groups): service buttons from the left edge,
+`BUTTON_GAP` (16) apart, and primary Undock on the right edge. See
 [Station and shop](shop.md#station-pages) for service order and dismissal.
 
 ### Achievements card
@@ -1091,7 +1097,10 @@ body copy keeps `TYPE.body` at 16 px on a 20 px line.
 
 When wrapped detail exceeds the available height, the body scrolls in one
 group. The title and close X stay above it. The footer, including Back when
-opened from the list, stays fixed below the scroll group.
+opened from the list, stays fixed below the scroll group. The Quests list and
+detail footers follow the [footer pattern](#groups): secondary actions from
+the left edge, the primary dismissal on the right edge, and neighbouring
+faces `BUTTON_GAP` (16) apart.
 
 ### Ship card
 
@@ -1774,8 +1783,10 @@ Tests:
   centres with hidden siblings or native wrappers present, including in
   dismissal footers. Verify stretched stack widths and primary order in each
   group. Keep neighbouring standard faces `STACK_BUTTON_GAP` apart stacked
-  and `BUTTON_GAP` apart side by side, with `SMALL_BUTTON_GAP` in any
-  direction when either is small.
+  and `BUTTON_GAP` apart side by side, footers included, with
+  `SMALL_BUTTON_GAP` in any direction when either is small. Verify that each
+  pinned footer keeps its secondary actions on the left edge and its primary
+  on the right edge.
 - With phone insets (left and right 43, bottom 19 logical) at 720x360, every
   HUD drawn rect lies in its safe rect and the top clusters' press areas keep
   `SPACING.pageInset` apart.
