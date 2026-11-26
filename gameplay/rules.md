@@ -329,7 +329,7 @@ Its signature mechanic is space currents, flow fields that push every ship in
 them. All values are provisional tuning:
 
 - A current is an open curved path 3000 to 8000 world units long and 300 to 500
-  wide. Its flow is strongest at the centre line, a peak of 70 world units per
+  wide. Its flow is strongest at the centre line, a peak of 105 world units per
   second, falls to zero at its edges and fades
   out over the last 600 world units at each end.
 - Currents and their debris rivers are placed by the galaxy's fixed seed, so they
