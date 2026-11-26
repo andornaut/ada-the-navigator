@@ -201,10 +201,10 @@ half-height 260 at the 720 x 360 base view, scaled with the actual game area.
 The shape and the player's centre are captured when firing. Levels change
 neither this envelope nor the one-second fire interval.
 
-The drawn beam stays attached to the firing ship's nose and turns with its aim
-for the whole flash, at the length `L` fixed when firing. Coverage and the hit
-are fire-time: turning after firing never extends, shortens or retargets the
-beam.
+The drawn beam starts at Ada's current nose throughout the flash. Its endpoint
+is fixed in world coordinates at fire time, at the first contact or the
+original miss endpoint. `L` is the current drawn length between those points.
+Hit detection and coverage are determined when fired.
 
 Keyframes for width factor `w` and keyed alpha `a`, linear between keys: 0 ms
 `w` 0.55 `a` 0.85; 20 ms `w` 1 `a` 1; 70 ms `w` 1 `a` 1; 150 ms `w` 0.4 `a` 0.
@@ -232,8 +232,7 @@ The flash ends at 150 ms, Tech's `BEAM.flashSeconds`.
 A Phaser contact uses `compactBright`, the Laser and Multi-Laser contact
 `compact`: the same shapes, brighter and longer for the Phaser. A miss has no
 contact effect. The spark stays at the fire-time contact point, aligned with
-the beam's fire-time direction, while the beam turns with the nose. With
-`p` its age over its life:
+the beam's fire-time direction. Here `p` is its age over its life.
 
 - Rays: six wedges at 30 degrees and every 60 after about the incoming axis,
   from `1.5 + 5 k` to `8.5 + 3 k` times the scale for `k = p / 0.6`, 2.6 wide
