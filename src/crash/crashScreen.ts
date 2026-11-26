@@ -6,6 +6,7 @@
 import "@andornaut/game-kit/runtime/web/crash/dom/crash.css";
 import "./reload.css";
 
+import { BUTTON_GAP } from "@andornaut/game-kit/runtime/ui/spacing";
 import {
   type CrashColours,
   type CrashScreen,
@@ -16,6 +17,7 @@ import {
   listenPagePresses,
   type PagePress,
 } from "@andornaut/game-kit/runtime/web/input/dom/pagePresses";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
 import { BUILD_LABEL } from "../buildLabel.ts";
 import { CRASH_COPY } from "../data/crashCopy.ts";
@@ -23,7 +25,8 @@ import { TEXT_BUTTON } from "../data/layout.ts";
 import { SCREEN } from "../data/screen.ts";
 import { createAdaFactoryHoldBinding } from "../ui/actionBinding.ts";
 import { bindAdaRecoveryActionRoot } from "../ui/holdActionsAdapter.ts";
-import { SCROLL } from "../ui/layout/contentCard.ts";
+import { COLOURS } from "../ui/layout/colours.ts";
+import { CARD_WIDTH_CAPS, SCROLL } from "../ui/layout/contentCard.ts";
 import { readViewUnit } from "../ui/layout/viewScale.ts";
 import { rootPressGuard } from "../ui/pressScope.ts";
 
@@ -38,7 +41,6 @@ export const CRASH_COLOURS: CrashColours = {
 
 let recovery:
   | {
-      readonly bind: HoldActionBinding;
       readonly host: HTMLElement;
       live: boolean;
       readonly root: ReturnType<typeof bindAdaRecoveryActionRoot>;
@@ -103,16 +105,40 @@ function bindReloadPress(element: HTMLElement): () => void {
   };
 }
 
+function placeCrashActions(host: HTMLElement): void {
+  const panel = host.querySelector<HTMLElement>(".crash-panel");
+  if (!panel) {
+    return;
+  }
+  const { style } = panel;
+  style.setProperty("--ada-crash-panel-width", `${CARD_WIDTH_CAPS.medium}px`);
+  style.setProperty("--ada-crash-action-height", `${TEXT_BUTTON.height}px`);
+  style.setProperty("--ada-crash-action-inset", recoveryLength(TEXT_BUTTON.inset));
+  style.setProperty("--ada-crash-action-label", `${TEXT_BUTTON.label.size}px`);
+  style.setProperty("--ada-crash-action-line", `${TEXT_BUTTON.label.lineHeight}px`);
+  style.setProperty("--ada-crash-action-gap", `${BUTTON_GAP}px`);
+  style.setProperty("--ada-crash-secondary-face", COLOURS.secondaryFace);
+  style.setProperty("--ada-crash-secondary-lip", COLOURS.secondaryLip);
+  const details = panel.querySelector(".crash-details");
+  const actions = details?.querySelector(".crash-actions");
+  const reload = panel.querySelector<HTMLButtonElement>(
+    ':scope > .crash-button[data-ui-button-role="primary"]',
+  );
+  if (details && actions && reload) {
+    const focused = reload === host.ownerDocument.activeElement;
+    // Keep Kit's native controls and put the details status before the shared action row.
+    details.after(actions);
+    actions.append(reload);
+    if (focused && reload !== host.ownerDocument.activeElement) {
+      focusTarget(reload);
+    }
+  }
+}
+
 const bindHoldAction: HoldActionBinding = (action) => {
   const { element } = action;
-  const isReload = element.matches(".crash-panel > button.crash-button");
-  if (isReload) {
-    const { style } = element;
-    style.setProperty("--ada-reload-height", `${TEXT_BUTTON.height}px`);
-    style.setProperty("--ada-reload-inset", recoveryLength(TEXT_BUTTON.inset));
-    style.setProperty("--ada-reload-label", `${TEXT_BUTTON.label.size}px`);
-    style.setProperty("--ada-reload-line", `${TEXT_BUTTON.label.lineHeight}px`);
-  }
+  const isReload = element.matches('.crash-button[data-ui-button-role="primary"]');
+  const details = element.closest<HTMLDetailsElement>(".crash-details");
   const body = element.ownerDocument.body;
   let ancestor = element;
   while (ancestor.parentElement && ancestor.parentElement !== body) {
@@ -127,13 +153,6 @@ const bindHoldAction: HoldActionBinding = (action) => {
   }
   if (!recovery) {
     recovery = {
-      bind: createAdaFactoryHoldBinding(
-        {
-          current: () => host.isConnected,
-          slopPx: () => SCROLL.dragThreshold * readViewUnit(host),
-        },
-        host,
-      ),
       host,
       live: true,
       root: bindAdaRecoveryActionRoot({ guard: rootPressGuard(host) }, host),
@@ -141,7 +160,13 @@ const bindHoldAction: HoldActionBinding = (action) => {
     window.addEventListener("pagehide", onPageHide);
   }
   const completed = recovery;
-  const bind = completed.bind;
+  const bind = createAdaFactoryHoldBinding(
+    {
+      current: () => host.isConnected && (details?.open ?? true),
+      slopPx: () => SCROLL.dragThreshold * readViewUnit(host),
+    },
+    host,
+  );
   const unbind = bind(action);
   const stopPress = isReload ? bindReloadPress(element) : undefined;
   const stop = () => {
@@ -160,6 +185,7 @@ const bindHoldAction: HoldActionBinding = (action) => {
     completed.live
   ) {
     completed.root.assertBindings();
+    placeCrashActions(host);
   }
   return stop;
 };

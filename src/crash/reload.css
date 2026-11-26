@@ -1,25 +1,74 @@
+.crash > .crash-panel {
+  max-width: var(--ada-crash-panel-width, 328px);
+  min-width: 0;
+}
+
+.crash-panel > :is(.crash-body, .crash-details) {
+  margin-bottom: var(--ada-crash-action-gap, 24px);
+}
+
+.crash-panel .crash-stack {
+  margin-bottom: 0;
+}
+
+/* Keep the empty live region available for the next Copy announcement. */
+.crash-panel .crash-status:empty {
+  min-height: 0;
+  margin: 0;
+}
+
+.crash-panel > .crash-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--ada-crash-action-gap, 16px);
+}
+
 /* Specificity keeps the inline padding through the Kit's pressed padding shorthand. */
-.crash-panel > button.crash-button {
+.crash-panel > button.crash-button,
+.crash-panel > .crash-actions > button.crash-button {
   box-sizing: border-box;
   width: max-content;
   min-width: 0;
   max-width: 100%;
-  min-height: var(--ada-reload-height, 48px);
-  padding-inline: var(--ada-reload-inset, 20px);
+  min-height: var(--ada-crash-action-height, 48px);
+  padding-inline: var(--ada-crash-action-inset, 20px);
   font-family: system-ui, sans-serif;
-  font-size: var(--ada-reload-label, 18px);
-  line-height: var(--ada-reload-line, normal);
+  font-size: var(--ada-crash-action-label, 18px);
+  line-height: var(--ada-crash-action-line, normal);
   white-space: normal;
   overflow-wrap: anywhere;
 }
 
-.crash-panel > button.crash-button:is(:active, [data-ada-reload-pressed]):not(:disabled) {
+.crash-panel > .crash-actions > .crash-button:not([data-ui-button-role="primary"]) {
+  --crash-action-face: var(--ada-crash-secondary-face);
+  --crash-action-text: var(--crash-ink);
+  --crash-button-lip: var(--ada-crash-secondary-lip);
+}
+
+.crash-panel
+  > .crash-details:not([open])
+  + .crash-actions
+  > .crash-button:not([data-ui-button-role="primary"]),
+.crash-panel
+  > .crash-actions
+  > .crash-button:is([hidden], :disabled):not([data-ui-button-role="primary"]) {
+  display: none;
+}
+
+.crash-panel
+  .crash-button[data-ui-button-role="primary"]:is(:active, [data-ada-reload-pressed]):not(
+    :disabled
+  ) {
   background-color: var(--crash-text);
   color: var(--crash-ink);
 }
 
 @media (forced-colors: active) {
-  .crash-panel > button.crash-button:is(:active, [data-ada-reload-pressed]):not(:disabled) {
+  .crash-panel
+    .crash-button[data-ui-button-role="primary"]:is(:active, [data-ada-reload-pressed]):not(
+      :disabled
+    ) {
     forced-color-adjust: none;
     background-color: ButtonText;
     color: ButtonFace;

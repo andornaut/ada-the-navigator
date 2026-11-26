@@ -70,9 +70,11 @@ it("releases a binding retired during construction and audits only the next live
   const dialog = {
     getAttribute: () => "alertdialog",
     parentElement: body,
+    querySelector: () => null,
     querySelectorAll: () => [element],
   };
   const element = {
+    closest: () => null,
     matches: () => false,
     ownerDocument: { body },
     parentElement: dialog,
