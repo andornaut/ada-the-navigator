@@ -255,7 +255,7 @@ pale core ([Andromeda](andromeda.md)).
 ## Backdrop layers
 
 Every galaxy draws the shared [backdrop layers](backdrop.md) (sky, phenomena,
-plates, stars and debris) in its own field tones, from its `backdrop.json`.
+plates, stars and debris) in its own field tones, from its `backdrop-lattice.json`.
 Each gets its own character within the system:
 
 | Galaxy    | Plates (L1)                                                                                            | Phenomena (L2)                                                                | Stars and streaks                              |

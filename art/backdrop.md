@@ -5,11 +5,12 @@ field tones, so the sky moves at several depths and shows Ada's motion over an
 empty stretch. Tech draws them at runtime from data; Art owns this spec.
 
 - Rebuild with `node art/tools/backdrop.ts`. It writes the shared rules to
-  [backdrop.json](../public/art/backdrop.json), linked from the core manifest
-  as `backdropLayers`, and each galaxy's tones and recipes to
-  `public/art/{galaxy}/backdrop.json`, linked from that galaxy's manifest as
-  `backdrop`. It also writes the nebula textures of each galaxy with a
-  nebula far look into that galaxy's manifest: Whirlpool's
+  [backdrop-lattice.json](../public/art/backdrop-lattice.json), linked from
+  the core manifest as `backdropLayers`, and each galaxy's tones and recipes
+  to `public/art/{galaxy}/backdrop-lattice.json`, linked from that galaxy's
+  manifest as `backdrop`. It also writes each galaxy's
+  [rare decoration](#rare-giant-decorations) sheet and the nebula textures of
+  each galaxy with a nebula far look into that galaxy's manifest: Whirlpool's
   (`nebula-whirlpool-1`, `-2`) and Phantom's smoke banks
   (`nebula-phantom-1`, `-2`). Reruns are byte-identical.
 - Every galaxy reads its backdrop the same way: the core manifest's
@@ -49,7 +50,7 @@ moves by. Play objects, effects and the HUD draw over all of them.
 Each galaxy's optional `decorations` recipe adds purely decorative compositions
 below the plates. Placement, parallax, jitter and weighted sizes are authored in
 [backdrop-decorations.ts](tools/backdrop-decorations.ts), then published in each
-galaxy's `backdrop.json`; consumers do not duplicate these values. The shared
+galaxy's `backdrop-lattice.json`; consumers do not duplicate these values. The shared
 size distribution weights approximately one, two and three screen-width
 formations 6:3:1, independently of the selected signature. A screen is 720
 projected gameplay pixels, not a device-pixel width or a placement cell.
@@ -122,13 +123,11 @@ lit, body and ring.
 | Needle    | `#CBC6BE` 1.12, `#C6C0B3` 1.05, `#B8B099` 1.14 |  1.14:1 |
 | Phantom   | `#6A6277` 1.49, `#61586F` 1.29, `#524C5D` 1.05 |  1.49:1 |
 
-Sunflower's and Andromeda's six-frame sets are staged: the producer writes
-`decoration-set-sheet.svg` (3072 by 1536) beside the three-frame
-`decoration-sheet.svg` and records the six manifest rows and the six
-`decorations.sprites` entries under `decorations-sunflower` and
-`decorations-andromeda` in [polish-rows.json](polish-rows.json). The live
-manifests and `backdrop.json` files keep the three planet frames until the
-rows are applied. `node art/tools/polish-contact-sheet.ts <dir> decorations`
+Sunflower's and Andromeda's six frames, the three planets then the three
+solids, are in `{galaxy}/decoration-set-sheet.svg` (3072 by 1536); every other
+galaxy's three solids are in `{galaxy}/decoration-sheet.svg` (2048 by 1536).
+A sheet's frames sit in rows of the least whole number of columns whose
+square holds them. `node art/tools/polish-contact-sheet.ts <dir> decorations`
 writes a review sheet of every frame on its field.
 
 - Multiply and screen are Phaser `BlendModes.MULTIPLY` and `BlendModes.SCREEN`
@@ -136,17 +135,12 @@ writes a review sheet of every frame on its field.
 
 ## Motif field
 
-The motif field is the staged replacement of the plate, planet, streak and
-rock placement rules: calm, ordered and themed, with every tone kept. The
-producer writes it beside the shipped data as `/art/backdrop-lattice.json`
-(shared rules, `version` 2) and `/art/{galaxy}/backdrop-lattice.json`, and
-stages the manifest links `backdropLayers` and `backdrop` that select them
-under `field` and `field-{galaxy}` in [polish-rows.json](polish-rows.json).
-The shipped `backdrop.json` files and their links stay as they are until the
-runtime reads the new files. Sky, far items, fixed layers, stars, specks,
-nebula textures and the rare decorations are the same in both; each staged
-galaxy file carries its `decorations` recipe as the shipped file does, so a
-change to the decoration sprites is written to both.
+The motif field replaces the plate, planet, streak and rock placement rules
+above: calm, ordered and themed, with every tone kept. It is the shipped
+backdrop: `/art/backdrop-lattice.json` (shared rules, `version` 2) and
+`/art/{galaxy}/backdrop-lattice.json` (`version` 2). Sky, far items, fixed
+layers, stars, specks, nebula textures and the rare decorations follow the
+rules above.
 
 - Plates. Node `(i, j)` of the lattice `e1 = (250, 125)`, `e2 = (-250, 125)`
   sits at `i e1 + j e2` in layer px at parallax 0.15, with no jitter. A node
@@ -186,7 +180,7 @@ Round motifs lie on the world plane and draw as 2:1 ellipses. The producer
 runs the [area check](#contrast-caps) on the motif field over the same
 random cameras and one centred on each planet look and far look it draws,
 and fails under the same rule: no recognition signal's sampled minimum may
-fall under today's. Each staged galaxy file records the result in `check`.
+fall under today's. Each galaxy file records the result in `check`.
 `node art/tools/backdrop.ts --preview <dir>` also writes each motif camera
 as `{galaxy}-lattice-{k}.png`.
 
@@ -317,7 +311,8 @@ decorations keep the full-strength planet tones.
 
 ## Data
 
-`backdrop.json`, version 1, the shared rules: `view`, `order`, and per layer
+`backdrop-lattice.json`, version 2, the shared rules (the
+[motif field](#motif-field) plate, planet, streak and rock rules over these): `view`, `order`, and per layer
 `parallax` with its chunk sizes, chances, salts, sizes and geometry
 (`phenomena.planets`, `phenomena.nebula`, `phenomena.cluster`, `plates`,
 `stars`, `debris`); `plates.blend` (`darker` `multiply`, `lighter` `screen`);
@@ -326,7 +321,8 @@ decorations keep the full-strength planet tones.
 (`salt`, `cell`, `chance`, `scale`, `value`); `caps`; and `check` (the sampled
 cameras and the opening size).
 
-`{galaxy}/backdrop.json`, version 1:
+`{galaxy}/backdrop-lattice.json`, version 2 (`plates` holds `lighter`, the
+`motif` and its two `steps`; see [Motif field](#motif-field)):
 
 | Key           | Holds                                                                                                                                                                  |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

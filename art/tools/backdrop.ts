@@ -1,9 +1,9 @@
-// Layered parallax backdrop: the shared layer rules in /art/backdrop.json, each galaxy's
-// /art/{galaxy}/backdrop.json (sky, plates, phenomena, stars and streaks in its own field
-// tones), the nebula galaxies' quarter-resolution textures, and contrast checks over sampled
-// cameras that fail the build when a layer passes its cap. A placeholder galaxy gets a
-// monochrome placeholder backdrop in the base space palette and a galaxy manifest holding only
-// that link, until its own art replaces both.
+// Layered parallax backdrop: the shared layer rules in /art/backdrop-lattice.json, each galaxy's
+// /art/{galaxy}/backdrop-lattice.json (sky, motif plates, phenomena, stars and streaks in its own
+// field tones), its rare decoration sheet, the nebula galaxies' quarter-resolution textures, and
+// contrast checks over sampled cameras that fail the build when a layer passes its cap. A
+// placeholder galaxy gets a monochrome placeholder backdrop in the base space palette and a galaxy
+// manifest holding only that link, until its own art replaces both.
 // Usage: node art/tools/backdrop.ts [--preview <dir>] writes the data, the textures and the
 // manifest links; --preview also writes each checked camera's layers as a PNG to <dir>.
 // Contract: art/backdrop.md.
@@ -34,7 +34,6 @@ import {
   type Xy,
 } from "./backdrop-field.ts";
 import { editManifest, GALAXIES, linkData, manifestUrl, replaceEntries } from "./manifest.ts";
-import { stageRows } from "./polish-rows.ts";
 import { fromOklab, hex, rgb, toOklab } from "./oklab.ts";
 import { writePng } from "./paint.ts";
 import { json, round } from "./projection.ts";
@@ -495,10 +494,9 @@ const CONFIG: Record<GalaxyId, GalaxyConfig> = {
 const roundXy = (xy: Xy): Xy => [round(xy[0]), round(xy[1])];
 
 // ---------------------------------------------------------------- the motif field
-// The staged field (art/backdrop.md, Motif field): one themed motif per galaxy on a regular
+// The motif field (art/backdrop.md, Motif field): one themed motif per galaxy on a regular
 // isometric lattice in two flat plate steps, round two-tone planets in every second chunk,
 // streaks of one length at one angle on a checker, and the backdrop rocks in every second cell.
-// It is written beside the shipped backdrop data, which the runtime reads until the switch.
 
 const MOTIF_RULES: MotifRules = {
   lattice: [
@@ -1736,20 +1734,9 @@ for (const galaxy of GALAXIES) {
       ),
     };
   };
-  const check = measure(
-    "",
-    cameras,
-    (camera) => renderArea(data, camera, nebulae),
-    (camera, raster) => drawPoints(data, camera, raster),
-  );
   const { galaxy: id, ...rest } = data;
-  const text = json({ version: 1, galaxy: id, ...rest, check });
-  writes.push(() => {
-    writeFileSync(`${art}${galaxy}/backdrop.json`, text);
-    linkData(galaxy, { backdrop: `/art/${galaxy}/backdrop.json` });
-  });
 
-  // The staged motif field: the same tones, with the galaxy's first lighter and first darker
+  // The motif field: the same tones, with the galaxy's first lighter and first darker
   // plate steps (its two darker steps where it has no lighter one), checked over the random
   // cameras and one centred on each planet look and far look it draws.
   const paint = (step: number) => data.plates.steps.find((s) => s.step === step)!;
@@ -1801,11 +1788,7 @@ for (const galaxy of GALAXIES) {
   const fieldPath = `/art/${galaxy}/backdrop-lattice.json`;
   writes.push(() => {
     writeFileSync(`${art}${galaxy}/backdrop-lattice.json`, fieldText);
-    stageRows(`field-${galaxy}`, {
-      manifest: galaxy,
-      links: { backdrop: fieldPath },
-      replaces: `/art/${galaxy}/backdrop.json`,
-    });
+    linkData(galaxy, { backdrop: fieldPath });
   });
 }
 
@@ -1828,11 +1811,5 @@ editManifest("core", (manifest) => {
 for (const write of writes) {
   write();
 }
-writeFileSync(`${art}backdrop.json`, json(RULES));
-linkData("core", { backdropLayers: "/art/backdrop.json" });
 writeFileSync(`${art}backdrop-lattice.json`, json(FIELD_RULES));
-stageRows("field", {
-  manifest: "core",
-  links: { backdropLayers: "/art/backdrop-lattice.json" },
-  replaces: "/art/backdrop.json",
-});
+linkData("core", { backdropLayers: "/art/backdrop-lattice.json" });

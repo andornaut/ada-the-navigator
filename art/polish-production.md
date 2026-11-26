@@ -10,8 +10,8 @@ it is staged and what remains. Renderer changes are in the
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
 | Weapon and hostile map glyphs | Produced files, replaced in place                                                                                     | Produced                                           |
 | Traveling debris              | Produced files and collision data, replaced in place                                                                  | Produced                                           |
-| Giant decorations             | Produced files: four galaxies in place, Sunflower and Andromeda staged with six frames                                | Produced                                           |
-| Backdrop field                | Staged data beside the shipped data, with its contrast check                                                          | Produced                                           |
+| Giant decorations             | Produced files in place for every galaxy, six frames on Sunflower and Andromeda                                       | Produced                                           |
+| Backdrop field                | Produced data in place, with its contrast check                                                                       | Produced                                           |
 | Quantum jump                  | Produced rasters, replaced in place; the iris rim is a specification                                                  | Produced                                           |
 | Weapon and destruction looks  | Specifications; staged shard data                                                                                     | Specified                                          |
 | Runtime effects               | Staged data and specifications: current streaks, stitch, the Eye, the band                                            | Specified                                          |
@@ -25,12 +25,7 @@ and story scenes.
 ## Staging
 
 [polish-rows.json](polish-rows.json) holds one group per switch, each
-rewritten whole by its producer. The backdrop field is written to new files
-beside the shipped ones (`/art/backdrop-lattice.json` and
-`/art/{galaxy}/backdrop-lattice.json`), and the rows hold the manifest links
-that select them. Until the runtime reads the new files, each galaxy's
-`decorations` recipe is carried in both its `backdrop.json` and its
-`backdrop-lattice.json`, and a decoration switch is applied to both.
+rewritten whole by its producer.
 
 ## Model layer
 

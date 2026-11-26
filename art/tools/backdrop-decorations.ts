@@ -7,8 +7,7 @@ import { fileURLToPath } from "node:url";
 import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
 
 import { decorationMesh } from "./decoration-models.ts";
-import { type ManifestFile, readManifest, replaceEntries } from "./manifest.ts";
-import { stageRows } from "./polish-rows.ts";
+import { type ManifestFile, replaceEntries } from "./manifest.ts";
 import { svgText } from "./svg-text.ts";
 import { pathData } from "./debris.ts";
 import { tonePaths } from "./fleet.ts";
@@ -37,19 +36,18 @@ const FRAME = [1024, 768] as const;
 const MARGIN = 60;
 // The formation's visible span in logical px at size scale 1.
 const SPAN = 720;
-// The galaxies whose flat planet frames stay beside the solid formations.
+// The galaxies whose flat planet frames stay beside the solid formations, and the sheet that
+// holds their six frames; every other galaxy's three solids are in `decoration-sheet.svg`.
 const PLANET_FRAMES: readonly GalaxyId[] = ["sunflower", "andromeda"];
-// Their six-frame sheet, staged beside the shipped three-frame sheet until the switch.
-const STAGED_SHEET = "decoration-set-sheet.svg";
+const SET_SHEET = "decoration-set-sheet.svg";
 
 type Drawing = { kind: "planet" | "solid"; variant: number };
 
-// A galaxy's frames in sprite order. `staged` is the set after the switch.
-function drawings(galaxy: GalaxyId, staged: boolean): Drawing[] {
+// A galaxy's frames in sprite order: the planets, then the solids.
+function drawings(galaxy: GalaxyId): Drawing[] {
   const planets = [0, 1, 2].map((variant): Drawing => ({ kind: "planet", variant }));
   const solids = [0, 1, 2].map((variant): Drawing => ({ kind: "solid", variant }));
-  if (!PLANET_FRAMES.includes(galaxy)) return solids;
-  return staged ? [...planets, ...solids] : planets;
+  return PLANET_FRAMES.includes(galaxy) ? [...planets, ...solids] : solids;
 }
 
 const draw = (c: Colours, galaxy: GalaxyId, { kind, variant }: Drawing) =>
@@ -57,8 +55,8 @@ const draw = (c: Colours, galaxy: GalaxyId, { kind, variant }: Drawing) =>
 
 const BLACK = { body: "#000000", lit: "#000000", night: "#000000", ring: "#000000" };
 
-function sprites(galaxy: GalaxyId, staged: boolean): DecorationRecipe["sprites"] {
-  return drawings(galaxy, staged).map((drawing, index) => {
+function sprites(galaxy: GalaxyId): DecorationRecipe["sprites"] {
+  return drawings(galaxy).map((drawing, index) => {
     const { bodies } = draw(BLACK, galaxy, drawing);
     const xs = bodies.flatMap((body) =>
       body.polygons.flatMap((polygon) => polygon.outer.map((point) => point[0])),
@@ -87,20 +85,22 @@ export function decorationRecipe(galaxy: GalaxyId): DecorationRecipe {
       { scale: 2, weight: 3 },
       { scale: 3, weight: 1 },
     ],
-    sprites: sprites(galaxy, false),
+    sprites: sprites(galaxy),
   };
 }
 
-function frames(colours: Colours, galaxy: GalaxyId, staged: boolean) {
-  return drawings(galaxy, staged).map((drawing, index) => ({
+// The galaxy's frames as sheet members, each entry naming the sheet that holds it.
+function frames(colours: Colours, galaxy: GalaxyId, sheet: string) {
+  return drawings(galaxy).map((drawing, index) => ({
     entry: {
       id: `backdrop-decoration-${galaxy}-${index + 1}`,
-      path: `/art/${galaxy}/decoration-${index + 1}.svg`,
+      path: sheet,
       width: FRAME[0],
       height: FRAME[1],
       kind: "backdrop-decoration",
       facing: "fixed",
       pivot: { x: 0.5, y: 0.5 },
+      svgSheet: true,
     },
     svg: svgText(draw(colours, galaxy, drawing).svg),
   }));
@@ -126,9 +126,8 @@ function sheetSvg(sheet: string, width: number, members: ReturnType<typeof frame
 }
 
 /**
- * Write the galaxy's rare decoration assets and matching manifest entries. A galaxy that keeps
- * its planet frames also writes its six-frame sheet beside the shipped one and stages the
- * manifest rows and backdrop sprites that switch to it.
+ * Write the galaxy's rare decoration sheet, its frames as nested roots in rows of `columns`
+ * (the least whole number whose square holds them), and its manifest entries.
  */
 export function writeDecorations(
   palette: Readonly<Record<string, string>>,
@@ -141,51 +140,14 @@ export function writeDecorations(
     ring: palette.ring!,
   };
   const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
-  const prefix = `backdrop-decoration-${galaxy}-`;
-  const directory = `/art/${galaxy}/`;
-  const sheet = `${directory}decoration-sheet.svg`;
-  const live = frames(colours, galaxy, false);
-  const owns = (id: string) => id.startsWith(prefix);
-  const installed: readonly { id: string; path?: unknown; svgSheet?: unknown }[] =
-    readManifest(galaxy).assets;
-  const rows = installed.filter(({ id, path }) => owns(id) || path === sheet);
-  const write = (path: string, svg: string) => writeFileSync(art + path.slice("/art/".length), svg);
-
-  if (PLANET_FRAMES.includes(galaxy)) {
-    const staged = `${directory}${STAGED_SHEET}`;
-    const members = frames(colours, galaxy, true);
-    write(staged, sheetSvg(staged, 3 * FRAME[0], members));
-    stageRows(`decorations-${galaxy}`, {
-      manifest: galaxy,
-      replaces: sheet,
-      assets: members.map(({ entry }) => ({ ...entry, path: staged, svgSheet: true })),
-      backdrop: { decorations: { sprites: sprites(galaxy, true) } },
-    });
-  }
-
-  if (!rows.some(({ path, svgSheet }) => path === sheet || svgSheet === true)) {
-    for (const { entry, svg } of live) write(entry.path, svg);
-    replaceEntries(
-      galaxy,
-      owns,
-      live.map(({ entry }) => entry),
-    );
-    return;
-  }
-  if (
-    rows.length !== live.length ||
-    rows.some(
-      ({ id, path, svgSheet }, index) =>
-        id !== live[index]!.entry.id || path !== sheet || svgSheet !== true,
-    )
-  ) {
-    throw new Error(`Invalid ${galaxy} backdrop decoration sheet selection`);
-  }
-  write(sheet, sheetSvg(sheet, 2 * FRAME[0], live));
+  const sheet = `/art/${galaxy}/${PLANET_FRAMES.includes(galaxy) ? SET_SHEET : "decoration-sheet.svg"}`;
+  const members = frames(colours, galaxy, sheet);
+  const columns = Math.ceil(Math.sqrt(members.length));
+  writeFileSync(art + sheet.slice("/art/".length), sheetSvg(sheet, columns * FRAME[0], members));
   replaceEntries(
     galaxy,
-    owns,
-    live.map(({ entry }) => ({ ...entry, path: sheet, svgSheet: true })),
+    (id) => id.startsWith(`backdrop-decoration-${galaxy}-`),
+    members.map(({ entry }) => entry),
   );
 }
 

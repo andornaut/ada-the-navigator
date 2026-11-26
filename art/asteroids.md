@@ -106,13 +106,13 @@ Rocks and specks are the debris layer of the [backdrop layers](backdrop.md),
 at their own depth behind the play plane:
 
 - Backdrop rocks move at parallax 0.8 (`debris.rocks` in
-  [backdrop.json](../public/art/backdrop.json)), a far rock depth at 0.45
+  [backdrop-lattice.json](../public/art/backdrop-lattice.json)), a far rock depth at 0.45
   (`debris.farRocks`) and the dust specks at 0.7 (`debris.specks`). Each
   keeps its world rule (cells, density, scale, seed), placed at the parallax
   times the camera's world position and projected as the scene projects, so
   its layout stays isometric. The specks' positions
   are in layer coordinates, not world coordinates.
-- The staged [motif field](backdrop.md#motif-field) keeps the sprites, tints,
+- The [motif field](backdrop.md#motif-field) keeps the sprites, tints,
   scales, cells and parallax and places a rock in every cell whose `i + j` is
   even, half the cells, in place of 70 percent of them at random.
 - Backdrop rocks keep no ore-field clearance: at parallax 0.8 they slide past
