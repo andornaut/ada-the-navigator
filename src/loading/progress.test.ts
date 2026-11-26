@@ -8,6 +8,7 @@ import {
   loadingProgress,
   reportBoot,
   requiredUpdateActivity,
+  subscribeLoadingProgress,
   updateActivationActivity,
   updateStateActivity,
   waitedProgress,
@@ -69,6 +70,29 @@ describe("the loading bar's background layer", () => {
     expect(bar.last().active).toBe(false);
     bar.stop();
   });
+
+  it.each([{ phase: "failed", version: "b" }, { phase: "idle" }] as const)(
+    "clears a partial transfer on $phase without showing completion",
+    (terminal) => {
+      const timer = { clearTimeout: vi.fn(), setTimeout: vi.fn(() => 0) };
+      const snapshots: ProgressSnapshot[] = [];
+      const stop = subscribeLoadingProgress(timer, { fadeMs: 150, fullMs: 250 }, (snapshot) =>
+        snapshots.push(snapshot),
+      );
+      try {
+        updateStateActivity({ phase: "staging", value: 0.45, version: "b" });
+        expect(snapshots.at(-1)).toEqual({ active: true, value: 0.45 });
+        updateStateActivity(terminal);
+        expect(snapshots.slice(-2)).toEqual([
+          { active: true, value: undefined },
+          { active: false, value: undefined },
+        ]);
+        expect(timer.setTimeout).not.toHaveBeenCalled();
+      } finally {
+        stop();
+      }
+    },
+  );
 
   it("travels while Update now switches or a forced update runs, until every one ends", () => {
     const bar = record(installProgress);

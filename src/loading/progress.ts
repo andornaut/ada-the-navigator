@@ -92,6 +92,10 @@ function showBackground(reason: "activation" | "required" | "update", shown: boo
 
 /** A background update (the kit's onUpdateState) fills the background bar while it stages. */
 export function updateStateActivity(state: UpdateState): void {
+  if (state.phase === "failed" || state.phase === "idle") {
+    // A partial transfer that ends without a ready build must skip the full-bar hold.
+    install?.progress(undefined);
+  }
   staging = state.phase === "staging" ? state.value : undefined;
   showBackground("update", state.phase === "staging");
 }
