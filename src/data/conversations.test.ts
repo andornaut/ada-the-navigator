@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { controlHelpText } from "../ui/controlHelp.ts";
 import { SHIELD_PILL } from "../ui/layout/playView.ts";
 import { ANDROMEDA_CHAPTER } from "./andromeda.ts";
+import { SUNFLOWER_BOSS_CUES } from "./capitalBosses.ts";
 import { CONTROL_WORDS } from "./controlWords.ts";
 import {
   ARCHIE_NAMED,
@@ -46,14 +47,14 @@ function spokenLines(text: string): { mood?: string; name: string; text: string 
         "Admiral Archie:",
       )
       .matchAll(
-        /(Astra|Ada|Penny|Unknown voice|Admiral Archie): "([^"]+)"(?: \((happy|neutral|upset)\))?/gu,
+        /(Astra|Ada|Penny|Unknown voice|Admiral Archie|Captain Tally): "([^"]+)"(?: \((happy|neutral|upset)\))?/gu,
       ),
     ([, name = "", line = "", mood]) => (mood ? { mood, name, text: line } : { name, text: line }),
   );
 }
 
 // Ambient copy covers all galaxies; Phantom battle cues retain their explicit triggers.
-const IN_FLIGHT = passage("## In-flight conversations", " ## Greeters");
+const IN_FLIGHT = passage("## In-flight conversations");
 const BATTLE = passage("Battle chatter stays in the small box:", "Salvage the last holodisk");
 const BROADCASTS = passage("Memory lines and broadcasts follow", "Outposts handing over");
 
@@ -123,6 +124,14 @@ describe("in-flight conversations", () => {
     expect(DATA_LINES).toEqual(expect.arrayContaining(copied));
     expect(copied).toEqual(expect.arrayContaining(DATA_LINES));
     expect(copied).toHaveLength(DATA_LINES.length);
+  });
+
+  it("matches the actual Sunflower boss cues to the authored radio lines in order", () => {
+    const cues = Object.values(SUNFLOWER_BOSS_CUES).map(({ speaker, text }) => ({
+      name: SPEAKERS[speaker].name,
+      text: written(text),
+    }));
+    expect(cues).toEqual(spokenLines(passage("## Captain Tally and Hammer")));
   });
 
   it("speaks exactly the four authored Phantom battle cues with their moods and known Admiral", () => {
