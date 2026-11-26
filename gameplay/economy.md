@@ -315,9 +315,11 @@ matches its level 2 upgrade:
 
 Engine tuning raises Ada's top speed. See [ship speeds](ships.md#values) for
 how it compares with enemy craft. A purchased gear offer stays in the same
-slot marked “Owned.” It can rotate to another eligible offer on a later
-visit after 300 seconds of active flight since the purchase. Time paused,
-docked, hidden or offline does not count. Each galaxy, station and slot tracks
+slot marked “Owned,” including an ammunition pack bought from that slot.
+After 300 seconds of active flight since the purchase, a later docking can
+replace it with a distinct eligible offer in the same category. If there is
+no such offer, the slot stays “Owned” and tries again on a later docking.
+Time paused, docked, hidden or offline does not count. Each galaxy, station and slot tracks
 its own rotation. Ownership, shop categories, prices and the one-time story
 holodisk follow their existing rules. Restocking never buys gear for Ada.
 Unowned ammunition stays visible with “Requires {weapon}” and its purchase
