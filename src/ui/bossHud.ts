@@ -1,17 +1,9 @@
+import type { CapitalBossHud } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATION_BOX, SHIELD_PILL } from "../data/layout.ts";
 import { COLOURS } from "./layout/colours.ts";
 import { font, fromHudEdge, units } from "./layout/css.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
-
-export interface BossHudView {
-  readonly id: string;
-  readonly ship: string;
-  readonly captain: string;
-  readonly hull: number;
-  readonly maxHull: number;
-  readonly disabled: boolean;
-}
 
 // The longest ship and captain pair still fits on one line with Disabled.
 const MAX_WIDTH = 384;
@@ -74,7 +66,7 @@ function setAttribute(element: HTMLElement, name: string, value: string): void {
 
 /** Mount under the controls overlay so view scaling, modal dimming and cover are shared. */
 export function createBossHud(parent: HTMLElement): {
-  show(view: BossHudView | null): void;
+  show(view: CapitalBossHud | null): void;
   dispose(): void;
 } {
   const document = parent.ownerDocument;

@@ -41,6 +41,7 @@ import {
   updateOffer,
 } from "../pwa/index.ts";
 import { backReleased } from "../ui/backStack.ts";
+import { createBossHud } from "../ui/bossHud.ts";
 import { createConversationBox, createInteractionCard } from "../ui/conversation.ts";
 import { pageStorage, screenShakes } from "../ui/deviceSettings.ts";
 import { createBannerLayer } from "../ui/disabledBanner.ts";
@@ -160,6 +161,7 @@ export type UiContext = Partial<Pick<GameScene, "fieldLight">> &
     | "cacheArt"
     | "cameras"
     | "children"
+    | "bossHud"
     | "controls"
     | "conversationBox"
     | "coreAssetIds"
@@ -711,6 +713,9 @@ export function buildScene(scene: UiContext): void {
     },
   });
   partial.push(() => scene.controls.dispose());
+  const bossHud = createBossHud(scene.controls.overlay);
+  scene.bossHud = bossHud;
+  partial.push(() => bossHud.dispose());
   const scanView = createScanFeedbackView(
     document.getElementById(VIEW_HOST_ID) ?? scene.controls.overlay,
   );
@@ -1442,6 +1447,7 @@ export function noticeGains(scene: UiContext): void {
 /** Baselines a new or loaded flight before the pill observes its cumulative paid ore. */
 export function renderStatus(scene: UiContext): void {
   const state = scene.model.state;
+  scene.bossHud?.show(scene.model.bossHud());
   const flight = state.mode === "space" ? state.flight : null;
   if (!shieldOreFlights.has(scene) || shieldOreFlights.get(scene) !== flight) {
     scene.controls.resetShieldOreSpent(flight?.shieldOreSpent ?? 0);

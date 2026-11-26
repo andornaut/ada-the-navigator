@@ -31,6 +31,7 @@ import { direction } from "../model/shipPhysics.ts";
 import type { StoryNoses } from "../model/storyShips.ts";
 import type { FlightInput, FlightState, GameSave, Vec } from "../model/types.ts";
 import { shipTuning } from "../model/upgrades.ts";
+import type { createBossHud } from "../ui/bossHud.ts";
 import type { ConversationBox } from "../ui/conversation.ts";
 import { createBannerLayer, type PlacedBanner } from "../ui/disabledBanner.ts";
 import { createFpsCounter } from "../ui/fpsCounter.ts";
@@ -449,6 +450,7 @@ export class GameScene extends Scene {
   routeGalaxies: () => GalaxyMapView["galaxies"] = () => [];
   restartCard!: ReturnType<typeof createRestartCard>;
   fpsCounter!: ReturnType<typeof createFpsCounter>;
+  bossHud?: ReturnType<typeof createBossHud>;
   conversationBox!: ConversationBox;
   // The loader runs the player waits for show the loading bar; on-demand art loads silently. The
   // kit's watch also gives every file the loader's timeout and retries failed loads in rounds.
