@@ -1,4 +1,4 @@
-import type { GameObjects, Scene, Textures } from "phaser";
+import { type GameObjects, Renderer, type Scene, type Textures } from "phaser";
 
 import {
   forwardFlightPlumes,
@@ -165,6 +165,7 @@ export class ForwardJetComposition {
       )
       .removeFromDisplayList();
     this.output = scene.add.renderTexture(0, 0, SIDE, SIDE).setVisible(false);
+    scene.game.renderer.on(Renderer.Events.RESTORE_WEBGL, this.invalidateTargets, this);
   }
 
   hide(): void {
@@ -172,6 +173,7 @@ export class ForwardJetComposition {
   }
 
   destroy(): void {
+    this.scene.game.renderer.off(Renderer.Events.RESTORE_WEBGL, this.invalidateTargets, this);
     this.output.destroy();
     this.shader.destroy();
     this.ink.destroy();
@@ -181,6 +183,12 @@ export class ForwardJetComposition {
     if (this.mask) {
       this.scene.textures.remove(this.mask);
     }
+  }
+
+  private invalidateTargets(): void {
+    // Phaser restores the render targets empty. Draw their contents on the next flight draw.
+    this.hull = undefined;
+    this.drawnPlumes = undefined;
   }
 
   select(
