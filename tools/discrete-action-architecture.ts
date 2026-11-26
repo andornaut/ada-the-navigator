@@ -967,7 +967,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
     !node.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.AsyncKeyword) &&
     !((ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node)) && node.asteriskToken);
   const immediateWrapperCall = (
-    call: ts.CallExpression,
+    site: ts.Node,
     owner: ts.FunctionDeclaration | ts.FunctionExpression | ts.ArrowFunction | ts.SourceFile,
   ): boolean => {
     if (!ts.isSourceFile(owner) && (!synchronousCallable(owner) || !owner.body)) {
@@ -994,7 +994,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
     if (!(ts.isBlock(body) || ts.isSourceFile(body)) && deferred(body)) {
       return false;
     }
-    let current: ts.Node = call;
+    let current = site;
     while (current !== body && current.parent !== body) {
       if (current === owner || deferred(current) || !current.parent) {
         return false;
@@ -1703,7 +1703,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
     }
   }
   // These categories prove only local callback effects. Unresolved helper calls stay reviewable.
-  const callbackFacts = (argument: ts.Expression | undefined) => {
+  const callbackFacts = (argument: ts.Expression | undefined, keyboard: boolean) => {
     const declared = argument && ts.isIdentifier(argument) ? declaration(argument) : undefined;
     const callback =
       argument && ts.isIdentifier(argument)
@@ -1725,6 +1725,151 @@ function scanSource(context: ScanContext, path: string, text: string) {
     let focus = false,
       registered = false,
       sampled = false;
+    const localConst = (node: ts.Expression) => {
+      const value = lexicalDeclaration(node);
+      return value &&
+        ts.isVariableDeclaration(value) &&
+        value.parent.flags & ts.NodeFlags.Const &&
+        phase(value) === callback &&
+        stable(node)
+        ? value.initializer
+        : undefined;
+    };
+    const nativeMethod = (callee: ts.PropertyAccessExpression, ...prototypes: string[]) =>
+      !callee.questionDotToken &&
+      clean(reference(callee), true) &&
+      ![...writes].some((key) =>
+        prototypes.some(
+          (type) =>
+            key.includes(`:${type}.prototype`) &&
+            (key.endsWith(".prototype") || key.endsWith(`.${callee.name.text}`)),
+        ),
+      );
+    const elementValue = (node: ts.Expression, throughHelper = false): boolean => {
+      if (!ts.isIdentifier(node) || !stable(node) || !clean(`${reference(node)}.closest`)) {
+        return false;
+      }
+      const value = origin(node);
+      if (!value || !ts.isVariableDeclaration(value) || !value.initializer) {
+        return false;
+      }
+      const init = value.initializer;
+      if (
+        ts.isPropertyAccessExpression(init) &&
+        !init.questionDotToken &&
+        ts.isIdentifier(value.name)
+      ) {
+        const factoryResult = origin(init.expression);
+        const factory =
+          factoryResult && ts.isVariableDeclaration(factoryResult) && factoryResult.initializer;
+        return Boolean(
+          factory &&
+          ts.isCallExpression(factory) &&
+          ts.isIdentifier(factory.expression) &&
+          factoryFor(factory.expression)?.has(init.name.text) &&
+          hasBinding(value.name, false, phase(value), value.end),
+        );
+      }
+      if (!ts.isCallExpression(init) || init.questionDotToken) {
+        return false;
+      }
+      const callee = init.expression;
+      if (ts.isPropertyAccessExpression(callee)) {
+        const receiver = callee.expression;
+        return (
+          callee.name.text === "createElement" &&
+          ts.isIdentifier(receiver) &&
+          receiver.text === "document" &&
+          !lexicalDeclaration(receiver) &&
+          nativeMethod(callee, "Document", "HTMLDocument") &&
+          init.arguments.length === 1 &&
+          ts.isStringLiteral(init.arguments[0]!)
+        );
+      }
+      if (throughHelper || !ts.isIdentifier(callee) || !stable(callee)) {
+        return false;
+      }
+      const helper = lexicalValue(callee);
+      const fn = helper && ts.isVariableDeclaration(helper) ? helper.initializer : undefined;
+      if (!fn || !ts.isArrowFunction(fn) || !synchronousCallable(fn) || !ts.isBlock(fn.body)) {
+        return false;
+      }
+      const result = fn.body.statements.at(-1);
+      return Boolean(
+        result &&
+        ts.isReturnStatement(result) &&
+        result.expression &&
+        immediateWrapperCall(result.expression, fn) &&
+        elementValue(result.expression, true),
+      );
+    };
+    const focusQuery = (node: ts.Expression): boolean =>
+      ts.isCallExpression(node) &&
+      !node.questionDotToken &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      node.expression.name.text === "querySelectorAll" &&
+      nativeMethod(node.expression, "Element", "HTMLElement") &&
+      elementValue(node.expression.expression) &&
+      node.arguments.length === 1 &&
+      ts.isStringLiteral(node.arguments[0]!);
+    const visibilityPredicate = (node: ts.Expression): boolean => {
+      if (
+        !ts.isArrowFunction(node) ||
+        !synchronousCallable(node) ||
+        node.parameters.length !== 1 ||
+        !ts.isIdentifier(node.parameters[0]!.name) ||
+        node.parameters[0]!.initializer ||
+        !ts.isBinaryExpression(node.body) ||
+        node.body.operatorToken.kind !== ts.SyntaxKind.AmpersandAmpersandToken
+      ) {
+        return false;
+      }
+      const own = (value: ts.Expression, method: string): value is ts.PropertyAccessExpression =>
+        ts.isPropertyAccessExpression(value) &&
+        !value.questionDotToken &&
+        value.name.text === method &&
+        lexicalIdentity(value.expression, node.parameters[0]!);
+      const { left, right } = node.body;
+      if (
+        !ts.isPrefixUnaryExpression(left) ||
+        left.operator !== ts.SyntaxKind.ExclamationToken ||
+        !ts.isCallExpression(left.operand) ||
+        left.operand.questionDotToken ||
+        !own(left.operand.expression, "closest") ||
+        !nativeMethod(left.operand.expression, "Element", "HTMLElement") ||
+        left.operand.arguments.length !== 1 ||
+        !ts.isStringLiteral(left.operand.arguments[0]!) ||
+        [...writes].some((key) => key.endsWith(".closest"))
+      ) {
+        return false;
+      }
+      return (
+        ts.isPrefixUnaryExpression(right) &&
+        right.operator === ts.SyntaxKind.ExclamationToken &&
+        own(right.operand, "hidden")
+      );
+    };
+    const focusFilter = (node: ts.CallExpression): boolean => {
+      if (
+        !keyboard ||
+        node.questionDotToken ||
+        !ts.isPropertyAccessExpression(node.expression) ||
+        node.expression.name.text !== "filter" ||
+        !nativeMethod(node.expression, "Array") ||
+        node.arguments.length !== 1 ||
+        !visibilityPredicate(node.arguments[0]!)
+      ) {
+        return false;
+      }
+      const order = localConst(node.expression.expression);
+      return Boolean(
+        order &&
+        ts.isArrayLiteralExpression(order) &&
+        order.elements.every((item) =>
+          ts.isSpreadElement(item) ? focusQuery(item.expression) : elementValue(item),
+        ),
+      );
+    };
     const arrayValue = (node: ts.Expression): boolean => {
       if (ts.isArrayLiteralExpression(node)) {
         return true;
@@ -1736,7 +1881,10 @@ function scanSource(context: ScanContext, path: string, text: string) {
         value &&
         ts.isVariableDeclaration(value) &&
         value.initializer &&
-        ts.isArrayLiteralExpression(value.initializer),
+        (ts.isArrayLiteralExpression(value.initializer) ||
+          (localConst(node) &&
+            ts.isCallExpression(value.initializer) &&
+            focusFilter(value.initializer))),
       );
     };
     const setValue = (node: ts.Expression): boolean => {
@@ -1772,6 +1920,14 @@ function scanSource(context: ScanContext, path: string, text: string) {
       editing = false;
     const inspect = (node: ts.Node): void => {
       if (
+        keyboard &&
+        ts.isSpreadElement(node) &&
+        ts.isArrayLiteralExpression(node.parent) &&
+        focusQuery(node.expression)
+      ) {
+        return;
+      }
+      if (
         ts.isBinaryExpression(node) &&
         node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
         node.operatorToken.kind <= ts.SyntaxKind.LastAssignment
@@ -1797,6 +1953,10 @@ function scanSource(context: ScanContext, path: string, text: string) {
       }
       if (ts.isCallExpression(node)) {
         const callee = node.expression;
+        if (focusFilter(node)) {
+          // The predicate was checked in full. Other nested callbacks remain unresolved.
+          return;
+        }
         if (
           ts.isPropertyAccessExpression(callee) &&
           ["preventDefault", "stopPropagation", "stopImmediatePropagation"].includes(
@@ -1827,6 +1987,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
         } else if (
           ts.isPropertyAccessExpression(callee) &&
           ["indexOf", "at", "includes"].includes(callee.name.text) &&
+          (!keyboard || nativeMethod(callee, "Array")) &&
           arrayValue(callee.expression)
         ) {
           // Read-only native array operations do not invoke an action callback.
@@ -2531,7 +2692,6 @@ function scanSource(context: ScanContext, path: string, text: string) {
       ) {
         const event = node.arguments[0];
         const names = event ? eventNames(event) : [];
-        const facts = callbackFacts(node.arguments[1]);
         const discrete = names.some((name) => ["click", "dblclick"].includes(name));
         const pointer = names.some((name) =>
           /^(?:(?:got|lost)pointercapture$|pointer|touch|mouse|wheel|keydown|keyup)/.test(name),
@@ -2539,6 +2699,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
         const editing = names.some((name) => ["input", "change", "beforeinput"].includes(name));
         const keyboard =
           names.length > 0 && names.every((name) => ["keydown", "keyup"].includes(name));
+        const facts = callbackFacts(node.arguments[1], keyboard);
         if (keyboard && facts && !facts.unknown && !facts.writesOuter && facts.registered) {
           record(
             "registered-action",

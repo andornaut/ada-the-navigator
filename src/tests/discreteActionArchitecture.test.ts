@@ -1266,6 +1266,68 @@ it("proves focus-only keyboard effects from the public focus contract, not a sim
   ).toBe("gesture-review");
 });
 
+const focusOrderCallback = `
+  import {focusTarget} from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+  const screen = document.createElement("div");
+  const tools = document.createElement("div");
+  const places = document.createElement("div");
+  const close = document.createElement("div");
+  screen.addEventListener("keydown", event => {
+    if (event.key !== "Tab") return;
+    const order = [
+      ...tools.querySelectorAll<HTMLButtonElement>("button"),
+      close,
+      ...places.querySelectorAll<HTMLButtonElement>("button"),
+    ];
+    const targets = order.filter(button => !button.closest("[hidden]") && !button.hidden);
+    if (targets.length === 0) return;
+    event.preventDefault();
+    const at = targets.indexOf(document.activeElement as HTMLButtonElement);
+    const step = event.shiftKey ? -1 : 1;
+    const next = at < 0 ? (event.shiftKey ? targets.length - 1 : 0) : at + step;
+    focusTarget(targets[(next + targets.length) % targets.length]!);
+  });
+`;
+
+it("proves keyboard focus from native queries, a visibility filter and local array navigation", () => {
+  expect(scanWithRegistry("src/focusOrder.ts", focusOrderCallback)).toEqual([
+    expect.objectContaining({ classification: "keyboard-focus", kind: "non-action" }),
+  ]);
+});
+
+it.each([
+  ["!button.hidden", "visible(button)"],
+  ["!button.hidden", "(button.hidden = false)"],
+  ["!button.hidden", "(event.stopImmediatePropagation(), !button.hidden)"],
+  ["screen.addEventListener", "tools.querySelectorAll = choose; screen.addEventListener"],
+  ["screen.addEventListener", "Array.prototype.filter = choose; screen.addEventListener"],
+  ["screen.addEventListener", "Element.prototype.closest = choose; screen.addEventListener"],
+  ["screen.addEventListener", "close.closest = choose; screen.addEventListener"],
+  ["event.preventDefault();", "event.preventDefault(); targets.indexOf = choose;"],
+  ["event.preventDefault();", "event.preventDefault(); choose(close);"],
+  ["event.preventDefault();", "suppressAndActivate(event);"],
+  [
+    'document.createElement("div");\n  screen.addEventListener',
+    "fakeElement();\n  screen.addEventListener",
+  ],
+])("keeps an unproved focus-order callback blocking (%s → %s)", (before, after) => {
+  const mutated = focusOrderCallback.replace(before, after);
+  expect(mutated).not.toBe(focusOrderCallback);
+  expect(scanWithRegistry("src/focusOrder.ts", mutated)).toEqual([
+    expect.objectContaining({ kind: "gesture-review" }),
+  ]);
+});
+
+it("keeps native keyboard event suppression with a focus order in the focus category", () => {
+  const suppressed = focusOrderCallback.replace(
+    "event.preventDefault();",
+    "event.preventDefault(); event.stopPropagation();",
+  );
+  expect(scanWithRegistry("src/focusOrder.ts", suppressed)).toEqual([
+    expect.objectContaining({ classification: "keyboard-focus", kind: "non-action" }),
+  ]);
+});
+
 it("distinguishes canonical keyboard activation from a second direct action callback", () => {
   const registered = `const button = createButton("Run");
     const binding = bindAdaAction(options, button);`;
