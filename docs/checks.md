@@ -315,9 +315,10 @@ and in reverse, at headings 0, 16, 32 and 48 of 64: eight fixtures per set.
 `jet-halo` takes her forward plumes at those headings at each of the three
 speeds, where the 42 px flight sprite draws the halo under her hull, then the
 start screen and the warp's settle-24 pose, which draw none. `ship-shape` takes
-the start screen, Ada's ship aboard behind the holodisk moment's first page and
-her flight at headings 0, 16, 32 and 48 at 0.6 of her top speed, each with a
-close-up of her canopy and tail.
+her flight at headings 0, 16, 32 and 48 at 0.6 of her top speed, the start
+screen, the holodisk moment's first page aboard and the ordinary aboard page
+after it, which draws the start screen's ship, each ship view with a close-up of
+her canopy and tail.
 
 `placements` takes the salvage beacons, Whirlpool's nursery beacon and
 Andromeda's spare beacon after their reveal, and `hostile-tops` each family's

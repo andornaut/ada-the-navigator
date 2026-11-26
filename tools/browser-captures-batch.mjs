@@ -897,10 +897,18 @@ export function batchCaptures(ctx) {
     await ctx.closeUp("jet-halo-settle-24-close.png", { side: 320 });
   }
 
-  // Ada's hull shape at 2 device px per CSS px: the start screen, her ship aboard behind the
-  // holodisk moment's first page, and flight under way at 0.6 of her top speed at headings 0, 16,
-  // 32 and 48 of 64, each with a close-up of her canopy and tail.
+  // Ada's hull shape at 2 device px per CSS px: flight under way at 0.6 of her top speed at
+  // headings 0, 16, 32 and 48 of 64, the start screen, then aboard: the holodisk moment's first
+  // page, where Art's holodisk frames play, and its next page, an ordinary aboard page that draws
+  // the title screen's ship over the backdrop. Each ship view adds a close-up of her canopy and
+  // tail. Flight and the start screen come first, so an aboard failure leaves their frames.
   async function shipShape() {
+    await inTurn(FIX_HEADINGS, async (heading) => {
+      const name = `ship-shape-${heading}`;
+      await open(canonical(underWay(PLUME_SIZES.m, false, heading), name), FIX_SCALE);
+      await ctx.frames(name);
+      await ctx.closeUp(`art-${name}-close.png`, { side: 160 });
+    });
     const title = canonical(painted(flightModel(1), "classic"), "ship-shape-title");
     const home = await ctx.openHome(title, FIX_SCALE);
     await home.locator(".ada-start-actions > button").first().waitFor();
@@ -908,24 +916,31 @@ export function batchCaptures(ctx) {
     await home.waitForTimeout(500);
     await ctx.pageShot("ship-shape-title.png");
     await ctx.closeUp("ship-shape-title-close.png", { selector: ".ada-start-ship" });
-    // A saved holodisk moment shows again from its first page on Continue, aboard.
+    // A saved holodisk moment shows again from its first page on Continue. That page plays Art's
+    // holodisk frames and hides the title screen's ship (storyPresentation.ts aboardGalaxy); the
+    // pages after it are ordinary aboard pages, which draw it.
     const aboard = flightModel(1);
     aboard.state.progress[1].holodisk = true;
     aboard.state.dialogue = { choices: [], context: "holodiskMoment", text: "", title: "" };
     const page = await ctx.openHome(canonical(aboard, "ship-shape-aboard"), FIX_SCALE);
     await page.locator('.ada-start-actions > [data-action="continue"]').click();
+    const next =
+      '.ada-story-panel:not(.ada-dialogue-panel):not([hidden]) [data-action="story-next"]';
+    await page.locator(next).waitFor();
+    assert.equal(
+      await page.locator(".ada-story-background").getAttribute("data-background"),
+      "aboard",
+      "The holodisk moment shows aboard",
+    );
+    await page.waitForTimeout(1500);
+    await ctx.pageShot("ship-shape-holodisk.png");
+    await page.locator(next).click();
     const ship = ".ada-story-ship:not([hidden]) .ada-start-ship";
     await page.locator(ship).waitFor();
     await page.waitForFunction((selector) => document.querySelector(selector)?.complete, ship);
     await page.waitForTimeout(1500);
     await ctx.pageShot("ship-shape-aboard.png");
     await ctx.closeUp("ship-shape-aboard-close.png", { selector: ship });
-    await inTurn(FIX_HEADINGS, async (heading) => {
-      const name = `ship-shape-${heading}`;
-      await open(canonical(underWay(PLUME_SIZES.m, false, heading), name), FIX_SCALE);
-      await ctx.frames(name);
-      await ctx.closeUp(`art-${name}-close.png`, { side: 160 });
-    });
   }
 
   /** A save with Ada's ship in the paint scheme `paint`. */
