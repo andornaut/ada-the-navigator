@@ -576,8 +576,26 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   });
   chart.append(legs);
   const markers = POSITIONS.map((position) => {
+    const selectGalaxy = () => {
+      if (!view || unlock || (!viewingEarth && view.panel === position)) {
+        return;
+      }
+      viewingEarth = false;
+      options.onView(position);
+      drawPanel();
+      drawChart();
+    };
     const button = document.createElement("button");
     button.type = "button";
+    const binding = bindAdaAction(
+      {
+        click: { availability: () => ({ kind: "available" }), run: () => selectGalaxy() },
+        current: () => current(),
+        slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
+      },
+      button,
+    );
+    bindings.push({ dispose: () => binding.dispose() });
     button.className = "ada-route-marker";
     button.dataset.position = String(position);
     const centre = GALAXY_MAP.centres[position - 1]!;
@@ -589,16 +607,6 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     disc.className = "ada-route-disc";
     disc.textContent = String(position);
     button.append(backing, disc);
-    const selectGalaxy = () => {
-      if (!view || unlock || (!viewingEarth && view.panel === position)) {
-        return;
-      }
-      viewingEarth = false;
-      options.onView(position);
-      drawPanel();
-      drawChart();
-    };
-    register(button, selectGalaxy);
     button.addEventListener("focus", selectGalaxy);
     leaveFocus.push(() => button.removeEventListener("focus", selectGalaxy));
     const name = document.createElement("span");

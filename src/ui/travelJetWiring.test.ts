@@ -505,12 +505,31 @@ it.each(["1", "earth", "galaxy-jump", "galaxy-close-x"])(
     const options = galaxyConstructionOptions();
     const mount = vi.spyOn(fixture.host, "insertBefore");
     const bind = actionBinding.bindAdaAction;
-    vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((action, element) =>
-      (element.dataset.action ?? element.dataset.position) === id ||
-      (id === "galaxy-jump" && action.ownAriaDisabled === "refusal-feedback")
-        ? { activate: () => false, dispose() {}, update() {} }
-        : bind(action, element),
-    );
+    const bindings = new WeakMap<HTMLElement, ReturnType<typeof bind>>();
+    vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((action, element) => {
+      if (
+        (element.dataset.action ?? element.dataset.position) === id ||
+        (id === "galaxy-jump" && action.ownAriaDisabled === "refusal-feedback")
+      ) {
+        return { activate: () => false, dispose() {}, update() {} };
+      }
+      const binding = bind(action, element);
+      bindings.set(element, binding);
+      return binding;
+    });
+    const assertMetadata = actionBinding.assertAdaActionMetadata;
+    vi.spyOn(actionBinding, "assertAdaActionMetadata").mockImplementation((screen) => {
+      // The marker is bound before it receives its position.
+      if (id === "1") {
+        const target = [...screen.querySelectorAll<HTMLButtonElement>("button")].find(
+          (button) => button.dataset.position === id,
+        );
+        if (target) {
+          bindings.get(target)?.dispose();
+        }
+      }
+      assertMetadata(screen);
+    });
 
     expect(() => createGalaxyMap(fixture.host, options)).toThrow("no registered action binding");
     expect(mount).not.toHaveBeenCalled();

@@ -554,19 +554,28 @@ it.each(["map-zoomIn", "map-travel"])(
   "rejects missing %s metadata in the completed Map layout before publication",
   (id) => {
     const bind = actionBinding.bindAdaAction;
-    vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) =>
-      (id === "map-travel" ? isMapTravelBinding(options, element) : element.dataset.action === id)
-        ? { activate: () => false, dispose() {}, update() {} }
-        : bind(options, element),
-    );
+    const bindings = new WeakMap<HTMLElement, ReturnType<typeof bind>>();
+    vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) => {
+      if (id === "map-travel" && isMapTravelBinding(options, element)) {
+        return { activate: () => false, dispose() {}, update() {} };
+      }
+      const binding = bind(options, element);
+      bindings.set(element, binding);
+      return binding;
+    });
     // The Travel leaf is mounted in the hidden panel even without a selection or an action root.
     const root = id === "map-travel" ? new FakeElement() : mountedRoot();
     const append = vi.spyOn(root, "append");
     const observe = vi.fn();
     const assertMetadata = actionBinding.assertAdaActionMetadata;
     vi.spyOn(actionBinding, "assertAdaActionMetadata").mockImplementation((screen) => {
+      const target = screen.querySelector<HTMLElement>(`[data-action="${id}"]`);
+      // The native tool is bound before it receives its action marker.
+      if (id === "map-zoomIn" && target) {
+        bindings.get(target)?.dispose();
+      }
       observe({
-        actionPresent: screen.querySelector(`[data-action="${id}"]`) !== null,
+        actionPresent: target !== null,
         connected: screen.isConnected,
         panelHidden: screen.querySelector<HTMLElement>(".ada-map-panel")?.hidden,
       });

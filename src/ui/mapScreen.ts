@@ -914,7 +914,15 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       state?.carrying ?? false,
       selectedPlace(),
     );
-  const actionBindings = new Set<{ dispose(): void }>();
+  type ActionDisposer = { dispose(): void };
+  const actionBindings = new Set<ActionDisposer>();
+  const buttonAvailability = (element: HTMLElement): ControlAvailability =>
+    element.matches(":disabled") || element.closest("[hidden], [inert]")
+      ? { kind: "omitted" }
+      : { kind: "available" };
+  const actionCurrent = (element: HTMLElement) =>
+    !disposed && !screen.hidden && inCurrentView(root, element);
+  const actionSlop = () => MAP_SCREEN.dragThreshold * readViewUnit(screen);
   const registerAction = (
     action: Pick<
       AdaActionOptions,
@@ -923,29 +931,50 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     element: HTMLElement,
   ) => {
     const { run, ...routing } = action;
-    const availability = (): ControlAvailability =>
-      element.matches(":disabled") || element.closest("[hidden], [inert]")
-        ? { kind: "omitted" }
-        : { kind: "available" };
     const binding = bindAdaAction(
       {
         ...routing,
-        click: { availability, run },
-        current: () => !disposed && !screen.hidden && inCurrentView(root, element),
-        slopPx: () => MAP_SCREEN.dragThreshold * readViewUnit(screen),
+        click: { availability: () => buttonAvailability(element), run },
+        current: () => actionCurrent(element),
+        slopPx: actionSlop,
       },
       element,
     );
     actionBindings.add(binding);
     return binding;
   };
-  const forgetAction = (binding: ReturnType<typeof bindAdaAction> | undefined) => {
+  const createMapButton = ({
+    actionId,
+    beforeClick,
+    run,
+  }: {
+    readonly actionId?: string;
+    readonly beforeClick?: AdaActionOptions["beforeClick"];
+    readonly run: (button: HTMLButtonElement) => void;
+  }) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    const binding = bindAdaAction(
+      {
+        beforeClick: (event) => beforeClick?.(event),
+        click: { availability: () => buttonAvailability(button), run: () => run(button) },
+        current: () => actionCurrent(button),
+        slopPx: () => actionSlop(),
+      },
+      button,
+    );
+    if (actionId !== undefined) {
+      button.dataset.action = actionId;
+    }
+    return { binding: { dispose: () => binding.dispose() }, button };
+  };
+  const forgetAction = (binding: ActionDisposer | undefined) => {
     if (binding) {
       binding.dispose();
       actionBindings.delete(binding);
     }
   };
-  const chipBindings = new Map<string, ReturnType<typeof bindAdaAction>>();
+  const chipBindings = new Map<string, ActionDisposer>();
   const fog = document.createElement("canvas");
   fog.className = "ada-map-fog";
   fog.setAttribute("aria-hidden", "true");
@@ -1003,13 +1032,24 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     zoomIn: labels.zoomIn,
     zoomOut: labels.zoomOut,
   };
+  const toolActions: Record<MapTool, (button: HTMLButtonElement) => void> = {
+    recentre: () => {
+      if (view && state) {
+        cancelFieldAction();
+        const { field, inner } = layout();
+        view = recentreView(inner, field, state.map.player, view);
+        render();
+      }
+    },
+    zoomIn: (button) => zoom(MAP_SCREEN.zoomStep, fitCentre(), button),
+    zoomOut: (button) => zoom(1 / MAP_SCREEN.zoomStep, fitCentre(), button),
+  };
   const toolButtons = new Map<MapTool, HTMLButtonElement>();
   for (const { glyph, id } of MAP_TOOLS) {
-    const button = document.createElement("button");
-    button.type = "button";
+    const { binding, button } = createMapButton({ actionId: `map-${id}`, run: toolActions[id] });
+    actionBindings.add(binding);
     button.className = "ada-map-tool";
     button.dataset.tool = id;
-    button.dataset.action = `map-${id}`;
     button.setAttribute("aria-label", toolLabels[id]);
     const disc = document.createElement("span");
     disc.className = "ada-disc";
@@ -1303,30 +1343,26 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   const addChips = (nextPlaces: readonly MapPlace[]) => {
     const pending = new Map<
       string,
-      { readonly binding: ReturnType<typeof bindAdaAction>; readonly chip: HTMLButtonElement }
+      { readonly binding: ActionDisposer; readonly chip: HTMLButtonElement }
     >();
     try {
       for (const { id } of nextPlaces) {
         if (chips.has(id) || pending.has(id)) {
           continue;
         }
-        const chip = document.createElement("button");
-        chip.type = "button";
-        const binding = registerAction(
-          {
-            beforeClick(event) {
-              // Spatial pointer gestures belong to the root. Enter and assistive clicks still use
-              // this button's own target, even when it moved under keyboard focus.
-              if (event.detail !== 0) {
-                return false;
-              }
-              cancelFieldAction();
-              return true;
-            },
-            run: () => select(id),
+        const { binding, button: chip } = createMapButton({
+          beforeClick(event) {
+            // Spatial pointer gestures belong to the root. Enter and assistive clicks still use
+            // this button's own target, even when it moved under keyboard focus.
+            if (event.detail !== 0) {
+              return false;
+            }
+            cancelFieldAction();
+            return true;
           },
-          chip,
-        );
+          run: () => select(id),
+        });
+        actionBindings.add(binding);
         pending.set(id, { binding, chip });
         assertAdaActionMetadata(chip);
         chip.addEventListener("focus", () => {
@@ -1565,27 +1601,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     const { fit } = layout();
     return { x: fit.x + fit.width / 2, y: fit.y + fit.height / 2 };
   };
-  registerAction(
-    { run: () => zoom(MAP_SCREEN.zoomStep, fitCentre(), toolButtons.get("zoomIn")) },
-    toolButtons.get("zoomIn")!,
-  );
-  registerAction(
-    { run: () => zoom(1 / MAP_SCREEN.zoomStep, fitCentre(), toolButtons.get("zoomOut")) },
-    toolButtons.get("zoomOut")!,
-  );
-  registerAction(
-    {
-      run: () => {
-        if (view && state) {
-          cancelFieldAction();
-          const { field, inner } = layout();
-          view = recentreView(inner, field, state.map.player, view);
-          render();
-        }
-      },
-    },
-    toolButtons.get("recentre")!,
-  );
   const goTo = (place: MapPlace) => {
     cancelFieldAction();
     if (view) {
