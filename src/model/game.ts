@@ -166,6 +166,7 @@ import {
   dropJob,
   explorationLeadOffer,
   heldJob,
+  isPostedLead,
   jobHostiles,
   type LeadJobType,
   nearestWorldSafePlace,
@@ -3787,9 +3788,8 @@ export class GameModel {
       state,
       type: job.type,
     });
-    // An active activity heads the board, marked Active with Drop, as a held job does; a
-    // station that offers the galaxy's activity (the hub's mining contract) heads its board with
-    // the offer instead.
+    // A posted lead gets the first offer slot before the station's featured activity and
+    // ordinary jobs, even when projects reserve the remaining slots.
     const activity = this.activity;
     const offered = activity ? null : this.boardActivity(f, site.id);
     const activityRow: JobRow[] =
@@ -3806,12 +3806,16 @@ export class GameModel {
             },
           ]
         : [];
+    const offers = board.filter((offer) => offer.id !== held?.id);
+    const lead = offers.find(isPostedLead);
+    const offerState = busy ? "busy" : "offer";
+    const featuredFirst = Boolean(activity) || !lead;
     return [
-      ...activityRow,
+      ...(featuredFirst ? activityRow : []),
       ...(held ? [row(held, "held")] : []),
-      ...board
-        .filter((offer) => offer.id !== held?.id)
-        .map((offer) => row(offer, busy ? "busy" : "offer")),
+      ...(lead ? [row(lead, offerState)] : []),
+      ...(featuredFirst ? [] : activityRow),
+      ...offers.filter((offer) => !isPostedLead(offer)).map((offer) => row(offer, offerState)),
     ];
   }
   /** Why a board's Accept refuses while the slot is taken: an activity, else a held job. */

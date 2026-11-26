@@ -6,6 +6,7 @@ import { JOB_TUNING } from "../data/jobs.ts";
 import { questReward } from "../data/questRewards.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
+import { stationJobsRows, type StationRow } from "../ui/station.ts";
 import { dropRandom, enemyStardust } from "./drops.ts";
 import { ROUTE_OPPORTUNITY_SECONDS } from "./explorationPacing.ts";
 import { ensureStation } from "./flight.ts";
@@ -282,15 +283,38 @@ it("posts an admitted near-route hunt on Scan, then accepts and pays through the
     rerollBoards(1, model.state);
     expect(model.state.jobs.boards[1]![issuer.id]).toEqual([offer]);
 
+    progress.resolved = true;
     ensureStation(CONTENT, issuer.id, flight);
     flight.player = { x: issuer.x, y: issuer.y };
     flight.dangerFor = 0;
     model.interact();
     expect(model.state.docked).toBe(issuer.id);
     expect(outcome!.leadStation).toBe(model.dockedStationName);
-    const ordinary = model.jobBoard().filter((row) => row.id !== id);
+    const jobs = model.jobBoard();
+    const ordinary = jobs.filter((row) => row.id !== id);
     expect(ordinary).toHaveLength(3);
-    expect(model.acceptJob(id)).toBe("accepted");
+    const projects = model.projects!;
+    expect(projects).toHaveLength(3);
+    expect(projects.every(({ funded }) => !funded)).toBe(true);
+    const projectRows = projects.map((project): StationRow => ({
+      glyph: { key: project.icon, kind: "stateVector" },
+      group: "items",
+      key: `project:${project.id}`,
+      level: "",
+      name: project.name,
+      price: project.remaining,
+      project: true,
+      state: "unaffordable",
+    }));
+    const displayed = () =>
+      stationJobsRows(
+        model.jobBoard().map((job) => ({ ...job, rewardText: String(job.reward) })),
+        model.stationServices,
+        projectRows,
+      );
+    expect(displayed()).toMatchObject([{ id, state: "offer" }]);
+    expect(model.acceptJob(displayed()[0]!.id)).toBe("accepted");
+    expect(displayed()[0]).toMatchObject({ id, state: "held" });
     expect(model.acceptJob(ordinary[0]!.id)).toBe("busy");
     model.undock();
     const balance = model.state.economy.stardust;
