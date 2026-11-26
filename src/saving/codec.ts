@@ -1031,7 +1031,7 @@ function validStationRestock(
       !GALAXY_NUMBERS.includes(galaxy) ||
       typeof id !== "string" ||
       key !== JSON.stringify([galaxy, id]) ||
-      !(progress[galaxy].stations.includes(id) || (galaxy === 2 && id === HUB_STATION)) ||
+      !namesStation(ECONOMY, galaxy, id) ||
       !record(slots)
     ) {
       return false;
