@@ -46,12 +46,26 @@ function actual(name: string): string {
       found = node.initializer;
     }
     if (
-      ["chip", "screen"].includes(name) &&
+      name === "screen" &&
       ts.isCallExpression(node) &&
       node.expression.getText(source) === "registerAction" &&
       node.arguments[1]?.getText(source) === name
     ) {
       found = node;
+    }
+    if (
+      name === "chip" &&
+      ts.isVariableDeclaration(node) &&
+      ts.isObjectBindingPattern(node.name) &&
+      node.name.elements.some(
+        ({ name, propertyName }) =>
+          name.getText(source) === "chip" && propertyName?.getText(source) === "button",
+      ) &&
+      node.initializer &&
+      ts.isCallExpression(node.initializer) &&
+      node.initializer.expression.getText(source) === "createMapButton"
+    ) {
+      found = node.initializer;
     }
     if (
       ["close", "dispose"].includes(name) &&
@@ -243,7 +257,7 @@ function fixture(spatial = false) {
         host,
       ).dispose
     : bindAdaHoldActions(guard, host);
-  const bindings = new Set<ReturnType<typeof bindAdaAction>>();
+  const bindings = new Set<Pick<ReturnType<typeof bindAdaAction>, "dispose">>();
   cleanup.push(() => {
     for (const b of bindings) {
       b.dispose();
@@ -266,9 +280,15 @@ function fixture(spatial = false) {
       ts.transpileModule(code, { compilerOptions: { target: ts.ScriptTarget.ES2023 } }).outputText,
       context,
     );
-  execute(
-    `const registerAction = ${actual("registerAction")}; const forgetAction = ${actual("forgetAction")};`,
-  );
+  for (const name of [
+    "buttonAvailability",
+    "actionCurrent",
+    "actionSlop",
+    "registerAction",
+    "forgetAction",
+  ]) {
+    execute(`const ${name} = ${actual(name)};`);
+  }
   const register = execute("registerAction") as (
     action: { run: () => void; availability?: () => { kind: "available" } },
     target: unknown,
@@ -505,6 +525,7 @@ function spatialFixture(places = [{ id: "a", x: 0, y: 0 }]) {
     zoomView,
   });
   for (const name of [
+    "createMapButton",
     "local",
     "onChrome",
     "pinchOf",
@@ -522,13 +543,14 @@ function spatialFixture(places = [{ id: "a", x: 0, y: 0 }]) {
     const lifecycle = ({ ${actual("close")}, ${actual("dispose")} });
   `);
   const addChip = (id: string) => {
-    const chip = new Element(f.document);
+    f.context.id = id;
+    const { binding, button: chip } = f.execute(`((id) => ${actual("chip")})(id)`) as {
+      binding: Pick<ReturnType<typeof bindAdaAction>, "dispose">;
+      button: Element;
+    };
+    f.bindings.add(binding);
     chip.parentElement = f.screen;
     chips.set(id, chip);
-    Object.assign(f.context, { chip, id });
-    const binding = f.execute(`((chip, id) => ${actual("chip")})(chip, id)`) as ReturnType<
-      typeof bindAdaAction
-    >;
     return { binding, chip };
   };
   const added = places.map(({ id }) => addChip(id));
