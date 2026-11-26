@@ -1343,7 +1343,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     // after the fog and its reveals, while leaving the separate map content and chrome above it.
     const [top, ...tips] = mapWorldDiamond(inner, current);
     context.save();
-    context.fillStyle = "#131119";
+    context.fillStyle = UNLISTED_COLOURS.mapOuterBackground;
     context.beginPath();
     context.rect(0, 0, width, height);
     context.moveTo(top.x * px, top.y * px);

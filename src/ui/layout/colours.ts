@@ -100,6 +100,8 @@ export const UNLISTED_COLOURS = {
   fpsPanel: "#000000b3",
   /** The grower's map chip. */
   mapGrowers: "#9ccc5a",
+  /** Outside the Local Map's playable diamond. */
+  mapOuterBackground: "#131119",
   /** The map's point of interest lavender: the objective stroke and station chips. */
   mapPointOfInterest: "#c4afcc",
   /** The workshop's map chip. */

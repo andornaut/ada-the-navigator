@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
 import { CHARTING_ORIGIN, CHARTING_RADIUS, withinChartingRadius } from "../model/map.ts";
+import { UNLISTED_COLOURS } from "./layout/colours.ts";
 import {
   MAP_COLORS,
   type MapView,
@@ -187,6 +188,7 @@ it("draws the survey after fog and covers only the exterior after search markers
       "mapWorldDiamond",
       "drawMapSurveyOutline",
       "drawSearchArea",
+      "UNLISTED_COLOURS",
       body,
     )(
       state,
@@ -197,6 +199,7 @@ it("draws the survey after fog and covers only the exterior after search markers
       mapWorldDiamond,
       () => calls.push("survey"),
       () => calls.push("search"),
+      UNLISTED_COLOURS,
     ) as (inner: Rect, unit: number, view: MapView) => void;
     draw(INNER, 1.25, { centre: { x: 60_000, y: -30_000 }, scale: 0.002, worldSide: 240_000 });
     expect(calls).toEqual([
