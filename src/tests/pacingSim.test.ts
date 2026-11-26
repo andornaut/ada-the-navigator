@@ -22,64 +22,97 @@ import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { weaponAt } from "../data/weaponCatalog.ts";
 import { asteroidSize } from "../model/asteroids.ts";
-import { createFlight } from "../model/flight.ts";
+import { createFlight, createUnpopulatedFlight, populateFlight } from "../model/flight.ts";
 import { MOVING_ROCK_PREFIX } from "../model/rockRicochet.ts";
 
 const spawnWeights = CONTENT.tuning.flight.spawnWeights;
 
-describe("pacing simulation world", () => {
-  it("generates the same asteroids, caches and encounter packs as a real flight", () => {
-    let cachePickups = 0;
-    for (const galaxy of [1, 2] as const satisfies readonly GalaxyNumber[]) {
-      for (let seed = 1; seed <= 30; seed++) {
-        const flight = createFlight(CONTENT, galaxy, seed, { known: [] });
-        const world = { catalog: ECONOMY, galaxy, seed, spawnWeights };
-        const expected = { caches: [] as string[], packs: [] as string[], rocks: [] as string[] };
-        for (let x = -2; x <= 2; x++) {
-          for (let y = -2; y <= 2; y++) {
-            const chunk = generateChunk(world, { x: 0, y: 0 }, x, y);
-            expected.rocks.push(
-              ...chunk.rocks.map((rock) => `${rock.id}:${rock.size}@${rock.x},${rock.y}`),
-            );
-            expected.caches.push(
-              ...chunk.caches.map((cache) => `${cache.id}@${cache.x},${cache.y}=${cache.amount}`),
-            );
-            if (chunk.pack) {
-              expected.packs.push(`${chunk.pack.id}:${chunk.pack.archetype}x${chunk.pack.count}`);
-            }
-          }
-        }
-        // Moving rocks drop loot too, so the simulation mines them under their placed ids.
-        const rocks = flight.objects
-          .filter((object) => object.kind === "rock" || object.id.startsWith(MOVING_ROCK_PREFIX))
-          .map(
-            (object) =>
-              `${object.id.replace(MOVING_ROCK_PREFIX, "")}:${asteroidSize(object)}@${object.x},${object.y}`,
+function expectWorldParity(seeds: readonly number[]) {
+  let cachePickups = 0;
+  let movingRockWorlds = 0;
+  for (const galaxy of [1, 2] as const satisfies readonly GalaxyNumber[]) {
+    for (const seed of seeds) {
+      const flight = createFlight(CONTENT, galaxy, seed, { known: [] });
+      const world = { catalog: ECONOMY, galaxy, seed, spawnWeights };
+      const expected = { caches: [] as string[], packs: [] as string[], rocks: [] as string[] };
+      for (let x = -2; x <= 2; x++) {
+        for (let y = -2; y <= 2; y++) {
+          const chunk = generateChunk(world, { x: 0, y: 0 }, x, y);
+          expected.rocks.push(
+            ...chunk.rocks.map((rock) => `${rock.id}:${rock.size}@${rock.x},${rock.y}`),
           );
-        const caches = flight.objects
-          .filter((object) => object.kind === "pickup" && object.amount !== undefined)
-          .map((object) => `${object.id}@${object.x},${object.y}=${object.amount}`);
-        const packs = new Map<string, string[]>();
-        for (const object of flight.objects) {
-          if (object.kind === "enemy" && object.enemy?.packId) {
-            const members = packs.get(object.enemy.packId) ?? [];
-            members.push(object.enemy.archetype);
-            packs.set(object.enemy.packId, members);
+          expected.caches.push(
+            ...chunk.caches.map((cache) => `${cache.id}@${cache.x},${cache.y}=${cache.amount}`),
+          );
+          if (chunk.pack) {
+            expected.packs.push(`${chunk.pack.id}:${chunk.pack.archetype}x${chunk.pack.count}`);
           }
         }
-        expect(rocks.sort()).toEqual(expected.rocks.sort());
-        expect(caches.sort()).toEqual(expected.caches.sort());
-        cachePickups += caches.length;
-        for (const cache of flight.objects.filter((object) => object.kind === "pickup")) {
-          expect(cache.id).toMatch(/:stardust:0$/);
-          expect(cache.amount).toBe(5);
-        }
-        expect([...packs].map(([id, members]) => `${id}:${members[0]}x${members.length}`)).toEqual(
-          expected.packs,
-        );
       }
+      // Moving rocks drop loot too, so the simulation mines them under their placed ids.
+      const rocks = flight.objects
+        .filter((object) => object.kind === "rock" || object.id.startsWith(MOVING_ROCK_PREFIX))
+        .map(
+          (object) =>
+            `${object.id.replace(MOVING_ROCK_PREFIX, "")}:${asteroidSize(object)}@${object.x},${object.y}`,
+        );
+      const caches = flight.objects
+        .filter((object) => object.kind === "pickup" && object.amount !== undefined)
+        .map((object) => `${object.id}@${object.x},${object.y}=${object.amount}`);
+      const packs = new Map<string, string[]>();
+      for (const object of flight.objects) {
+        if (object.kind === "enemy" && object.enemy?.packId) {
+          const members = packs.get(object.enemy.packId) ?? [];
+          members.push(object.enemy.archetype);
+          packs.set(object.enemy.packId, members);
+        }
+      }
+      expect(rocks.sort()).toEqual(expected.rocks.sort());
+      expect(caches.sort()).toEqual(expected.caches.sort());
+      cachePickups += caches.length;
+      if (flight.objects.some(({ id }) => id.startsWith(MOVING_ROCK_PREFIX))) {
+        movingRockWorlds++;
+      }
+      for (const cache of flight.objects.filter((object) => object.kind === "pickup")) {
+        expect(cache.id).toMatch(/:stardust:0$/);
+        expect(cache.amount).toBe(5);
+      }
+      expect([...packs].map(([id, members]) => `${id}:${members[0]}x${members.length}`)).toEqual(
+        expected.packs,
+      );
     }
+  }
+  return { cachePickups, movingRockWorlds };
+}
+
+describe("pacing simulation contracts", () => {
+  it("matches real flight generation in four pinned launch worlds with caches and moving rocks", () => {
+    const { cachePickups, movingRockWorlds } = expectWorldParity([1, 2]);
     expect(cachePickups).toBeGreaterThan(0);
+    expect(movingRockWorlds).toBeGreaterThan(0);
+  });
+
+  it("matches a real encounter pack outside Sunflower's departure calm radius", () => {
+    const galaxy = 1;
+    const seed = 1;
+    const { chunkSize } = CONTENT.tuning;
+    const chunk = { x: 7, y: -11 };
+    const flight = createUnpopulatedFlight(CONTENT, galaxy, seed);
+    flight.player = { x: (chunk.x + 0.5) * chunkSize, y: (chunk.y + 0.5) * chunkSize };
+    populateFlight(CONTENT, { known: [] }, flight);
+
+    const { pack } = generateChunk(
+      { catalog: ECONOMY, galaxy, seed, spawnWeights },
+      flight.player,
+      chunk.x,
+      chunk.y,
+    );
+    expect(pack).not.toBeNull();
+    const members = flight.objects.flatMap(({ enemy }) =>
+      enemy && enemy.packId === pack!.id ? [enemy.archetype] : [],
+    );
+    expect(members).toHaveLength(pack!.count);
+    expect(members.every((archetype) => archetype === pack!.archetype)).toBe(true);
   });
 
   it("uses the scene's isometric viewport for on-screen checks", () => {
@@ -87,42 +120,6 @@ describe("pacing simulation world", () => {
     expect(onScreen(SCREEN.height / 2 + 1, SCREEN.height / 2 + 1)).toBe(false);
     expect(onScreen(SCREEN.width / 4, -SCREEN.width / 4)).toBe(true);
     expect(onScreen(SCREEN.width / 4 + 1, -SCREEN.width / 4 - 1)).toBe(false);
-  });
-});
-
-/** Recombine the real seed runs with the same aggregate used by the pacing tool. */
-function summaryOf(samples: readonly ReturnType<typeof runScenario>[]) {
-  const { packPrice, prices, scenario } = samples[0]!.summary;
-  return summarise(
-    scenario,
-    prices,
-    packPrice,
-    samples.flatMap((sample) => sample.runs),
-  );
-}
-
-function completeSamples<T>(seeds: readonly number[], samples: ReadonlyMap<number, T>): T[] {
-  expect([...samples.keys()].sort((a, b) => a - b)).toEqual(seeds);
-  return seeds.map((seed) => samples.get(seed)!);
-}
-
-describe("pacing simulation runs", () => {
-  const run = createScenarioRunner();
-  const options = { behaviour: DEFAULT_BEHAVIOUR, galaxy: 1 as const, minutes: 15, seeds: 3 };
-
-  const runSeed = (config: Omit<RunOptions, "seeds">, seed: number) => {
-    const sample = run({ ...config, seeds: [seed] });
-    expect(sample.runs.map((flight) => [flight.seed, flight.minutes])).toEqual([
-      [seed, config.minutes],
-    ]);
-    return sample;
-  };
-
-  it("is deterministic for the same seeds and values", () => {
-    const scenario = { behaviour: {}, description: "", economy: {}, name: "current", prices: {} };
-    expect(runScenario({ ...options, scenario }).runs).toEqual(
-      runScenario({ ...options, scenario }).runs,
-    );
   });
 
   it("spends firing time on each asteroid in proportion to its size's hit points", () => {
@@ -149,6 +146,55 @@ describe("pacing simulation runs", () => {
       expect((hits - 1) * damagePerHit).toBeLessThan(hp[size]);
       expect(hits * damagePerHit).toBeGreaterThanOrEqual(hp[size]);
     }
+  });
+
+  it("applies a discovery Stardust override to the scenario catalog", () => {
+    const catalog = scenarioEconomy({ discoveryStardust: 3 });
+    expect(catalog.discoveryStardust).toBe(3);
+  });
+});
+
+/** Recombine the real seed runs with the same aggregate used by the pacing tool. */
+function summaryOf(samples: readonly ReturnType<typeof runScenario>[]) {
+  const { packPrice, prices, scenario } = samples[0]!.summary;
+  return summarise(
+    scenario,
+    prices,
+    packPrice,
+    samples.flatMap((sample) => sample.runs),
+  );
+}
+
+function completeSamples<T>(seeds: readonly number[], samples: ReadonlyMap<number, T>): T[] {
+  expect([...samples.keys()].sort((a, b) => a - b)).toEqual(seeds);
+  return seeds.map((seed) => samples.get(seed)!);
+}
+
+describe.runIf(import.meta.env.MODE === "pacing-review")("pacing simulation review", () => {
+  it("matches real flight generation across all 60 review worlds", () => {
+    const { cachePickups } = expectWorldParity(Array.from({ length: 30 }, (_, index) => index + 1));
+    expect(cachePickups).toBeGreaterThan(0);
+  });
+
+  const run = createScenarioRunner();
+  const options = { behaviour: DEFAULT_BEHAVIOUR, galaxy: 1 as const, minutes: 15, seeds: 3 };
+
+  const runSeed = (config: Omit<RunOptions, "seeds">, seed: number) => {
+    const sample = run({ ...config, seeds: [seed] });
+    expect(sample.runs.map((flight) => [flight.seed, flight.minutes])).toEqual([
+      [seed, config.minutes],
+    ]);
+    return sample;
+  };
+
+  it("is deterministic for the same seeds and values", () => {
+    const scenario = { behaviour: {}, description: "", economy: {}, name: "current", prices: {} };
+    expect(runScenario({ ...options, scenario }).runs).toEqual(
+      runScenario({ ...options, scenario }).runs,
+    );
+  });
+
+  it("accounts for asteroid firing time and shots by size across a scripted run", () => {
     const { runs, summary } = run({
       ...options,
       scenario: { behaviour: {}, description: "", economy: {}, name: "time", prices: {} },
@@ -198,8 +244,6 @@ describe("pacing simulation runs", () => {
   });
 
   it("applies value overrides to drops and caches", () => {
-    const catalog = scenarioEconomy({ discoveryStardust: 3 });
-    expect(catalog.discoveryStardust).toBe(3);
     const base = run({
       ...options,
       scenario: { behaviour: {}, description: "", economy: {}, name: "base", prices: {} },
