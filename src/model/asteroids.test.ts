@@ -257,13 +257,13 @@ describe("rock silhouettes", () => {
     expect(fire(top - 4)).toBe(false);
   });
 
-  it("never draw Ada's ship overlapping a rock after contact, at any frame, heading or approach", () => {
-    const flight = createFlight(CONTENT, 1, 7, { known: [] });
-    // Bumps deal no damage here, so every approach runs on a full shield.
-    flight.lastBump = Infinity;
-    let approaches = 0;
-    let touched = 0;
-    for (const { art, object } of drawnRocks) {
+  // Each Art rock in its own test, so no one test runs every rock's approaches.
+  it.each(drawnRocks.map((entry) => [entry.art.id, entry] as const))(
+    "never draw Ada's ship overlapping %s after contact, at any frame, heading or approach",
+    (_id, { art, object }) => {
+      const flight = createFlight(CONTENT, 1, 7, { known: [] });
+      // Bumps deal no damage here, so every approach runs on a full shield.
+      flight.lastBump = Infinity;
       const drawn = scenerySilhouette(object)!;
       // Every heading against frame 0, and every later spin frame at a heading that walks round.
       const cases: [number, number][] = [];
@@ -273,6 +273,9 @@ describe("rock silhouettes", () => {
       for (let frame = 1; frame < drawn.frames.length; frame++) {
         cases.push([frame, (frame * 5) % SHIP_HEADINGS]);
       }
+      let approaches = 0;
+      let touched = 0;
+      const overlaps: string[] = [];
       for (const [frame, heading] of cases) {
         const facing = {
           x: Math.cos((heading * Math.PI * 2) / SHIP_HEADINGS),
@@ -314,10 +317,9 @@ describe("rock silhouettes", () => {
             flight.shots = [];
             const overlap = sceneryBodyContact(held, flight.player, shipBody(flight.facing), frame);
             // To the push-out's 0.01 margin.
-            expect(
-              overlap?.depth ?? 0,
-              `${art.id} frame ${frame} heading ${heading} angle ${turn}`,
-            ).toBeLessThan(0.02);
+            if (!((overlap?.depth ?? 0) < 0.02)) {
+              overlaps.push(`frame ${frame} heading ${heading} angle ${turn}: ${overlap?.depth}`);
+            }
             reached ||=
               sceneryBodyContact(held, flight.player, shipBody(flight.facing), frame, 2) !== null;
           }
@@ -325,12 +327,13 @@ describe("rock silhouettes", () => {
           touched += reached ? 1 : 0;
         }
       }
-    }
-    expect(approaches).toBeGreaterThan(4 * SHIP_HEADINGS * drawnRocks.length);
-    // Nearly every approach reaches the rock, so the check above is not vacuous.
-    expect(touched / approaches).toBeGreaterThan(0.9);
-    // About 4.5 s in the check container and up to twice that on CI runners: over 6x locally.
-  }, 40_000);
+      expect(overlaps, art.id).toEqual([]);
+      // Four approaches at every heading against frame 0 and at every later frame.
+      expect(approaches).toBe(4 * (SHIP_HEADINGS + drawn.frames.length - 1));
+      // Nearly every approach reaches the rock, so the check above is not vacuous.
+      expect(touched / approaches).toBeGreaterThan(0.9);
+    },
+  );
 });
 
 describe("scenery contact and bounce", () => {
@@ -528,16 +531,18 @@ describe("asteroids in flight", () => {
     }
   });
 
-  it("never ends a step with Ada's drawn ship inside a large rock, from any angle or speed", () => {
-    const large = shapes.find((shape) => shape.size === "large")!;
-    const { flight, model } = launched();
-    // Bumps deal no damage here, so the sweep runs on a full shield.
-    flight.lastBump = Infinity;
-    const shield = flight.shield;
-    const start = { ...flight.player };
-    const overlaps: string[] = [];
-    for (let degrees = 0; degrees < 360; degrees += 15) {
-      for (const deflection of [0.35, 0.7, 1]) {
+  // Each share of full thrust in its own test, so no one test runs every approach.
+  it.each([0.35, 0.7, 1])(
+    "never ends a step with Ada's drawn ship inside a large rock, from any angle at %s thrust",
+    (deflection) => {
+      const large = shapes.find((shape) => shape.size === "large")!;
+      const { flight, model } = launched();
+      // Bumps deal no damage here, so the sweep runs on a full shield.
+      flight.lastBump = Infinity;
+      const shield = flight.shield;
+      const start = { ...flight.player };
+      const overlaps: string[] = [];
+      for (let degrees = 0; degrees < 360; degrees += 15) {
         const angle = (degrees * Math.PI) / 180;
         const toward = { x: Math.cos(angle), y: Math.sin(angle) };
         const wall = rock(`sweep:${degrees}:${deflection}`, {
@@ -557,15 +562,15 @@ describe("asteroids in flight", () => {
           ];
           model.step(1 / 60, { ...idle, move: step < 100 ? move : { x: 0, y: 0 } });
           if (sceneryBodyContact(wall, flight.player, shipBody(flight.facing))) {
-            overlaps.push(`${degrees} deg at ${deflection} on step ${step}`);
+            overlaps.push(`${degrees} deg on step ${step}`);
             break;
           }
         }
       }
-    }
-    expect(overlaps).toEqual([]);
-    expect(flight.shield).toBe(shield);
-  });
+      expect(overlaps).toEqual([]);
+      expect(flight.shield).toBe(shield);
+    },
+  );
 
   it("returns the restitution share of a head-on approach as recoil", () => {
     const { flight, model } = launched();
