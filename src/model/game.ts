@@ -220,7 +220,7 @@ import { markerActorTracked } from "./markerKnowledge.ts";
 import { needleCourses, setNeedleActivity, stepNeedleCourse } from "./needle.ts";
 import { clearNeedleEnemies, ensureNeedleDebris } from "./needleFlight.ts";
 import type { PennyMarker, PennyPoint } from "./pennyMarkers.ts";
-import { type PhantomContext, phantomWaypoint } from "./phantom.ts";
+import { phantomBossHud, type PhantomContext, phantomWaypoint } from "./phantom.ts";
 import { phantomAllyRoster, type PhantomAllySpec } from "./phantomAllies.ts";
 import { HUNT_GLINT } from "./pickupBody.ts";
 import { ambientSecondThread } from "./poiDiscourse.ts";
@@ -1457,6 +1457,11 @@ export class GameModel {
     if (this.screen !== "space" || this.state.docked || !flight) {
       return null;
     }
+    const canSalvage = (object: SpaceObject) =>
+      this.contextAction === "salvage" && salvageTarget(this.content, flight) === object;
+    if (flight.galaxy === 6) {
+      return phantomBossHud({ content: this.content, flight, progress: this.current }, canSalvage);
+    }
     const sounder = this.current.sounder;
     const identity =
       flight.galaxy === 1 && this.current.capitalBoss?.phase === "active"
@@ -1466,15 +1471,7 @@ export class GameModel {
               (sounder?.phase === "resolved" && sounder.outcome === "disabled"))
           ? WHIRLPOOL_CAPITAL_BOSS
           : null;
-    return (
-      identity &&
-      encounterBossHud(
-        identity,
-        flight,
-        (object) =>
-          this.contextAction === "salvage" && salvageTarget(this.content, flight) === object,
-      )
-    );
+    return identity && encounterBossHud(identity, flight, canSalvage);
   }
 
   private prepareWhirlpoolDisk(flight: FlightState): void {
@@ -3175,9 +3172,8 @@ export class GameModel {
           text: cue.text,
         });
       }
-      const chatter = f.phantom?.chatter.splice(0) ?? [];
-      for (const key of chatter) {
-        this.talk.chapter(key);
+      if (f.phantom) {
+        this.talk.queuePhantomChatter(f.phantom.chatter);
       }
     }
     materializeGeneratedHostileStations(this.content, this.current, f);
@@ -3210,7 +3206,11 @@ export class GameModel {
         "capital",
         SCREEN,
         f,
-        f.galaxy === 3 ? WHIRLPOOL_CAPITAL_BOSS.id : SUNFLOWER_CAPITAL_BOSS.id,
+        f.galaxy === 6
+          ? PHANTOM_FLAGSHIP
+          : f.galaxy === 3
+            ? WHIRLPOOL_CAPITAL_BOSS.id
+            : SUNFLOWER_CAPITAL_BOSS.id,
       ),
       collectedStardust: events.some((event) => event.type === "stardust"),
       docked: this.dockedThisFlight,
@@ -3226,7 +3226,8 @@ export class GameModel {
         (event) =>
           event.type === "enemyDisabled" &&
           event.id !== SUNFLOWER_CAPITAL_BOSS.id &&
-          event.id !== WHIRLPOOL_CAPITAL_BOSS.id,
+          event.id !== WHIRLPOOL_CAPITAL_BOSS.id &&
+          event.id !== PHANTOM_FLAGSHIP,
       ),
       holodisks: holodisksHeld(this.state.progress),
       inCurrent: inCurrent(f.galaxy, 0, f.player),
@@ -5352,7 +5353,6 @@ export class GameModel {
             flight: {
               ...flight,
               ...(flight.needle ? { needle: { ...flight.needle, chatter: [] } } : {}),
-              ...(flight.phantom ? { phantom: { ...flight.phantom, chatter: [] } } : {}),
             },
           }
         : effective;

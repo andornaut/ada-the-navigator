@@ -4961,15 +4961,26 @@ function hit(
     return;
   }
   if (object.kind === "enemy" && object.enemy) {
-    const definition = enemyEquipmentDefinition(flight.galaxy, object.enemy);
-    const disabled = object.enemy.disabled;
-    object.enemy = damageEnemy(definition, { amount, hardpointId: part }, object.enemy);
-    object.hp = enemyDefeated(object.enemy) ? 0 : Math.max(1, object.enemy.hp);
-    if ((!disabled && object.enemy.disabled) || object.hp <= 0) {
+    const before = object.enemy;
+    const definition = enemyEquipmentDefinition(flight.galaxy, before);
+    const after = damageEnemy(definition, { amount, hardpointId: part }, before);
+    object.enemy = after;
+    object.hp = enemyDefeated(after) ? 0 : Math.max(1, after.hp);
+    if ((!before.disabled && after.disabled) || object.hp <= 0) {
       queueHostileStationReward(flight, events, object);
     }
-    if (object.hp > 0 && !disabled && object.enemy.disabled) {
+    if (object.hp > 0 && !before.disabled && after.disabled) {
       events.push({ id: object.id, type: "enemyDisabled" });
+    } else if (
+      object.id === PHANTOM_FLAGSHIP &&
+      part !== null &&
+      object.hp > 0 &&
+      !before.disabled &&
+      !after.disabled &&
+      before.hardpoints.every(({ hp }) => hp > 0) &&
+      after.hardpoints.some(({ hp, id }) => id === part && hp === 0)
+    ) {
+      events.push({ id: object.id, type: "enemyFirstHardpointLost" });
     }
   } else {
     object.hp -= amount;

@@ -4,12 +4,17 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { BUILT, GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
-import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../data/phantom.ts";
+import {
+  PHANTOM_COPY,
+  PHANTOM_DESTINATIONS,
+  PHANTOM_FLAGSHIP,
+  PHANTOM_TUNING,
+} from "../data/phantom.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
 import { clearPhantomTraffic } from "../testing/phantomTraffic.ts";
 import { worldParts } from "./convex.ts";
-import { enemyIntegrity, hardpointOffset } from "./enemyAi.ts";
+import { createEnemy, enemyIntegrity, hardpointOffset } from "./enemyAi.ts";
 import { enemyPartOutline } from "./enemyBody.ts";
 import { ensureDestination, ensureStation } from "./flight.ts";
 import { GameModel, newGameState } from "./game.ts";
@@ -36,6 +41,42 @@ function represented(model: GameModel, id: string): SpaceObject | null | undefin
   return flight.objects.find((object) => object.id === id) ?? flight.world.notables[id];
 }
 
+/** Exercise the real collision and damage path on the drawn hardpoint or hull. */
+function hitEnemy(model: GameModel, target: SpaceObject, damage: number, partId?: string): void {
+  const { id } = target;
+  const flight = model.state.flight!;
+  const enemy = target.enemy!;
+  const definition = enemyDefinition(6, enemy.archetype, id);
+  const part = definition.hardpoints.find(({ id }) => id === partId);
+  const outline = part && enemyPartOutline(ROUTE_POSITION[6], enemy, part.id);
+  const polygon = outline && worldParts(outline)[0];
+  const offset = polygon
+    ? polygon.reduce(
+        (sum, point) => ({
+          x: sum.x + point.x / polygon.length,
+          y: sum.y + point.y / polygon.length,
+        }),
+        { x: 0, y: 0 },
+      )
+    : part
+      ? hardpointOffset(definition, CONTENT.tuning.flight.shipRadius * 2, enemy.facing, part)
+      : { x: 0, y: 0 };
+  flight.shots.push({
+    damage,
+    enemy: false,
+    hitIds: [...flight.objects, ...flight.mines]
+      .filter((entry) => entry.id !== id)
+      .map((entry) => entry.id),
+    id: `route-impact:${id}`,
+    life: 1,
+    piercing: false,
+    velocity: { x: 0, y: 0 },
+    x: target.x + offset.x,
+    y: target.y + offset.y,
+  });
+  model.step(0.000001, idle);
+}
+
 /** Deterministic impact fixtures exercise collision and damage, without measuring combat balance. */
 function defeat(model: GameModel, id: string): void {
   const initial = represented(model, id);
@@ -57,37 +98,8 @@ function defeat(model: GameModel, id: string): void {
     const target = represented(model, id)!;
     const enemy = target.enemy!;
     const before = enemyIntegrity(enemy);
-    const definition = enemyDefinition(6, enemy.archetype, id);
-    const part = definition.hardpoints.find((part) =>
-      enemy.hardpoints.some((state) => state.id === part.id && state.hp > 0),
-    );
-    const outline = part && enemyPartOutline(ROUTE_POSITION[6], enemy, part.id);
-    const polygon = outline && worldParts(outline)[0];
-    const offset = polygon
-      ? polygon.reduce(
-          (sum, point) => ({
-            x: sum.x + point.x / polygon.length,
-            y: sum.y + point.y / polygon.length,
-          }),
-          { x: 0, y: 0 },
-        )
-      : part
-        ? hardpointOffset(definition, CONTENT.tuning.flight.shipRadius * 2, enemy.facing, part)
-        : { x: 0, y: 0 };
-    flight.shots.push({
-      damage: before,
-      enemy: false,
-      hitIds: [...flight.objects, ...flight.mines]
-        .filter((entry) => entry.id !== id)
-        .map((entry) => entry.id),
-      id: `route-impact:${id}:${impact}`,
-      life: 1,
-      piercing: false,
-      velocity: { x: 0, y: 0 },
-      x: target.x + offset.x,
-      y: target.y + offset.y,
-    });
-    model.step(0.000001, idle);
+    const part = enemy.hardpoints.find(({ hp }) => hp > 0);
+    hitEnemy(model, target, before, part?.id);
     const after = represented(model, id);
     expect(
       !after || after.hp <= 0 || enemyIntegrity(after.enemy!) < before,
@@ -153,19 +165,97 @@ describe("Phantom full route under test-only chapter admission, not production r
         }
       }
       expect(model.state.flight!.phantom!.phase).toBe("flagship");
+      const milestone = { id: PHANTOM_FLAGSHIP, type: "enemyFirstHardpointLost" };
+      const originalFlagship = represented(model, PHANTOM_FLAGSHIP)!;
+      expect(model.bossHud()).toBeNull();
+      travel(model, { x: originalFlagship.x + 300, y: originalFlagship.y });
+      clearPhantomTraffic(model.state.flight!);
+      const definition = enemyDefinition(6, "capital", PHANTOM_FLAGSHIP);
+      const weapon = definition.hardpoints.find(({ kind }) => kind === "weapon")!;
+      const otherHit = reload(model);
+      const otherFlagship = represented(otherHit, PHANTOM_FLAGSHIP)!;
+      // Isolate the branch where the first recorded loss and the disable are one impact.
+      otherFlagship.enemy!.hardpoints = otherFlagship.enemy!.hardpoints.filter(
+        ({ id }) => id === weapon.id,
+      );
+      hitEnemy(otherHit, otherFlagship, weapon.hp, weapon.id);
+      expect(otherHit.flightEvents).toContainEqual({ id: PHANTOM_FLAGSHIP, type: "enemyDisabled" });
+      expect(otherHit.flightEvents).not.toContainEqual(milestone);
+
+      hitEnemy(model, originalFlagship, 1, weapon.id);
+      expect(originalFlagship.enemy!.hardpoints.find(({ id }) => id === weapon.id)?.hp).toBe(
+        weapon.hp - 1,
+      );
+      expect(model.flightEvents).not.toContainEqual(milestone);
+      expect(model.bossHud()).toMatchObject({
+        captain: "Admiral Archie",
+        disabled: false,
+        hull: definition.hp,
+        id: PHANTOM_FLAGSHIP,
+        maxHull: definition.hp,
+      });
+      hitEnemy(model, originalFlagship, weapon.hp, weapon.id);
+      expect(model.flightEvents.filter(({ type }) => type === milestone.type)).toEqual([milestone]);
+      expect(model.state.flight?.phantom?.chatter).toContain("flagshipHardpoint");
+      model = reload(model);
+      expect(model.state.flight?.phantom?.chatter).toContain("flagshipHardpoint");
+      const line = PHANTOM_COPY.flagshipHardpoint!.lines[0]!.text;
+      for (let beat = 0; beat < 8 && model.conversation?.text !== line; beat++) {
+        model.dismissConversation();
+        model.step(0.000001, idle);
+      }
+      expect(model.conversation).toMatchObject({ speaker: "astra", text: line });
+      expect(model.state.flight?.phantom?.chatter).not.toContain("flagshipHardpoint");
+      model = reload(model);
+      expect(model.state.flight?.phantom?.chatter).not.toContain("flagshipHardpoint");
+      const resumedFlagship = represented(model, PHANTOM_FLAGSHIP)!;
+      const nextWeapon = definition.hardpoints.find(
+        ({ id, kind }) => kind === "weapon" && id !== weapon.id,
+      )!;
+      hitEnemy(model, resumedFlagship, nextWeapon.hp, nextWeapon.id);
+      expect(model.flightEvents).not.toContainEqual(milestone);
+
       for (const id of [...model.state.flight!.phantom!.enemyIds]) {
         defeat(model, id);
       }
       const flagship = represented(model, PHANTOM_FLAGSHIP)!;
       expect(flagship.enemy!.disabled).toBe(true);
+      expect(model.bossHud()).toBeNull();
+      // A lethal hull hit still leaves the disabled flagship at its canonical one-HP floor.
+      hitEnemy(model, flagship, definition.hp * 2);
+      expect(flagship.enemy!.hp).toBe(1);
+      expect(model.flightEvents).not.toContainEqual({
+        id: PHANTOM_FLAGSHIP,
+        type: "enemyDestroyed",
+      });
       travel(model, {
         x: flagship.x + flagship.radius + CONTENT.tuning.flight.shipRadius + 1,
         y: flagship.y,
       });
+      expect(model.bossHud()).toMatchObject({ disabled: true, hull: 1, id: PHANTOM_FLAGSHIP });
+      const flight = model.state.flight!;
+      const closer = createEnemy(
+        enemyDefinition(6, "frigate"),
+        { archetype: "frigate", id: "closer-salvage", packId: null, phase: 0 },
+        flight.player,
+      );
+      closer.disabled = true;
+      flight.objects.push({
+        ...flight.player,
+        enemy: closer,
+        hp: closer.hp,
+        id: closer.id,
+        kind: "enemy",
+        radius: 40,
+      });
+      expect(model.contextAction).toBe("salvage");
+      expect(model.bossHud()).toBeNull();
+      flight.objects = flight.objects.filter(({ id }) => id !== closer.id);
       model.interact();
       expect(model.state.dialogue?.context).toBe("phantom.flagshipSalvage");
       model.choose("continue");
       expect(model.state.progress[6].holodisk).toBe(true);
+      expect(model.bossHud()).toBeNull();
       const memory = readStory(model);
       expect(memory.find((page) => page.id === "holodisk:memory")?.text).toBe(
         CONTENT.premise.holodisk.memories[5],

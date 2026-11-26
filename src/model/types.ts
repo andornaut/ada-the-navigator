@@ -474,6 +474,8 @@ export type FlightEvent =
   | { id: string; type: "ammoCollected" }
   /** A heavy's last weapon hardpoint was destroyed while its hull holds. */
   | { id: string; type: "enemyDisabled" }
+  /** The flagship lost its first working hardpoint without resolving the fight on that hit. */
+  | { id: string; type: "enemyFirstHardpointLost" }
   | { type: "debrisCleared"; id: string }
   /** A destroyed rock, for the view's break at its pivot; it changes no state. */
   | {
