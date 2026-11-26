@@ -413,6 +413,9 @@ describe("status pill count", () => {
     setAttribute(name: string, value: string): void {
       this.attributes.set(name, value);
     }
+    set type(value: string) {
+      this.setAttribute("type", value);
+    }
   }
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -454,7 +457,10 @@ describe("status pill count", () => {
       .spyOn(actionBinding, "bindAdaAction")
       .mockImplementation((options, element) => {
         const binding = bind(options, element);
-        if (element.dataset.action === id) {
+        if (
+          element.dataset.action === id ||
+          (id === "resource-ore" && element.className.split(" ").includes("ada-status-ore-count"))
+        ) {
           binding.dispose();
         }
         return binding;

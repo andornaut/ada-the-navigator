@@ -681,36 +681,38 @@ export function createStatusPill(
   },
 ) {
   let disposed = false;
-  let shieldBinding: ReturnType<typeof bindAdaAction> | undefined;
-  const resourceBindings: ReturnType<typeof bindAdaAction>[] = [];
+  const disposeResources: (() => void)[] = [];
   const leaveInputs: (() => void)[] = [];
   const root = document.createElement("div");
   root.className = "ada-status";
   root.hidden = true;
-  const shieldRoot = document.createElement(options.onShield ? "button" : "div");
-  shieldRoot.className = "ada-shield";
-  shieldRoot.hidden = true;
-  if (options.onShield) {
-    shieldRoot.setAttribute("type", "button");
-    shieldRoot.setAttribute("aria-label", options.shieldLabel);
-    shieldRoot.setAttribute("aria-haspopup", "dialog");
-    shieldRoot.dataset.action = "shield-details";
-    const pointerdown = (event: Event) => event.stopPropagation();
-    shieldRoot.addEventListener("pointerdown", pointerdown);
-    leaveInputs.push(() => shieldRoot.removeEventListener("pointerdown", pointerdown));
-    shieldBinding = bindAdaAction(
+  const createShieldControl = () => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.action = "shield-details";
+    const binding = bindAdaAction(
       {
         beforeClick: (event) => event.stopPropagation(),
         click: {
           availability: () => ({ kind: "available" }),
-          run: () => options.onShield?.(shieldRoot),
+          run: () => options.onShield?.(button),
         },
         current: () => !disposed,
-        slopPx: () => SCROLL.dragThreshold * readViewUnit(shieldRoot),
+        slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
       },
-      shieldRoot,
+      button,
     );
-  }
+    button.setAttribute("aria-label", options.shieldLabel);
+    button.setAttribute("aria-haspopup", "dialog");
+    const pointerdown = (event: Event) => event.stopPropagation();
+    button.addEventListener("pointerdown", pointerdown);
+    leaveInputs.push(() => button.removeEventListener("pointerdown", pointerdown));
+    return { button, dispose: () => binding.dispose() };
+  };
+  const shieldControl = options.onShield ? createShieldControl() : undefined;
+  const shieldRoot = shieldControl?.button ?? document.createElement("div");
+  shieldRoot.className = "ada-shield";
+  shieldRoot.hidden = true;
   // The icon's outline is a filter on a wrapper: the icon's own mask would clip it.
   const shieldMark = document.createElement("span");
   shieldMark.className = "ada-status-mark";
@@ -761,54 +763,61 @@ export function createStatusPill(
   aboardIcon.removeAttribute("aria-hidden");
   aboardIcon.setAttribute("role", "img");
   root.append(sparkle, stardust.slot, oreDivider, oreIcon, ore.slot, aboardDivider, aboardIcon);
-  if (options.onResource) {
-    for (const [kind, nodes, action] of [
-      ["stardust", [sparkle, stardust.slot], stardust.count],
-      ["ore", [oreIcon, ore.slot], ore.count],
-      ["aboard", [aboardIcon], aboardIcon],
-    ] as const) {
-      action.setAttribute("role", "button");
-      action.setAttribute("tabindex", "0");
-      action.setAttribute("aria-haspopup", "dialog");
-      action.dataset.action = `resource-${kind}`;
-      const activate = () => options.onResource?.(kind, action);
-      let keyboardBinding: ReturnType<typeof bindAdaAction> | undefined;
-      for (const node of new Set([...nodes, action])) {
-        node.classList.add("ada-resource-target");
-        const pointerdown = (event: PointerEvent) => event.stopPropagation();
-        node.addEventListener("pointerdown", pointerdown);
-        leaveInputs.push(() => node.removeEventListener("pointerdown", pointerdown));
-        const binding = bindAdaAction(
-          {
-            beforeClick: (event) => event.stopPropagation(),
-            click: { availability: () => ({ kind: "available" }), run: activate },
-            current: () => !disposed,
-            slopPx: () => SCROLL.dragThreshold * readViewUnit(node),
+  const addResource = (
+    kind: "ore" | "stardust" | "aboard",
+    aliases: readonly HTMLElement[],
+    action: HTMLElement,
+  ) => {
+    const bindResource = (node: HTMLElement) =>
+      bindAdaAction(
+        {
+          beforeClick: (event) => event.stopPropagation(),
+          click: {
+            availability: () => ({ kind: "available" }),
+            run: () => options.onResource?.(kind, action),
           },
-          node,
-        );
-        resourceBindings.push(binding);
-        if (node === action) {
-          keyboardBinding = binding;
-        }
+          current: () => !disposed,
+          slopPx: () => SCROLL.dragThreshold * readViewUnit(node),
+        },
+        node,
+      );
+    for (const node of [...aliases, action]) {
+      node.classList.add("ada-resource-target");
+      const pointerdown = (event: PointerEvent) => event.stopPropagation();
+      node.addEventListener("pointerdown", pointerdown);
+      leaveInputs.push(() => node.removeEventListener("pointerdown", pointerdown));
+      if (node !== action) {
+        const binding = bindResource(node);
+        disposeResources.push(() => binding.dispose());
       }
-      const keydown = (event: KeyboardEvent) => {
-        if ((event.key === "Enter" || event.key === " ") && !event.repeat) {
-          event.preventDefault();
-          event.stopPropagation();
-          keyboardBinding?.activate();
-        }
-      };
-      action.addEventListener("keydown", keydown);
-      leaveInputs.push(() => action.removeEventListener("keydown", keydown));
     }
+    const keyboardBinding = bindResource(action);
+    action.setAttribute("role", "button");
+    action.setAttribute("tabindex", "0");
+    action.setAttribute("aria-haspopup", "dialog");
+    action.dataset.action = `resource-${kind}`;
+    disposeResources.push(() => keyboardBinding.dispose());
+    const keydown = (event: KeyboardEvent) => {
+      if ((event.key === "Enter" || event.key === " ") && !event.repeat) {
+        event.preventDefault();
+        event.stopPropagation();
+        keyboardBinding.activate();
+      }
+    };
+    action.addEventListener("keydown", keydown);
+    leaveInputs.push(() => action.removeEventListener("keydown", keydown));
+  };
+  if (options.onResource) {
+    addResource("stardust", [sparkle, stardust.slot], stardust.count);
+    addResource("ore", [oreIcon, ore.slot], ore.count);
+    addResource("aboard", [], aboardIcon);
   }
 
   const disposeInputs = () => {
     disposed = true;
-    shieldBinding?.dispose();
-    for (const binding of resourceBindings) {
-      binding.dispose();
+    shieldControl?.dispose();
+    for (const dispose of disposeResources) {
+      dispose();
     }
     for (const leave of leaveInputs) {
       leave();
