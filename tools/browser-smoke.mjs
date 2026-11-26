@@ -950,6 +950,7 @@ try {
   const [
     { GameModel, galaxyRoute },
     { CONTENT },
+    { MAP_JUMP_COST },
     { ensureDestination, routeBlocked },
     { playOpening, relaunch, supportEntropy },
     { SAVE_RESTORE, SAVE_VERSION, restoreSave: restoreCalm },
@@ -957,6 +958,7 @@ try {
   ] = await Promise.all([
     import(new URL("../src/model/game.ts", import.meta.url)),
     import(new URL("../src/data/content.ts", import.meta.url)),
+    import(new URL("../src/data/mapJump.ts", import.meta.url)),
     import(new URL("../src/model/flight.ts", import.meta.url)),
     import(new URL("../src/testing/launch.ts", import.meta.url)),
     import(new URL("../src/saving/index.ts", import.meta.url)),
@@ -1896,7 +1898,8 @@ try {
   });
   assert.ok(safeInput.state.flight, "Safe input fixture requires a real flight");
   const friendly = ensureDestination(CONTENT, "growers", safeInput.state.flight);
-  safeInput.teleport("growers");
+  safeInput.state.economy.stardust = MAP_JUMP_COST;
+  assert.equal(safeInput.teleport("growers"), true, "Safe input fixture must reach Growers");
   assert.deepEqual(safeInput.state.flight.player, { x: friendly.x, y: friendly.y });
   // Chapter one's stage places a quest guard on the Growers route; with its weapons stopped it no
   // longer blocks the way in (routeBlocked in src/model/flight.ts), so Talk is offered there.
