@@ -20,11 +20,11 @@
     "clean": "rm -rf dist .wrangler"
   },
   "dependencies": {
-    "@andornaut/game-kit": "https://github.com/andornaut/game-kit/releases/download/v0.77.0/game-kit-0.77.0.tgz",
+    "@andornaut/game-kit": "https://github.com/andornaut/game-kit/releases/download/v0.91.0/game-kit-0.91.0.tgz",
     "phaser": "^4.2.1"
   },
   "devDependencies": {
-    "@andornaut/art-kit": "https://github.com/andornaut/art-kit/releases/download/v0.33.0/art-kit-0.33.0.tgz",
+    "@andornaut/art-kit": "https://github.com/andornaut/art-kit/releases/download/v0.34.0/art-kit-0.34.0.tgz",
     "@andornaut/delivery-kit": "https://github.com/andornaut/delivery-kit/releases/download/v8.4.0/delivery-kit-8.4.0.tgz",
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.6",
