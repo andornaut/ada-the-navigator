@@ -64,6 +64,14 @@ describe("Later chapter first encounters", () => {
     const flight = model.state.flight!;
     const loom = flight.objects.find(({ id }) => id === "elderLoom")!;
     visit(model, loom);
+    // The visit generated the region around Loom. Its rocks, ships and debris are cleared, the
+    // debris recorded as removed so it does not refill, and the prelude's line time runs Ada at
+    // Loom alone.
+    const scenery = new Set(["debris", "enemy", "rock"]);
+    for (const object of flight.objects.filter(({ kind }) => kind === "debris")) {
+      flight.world.notables[object.id] = null;
+    }
+    flight.objects = flight.objects.filter(({ kind }) => !scenery.has(kind));
     model.interact();
     expect(model.state.dialogue).toBeNull();
     const shown: string[] = [];
@@ -76,6 +84,8 @@ describe("Later chapter first encounters", () => {
       }
       waitOutLine(model);
     }
+    // No rock, ship or debris came back during the prelude.
+    expect(flight.objects.filter(({ kind }) => scenery.has(kind))).toEqual([]);
     expect(shown).toEqual(prelude.flatMap(({ lines }) => lines.map(({ text }) => text)));
     expect(model.state.dialogue?.context).toBe("needle.arrival");
     expect(model.state.progress[4].needle?.met).toBe(false);
@@ -86,9 +96,7 @@ describe("Later chapter first encounters", () => {
     loaded.interact();
     expect(loaded.state.dialogue?.context).toBe("needle.arrival");
     expect(loaded.state.progress[4].needle?.met).toBe(false);
-    // The prelude's 47 s of line time runs 2,850 flight slices: about 4.3 s in the check container
-    // and 11.2 s on a CI runner.
-  }, 30_000);
+  });
 
   it("does not identify Avi at an arbitrary station or apply a queued Talk after Ada leaves Loom", () => {
     const model = launch(4);
