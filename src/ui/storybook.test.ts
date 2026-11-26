@@ -17,7 +17,7 @@ import {
   STORY_ROOM_PANEL_TOP,
   STORY_SKIP,
 } from "./layout/playView.ts";
-import { STORY_PANEL } from "./layout/storyPage.ts";
+import { STORY_CHOICE_GAP, STORY_PANEL } from "./layout/storyPage.ts";
 import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./layout/tokens.ts";
 import { MODAL_STYLE } from "./modal.ts";
 import {
@@ -168,7 +168,7 @@ describe("storybook page", () => {
     }
   });
 
-  it("keeps small story buttons SMALL_BUTTON_GAP apart in every direction", () => {
+  it("keeps the 24-unit horizontal gap and uses a 16-unit stacked story gap", () => {
     expect(SMALL_BUTTON_GAP).toBe(24);
     for (const selector of [
       ".ada-controls .ada-story-choice-column",
@@ -177,6 +177,12 @@ describe("storybook page", () => {
     ]) {
       expect(rule(selector), selector).toContain(`gap:${units(SMALL_BUTTON_GAP)}`);
     }
+    expect(STORY_CHOICE_GAP).toBe(16);
+    expect(
+      rule(
+        ".ada-controls .ada-story :is(.ada-story-choice-column,.ada-story-choices,.ada-story-controls.ada-story-wide)",
+      ),
+    ).toContain(`row-gap:${units(STORY_CHOICE_GAP)}`);
     expect(rule(".ada-controls .ada-story-controls")).toContain(
       "grid-template-columns:minmax(0, 1fr) minmax(0, 1fr)",
     );
@@ -395,12 +401,9 @@ it("grows the half spread past the lower half up to the light spread's top cap",
   expect(rule(".ada-controls .ada-story.ada-story-half .ada-story-panel.ada-story-room")).toContain(
     height(STORY_ROOM_PANEL_TOP),
   );
-  // Astra's three one-line questions with the page controls (art/layout.md "Storybook page"):
-  // 3 * 36 + 2 * 24 + 24 + 36 = 216, 248 with the padding, above the 202.5 lower half of a
-  // 1280x720 window's 405-high view and under the 283.5 cap of a 360-high view (360 - 60.5 - 16;
-  // 280.5 with a 19 bottom inset).
-  const panel = 3 * 36 + 3 * SMALL_BUTTON_GAP + 36 + 2 * STORY_PANEL.padding;
-  expect(panel).toBe(248);
+  // Astra's three questions and Previous all keep their full standard-height faces.
+  const panel = 4 * TEXT_BUTTON.height + 3 * STORY_CHOICE_GAP + 2 * STORY_PANEL.padding;
+  expect(panel).toBe(272);
   expect(panel).toBeGreaterThan(405 / 2);
   expect(panel).toBeLessThanOrEqual(360 - (12 + STORY_PANEL_TOP) - SPACING.pageInset);
 });

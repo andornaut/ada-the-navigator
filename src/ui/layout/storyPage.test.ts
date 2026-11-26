@@ -25,6 +25,7 @@ import {
   STORY_ROOM_PANEL_TOP,
 } from "./playView.ts";
 import {
+  STORY_CHOICE_GAP,
   STORY_PANEL,
   storyBackgroundTop,
   storyChoiceWidth,
@@ -76,7 +77,7 @@ function choiceHeight(page: StoryPage, width: number): number {
     parts.push(buttonHeight(page.action, width));
   }
   parts.push(STORY_BUTTON.height);
-  return parts.reduce((sum, part) => sum + part, 0) + (parts.length - 1) * SMALL_BUTTON_GAP;
+  return parts.reduce((sum, part) => sum + part, 0) + (parts.length - 1) * STORY_CHOICE_GAP;
 }
 
 interface Screen {
@@ -212,10 +213,10 @@ describe("story text fit", () => {
     expect(longest.text.length).toBeLessThanOrEqual(220);
     const questions = PAGES.find(({ questions }) => questions)!;
     const heights = (page: StoryPage) => SCREENS.map((screen) => panelFor(page, screen).height);
-    expect(heights(opening)).toEqual([228, 228, 208, 228]);
+    expect(heights(opening)).toEqual([212, 212, 198, 212]);
 
-    expect(heights(questions)).toEqual([248, 248, 248, 248]);
-    expect(SCREENS.map((screen) => panelFor(questions, screen).top)).toEqual([93, 93, 96, 141]);
+    expect(heights(questions)).toEqual([224, 224, 224, 224]);
+    expect(SCREENS.map((screen) => panelFor(questions, screen).top)).toEqual([117, 117, 120, 165]);
   });
 });
 
@@ -345,19 +346,19 @@ describe("story background placement", () => {
       }
       return Object.fromEntries(highest);
     };
-    // Art's placement table: the run's panel tops at 720x360 with insets and at 1280x720.
+    // Run tops at the two viewport sizes after applying the stacked spacing.
     expect(tops(SCREENS[0]!)).toEqual({
-      aboard: 93,
-      adaRoom: 213,
+      aboard: 117,
+      adaRoom: 221,
       adaRoomUnpolished: 231,
-      grandmaGarden: 113,
+      grandmaGarden: 129,
       park: 229,
     });
     expect(tops(SCREENS[3]!)).toEqual({
-      aboard: 141,
-      adaRoom: 261,
+      aboard: 165,
+      adaRoom: 269,
       adaRoomUnpolished: 279,
-      grandmaGarden: 161,
+      grandmaGarden: 177,
       park: 285,
     });
   });

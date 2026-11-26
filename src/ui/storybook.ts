@@ -47,6 +47,7 @@ import { frameBoxIn, frameSize } from "./layout/frameBox.ts";
 import { STORY_PANEL_TOP, STORY_ROOM_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
 import {
   STORY_BACKGROUND,
+  STORY_CHOICE_GAP,
   STORY_PANEL,
   storyBackgroundTop,
   storyHalfArtOffset,
@@ -560,6 +561,9 @@ ${STORY_PORTRAIT_RULES}
   grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
   grid-template-areas:"previous next";
   gap:${units(SMALL_BUTTON_GAP)}
+}
+.ada-controls .ada-story :is(.ada-story-choice-column,.ada-story-choices,.ada-story-controls.ada-story-wide){
+  row-gap:${units(STORY_CHOICE_GAP)}
 }
 .ada-controls .ada-story-controls.ada-story-no-previous{
   grid-template-columns:minmax(0,1fr);
