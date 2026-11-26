@@ -1549,9 +1549,9 @@ const step = (background: string, fadeMs: number, holdMs: number) => ({
 const rockGlow = (room = "story-ada-room") => ({
   from: room,
   steps: [
-    step(`${room}-glow-1`, 160, 0),
-    step(`${room}-glow-2`, 160, 0),
-    step(`${room}-glow-3`, 200, 240),
+    step(`${room}-glow-1`, 320, 0),
+    step(`${room}-glow-2`, 320, 0),
+    step(`${room}-glow-3`, 400, 480),
     step("aboard", 0, 0),
   ],
   reducedMotion: [step("aboard", 400, 0)],

@@ -388,9 +388,9 @@ root manifest as `storyTransition`. Key `rockGlow` ends on
   panel hides, then `steps` play in order.
 - Each step cross-fades linearly from the previous image to its `background`
   over `fadeMs`, then holds for `holdMs`. A `fadeMs` of 0 is a cut.
-- Steps: `story-ada-room-glow-1` (160 ms), `story-ada-room-glow-2` (160 ms),
-  `story-ada-room-glow-3` (200 ms, hold 240 ms), then a cut to `aboard`. The
-  first aboard page's panel then appears.
+- Steps: `story-ada-room-glow-1` (320 ms), `story-ada-room-glow-2` (320 ms),
+  `story-ada-room-glow-3` (400 ms, hold 480 ms), then a cut to `aboard` at
+  1,520 ms. The first aboard page's panel then appears.
 - `reducedMotion` replaces `steps`: one 400 ms cross-fade from
   `story-ada-room` to `aboard`, with no glow frames.
 

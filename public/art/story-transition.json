@@ -5,18 +5,18 @@
     "steps": [
       {
         "background": "story-ada-room-glow-1",
-        "fadeMs": 160,
+        "fadeMs": 320,
         "holdMs": 0
       },
       {
         "background": "story-ada-room-glow-2",
-        "fadeMs": 160,
+        "fadeMs": 320,
         "holdMs": 0
       },
       {
         "background": "story-ada-room-glow-3",
-        "fadeMs": 200,
-        "holdMs": 240
+        "fadeMs": 400,
+        "holdMs": 480
       },
       {
         "background": "aboard",
@@ -37,18 +37,18 @@
     "steps": [
       {
         "background": "story-ada-room-recorder-glow-1",
-        "fadeMs": 160,
+        "fadeMs": 320,
         "holdMs": 0
       },
       {
         "background": "story-ada-room-recorder-glow-2",
-        "fadeMs": 160,
+        "fadeMs": 320,
         "holdMs": 0
       },
       {
         "background": "story-ada-room-recorder-glow-3",
-        "fadeMs": 200,
-        "holdMs": 240
+        "fadeMs": 400,
+        "holdMs": 480
       },
       {
         "background": "aboard",
@@ -69,18 +69,18 @@
     "steps": [
       {
         "background": "story-ada-room-invitations-glow-1",
-        "fadeMs": 160,
+        "fadeMs": 320,
         "holdMs": 0
       },
       {
         "background": "story-ada-room-invitations-glow-2",
-        "fadeMs": 160,
+        "fadeMs": 320,
         "holdMs": 0
       },
       {
         "background": "story-ada-room-invitations-glow-3",
-        "fadeMs": 200,
-        "holdMs": 240
+        "fadeMs": 400,
+        "holdMs": 480
       },
       {
         "background": "aboard",
@@ -101,18 +101,18 @@
     "steps": [
       {
         "background": "story-ada-room-party-glow-1",
-        "fadeMs": 160,
+        "fadeMs": 320,
         "holdMs": 0
       },
       {
         "background": "story-ada-room-party-glow-2",
-        "fadeMs": 160,
+        "fadeMs": 320,
         "holdMs": 0
       },
       {
         "background": "story-ada-room-party-glow-3",
-        "fadeMs": 200,
-        "holdMs": 240
+        "fadeMs": 400,
+        "holdMs": 480
       },
       {
         "background": "aboard",
