@@ -25,18 +25,18 @@ The folder READMEs describe the current design and implementation:
 The [version one rules](gameplay/rules.md) define the scope and approved rules.
 Balance values are provisional and tuned through playtesting.
 
-Three story galaxies are designed:
+The campaign has six playable story galaxies, in route order:
 
-- Cooperating outposts: connect growers, a workshop and salvagers, then help start
-  a community garden at home.
-- Mining hub: collect and deposit resources, support a miner facing intimidation,
-  then help Ada and her friends include a child at school.
-- Whale family: clear debris, locate the whale's family and relay coordinates,
-  then help Ada understand her dog's need to explore.
+1. Sunflower: connect growers, a workshop and salvagers, then help start a community garden at home.
+2. Whirlpool: locate and reunite a whale family, then help Ada understand her dog's need to explore.
+3. Needle: practise with Elder Loom and thread the Eye, then play the recorder at the school concert.
+4. Andromeda: help Pip tell the settlers what happened and relight the dark beacon.
+5. Cartwheel: support a miner facing intimidation, then help Ada and her friends include a child at school.
+6. Phantom: free the blockaded settlements and confront Admiral Archie.
 
 A galaxy's space quest, its resolution at home and its recovered holodisk unlock
-the next galaxy. Completed galaxies remain replayable. Galaxy four's conclusion is deferred and has no
-playable story. See [dialogue and objectives](gameplay/player-copy.md).
+the next galaxy. Ada can replay completed chapters' Earth stories from her room.
+See [dialogue and objectives](gameplay/player-copy.md).
 
 Flight has independent movement and aim, a rechargeable shield and contextual
 interactions; the status pill shows the shield and Ada's Stardust. Ada has six
@@ -57,11 +57,10 @@ the galaxy's discovered destinations and stations and how much of it is mapped;
 Travel here reaches a chosen one outside danger, and Return to Earth ends the
 flight outside danger, towing or not. Its Quests card lists the story objective
 and the held job; a line whose target is mapped selects that place. Space draws
-authored sprites for Ada's ship, enemy ships, stations, galaxy one's outposts,
+authored sprites for Ada's ship, enemy ships, stations, outposts, whales,
 discovery caches, the holodisk and its beacon, Stardust, upgrade pickups, missiles,
-blasts, the Phaser beam and asteroids. Galaxy two's hub, miner and visitors,
-galaxy three's whale and family, mining deposits, cargo, hazards and traveling
-debris keep simple placeholders. See [economy](gameplay/economy.md).
+blasts, the Phaser beam and asteroids. See [galaxy art](art/galaxies.md) and
+[economy](gameplay/economy.md).
 
 Combat includes data-defined solo ships and packs, independent large-ship
 hardpoints and straight-flying missiles. Required approach encounters stay outside

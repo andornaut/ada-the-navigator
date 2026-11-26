@@ -23,18 +23,23 @@ describes their implementation.
 
 ### Source layout
 
-- **Entry:** [`src/main.ts`](main.ts) creates the Phaser game at the 720 × 360 base
-  view in device pixels, mounts the loading bar and sets up the phone app.
+- **Entry:** [`src/loading/bootstrap.ts`](loading/bootstrap.ts) starts phone launch
+  and the loading UI before importing [`src/main.ts`](main.ts), which creates
+  the Phaser game at the 720 × 360 base view in device pixels.
   [`src/lifecycle.ts`](lifecycle.ts) sleeps the game loop while the page is hidden.
-- **Model:** [`src/model/`](model/) holds the game state (`GameModel`), flight,
-  combat, economy, stories, saves and their migrations, Phaser-free.
+- **Model:** [`src/model/`](model/) holds the Phaser-free game state (`GameModel`),
+  flight, combat, economy and stories. It defines the save schema and restore
+  port in [`saveSchema.ts`](model/saveSchema.ts).
+- **Saving:** [`src/saving/index.ts`](saving/index.ts) exposes the save codec,
+  integrity checks and browser store, and supplies the Model restore port.
 - **Data:** [`src/data/`](data/) holds the authored content: galaxies, ships,
   weapons, enemies, story pages, conversations and the base view (`screen.ts`).
 - **Game:** [`src/game/`](game/) holds the play scene (`scene.ts`), the
   `scene*.ts` modules it delegates to (assets, interface, backdrop, objects,
-  enemies, world, HUD, effects, jump and sprites), its cameras and touch chrome,
-  and the Phaser-free art adapters, draw order, palettes and persistence the
-  scene reads.
+  enemies, world, HUD, effects, jump and sprites), its cameras and touch chrome.
+- **Art adapters:** [`src/art/index.ts`](art/index.ts) exposes Phaser-free
+  helpers for scenery, sprite keys, stations, weapons and other scene art.
+  Some Phaser-free helpers remain in `src/game/`.
 - **Input:** [`src/input/`](input/) holds keyboard and stick state (`state.ts`)
   and the controls that wire them to the scene and the interface (`controls.ts`).
 - **UI:** [`src/ui/`](ui/) holds the HTML interface drawn over the canvas: the
@@ -55,9 +60,9 @@ describes their implementation.
   of `src/game/` are Phaser-free, so they unit-test without a renderer.
 - **Layers:** [ESLint](../eslint.config.mjs) places every
   module of `src/` and `tools/` in a layer of the shared source-structure bands,
-  lowest first: lib and data, model, saving, art (the Phaser-free `src/game/` modules),
-  layout and input state, platform (loading, PWA, crash), ui, scene, entries,
-  then support (build, tests, tools). Outside tests, imports point down only,
+  lowest first: lib and data, model, saving, art (`src/art/` and the Phaser-free
+  `src/game/` modules), layout and input state, platform (loading, PWA, crash),
+  ui, scene, entries, then support (build, tests, tools). Outside tests, imports point down only,
   including type-only imports. The repository lint reports runtime cycles, and
   erased type-only edges may close a cycle within a layer.
 - **Test helpers:** [`src/testing/`](testing/) is importable only from tests and
@@ -88,26 +93,26 @@ owns tap/hold gestures; factory callbacks retain native click ownership. See the
 The persistence contract distinguishes an interrupted flight from leaving a galaxy:
 
 - Every launch opens on the start screen. After closing mid-flight, Continue
-  resumes the exact flight, including its layout seed, position, cargo, shield,
-  equipped weapon, tow and danger.
-- Leaving a galaxy ends its flight: re-entering generates a new layout seed and
-  starts without carried cargo. Story progress, known destinations, discovered
+  resumes the saved flight, including its geography and encounter seeds,
+  position, cargo, shield, equipped weapon, tow and danger.
+- Leaving a galaxy ends its flight. Re-entering uses the saved geography seed
+  and site policy for that galaxy. The new flight draws its own encounter seed. The chart, story progress, known destinations, discovered
   stations, deposited resources, activity counters, Stardust, owned weapons, levels,
-  ship upgrades and paint schemes persist.
-- Shield depletion jumps Ada home and costs only the flight: its layout, open-space
-  enemies, pickups, carried cargo and any towed pod. Weapons, levels, Stardust and
-  accepted quests are kept. She lands at night, sleeps while Astra recharges
-  overnight, and wakes in the morning.
+  ship upgrades and paint schemes persist. Voluntary travel keeps undeposited ore
+  aboard for the next flight.
+- Shield depletion jumps Ada home and ends the flight. Its open-space enemies,
+  pickups, undeposited ore and any tow are lost. The galaxy's saved geography,
+  weapons, levels, Stardust and accepted quests persist. She lands at night,
+  sleeps while Astra recharges overnight, and wakes in the morning.
 
 Flight snapshots are stored locally in this browser. If browser storage is
 unavailable, play continues with a nonblocking save warning. The warning clears
 after a successful write; failed writes preserve the last persisted snapshot.
 
-The flight snapshot is stored in `localStorage` under one key
-([`src/saving/index.ts`](saving/index.ts)), validated by the Saving codec. Device
-settings (move stick, aim stick,
-sound, FPS counter and reduced motion) are stored under their own keys
-([`src/ui/deviceSettings.ts`](ui/deviceSettings.ts)), outside the save.
+The Saving codec validates the flight snapshot. The store uses `localStorage`
+with a primary save key and a separate repair backup key. Device settings (move
+stick, aim stick, sound, FPS counter and reduced motion) are stored under their
+own keys ([`src/ui/deviceSettings.ts`](ui/deviceSettings.ts)), outside the save.
 
 ## Phone
 
