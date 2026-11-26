@@ -50,8 +50,10 @@ depends on how a ship mounts its weapons:
   heading starts from the hull and turns with `turnSeconds`, velocity and hull
   swing round together, so a turret ship turns around to leave. Its turrets
   track Ada independently of the hull with `aimTurnSeconds` and fire in any
-  direction, astern included. Platforms and hostile stations never move and keep
-  a fixed facing; their turrets track the same way.
+  direction, astern included. Their fixed front Lasers fire only along the
+  facing, while their aim point is within the 20-degree nose arc, so they never
+  turn the hull toward Ada. Platforms and hostile stations never move and keep a
+  fixed facing; their turrets track the same way.
 
 Most mobile enemies patrol when unengaged, investigate a fixed last-seen position
 after losing actual line of sight, and resume patrol there. Returning craft investigate home and
@@ -278,6 +280,12 @@ Heavies:
   aim allows for (see [Enemy aim](#enemy-aim)). Notice and fire rates are
   relative to the base catalog. The Fire column applies to enemy-only weapons; shared
   weapons use the equipped-level rate shares below. Enemy group densities are in [Spawn targets](rules.md#spawn-targets).
+- Frigates carry one fixed front Laser and capitals, the flagship included, carry
+  two, in addition to the weapon counts above. Each fires the shared Laser at the
+  equipped level, at heavy shot speed and the ship's Laser rate (frigate 1,
+  capital 1.5), only along the facing within the 20-degree nose arc. Each is a
+  weapon part with hardpoint HP and counts toward disabling the ship. Art places
+  them on each hull's prow.
 - Every heavy hardpoint (weapon, engine, command and platform turret) has the
   position's hardpoint HP: 10, 10, 12, 12, 14 and 14 along the route. The
   flagship's parts have 18 HP. A `platform` hull has half the frigate hull.
@@ -348,16 +356,16 @@ for that weapon; projectiles from heavies (frigates, capitals, the flagship,
 platforms and hostile stations) fly at 0.8 times, with no level speed scaling. Enemies
 carry no ammunition.
 
-| Archetype       | Weapon signature                                            |
-| --------------- | ----------------------------------------------------------- |
-| `swarm`         | Laser                                                       |
-| `fighter`       | Multi-Laser                                                 |
-| `interceptor`   | One Phaser                                                  |
-| `retaliator`    | Rapid Missile                                               |
-| `frigate`       | One Heavy Missile on `port`; other active mounts Laser      |
-| `capital`       | One charged lance or mine layer; other mounts Scattershot   |
-| `platform`      | Laser on every active mount                                 |
-| Hostile station | Ring burst on `weapon-5`; other active mounts Rapid Missile |
+| Archetype       | Weapon signature                                                                  |
+| --------------- | --------------------------------------------------------------------------------- |
+| `swarm`         | Laser                                                                             |
+| `fighter`       | Multi-Laser                                                                       |
+| `interceptor`   | One Phaser                                                                        |
+| `retaliator`    | Rapid Missile                                                                     |
+| `frigate`       | One Heavy Missile on `port`; other active mounts Laser; one fixed front Laser     |
+| `capital`       | One charged lance or mine layer; other mounts Scattershot; two fixed front Lasers |
+| `platform`      | Laser on every active mount                                                       |
+| Hostile station | Ring burst on `weapon-5`; other active mounts Rapid Missile                       |
 
 A capital uses charged lance on `weapon-left` at route positions 1–4. In
 Cartwheel and Phantom, an independent stable per-ship profile gives equal weight
@@ -699,8 +707,8 @@ chapter is complete, Phantom places no new encounters.
 Admiral Archie's flagship is a `capital` in his own design, the only crewed ship in
 his fleet.
 
-- **Hull and parts:** 160 hull HP; command, two engines and 8 weapon mounts, each
-  hardpoint 8 HP. Its weapons follow the capital signature at position 6, as for any
+- **Hull and parts:** 320 hull HP; command, two engines, 8 weapon mounts and two
+  fixed front Lasers, each hardpoint 18 HP. Its weapons follow the capital signature at position 6, as for any
   capital ([Enemy weapons](#enemy-weapons)). Its hull never drops below 1 HP, so
   it is beaten only by disabling.
 - **Movement:** `siege` at a quarter of its top speed, staying within 1000 world
