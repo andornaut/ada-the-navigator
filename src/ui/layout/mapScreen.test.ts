@@ -43,6 +43,7 @@ import {
   readingOrder,
   recentreView,
   scaleLimits,
+  selectedPanelMaxHeight,
   toolColumnLeft,
   toScreen,
   zoomView,
@@ -331,6 +332,13 @@ describe("close places", () => {
         MAP_SYMBOL.chip - 0.05,
       );
     }
+  });
+
+  it("caps a selected panel below the fit top, ring diameter and gap", () => {
+    const { fit } = regionsAt({ height: 720, width: 1280 });
+    expect(selectedPanelMaxHeight(fit, 389)).toBe(255);
+    expect(selectedPanelMaxHeight(fit, 369)).toBe(235);
+    expect(selectedPanelMaxHeight(fit, fit.y)).toBe(0);
   });
 
   it("pans a selected chip clear of the panel at once, and orders places for reading", () => {

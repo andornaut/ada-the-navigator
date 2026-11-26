@@ -39,7 +39,7 @@ import {
   units,
   VIEW_PROPERTIES,
 } from "./layout/css.ts";
-import { framePoint, frameSize, turnOf } from "./layout/frameBox.ts";
+import { frameBoxIn, framePoint, frameSize, turnOf } from "./layout/frameBox.ts";
 import {
   chipRect,
   clampView,
@@ -68,6 +68,7 @@ import {
   type Point,
   readingOrder,
   recentreView,
+  selectedPanelMaxHeight,
   toScreen,
   zoomView,
 } from "./layout/mapScreen.ts";
@@ -633,6 +634,9 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
   padding:calc(${units(MAP_PANEL.padding)} - ${slice(CARD_SLICE)});
   display:grid;
   gap:${units(MAP_PANEL.reasonGap)};
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  touch-action:pan-y;
   font:${font(TYPE.body)};
   color:${TEXT_TOKENS.supporting};
   background:${COLOURS.cardFace};
@@ -1307,9 +1311,11 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       return null;
     }
     const bottom = size.height - Math.max(SAFE_MARGIN.page, insets.bottom);
-    const measured = panel.hidden ? 0 : panel.offsetHeight / unit;
-    if (measured > 0) {
-      return bottom - measured;
+    if (!panel.hidden) {
+      const measured = frameBoxIn(screen, panel);
+      if (measured.height > 0) {
+        return measured.y / unit;
+      }
     }
     const place = selectedPlace();
     const reason = travelNow().reason !== null;
@@ -1556,15 +1562,17 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     drawFog(inner, unit, current);
   };
 
-  // The panel's content and width for the selection.
+  // Constrain the selected panel before its top is measured for keep-clear.
   const dressPanel = () => {
-    const { insets, size } = layout();
+    const { fit, insets, size } = layout();
     const navigation = frameSize(hudRow).width / readViewUnit(hudRow);
     const width = units(panelMaxWidth(insets, size, navigation || undefined));
     panel.style.maxWidth = width;
     panel.style.setProperty("--map-panel-width", width);
     const place = selectedPlace();
     const travelling = travelNow();
+    const bottom = size.height - Math.max(SAFE_MARGIN.page, insets.bottom);
+    panel.style.maxHeight = place ? units(selectedPanelMaxHeight(fit, bottom)) : "";
     panel.hidden = !panelShown();
     row.hidden = place === null;
     empty.hidden = place !== null || !mapShowsEmpty(places());
@@ -1582,10 +1590,22 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     reasons.towing.toggleAttribute("data-shown", travelling.reason === "towing");
     reasons.carrying.toggleAttribute("data-shown", travelling.reason === "carrying");
     galaxiesAction.refresh();
+    if (place && panel.scrollHeight > panel.clientHeight) {
+      panel.tabIndex = 0;
+      panel.setAttribute("role", "region");
+      panel.setAttribute("aria-label", place.label);
+    } else {
+      panel.removeAttribute("tabindex");
+      panel.removeAttribute("role");
+      panel.removeAttribute("aria-label");
+    }
   };
 
   // Selecting pans the chip clear of the panel at once; an empty press clears the selection.
   const select = (id: string | null) => {
+    if (selected !== id) {
+      panel.scrollTop = 0;
+    }
     selected = id;
     const place = selectedPlace();
     if (place && view) {
@@ -1783,6 +1803,9 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   screen.addEventListener(
     "wheel",
     (event) => {
+      if (event.target instanceof Node && panel.contains(event.target)) {
+        return;
+      }
       event.preventDefault();
       const delta =
         event.deltaMode === 1 ? (event.deltaY * MAP_SCREEN.wheelStep) / 3 : event.deltaY;
@@ -1790,8 +1813,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     },
     { passive: false },
   );
-  // Tab stays on the screen in art/map.md's order: the tools, the places in reading order,
-  // Travel here, Quests, Galaxies, then Close. It wraps at either end.
+  // Tab follows the Map order, with a stop before Travel here when the panel can scroll.
   screen.addEventListener("keydown", (event) => {
     if (event.key !== "Tab") {
       return;
@@ -1800,6 +1822,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       ...tools.querySelectorAll<HTMLButtonElement>("button"),
       closeX,
       ...placesLayer.querySelectorAll<HTMLButtonElement>("button"),
+      ...(panel.tabIndex === 0 ? [panel] : []),
       travel,
       questsButton,
       galaxies,
@@ -1810,7 +1833,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       return;
     }
     event.preventDefault();
-    const at = targets.indexOf(document.activeElement as HTMLButtonElement);
+    const at = targets.findIndex((target) => target === document.activeElement);
     const step = event.shiftKey ? -1 : 1;
     const next = at < 0 ? (event.shiftKey ? targets.length - 1 : 0) : at + step;
     focusTarget(targets[(next + targets.length) % targets.length]!);

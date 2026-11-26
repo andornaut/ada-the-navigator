@@ -575,6 +575,13 @@ export function recentreView(inner: MapRegion, field: Rect, player: Point, view:
   return clampView(inner, field, { ...view, centre: mapProjection(mapImage(view, player)) });
 }
 
+const SELECTION_REACH = MAP_SYMBOL.ring.radius + MAP_SYMBOL.ring.band / 2 + MAP_SYMBOL.ring.fringe;
+
+/** Leave room for the selection ring and its panel gap above a bottom-anchored panel. */
+export function selectedPanelMaxHeight(fit: Rect, bottom: number): number {
+  return Math.max(0, bottom - fit.y - 2 * SELECTION_REACH - SPACING.gap);
+}
+
 /**
  * Keep clear: the least pan that puts a selected chip and its ring inside the fit region and at
  * least SPACING.gap above the panel's top (or the fit region's bottom without a panel), as far as
@@ -588,7 +595,7 @@ export function keepClear(
   place: Point,
   view: MapView,
 ): MapView {
-  const reach = MAP_SYMBOL.ring.radius + MAP_SYMBOL.ring.band / 2 + MAP_SYMBOL.ring.fringe;
+  const reach = SELECTION_REACH;
   const bottom = Math.min(
     fit.y + fit.height,
     panelTop === null ? Infinity : panelTop - SPACING.gap,
