@@ -344,7 +344,7 @@ count, so Phaser energy is separate from Multi-Laser energy. Multi-Laser spends
 one unit per bolt, so a full fan costs 3, 4 or 5 units by level. If the count
 is lower, it fires only the affordable bolts, taking the angles closest to aim
 first. This higher ammo cost balances the fan's easier aiming. Other weapons
-spend one unit per volley, including a full Scattershot spread.
+spend one unit per volley, including all three rows of a Scattershot volley.
 
 Ammunition is sold per weapon in the shop. Every pack costs 25 Stardust and
 gives three world pickups' worth: Multi-Laser 300 bolts, Rapid Missile 180
@@ -416,7 +416,7 @@ origin, preserving the Shop pane and focused row where applicable.
 | Multi-Laser   | "Fires a fan of {count} laser bolts." "Each level adds a bolt."                                                             |
 | Rapid Missile | "Fires small missiles quickly." "Explodes on impact or after a short distance." "Each level fires faster."                  |
 | Heavy Missile | "Fires slowly but hits hard." "Explodes on impact or after a short distance, with a large blast." "Each level hits harder." |
-| Scattershot   | "Fires a wide spread of {count} short-range shots." "Each level adds shots that hit harder."                                |
+| Scattershot   | "Fires {count} short-range pellets in three rows." "Each level adds pellets that hit harder."                               |
 | Phaser        | "Fires an instant beam that nothing can dodge." "Fires slowly but hits hard." "Each level hits harder."                     |
 
 An upgrade card shows the upgrade's shop name (`weaponUpgrade`, `shield`,
@@ -424,17 +424,17 @@ An upgrade card shows the upgrade's shop name (`weaponUpgrade`, `shield`,
 `detailNextLevel` and what the next level adds, from the table below. At level 3
 it shows `detailMaxed` instead.
 
-| Upgrade       | Level 2 adds                           | Level 3 adds    |
-| ------------- | -------------------------------------- | --------------- |
-| Laser         | "Fires faster and hits harder."        | Same as level 2 |
-| Multi-Laser   | "One more bolt, and faster bolts."     | Same as level 2 |
-| Rapid Missile | "Fires faster."                        | Same as level 2 |
-| Heavy Missile | "Hits harder."                         | Same as level 2 |
-| Scattershot   | "Two more shots that hit harder."      | Same as level 2 |
-| Phaser        | "Hits harder."                         | Same as level 2 |
-| Shield        | "A bigger shield that refills faster." | Same as level 2 |
-| Engine tuning | "Fly faster and turn more quickly."    | Same as level 2 |
-| Tractor beam  | "Pulls from farther away, and faster." | Same as level 2 |
+| Upgrade       | Level 2 adds                           | Level 3 adds                         |
+| ------------- | -------------------------------------- | ------------------------------------ |
+| Laser         | "Fires faster and hits harder."        | Same as level 2                      |
+| Multi-Laser   | "One more bolt, and faster bolts."     | Same as level 2                      |
+| Rapid Missile | "Fires faster."                        | Same as level 2                      |
+| Heavy Missile | "Hits harder."                         | Same as level 2                      |
+| Scattershot   | "Three more pellets that hit harder."  | "Four more pellets that hit harder." |
+| Phaser        | "Hits harder."                         | Same as level 2                      |
+| Shield        | "A bigger shield that refills faster." | Same as level 2                      |
+| Engine tuning | "Fly faster and turn more quickly."    | Same as level 2                      |
+| Tractor beam  | "Pulls from farther away, and faster." | Same as level 2                      |
 
 ## Donations
 

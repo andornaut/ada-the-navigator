@@ -1084,8 +1084,16 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   charged lance do not inherit launch velocity.
 - Fan angles are measured in the projected aim plane. Rotate there before
   unprojecting each shot direction; preserve weapon speed before adding launch velocity.
-- Each scattershot dot has 100 weapon-relative world units of travel along its rotated heading on
-  every device, fades after 65% of that range and vanishes at the limit.
+- Scattershot fires one volley per second with three rows, 60 ms apart. The
+  rows fire 7 / 3 / 1 pellets at level 1, 9 / 4 / 1 at level 2 and 11 / 5 / 2 at
+  level 3. The first row spreads ±30° and the second spreads ±15°. The third
+  fires along the aim line at levels 1 and 2 and at ±4° at level 3. One shell
+  pays for all three rows. A volley already fired completes if the player
+  switches weapons or spends the last shell and automatically equips Laser.
+  Ada and enemy capitals share the row pattern and per-pellet damage under
+  existing enemy modifiers. Each pellet deals 0.8 / 1 / 1.2 damage by level,
+  travels 100 weapon-relative world units along its own heading, fades after
+  65% of that range and vanishes at the limit.
 - Weapon intervals, speeds, damage, angles, reach and fade are provisional
   catalog tuning; damage is in multiples of a level 1 Laser shot. No homing, piercing or reloading is added.
 - Top-right weapon icons select Laser fire or an owned weapon, in the order Laser,
