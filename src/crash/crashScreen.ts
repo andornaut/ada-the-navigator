@@ -186,11 +186,15 @@ const bindHoldAction: HoldActionBinding = (action) => {
     return () => {};
   }
   metadata.add(stop);
-  const allBound = metadata.size === host.querySelectorAll("button").length;
-  if (allBound) {
+  if (metadata.size === host.querySelectorAll("button").length) {
     placeCrashActions(host);
   }
-  if (allBound && recovery === completed && completed.live) {
+  // Moving the focused Reload can dispatch focus events. Audit the still-live final subtree.
+  if (
+    metadata.size === host.querySelectorAll("button").length &&
+    recovery === completed &&
+    completed.live
+  ) {
     completed.root.assertBindings();
   }
   return stop;
