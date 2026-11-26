@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { ASTEROID_SHAPES, sceneryBodyContact } from "./asteroids.ts";
+import { ASTEROID_SHAPES, sceneryBodyContact, scenerySilhouette } from "./asteroids.ts";
 import { type Parts, unionContact } from "./convex.ts";
-import { createFlight, resolveScenery, type SceneryContactOf } from "./flight.ts";
+import { debrisSilhouette } from "./debrisBody.ts";
+import { createFlight } from "./flight.ts";
+import { resolveScenery, type SceneryContactOf } from "./flight/sceneryResolution.ts";
+import { SceneryFrames } from "./sceneryFrames.ts";
 import { shipBody } from "./shipBody.ts";
 import type { FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
 
@@ -27,6 +30,13 @@ const progress: GalaxyProgress = {
   stations: [],
 };
 const RADIUS = 2;
+const frames = new SceneryFrames();
+const scenery = {
+  drawnOf: (flight: FlightState, object: SpaceObject) =>
+    debrisSilhouette(flight.galaxy, object) ?? scenerySilhouette(object),
+  frameOf: (flight: FlightState, object: SpaceObject) => frames.frame(flight, false, object),
+  kinds: ["rock", "debris"],
+};
 
 const flightWith = (wall: SpaceObject): FlightState => {
   const flight = createFlight(CONTENT, 1, 1234, progress);
@@ -119,6 +129,7 @@ describe("scenery push-out in a notch", () => {
     const normals: Vec[] = [];
     const position = { x: 0, y: 0 };
     resolveScenery(
+      scenery,
       flight,
       (_, at) => grooveContact(at),
       (normal) => normals.push(normal),
@@ -138,6 +149,7 @@ describe("scenery push-out in a notch", () => {
     const position = intoNotch();
     let returned = false;
     resolveScenery(
+      scenery,
       flightWith(NOTCH_ROCK),
       rockContact,
       (normal) => normals.push(normal),
@@ -158,6 +170,7 @@ describe("scenery push-out in a notch", () => {
     const normals: Vec[] = [];
     const position = { x: 0, y: 0 };
     resolveScenery(
+      scenery,
       flight,
       contactOf,
       (normal) => normals.push(normal),
@@ -178,7 +191,7 @@ describe("scenery push-out in a notch", () => {
   it("leaves a stuck body where the passes end when no move start is given", () => {
     const { contactOf, flight } = notched(SLOT);
     const position = { x: 0, y: 0 };
-    resolveScenery(flight, contactOf, () => undefined, position);
+    resolveScenery(scenery, flight, contactOf, () => undefined, position);
     expect(position.y).toBe(0);
     expect(unionContact(SLOT, position, RADIUS)).not.toBeNull();
   });
