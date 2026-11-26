@@ -1,8 +1,8 @@
+import { CONTENT } from "../data/content.ts";
 import { CONVERSATION_BOX, SHIELD_PILL } from "../data/layout.ts";
 import { COLOURS } from "./layout/colours.ts";
-import { font, fromHudEdge, units, VIEW_HOST_ID } from "./layout/css.ts";
+import { font, fromHudEdge, units } from "./layout/css.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
-import { BOX_OCCUPANT } from "./notice.ts";
 
 export interface BossHudView {
   readonly id: string;
@@ -13,26 +13,27 @@ export interface BossHudView {
   readonly disabled: boolean;
 }
 
-const MAX_WIDTH = 320;
+// The longest ship and captain pair still fits on one line with Disabled.
+const MAX_WIDTH = 384;
+// Reserve the conversation slot throughout the fight. Compact vertical padding leaves room
+// above Ada's highest hull pixels in the 360-unit play area.
+const TOP = CONVERSATION_BOX.top + CONVERSATION_BOX.height + SHIELD_PILL.bar.inset;
 
 export const BOSS_HUD_STYLE = `
 .ada-controls .ada-boss-hud{
   position:absolute;
-  top:${fromHudEdge("top", CONVERSATION_BOX.top)};
+  top:${fromHudEdge("top", TOP)};
   left:${fromHudEdge("left")};
   right:${fromHudEdge("right")};
   box-sizing:border-box;
   max-width:${units(MAX_WIDTH)};
   margin-inline:auto;
-  padding:${units(SPACING.rowGap)} ${units(SPACING.gap)};
+  padding:${units(SHIELD_PILL.bar.rim)} ${units(SPACING.gap)};
   background:${COLOURS.navy};
   color:${COLOURS.cream};
   font:${font(TYPE.label)};
   text-align:center;
   pointer-events:none
-}
-#${VIEW_HOST_ID}[${BOX_OCCUPANT}] .ada-boss-hud{
-  top:${fromHudEdge("top", CONVERSATION_BOX.top + CONVERSATION_BOX.height + SPACING.rowGap)}
 }
 .ada-boss-hud-names{
   display:flex;
@@ -46,8 +47,8 @@ export const BOSS_HUD_STYLE = `
   font:${font(TYPE.body)}
 }
 .ada-boss-hud-meter{
-  height:${units(SPACING.markGap)};
-  margin-top:${units(SPACING.rowGap)};
+  height:${units(SPACING.rowGap)};
+  margin-top:${units(SHIELD_PILL.bar.rim)};
   background:${COLOURS.ink}
 }
 .ada-boss-hud-fill{
@@ -87,7 +88,7 @@ export function createBossHud(parent: HTMLElement): {
   const captain = document.createElement("span");
   captain.className = "ada-boss-hud-captain";
   const disabled = document.createElement("span");
-  disabled.textContent = "Disabled";
+  disabled.textContent = CONTENT.labels.disabledBanner ?? "";
   disabled.hidden = true;
   names.append(ship, captain, disabled);
 
