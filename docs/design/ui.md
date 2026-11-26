@@ -85,3 +85,5 @@ Reference: [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.
 | ada-0390 | Render the UI from shared components with one layout model                      | [ada-0390.md](../work/ada-0390.md) |
 | ada-0397 | Give heavies a distinct threat-red edge marker                                  | [ada-0397.md](../work/ada-0397.md) |
 | ada-0400 | Use the medium crash dialog and standard recovery buttons                       | [ada-0400.md](../work/ada-0400.md) |
+| ada-0401 | Centre scan notices in the top HUD row                                          | [ada-0401.md](../work/ada-0401.md) |
+| ada-0402 | Fix flight slowdown when dialogue appears                                       | [ada-0402.md](../work/ada-0402.md) |
