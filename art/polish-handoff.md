@@ -13,18 +13,18 @@ the test pins listed.
 | Traveling debris              | The five debris sheets, `cartwheel/debris.json`, `whirlpool/debris.json`, `needle/channels.json`                                 | `src/game/sceneNeedle.test.ts` pins the Needle plate's frame 0 bounds, now `[7.12, 18.745, 61.487, 59.542]`      |
 | Decorations                   | `decoration-sheet.svg` (Sunflower and Andromeda `decoration-set-sheet.svg`) and `backdrop-lattice.json` sprites for every galaxy | `src/game/textures.test.ts` pins each sprite's `width` and `height`; read them from each `backdrop-lattice.json` |
 | Backdrop field                | `backdrop-lattice.json` and one per galaxy ([motif field](backdrop.md#motif-field))                                              | None                                                                                                             |
+| Needle band                   | `needle/band.json` ([Space look](needle.md#space-look))                                                                          | None                                                                                                             |
 | Quantum jump                  | `quantum-jump-tunnel.webp`, `-field.webp`, `-glow.png`, `-star.png`                                                              | None: ids, sizes and frame names are unchanged                                                                   |
 | Tow line                      | `cartwheel/friendly-tow.json` `line` ([Cartwheel props](cartwheel-props.md#tow-line))                                            | None                                                                                                             |
 | Preview cards                 | `previews/card-{galaxy}.png` and `-locked` ([preview cards](galaxies.md#preview-cards))                                          | None                                                                                                             |
 
 ## Staged: switch with a reader or renderer change
 
-| Rows group         | Art side                                    | Tech change                                                                                                                                                                           |
-| ------------------ | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `runtime-currents` | [Ordered darts](whirlpool.md#ordered-darts) | `src/game/currentStreaks.ts`: filled dart polygon, even lanes and rows, stepped size and alpha; `currentStreaks.test.ts`                                                              |
-| `runtime-stitch`   | [Bolder stitch](needle.md#bolder-stitch)    | Data only: write `width`, `dash` and `alpha` into `channels.json`                                                                                                                     |
-| `runtime-eye`      | [Ordered Eye](needle.md#ordered-eye)        | `src/model/needle.ts`: piece by row, tumble frame by index and row, no spread; after Gameplay accepts 360 pieces in place of 468                                                      |
-| `runtime-band`     | [Flat band](needle.md#flat-band)            | `src/game/backdropLayers.ts`: two flat strips, specks and stars by pitch and offset cycle; `backdropBand.test.ts`. The backdrop producer's contrast check then reads the flat profile |
+| Rows group         | Art side                                    | Tech change                                                                                                                      |
+| ------------------ | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `runtime-currents` | [Ordered darts](whirlpool.md#ordered-darts) | `src/game/currentStreaks.ts`: filled dart polygon, even lanes and rows, stepped size and alpha; `currentStreaks.test.ts`         |
+| `runtime-stitch`   | [Bolder stitch](needle.md#bolder-stitch)    | Data only: write `width`, `dash` and `alpha` into `channels.json`                                                                |
+| `runtime-eye`      | [Ordered Eye](needle.md#ordered-eye)        | `src/model/needle.ts`: piece by row, tumble frame by index and row, no spread; after Gameplay accepts 360 pieces in place of 468 |
 
 ## Specification only: renderer changes
 

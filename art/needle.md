@@ -272,20 +272,21 @@ side). Rebuild the band with `node art/tools/needle-sky.ts`; it writes
 Tech draws the edge-on band at runtime: one thin line across the whole sky,
 the galaxy seen edge on. It follows the [backdrop haze](galaxies.md#backdrop-haze)
 conventions (layer `backdrop`, anchor `view`, parallax 0) but is drawn from
-data, not a texture: its 1.2 px core and 1 to 2 px stars would not survive the
-haze's half-resolution texture and sigma 20 blur. Needle has no haze.
+data, not a texture: its 10 px core strip and 1 to 2 px stars would not
+survive the haze's half-resolution texture and sigma 20 blur. Needle has no
+haze. Distances are logical px along the line from `through` and across it.
 
 | Part    | Rule                                                                                                                                                                      |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Line    | A straight line at `angle` -6 degrees on screen through `through` (0.5, 0.4) of the play view, fixed to the screen (`anchor` `view`, `parallax` 0)                        |
-| Profile | Across the line, `color` `#CFC5BD` at alpha `sum(alpha * exp(-(d / sigma)^2))`, `d` in logical px: haze 0.06 at sigma 30, glow 0.10 at 7, core 0.08 at 1.2                |
-| Specks  | 1 px stars on the line, one per 2.2 px of its length on average, offset across it by a normal of sigma 12, `color` at alpha 0.25 to 0.8                                   |
-| Stars   | 2 px `#F1ECE6` stars, one per 240 px on average, sigma 7.2 across                                                                                                         |
+| Profile | Two flat strips of `color` `#CFC5BD` across the line: haze within 22 px either side at alpha 0.07 and core within 5 px at alpha 0.11 over it, 0.18 at the line            |
+| Specks  | 85 1 px points in `color` at alpha 0.55, on a 9 px pitch from -380 to 376 along the line, across it by the cycle -9, 4, -2, 11, -6, 7, 0, -11, 9, -4                      |
+| Stars   | Four 2 px `#F1ECE6` stars at -360, -120, 120 and 360 along the line, across it by 5, -6, 3 and -4                                                                         |
 | Depth   | `layer` `backdrop`, the fixed part of [L2](backdrop.md#layers): over the sky gradient, under the planets, plates, stars, debris, the channel stitch and every play object |
-| Seed    | Speck and star positions come from one fixed seed, so the band looks the same on every flight                                                                             |
 
-- The line stays within the backdrop rocks' 1.8:1 cap: its peak (alpha 0.24)
-  is `#C8BDAC`, 1.02:1, and 7 px out 1.01:1. The build fails over 1.8:1. That
+- The line stays within the backdrop rocks' 1.8:1 cap: its peak (alpha 0.18)
+  is `#C8BDAA`, 1.02:1, and the haze strip alone 1.01:1. The build fails over
+  1.8:1. That
   peak is Needle's brightest backdrop tone, and the
   [backdrop caps](backdrop.md#contrast-caps) hold every other layer at or
   under it.
@@ -293,24 +294,10 @@ haze's half-resolution texture and sigma 20 blur. Needle has no haze.
   parallel to the band, sliding along it at parallax 0.15 and screening it
   lighter or multiplying it darker as they pass; its dust streaks run along it
   too. A graphite crescent is its one planet.
-- Specks and stars are point stars, not the line: specks run 1.03 to 1.09:1
-  and the pearl stars 1.62:1, as small and sparse as the field's dust specks.
+- Specks and stars are point stars, not the line: specks are 1.07:1 and the
+  pearl stars 1.62:1, as small and sparse as the field's dust specks.
 - Reduced motion: the band is static, so it is unchanged. The
   [selector preview](galaxies.md#selector-preview) capture includes it.
-
-### Flat band
-
-The accepted band, staged as `runtime-band` in
-[polish-rows.json](polish-rows.json) for `band.json`
-([handoff](polish-handoff.md)). The colour, line, angle, anchor and layer are
-unchanged; distances are px along the band's line from `through` and across
-it.
-
-| Part   | Shipped                                                                | Flat band                                                                                                       |
-| ------ | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Glow   | Three summed Gaussian falloffs: 0.06 at 30, 0.1 at 7 and 0.08 at 1.2   | Two flat strips: 44 px wide at alpha 0.07 and 10 px wide at alpha 0.11 over it (0.18 at the line, against 0.24) |
-| Specks | About 340, 2.2 apart, random across within sigma 12, alpha 0.25 to 0.8 | 85 on a 9 px pitch from -380 to 376, across by the cycle -9, 4, -2, 11, -6, 7, 0, -11, 9, -4, alpha 0.55        |
-| Stars  | 2 px, 240 apart, random across within sigma 7.2                        | Four 2 px stars at -360, -120, 120 and 360, across by 5, -6, 3 and -4                                           |
 
 ## Elder Loom's saucer
 

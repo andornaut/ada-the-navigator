@@ -14,7 +14,7 @@ it is staged and what remains. Renderer changes are in the
 | Backdrop field                | Produced data in place, with its contrast check                                                                       | Produced                                           |
 | Quantum jump                  | Produced rasters, replaced in place; the iris rim is a specification                                                  | Produced                                           |
 | Weapon and destruction looks  | Specifications; staged shard data                                                                                     | Specified                                          |
-| Runtime effects               | Staged data and specifications: current streaks, stitch, the Eye, the band                                            | Specified                                          |
+| Runtime effects               | Staged data and specifications: current streaks, stitch, the Eye; the band in place                                   | Specified                                          |
 | Missile and mine frames       | Produced frames of the solid models in [Weapons](weapons.md#missile-and-mine-frames), staged                          | Produced                                           |
 | Galaxy preview cards          | Produced cards, staged beside the captured previews                                                                   | Produced from the station redesign's main stations |
 | Disabled frames               | Close X and switch frames added to their sheets in place; pause, menu, cargo and tow icons staged in their own sheets | Produced                                           |

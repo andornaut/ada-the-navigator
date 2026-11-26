@@ -60,35 +60,6 @@
       }
     }
   },
-  "runtime-band": {
-    "file": "/art/needle/band.json",
-    "profile": [
-      {
-        "name": "haze",
-        "halfWidth": 22,
-        "alpha": 0.07
-      },
-      {
-        "name": "core",
-        "halfWidth": 5,
-        "alpha": 0.11
-      }
-    ],
-    "specks": {
-      "pitch": 9,
-      "extent": 380,
-      "offsets": [-9, 4, -2, 11, -6, 7, 0, -11, 9, -4],
-      "alpha": 0.55,
-      "size": 1
-    },
-    "stars": {
-      "color": "#F1ECE6",
-      "pitch": 240,
-      "extent": 360,
-      "offsets": [5, -6, 3, -4],
-      "size": 2
-    }
-  },
   "runtime-currents": {
     "file": "/art/whirlpool/currents.json",
     "streaks": {
