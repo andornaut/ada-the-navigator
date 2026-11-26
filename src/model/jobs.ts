@@ -117,6 +117,10 @@ function spotNear(
     let clearance = Infinity;
     for (const hostile of context.hostiles) {
       clearance = Math.min(clearance, worldDistance(world, hostile, spot));
+      // More hostiles can only lower the clearance. An earlier fallback wins ties.
+      if (allowFallback ? clearance <= bestClearance : clearance < JOB_TUNING.hostileClearance) {
+        break;
+      }
     }
     if (clearance >= JOB_TUNING.hostileClearance) {
       return spot;
