@@ -57,7 +57,6 @@ function jetsScene(light: boolean) {
     },
     craftJets: new Map<string, Graphics>(),
     craftJetsDrawn: new Set<string>(),
-    edgeInk: LIGHT_FIELD.ink,
     enemyJets: new Graphics(),
     light,
     made,

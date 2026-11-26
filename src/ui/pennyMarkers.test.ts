@@ -6,13 +6,7 @@ import { EDGE_MARKERS } from "../data/edgeMarkers.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { TASK_COLORS, type TaskCategory } from "../data/taskCategories.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
-import {
-  foregroundEdge,
-  LIGHT_FIELD,
-  lightGalaxy,
-  readForegroundEdges,
-  readLightGalaxies,
-} from "../game/lightField.ts";
+import { foregroundEdge, LIGHT_FIELD, lightGalaxy, readLightGalaxies } from "../game/lightField.ts";
 import {
   galaxyPalettes,
   readGalaxyFields,
@@ -29,7 +23,6 @@ import { layoutTargetMarkers } from "./layout/targetMarkers.ts";
 import { playLayout } from "./layout/viewScale.ts";
 import {
   createPennyMarkerLayer,
-  markerEdge,
   PENNY_MARKERS_STYLE,
   pennyGlyph,
   pennyMarkerInkExtent,
@@ -264,16 +257,9 @@ it("keeps the same marker node while identifying it and clearing its identity ag
   ui.place({ x: 0, y: 0 }, area, undefined, [{ ...target, taskCategory: "story" }]);
   expectUnknown();
   expect(chip.style.background).toBe("#65c9bf");
-  ui.place(
-    { x: 0, y: 0 },
-    area,
-    {
-      color: "#65c9bf",
-      edge: "#102030",
-      light: true,
-    },
-    [{ ...target, identified: true, item: "stardust" }],
-  );
+  ui.place({ x: 0, y: 0 }, area, { color: "#65c9bf", light: true }, [
+    { ...target, identified: true, item: "stardust" },
+  ]);
   expect(layer.children).toHaveLength(1);
   expect(layer.children[0]).toBe(chip);
   expect(chip.dataset).toMatchObject({
@@ -309,18 +295,14 @@ describe("enemy marker colour and outline in every galaxy", () => {
   const galaxies = publicJson(ART_MANIFEST.galaxyFields);
   const palettes = galaxyPalettes(art, readGalaxyFields(galaxies));
   const light = readLightGalaxies(galaxies);
-  const edges = readForegroundEdges(galaxies);
-  // The style the scene passes: its foreground edge, Art's or a light field's ink, and whether
-  // the field draws one.
+  // The style the scene passes: whether the field draws its foreground edge.
   const styles = GALAXY_NUMBERS.map((galaxy) => {
     const palette = palettes.get(galaxy)!;
-    const edge = foregroundEdge(light, edges, galaxy);
     return {
       galaxy,
       style: {
         color: spaceColorCss(palette.pointOfInterest),
-        edge: spaceColorCss(edge ?? LIGHT_FIELD.ink),
-        light: edge !== undefined,
+        light: foregroundEdge(galaxy) !== undefined,
         threat: spaceColorCss(palette.threat),
       },
     };
@@ -338,16 +320,27 @@ describe("enemy marker colour and outline in every galaxy", () => {
   const categories = [undefined, ...(Object.keys(TASK_COLORS) as TaskCategory[])];
   const threats = ["enemy", "heavy", "guard", "hostileStation"] as const;
 
-  it("covers every galaxy: ink edges on light fields, white on Phantom, none elsewhere", () => {
+  it("edges every galaxy in ink: the foreground edge, each enemy disc's ring and badge border", () => {
     expect(styles.map(({ galaxy }) => galaxy)).toEqual([...GALAXY_NUMBERS]);
     for (const { galaxy, style } of styles) {
-      expect([galaxy, style.light, style.edge]).toEqual([
+      expect([galaxy, foregroundEdge(galaxy), style.light]).toEqual([
         galaxy,
-        lightGalaxy(light, galaxy) || galaxy === 6,
-        galaxy === 6 ? "#ffffff" : spaceColorCss(LIGHT_FIELD.ink),
+        LIGHT_FIELD.ink,
+        true,
       ]);
     }
+    // Phantom keeps its dark field and still takes the ink edge.
     expect(lightGalaxy(light, 6)).toBe(false);
+    expect(MAP_COLORS.ink.toLowerCase()).toBe(spaceColorCss(LIGHT_FIELD.ink));
+    expect(LIGHT_FIELD.markerOutline).toBe(1);
+    expect(MAP_SYMBOL.edge).toBe(1);
+    expect(PENNY_MARKERS_STYLE).toContain(`border:${units(1)} solid ${MAP_COLORS.ink};`);
+    for (const symbol of threats) {
+      expect(PENNY_MARKERS_STYLE).toContain(
+        `[data-symbol="${symbol}"][data-light="true"]{\nbox-shadow:0 0 0 ${units(1)} ${MAP_COLORS.ink}}`,
+      );
+    }
+    expect(PENNY_MARKERS_STYLE).not.toContain("--marker-edge");
   });
   it.each(styles)(
     "draws a task-target enemy, heavy, guard and hostile station threat red in galaxy $galaxy",
@@ -372,50 +365,21 @@ describe("enemy marker colour and outline in every galaxy", () => {
       ui.destroy();
     },
   );
-  it.each(styles)(
-    "edges every disc and badge in the field's foreground edge in galaxy $galaxy",
-    ({ galaxy, style }) => {
-      const edge = galaxy === 6 ? "#ffffff" : spaceColorCss(LIGHT_FIELD.ink);
-      expect(markerEdge(style)).toBe(edge);
-      const { root, ui } = layer();
-      // The 24 badges: a seen station, a known place and the unidentified `?`.
-      for (const badge of [
-        { ...marker, identified: true, symbol: "station" as const },
-        { ...marker, identified: true, symbol: "destination" as const },
-        marker,
-        { ...marker, symbol: "enemy" as const },
-      ]) {
-        ui.place({ x: 0, y: 0 }, area, style, [badge]);
-        expect(root.children[0]!.children[0]!.properties.get("--marker-edge")).toBe(edge);
-      }
-      for (const symbol of threats) {
-        ui.place({ x: 0, y: 0 }, area, style, [{ ...marker, identified: true, symbol }]);
-        const node = root.children[0]!.children[0]!;
-        expect(node.dataset.light).toBe(String(style.light));
-        expect(node.properties.get("--marker-edge")).toBe(edge);
-        // The outline adds its width on every side, as the light field's ink outline does.
-        const disc = symbol === "enemy" ? 6 : 12;
-        const ring = style.light ? 2 * LIGHT_FIELD.markerOutline : 0;
-        expect(pennyMarkerInkExtent({ ...marker, identified: true, symbol }, style.light)).toEqual({
-          height: disc + ring,
-          width: disc + ring,
-        });
-      }
-      ui.destroy();
-    },
-  );
-  it("draws the edge as each badge's 1 border and a 1 ring around each enemy disc", () => {
-    expect(LIGHT_FIELD.markerOutline).toBe(1);
-    expect(MAP_SYMBOL.edge).toBe(1);
-    const edge = `var(--marker-edge,${MAP_COLORS.ink})`;
-    expect(PENNY_MARKERS_STYLE).toContain(`border:${units(1)} solid ${edge};`);
+  it.each(styles)("rings every enemy disc in its ink outline in galaxy $galaxy", ({ style }) => {
+    const { root, ui } = layer();
     for (const symbol of threats) {
-      expect(PENNY_MARKERS_STYLE).toContain(
-        `[data-symbol="${symbol}"][data-light="true"]{\nbox-shadow:0 0 0 ${units(1)} ${edge}}`,
-      );
+      ui.place({ x: 0, y: 0 }, area, style, [{ ...marker, identified: true, symbol }]);
+      const node = root.children[0]!.children[0]!;
+      expect(node.dataset.light).toBe(String(style.light));
+      // The outline adds its width on every side, as the light field's ink outline does.
+      const disc = symbol === "enemy" ? 6 : 12;
+      const ring = style.light ? 2 * LIGHT_FIELD.markerOutline : 0;
+      expect(pennyMarkerInkExtent({ ...marker, identified: true, symbol }, style.light)).toEqual({
+        height: disc + ring,
+        width: disc + ring,
+      });
     }
-    // Without a foreground edge, the badges keep their ink border.
-    expect(markerEdge({})).toBe(MAP_COLORS.ink);
+    ui.destroy();
   });
   it.each(styles)(
     "keeps an unidentified marker the generic colour unless a story or job targets it, galaxy $galaxy",

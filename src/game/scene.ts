@@ -255,10 +255,9 @@ export class GameScene extends Scene {
   partLoads = new Set<string>();
   // A light field (art/galaxies.md "Light fields"): this frame's keylined sprites, each keyline's
   // eight ink copies by key, the ship jets' ink edge and the indicators' ink stroke layer.
-  /** Whether a foreground boundary treatment is enabled, including explicit Art ink. */
+  /** Whether the flight's galaxy draws foreground edges (foregroundEdge). */
   light = false;
   fieldLight = false;
-  edgeInk = LIGHT_FIELD.ink;
   keyed: {
     depth: number | undefined;
     key: string;
@@ -441,7 +440,6 @@ export class GameScene extends Scene {
   galaxyPalettes: ReadonlyMap<GalaxyNumber, SpacePalette> = new Map();
   // The galaxies whose field is light, from the same galaxies.json as their palettes.
   lightGalaxies: ReadonlySet<GalaxyNumber> = new Set();
-  foregroundEdges: ReadonlyMap<GalaxyNumber, number> = new Map();
   // The space background in use: the flight's galaxy field, else the base palette's.
   spaceBackground = FALLBACK_SPACE_PALETTE.background;
   station!: ReturnType<typeof createStationView>;
@@ -926,7 +924,7 @@ export class GameScene extends Scene {
       drawEffect(
         this,
         effect.shapes,
-        shotEdge ? inkEdges(this.edgeInk, shotEdge, effect.edged) : [],
+        shotEdge ? inkEdges(LIGHT_FIELD.ink, shotEdge, effect.edged) : [],
       );
     const hull = effectBox(
       shipSilhouette(shipHeading(flight.facing)).map((part) => ({
@@ -944,7 +942,7 @@ export class GameScene extends Scene {
       angle !== undefined && launched(effectBox(shapes)) ? clipBehind(tip, angle, shapes) : shapes;
     const drawOwn = (drawn: readonly EffectShape[], angle?: number) => {
       const shapes = launch(drawn, angle);
-      const edges = shotEdge ? inkEdges(this.edgeInk, shotEdge, shapes) : [];
+      const edges = shotEdge ? inkEdges(LIGHT_FIELD.ink, shotEdge, shapes) : [];
       const ink = launched(effectBox([...edges, ...shapes])) ? this.launchInk : this.overlay;
       drawEffect(this, shapes, edges, ink);
     };
@@ -1050,9 +1048,7 @@ export class GameScene extends Scene {
     const flight = this.model.storyView ? null : this.model.state.flight;
     const galaxy = this.model.state.mode === "space" ? flight?.galaxy : undefined;
     this.fieldLight = lightGalaxy(this.lightGalaxies, galaxy);
-    const edge = foregroundEdge(this.lightGalaxies, this.foregroundEdges, galaxy);
-    this.light = edge !== undefined;
-    this.edgeInk = edge ?? LIGHT_FIELD.ink;
+    this.light = foregroundEdge(galaxy) !== undefined;
     if (flight !== this.needleFlight) {
       this.needleRenderer?.clear();
       this.needleFlight = flight ?? undefined;
@@ -1219,7 +1215,7 @@ export class GameScene extends Scene {
         impact.family === "missile"
           ? this.light &&
             ["blastRing", "blastFlash"].some((kind) => LIGHT_FIELD.effects.includes(kind))
-            ? blastEdges(this.edgeInk, LIGHT_FIELD.keyline, shapes)
+            ? blastEdges(LIGHT_FIELD.ink, LIGHT_FIELD.keyline, shapes)
             : []
           : keylineEdges(this, ["hitSpark"], edgedShapes);
       drawEffect(this, shapes, edges);
@@ -1238,7 +1234,7 @@ export class GameScene extends Scene {
       drawEffect(
         this,
         effect.shapes,
-        this.light ? inkEdges(this.edgeInk, LIGHT_FIELD.phaser.edge, effect.edged) : [],
+        this.light ? inkEdges(LIGHT_FIELD.ink, LIGHT_FIELD.phaser.edge, effect.edged) : [],
       );
     }
     drawEnemyWeapons(this, enemyWeaponsView(flight));
@@ -1289,8 +1285,8 @@ export class GameScene extends Scene {
           continue;
         }
         if (keyline) {
-          this.jetKeyline.fillStyle(this.edgeInk, alpha);
-          this.jetKeyline.lineStyle(2 * LIGHT_FIELD.keyline, this.edgeInk, alpha);
+          this.jetKeyline.fillStyle(LIGHT_FIELD.ink, alpha);
+          this.jetKeyline.lineStyle(2 * LIGHT_FIELD.keyline, LIGHT_FIELD.ink, alpha);
           this.jetKeyline.fillTriangle(
             points[0].x,
             points[0].y,

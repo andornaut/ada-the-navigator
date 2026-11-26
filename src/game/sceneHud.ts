@@ -25,7 +25,7 @@ import { createUseCallout } from "./touchChrome.ts";
 import { type EffectShape } from "./weaponEffects.ts";
 
 /** The scene state and methods this module's functions use. */
-export type HudContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
+export type HudContext = Partial<Pick<GameScene, "fieldLight">> &
   Scene &
   Pick<
     GameScene,
@@ -222,8 +222,10 @@ export function keylineSprite(
 }
 
 /** The scene state a craft's jets draw with. */
-export type CraftJetsContext = Partial<Pick<GameScene, "edgeInk">> &
-  Pick<GameScene, "add" | "craftJets" | "craftJetsDrawn" | "enemyJets" | "light">;
+export type CraftJetsContext = Pick<
+  GameScene,
+  "add" | "craftJets" | "craftJetsDrawn" | "enemyJets" | "light"
+>;
 
 /**
  * A craft's drawn jets at screen `point`. On a light field, a keylined kind whose jets join its
@@ -269,7 +271,7 @@ export function drawCraftJets(
     .clear()
     .setDepth(depth - 1e-6)
     .setVisible(true);
-  graphics.fillStyle(scene.edgeInk ?? LIGHT_FIELD.ink, 1);
+  graphics.fillStyle(LIGHT_FIELD.ink, 1);
   for (const offset of keylineOffsets(keylineWidth(LIGHT_FIELD, kind))) {
     for (const triangle of triangles) {
       if (triangle.alpha >= KEYLINE_ALPHA) {
@@ -337,7 +339,6 @@ export function drawKeylines(
   scene.craftJetsDrawn.clear();
   scene.silhouettes.sweep(
     scene.rasters.scale,
-    scene.edgeInk ?? LIGHT_FIELD.ink,
     (key) =>
       scene.children.list.some(
         (child) => child instanceof GameObjects.Image && child.texture.key === key,
@@ -355,8 +356,7 @@ export function keylineSilhouette(
   sprite: { frame: Textures.Frame },
 ): string | undefined {
   const frame = sprite.frame;
-  const ink = scene.edgeInk ?? LIGHT_FIELD.ink;
-  const key = scene.silhouettes.use(frame, ink, scene.rasters.scale);
+  const key = scene.silhouettes.use(frame, scene.rasters.scale);
   if (!key) {
     return undefined;
   }
@@ -392,7 +392,7 @@ export function keylineSilhouette(
     height,
   );
   const pixels = context.getImageData(0, 0, width, height);
-  thresholdSilhouette(ink, KEYLINE_ALPHA, pixels.data);
+  thresholdSilhouette(LIGHT_FIELD.ink, KEYLINE_ALPHA, pixels.data);
   context.putImageData(pixels, 0, 0);
   canvas.refresh();
   // The silhouette samples as its source does.
@@ -407,7 +407,7 @@ export function keylineEdges(
   shapes: readonly EffectShape[],
 ): EffectShape[] {
   return scene.light && kinds.some((kind) => LIGHT_FIELD.effects.includes(kind))
-    ? inkEdges(scene.edgeInk ?? LIGHT_FIELD.ink, LIGHT_FIELD.keyline, shapes)
+    ? inkEdges(LIGHT_FIELD.ink, LIGHT_FIELD.keyline, shapes)
     : [];
 }
 
@@ -465,7 +465,7 @@ export function drawPulse(scene: HudContext, grow: number, pulse: FeedbackPulse)
   scene.overlay.lineStyle(
     (pulse.kind === "damage" ? 3 : 1.5) + 2 * grow,
     grow
-      ? (scene.edgeInk ?? LIGHT_FIELD.ink)
+      ? LIGHT_FIELD.ink
       : pulse.compromised
         ? EMERGENCY_RETURN.shield.colour
         : pulse.kind === "damage"

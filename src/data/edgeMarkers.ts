@@ -21,9 +21,8 @@ export const EDGE_MARKERS = {
  * Each kind's glyph in logical px (art/space-palette.md "Edge markers"): a filled disc for
  * enemies, heavies, guards and hostile stations, in the space palette's threat, the guard's with
  * an ink bar across its centre and a hostile station's the heavy's disc; an unfilled diamond with
- * a 2 stroke inside its extent for stations, in pointOfInterest. A field with foreground edges
- * outlines each in its edge colour (lightField.markerOutline), ink on a light field and white on
- * Phantom; the guard's bar adds none.
+ * a 2 stroke inside its extent for stations, in pointOfInterest. A field with foreground edges,
+ * every galaxy's, outlines each in ink (lightField.markerOutline); the guard's bar adds none.
  */
 export const EDGE_MARKER_GLYPHS = {
   enemy: { disc: 6 },

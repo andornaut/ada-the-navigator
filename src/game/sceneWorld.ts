@@ -49,7 +49,7 @@ import {
 } from "./whirlpoolProjects.ts";
 
 /** The scene state and methods this module's functions use. */
-export type WorldContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
+export type WorldContext = Partial<Pick<GameScene, "fieldLight">> &
   Scene &
   Pick<
     GameScene,
@@ -552,7 +552,7 @@ export function drawJobs(scene: WorldContext): void {
       };
       // On a light field the rim draws over an ink dash on the same path.
       if (scene.light) {
-        stroke(rim.lightInk.width, scene.edgeInk ?? LIGHT_FIELD.ink, rim.lightInk.alpha);
+        stroke(rim.lightInk.width, LIGHT_FIELD.ink, rim.lightInk.alpha);
       }
       stroke(rim.width, scene.palette.pointOfInterest, rim.alpha);
     } else {
@@ -574,7 +574,7 @@ export function drawJobs(scene: WorldContext): void {
       if (ping) {
         // The ping is on the world plane, under the glint; a light field draws it over ink.
         if (scene.light) {
-          scene.ink.lineStyle(sprite.ping.lightInk, scene.edgeInk ?? LIGHT_FIELD.ink, ping.alpha);
+          scene.ink.lineStyle(sprite.ping.lightInk, LIGHT_FIELD.ink, ping.alpha);
           scene.ink.strokeEllipse(glint.x, glint.y, ping.width, ping.height);
         }
         scene.ink.lineStyle(ping.stroke, scene.palette.pointOfInterest, ping.alpha);
@@ -720,7 +720,7 @@ export function drawTowLine(
     return { x: at.x + offset.x * t, y: at.y + offset.y * t };
   });
   const strokes = [
-    ...(scene.light ? [{ color: scene.edgeInk ?? LIGHT_FIELD.ink, width: line.lightInk }] : []),
+    ...(scene.light ? [{ color: LIGHT_FIELD.ink, width: line.lightInk }] : []),
     ...line.layers.map(({ color, width }) => ({ color: hexNumber(color), width })),
   ];
   for (const { color, width } of strokes) {

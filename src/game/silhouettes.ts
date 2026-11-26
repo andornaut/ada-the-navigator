@@ -11,7 +11,6 @@ type Frame = {
 type Entry = {
   readonly bytes: number;
   readonly frame: Frame;
-  readonly ink: number;
   readonly reusable: boolean;
   scale: number;
 };
@@ -52,15 +51,14 @@ export class Silhouettes {
     return release;
   }
 
-  use(frame: Frame, ink: number, scale: number): string | undefined {
-    const key = this.key(frame, ink);
+  use(frame: Frame, scale: number): string | undefined {
+    const key = this.key(frame);
     if (!key) {
       return undefined;
     }
     const entry = this.held.get(key) ?? {
       bytes: Math.max(1, frame.cutWidth) * Math.max(1, frame.cutHeight) * 4,
       frame,
-      ink,
       reusable: frame.source.image instanceof HTMLImageElement,
       scale,
     };
@@ -73,24 +71,14 @@ export class Silhouettes {
     return key;
   }
 
-  sweep(
-    scale: number,
-    ink: number,
-    inUse: (key: string) => boolean,
-    remove: (key: string) => void,
-  ): void {
+  sweep(scale: number, inUse: (key: string) => boolean, remove: (key: string) => void): void {
     const idle: [string, number][] = [];
     let bytes = 0;
     for (const [key, entry] of this.held) {
       if (this.marked.has(key) || inUse(key)) {
         continue;
       }
-      if (
-        !entry.reusable ||
-        entry.scale !== scale ||
-        entry.ink !== ink ||
-        this.key(entry.frame, entry.ink) !== key
-      ) {
+      if (!entry.reusable || entry.scale !== scale || this.key(entry.frame) !== key) {
         this.held.delete(key);
         remove(key);
         continue;
@@ -109,7 +97,7 @@ export class Silhouettes {
     this.marked.clear();
   }
 
-  private key(frame: Frame, ink: number): string | undefined {
+  private key(frame: Frame): string | undefined {
     const image = frame.source?.image;
     if (!image || !frame.texture) {
       return undefined;
@@ -122,6 +110,6 @@ export class Silhouettes {
     const { cutHeight, cutWidth, cutX, cutY } = frame;
     const traced = `${frame.texture.key}#${String(frame.name)}`;
     const region = `${cutWidth}x${cutHeight}:${cutX},${cutY}`;
-    return `keyline:${traced}@${region}:${ink.toString(16)}:${id}:${frame.source.scaleMode}`;
+    return `keyline:${traced}@${region}:${id}:${frame.source.scaleMode}`;
   }
 }

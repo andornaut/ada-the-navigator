@@ -96,7 +96,7 @@ import {
 } from "./worldArt.ts";
 
 /** The scene state and methods this module's functions use. */
-export type ObjectsContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
+export type ObjectsContext = Partial<Pick<GameScene, "fieldLight">> &
   Scene &
   Pick<
     GameScene,
@@ -846,7 +846,7 @@ function drawPullStreak(
   const edges =
     scene.light && LIGHT_FIELD.keylined.includes("stardust")
       ? inkEdges(
-          scene.edgeInk ?? LIGHT_FIELD.ink,
+          LIGHT_FIELD.ink,
           LIGHT_FIELD.keyline,
           shapes.filter((_, index) => wedges[index]!.keyline),
         )
@@ -1048,7 +1048,7 @@ export function drawObject(scene: ObjectsContext, object: SpaceObject): void {
       }
       if (scene.light && object.upgrade && LIGHT_FIELD.keylined.includes("upgradePickup")) {
         // The square's ink keyline: a stroke 2 keyline wider on the same path.
-        scene.ink.lineStyle(1.5 + 2 * LIGHT_FIELD.keyline, scene.edgeInk ?? LIGHT_FIELD.ink);
+        scene.ink.lineStyle(1.5 + 2 * LIGHT_FIELD.keyline, LIGHT_FIELD.ink);
         scene.ink.strokeRect(point.x - radius, point.y - radius, radius * 2, radius * 2);
         scene.ink.lineStyle(1.5, color);
       }

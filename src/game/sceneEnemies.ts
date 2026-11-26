@@ -43,7 +43,7 @@ import { acknowledgePrimitiveTarget } from "./sceneTargetMarkers.ts";
 import { type EffectShape, mineSolid } from "./weaponEffects.ts";
 
 /** The scene state and methods this module's functions use. */
-export type EnemiesContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
+export type EnemiesContext = Partial<Pick<GameScene, "fieldLight">> &
   Scene &
   Pick<
     GameScene,
@@ -515,9 +515,7 @@ export function drawEnemyWeapons(
       drawEffect(
         scene,
         effect.shapes,
-        light
-          ? enemyInkEdges(scene.edgeInk ?? art.colours.ink, art.lightField.edge, effect.edged)
-          : [],
+        light ? enemyInkEdges(art.colours.ink, art.lightField.edge, effect.edged) : [],
         graphics,
       );
     for (const ring of view.rings) {

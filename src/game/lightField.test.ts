@@ -15,7 +15,6 @@ import {
   keylineWidth,
   LIGHT_FIELD,
   lightGalaxy,
-  readForegroundEdges,
   readLightField,
   readLightGalaxies,
   thresholdSilhouette,
@@ -137,38 +136,13 @@ describe("light-field rule", () => {
     expect(lightGalaxy(readLightGalaxies({ galaxies: {} }), 1)).toBe(false);
   });
 
-  it("selects an explicit white edge without classifying Phantom as a light field", () => {
-    const data = {
-      galaxies: {
-        andromeda: { tint: { light: true } },
-        phantom: { foregroundEdge: "#FFFFFF" },
-      },
-      version: 1,
-    };
-    const light = readLightGalaxies(data);
-    const edges = readForegroundEdges(data);
-    expect(lightGalaxy(light, 6)).toBe(false);
-    expect(foregroundEdge(light, edges, 6)).toBe(0xffffff);
-    expect(foregroundEdge(light, edges, 5)).toBe(INK);
-    expect(foregroundEdge(light, edges, undefined)).toBeUndefined();
-    expect(foregroundEdge(light, edges, null)).toBeUndefined();
-    expect(foregroundEdge(light, edges, 2)).toBeUndefined();
-  });
-
-  it("keeps legacy treatment for absent or malformed optional edge colors", () => {
-    const data = {
-      galaxies: {
-        phantom: { foregroundEdge: "#fff" },
-        sunflower: { foregroundEdge: "invalid", tint: { light: true } },
-        unknown: { foregroundEdge: "#FFFFFF" },
-      },
-      version: 1,
-    };
-    const edges = readForegroundEdges(data);
-    expect(edges.size).toBe(0);
-    expect(foregroundEdge(readLightGalaxies(data), edges, 1)).toBe(INK);
-    expect(foregroundEdge(readLightGalaxies(data), edges, 6)).toBeUndefined();
-    expect(readForegroundEdges(null).size).toBe(0);
+  it("edges every galaxy in ink, Phantom's dark field too, and home in none", () => {
+    for (const galaxy of GALAXY_NUMBERS) {
+      expect([galaxy, foregroundEdge(galaxy)]).toEqual([galaxy, INK]);
+    }
+    expect(lightGalaxy(readLightGalaxies(galaxies), 6)).toBe(false);
+    expect(foregroundEdge(undefined)).toBeUndefined();
+    expect(foregroundEdge(null)).toBeUndefined();
   });
 
   it("reads no rule from malformed data", () => {

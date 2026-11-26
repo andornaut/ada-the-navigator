@@ -23,13 +23,12 @@ function world() {
   const remove = (key: string) => textures.delete(key);
   const store = { exists: (key: string) => textures.has(key), remove };
   const teardown = silhouettes.bindTextureStore(store)!;
-  const draw = (value: ReturnType<typeof frame>, scale = 1, ink = 0) => {
-    const key = silhouettes.use(value, ink, scale)!;
+  const draw = (value: ReturnType<typeof frame>, scale = 1) => {
+    const key = silhouettes.use(value, scale)!;
     textures.add(key);
     return key;
   };
-  const sweep = (scale = 1, ink = 0) =>
-    silhouettes.sweep(scale, ink, (key) => copies.has(key), remove);
+  const sweep = (scale = 1) => silhouettes.sweep(scale, (key) => copies.has(key), remove);
   return { copies, draw, silhouettes, store, sweep, teardown, textures };
 }
 
