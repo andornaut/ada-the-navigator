@@ -1114,22 +1114,56 @@ export function batchCaptures(ctx) {
     await flightPage.locator(".ada-item-notice").first().waitFor({ state: "visible" });
     await flightPage.waitForTimeout(500);
     await ctx.pageShot("controls-paint-notice.png");
-    // The use-refusal view (art/controls.md "Use disc", Refused): an engaged fighter beside the
-    // station puts Ada in danger, so a tap on Dock plays the Use disc's refusal cue with its
-    // notice, taken about 40 ms in, inside the cue's first tinted beat (0 to 80 ms).
+    // The use-refusal view (art/controls.md "Use disc", Refused): an enemy bolt held still in
+    // the battle square beside the station puts Ada in danger, so a tap on Dock plays the Use
+    // disc's refusal cue and shows its notice. No enemy presses Ada, so no drone warning takes
+    // the conversation slot, where the notice would wait under it. On the held clock the cue is
+    // taken 40 ms in, inside its first tinted beat (0 to 80 ms), then 400 ms in, after it ends.
     const refusal = stationModel(1);
-    addEnemy(refusal, { archetype: "fighter", screen: { x: 160, y: 40 } });
-    refusal.state.flight.dangerFor = 1;
+    const refusalFlight = refusal.state.flight;
+    refusalFlight.shots = [
+      {
+        damage: 1,
+        enemy: true,
+        hitIds: [],
+        id: "browser-art:shot:enemy:danger",
+        life: 60,
+        piercing: false,
+        projectile: "bolt",
+        velocity: { x: 0, y: 0 },
+        ...at(refusalFlight, { x: 200, y: 20 }),
+      },
+    ];
+    refusalFlight.dangerFor = 1;
     await ctx.openFixture(canonical(refusal, "controls-use-refusal"), { frozen: false });
     const refusalPage = ctx.page();
-    await refusalPage.clock.resume();
     const use = refusalPage.locator(".ada-use");
     await use.waitFor({ state: "visible" });
     const useBox = await use.boundingBox();
     assert.ok(useBox, "The Use disc has a frame");
+    const notice = refusalPage.locator("#game-status");
+    const refusedText = CONTENT.labels.travelUnavailable;
+    assert.equal(await notice.textContent(), "", "No notice shows before the tap");
     await refusalPage.touchscreen.tap(useBox.x + useBox.width / 2, useBox.y + useBox.height / 2);
-    await refusalPage.waitForTimeout(40);
-    await ctx.pageShot("controls-use-refusal.png");
+    // The frame that refuses the tap starts the cue and writes the notice, so the cue's time
+    // counts from the first frame showing the notice's text.
+    async function refused(frames) {
+      assert.ok(frames < 10, "Dock refuses within 10 frames of the tap");
+      await refusalPage.clock.runFor(16);
+      if ((await notice.textContent()) !== refusedText) {
+        await refused(frames + 1);
+      }
+    }
+    await refused(0);
+    async function refusalShot(file) {
+      assert.equal(await notice.textContent(), refusedText, `${file} shows the refusal notice`);
+      assert.ok(await notice.isVisible(), `${file} shows the refusal notice in the slot`);
+      await ctx.pageShot(file);
+    }
+    await refusalPage.clock.runFor(40);
+    await refusalShot("controls-use-refusal.png");
+    await refusalPage.clock.runFor(360);
+    await refusalShot("controls-use-refusal-notice.png");
   }
 
   // Art's retuned project placements: the salvage beacons on the salvagers' yard, Whirlpool's
