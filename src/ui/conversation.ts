@@ -256,10 +256,6 @@ ${PORTRAIT_RULES}
   left:${units(tab.inset)}
 }
 
-.ada-conversation[data-transmission] .ada-conversation-name{
-  background:${TAB_COLOURS.archie}
-}
-
 ${TAB_RULES}
 ${INTERACTION_STYLE}
 `;

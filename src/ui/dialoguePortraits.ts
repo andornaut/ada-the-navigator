@@ -1,3 +1,4 @@
+import { CAPITAL_CAPTAINS } from "../data/capitalCaptains.ts";
 import { CAST, castFrames, type CastPortraitSheet, SPEAKER_CAST } from "../data/cast.ts";
 import type { Mood } from "../data/conversations.ts";
 import type { ConversationLineView } from "./conversation.ts";
@@ -129,6 +130,7 @@ export const TAB_COLOURS = {
   archieNamed: COLOURS.archieTab,
   astra: COLOURS.astraTab,
   penny: COLOURS.jobOrange,
+  ...Object.fromEntries(Object.keys(CAPITAL_CAPTAINS).map((speaker) => [speaker, AWAITING_TAB])),
   ...Object.fromEntries(
     Object.entries(SPEAKER_CAST).map(([speaker, key]) => [speaker, CAST[key].tab]),
   ),

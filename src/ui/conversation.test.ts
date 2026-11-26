@@ -2,7 +2,11 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it, vi } from "vitest";
 
-import { CAPITAL_CAPTAINS, type CapitalCaptain } from "../data/capitalCaptains.ts";
+import {
+  CAPITAL_CAPTAINS,
+  type CapitalCaptain,
+  isCapitalCaptain,
+} from "../data/capitalCaptains.ts";
 import { CAST, castPortrait, SPEAKER_CAST } from "../data/cast.ts";
 import { SPEAKERS } from "../data/conversations.ts";
 import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
@@ -165,12 +169,19 @@ describe("conversation box style", () => {
     }
   });
 
-  it("gives every speaker a tab colour and a compact portrait sheet that exists", () => {
+  it("gives every speaker a tab and keeps uncrewed radio transmissions portrait-free", () => {
     for (const speaker of Object.keys(SPEAKERS)) {
       expect(TAB_COLOURS).toHaveProperty(speaker);
       expect(css.get(`.ada-conversation[data-speaker="${speaker}"] .ada-conversation-name`)).toBe(
         `background:${TAB_COLOURS[speaker as keyof typeof TAB_COLOURS]}`,
       );
+      if (isCapitalCaptain(speaker)) {
+        expect(css.has(`.ada-conversation-portrait[data-speaker="${speaker}"]`)).toBe(false);
+        expect(css.get(".ada-conversation[data-transmission] .ada-conversation-frame")).toBe(
+          "display:none",
+        );
+        continue;
+      }
       const cast = SPEAKER_CAST[speaker as keyof typeof SPEAKER_CAST];
       const sheet = cast
         ? castPortrait(cast, true)
