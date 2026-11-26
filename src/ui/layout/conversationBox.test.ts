@@ -124,30 +124,38 @@ describe("conversation box", () => {
     expect(shipHullTop(DESKTOP)).toBeCloseTo(play.y + play.height / 2 - 11.83, 9);
   });
 
+  // The shipped idle heading's rise above the pivot, from its standalone SVG's highest vertex.
+  const shippedRise = (heading: number) => {
+    const { svg } = SHIPPED_SHIP_SOURCES!.standaloneClassic(heading)!;
+    const ys = [...svg.matchAll(/[\d.]+,([\d.]+)/g)].map((match) => Number(match[1]));
+    return ((FRAME / 2 - Math.min(...ys)) * DISPLAY) / FRAME;
+  };
+
   it("rises to the highest drawn hull point of Art's 64 idle headings, at the same 45-degree orientation", () => {
-    const rises = Array.from({ length: SHIP_HEADINGS }, (_, heading) => {
-      const { svg } = SHIPPED_SHIP_SOURCES!.standaloneClassic(heading)!;
-      const ys = [...svg.matchAll(/[\d.]+,([\d.]+)/g)].map((match) => Number(match[1]));
-      return ((FRAME / 2 - Math.min(...ys)) * DISPLAY) / FRAME;
-    });
+    const rises = Array.from({ length: SHIP_HEADINGS }, (_, heading) => shippedRise(heading));
     const highest = Math.max(...rises);
     const peakHeading = rises.indexOf(highest);
     expect(peakHeading).toBe(SHIP_HEADINGS / 8);
     expect((peakHeading * 360) / SHIP_HEADINGS).toBe(45);
-    const expectedRises = Array.from({ length: SHIP_HEADINGS }, (_, yaw) => {
-      const ys = drawn(FRAME / 2, classic.paint, { yaw }).flatMap(({ outline }) =>
-        outline.map(([, y]) => y),
-      );
-      // Art's svgPaths writes frame-coordinate vertices to four places, then the SVG output step
-      // rounds them to the ship set's decimals.
-      const top = Number(svgNumber(SVG_DECIMALS.ship, Number(Math.min(...ys).toFixed(4))));
-      return ((FRAME / 2 - top) * DISPLAY) / FRAME;
-    });
-    expect(rises).toEqual(expectedRises);
-    expect(expectedRises.indexOf(Math.max(...expectedRises))).toBe(peakHeading);
     expect(highest).toBeLessThanOrEqual(CONVERSATION_BOX.ship.hullRise);
     expect(CONVERSATION_BOX.ship.hullRise).toBe(Math.ceil(highest * 100) / 100);
   });
+
+  // Art's model is drawn for every heading, an eighth of the headings per test.
+  it.each(Array.from({ length: 8 }, (_, octant) => [octant * 8, octant * 8 + 7]))(
+    "ships the highest drawn hull point of Art's model at idle headings %i to %i",
+    (first, last) => {
+      for (let yaw = first; yaw <= last; yaw++) {
+        const ys = drawn(FRAME / 2, classic.paint, { yaw }).flatMap(({ outline }) =>
+          outline.map(([, y]) => y),
+        );
+        // Art's svgPaths writes frame-coordinate vertices to four places, then the SVG output
+        // step rounds them to the ship set's decimals.
+        const top = Number(svgNumber(SVG_DECIMALS.ship, Number(Math.min(...ys).toFixed(4))));
+        expect(shippedRise(yaw), `heading ${yaw}`).toBe(((FRAME / 2 - top) * DISPLAY) / FRAME);
+      }
+    },
+  );
 
   it("keeps 42.67 clear above Ada's ship at the 360 high view and 65.17 at 405", () => {
     expect(conversationShipClearance(NO_INSETS, BASE)).toBeCloseTo(42.67, 9);
