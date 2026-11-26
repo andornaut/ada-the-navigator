@@ -606,7 +606,7 @@ function useFixture() {
     },
     now: () => Date.now(),
     onPageControl: (target: unknown) => target !== canvas && target !== parent,
-    options: { subscribeRequired: () => () => {} },
+    options: { exit: undefined, subscribeRequired: () => () => {} },
     parent,
     point: (event: PointerEvent) => ({ x: event.clientX, y: event.clientY }),
     readViewUnit,
@@ -625,6 +625,9 @@ function useFixture() {
     window,
   });
   const declarations = [
+    "exitPresentation",
+    "createExit",
+    "exit",
     "exitButton",
     "resolveUsePointer",
     "useAction",
@@ -633,8 +636,7 @@ function useFixture() {
   ];
   const actual = runInContext(
     ts.transpileModule(
-      `let ${controlsDeclaration("exitPose")};
-let ${controlsDeclaration("pressedStoryButton")};
+      `let ${controlsDeclaration("pressedStoryButton")};
 ${declarations
   .map((name) => `const ${controlsDeclaration(name)};`)
   .join("\n")}\n({actionRoot,useAction,resolveUsePointer});`,
