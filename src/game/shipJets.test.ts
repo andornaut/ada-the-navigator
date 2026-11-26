@@ -1,14 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { SHIP_HEADINGS as ART_SHIP_HEADINGS } from "../../art/tools/projection.ts";
-import {
-  JET_LENGTH,
-  JET_LEVELS,
-  JET_PROFILE,
-  JET_SHAPE,
-  plumeReach,
-} from "../../art/tools/ship-jet-layers.ts";
-import { forwardJetMouths, FRAME } from "../../art/tools/ship-model.ts";
+import { JET_LENGTH, JET_LEVELS, JET_PROFILE, JET_SHAPE } from "../../art/tools/ship-jet-layers.ts";
+import { forwardJetMouthGeometry, FRAME } from "../../art/tools/ship-model.ts";
 import { jetLength as artJetLength, plumePolygon } from "../../art/tools/ship-plume.ts";
 import manifest from "../../public/art/manifest.json";
 import art from "../../public/art/ship-jets.json";
@@ -478,10 +472,9 @@ describe("teardrop plumes", () => {
   it("matches the current canonical producer mouth geometry at every heading", () => {
     expect(jets.frame).toBe(FRAME);
     expect(jets.headings).toHaveLength(ART_SHIP_HEADINGS);
-    const reach = plumeReach(JET_LENGTH.base + JET_LENGTH.scale);
     jets.headings.forEach((mouths, heading) => {
       expect(mouths).toHaveLength(2);
-      forwardJetMouths(FRAME / 2, { yaw: heading }, reach).forEach((mouth, index) => {
+      forwardJetMouthGeometry(FRAME / 2, { yaw: heading }).forEach((mouth, index) => {
         const [x, y] = mouth.anchor;
         const [ax, ay] = mouth.axis;
         const [hx, hy] = mouth.half;
