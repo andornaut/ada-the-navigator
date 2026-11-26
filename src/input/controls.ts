@@ -206,13 +206,18 @@ const CONTROL_KEYS = new Set([
   "Space",
 ]);
 
-export function createControls(scene: Scene, options: ControlsOptions): Controls {
-  const { now } = options;
-  const canvas = scene.game.canvas;
+function requireCanvasParent(canvas: HTMLCanvasElement): HTMLElement {
   const parent = canvas.parentElement;
   if (!parent) {
     throw new Error("Controls require a mounted game canvas");
   }
+  return parent;
+}
+
+export function createControls(scene: Scene, options: ControlsOptions): Controls {
+  const { now } = options;
+  const canvas = scene.game.canvas;
+  const parent = requireCanvasParent(canvas);
   const host = parent.closest<HTMLElement>(`#${VIEW_HOST_ID}`);
   const previousPosition = parent.style.position;
   const ownsPosition = getComputedStyle(parent).position === "static";
@@ -252,6 +257,28 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     });
   }
   let menuContext: "start" | "nonplay" = "nonplay";
+  const useButton = document.createElement("button");
+  useButton.type = "button";
+  const useAction = bindAdaAction(
+    {
+      beforeClick: (event) => event.detail === 0 || resolveUsePointer(event) === useButton,
+      click: {
+        availability: () =>
+          state.accepts() &&
+          context !== undefined &&
+          useShown &&
+          !useButton.closest("[hidden], [inert]")
+            ? { kind: "available" }
+            : { kind: "omitted" },
+        run: () => state.requestUse(),
+      },
+      current: () => !disposed && useButton.isConnected,
+      slopPx: () => SCROLL.dragThreshold * readViewUnit(useButton),
+    },
+    useButton,
+  );
+  useButton.className = "ada-use";
+  useButton.hidden = true;
   const settings = createSettings(parent, {
     build: BUILD_LABEL,
     fpsCounter: options.fpsCounter,
@@ -276,6 +303,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       visibility = value;
     },
     storage: options.storage,
+    useButton,
   });
   const exitPresentation: { pose: ReturnType<typeof mountNavigationPose> | undefined } = {
     pose: undefined,
@@ -287,7 +315,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       guard: rootPressGuard(settings.root),
       pointerRelease: {
         onPressChange: (element) => {
-          usePress = element === settings.useButton ? { since: now() } : undefined;
+          usePress = element === useButton ? { since: now() } : undefined;
           weapons.setPressed(element);
           pressedStoryButton?.removeAttribute("data-story-pressed");
           pressedStoryButton =
@@ -636,7 +664,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     ring: createTouchChrome(scene, options.rasterScale, kind)?.setDepth(STICK_DEPTHS.ring),
   });
   const sticks = { aim: stick("aim"), move: stick("move") };
-  const questUseIcon = createContextQuestIcon(settings.useButton);
+  const questUseIcon = createContextQuestIcon(useButton);
   const useDisc = createUseDisc(scene, options.rasterScale).setDepth(STICK_DEPTHS.ring);
   const stickParts = [
     ...[sticks.move, sticks.aim]
@@ -674,8 +702,8 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     });
     useLayout = useDiscLayout(size, layout.insets);
     useDisc.setPosition(useLayout.frame.x, useLayout.frame.y);
-    settings.useButton.style.left = units(useLayout.frame.x);
-    settings.useButton.style.top = units(useLayout.frame.y);
+    useButton.style.left = units(useLayout.frame.x);
+    useButton.style.top = units(useLayout.frame.y);
   };
   const fitControls = (): void => {
     camera.ignore(scene.children.list.filter((object) => !stickSet.has(object)));
@@ -706,21 +734,21 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     if (target === null) {
       return null;
     }
-    const capturedUse = event.target instanceof Node && settings.useButton.contains(event.target);
-    const native = settings.useButton.contains(target);
+    const capturedUse = event.target instanceof Node && useButton.contains(event.target);
+    const native = useButton.contains(target);
     const surface = target === canvas || target === parent || joystickTarget(target) !== null;
     if (!native && (!surface || onPageControl(target))) {
       return capturedUse ? null : undefined;
     }
     if (useShown && state.accepts() && usePressed(useLayout, point(event))) {
-      return settings.useButton;
+      return useButton;
     }
     return native || capturedUse ? null : undefined;
   };
   const desktopBinding = bindDesktopInput(
     {
       accepts: () => state.accepts(),
-      acceptsPointer: (event) => resolveUsePointer(event) !== settings.useButton,
+      acceptsPointer: (event) => resolveUsePointer(event) !== useButton,
       onModeChange: () => state.reset(),
       onUse: () => state.requestUse(),
       point,
@@ -728,25 +756,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
     desktop,
   );
-  const useAction = bindAdaAction(
-    {
-      beforeClick: (event) => event.detail === 0 || resolveUsePointer(event) === settings.useButton,
-      click: {
-        availability: () =>
-          state.accepts() &&
-          context !== undefined &&
-          useShown &&
-          !settings.useButton.closest("[hidden], [inert]")
-            ? { kind: "available" }
-            : { kind: "omitted" },
-        run: () => state.requestUse(),
-      },
-      current: () => !disposed && settings.useButton.isConnected,
-      slopPx: () => SCROLL.dragThreshold * readViewUnit(settings.useButton),
-    },
-    settings.useButton,
-  );
-  for (const button of [exitButton, settings.useButton]) {
+  for (const button of [exitButton, useButton]) {
     if (button) {
       assertAdaActionBindings(button);
     }
@@ -781,7 +791,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const stopPointers = listenPagePresses(
     (event) =>
       state.accepts() &&
-      resolveUsePointer(event) !== settings.useButton &&
+      resolveUsePointer(event) !== useButton &&
       (event.pointerType === "touch" || joystickTarget(event.target) !== null) &&
       !onPageControl(event.target) &&
       (event.target === canvas || event.target === parent || joystickTarget(event.target) !== null),
@@ -917,18 +927,17 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     if (!useShown) {
       usePress = undefined;
     }
-    settings.useButton.hidden = !useShown;
-    settings.useButton.inert = modalOpen();
+    useButton.hidden = !useShown;
+    useButton.inert = modalOpen();
     useDisc.setVisible(useShown);
     if (context) {
-      const useFocused =
-        useShown && !settings.useButton.inert && settings.useButton.matches(":focus-visible");
+      const useFocused = useShown && !useButton.inert && useButton.matches(":focus-visible");
       const pose = usePress
         ? now() - usePress.since < USE_PRESS_MS
           ? "press"
           : "held"
         : useFocused
-          ? settings.useButton.matches(":active")
+          ? useButton.matches(":active")
             ? "focus-held"
             : "focus"
           : "rest";
@@ -1088,11 +1097,11 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       context = next;
       questUseIcon.set(next?.questIcon ?? null);
       if (next) {
-        settings.useButton.dataset.use = next.action;
-        settings.useButton.setAttribute("aria-label", next.label);
+        useButton.dataset.use = next.action;
+        useButton.setAttribute("aria-label", next.label);
       } else {
-        delete settings.useButton.dataset.use;
-        settings.useButton.removeAttribute("aria-label");
+        delete useButton.dataset.use;
+        useButton.removeAttribute("aria-label");
       }
     },
     setEnabled(value) {

@@ -98,6 +98,7 @@ export interface SettingsOptions {
   readonly onVisibilityChange: (visibility: ControlVisibility) => void;
   // Where the device settings are read and written; undefined where site data is blocked.
   readonly storage: DeviceStorage | undefined;
+  readonly useButton?: HTMLButtonElement;
 }
 
 const DEFAULT_CONTROL_FOCUS = `.ada-controls button:focus-visible:not(:where(
@@ -275,10 +276,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   root.className = "ada-controls";
   applyAdaControlTheme(root);
   root.dataset.fontRole = FONT_ROLES.body;
-  const useButton = document.createElement("button");
-  useButton.type = "button";
-  useButton.className = "ada-use";
-  useButton.hidden = true;
   const joystickTargets = ["move", "aim"].map((side) => {
     const target = document.createElement("div");
     target.dataset.control = `${side}-joystick`;
@@ -460,7 +457,8 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   setScrollGroup(stepsParts, stepsLine);
   options.onFeedbackChange?.(feedback());
   options.onVisibilityChange(visibility());
-  root.append(...joystickTargets, useButton, modal);
+  const { useButton } = options;
+  root.append(...joystickTargets, ...(useButton ? [useButton] : []), modal);
   const layer = createModalLayer(modal);
   let disposed = false;
   let open = false;
@@ -693,7 +691,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     root.remove();
   };
   try {
-    // Controls installs the live action root and binds contextual Use after this factory returns.
+    // Controls installs the live action root after this factory returns.
     assertAdaActionMetadata(cardFrame);
     assertAdaActionMetadata(stepsFrame);
     parent.append(root);
@@ -714,6 +712,5 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     open: () => setOpen(true),
     root,
     stepsOpen,
-    useButton,
   };
 }

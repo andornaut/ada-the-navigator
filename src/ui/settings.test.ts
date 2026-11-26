@@ -750,6 +750,10 @@ it("isolates Settings, releases its foreground once and restores the original op
 it("publishes bound Settings and Install Steps, then returns to the same native Settings frame", async () => {
   const onOpenChange = vi.fn();
   const parent = fixtureParent();
+  const useButton = document.createElement("button");
+  useButton.type = "button";
+  useButton.className = "ada-use";
+  useButton.hidden = true;
   const append = parent.append.bind(parent);
   const published: string[][] = [];
   vi.spyOn(parent, "append").mockImplementation((...nodes) => {
@@ -792,6 +796,7 @@ it("publishes bound Settings and Install Steps, then returns to the same native 
     onOpenChange,
     onVisibilityChange: vi.fn(),
     storage: localStorage,
+    useButton,
   });
   fixtureActionRoot(settings.root);
   expect(published).toEqual([

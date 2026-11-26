@@ -291,9 +291,10 @@ function fixture(
       pauseButton,
       pressBack,
       readViewUnit,
-      settings: { root, useButton },
+      settings: { root },
       state: { accepts: () => false },
       update,
+      useButton,
       window: document.defaultView,
     }),
   ) as {
