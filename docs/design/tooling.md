@@ -51,5 +51,7 @@ Reference: [checks](../checks.md), [container adoption](../container-adoption.md
 | ada-0351 | Reuse keyline textures across animation frames                            | [ada-0351.md](../work/ada-0351.md) |
 | ada-0391 | Drop the routine alternate-world test run                                 | [ada-0391.md](../work/ada-0391.md) |
 | ada-0393 | Restructure the source into named layers with one entry per area          | [ada-0393.md](../work/ada-0393.md) |
+| ada-0403 | Track Docker updates for Ada's check container                            | [ada-0403.md](../work/ada-0403.md) |
 | ada-0405 | Reduce redundant tests and suite runtime                                  | [ada-0405.md](../work/ada-0405.md) |
+| ada-0408 | Adopt Delivery Kit 8.6.0 with the existing gate                           | [ada-0408.md](../work/ada-0408.md) |
 | ada-0413 | Start version discovery earlier and show continuous update progress       | [ada-0413.md](../work/ada-0413.md) |
