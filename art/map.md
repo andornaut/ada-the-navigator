@@ -31,13 +31,18 @@ right 43, bottom 19) 43 to 677 and 16 to 341.
 
 | Part   | Anchor                                                                                                                        |
 | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| Field  | The whole logical view, in the galaxy's `background` with the fog over it                                                     |
+| Field  | The whole logical view, with the galaxy's `background` and fog inside the playable boundary                                   |
 | Header | Top on the page rect's top; left `SPACING.gap` right of the pause press area while the pause button shows, as the status pill |
 | Tools  | One row of three `HUD_BUTTON` targets, the last target's right and every target's top on the page rect's top-right corner     |
 | Footer | Quests, Galaxies, then Close, the last's right and every button's bottom on the page rect's bottom-right corner               |
 | Panel  | Left and bottom on the page rect's bottom-left corner                                                                         |
 | Fit    | The region left for the map: see [Projection and fit](#projection-and-fit)                                                    |
 | Quests | The shared [Quests screen](#shared-quests) opens over the Map                                                                 |
+
+The approved Local Map design uses near-black `#131119` beyond the full
+playable boundary, the diamond formed by projecting the wrapped galaxy square.
+The boundary follows the field as it pans and zooms. Keep the dashed charting
+oval as a distinct marker inside the playable field.
 
 ### Header
 
