@@ -1,4 +1,4 @@
-import { CAPITAL_CAPTAINS } from "../data/capitalCaptains.ts";
+import { NEEDLE_CADENCE } from "../data/capitalBosses.ts";
 import type { ConversationLine } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { NEEDLE, NEEDLE_PLACES } from "../data/needle.ts";
@@ -61,11 +61,7 @@ const progressOf = (context: ChapterContext): NeedleChapterProgress =>
   });
 const stateOf = (context: ChapterContext) => (context.flight as ChapterFlight).needle;
 export { needleCourses } from "./needle.ts";
-export const NEEDLE_CADENCE = {
-  captain: CAPITAL_CAPTAINS.captainCadence.name,
-  id: "boss:needle:crossbow",
-  ship: "Crossbow",
-} as const;
+export { NEEDLE_CADENCE };
 
 export const NEEDLE_CADENCE_CUES = {
   approach: {

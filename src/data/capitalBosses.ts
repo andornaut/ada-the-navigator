@@ -35,6 +35,12 @@ export const SUNFLOWER_BOSS_CUES = {
   },
 } as const satisfies Record<string, ConversationLine>;
 
+export const NEEDLE_CADENCE = {
+  captain: CAPITAL_CAPTAINS.captainCadence.name,
+  id: "boss:needle:crossbow",
+  ship: "Crossbow",
+} as const;
+
 export const WHIRLPOOL_CAPITAL_BOSS = {
   captain: CAPITAL_CAPTAINS.captainSounder.name,
   id: "route:holodisk:sounder",

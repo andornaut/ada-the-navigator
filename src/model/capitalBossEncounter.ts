@@ -6,11 +6,14 @@ import type { FlightState, SpaceObject } from "./types.ts";
 import { worldDistance } from "./worldContacts.ts";
 
 /** The active flight owns its actor; between flights the progress record owns it. */
-export type CapitalBossProgress = { readonly site: Vec } & (
+export type CapitalBossProgress = {
+  readonly firstHardpointLost?: true;
+  readonly site: Vec;
+} & (
   | { readonly phase: "active" }
   | { readonly actor: SpaceObject; readonly phase: "away" }
   | {
-      cacheClaimed: boolean;
+      cacheClaimed?: boolean;
       readonly outcome: "defeated" | "salvaged";
       readonly phase: "resolved";
     }

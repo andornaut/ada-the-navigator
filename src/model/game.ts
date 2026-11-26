@@ -41,6 +41,7 @@ import { HOLODISKS } from "../data/holodisks.ts";
 import { carriedItemName, STORY_ITEM_NAMES } from "../data/itemNames.ts";
 import { JOB_TUNING, type JobType } from "../data/jobs.ts";
 import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
+import { NEEDLE } from "../data/needle.ts";
 import { visualNoticeTiming } from "../data/noticeTiming.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { poiAmbientLine, type PoiApproachKind } from "../data/poiDiscoveryLore.ts";
@@ -77,7 +78,7 @@ import {
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { calfHome, calfRouteMidpoint, calfStart, placedCalf, stepCalf } from "./calf.ts";
 import { capitalBossActor, encounterBossHud } from "./capitalBossEncounter.ts";
-import type { ChapterResult } from "./chapterProtocol.ts";
+import type { ChapterContext, ChapterResult } from "./chapterProtocol.ts";
 import { chapterRuntime } from "./chapters.ts";
 import { applyEconomyCheat, type CheatId, economyCheatAvailable } from "./cheats.ts";
 import {
@@ -134,6 +135,7 @@ import {
   placeDestinationAhead,
   placeExplorationSite,
   placeHuntingPack,
+  placeNeedleCadence,
   placeSunflowerCapitalBoss,
   planRequiredCartwheelRoute,
   planRequiredWhirlpoolRoutes,
@@ -219,6 +221,12 @@ import { markerKnowledgeStore } from "./markerBindings.ts";
 import { markerActorTracked } from "./markerKnowledge.ts";
 import { needleCourses, setNeedleActivity, stepNeedleCourse } from "./needle.ts";
 import { clearNeedleEnemies, ensureNeedleDebris } from "./needleFlight.ts";
+import {
+  NEEDLE_CADENCE,
+  NEEDLE_CADENCE_CUES,
+  needleCadenceSite,
+  needleCadenceTransmission,
+} from "./needleRuntime.ts";
 import type { PennyMarker, PennyPoint } from "./pennyMarkers.ts";
 import { phantomBossHud, type PhantomContext, phantomWaypoint } from "./phantom.ts";
 import { phantomAllyRoster, type PhantomAllySpec } from "./phantomAllies.ts";
@@ -322,6 +330,7 @@ import type {
   DialogueState,
   FlightEvent,
   FlightInput,
+  FlightLogEntry,
   FlightState,
   GalaxyProgress,
   GameSave,
@@ -358,6 +367,12 @@ const progress = newProgress;
 
 // The dialogue marker that holds the flight under the holodisk moment's story pages.
 const HOLODISK_MOMENT = "holodiskMoment";
+const NAMED_CAPITAL_IDS: Partial<Record<GalaxyNumber, string>> = {
+  1: SUNFLOWER_CAPITAL_BOSS.id,
+  3: WHIRLPOOL_CAPITAL_BOSS.id,
+  4: NEEDLE_CADENCE.id,
+  6: PHANTOM_FLAGSHIP,
+};
 const NEEDLE_PRELUDE = ["arrival:4", "meeting:4:avi"] as const;
 
 /** A first launch: galaxy one unlocked and nothing begun. */
@@ -1470,15 +1485,85 @@ export class GameModel {
       return phantomBossHud({ content: this.content, flight, progress: this.current }, canSalvage);
     }
     const sounder = this.current.sounder;
+    const optional = this.current.capitalBoss?.phase === "active";
     const identity =
-      flight.galaxy === 1 && this.current.capitalBoss?.phase === "active"
+      optional && flight.galaxy === 1
         ? SUNFLOWER_CAPITAL_BOSS
-        : flight.galaxy === 3 &&
-            (sounder?.phase === "active" ||
-              (sounder?.phase === "resolved" && sounder.outcome === "disabled"))
-          ? WHIRLPOOL_CAPITAL_BOSS
-          : null;
+        : optional && flight.galaxy === 4
+          ? NEEDLE_CADENCE
+          : flight.galaxy === 3 &&
+              (sounder?.phase === "active" ||
+                (sounder?.phase === "resolved" && sounder.outcome === "disabled"))
+            ? WHIRLPOOL_CAPITAL_BOSS
+            : null;
     return identity && encounterBossHud(identity, flight, canSalvage);
+  }
+
+  private prepareNeedleBoss(context: ChapterContext): void {
+    const { flight, progress } = context;
+    const boss = progress.capitalBoss;
+    const world = flightWorldContext(flight);
+    if (boss?.phase === "away") {
+      const { actor, ...saved } = boss;
+      flight.objects.push(actor);
+      progress.capitalBoss = { ...saved, phase: "active" };
+      worldSyncFlightRegion(world, this.content, flight);
+      return;
+    }
+    if (boss || progress.needle?.eyeLit !== NEEDLE.eyeGates) {
+      return;
+    }
+    const grid = periodicWorldGrid(world, this.content.tuning.chunkSize);
+    const cell = worldCellKey(grid, worldCellAt(grid, flight.player));
+    if (this.bossPlacementCells.get(flight) === cell) {
+      return;
+    }
+    this.bossPlacementCells.set(flight, cell);
+    const site = placeNeedleCadence(this.content, flight, (placement) =>
+      needleCadenceSite(context, placement),
+    );
+    if (site) {
+      progress.capitalBoss = { phase: "active", site };
+    }
+  }
+
+  private resolveNeedleBoss(outcome: "defeated" | "salvaged"): void {
+    const boss = this.current.capitalBoss;
+    if (boss?.phase === "active") {
+      this.current.capitalBoss = { outcome, phase: "resolved", site: boss.site };
+      this.needleBossCues();
+    }
+  }
+
+  private needleBossCues(): void {
+    const { id } = NEEDLE_CADENCE;
+    const boss = this.current.capitalBoss;
+    if (boss?.phase === "resolved") {
+      this.talk.authoredCue(`${id}:resolved`, NEEDLE_CADENCE_CUES.resolved);
+    } else if (boss?.phase === "active" && this.bossHud()) {
+      this.talk.authoredCue(`${id}:approach`, NEEDLE_CADENCE_CUES.approach);
+      if (boss.firstHardpointLost) {
+        this.talk.authoredCue(`${id}:hardpoint`, NEEDLE_CADENCE_CUES.hardpoint);
+      }
+    }
+  }
+
+  /** Intercepted entries retain their identity as their disclosed attribution changes. */
+  get flightLog(): readonly FlightLogEntry[] {
+    const needle = this.state.progress[4];
+    const memoryPending =
+      this.state.selectedGalaxy === 4 &&
+      (this.story?.scene.id === "holodisk" ||
+        this.heldStory?.position.scene.id === "holodisk" ||
+        this.state.dialogue?.context === HOLODISK_MOMENT ||
+        this.heldFlight?.dialogue?.context === HOLODISK_MOMENT);
+    // Older saves have no completion field. The saved holodisk story cursor still gates them.
+    const archieRevealed =
+      needle.holodisk &&
+      holodisksHeld(this.state.progress) >= ARCHIE_NAMED.holodisks &&
+      (needle.needleMemoryRead ?? !memoryPending);
+    const transmission = needleCadenceTransmission(needle.capitalBoss, archieRevealed);
+    return transmission ? [transmission] : [];
   }
 
   private prepareWhirlpoolDisk(flight: FlightState): void {
@@ -2559,11 +2644,11 @@ export class GameModel {
       });
     } else if (flight.galaxy === 4 || flight.galaxy === 5 || flight.galaxy === 6) {
       populateRequiredChapterFlight(this.content, this.current, flight, () => {
-        chapterRuntime(flight.galaxy)?.init?.({
-          content: this.content,
-          flight,
-          progress: this.current,
-        });
+        const context = { content: this.content, flight, progress: this.current };
+        chapterRuntime(flight.galaxy)?.init?.(context);
+        if (flight.galaxy === 4) {
+          this.prepareNeedleBoss(context);
+        }
       });
     } else {
       populateFlight(this.content, this.current, flight);
@@ -2690,10 +2775,11 @@ export class GameModel {
     const flight = this.state.flight;
     if (flight) {
       const boss = this.current.capitalBoss;
-      if (flight.galaxy === 1 && boss?.phase === "active") {
-        const actor = capitalBossActor(flight, SUNFLOWER_CAPITAL_BOSS.id);
+      if ((flight.galaxy === 1 || flight.galaxy === 4) && boss?.phase === "active") {
+        const identity = flight.galaxy === 4 ? NEEDLE_CADENCE : SUNFLOWER_CAPITAL_BOSS;
+        const actor = capitalBossActor(flight, identity.id);
         if (actor) {
-          this.current.capitalBoss = { actor, phase: "away", site: boss.site };
+          this.current.capitalBoss = { ...boss, actor, phase: "away" };
         }
       }
       if (flight.galaxy === 3 && this.current.sounder?.phase === "active") {
@@ -2868,6 +2954,9 @@ export class GameModel {
     const p = this.current;
     p.holodisk = true;
     const f = this.state.flight;
+    if (f?.galaxy === 4) {
+      p.needleMemoryRead = false;
+    }
     if (f) {
       this.markerRegistry.forget({ store: this.markerStore(f) }, "holodisk");
       f.objects = f.objects.filter(
@@ -3058,6 +3147,20 @@ export class GameModel {
         boss.cacheClaimed = true;
       }
     }
+    if (f.galaxy === 4 && this.current.capitalBoss?.phase === "active") {
+      const boss = this.current.capitalBoss;
+      if (
+        events.some((event) => event.type === "enemyDestroyed" && event.id === NEEDLE_CADENCE.id)
+      ) {
+        this.resolveNeedleBoss("defeated");
+      } else if (
+        events.some(
+          (event) => event.type === "enemyFirstHardpointLost" && event.id === NEEDLE_CADENCE.id,
+        )
+      ) {
+        this.current.capitalBoss = { ...boss, firstHardpointLost: true };
+      }
+    }
     for (const event of events) {
       if (event.type === "guardCue") {
         const store = this.markerStore(f);
@@ -3155,6 +3258,10 @@ export class GameModel {
     this.stepCalf(dt, f);
     if (context && previousChapterPosition) {
       this.applyChapterResult(runtime?.afterStep?.(context, dt, previousChapterPosition, events));
+      if (f.galaxy === 4) {
+        this.prepareNeedleBoss(context);
+        this.needleBossCues();
+      }
       const thread = heldActivity(f.galaxy, this.state);
       const layout = needleCourses(f);
       if (thread?.id === "threadNeedle" && layout) {
@@ -3218,16 +3325,7 @@ export class GameModel {
     this.sounderCues(f);
     this.talk.step(dt, held, {
       aimed: Math.hypot(input.aim.x, input.aim.y) > 0,
-      capitalInSight: heavyInSight(
-        "capital",
-        SCREEN,
-        f,
-        f.galaxy === 6
-          ? PHANTOM_FLAGSHIP
-          : f.galaxy === 3
-            ? WHIRLPOOL_CAPITAL_BOSS.id
-            : SUNFLOWER_CAPITAL_BOSS.id,
-      ),
+      capitalInSight: heavyInSight("capital", SCREEN, f, NAMED_CAPITAL_IDS[f.galaxy]),
       collectedStardust: events.some((event) => event.type === "stardust"),
       docked: this.dockedThisFlight,
       dronesNear: dronesNear(f),
@@ -3243,7 +3341,8 @@ export class GameModel {
           event.type === "enemyDisabled" &&
           event.id !== SUNFLOWER_CAPITAL_BOSS.id &&
           event.id !== WHIRLPOOL_CAPITAL_BOSS.id &&
-          event.id !== PHANTOM_FLAGSHIP,
+          event.id !== PHANTOM_FLAGSHIP &&
+          event.id !== NEEDLE_CADENCE.id,
       ),
       holodisks: holodisksHeld(this.state.progress),
       inCurrent: inCurrent(f.galaxy, 0, f.player),
@@ -3461,6 +3560,17 @@ export class GameModel {
               symbol: "destination" as const,
             }
           : undefined;
+    const needle = f.galaxy === 4 ? this.current.capitalBoss : undefined;
+    const optionalBossWaypoint =
+      needle?.phase === "active"
+        ? {
+            ...needle.site,
+            id: NEEDLE_CADENCE.id,
+            label: NEEDLE_CADENCE.ship,
+            objective: false,
+            symbol: "destination" as const,
+          }
+        : sunflowerWaypoint;
     const map = localMap({
       ...flightStationContext(f),
       ...(waypoint
@@ -3472,8 +3582,8 @@ export class GameModel {
               objective: !this.current.questComplete,
             },
           }
-        : sunflowerWaypoint
-          ? { chapterWaypoint: sunflowerWaypoint }
+        : optionalBossWaypoint
+          ? { chapterWaypoint: optionalBossWaypoint }
           : {}),
       catalog: ECONOMY,
       chartedPois: this.explorationSites(f)
@@ -3777,6 +3887,8 @@ export class GameModel {
         this.resolveSunflowerBoss(flight, "salvaged");
       } else if (flight.galaxy === 3 && target.id === WHIRLPOOL_CAPITAL_BOSS.id) {
         this.resolveSounder(flight, "disabled");
+      } else if (flight.galaxy === 4 && target.id === NEEDLE_CADENCE.id) {
+        this.resolveNeedleBoss("salvaged");
       } else {
         this.panel("salvage", INTERACTION_COPY.salvage!.lines[0]!.text, "Astra");
       }
@@ -5273,6 +5385,15 @@ export class GameModel {
       this.story = null;
       if (this.state.dialogue?.context === HOLODISK_MOMENT) {
         this.state.dialogue = null;
+        if (
+          ended.id === "holodisk" &&
+          position.page === "holodisk:memory" &&
+          this.state.selectedGalaxy === 4 &&
+          this.current.holodisk &&
+          holodisksHeld(this.state.progress) === ARCHIE_NAMED.holodisks
+        ) {
+          this.current.needleMemoryRead = true;
+        }
         if (
           this.state.selectedGalaxy === 6 &&
           this.current.holodisk &&

@@ -4,12 +4,20 @@ import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { BUILT, GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { NEEDLE } from "../data/needle.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
+import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { interactionCopy } from "./conversations.ts";
-import { ensureStation } from "./flight.ts";
+import { damageEnemy } from "./enemyAi.ts";
+import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
+import { activeEnemyBeams, ensureStation } from "./flight.ts";
+import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
+import { worldSyncFlightRegion } from "./geography.ts";
 import { needleCourses } from "./needle.ts";
+import { NEEDLE_CADENCE } from "./needleRuntime.ts";
 import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
 
@@ -22,8 +30,8 @@ afterAll(() => {
   }
 });
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
-function launch(): GameModel {
-  const model = new GameModel(CONTENT);
+function launch(seed?: number): GameModel {
+  const model = new GameModel(CONTENT, undefined, seed === undefined ? undefined : () => seed);
   Object.assign(model.state, { prologueSeen: true, started: true, unlocked: [...GALAXY_NUMBERS] });
   for (const progress of Object.values(model.state.progress)) {
     progress.opened = true;
@@ -58,6 +66,199 @@ function learn(model: GameModel): void {
   model.choose("continue");
   expect(model.state.dialogue?.context).toBe("needle.learning");
 }
+
+function completeEye(seed: number): GameModel {
+  const model = launch(seed);
+  const progress = model.state.progress[4];
+  const flight = model.state.flight!;
+  for (const galaxy of [1, 3] as const) {
+    Object.assign(model.state.progress[galaxy], {
+      holodisk: true,
+      questComplete: true,
+      resolved: true,
+    });
+  }
+  Object.assign(progress.needle!, {
+    approach: "independent",
+    briefed: true,
+    eyeLit: NEEDLE.eyeGates - 1,
+    met: true,
+    practiceLit: NEEDLE.practiceGates,
+    practiceThanked: true,
+  });
+  const last = needleCourses(flight)!.eye.gates.at(-1)!;
+  model.step(0.001, idle);
+  expect(model.map?.places.some(({ id }) => id === NEEDLE_CADENCE.id)).toBe(false);
+  expect(progress.capitalBoss).toBeUndefined();
+  flight.player = {
+    x: last.point.x - last.tangent.x * 0.1,
+    y: last.point.y - last.tangent.y * 0.1,
+  };
+  flight.velocity = { x: last.tangent.x * 20, y: last.tangent.y * 20 };
+  model.step(0.05, { ...idle, move: { x: last.tangent.x * 0.25, y: last.tangent.y * 0.25 } });
+  expect(progress.needle?.eyeLit).toBe(NEEDLE.eyeGates);
+  expect(progress.capitalBoss?.phase).toBe("active");
+  expect(progress.holodisk).toBe(false);
+  expect(model.flightLog).toEqual([]);
+  expect(model.map?.places.find(({ id }) => id === NEEDLE_CADENCE.id)).toMatchObject({
+    ...progress.capitalBoss!.site,
+    label: "Crossbow",
+    objective: false,
+    travel: false,
+  });
+  endArrivalGrace(flight);
+  return model;
+}
+
+function nearCrossbow(model: GameModel, distance: number) {
+  const flight = model.state.flight!;
+  const boss = capitalBossActor(flight, NEEDLE_CADENCE.id)!;
+  const { x, y } = boss;
+  flight.player = { x: x - distance, y };
+  flight.velocity = { x: 0, y: 0 };
+  worldSyncFlightRegion(flightWorldContext(flight), CONTENT, flight);
+  expect(flight.objects).toContain(boss);
+  return boss;
+}
+
+describe("Captain Cadence admission and outcome", () => {
+  it("fires from the actual Crossbow and retains its clocks through Continue and a new flight", () => {
+    let model = completeEye(173);
+    let flight = model.state.flight!;
+    const { id } = NEEDLE_CADENCE;
+    const boss = nearCrossbow(model, 265);
+    const definition = enemyEquipmentDefinition(4, boss.enemy!);
+    boss.enemy!.facing = { x: -1, y: 0 };
+    const tells = new Set<number>();
+    const fired = new Set<number>();
+    for (let frame = 0; frame < 400 && fired.size < 2; frame++) {
+      flight.shield = model.shieldMax;
+      model.step(0.02, idle);
+      for (const beam of activeEnemyBeams(flight)) {
+        if (beam.kind === "lance" && beam.ownerId === id) {
+          (beam.fired ? fired : tells).add(beam.volley);
+        }
+      }
+    }
+    expect([...fired]).toHaveLength(2);
+    expect([...fired].every((volley) => tells.has(volley))).toBe(true);
+    expect(model.bossHud()).toMatchObject({
+      captain: "Captain Cadence",
+      hull: definition.hp,
+      id,
+      maxHull: definition.hp,
+      ship: "Crossbow",
+    });
+    const clocks = structuredClone(boss.enemy!.hardpoints);
+    model = relaunch(CONTENT, model.save());
+    flight = model.state.flight!;
+    expect(capitalBossActor(flight, id)?.enemy?.hardpoints).toEqual(clocks);
+    visit(model, "holodisk");
+    model.interact();
+    expect(model.state.dialogue?.context).toBe("needle.collect");
+    model.choose("continue");
+    expect(model.state.progress[4].holodisk).toBe(true);
+    expect(model.state.progress[4].capitalBoss?.phase).toBe("active");
+    readStory(model);
+    flight.dangerFor = 0;
+    model.returnHome();
+    expect(model.state.progress[4].capitalBoss?.phase).toBe("away");
+    const parked = model.state.progress[4].capitalBoss;
+    model = new GameModel(CONTENT, model.save(), () => 301);
+    expect(model.state.progress[4].capitalBoss).toEqual(parked);
+    model.startGalaxy(4);
+    expect(model.state.progress[4].capitalBoss?.phase).toBe("active");
+    expect(capitalBossActor(model.state.flight!, id)?.enemy?.hardpoints).toEqual(clocks);
+    expect(model.flightLog).toEqual([]);
+  });
+
+  it.each(["salvaged", "defeated"] as const)(
+    "records one %s transmission and names Archie only after the third memory",
+    (outcome) => {
+      let model = completeEye(1);
+      const flight = model.state.flight!;
+      const { id } = NEEDLE_CADENCE;
+      const boss = nearCrossbow(model, outcome === "salvaged" ? CONTENT.tuning.talkRange - 1 : 300);
+      const definition = enemyEquipmentDefinition(4, boss.enemy!);
+      if (outcome === "salvaged") {
+        for (const part of definition.hardpoints.filter(({ kind }) => kind === "weapon")) {
+          boss.enemy = damageEnemy(
+            definition,
+            { amount: part.hp, hardpointId: part.id },
+            boss.enemy!,
+          );
+        }
+        expect(model.contextAction).toBe("salvage");
+        expect(model.bossHud()).toMatchObject({ disabled: true, id });
+        model.interact();
+        const rewards = flight.objects.filter(({ role }) => role === "stardust");
+        expect(rewards.length).toBeGreaterThan(0);
+        model.interact();
+        expect(flight.objects.filter(({ role }) => role === "stardust")).toEqual(rewards);
+      } else {
+        const shot = {
+          damage: 1000,
+          enemy: false,
+          hitIds: flight.objects.filter((object) => object !== boss).map(({ id }) => id),
+          id: "cadence-hull-hit",
+          life: 1,
+          piercing: false,
+          velocity: { x: 0, y: 0 },
+          x: boss.x,
+          y: boss.y,
+        };
+        flight.shots.push(shot, { ...shot, id: "cadence-second-hit" });
+        model.step(0.01, idle);
+        expect(model.flightEvents.filter((event) => event.type === "enemyDestroyed")).toEqual([
+          { id, type: "enemyDestroyed" },
+        ]);
+      }
+      expect(model.state.progress[4].capitalBoss).toMatchObject({ outcome, phase: "resolved" });
+      expect(model.bossHud()).toBeNull();
+      expect(model.map?.places.some((place) => place.id === id)).toBe(false);
+      const anonymous = [
+        {
+          id: `${id}:transmission`,
+          text: "Orders from fleet command: Hold the exits. Recover every disk.",
+        },
+      ];
+      expect(model.flightLog).toEqual(anonymous);
+      model = relaunch(CONTENT, model.save());
+      expect(model.flightLog).toEqual(anonymous);
+      visit(model, "holodisk");
+      model.interact();
+      expect(model.state.dialogue?.context).toBe("needle.collect");
+      model.choose("continue");
+      expect(model.state.progress[4].holodisk).toBe(true);
+      expect(model.flightLog).toEqual(anonymous);
+      const legacyPendingMemory = JSON.parse(model.save()) as ReturnType<GameModel["saveDocument"]>;
+      delete legacyPendingMemory.progress[4].needleMemoryRead;
+      expect(relaunch(CONTENT, legacyPendingMemory).flightLog).toEqual(anonymous);
+      model = relaunch(CONTENT, model.save());
+      expect(model.flightLog).toEqual(anonymous);
+      for (let page = 0; page < 8 && model.storyView?.page.id !== "holodisk:memory"; page++) {
+        model.storyNext();
+      }
+      expect(model.storyView?.page.text).toBe(CONTENT.premise.holodisk.memories[2]);
+      expect(model.flightLog).toEqual(anonymous);
+      model.storyNext();
+      expect(model.state.progress[4].needleMemoryRead).toBe(true);
+      const revealed = [
+        { ...anonymous[0]!, text: "Admiral Archie's orders: Hold the exits. Recover every disk." },
+      ];
+      expect(model.flightLog).toEqual(revealed);
+      model = relaunch(CONTENT, model.save());
+      expect(model.flightLog).toEqual(revealed);
+      model.state.flight!.dangerFor = 0;
+      model.returnHome();
+      expect(model.state.flight).toBeNull();
+      expect(model.state.progress[4].capitalBoss).toMatchObject({ outcome, phase: "resolved" });
+      model.startGalaxy(4);
+      expect(capitalBossActor(model.state.flight!, id)).toBeUndefined();
+      expect(model.flightLog).toEqual(revealed);
+    },
+  );
+});
 
 describe("mounted Needle interactions", () => {
   it("requires an actual learning choice and retains it through Close, save and Continue", () => {

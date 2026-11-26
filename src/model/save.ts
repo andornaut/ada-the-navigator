@@ -1,6 +1,10 @@
 import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { CRYSTAL_FLAGS, type CrystalFlag } from "../data/asteroidCatalog.ts";
-import { SUNFLOWER_CAPITAL_BOSS, WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
+import {
+  NEEDLE_CADENCE,
+  SUNFLOWER_CAPITAL_BOSS,
+  WHIRLPOOL_CAPITAL_BOSS,
+} from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { deliveryDestination } from "../data/destinations.ts";
 import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
@@ -12,7 +16,7 @@ import { ENEMY_KEEP_MOVING } from "../data/enemyNavigation.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
 import { JOB_TYPES } from "../data/jobs.ts";
-import { NEEDLE_PLACES } from "../data/needle.ts";
+import { NEEDLE, NEEDLE_PLACES } from "../data/needle.ts";
 import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
 import { galaxyProjects } from "../data/projects.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
@@ -410,15 +414,17 @@ function spaceObject(
     (value.ammoPack === undefined || (value.ammoPack === true && value.kind === "pickup"))
   );
 }
-function sunflowerBossActor(value: unknown): value is SpaceObject {
+function optionalBossActor(galaxy: 1 | 4, value: unknown): value is SpaceObject {
+  const id = galaxy === 4 ? NEEDLE_CADENCE.id : SUNFLOWER_CAPITAL_BOSS.id;
   return (
-    spaceObject(1, [], value) &&
-    value.id === SUNFLOWER_CAPITAL_BOSS.id &&
+    spaceObject(galaxy, [], value) &&
+    value.id === id &&
     value.kind === "enemy" &&
     value.persistent === true &&
     value.hp > 0 &&
     value.enemy?.archetype === "capital" &&
     value.enemy.packId === null &&
+    value.enemy.escortOf === null &&
     !enemyDefeated(value.enemy)
   );
 }
@@ -428,59 +434,78 @@ function validBossProgress(galaxy: GalaxyNumber, progress: Record<string, unknow
   if (boss === undefined) {
     return true;
   }
+  if ((galaxy !== 1 && galaxy !== 4) || !record(boss) || !vector(boss.site)) {
+    return false;
+  }
   if (
-    galaxy !== 1 ||
-    !record(boss) ||
-    progress.questComplete !== true ||
-    progress.stage !== 4 ||
-    !vector(boss.site)
+    galaxy === 4
+      ? readNeedleChapterProgress(progress.needle)?.eyeLit !== NEEDLE.eyeGates
+      : progress.questComplete !== true || progress.stage !== 4
   ) {
     return false;
   }
+  if (boss.firstHardpointLost !== undefined && (galaxy !== 4 || boss.firstHardpointLost !== true)) {
+    return false;
+  }
+  const milestone = Number(boss.firstHardpointLost === true);
   switch (boss.phase) {
     case "active":
-      return Object.keys(boss).length === 2;
+      return Object.keys(boss).length === 2 + milestone;
     case "away":
       return (
-        Object.keys(boss).length === 3 &&
-        sunflowerBossActor(boss.actor) &&
+        Object.keys(boss).length === 3 + milestone &&
+        optionalBossActor(galaxy, boss.actor) &&
         boss.actor.enemy?.salvaged === false
       );
     case "resolved":
       return (
-        Object.keys(boss).length === 4 &&
-        typeof boss.cacheClaimed === "boolean" &&
-        (boss.outcome === "defeated" || boss.outcome === "salvaged")
+        milestone === 0 &&
+        (boss.outcome === "defeated" || boss.outcome === "salvaged") &&
+        (galaxy === 1
+          ? Object.keys(boss).length === 4 && typeof boss.cacheClaimed === "boolean"
+          : Object.keys(boss).length === 3 && boss.cacheClaimed === undefined)
       );
     default:
       return false;
   }
 }
 
-function bossFlightConsistent(boss: GalaxyProgress["capitalBoss"], flight: FlightState): boolean {
-  const { cacheId, id } = SUNFLOWER_CAPITAL_BOSS;
+function bossFlightConsistent(
+  galaxy: 1 | 4,
+  boss: GalaxyProgress["capitalBoss"],
+  flight: FlightState,
+): boolean {
+  const id = galaxy === 4 ? NEEDLE_CADENCE.id : SUNFLOWER_CAPITAL_BOSS.id;
   const actor = flight.objects.find((object) => object.id === id) ?? flight.world.notables[id];
+  const cacheId = SUNFLOWER_CAPITAL_BOSS.cacheId;
   const cache =
-    flight.objects.find((object) => object.id === cacheId) ?? flight.world.notables[cacheId];
-  if (flight.galaxy !== 1) {
+    galaxy === 1
+      ? (flight.objects.find((object) => object.id === cacheId) ?? flight.world.notables[cacheId])
+      : undefined;
+  if (flight.galaxy !== galaxy) {
     return actor === undefined && cache === undefined;
   }
   if (boss?.phase === "active") {
-    return cache === undefined && sunflowerBossActor(actor) && actor.enemy?.salvaged === false;
+    return (
+      cache === undefined && optionalBossActor(galaxy, actor) && actor.enemy?.salvaged === false
+    );
   }
   if (boss?.phase === "resolved") {
     const actorValid =
       actor == null ||
-      (boss.outcome === "salvaged" && sunflowerBossActor(actor) && actor.enemy?.salvaged === true);
+      (boss.outcome === "salvaged" &&
+        optionalBossActor(galaxy, actor) &&
+        actor.enemy?.salvaged === true);
     return (
       actorValid &&
-      (boss.cacheClaimed
-        ? cache == null
-        : cache?.kind === "pickup" &&
-          cache.role === "cargo" &&
-          cache.persistent === true &&
-          cache.hp > 0 &&
-          cache.amount === undefined)
+      (galaxy === 4 ||
+        (boss.cacheClaimed
+          ? cache == null
+          : cache?.kind === "pickup" &&
+            cache.role === "cargo" &&
+            cache.persistent === true &&
+            cache.hp > 0 &&
+            cache.amount === undefined))
     );
   }
   return !boss && actor === undefined && cache === undefined;
@@ -930,6 +955,8 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
         (p.markerKnowledge !== undefined && !validTargetKnowledge(p.markerKnowledge)) ||
         (p.andromeda !== undefined && (id !== 5 || !validAndromedaProgress(p.andromeda))) ||
         (p.needle !== undefined && (id !== 4 || !readNeedleChapterProgress(p.needle))) ||
+        (p.needleMemoryRead !== undefined &&
+          (id !== 4 || p.holodisk !== true || typeof p.needleMemoryRead !== "boolean")) ||
         (p.phantom !== undefined &&
           (id !== 6 ||
             !validPhantomProgress(p.phantom) ||
@@ -993,14 +1020,17 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
         return null;
       }
     }
-    const sunflowerBoss = (value.progress as unknown as GameState["progress"])[1].capitalBoss;
+    const progress = value.progress as unknown as GameState["progress"];
+    const sunflowerBoss = progress[1].capitalBoss;
+    const needleBoss = progress[4].capitalBoss;
     if (
-      sunflowerBoss?.phase === "active" &&
-      (value.selectedGalaxy !== 1 || value.flight === null)
+      (sunflowerBoss?.phase === "active" &&
+        (value.selectedGalaxy !== 1 || value.flight === null)) ||
+      (needleBoss?.phase === "active" && (value.selectedGalaxy !== 4 || value.flight === null))
     ) {
       return null;
     }
-    const whirlpool = (value.progress as unknown as GameState["progress"])[3];
+    const whirlpool = progress[3];
     if (
       whirlpool.sounder?.phase === "active" &&
       (value.selectedGalaxy !== 3 || value.flight === null)
@@ -1144,7 +1174,8 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
         return null;
       }
       if (
-        !bossFlightConsistent(sunflowerBoss, f as unknown as FlightState) ||
+        !bossFlightConsistent(1, sunflowerBoss, f as unknown as FlightState) ||
+        !bossFlightConsistent(4, needleBoss, f as unknown as FlightState) ||
         !sounderFlightConsistent(whirlpool, f as unknown as FlightState)
       ) {
         return null;

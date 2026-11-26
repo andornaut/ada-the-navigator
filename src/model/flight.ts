@@ -2,7 +2,11 @@ import { randomStream } from "@andornaut/game-kit/runtime/random";
 
 import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import { ASTEROID_LOOT, CRYSTAL_MINIMUM_ORE } from "../data/asteroidLoot.ts";
-import { SUNFLOWER_CAPITAL_BOSS, WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
+import {
+  NEEDLE_CADENCE,
+  SUNFLOWER_CAPITAL_BOSS,
+  WHIRLPOOL_CAPITAL_BOSS,
+} from "../data/capitalBosses.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
 import { SCENERY_IMPACT_SECONDS, sceneryImpactDamage } from "../data/collisionDamage.ts";
 import { CONTENT } from "../data/content.ts";
@@ -132,6 +136,7 @@ import {
   type StationMaterialization,
   stationPopulationObjects,
 } from "./hostileStations.ts";
+import type { NeedleCadencePlacement } from "./needleExitPlan.ts";
 import { activePhantomSong, phantomSongSpeed, stepPhantomAllies } from "./phantomAllies.ts";
 import {
   nextPhantomBatchReserved,
@@ -378,7 +383,7 @@ function requiredOccupants(content: GameContent, flight: FlightState): RequiredW
         (object) =>
           liveEnemy(object) &&
           (flight.galaxy === 4
-            ? object.enemy?.packId === "needle:exit"
+            ? object.enemy?.packId === "needle:exit" || object.id === NEEDLE_CADENCE.id
             : object.routeId !== undefined ||
               object.enemy?.packId?.startsWith("route:") ||
               object.enemy?.escortOf?.startsWith("route:")),
@@ -1538,6 +1543,57 @@ export function placeSunflowerCapitalBoss(
     }
   }
   return null;
+}
+
+/** Admit the optional Crossbow in clear current-world space, keeping the Eye route untouched. */
+export function placeNeedleCadence(
+  content: GameContent,
+  flight: FlightState,
+  selectSite: (placement: NeedleCadencePlacement) => Vec | null,
+): Vec | null {
+  const world = flightWorldContext(flight);
+  const actor = spawnEnemy(content, flight, "capital", NEEDLE_CADENCE.id, flight.player);
+  actor.persistent = true;
+  const definition = enemyEquipmentDefinition(flight.galaxy, actor.enemy!);
+  const placement = questGuardPlacementContext(content, flight);
+  const hullReach = questGuardFormationReach(placement, [actor]);
+  const site = selectSite({
+    canPlace: (point) => {
+      Object.assign(actor, point);
+      actor.enemy!.home = { ...point };
+      actor.enemy!.position = { ...point };
+      canonicalObject(flight, actor);
+      return (
+        clearOfExclusionZones(content, actor, flight) &&
+        worldStationsNear(
+          flightStationContext(flight),
+          ECONOMY,
+          flight.galaxy,
+          ECONOMY.station.exclusionRadius + hullReach,
+          actor,
+        ).length === 0 &&
+        !stationPopulationObjects(flight).some(
+          (other) =>
+            capital(other) && worldDistance(world, other, actor) < enemySpacing(actor, other),
+        ) &&
+        stationFormationClear(placement, [actor])
+      );
+    },
+    hullReach,
+    perception: definition.perception,
+    pursuitRadius: actorPursuitHomeRadius(
+      flight.galaxy,
+      definition.pursuit.homeRadius,
+      false,
+      actor,
+    ),
+  });
+  if (!site) {
+    return null;
+  }
+  flight.objects.push(actor);
+  worldSyncFlightRegion(world, content, flight);
+  return { x: actor.x, y: actor.y };
 }
 
 /** The repair cache is a single ordinary Ore pickup with a durable encounter identity. */
@@ -4972,7 +5028,7 @@ function hit(
     if (object.hp > 0 && !before.disabled && after.disabled) {
       events.push({ id: object.id, type: "enemyDisabled" });
     } else if (
-      object.id === PHANTOM_FLAGSHIP &&
+      (object.id === PHANTOM_FLAGSHIP || object.id === NEEDLE_CADENCE.id) &&
       part !== null &&
       object.hp > 0 &&
       !before.disabled &&

@@ -257,6 +257,8 @@ export interface GalaxyProgress {
   geography?: GalaxyGeography;
   andromeda?: AndromedaProgress;
   needle?: NeedleChapterProgress;
+  /** The third disk's memory finished on the Needle flight. */
+  needleMemoryRead?: boolean;
   phantom?: PhantomProgress;
   /** At least one repeatable activity completed here, for this galaxy's finale ally. */
   activityCompleted?: boolean;
@@ -460,6 +462,11 @@ export interface GameSave extends GameState {
   pendingInteraction?: { dialogue: DialogueState; galaxy: GalaxyNumber } | undefined;
 }
 
+export interface FlightLogEntry {
+  readonly id: string;
+  readonly text: string;
+}
+
 export type FlightEvent =
   | { type: "depleted" }
   /** The equipped weapon ran out of ammunition and Ada switched to Laser. */
@@ -474,7 +481,7 @@ export type FlightEvent =
   | { id: string; type: "ammoCollected" }
   /** A heavy's last weapon hardpoint was destroyed while its hull holds. */
   | { id: string; type: "enemyDisabled" }
-  /** The flagship lost its first working hardpoint without resolving the fight on that hit. */
+  /** An authored boss lost its first working hardpoint without resolving the fight on that hit. */
   | { id: string; type: "enemyFirstHardpointLost" }
   | { type: "debrisCleared"; id: string }
   /** A destroyed rock, for the view's break at its pivot; it changes no state. */
