@@ -415,9 +415,9 @@ export const CONVERSATION_BOX = {
     frame: CONVERSATION_FRAME,
     slot: CONVERSATION_PORTRAIT_SLOT,
   },
-  // Ada's ship pivots on the play view's centre; its highest drawn hull point across the 32
-  // headings (heading 4) is this far above the pivot.
-  ship: { hullRise: 11.83 },
+  // Ada's ship pivots on the play view's centre; its highest drawn hull point across the 64
+  // headings (heading 8) is this far above the pivot.
+  ship: { hullRise: 12.48 },
   // Space kept clear between the box's bottom and the top of Ada's ship.
   shipClearance: 24,
   tab: { ...CONVERSATION_TAB, labelInset: SPACING.markGap },

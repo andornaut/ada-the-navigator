@@ -119,9 +119,9 @@ describe("conversation box", () => {
   });
 
   it("measures the ship's hull top from the play view's centre", () => {
-    expect(shipHullTop(BASE)).toBeCloseTo(168.17, 9);
+    expect(shipHullTop(BASE)).toBeCloseTo(167.52, 9);
     const play = playView(DESKTOP);
-    expect(shipHullTop(DESKTOP)).toBeCloseTo(play.y + play.height / 2 - 11.83, 9);
+    expect(shipHullTop(DESKTOP)).toBeCloseTo(play.y + play.height / 2 - 12.48, 9);
   });
 
   // The shipped idle heading's rise above the pivot, from its standalone SVG's highest vertex.
@@ -157,11 +157,11 @@ describe("conversation box", () => {
     },
   );
 
-  it("keeps 42.67 clear above Ada's ship at the 360 high view and 65.17 at 405", () => {
-    expect(conversationShipClearance(NO_INSETS, BASE)).toBeCloseTo(42.67, 9);
-    // At 405 high the pivot sits at 202.5 and the hull top at 190.67.
+  it("keeps 42.02 clear above Ada's ship at the 360 high view and 64.52 at 405", () => {
+    expect(conversationShipClearance(NO_INSETS, BASE)).toBeCloseTo(42.02, 9);
+    // At 405 high the pivot sits at 202.5 and the hull top at 190.02.
     const box = conversationBoxRect(NO_INSETS, BASE);
-    expect(405 / 2 - CONVERSATION_BOX.ship.hullRise - (box.y + box.height)).toBeCloseTo(65.17, 9);
+    expect(405 / 2 - CONVERSATION_BOX.ship.hullRise - (box.y + box.height)).toBeCloseTo(64.52, 9);
   });
 
   it.each(VIEWS)("keeps at least 24 clear above Ada's ship on %s", (_name, view, insets) => {
