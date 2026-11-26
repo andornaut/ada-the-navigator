@@ -4738,7 +4738,8 @@ try {
   cargoSetup.state.dialogue = null;
   Object.assign(cargoSetup.state.progress[2], { known: ["hub"], stations: ["hub"] });
   ensureDestination(CONTENT, "hub", cargoSetup.state.flight);
-  cargoSetup.teleport("hub");
+  cargoSetup.state.economy.stardust = MAP_JUMP_COST;
+  assert.equal(cargoSetup.teleport("hub"), true, "Wide-cargo fixture must reach the Hub");
   cargoSetup.state.flight.cargo = 12345;
   // Relaunched, as the browser loads it: a resolved Cartwheel unlocks its achievement on load.
   const cargoModel = relaunch(CONTENT, cargoSetup.save());
