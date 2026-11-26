@@ -870,11 +870,11 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   safely placed sites per galaxy while preserving the original 12 identities and
   positions. Distant landmarks remain visible, scannable, chartable and mapped;
   the galactic-center mapping-progress and survey-area denominator stays 25000.
-- Each galaxy wraps on both axes across a square 240000 world units on a side.
+- Each galaxy wraps on both axes across a square 200000 world units on a side.
   Flight crosses to the opposite edge with its direction and speed intact.
   Flight, placement and distance queries use the same wrap geometry, so
   distances run the short way across the seam. The local map shows one wrap
-  period: pan and zoom stay within the canonical 240000 square, panning stops
+  period: pan and zoom stay within that square, panning stops
   at the seam, and every position draws at its canonical point. At maximum
   zoom-out, pan and zoom keep part of the survey oval visible, even if Ada
   goes off screen near a seam. The transition
