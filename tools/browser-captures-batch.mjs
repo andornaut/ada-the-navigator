@@ -21,6 +21,7 @@ const [
     activateRequiredWhirlpoolRoute,
     ensureDestination,
     ensureStation,
+    populateFlight,
     shipSpeedFraction,
     spawnChapterEnemy,
   },
@@ -1563,7 +1564,63 @@ export function batchCaptures(ctx) {
     await still("crystal-rocks-cartwheel-ore-field", model);
   }
 
+  // The station approach ring at Talk range, where Use offers Dock: Sunflower's nearest station
+  // drawn as its placeholder hull and ring, Art's station frames withheld, with Ada to its left
+  // 150 world units from its centre, inside Talk range with the Use disc showing, then 170,
+  // outside it. Each is the whole page, Use disc included.
+  async function approachRing() {
+    const left = toWorld({ x: -1, y: 0 });
+    const unit = Math.hypot(left.x, left.y);
+    await inTurn([150, 170], async (distance) => {
+      const model = flightModel(1);
+      const flight = model.state.flight;
+      const [site] = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 }).sort(
+        (a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y),
+      );
+      assert.ok(site, "Sunflower has a seeded station");
+      const station = ensureStation(CONTENT, site.id, flight);
+      withoutEnemies(flight);
+      flight.player = {
+        x: station.x + (left.x / unit) * distance,
+        y: station.y + (left.y / unit) * distance,
+      };
+      const name = `approach-ring-${distance}`;
+      await ctx.openFixture(canonical(model, name), { frozen: false, withoutStationArt: true });
+      await ctx.awaitGalaxyArt();
+      const page = ctx.page();
+      if (distance <= CONTENT.tuning.talkRange) {
+        await page.clock.resume();
+        await page.locator(".ada-use").waitFor({ state: "visible" });
+        await page.waitForTimeout(400);
+        await pauseClock(page);
+      }
+      await ctx.pageShot(`${name}.png`);
+    });
+  }
+
+  // Asteroid density at game scale: the rocks the flight generates around two open points in
+  // Sunflower and in Andromeda, away from the launch, held still with the encounters removed.
+  async function asteroidDensity() {
+    const points = [
+      { x: 6000, y: 3500 },
+      { x: -7000, y: -4500 },
+    ];
+    const views = [1, 5].flatMap((galaxy) =>
+      points.map((point, index) => ({ galaxy, index, point })),
+    );
+    await inTurn(views, async ({ galaxy, index, point }) => {
+      const model = flightModel(galaxy);
+      const flight = model.state.flight;
+      flight.player = { ...point };
+      populateFlight(CONTENT, model.state.progress[galaxy], flight);
+      withoutEnemies(flight);
+      await still(`asteroid-density-${GALAXY_ID[galaxy]}-${index + 1}`, model);
+    });
+  }
+
   return {
+    "approach-ring": approachRing,
+    "asteroid-density": asteroidDensity,
     backdrops,
     controls,
     craft,

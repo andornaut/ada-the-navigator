@@ -109,6 +109,7 @@ async function openFixture(
     frozen = true,
     reducedMotion = false,
     viewport = { width: 1280, height: 720 },
+    withoutStationArt = false,
   } = {},
 ) {
   await closeFixture();
@@ -117,6 +118,20 @@ async function openFixture(
   await opened.addInitScript(reportViolations);
   await opened.addInitScript(freezable);
   await opened.route("**/*", previewOnly);
+  if (withoutStationArt) {
+    // Art's manifests served without the station frames, so stations draw their placeholder.
+    await opened.route(/\/art\/(?:[a-z]+\/)?manifest\.json(?:\?|$)/, async (route) => {
+      const response = await route.fetch();
+      const manifest = await response.json();
+      manifest.assets = manifest.assets?.filter(
+        (asset) =>
+          !["station-a", "station-b"].includes(asset.id) &&
+          !["hub", "station"].includes(asset.destination) &&
+          asset.station === undefined,
+      );
+      await route.fulfill({ json: manifest, response });
+    });
+  }
   await opened.addInitScript(
     ({ entries }) => {
       if (!sessionStorage.getItem("ada-captures.seeded")) {
