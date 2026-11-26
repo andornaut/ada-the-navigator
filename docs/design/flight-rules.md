@@ -63,3 +63,4 @@ and scan feedback.
 | ada-0396 | Replace safe areas with state protection                                                                   | [ada-0396.md](../work/ada-0396.md) |
 | ada-0389 | Retire ore rocks so every static rock is an ordinary asteroid                                              | [ada-0389.md](../work/ada-0389.md) |
 | ada-0392 | Conform spawning and enemy logic to the procedural systems policy                                          | [ada-0392.md](../work/ada-0392.md) |
+| ada-0411 | Lock Ada's visible Phaser endpoint at fire time                                                            | [ada-0411.md](../work/ada-0411.md) |

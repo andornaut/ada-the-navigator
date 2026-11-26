@@ -17,6 +17,7 @@ import {
   drawnBeamFlash,
   stepFlight,
 } from "./flight.ts";
+import { recordBeamFlash } from "./flight/impactFeedback.ts";
 import { GameModel } from "./game.ts";
 import { noseOffset, nosePoint } from "./nose.ts";
 import { projectileOpacity } from "./playerProjectiles.ts";
@@ -190,21 +191,14 @@ describe("Phaser hitscan beam", () => {
     expect(activeBeamFlashes(miss)).toHaveLength(0);
   });
 
-  it("keeps the visible beam on Ada's nose and aim as she moves and turns, the hit where it landed", () => {
+  it("keeps the beam endpoint and damage at fire time as Ada moves and turns", () => {
     const flight = beam([sturdy("enemy", 100, nose.y)]);
     const flash = activeBeamFlashes(flight)[0]!;
     const fired = structuredClone(flash);
-    const reach = Math.hypot(fired.to.x - fired.from.x, fired.to.y - fired.from.y);
     const spark = structuredClone(activeWeaponImpacts(flight));
     expect(spark).toHaveLength(1);
-    // At fire the beam runs along the aim to its length; the contact sits on the hull surface,
-    // which may meet the beam anywhere across its width, so within the half-width of its end.
-    const atFire = drawnBeamFlash(flight, flash);
-    expect(atFire.from).toEqual(fired.from);
-    expect(Math.hypot(atFire.to.x - fired.to.x, atFire.to.y - fired.to.y)).toBeLessThanOrEqual(
-      BEAM.halfWidth,
-    );
-    // Mid-flash, Ada flies down and turns toward it without firing again.
+    expect(drawnBeamFlash(flight, flash)).toEqual({ from: fired.from, to: fired.to });
+    // Mid-flash, Ada flies down and turns without firing again.
     flight.fireCooldown = 100;
     const turn = { ...idle, aim: { x: 0, y: 1 }, fire: false, move: { x: 0, y: 1 } };
     for (let slice = 0; slice < 5; slice++) {
@@ -215,11 +209,8 @@ describe("Phaser hitscan beam", () => {
     expect(flight.player.y).toBeGreaterThan(0);
     expect(flight.facing.y).toBeGreaterThan(0.05);
     const drawn = drawnBeamFlash(flight, flash);
-    const facing = Math.hypot(flight.facing.x, flight.facing.y);
     expect(drawn.from).toEqual(nosePoint(flight.facing, flight.player));
-    expect(Math.hypot(drawn.to.x - drawn.from.x, drawn.to.y - drawn.from.y)).toBeCloseTo(reach, 9);
-    expect((drawn.to.x - drawn.from.x) / reach).toBeCloseTo(flight.facing.x / facing, 9);
-    expect((drawn.to.y - drawn.from.y) / reach).toBeCloseTo(flight.facing.y / facing, 9);
+    expect(drawn.to).toEqual(fired.to);
     // The hit, its damage and its spark stay at fire time.
     expect(hp(flight, "enemy")).toBe(STURDY - 4);
     expect(
@@ -230,6 +221,42 @@ describe("Phaser hitscan beam", () => {
         y,
       })),
     ).toEqual(spark.map(({ direction, family, x, y }) => ({ direction, family, x, y })));
+  });
+
+  it("anchors the visible end of a miss to its original range boundary", () => {
+    const flight = beam([]);
+    const flash = activeBeamFlashes(flight)[0]!;
+    const end = { ...flash.to };
+    flight.player.x -= 8;
+    flight.facing = { x: 0, y: 1 };
+    expect(drawnBeamFlash(flight, flash)).toEqual({
+      from: nosePoint(flight.facing, flight.player),
+      to: end,
+    });
+    expect(activeWeaponImpacts(flight)).toEqual([]);
+  });
+
+  it("projects the anchored beam endpoint and spark together across the world seam", () => {
+    const { flight } = launched("phaser");
+    const side = flight.topology!.side;
+    flight.player = { x: side / 2 - 20, y: 0 };
+    const flash = {
+      age: 0,
+      from: nosePoint({ x: 1, y: 0 }, flight.player),
+      hit: true,
+      to: { x: side / 2 + 80, y: 10 },
+    };
+    recordBeamFlash(flight, flash);
+    expect(drawnBeamFlash(flight, flash).to).toEqual(flash.to);
+    const initialImpact = activeWeaponImpacts(flight)[0]!;
+    flight.player.x = -side / 2 + 10;
+    const localEnd = { x: -side / 2 + 80, y: 10 };
+    expect(drawnBeamFlash(flight, flash)).toEqual({
+      from: nosePoint(flight.facing, flight.player),
+      to: localEnd,
+    });
+    expect(activeWeaponImpacts(flight)).toEqual([{ ...initialImpact, ...localEnd }]);
+    expect(flash.to).toEqual({ x: side / 2 + 80, y: 10 });
   });
 
   it("strikes an obstacle at the nose at once", () => {

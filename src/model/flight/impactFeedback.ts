@@ -1,9 +1,10 @@
 import type { Vec } from "../../data/types.ts";
 import { BEAM } from "../../data/weaponCatalog.ts";
-import { magnitude as length } from "../ai/course.ts";
+import { flightWorldContext } from "../flightTopology.ts";
 import { nosePoint } from "../nose.ts";
 import type { FlightState } from "../types.ts";
 import type { ImpactFamily, WeaponImpact } from "../weaponImpacts.ts";
+import { worldPoint } from "../worldContacts.ts";
 
 /**
  * A hitscan beam's visible flash, view-only and never saved: `from` and `to` are the fire-time
@@ -16,24 +17,14 @@ export interface BeamFlash {
   age: number;
 }
 
-/**
- * Ada's beam as drawn now: it stays on her nose and turns with her aim, at the length it fired
- * with (gameplay/rules.md, Phaser).
- */
+/** The fire-time endpoint in the current local world chart. */
+function beamEndpoint(flight: FlightState, flash: BeamFlash): Vec {
+  return worldPoint(flightWorldContext(flight), flight.player, flash.to);
+}
+
+/** Ada's current nose to the original contact or miss endpoint. */
 export function drawnBeamFlash(flight: FlightState, flash: BeamFlash): { from: Vec; to: Vec } {
-  const span = length(flight.facing);
-  const reach = length({ x: flash.to.x - flash.from.x, y: flash.to.y - flash.from.y });
-  if (!span) {
-    return { from: flash.from, to: flash.to };
-  }
-  const from = nosePoint(flight.facing, flight.player);
-  return {
-    from,
-    to: {
-      x: from.x + (flight.facing.x / span) * reach,
-      y: from.y + (flight.facing.y / span) * reach,
-    },
-  };
+  return { from: nosePoint(flight.facing, flight.player), to: beamEndpoint(flight, flash) };
 }
 const beamFlashes = new WeakMap<FlightState, BeamFlash[]>();
 
@@ -90,7 +81,7 @@ export function activeWeaponImpacts(flight: FlightState): readonly WeaponImpact[
       flash.hit
         ? [
             {
-              ...flash.to,
+              ...beamEndpoint(flight, flash),
               age: flash.age,
               direction: { x: flash.to.x - flash.from.x, y: flash.to.y - flash.from.y },
               family: "phaserRings",

@@ -1262,7 +1262,7 @@ export class GameScene extends Scene {
           : keylineEdges(this, ["hitSpark"], edgedShapes);
       drawEffect(this, shapes, edges);
     }
-    // The Phaser body stays on Ada's nose and aim; its contact uses the family dispatcher above.
+    // The Phaser starts at Ada's current nose and ends at its fire-time point.
     // Where a field edge exists its amber band and outer bloom disc grow by it in the edge.
     for (const flash of activeBeamFlashes(flight)) {
       const drawn = drawnBeamFlash(flight, flash);
