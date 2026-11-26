@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it, vi } from "vitest";
 
+import { CAPITAL_CAPTAINS, type CapitalCaptain } from "../data/capitalCaptains.ts";
 import { CAST, castPortrait, SPEAKER_CAST } from "../data/cast.ts";
 import { SPEAKERS } from "../data/conversations.ts";
 import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
@@ -266,6 +267,13 @@ describe("conversation portraits", () => {
       expect(
         portraitFrame(false, { ...line, elapsed: 0.25, speaker: speaker as keyof typeof SPEAKERS }),
       ).toBe(sheet!.frames!.neutral);
+    }
+  });
+
+  it("names a capital transmission without borrowing Archie's portrait", () => {
+    for (const speaker of Object.keys(CAPITAL_CAPTAINS) as CapitalCaptain[]) {
+      expect(SPEAKERS[speaker]).toBe(CAPITAL_CAPTAINS[speaker]);
+      expect(portraitFrame(false, { ...line, elapsed: 0.25, speaker })).toBe(-1);
     }
   });
 

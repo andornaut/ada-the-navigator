@@ -117,7 +117,9 @@ export function portraitFrame(
   if (line.speaker === "astra") {
     return loop(COMPACT_PORTRAITS.astra.speaking);
   }
-  return loop(COMPACT_PORTRAITS.archie.speaking[line.named ? "named" : "unknown"]);
+  return line.speaker === "archie"
+    ? loop(COMPACT_PORTRAITS.archie.speaking[line.named ? "named" : "unknown"])
+    : -1;
 }
 
 // Each speaker's name tab fill (art/controls.md "Conversation box").

@@ -1,3 +1,4 @@
+import { CAPITAL_CAPTAINS, type CapitalCaptain } from "./capitalCaptains.ts";
 import { GALAXY_NUMBERS } from "./galaxies.ts";
 import { JOB_LORE } from "./jobs.ts";
 import { LANDMARK_SCAN_COPY } from "./landmarkScanCopy.ts";
@@ -11,6 +12,7 @@ import type { GalaxyNumber } from "./types.ts";
 // from gameplay/quests.md).
 
 export type Speaker =
+  | CapitalCaptain
   | "ada"
   | "avi"
   | "blurbs"
@@ -137,6 +139,7 @@ export const SPEAKERS: Readonly<
   astra: { name: "Astra", side: "right" },
   avi: { name: "Avi", side: "right" },
   blurbs: { name: "Blurbs", side: "right" },
+  ...CAPITAL_CAPTAINS,
   dollop: { name: "Dollop", side: "right" },
   elderLoom: { name: "Elder Loom", side: "right" },
   // The community projects' thank-you speakers (gameplay/economy.md "Donations").

@@ -2,6 +2,7 @@ import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { REFUSAL_ATTRIBUTES } from "@andornaut/game-kit/runtime/web/ui/dom/refusalCue";
 
+import { isCapitalCaptain } from "../data/capitalCaptains.ts";
 import { castPortrait, type CastPortraitSheet, SPEAKER_CAST } from "../data/cast.ts";
 import { CONTENT } from "../data/content.ts";
 import { CONTROL_WORDS } from "../data/controlWords.ts";
@@ -194,6 +195,10 @@ export const CONVERSATION_STYLE = `
   background:${portrait.face}
 }
 
+.ada-conversation[data-transmission] .ada-conversation-frame{
+  display:none
+}
+
 .ada-conversation-portrait{
   width:${units(portrait.art)};
   height:${units(portrait.art)};
@@ -249,6 +254,10 @@ ${PORTRAIT_RULES}
 
 .ada-conversation[data-side="right"] .ada-conversation-name{
   left:${units(tab.inset)}
+}
+
+.ada-conversation[data-transmission] .ada-conversation-name{
+  background:${TAB_COLOURS.archie}
 }
 
 ${TAB_RULES}
@@ -339,6 +348,7 @@ export function createConversationBox(onDismiss: () => void): ConversationBox {
           root.dataset.side = line.side;
           root.dataset.speaker = line.speaker;
           root.toggleAttribute("data-named", line.named);
+          root.toggleAttribute("data-transmission", isCapitalCaptain(line.speaker));
           face.dataset.speaker = line.speaker;
           selectPortraitCrop(face, CAST_COMPACT[line.speaker]);
           name.textContent = line.name;
