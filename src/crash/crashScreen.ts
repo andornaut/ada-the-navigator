@@ -108,10 +108,7 @@ const bindHoldAction: HoldActionBinding = (action) => {
   const isReload = element.matches(".crash-panel > button.crash-button");
   if (isReload) {
     const { style } = element;
-    style.setProperty(
-      "--ada-reload-height",
-      `max(${TEXT_BUTTON.height}px, ${recoveryLength(TEXT_BUTTON.height)})`,
-    );
+    style.setProperty("--ada-reload-height", `${TEXT_BUTTON.height}px`);
     style.setProperty("--ada-reload-inset", recoveryLength(TEXT_BUTTON.inset));
     style.setProperty("--ada-reload-label", `${TEXT_BUTTON.label.size}px`);
     style.setProperty("--ada-reload-line", `${TEXT_BUTTON.label.lineHeight}px`);
