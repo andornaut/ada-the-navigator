@@ -1,6 +1,7 @@
 import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { CRYSTAL_FLAGS, type CrystalFlag } from "../data/asteroidCatalog.ts";
 import {
+  ANDROMEDA_REDACT,
   NEEDLE_CADENCE,
   SUNFLOWER_CAPITAL_BOSS,
   WHIRLPOOL_CAPITAL_BOSS,
@@ -414,8 +415,9 @@ function spaceObject(
     (value.ammoPack === undefined || (value.ammoPack === true && value.kind === "pickup"))
   );
 }
-function optionalBossActor(galaxy: 1 | 4, value: unknown): value is SpaceObject {
-  const id = galaxy === 4 ? NEEDLE_CADENCE.id : SUNFLOWER_CAPITAL_BOSS.id;
+function optionalBossActor(galaxy: 1 | 4 | 5, value: unknown): value is SpaceObject {
+  const ids = { 1: SUNFLOWER_CAPITAL_BOSS.id, 4: NEEDLE_CADENCE.id, 5: ANDROMEDA_REDACT.id };
+  const id = ids[galaxy];
   return (
     spaceObject(galaxy, [], value) &&
     value.id === id &&
@@ -509,6 +511,69 @@ function bossFlightConsistent(
     );
   }
   return !boss && actor === undefined && cache === undefined;
+}
+
+function validRedactProgress(galaxy: GalaxyNumber, progress: Record<string, unknown>): boolean {
+  const boss = progress.redact;
+  const known = Array.isArray(progress.known)
+    ? progress.known.filter((id) => id === ANDROMEDA_REDACT.relayId).length
+    : 0;
+  if (boss === undefined) {
+    return known === 0;
+  }
+  if (
+    galaxy !== 5 ||
+    progress.stage !== 6 ||
+    progress.questComplete !== true ||
+    !record(boss) ||
+    !vector(boss.relay) ||
+    !vector(boss.site) ||
+    (boss.firstHardpointLost !== undefined && boss.firstHardpointLost !== true)
+  ) {
+    return false;
+  }
+  const entries = Object.keys(boss).length - Number(boss.firstHardpointLost === true);
+  switch (boss.phase) {
+    case "active":
+      return entries === 3 && known === 0;
+    case "away":
+      return (
+        entries === 4 &&
+        known === 0 &&
+        optionalBossActor(5, boss.actor) &&
+        boss.actor.enemy?.salvaged === false
+      );
+    case "resolved":
+      return (
+        entries === 4 && known === 1 && (boss.outcome === "defeated" || boss.outcome === "salvaged")
+      );
+    default:
+      return false;
+  }
+}
+
+function redactFlightConsistent(boss: GalaxyProgress["redact"], flight: FlightState): boolean {
+  const { id, relayId } = ANDROMEDA_REDACT;
+  const actor = flight.objects.find((object) => object.id === id) ?? flight.world.notables[id];
+  const relay = flight.objects.find((object) => object.id === relayId);
+  if (flight.galaxy !== 5) {
+    return actor === undefined && relay === undefined;
+  }
+  if (boss?.phase === "active") {
+    return !relay && optionalBossActor(5, actor) && actor.enemy?.salvaged === false;
+  }
+  if (boss?.phase === "resolved") {
+    return (
+      relay?.kind === "destination" &&
+      relay.x === boss.relay.x &&
+      relay.y === boss.relay.y &&
+      (actor == null ||
+        (boss.outcome === "salvaged" &&
+          optionalBossActor(5, actor) &&
+          actor.enemy?.salvaged === true))
+    );
+  }
+  return !boss && actor === undefined && relay === undefined;
 }
 
 function sounderActor(value: SpaceObject): boolean {
@@ -934,6 +999,7 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
       if (
         !record(p) ||
         !validBossProgress(id, p) ||
+        !validRedactProgress(id, p) ||
         !validSounderProgress(id, p) ||
         (p.geography !== undefined && !validGalaxyGeography(p.geography)) ||
         (p.explorationSites !== undefined &&
@@ -972,7 +1038,11 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
           p.known.some(
             (v) =>
               !destinationIds[id]?.includes(v) &&
-              !(id === 5 && typeof v === "string" && settlementById(ECONOMY, v)),
+              !(
+                id === 5 &&
+                typeof v === "string" &&
+                (v === ANDROMEDA_REDACT.relayId || settlementById(ECONOMY, v))
+              ),
           )) ||
         (p.resolved === true && p.questComplete !== true)
       ) {
@@ -1023,10 +1093,12 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
     const progress = value.progress as unknown as GameState["progress"];
     const sunflowerBoss = progress[1].capitalBoss;
     const needleBoss = progress[4].capitalBoss;
+    const redact = progress[5].redact;
     if (
       (sunflowerBoss?.phase === "active" &&
         (value.selectedGalaxy !== 1 || value.flight === null)) ||
-      (needleBoss?.phase === "active" && (value.selectedGalaxy !== 4 || value.flight === null))
+      (needleBoss?.phase === "active" && (value.selectedGalaxy !== 4 || value.flight === null)) ||
+      (redact?.phase === "active" && (value.selectedGalaxy !== 5 || value.flight === null))
     ) {
       return null;
     }
@@ -1176,6 +1248,7 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
       if (
         !bossFlightConsistent(1, sunflowerBoss, f as unknown as FlightState) ||
         !bossFlightConsistent(4, needleBoss, f as unknown as FlightState) ||
+        !redactFlightConsistent(redact, f as unknown as FlightState) ||
         !sounderFlightConsistent(whirlpool, f as unknown as FlightState)
       ) {
         return null;

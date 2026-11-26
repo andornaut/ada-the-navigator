@@ -1,17 +1,13 @@
-import { CAPITAL_CAPTAINS } from "../data/capitalCaptains.ts";
+import { ANDROMEDA_REDACT } from "../data/capitalBosses.ts";
 import type { ConversationLine } from "../data/conversations.ts";
 import type { Vec } from "../data/types.ts";
+import type { CapitalBossProgress } from "./capitalBossEncounter.ts";
 import type { ChapterContext } from "./chapterProtocol.ts";
 import { questGuardPlacementContext } from "./flight.ts";
 import type { StationPlacementContext } from "./stationPlacement.ts";
-import type { FlightEvent, SpaceObject } from "./types.ts";
+import type { FlightEvent } from "./types.ts";
 
-export const ANDROMEDA_REDACT = {
-  captain: CAPITAL_CAPTAINS.captainRedact.name,
-  id: "boss:andromeda:broad-wing",
-  relayId: "boss:andromeda:relay",
-  ship: "Broad Wing",
-} as const;
+export { ANDROMEDA_REDACT };
 
 export const ANDROMEDA_REDACT_CUES = {
   approach: {
@@ -35,12 +31,7 @@ interface RedactPlacement {
 
 type RedactOutcome = "defeated" | "salvaged";
 
-export type AndromedaRedactProgress = RedactPlacement &
-  (
-    | { readonly phase: "active" }
-    | { readonly phase: "away"; readonly actor: SpaceObject }
-    | { readonly phase: "resolved"; readonly outcome: RedactOutcome }
-  );
+export type AndromedaRedactProgress = CapitalBossProgress & RedactPlacement;
 
 /** Plan both sites against the supplied clearance context without changing the live flight. */
 export type AndromedaRedactPlacementPort = (

@@ -1,8 +1,10 @@
 import { randomStream } from "@andornaut/game-kit/runtime/random";
 
+import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import { ASTEROID_LOOT, CRYSTAL_MINIMUM_ORE } from "../data/asteroidLoot.ts";
 import {
+  ANDROMEDA_REDACT,
   NEEDLE_CADENCE,
   SUNFLOWER_CAPITAL_BOSS,
   WHIRLPOOL_CAPITAL_BOSS,
@@ -101,6 +103,7 @@ import {
   proceduralPoisNear,
 } from "./proceduralPois.ts";
 export { rollEncounter } from "./encounterRoll.ts";
+import { settlementsNear } from "./andromedaPlaces.ts";
 import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
 import { flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
@@ -183,7 +186,7 @@ import {
   pickupSpacingRadius,
   stardustDropOffsets,
 } from "./stardustPlacement.ts";
-import { stationFormationClear } from "./stationPlacement.ts";
+import { stationFormationClear, type StationPlacementContext } from "./stationPlacement.ts";
 import { type ImpactFamily, impactFamily, type WeaponImpact } from "./weaponImpacts.ts";
 import {
   periodicWorldGrid,
@@ -371,6 +374,7 @@ function requiredOccupants(content: GameContent, flight: FlightState): RequiredW
   const authored =
     flight.galaxy === 2 ||
     flight.galaxy === 3 ||
+    (flight.galaxy === 5 && andromedaRelaySites.has(flight)) ||
     flight.galaxy === 6 ||
     (flight.galaxy === 4 && flight.needle)
       ? stationPopulationObjects(flight)
@@ -384,15 +388,18 @@ function requiredOccupants(content: GameContent, flight: FlightState): RequiredW
           liveEnemy(object) &&
           (flight.galaxy === 4
             ? object.enemy?.packId === "needle:exit" || object.id === NEEDLE_CADENCE.id
-            : object.routeId !== undefined ||
-              object.enemy?.packId?.startsWith("route:") ||
-              object.enemy?.escortOf?.startsWith("route:")),
+            : flight.galaxy === 5
+              ? object.id === ANDROMEDA_REDACT.id
+              : object.routeId !== undefined ||
+                object.enemy?.packId?.startsWith("route:") ||
+                object.enemy?.escortOf?.startsWith("route:")),
       ),
     ],
     sites: [
-      ...authored.filter((object) => object.kind === "destination"),
+      ...(flight.galaxy === 5 ? [] : authored.filter((object) => object.kind === "destination")),
       ...cartwheelSiteGeometry(flight),
       ...(whirlpoolProtectedDisks.get(flight) ?? []),
+      ...(andromedaRelaySites.get(flight) ?? []),
     ],
   };
 }
@@ -1594,6 +1601,107 @@ export function placeNeedleCadence(
   flight.objects.push(actor);
   worldSyncFlightRegion(world, content, flight);
   return { x: actor.x, y: actor.y };
+}
+
+const andromedaRelaySites = new WeakMap<FlightState, readonly SpaceObject[]>();
+
+export function reserveAndromedaRelaySite(flight: FlightState, point: Vec): void {
+  if (!andromedaRelaySites.has(flight)) {
+    andromedaRelaySites.set(flight, [
+      { ...point, hp: 1, id: ANDROMEDA_REDACT.relayId, kind: "destination", radius: 30 },
+    ]);
+  }
+}
+
+/** Find a clear pair outside Pip's routes without publishing them or clearing scenery. */
+export function planRedactEncounter(
+  placement: StationPlacementContext,
+  otherStops: readonly string[],
+): { readonly site: Vec; readonly relay: Vec } | null {
+  const { content, flight } = placement;
+  const world = flightWorldContext(flight);
+  const population = stationPopulationObjects(flight);
+  const beacon = population.find(({ id }) => id === ANDROMEDA_PLACES.beacon);
+  const pip = population.find(({ id }) => id === ANDROMEDA_PLACES.pip);
+  if (!beacon || !pip) {
+    return null;
+  }
+  const actor = spawnEnemy(content, flight, "capital", ANDROMEDA_REDACT.id, beacon);
+  actor.persistent = true;
+  const definition = enemyEquipmentDefinition(flight.galaxy, actor.enemy!);
+  const reach = questGuardFormationReach(placement, [actor]);
+  const clearance =
+    reach +
+    definition.perception +
+    actorPursuitHomeRadius(flight.galaxy, definition.pursuit.homeRadius, false, actor);
+  const directionToPip = worldDelta(world, beacon, pip);
+  const heading = Math.atan2(directionToPip.y, directionToPip.x);
+  const routes = [pip, FLIGHT_START, ...population.filter(({ id }) => otherStops.includes(id))];
+  for (const span of [clearance * 1.25, clearance * 1.65]) {
+    for (let spoke = 0; spoke < 8; spoke++) {
+      const angle = heading + Math.PI / 2 + (spoke * Math.PI) / 4;
+      const offset = { x: Math.cos(angle), y: Math.sin(angle) };
+      const at = (distance: number) => ({
+        x: beacon.x + offset.x * distance,
+        y: beacon.y + offset.y * distance,
+      });
+      const site = at(span);
+      const relay = at(span + content.tuning.storySpacing);
+      canonicalPosition(flight, site);
+      canonicalPosition(flight, relay);
+      Object.assign(actor, site);
+      if (
+        routes.some(
+          (to) =>
+            segmentDistance(
+              worldPoint(world, beacon, site),
+              beacon,
+              worldPoint(world, beacon, to),
+            ) <= clearance,
+        ) ||
+        !clearOfExclusionZones(content, actor, flight) ||
+        worldStationsNear(
+          flightStationContext(flight),
+          ECONOMY,
+          flight.galaxy,
+          ECONOMY.station.exclusionRadius + reach,
+          site,
+        ).length > 0 ||
+        settlementsNear(ECONOMY, content.tuning.exclusionRadius + reach, site).length > 0 ||
+        population.some(
+          (other) =>
+            capital(other) && worldDistance(world, other, site) < enemySpacing(actor, other),
+        ) ||
+        !stationFormationClear(placement, [actor]) ||
+        !destinationClear(content, flight, relay) ||
+        settlementsNear(ECONOMY, content.tuning.storySpacing, relay).length > 0 ||
+        !requiredFootprintClear(content, flight, {
+          center: relay,
+          radius: content.tuning.exclusionRadius,
+        }) ||
+        population.some(
+          (other) => other.hp > 0 && !clearOf(flight, content.tuning.exclusionRadius, relay, other),
+        )
+      ) {
+        continue;
+      }
+      return { relay, site };
+    }
+  }
+  return null;
+}
+
+export function admitRedactEncounter(
+  content: GameContent,
+  flight: FlightState,
+  site: Vec,
+  relay: Vec,
+): void {
+  const actor = spawnEnemy(content, flight, "capital", ANDROMEDA_REDACT.id, site);
+  actor.persistent = true;
+  reserveAndromedaRelaySite(flight, relay);
+  flight.objects.push(actor);
+  worldSyncFlightRegion(flightWorldContext(flight), content, flight);
 }
 
 /** The repair cache is a single ordinary Ore pickup with a durable encounter identity. */
@@ -5028,7 +5136,9 @@ function hit(
     if (object.hp > 0 && !before.disabled && after.disabled) {
       events.push({ id: object.id, type: "enemyDisabled" });
     } else if (
-      (object.id === PHANTOM_FLAGSHIP || object.id === NEEDLE_CADENCE.id) &&
+      (object.id === PHANTOM_FLAGSHIP ||
+        object.id === NEEDLE_CADENCE.id ||
+        object.id === ANDROMEDA_REDACT.id) &&
       part !== null &&
       object.hp > 0 &&
       !before.disabled &&
@@ -6269,6 +6379,8 @@ export function stepFlight(
   for (const object of flight.objects) {
     if (
       object.kind === "destination" &&
+      // The hidden relay's discovery is committed when the encounter resolves.
+      object.id !== ANDROMEDA_REDACT.relayId &&
       !routeBlocked(object.id, flight) &&
       worldDistance(flightWorldContext(flight), object, flight.player) <= content.tuning.talkRange
     ) {

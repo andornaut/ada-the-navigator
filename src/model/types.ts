@@ -8,6 +8,7 @@ import type { JobType } from "../data/jobs.ts";
 import type { StorySceneId } from "../data/storyShips.ts";
 import type { GalaxyNumber, Vec, Weapon } from "../data/types.ts";
 import type { AchievementState } from "./achievements.ts";
+import type { AndromedaRedactProgress } from "./andromedaRedact.ts";
 import type { CapitalBossProgress, RequiredCapitalBossProgress } from "./capitalBossEncounter.ts";
 import type { EnemyState } from "./enemyAi.ts";
 import type { ExplorationSites, ExplorationState } from "./explorationState.ts";
@@ -256,6 +257,7 @@ export interface GalaxyProgress {
   /** Persistent geography; null seed explicitly records unavailable legacy history. */
   geography?: GalaxyGeography;
   andromeda?: AndromedaProgress;
+  redact?: AndromedaRedactProgress;
   needle?: NeedleChapterProgress;
   /** The third disk's memory finished on the Needle flight. */
   needleMemoryRead?: boolean;
@@ -465,6 +467,7 @@ export interface GameSave extends GameState {
 export interface FlightLogEntry {
   readonly id: string;
   readonly text: string;
+  readonly waypoint?: Vec & { readonly id: string };
 }
 
 export type FlightEvent =

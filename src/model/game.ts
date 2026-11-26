@@ -75,6 +75,14 @@ import {
   resetCourier,
   supplyTerms,
 } from "./activities.ts";
+import {
+  ANDROMEDA_REDACT,
+  ANDROMEDA_REDACT_CUES,
+  andromedaRedactEligible,
+  andromedaRelayWaypoint,
+  reserveAndromedaRedact,
+  resolveAndromedaRedact,
+} from "./andromedaRedact.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { calfHome, calfRouteMidpoint, calfStart, placedCalf, stepCalf } from "./calf.ts";
 import { capitalBossActor, encounterBossHud } from "./capitalBossEncounter.ts";
@@ -121,6 +129,7 @@ import {
   activateRequiredCartwheelRoute,
   activateRequiredWhirlpoolRoute,
   activateRouteEncounter,
+  admitRedactEncounter,
   beginArrivalGrace,
   carryPickup,
   createUnpopulatedFlight,
@@ -137,12 +146,14 @@ import {
   placeHuntingPack,
   placeNeedleCadence,
   placeSunflowerCapitalBoss,
+  planRedactEncounter,
   planRequiredCartwheelRoute,
   planRequiredWhirlpoolRoutes,
   populateFlight,
   populateRequiredChapterFlight,
   populateRequiredFlight,
   questGuardPlacementContext,
+  reserveAndromedaRelaySite,
   reserveWhirlpoolDiskSite,
   restoreWhirlpoolSounder,
   retireLegacyWhirlpoolDiskGuard,
@@ -371,6 +382,7 @@ const NAMED_CAPITAL_IDS: Partial<Record<GalaxyNumber, string>> = {
   1: SUNFLOWER_CAPITAL_BOSS.id,
   3: WHIRLPOOL_CAPITAL_BOSS.id,
   4: NEEDLE_CADENCE.id,
+  5: ANDROMEDA_REDACT.id,
   6: PHANTOM_FLAGSHIP,
 };
 const NEEDLE_PRELUDE = ["arrival:4", "meeting:4:avi"] as const;
@@ -1335,6 +1347,10 @@ export class GameModel {
     }
     if (result.complete && !this.current.questComplete) {
       this.complete();
+      const flight = this.state.flight;
+      if (flight?.galaxy === 5) {
+        this.prepareRedact({ content: this.content, flight, progress: this.current });
+      }
     }
     if (result.dialogue) {
       this.state.dialogue = result.dialogue;
@@ -1351,7 +1367,9 @@ export class GameModel {
     return (BUILT.has(galaxy) && this.content.chapters[galaxy]) || placeholderChapter(galaxy);
   }
   private label(id: string): string {
-    return this.content.labels[id] ?? "";
+    return id === ANDROMEDA_REDACT.relayId
+      ? ANDROMEDA_REDACT.relayLabel
+      : (this.content.labels[id] ?? "");
   }
   /** How many Use presses have been refused, such as Dock in danger; the scene cues each new one. */
   get useRefusals(): number {
@@ -1398,6 +1416,7 @@ export class GameModel {
       .filter(
         (o) =>
           ((o.kind === "destination" &&
+            o.id !== ANDROMEDA_REDACT.relayId &&
             this.current.known.includes(o.id) &&
             !routeBlocked(o.id, f)) ||
             (o.kind === "station" && this.current.stations.includes(o.id))) &&
@@ -1484,6 +1503,11 @@ export class GameModel {
     if (flight.galaxy === 6) {
       return phantomBossHud({ content: this.content, flight, progress: this.current }, canSalvage);
     }
+    if (flight.galaxy === 5) {
+      return this.current.redact?.phase === "active"
+        ? encounterBossHud(ANDROMEDA_REDACT, flight, canSalvage)
+        : null;
+    }
     const sounder = this.current.sounder;
     const optional = this.current.capitalBoss?.phase === "active";
     const identity =
@@ -1548,6 +1572,81 @@ export class GameModel {
     }
   }
 
+  private prepareRedact(context: ChapterContext): void {
+    const { flight, progress } = context;
+    if (!andromedaRedactEligible(context)) {
+      return;
+    }
+    const boss = progress.redact;
+    const world = flightWorldContext(flight);
+    if (boss) {
+      reserveAndromedaRelaySite(flight, boss.relay);
+      if (boss.phase === "away") {
+        const { actor, ...saved } = boss;
+        flight.objects.push(actor);
+        progress.redact = { ...saved, phase: "active" };
+        worldSyncFlightRegion(world, this.content, flight);
+      } else {
+        const relay = andromedaRelayWaypoint(boss);
+        if (relay) {
+          ensureDestinationAt(this.content, relay.id, relay, flight);
+        }
+      }
+      return;
+    }
+    const grid = periodicWorldGrid(world, this.content.tuning.chunkSize);
+    const cell = worldCellKey(grid, worldCellAt(grid, flight.player));
+    if (this.bossPlacementCells.get(flight) === cell) {
+      return;
+    }
+    this.bossPlacementCells.set(flight, cell);
+    const stops = [progress.andromeda?.station, progress.andromeda?.settlement].filter(
+      (id): id is string => id !== undefined,
+    );
+    const reservation = reserveAndromedaRedact(
+      context,
+      (placement) => planRedactEncounter(placement, stops),
+      boss,
+    );
+    if (reservation) {
+      progress.redact = reservation;
+      admitRedactEncounter(this.content, flight, reservation.site, reservation.relay);
+    }
+  }
+
+  private resolveRedact(flight: FlightState, outcome: "defeated" | "salvaged"): void {
+    const progress = this.current;
+    const result = resolveAndromedaRedact(
+      { content: this.content, flight, progress },
+      progress.redact,
+      { id: ANDROMEDA_REDACT.id, outcome },
+    );
+    if (!result) {
+      return;
+    }
+    progress.redact = result.progress;
+    ensureDestinationAt(this.content, result.relay.id, result.relay, flight);
+    if (!progress.known.includes(result.discovery.id)) {
+      progress.known.push(result.discovery.id);
+      progress.discoveries++;
+      this.flightEvents.push(result.discovery);
+    }
+    this.talk.authoredCue(result.cue.id, result.cue.line);
+  }
+
+  private redactCues(): void {
+    const { id } = ANDROMEDA_REDACT;
+    const boss = this.current.redact;
+    if (boss?.phase === "resolved") {
+      this.talk.authoredCue(`${id}:resolved`, ANDROMEDA_REDACT_CUES.resolved);
+    } else if (boss?.phase === "active" && this.bossHud()) {
+      this.talk.authoredCue(`${id}:approach`, ANDROMEDA_REDACT_CUES.approach);
+      if (boss.firstHardpointLost) {
+        this.talk.authoredCue(`${id}:hardpoint`, ANDROMEDA_REDACT_CUES.hardpoint);
+      }
+    }
+  }
+
   /** Intercepted entries retain their identity as their disclosed attribution changes. */
   get flightLog(): readonly FlightLogEntry[] {
     const needle = this.state.progress[4];
@@ -1563,7 +1662,11 @@ export class GameModel {
       holodisksHeld(this.state.progress) >= ARCHIE_NAMED.holodisks &&
       (needle.needleMemoryRead ?? !memoryPending);
     const transmission = needleCadenceTransmission(needle.capitalBoss, archieRevealed);
-    return transmission ? [transmission] : [];
+    const relay = andromedaRelayWaypoint(this.state.progress[5].redact);
+    return [
+      ...(transmission ? [transmission] : []),
+      ...(relay ? [{ id: relay.id, text: ANDROMEDA_REDACT.relayLabel, waypoint: relay }] : []),
+    ];
   }
 
   private prepareWhirlpoolDisk(flight: FlightState): void {
@@ -2648,6 +2751,8 @@ export class GameModel {
         chapterRuntime(flight.galaxy)?.init?.(context);
         if (flight.galaxy === 4) {
           this.prepareNeedleBoss(context);
+        } else if (flight.galaxy === 5) {
+          this.prepareRedact(context);
         }
       });
     } else {
@@ -2789,6 +2894,13 @@ export class GameModel {
         this.current.sounder = actors.some(({ id }) => id === WHIRLPOOL_CAPITAL_BOSS.id)
           ? { actors, phase: "away" }
           : { phase: "revealed" };
+      }
+      const redact = this.current.redact;
+      if (flight.galaxy === 5 && redact?.phase === "active") {
+        const actor = capitalBossActor(flight, ANDROMEDA_REDACT.id);
+        if (actor) {
+          this.current.redact = { ...redact, actor, phase: "away" };
+        }
       }
       if (cargo === "keep" && flight.cargo > 0) {
         this.state.economy.cargo = flight.cargo;
@@ -3161,6 +3273,20 @@ export class GameModel {
         this.current.capitalBoss = { ...boss, firstHardpointLost: true };
       }
     }
+    if (f.galaxy === 5 && this.current.redact?.phase === "active") {
+      const boss = this.current.redact;
+      if (
+        events.some((event) => event.type === "enemyDestroyed" && event.id === ANDROMEDA_REDACT.id)
+      ) {
+        this.resolveRedact(f, "defeated");
+      } else if (
+        events.some(
+          (event) => event.type === "enemyFirstHardpointLost" && event.id === ANDROMEDA_REDACT.id,
+        )
+      ) {
+        this.current.redact = { ...boss, firstHardpointLost: true };
+      }
+    }
     for (const event of events) {
       if (event.type === "guardCue") {
         const store = this.markerStore(f);
@@ -3261,6 +3387,9 @@ export class GameModel {
       if (f.galaxy === 4) {
         this.prepareNeedleBoss(context);
         this.needleBossCues();
+      } else if (f.galaxy === 5) {
+        this.prepareRedact(context);
+        this.redactCues();
       }
       const thread = heldActivity(f.galaxy, this.state);
       const layout = needleCourses(f);
@@ -3342,7 +3471,8 @@ export class GameModel {
           event.id !== SUNFLOWER_CAPITAL_BOSS.id &&
           event.id !== WHIRLPOOL_CAPITAL_BOSS.id &&
           event.id !== PHANTOM_FLAGSHIP &&
-          event.id !== NEEDLE_CADENCE.id,
+          event.id !== NEEDLE_CADENCE.id &&
+          event.id !== ANDROMEDA_REDACT.id,
       ),
       holodisks: holodisksHeld(this.state.progress),
       inCurrent: inCurrent(f.galaxy, 0, f.player),
@@ -3561,16 +3691,25 @@ export class GameModel {
             }
           : undefined;
     const needle = f.galaxy === 4 ? this.current.capitalBoss : undefined;
+    const redact = f.galaxy === 5 ? this.current.redact : undefined;
     const optionalBossWaypoint =
-      needle?.phase === "active"
+      redact?.phase === "active"
         ? {
-            ...needle.site,
-            id: NEEDLE_CADENCE.id,
-            label: NEEDLE_CADENCE.ship,
+            ...redact.site,
+            id: ANDROMEDA_REDACT.id,
+            label: ANDROMEDA_REDACT.ship,
             objective: false,
             symbol: "destination" as const,
           }
-        : sunflowerWaypoint;
+        : needle?.phase === "active"
+          ? {
+              ...needle.site,
+              id: NEEDLE_CADENCE.id,
+              label: NEEDLE_CADENCE.ship,
+              objective: false,
+              symbol: "destination" as const,
+            }
+          : sunflowerWaypoint;
     const map = localMap({
       ...flightStationContext(f),
       ...(waypoint
@@ -3889,6 +4028,8 @@ export class GameModel {
         this.resolveSounder(flight, "disabled");
       } else if (flight.galaxy === 4 && target.id === NEEDLE_CADENCE.id) {
         this.resolveNeedleBoss("salvaged");
+      } else if (flight.galaxy === 5 && target.id === ANDROMEDA_REDACT.id) {
+        this.resolveRedact(flight, "salvaged");
       } else {
         this.panel("salvage", INTERACTION_COPY.salvage!.lines[0]!.text, "Astra");
       }
@@ -4950,6 +5091,9 @@ export class GameModel {
       this.beginConversations();
       const chapter = this.chapterContext();
       if (chapter) {
+        if (chapter.flight.galaxy === 5 && this.current.redact) {
+          reserveAndromedaRelaySite(chapter.flight, this.current.redact.relay);
+        }
         chapterRuntime(chapter.flight.galaxy)?.init?.(chapter);
       }
       if (flight) {

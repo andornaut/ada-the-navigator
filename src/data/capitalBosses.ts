@@ -35,6 +35,14 @@ export const SUNFLOWER_BOSS_CUES = {
   },
 } as const satisfies Record<string, ConversationLine>;
 
+export const ANDROMEDA_REDACT = {
+  captain: CAPITAL_CAPTAINS.captainRedact.name,
+  id: "boss:andromeda:broad-wing",
+  relayId: "boss:andromeda:relay",
+  relayLabel: "Hidden relay",
+  ship: "Broad Wing",
+} as const;
+
 export const NEEDLE_CADENCE = {
   captain: CAPITAL_CAPTAINS.captainCadence.name,
   id: "boss:needle:crossbow",
