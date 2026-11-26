@@ -202,11 +202,17 @@ and jets stay in frame px. The sector one enemy SVGs declare their frame size.
 like the hull frame.
 
 - `archetype`, `frame`: the hull archetype and frame size.
+- `hull`: the drawn hull in frame px, as in the
+  [enemy fleet](enemy-redesign.md)'s files: `length` fore and aft over the hull
+  and its intact engines and command tower, `width` the span of `sizeRatio` Ada
+  widths and `radius`, the larger of half of each.
 - `hardpoints[]`, in Art's order: `id`, `role`, `states`
   (`["intact", "destroyed"]`) and `top`: the one top design the hardpoint
   always carries, or `null`. Weapon mounts are `null`: their top is the ship's
-  weapon's. A mount heavy (frigate, capital, Archie) adds `capped`, whether the
-  mount has capped plate sprites.
+  weapon's. A fixed front Laser adds `aim` `facing`. A mount heavy (frigate,
+  capital, Archie) adds `capped`, whether the mount has capped plate sprites.
+  `offset` is the hardpoint's origin from the hull pivot in frame px, x to
+  starboard and y aft.
 - `fill` (mount heavies): the weapon mount ids in fill order.
 - `weaponTops` (mount heavies): every weapon the class can hold mapped to
   `{ "top", "aim" }`, `aim` being `target` or `aft`. Archie's equals the
@@ -395,9 +401,6 @@ tiers and tops on a more threatening hull, in the coral family palette.
   a destroyed mount. They follow the mounts in `archie-hardpoints.json`, each
   with `aim` `facing` and per heading `muzzles`, its shot origin in hull frame
   px, and their base frames are part rows of `archie-parts-batch-24-1.svg`.
-  `archie-prow.json` is a byte copy of `archie-hardpoints.json`, which the core
-  manifest's sidecar and `src/data/enemyMuzzles.ts` name until they name
-  `archie-hardpoints.json`.
 
 Mouth width and height are model units.
 

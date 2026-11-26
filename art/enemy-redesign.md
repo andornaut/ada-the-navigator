@@ -321,9 +321,6 @@ One port sits on the centreline (`prow`); a pair sits either side of it
   still fires.
 - The Lasers' base frames are rows of the part sheet of their frame size, ids
   `enemy-{stem}-{h}-{state}-{k}`.
-- `{key}-prow.json` is a byte copy of `{key}-hardpoints.json`, which
-  `src/data/enemyMuzzles.ts` and the manifests' sidecars name until they name
-  `{key}-hardpoints.json`.
 
 ### Weapon tops
 
@@ -458,11 +455,6 @@ station in the core, Cartwheel and Andromeda manifests and the platform's
 40 px, with the shot origins and collision of
 [fleet-tops.json](fleet-tops.json): two for `pod`, eight for `dome`, one for
 `gun`.
-
-For the fixed front Lasers, `src/data/enemyMuzzles.ts` and each heavy's
-manifest sidecar name `{key}-hardpoints.json` and `archie-hardpoints.json` in
-place of the `-prow.json` copies, which Art then removes with the producers'
-copy steps.
 
 The fleet producer keeps the craft. Art then renames the files to the
 `{archetype}-` stems and removes `fleet-rows.json` and the replaced sheets and

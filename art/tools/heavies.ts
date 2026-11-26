@@ -1871,9 +1871,27 @@ export function jetMouths(frame: number, yaw: number, placed: readonly Placed[])
   );
 }
 
-// `{craft}-hardpoints.json` version 1: ids, per-heading anchors, pivots and layer order, and
-// per-aim muzzles relative to each shared top's pivot. `collision` adds the drawn silhouettes:
-// the hull's and each base's per heading, and each top's per aim.
+// The drawn hull in frame px, as the fleet's hardpoints files give it: `length` fore and aft over
+// the hull and its intact engines and command tower, `width` the hull's span of `sizeRatio` Ada
+// widths, and `radius`, the larger of half the length and half the width.
+function hullSize(craft: HeavyCraft, placed: readonly Placed[]) {
+  const stations = [
+    ...craft.hull.flatMap(({ plan }) => plan.map(([, y]) => y)),
+    ...placed
+      .filter(({ model }) => model.role !== "turret")
+      .flatMap(({ model, origin }) =>
+        model.intact.flatMap(({ plan }) => plan.map(([, y]) => y + origin[1])),
+      ),
+  ];
+  const length = Math.max(...stations) - Math.min(...stations);
+  const width = craft.sizeRatio * ADA_WIDTH;
+  return { length: round(length), width: round(width), radius: round(Math.max(length, width) / 2) };
+}
+
+// `{craft}-hardpoints.json` version 1: the drawn hull's size, ids, each hardpoint's `offset` from
+// the hull pivot in frame px (x to starboard, y aft), per-heading anchors, pivots and layer order,
+// and per-aim muzzles relative to each shared top's pivot. `collision` adds the drawn
+// silhouettes: the hull's and each base's per heading, and each top's per aim.
 export function hardpointsFile(
   craft: HeavyCraft,
   placed: readonly Placed[],
@@ -1883,13 +1901,15 @@ export function hardpointsFile(
     version: 1,
     archetype: enemyArchetype(craft.name),
     frame: craft.frame,
-    hardpoints: placed.map(({ id, model }) => ({
+    hull: hullSize(craft, placed),
+    hardpoints: placed.map(({ id, model, origin }) => ({
       id,
       role: model.role,
       states: states(model),
       top: fixedTop(model),
       ...(model.muzzle ? { aim: "facing" } : {}),
       ...(craft.mounts ? { capped: model.capped !== undefined } : {}),
+      offset: [round(origin[0]), round(origin[1])],
     })),
     ...(craft.mounts
       ? {
@@ -2303,15 +2323,7 @@ async function main() {
       owns,
       outputEntries.map((entry) => storedAt(paths, entry)),
     );
-    // CLEANUP (added 2026-11-25): src/data/enemyMuzzles.ts and the core manifest's sidecar read
-    // this copy of each hardpoints file; write and name `{craft}-hardpoints.json` alone once
-    // they name it.
-    const sidecars = sidecarsIn(paths);
-    for (const { name } of drawn) {
-      writeFileSync(`${dir}${name}-prow.json`, files.get(`${name}-hardpoints.json`)!);
-      sidecars[name] = { ...sidecars[name], hardpoints: `/art/enemies/${name}-prow.json` };
-    }
-    mergeSidecars("core", ownsSidecar, sidecars);
+    mergeSidecars("core", ownsSidecar, sidecarsIn(paths));
   } else {
     for (const [file, text] of files) {
       writeFileSync(`${dir}${file}`, text);

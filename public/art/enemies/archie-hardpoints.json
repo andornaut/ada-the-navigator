@@ -2,83 +2,99 @@
   "version": 1,
   "archetype": "archie",
   "frame": 560,
+  "hull": {
+    "length": 279.414,
+    "width": 257.28,
+    "radius": 139.707
+  },
   "hardpoints": [
     {
       "id": "command",
       "role": "command",
       "states": ["intact", "destroyed"],
       "top": null,
-      "capped": false
+      "capped": false,
+      "offset": [0, 0]
     },
     {
       "id": "engine-left",
       "role": "engine",
       "states": ["intact", "destroyed"],
       "top": null,
-      "capped": false
+      "capped": false,
+      "offset": [-60.054, 97.866]
     },
     {
       "id": "engine-right",
       "role": "engine",
       "states": ["intact", "destroyed"],
       "top": null,
-      "capped": false
+      "capped": false,
+      "offset": [60.054, 97.866]
     },
     {
       "id": "weapon-left",
       "role": "turret",
       "states": ["intact", "destroyed"],
       "top": null,
-      "capped": false
+      "capped": false,
+      "offset": [-80.072, -66.727]
     },
     {
       "id": "weapon-right",
       "role": "turret",
       "states": ["intact", "destroyed"],
       "top": null,
-      "capped": false
+      "capped": false,
+      "offset": [80.072, -66.727]
     },
     {
       "id": "weapon-rear-left",
       "role": "turret",
       "states": ["intact", "destroyed"],
       "top": null,
-      "capped": false
+      "capped": false,
+      "offset": [-97.866, 22.242]
     },
     {
       "id": "weapon-rear-right",
       "role": "turret",
       "states": ["intact", "destroyed"],
       "top": null,
-      "capped": false
+      "capped": false,
+      "offset": [97.866, 22.242]
     },
     {
       "id": "claw-left",
       "role": "turret",
       "states": ["intact", "destroyed"],
       "top": null,
-      "capped": true
+      "capped": true,
+      "offset": [-35.588, -106.763]
     },
     {
       "id": "claw-right",
       "role": "turret",
       "states": ["intact", "destroyed"],
       "top": null,
-      "capped": true
+      "capped": true,
+      "offset": [35.588, -106.763]
     },
     {
       "id": "stern-left",
       "role": "turret",
       "states": ["intact", "destroyed"],
       "top": null,
-      "capped": true
+      "capped": true,
+      "offset": [-24.466, 73.399]
     },
     {
       "id": "stern-right",
       "role": "turret",
       "states": ["intact", "destroyed"],
       "top": null,
-      "capped": true
+      "capped": true,
+      "offset": [24.466, 73.399]
     },
     {
       "id": "prow-left",
@@ -86,7 +102,8 @@
       "states": ["intact", "destroyed"],
       "top": null,
       "aim": "facing",
-      "capped": false
+      "capped": false,
+      "offset": [-28.915, -133.454]
     },
     {
       "id": "prow-right",
@@ -94,7 +111,8 @@
       "states": ["intact", "destroyed"],
       "top": null,
       "aim": "facing",
-      "capped": false
+      "capped": false,
+      "offset": [28.915, -133.454]
     }
   ],
   "fill": [

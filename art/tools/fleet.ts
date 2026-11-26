@@ -1263,13 +1263,6 @@ async function main() {
         if (!file.endsWith("-sheet.svg")) shared.set(file, path);
       }
     }
-    // CLEANUP (added 2026-11-25): src/data/enemyMuzzles.ts and the manifests' sidecars read this
-    // copy of each hardpoints file with fixed front Lasers; remove it once they name
-    // {key}-hardpoints.json.
-    for (const craft of flown.filter(({ lasers }) => lasers?.length)) {
-      const text = files.get("/art/enemies/")?.get(`${craft.key}-hardpoints.json`);
-      if (text !== undefined) writeFileSync(`${art}enemies/${craft.key}-prow.json`, text);
-    }
     for (const { craft, first, sheet: set } of staged) {
       const { directory, manifest } = home(craft, family);
       const target = (rows[manifest] ??= { assets: [], sidecars: {} });
