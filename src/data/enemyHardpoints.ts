@@ -3,9 +3,7 @@ import {
   enemyCatalog,
   type EnemyDefinition,
   type FireProfile,
-  FRONT_LASER_MOUNTS,
 } from "./enemyCatalog.ts";
-import { ENEMY_SIZE_RATIOS } from "./enemyDimensions.ts";
 
 /** One hardpoint in the export Art's generator reads to anchor parts on each heading. */
 export interface ExportedHardpoint {
@@ -45,11 +43,11 @@ export function exportHardpoints(): {
   version: 1;
 } {
   return {
-    archetypes: Object.fromEntries([
-      ...HARDPOINT_ARCHETYPES.map((archetype) => {
+    archetypes: Object.fromEntries(
+      HARDPOINT_ARCHETYPES.map((archetype) => {
         const definition: EnemyDefinition = enemyCatalog[archetype];
-        // The fleet frigate's and capital's front Lasers come from Art's fleet hardpoints files,
-        // not this export's layouts.
+        // The front Lasers come from Art's hardpoints files, which carry their offsets, so the
+        // export omits them.
         const hardpoints: ExportedHardpoint[] = definition.hardpoints
           .filter((part) => !(part.kind === "weapon" && part.fixed))
           .map((part, order) => ({
@@ -83,21 +81,7 @@ export function exportHardpoints(): {
         }));
         return [archetype, { hardpoints: [...parts, ...mounts], sizeRatio: definition.sizeRatio }];
       }),
-      // Archie's flagship lists only its fixed front Lasers, which Art folds into its layout.
-      [
-        "archie",
-        {
-          hardpoints: (FRONT_LASER_MOUNTS.archie ?? []).map(({ id, offset }, order) => ({
-            fire: "bolt" as const,
-            id,
-            offset: [offset.x, offset.y] as [number, number],
-            order,
-            role: "turret" as const,
-          })),
-          sizeRatio: ENEMY_SIZE_RATIOS.flagship,
-        },
-      ],
-    ]),
+    ),
     version: 1,
   };
 }

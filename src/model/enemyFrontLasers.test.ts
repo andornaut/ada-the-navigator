@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import archieFile from "../../public/art/enemies/archie-hardpoints.json" with { type: "json" };
 import capital from "../../public/art/enemies/fleetCapital-hardpoints.json" with { type: "json" };
 import capitalBroad from "../../public/art/enemies/fleetCapitalBroad-hardpoints.json" with { type: "json" };
 import capitalCrossbow from "../../public/art/enemies/fleetCapitalCrossbow-hardpoints.json" with { type: "json" };
@@ -197,6 +198,7 @@ describe("heavy front Lasers", () => {
 
   it("ships Art's prow mounts on every frigate, capital and flagship design", () => {
     const files = {
+      archie: archieFile,
       capital,
       capitalBroad,
       capitalCrossbow,
@@ -206,9 +208,7 @@ describe("heavy front Lasers", () => {
       frigate: frigateFile,
       frigateTwin,
     };
-    expect(Object.keys(FRONT_LASER_MOUNTS).sort()).toEqual(
-      ["archie", ...Object.keys(files)].sort(),
-    );
+    expect(Object.keys(FRONT_LASER_MOUNTS).sort()).toEqual(Object.keys(files).sort());
     for (const [key, file] of Object.entries(files)) {
       // Each offset is Art's frame px from the hull pivot over the hull width.
       const lasers = file.hardpoints.flatMap((part) =>
@@ -231,6 +231,16 @@ describe("heavy front Lasers", () => {
           : ["prow-left", "prow-right"],
       );
     }
+    // Archie's flagship reads its Lasers like the fleet: Art's offset over its hull width.
+    const archieWidth = archieFile.hull.width;
+    expect(FRONT_LASER_MOUNTS.archie).toEqual(
+      archieFile.hardpoints
+        .filter((part) => "aim" in part && part.aim === "facing")
+        .map(({ id, offset }) => ({
+          id,
+          offset: { x: offset[0]! / archieWidth, y: offset[1]! / archieWidth },
+        })),
+    );
     expect(FRONT_LASER_MOUNTS.archie!.map(({ id }) => id)).toEqual(["prow-left", "prow-right"]);
     for (const [key, mounts] of Object.entries(FRONT_LASER_MOUNTS)) {
       const archetype = key === "archie" ? "capital" : (hullDesignClass(key) ?? key);

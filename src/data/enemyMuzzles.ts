@@ -156,19 +156,12 @@ export function readFrontLaserMounts(file: HardpointsFile): FrontLaserMount[] {
   });
 }
 
-/** The ids of a hardpoints file's fixed front Lasers, its `facing` hardpoints, in Art's order. */
-export function readFrontLaserIds(file: HardpointsFile): string[] {
-  return file.hardpoints.flatMap(({ aim, id }) => (aim === "facing" ? [id] : []));
-}
-
-/** The ids of the flagship's front Lasers in Art's hardpoints file. */
-export const ARCHIE_FRONT_LASER_IDS: readonly string[] = readFrontLaserIds(archie);
-
 /**
- * Art's front Laser mounts on the fleet frigates and capitals. Archie's hardpoints file names its
- * Lasers but carries no offsets or hull size, so the catalog states the flagship's offsets.
+ * Art's front Laser mounts on the Shoulder and Twin hull frigates, the six capital designs and
+ * Archie's flagship, read from their hardpoints files.
  */
-export const FLEET_FRONT_LASER_MOUNTS: Partial<Record<EnemyGeometryKey, FrontLaserMount[]>> = {
+export const ART_FRONT_LASER_MOUNTS: Partial<Record<EnemyGeometryKey, FrontLaserMount[]>> = {
+  archie: readFrontLaserMounts(archie),
   capital: readFrontLaserMounts(capital),
   capitalBroad: readFrontLaserMounts(capitalBroad),
   capitalCrossbow: readFrontLaserMounts(capitalCrossbow),

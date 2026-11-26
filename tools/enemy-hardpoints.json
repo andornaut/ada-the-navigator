@@ -148,25 +148,6 @@
         }
       ],
       "sizeRatio": 4
-    },
-    "archie": {
-      "hardpoints": [
-        {
-          "fire": "bolt",
-          "id": "prow-left",
-          "offset": [-0.11238709677419356, -0.5187096774193549],
-          "order": 0,
-          "role": "turret"
-        },
-        {
-          "fire": "bolt",
-          "id": "prow-right",
-          "offset": [0.11238709677419356, -0.5187096774193549],
-          "order": 1,
-          "role": "turret"
-        }
-      ],
-      "sizeRatio": 6
     }
   },
   "version": 1
