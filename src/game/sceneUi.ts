@@ -4,6 +4,14 @@ import type { NetworkPlayNotice } from "@andornaut/game-kit/runtime/web/pwa/buil
 import { Scale, type Scene, Scenes } from "phaser";
 
 import PROJECTS_FILE from "../../public/art/projects.json" with { type: "json" };
+import {
+  AMMO_PACK_FRAMES,
+  HOLODISK_FRAMES,
+  readBeaconArt,
+  readCacheArt,
+  readLoopArt,
+  readStardustArt,
+} from "../art/index.ts";
 import { CHEAT_COPY } from "../data/cheatCopy.ts";
 import { CONTENT } from "../data/content.ts";
 import { lineDuration } from "../data/conversations.ts";
@@ -103,20 +111,12 @@ import {
   readGalaxyFields,
   readSpacePalette,
 } from "./spacePalette.ts";
-import { readStardustArt } from "./stardustArt.ts";
 import { staticShipJets } from "./staticShipJets.ts";
 import { readOutpostArt, readStationArt } from "./stationArt.ts";
 import { aboardGalaxy } from "./storyPresentation.ts";
 import { RASTER_SCALE_EVENT } from "./svgRasters.ts";
 import { readUpgradePickup } from "./upgradePickup.ts";
 import { readWeaponSolids } from "./weaponEffects.ts";
-import {
-  AMMO_PACK_FRAMES,
-  HOLODISK_FRAMES,
-  readBeaconArt,
-  readCacheArt,
-  readLoopArt,
-} from "./worldArt.ts";
 
 const scanViews = new WeakMap<
   object,

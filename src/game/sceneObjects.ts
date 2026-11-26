@@ -4,8 +4,12 @@ import { densityTexels } from "@andornaut/game-kit/runtime/view/renderScale";
 import { Math as PhaserMath, type Scene } from "phaser";
 
 import {
+  ammoPackFrame,
   type AsteroidOutline,
   BEACON_SUFFIX,
+  blinkRow,
+  cacheApproached,
+  cacheRow,
   debrisFrame,
   debrisMarks,
   debrisPiece,
@@ -15,11 +19,21 @@ import {
   FLASH_SUFFIX,
   footprintOutline,
   hexNumber,
+  holodiskFrame,
+  holodiskWaypoint,
   hubBayKey,
+  isDiscoveryCache,
+  loopPhase,
   partKey,
   playDepth,
+  PULL_STREAK,
+  pullStreakWedges,
   rockArt,
   sceneryDetail,
+  stardustDrawn,
+  stardustFrame,
+  stardustPhase,
+  stardustShown,
   type WhaleKind,
   whaleLoopFrame,
   whalePhase,
@@ -77,14 +91,6 @@ import {
 import { shipDirection } from "./shipArt.ts";
 import { spaceObjectColor } from "./spacePalette.ts";
 import {
-  PULL_STREAK,
-  pullStreakWedges,
-  stardustDrawn,
-  stardustFrame,
-  stardustPhase,
-  stardustShown,
-} from "./stardustArt.ts";
-import {
   type StationArt,
   stationFrame,
   stationFrameIndex,
@@ -92,16 +98,6 @@ import {
 } from "./stationArt.ts";
 import { UPGRADE_CHEVRON, upgradeFrame } from "./upgradePickup.ts";
 import type { EffectShape } from "./weaponEffects.ts";
-import {
-  ammoPackFrame,
-  blinkRow,
-  cacheApproached,
-  cacheRow,
-  holodiskFrame,
-  holodiskWaypoint,
-  isDiscoveryCache,
-  loopPhase,
-} from "./worldArt.ts";
 
 /** The scene state and methods this module's functions use. */
 export type ObjectsContext = Partial<Pick<GameScene, "fieldLight">> &

@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import type { SpaceObject } from "../model/types.ts";
 import {
   AMMO_PACK_FRAMES,
   ammoPackFrame,
@@ -18,7 +17,8 @@ import {
   readBeaconArt,
   readCacheArt,
   readLoopArt,
-} from "./worldArt.ts";
+} from "../art/index.ts";
+import type { SpaceObject } from "../model/types.ts";
 
 const manifest = JSON.parse(
   readFileSync(new URL("../../public/art/manifest.json", import.meta.url), "utf8"),

@@ -16,6 +16,7 @@ import {
   readBackdropRules,
   readDebrisArt,
   readGalaxyBackdrop,
+  readJobArt,
   readMarloArt,
   readStreakSpec,
   readWhaleArt,
@@ -65,7 +66,6 @@ import {
   readSidecars,
   type Sidecars,
 } from "./enemyArt.ts";
-import { readJobArt } from "./jobArt.ts";
 import { sceneFit } from "./playCamera.ts";
 import { readQuantumJump } from "./quantumJump.ts";
 import type { GameScene } from "./scene.ts";

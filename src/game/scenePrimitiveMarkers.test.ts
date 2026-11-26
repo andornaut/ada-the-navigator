@@ -6,6 +6,7 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
+import { isDiscoveryCache } from "../art/index.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
@@ -28,7 +29,6 @@ import {
   acknowledgePrimitiveTarget,
   primitiveTargetInView,
 } from "./sceneTargetMarkers.ts";
-import { isDiscoveryCache } from "./worldArt.ts";
 
 function production(file: string, names: readonly string[], globals: object) {
   const source = ts.createSourceFile(

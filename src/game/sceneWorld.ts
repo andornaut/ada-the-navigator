@@ -3,9 +3,15 @@
 import { Math as PhaserMath, type Scene } from "phaser";
 
 import {
+  beaconLandmarkFrame,
+  dashes,
+  glintFrame,
+  glintPing,
   hexNumber,
   hubBuoyKey,
   hubStoryKey,
+  type JobFrame,
+  nebulaTint,
   partKey,
   playDepth,
   streakMarks,
@@ -18,14 +24,6 @@ import { currentsNear, flowFraction } from "../model/currents.ts";
 import { drawnHeading, hubBay, storyShips } from "../model/storyShips.ts";
 import type { FlightState, Vec } from "../model/types.ts";
 import { enemyJetTriangles, selectEnemyFrame } from "./enemyArt.ts";
-import {
-  beaconLandmarkFrame,
-  dashes,
-  glintFrame,
-  glintPing,
-  type JobFrame,
-  nebulaTint,
-} from "./jobArt.ts";
 import { LIGHT_FIELD } from "./lightField.ts";
 import { boundsOnScreen, revealAlpha } from "./projectArt.ts";
 import type { GameScene } from "./scene.ts";

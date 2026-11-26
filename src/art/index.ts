@@ -43,6 +43,19 @@ export {
   readDebrisArt,
 } from "./debrisArt.ts";
 export {
+  beaconLandmarkFrame,
+  dashes,
+  glintFrame,
+  glintPing,
+  type JobArt,
+  type JobFrame,
+  type LandmarkLayer,
+  type MapArea,
+  nebulaTint,
+  readJobArt,
+  readMapArea,
+} from "./jobArt.ts";
+export {
   type AllyJump,
   type AllyJumpStep,
   allyJumpStep,
@@ -66,6 +79,20 @@ export {
   staleSpriteKeys,
 } from "./spriteKeys.ts";
 export {
+  PULL_STREAK,
+  type PullStreak,
+  pullStreakWedges,
+  readPullStreak,
+  readStardustArt,
+  releaseSettle,
+  type StardustArt,
+  type StardustAsset,
+  stardustDrawn,
+  stardustFrame,
+  stardustPhase,
+  stardustShown,
+} from "./stardustArt.ts";
+export {
   familyMembers,
   readMarloArt,
   readWhaleArt,
@@ -76,3 +103,24 @@ export {
   whalePhase,
   whaleViewBox,
 } from "./whaleArt.ts";
+export {
+  AMMO_PACK_FRAMES,
+  ammoPackFrame,
+  type BlinkArt,
+  blinkRow,
+  cacheApproached,
+  type CacheArt,
+  cacheRow,
+  HOLODISK_FRAMES,
+  holodiskFrame,
+  holodiskWaypoint,
+  isDiscoveryCache,
+  type LoopArt,
+  type LoopAsset,
+  loopFrame,
+  loopPhase,
+  readBeaconArt,
+  readBlinkRows,
+  readCacheArt,
+  readLoopArt,
+} from "./worldArt.ts";

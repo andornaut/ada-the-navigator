@@ -1,9 +1,8 @@
-import { spriteOwner } from "../art/index.ts";
+import { isDiscoveryCache, spriteOwner } from "../art/index.ts";
 import { SCREEN } from "../data/screen.ts";
 import { edgeMarkerKind } from "../model/edgeMarkers.ts";
 import type { GameModel } from "../model/game.ts";
 import type { Vec } from "../model/types.ts";
-import { isDiscoveryCache } from "./worldArt.ts";
 
 interface DrawnTarget {
   readonly alpha: number;

@@ -13,7 +13,7 @@ import {
   stardustFrame,
   stardustPhase,
   stardustShown,
-} from "./stardustArt.ts";
+} from "../art/index.ts";
 
 const manifest = JSON.parse(
   readFileSync(new URL("../../public/art/manifest.json", import.meta.url), "utf8"),

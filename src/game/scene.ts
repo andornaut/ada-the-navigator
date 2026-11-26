@@ -6,14 +6,19 @@ import {
   type BackdropHaze,
   type BackdropRules,
   backdropTint,
+  type BlinkArt,
+  type CacheArt,
   type DebrisArt,
   type GalaxyBackdrop,
   hexNumber,
+  type JobArt,
+  type LoopArt,
   playDepth,
   SPECK_RADIUS,
   speckField,
   spriteOwner,
   staleSpriteKeys,
+  type StardustArt,
   type StreakSpec,
   type WhaleArt,
 } from "../art/index.ts";
@@ -105,7 +110,6 @@ import {
   hitFlashBands,
   ModelFeedback,
 } from "./feedback.ts";
-import type { JobArt } from "./jobArt.ts";
 import {
   blastEdges,
   foregroundEdge,
@@ -176,7 +180,6 @@ import {
 } from "./shipJets.ts";
 import { Silhouettes } from "./silhouettes.ts";
 import { FALLBACK_SPACE_PALETTE, type SpacePalette } from "./spacePalette.ts";
-import type { StardustArt } from "./stardustArt.ts";
 import type { GalaxyStationArt, StationArt } from "./stationArt.ts";
 import { aboardGalaxy, storyCoversScene } from "./storyPresentation.ts";
 import { SvgRasters } from "./svgRasters.ts";
@@ -202,7 +205,6 @@ import {
   type WeaponSolids,
 } from "./weaponEffects.ts";
 import type { WhirlpoolProjects } from "./whirlpoolProjects.ts";
-import type { BlinkArt, CacheArt, LoopArt } from "./worldArt.ts";
 
 export class GameScene extends Scene {
   // Read from the save once the launch's update check lets the first screen show (build).

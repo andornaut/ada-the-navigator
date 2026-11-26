@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { HUNT_GLINT } from "../model/pickupBody.ts";
-import { CORE_MANIFEST, publicJson } from "../testing/publicArt.ts";
 import {
   beaconLandmarkFrame,
   dashes,
@@ -11,7 +9,9 @@ import {
   nebulaTint,
   readJobArt,
   readMapArea,
-} from "./jobArt.ts";
+} from "../art/index.ts";
+import { HUNT_GLINT } from "../model/pickupBody.ts";
+import { CORE_MANIFEST, publicJson } from "../testing/publicArt.ts";
 import { LIGHT_FIELD } from "./lightField.ts";
 
 const FILE = publicJson("/art/jobs.json") as Record<string, unknown>;

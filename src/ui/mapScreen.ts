@@ -11,10 +11,10 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import JOBS from "../../public/art/jobs.json" with { type: "json" };
+import { readMapArea } from "../art/index.ts";
 import { HUD_BUTTON } from "../data/layout.ts";
 import { TASK_COLORS } from "../data/taskCategories.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { readMapArea } from "../game/jobArt.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
 import { type LocalMap, type MapPlace, type MapPlaceType, placeType } from "../model/map.ts";
 import { shipHeading } from "../model/nose.ts";
