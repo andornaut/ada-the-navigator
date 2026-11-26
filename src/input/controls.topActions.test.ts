@@ -1,11 +1,13 @@
 import { readFileSync } from "node:fs";
 import { createContext, runInContext } from "node:vm";
 
+import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 import ts from "typescript";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { PHONE_BACK_PRESSED } from "../pwa/events.ts";
 import {
+  ADA_ACTION_HOLD_MS,
   assertAdaActionBindings,
   bindAdaAction,
   resolveAdaHoldAction,
@@ -125,6 +127,20 @@ class Element extends EventTarget {
   disabled = false;
   readonly dataset: Record<string, string> = {};
   readonly attributes = new Map<string, string>();
+  className = "";
+  readonly classList = {
+    add: (...values: string[]) => {
+      this.className = [
+        ...new Set([...this.className.split(/\s+/u).filter(Boolean), ...values]),
+      ].join(" ");
+    },
+    remove: (...values: string[]) => {
+      this.className = this.className
+        .split(/\s+/u)
+        .filter((token) => token && !values.includes(token))
+        .join(" ");
+    },
+  };
   readonly ownerDocument: FixtureDocument;
   readonly tag: string;
   constructor(document: FixtureDocument, tag = "div") {
@@ -139,6 +155,14 @@ class Element extends EventTarget {
     for (const node of nodes) {
       node.parentElement = this;
     }
+  }
+  replaceChildren(...nodes: Element[]) {
+    for (const node of this.ownerDocument.nodes) {
+      if (node.parentElement === this) {
+        node.parentElement = null;
+      }
+    }
+    this.append(...nodes);
   }
   before(node: Element) {
     node.parentElement = this.parentElement;
@@ -176,6 +200,7 @@ class Element extends EventTarget {
       const key = part.trim();
       return (
         key === this.tag ||
+        (key.startsWith(".") && this.className.split(/\s+/u).includes(key.slice(1))) ||
         (key === ":disabled" && this.disabled) ||
         (key === "[data-action]" && this.dataset.action !== undefined)
       );
@@ -191,6 +216,9 @@ class Element extends EventTarget {
   }
   setAttribute(name: string, value: string) {
     this.attributes.set(name, value);
+  }
+  removeAttribute(name: string) {
+    this.attributes.delete(name);
   }
   toggleAttribute(name: string, value: boolean) {
     if (value) {
@@ -240,7 +268,12 @@ function fixture(
   root.append(pauseButton, useButton);
   const register: typeof bindAdaAction = (options, element) => {
     const binding = bindAdaAction(options, element);
-    const kind = element === (useButton as unknown as HTMLElement) ? "use" : element.dataset.action;
+    const kind =
+      element === (useButton as unknown as HTMLElement)
+        ? "use"
+        : element.matches(".ada-exit-open")
+          ? "exit"
+          : undefined;
     if (missing && kind === missing) {
       binding.dispose();
     }
@@ -272,6 +305,7 @@ function fixture(
     ts.transpileModule(actualLeaves(), { compilerOptions: { target: ts.ScriptTarget.ES2023 } })
       .outputText,
     createContext({
+      ADA_ACTION_HOLD_MS,
       CONTROL_KEYS: new Set(),
       EXIT_SHOWN_ATTRIBUTE,
       Element,
@@ -281,6 +315,7 @@ function fixture(
       assertAdaActionBindings,
       backStack,
       bindAdaAction: register,
+      createButton,
       document,
       inCurrentView,
       leaveBack: [],
@@ -291,6 +326,7 @@ function fixture(
       pauseButton,
       pressBack,
       readViewUnit,
+      resolveAdaHoldAction,
       settings: { root },
       state: { accepts: () => false },
       update,
@@ -367,6 +403,10 @@ function fixture(
 it("routes actual Exit through one hold and the current native callback", () => {
   const f = fixture();
   const node = f.exitButton!;
+  expect(node.matches("button")).toBe(true);
+  expect(node.matches(".ui-standard-button")).toBe(true);
+  expect(node.getAttribute("aria-label")).toBe("Exit");
+  expect(node.querySelectorAll(".ui-button-face").map((face) => face.hidden)).toEqual([true]);
   node.hidden = false;
   const initial = f.options.exit!.onExit;
   const current = vi.fn();

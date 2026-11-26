@@ -4,6 +4,7 @@ import {
   onPageControl,
   type PagePointerEvent,
 } from "@andornaut/game-kit/runtime/web/input/dom/pagePresses";
+import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import type { GameObjects, Scene } from "phaser";
 
@@ -36,7 +37,12 @@ import {
   type AchievementsLabels,
   createAchievementsCard,
 } from "../ui/achievementsCard.ts";
-import { assertAdaActionBindings, bindAdaAction } from "../ui/actionBinding.ts";
+import {
+  ADA_ACTION_HOLD_MS,
+  assertAdaActionBindings,
+  bindAdaAction,
+  resolveAdaHoldAction,
+} from "../ui/actionBinding.ts";
 import { type BackLayer, createBackStack, pressBack } from "../ui/backStack.ts";
 import type { CheatAction } from "../ui/cheatActions.ts";
 import { type CheatLabels, createCheats } from "../ui/cheats.ts";
@@ -400,9 +406,25 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   settings.root.classList.add("ada-no-settings-button");
   // The start screen's Exit disc at the top right, where it shows; it follows the Menu in Tab order.
   const createExit = (label: string) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.dataset.action = "exit";
+    const kit = createButton(settings.root.ownerDocument, {
+      appearance: { className: "ada-exit-open", face: {}, layout: "caller" },
+      content: { kind: "icon", name: label },
+      getAction: (button) => {
+        const owned = resolveAdaHoldAction(settings.root, button);
+        return owned?.available() ? owned : null;
+      },
+      getState: (button) => ({
+        availability: button.hidden
+          ? { kind: "omitted" }
+          : button.disabled
+            ? { kind: "disabled" }
+            : { kind: "available" },
+      }),
+      rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: SCROLL.dragThreshold },
+    });
+    const button = kit.element;
+    // The HUD paints the navigation pose and focus on the button's pseudo-element.
+    kit.face.hidden = true;
     const action = bindAdaAction(
       {
         click: {
@@ -416,17 +438,23 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
           },
         },
         current: () => !disposed && button.isConnected && inCurrentView(settings.root, button),
+        nativeClickOwner: "factory",
         slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
       },
       button,
     );
-    button.className = "ada-exit-open";
-    button.setAttribute("aria-label", label);
+    button.dataset.action = "exit";
     button.title = label;
     button.hidden = true;
     const pose = mountNavigationPose(button);
     return {
-      action: { activate: () => action.activate(), dispose: () => action.dispose() },
+      action: {
+        activate: () => action.activate(),
+        dispose() {
+          action.dispose();
+          kit.dispose();
+        },
+      },
       button,
       pose,
     };
