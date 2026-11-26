@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { createAdaSaves, SAVE_KEYS } from "../game/persistence.ts";
+import { createAdaSaves, SAVE_KEYS } from "../saving/index.ts";
 import { routeBlocked, routeGuardPlanResult } from "./flight.ts";
 import { GameModel, newGameState } from "./game.ts";
 import { readRequiredPlan } from "./requiredEncounterPlans.ts";

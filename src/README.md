@@ -55,7 +55,7 @@ describes their implementation.
   of `src/game/` are Phaser-free, so they unit-test without a renderer.
 - **Layers:** [ESLint](../eslint.config.mjs) places every
   module of `src/` and `tools/` in a layer of the shared source-structure bands,
-  lowest first: lib and data, model, art (the Phaser-free `src/game/` modules),
+  lowest first: lib and data, model, saving, art (the Phaser-free `src/game/` modules),
   layout and input state, platform (loading, PWA, crash), ui, scene, entries,
   then support (build, tests, tools). Outside tests, imports point down only,
   including type-only imports. The repository lint reports runtime cycles, and
@@ -104,7 +104,7 @@ unavailable, play continues with a nonblocking save warning. The warning clears
 after a successful write; failed writes preserve the last persisted snapshot.
 
 The flight snapshot is stored in `localStorage` under one key
-([`src/game/persistence.ts`](game/persistence.ts)), validated and migrated by
+([`src/saving/index.ts`](saving/index.ts)), validated and migrated by
 [`src/model/save.ts`](model/save.ts). Device settings (move stick, aim stick,
 sound, FPS counter and reduced motion) are stored under their own keys
 ([`src/ui/deviceSettings.ts`](ui/deviceSettings.ts)), outside the save.

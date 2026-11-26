@@ -17,6 +17,7 @@ import { GameModel } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import type { GameSave } from "../model/types.ts";
 import { UPGRADE_WEAPONS } from "../model/weapons.ts";
+import { createAdaSaves, SAVE_KEYS } from "../saving/index.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
 import type { CheatAction } from "../ui/cheatActions.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
@@ -27,7 +28,6 @@ import { BOX_OCCUPANT, boxOccupant } from "../ui/notice.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
 import type { PauseState } from "../ui/pauseCard.ts";
 import { ShieldOreSpendCounter, type StatusView } from "../ui/statusPill.ts";
-import { createAdaSaves, SAVE_KEYS } from "./persistence.ts";
 
 // Execute production UI wiring against the real model without loading Phaser's DOM.
 const source = ts.createSourceFile(

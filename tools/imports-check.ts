@@ -18,7 +18,6 @@ export interface Layer {
 // The Phaser scene and the src/game/ modules that serve it; the rest of src/game/ is art.
 const SCENE_MODULES = new Set([
   "emergencyReturn",
-  "persistence",
   "playCamera",
   "renderLoop",
   "routeArt",
@@ -65,6 +64,7 @@ export const LAYERS: readonly Layer[] = [
   },
   { band: "Foundation", holds: (path) => path.startsWith("src/data/"), name: "data" },
   { band: "Model", holds: (path) => path.startsWith("src/model/"), name: "model" },
+  { band: "Saving", holds: (path) => path.startsWith("src/saving/"), name: "saving" },
   {
     band: "Presentation",
     holds: (path) =>

@@ -18,7 +18,6 @@ import { followFrameTurn } from "@andornaut/game-kit/runtime/web/view/phaser/fol
 import { Core, Game, Scale, Scenes, WEBGL } from "phaser";
 
 import { SCREEN } from "./data/screen.ts";
-import { saves } from "./game/persistence.ts";
 import { GameScene } from "./game/scene.ts";
 import { flushScene, refreshScene } from "./game/sceneUi.ts";
 import { followPageVisibility } from "./lifecycle.ts";
@@ -29,6 +28,7 @@ import { requireBootJets, validateBootCore } from "./loading/requiredCore.ts";
 import { requireSceneFiles } from "./loading/requiredFiles.ts";
 import { startupFence } from "./loading/startup.ts";
 import { launchPhoneApp, requireNewerVersion, setupPhoneApp } from "./pwa/index.ts";
+import { saves } from "./saving/index.ts";
 import { CRASH_SCREEN } from "./ui/crashScreen.ts";
 import { bindAdaActionRoot } from "./ui/holdActionsAdapter.ts";
 import { loadingFailureChrome } from "./ui/loadingFailure.ts";

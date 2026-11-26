@@ -3,7 +3,7 @@ import { expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { GameModel, newGameState } from "../model/game.ts";
 import { restoreSave, SAVE_VERSION } from "../model/save.ts";
-import { createAdaSaves, SAVE_KEYS } from "./persistence.ts";
+import { createAdaSaves, SAVE_KEYS } from "../saving/index.ts";
 
 function fixture(raw: string | null, version = "0.0.1") {
   const values = new Map<string, string>([

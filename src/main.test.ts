@@ -51,7 +51,7 @@ vi.mock("./ui/crashScreen.ts", () => ({
     },
   },
 }));
-vi.mock("./game/persistence.ts", () => ({
+vi.mock("./saving/index.ts", () => ({
   saves: { blockWrites: boot.blockWrites, load: boot.load },
 }));
 vi.mock("./game/sceneUi.ts", () => ({ flushScene: vi.fn(), refreshScene: vi.fn() }));

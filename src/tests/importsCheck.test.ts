@@ -98,6 +98,7 @@ describe("layers", () => {
     expect(layerOf("src/data/galaxies.ts")).toBe(layer("data"));
     expect(layerOf("src/art/index.ts")).toBe(layer("art"));
     expect(layerOf("src/game/shipJets.ts")).toBe(layer("art"));
+    expect(layerOf("src/saving/index.ts")).toBe(layer("saving"));
     expect(layerOf("src/game/sceneHud.ts")).toBe(layer("scene"));
     expect(layerOf("src/ui/layout/tokens.ts")).toBe(layer("layout and input state"));
     expect(layerOf("src/ui/modal.ts")).toBe(layer("ui"));
@@ -106,6 +107,8 @@ describe("layers", () => {
     expect(layerOf("src/ui/modal.test.ts")).toBe(layer("support"));
     expect(layerOf("src/unknown.ts")).toBe(-1);
     expect(layer("data")).toBeLessThan(layer("model"));
+    expect(layer("model")).toBeLessThan(layer("saving"));
+    expect(layer("saving")).toBeLessThan(layer("art"));
     expect(layer("ui")).toBeLessThan(layer("scene"));
   });
 
