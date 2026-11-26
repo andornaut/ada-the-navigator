@@ -128,6 +128,12 @@ import {
   ModelFeedback,
 } from "./feedback.ts";
 import {
+  FORWARD_FLIGHT_KEY,
+  FORWARD_FLIGHT_PATH,
+  type ForwardFlightJets,
+  readForwardFlightJets,
+} from "./forwardFlightJets.ts";
+import {
   blastEdges,
   foregroundEdge,
   inkEdges,
@@ -142,6 +148,7 @@ import { drawAndromeda } from "./sceneAndromeda.ts";
 import {
   filterLoadedSvg,
   filterTexture,
+  flightShipMask,
   loadGalaxyArt,
   loadGalaxyAsset,
   loadSvg,
@@ -158,6 +165,7 @@ import {
 import { drawBackdrop, drawBackdropLayer, drawBackdropLayers } from "./sceneBackdrop.ts";
 import { drawRockBreaks, drawZips, startRockBreaks, startZips } from "./sceneEffects.ts";
 import { drawEffect, drawEnemyWeapons, enemyWeaponsView } from "./sceneEnemies.ts";
+import { ForwardJetComposition } from "./sceneForwardJets.ts";
 import { createGuideLights } from "./sceneGuideLights.ts";
 import {
   drawCompromisedShield,
@@ -188,11 +196,13 @@ import { drawCurrents, drawJobs, drawStoryShips, drawWhirlpoolProjects } from ".
 import { StoryShell } from "./shell.ts";
 import {
   type EngineJets,
+  type JetDisplay,
   jetOccluderRegions,
   jetsInFront,
   type JetTriangle,
   jetTriangles,
   shipJetDirection,
+  type ShipJets,
   travelJets,
 } from "./shipJets.ts";
 import { Silhouettes } from "./silhouettes.ts";
@@ -225,6 +235,9 @@ export class GameScene extends Scene {
   private occludedHull: { image: GameObjects.Image; shape: GameObjects.Graphics } | undefined;
   shipJets: EngineJets | undefined;
   shipRetroJets: EngineJets | undefined;
+  forwardJetComposition: ForwardJetComposition | undefined;
+  private forwardFlight: ForwardFlightJets | undefined;
+  private forwardFlightRequested = false;
   /** Shots and feedback draw above enemy sprites. */
   overlay!: GameObjects.Graphics;
   /** Ada's own shots still over her hull draw just beneath it, so they leave from her nose. */
@@ -705,6 +718,8 @@ export class GameScene extends Scene {
   private createEntry(): void {
     this.jumping = false;
     this.holdSource = false;
+    this.forwardFlight = undefined;
+    this.forwardFlightRequested = false;
     this.emergencyReturn.cancel();
     buildScene(this);
     const chipColor = () => {
@@ -732,6 +747,9 @@ export class GameScene extends Scene {
       this.events.off(Scenes.Events.SHUTDOWN, disposeRenderer);
       this.events.off(Scenes.Events.DESTROY, disposeRenderer);
       renderer.dispose();
+      this.load.off(`filecomplete-json-${FORWARD_FLIGHT_KEY}`, this.acceptForwardFlight);
+      this.forwardJetComposition?.destroy();
+      this.forwardJetComposition = undefined;
       this.occludedHull?.image.destroy();
       this.occludedHull?.shape.destroy();
       this.occludedHull = undefined;
@@ -1080,6 +1098,7 @@ export class GameScene extends Scene {
     clearPhantomJump(this);
     this.jets.clear();
     this.jetHalo.clear();
+    this.forwardJetComposition?.hide();
     this.occludedHull?.image.setVisible(false);
     this.occludedHull?.shape.clear();
     this.overlay.clear();
@@ -1280,7 +1299,7 @@ export class GameScene extends Scene {
     this.ship.setOrigin(ship?.pivot.x ?? 0.5, ship?.pivot.y ?? 0.5);
     // Authored direction frames already include perspective and must not rotate in screen space.
     this.ship.setRotation(0);
-    keylineSprite(this, "ship", "player-ship", this.ship);
+    let composed = false;
     const flames: Vec[] = [];
     let tailRegions: readonly (readonly Vec[])[] = [];
     if (activeJets && ship?.directionIndex !== undefined) {
@@ -1292,25 +1311,47 @@ export class GameScene extends Scene {
         displayWidth: ship.displayWidth ?? 42,
         pivot: ship.pivot,
       };
-      if (travel === "forward") {
-        tailRegions = jetOccluderRegions(activeJets, display, ship.directionIndex);
-      }
-      // Ada's plumes take a keyline only when the light field joins her jets to her silhouette.
-      const keyline = this.light && joinsJets(LIGHT_FIELD, "ship");
-      const under: JetTriangle[] = [];
-      for (const triangle of jetTriangles(activeJets, display, ship.directionIndex, speed)) {
-        const { alpha, color, points } = triangle;
-        for (const corner of points) {
-          flames.push({ x: this.ship.x + corner.x, y: this.ship.y + corner.y });
+      composed =
+        travel === "forward" &&
+        this.drawForwardJetComposition(activeJets, display, ship.directionIndex, speed, flames);
+      if (!composed) {
+        if (travel === "forward") {
+          tailRegions = jetOccluderRegions(activeJets, display, ship.directionIndex);
         }
-        if (triangle.underHull) {
-          under.push(triangle);
-          continue;
-        }
-        if (keyline) {
-          this.jetKeyline.fillStyle(LIGHT_FIELD.ink, alpha);
-          this.jetKeyline.lineStyle(2 * LIGHT_FIELD.keyline, LIGHT_FIELD.ink, alpha);
-          this.jetKeyline.fillTriangle(
+        // Ada's plumes take a keyline only when the light field joins her jets to her silhouette.
+        const keyline = this.light && joinsJets(LIGHT_FIELD, "ship");
+        const under: JetTriangle[] = [];
+        for (const triangle of jetTriangles(activeJets, display, ship.directionIndex, speed)) {
+          const { alpha, color, points } = triangle;
+          for (const corner of points) {
+            flames.push({ x: this.ship.x + corner.x, y: this.ship.y + corner.y });
+          }
+          if (triangle.underHull) {
+            under.push(triangle);
+            continue;
+          }
+          if (keyline) {
+            this.jetKeyline.fillStyle(LIGHT_FIELD.ink, alpha);
+            this.jetKeyline.lineStyle(2 * LIGHT_FIELD.keyline, LIGHT_FIELD.ink, alpha);
+            this.jetKeyline.fillTriangle(
+              points[0].x,
+              points[0].y,
+              points[1].x,
+              points[1].y,
+              points[2].x,
+              points[2].y,
+            );
+            this.jetKeyline.strokeTriangle(
+              points[0].x,
+              points[0].y,
+              points[1].x,
+              points[1].y,
+              points[2].x,
+              points[2].y,
+            );
+          }
+          this.jets.fillStyle(color, alpha);
+          this.jets.fillTriangle(
             points[0].x,
             points[0].y,
             points[1].x,
@@ -1318,31 +1359,21 @@ export class GameScene extends Scene {
             points[2].x,
             points[2].y,
           );
-          this.jetKeyline.strokeTriangle(
-            points[0].x,
-            points[0].y,
-            points[1].x,
-            points[1].y,
-            points[2].x,
-            points[2].y,
-          );
         }
-        this.jets.fillStyle(color, alpha);
-        this.jets.fillTriangle(
-          points[0].x,
-          points[0].y,
-          points[1].x,
-          points[1].y,
-          points[2].x,
-          points[2].y,
-        );
+        this.drawUnderHullJets(under, keyline);
       }
-      this.drawUnderHullJets(under, keyline);
+    }
+    if (!composed) {
+      keylineSprite(this, "ship", "player-ship", this.ship);
     }
     this.placeAda(
       flames,
       travel === "forward" && jetsInFront(activeJets, ship?.directionIndex ?? -1),
     );
+    if (composed) {
+      this.forwardJetComposition?.place(this.ship.depth);
+      this.ship.setVisible(false);
+    }
     const launchDepth = this.ship.depth + ADA_LAYERS.launch;
     this.launchInk.setDepth(launchDepth);
     for (const sprite of this.launching) {
@@ -1408,6 +1439,85 @@ export class GameScene extends Scene {
   }
 
   /** Redraws the loaded hull image inside the plume occluders, over the plumes drawn in front. */
+  private readonly acceptForwardFlight = (): void => {
+    if (this.entryCurrent()) {
+      this.forwardFlight = readForwardFlightJets(this.cache.json.get(FORWARD_FLIGHT_KEY));
+    }
+  };
+
+  private requestForwardFlight(): void {
+    if (this.forwardFlightRequested) {
+      return;
+    }
+    this.forwardFlightRequested = true;
+    const manifest = this.cache.json.get("art-manifest") as CoreManifest<Asset> | undefined;
+    if (manifest?.shipForwardFlight !== FORWARD_FLIGHT_PATH) {
+      return;
+    }
+    if (this.cache.json.exists(FORWARD_FLIGHT_KEY)) {
+      this.acceptForwardFlight();
+      return;
+    }
+    this.load.once(`filecomplete-json-${FORWARD_FLIGHT_KEY}`, this.acceptForwardFlight);
+    this.load.json(FORWARD_FLIGHT_KEY, FORWARD_FLIGHT_PATH);
+    if (!this.load.isLoading()) {
+      this.load.start();
+    }
+  }
+
+  private drawForwardJetComposition(
+    jets: ShipJets,
+    display: JetDisplay,
+    index: number,
+    speed: number,
+    flames: Vec[],
+  ): boolean {
+    if (this.jumping || !(speed > 0) || !this.ship.visible) {
+      return false;
+    }
+    this.requestForwardFlight();
+    const heading = this.forwardFlight?.[index];
+    if (!heading) {
+      return false;
+    }
+    const paths = flightShipMask(this, index);
+    if (!paths) {
+      return false;
+    }
+    this.forwardJetComposition ??= new ForwardJetComposition(this);
+    const plumes = this.forwardJetComposition.select(jets, heading, index, display, speed);
+    if (!plumes) {
+      return false;
+    }
+    const axis = jets.headings[index]![0]!.axis;
+    const endOn = (2 * Math.abs(axis.y)) / Math.hypot(axis.x, 2 * axis.y);
+    const lateral = Math.abs(axis.x) / Math.hypot(axis.x, axis.y);
+    const profile = Math.max(0, Math.min(1, (lateral - 0.55) / 0.45));
+    const rearRestore = Math.max(profile ** 2 * (3 - 2 * profile), endOn ** 4);
+    if (
+      !this.forwardJetComposition.draw(
+        this.ship,
+        display,
+        heading,
+        index,
+        paths,
+        plumes,
+        this.rasters.scale,
+        rearRestore,
+        this.light && joinsJets(LIGHT_FIELD, "ship"),
+      )
+    ) {
+      return false;
+    }
+    this.rasters.mark(this.ship.texture.key);
+    for (const { points } of plumes) {
+      for (const point of points) {
+        flames.push({ x: this.ship.x + point.x, y: this.ship.y + point.y });
+      }
+    }
+    return true;
+  }
+
   private drawOccludedHull(regions: readonly (readonly Vec[])[]): void {
     if (!regions.length) {
       return;

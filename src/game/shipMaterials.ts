@@ -174,6 +174,7 @@ export function readShipMaterialPalettes(
 /** Filled SVG sources are assembled once per paint and geometry, then reused on raster changes. */
 export class ShipMaterialSources {
   private readonly sources = new Map<string, MaterialSvg>();
+  private readonly flightMasks = new Map<number, { tail: string[]; rear: string[] }>();
 
   private readonly materials: ShipMaterials;
   private readonly palettes: ReadonlyMap<string, ShipMaterialPalette>;
@@ -205,6 +206,29 @@ export class ShipMaterialSources {
     const source = { svg, url: `data:image/svg+xml;base64,${btoa(svg)}` };
     this.sources.set(key, source);
     return source;
+  }
+
+  flightMask(heading: number): { tail: string[]; rear: string[] } | undefined {
+    const cached = this.flightMasks.get(heading);
+    if (cached) {
+      return cached;
+    }
+    const draws = this.materials.headings.get(heading);
+    if (!draws) {
+      return undefined;
+    }
+    const tail: string[] = [];
+    const rear: string[] = [];
+    for (const { path, slot } of draws) {
+      if (slot === "tailLeft" || slot === "tailRight") {
+        tail.push(this.materials.paths[path]!);
+      } else if (slot === "engineOpening") {
+        rear.push(this.materials.paths[path]!);
+      }
+    }
+    const mask = { rear: [...tail, ...rear], tail };
+    this.flightMasks.set(heading, mask);
+    return mask;
   }
 
   pose(paint: string, id: string): MaterialSvg | undefined {

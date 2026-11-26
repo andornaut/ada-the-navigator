@@ -13,6 +13,7 @@ export interface CoreManifest<T> {
   readonly shipHeadings?: ShipHeadingContract;
   /** Shared ship geometry and material slots for every declared paint. */
   readonly shipMaterials?: string;
+  readonly shipForwardFlight?: string;
   readonly assets: T[];
   /** The backdrop layers' shared rules (public/art/backdrop-lattice.json). */
   readonly backdropLayers?: string;

@@ -7,10 +7,8 @@ import { sceneFit, viewShift } from "./playCamera.ts";
 import type { GameScene } from "./scene.ts";
 
 /** The scene state and methods this module's functions use. */
-export type JumpContext = Pick<
-  GameScene,
-  "galaxies" | "jumping" | "model" | "scale" | "ship" | "specks" | "warpCover"
->;
+export type JumpContext = Partial<Pick<GameScene, "forwardJetComposition">> &
+  Pick<GameScene, "galaxies" | "jumping" | "model" | "scale" | "ship" | "specks" | "warpCover">;
 
 /**
  * The scene the quantum jump plays over now, centred on the play view: the galaxy map with Ada's
@@ -45,6 +43,7 @@ export function spaceJumpScene(scene: JumpContext): JumpScene {
 export function coverShip(scene: JumpContext): void {
   scene.warpCover = true;
   scene.ship.setVisible(false);
+  scene.forwardJetComposition?.hide();
   scene.galaxies.coverShip();
 }
 

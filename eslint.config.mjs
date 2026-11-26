@@ -22,6 +22,7 @@ const PHASER_MODULES = [
   "game/sceneBackdrop",
   "game/sceneEffects",
   "game/sceneEnemies",
+  "game/sceneForwardJets",
   "game/sceneGuideLights",
   "game/sceneHud",
   "game/sceneJump",

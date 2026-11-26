@@ -93,6 +93,10 @@ interface MaterialCache {
 }
 const materialCaches = new WeakMap<object, MaterialCache>();
 
+export function flightShipMask(scene: AssetsContext, heading: number) {
+  return materialCaches.get(scene)?.source.flightMask(heading);
+}
+
 /** The legacy aliases and logical idle frames whose geometry is shared across paints. */
 export function materialShipHeading(asset: Asset): number | undefined {
   const heading = asset.directionIndex;
