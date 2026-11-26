@@ -1,4 +1,4 @@
-import { CONVERSATION_BOX } from "../data/layout.ts";
+import { CONVERSATION_BOX, SHIELD_PILL } from "../data/layout.ts";
 import { visualNoticeTiming } from "../data/noticeTiming.ts";
 import type { Weapon } from "../data/types.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
@@ -8,7 +8,7 @@ import { createCompletionIndicator } from "./completionIndicator.ts";
 import { font, fromHudEdge, pixels, units, VIEW_PROPERTIES } from "./layout/css.ts";
 import { measureFrame } from "./layout/frameBox.ts";
 import { ITEM_NOTICE } from "./layout/itemNotice.ts";
-import { scanFeedbackTop } from "./layout/scanFeedback.ts";
+import { shortNoticeWidth } from "./layout/scanFeedback.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { TEXT_TOKENS } from "./modal.ts";
@@ -20,6 +20,8 @@ import {
 } from "./scanFeedback.ts";
 import { STATUS_COLOURS } from "./statusPill.ts";
 
+const SAFE_NOTICE_WIDTH = `100% - 2 * max(${fromHudEdge("left")}, ${fromHudEdge("right")})`;
+
 function createShortFlightPanel(parent: HTMLElement, className: string) {
   const panel = parent.ownerDocument.createElement("div");
   panel.className = `ada-item-notice-panel ${className}`;
@@ -27,7 +29,6 @@ function createShortFlightPanel(parent: HTMLElement, className: string) {
   panel.setAttribute("role", "status");
   panel.setAttribute("aria-live", "polite");
   panel.setAttribute("aria-atomic", "true");
-  const safeWidth = `100% - 2 * max(${fromHudEdge("left")}, ${fromHudEdge("right")})`;
   Object.assign(panel.style, {
     alignItems: "center",
     backgroundColor: TEXT_TOKENS.buttonLabel,
@@ -39,7 +40,7 @@ function createShortFlightPanel(parent: HTMLElement, className: string) {
     font: font(TYPE.body),
     gap: units(SPACING.markGap),
     left: "50%",
-    maxWidth: `min(${units(CONVERSATION_BOX.maxWidth)}, ${safeWidth})`,
+    maxWidth: `min(${units(CONVERSATION_BOX.maxWidth)}, ${SAFE_NOTICE_WIDTH})`,
     padding: units(ITEM_NOTICE.padding),
     pointerEvents: "none",
     position: "absolute",
@@ -84,6 +85,7 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
     }
   };
   const clearEquip = () => {
+    const wasVisible = !equip.hidden;
     equipped = undefined;
     if (dialogue) {
       resize.unobserve(dialogue);
@@ -92,6 +94,9 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
     lineKey = undefined;
     hide(equip);
     equipLabel.textContent = "";
+    if (wasVisible) {
+      fit();
+    }
   };
   const queue = new ScanFeedbackQueue();
   let current: ScanFeedbackContent | undefined;
@@ -121,48 +126,37 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
       }
     }
   };
-  const left = Array.from(controls.querySelectorAll<HTMLElement>(".ada-pause,.ada-status"));
-  const weapons = controls.querySelector<HTMLElement>(".ada-weapon-selector");
-  const boss = controls.querySelector<HTMLElement>(".ada-boss-hud");
-  const observedWeapons = new Set<HTMLElement>();
+  const shield = controls.querySelector<HTMLElement>(".ada-shield");
+  const touch = Array.from(
+    controls.querySelectorAll<HTMLElement>('[data-control$="-joystick"],.ada-use'),
+  );
   const fit = (): void => {
     if (panel.hidden && equip.hidden) {
       return;
     }
     const unit = readViewUnit(parent);
-    const hudGap = SPACING.rowGap * unit;
     const stackGap = SPACING.gap * unit;
     const { box, size: host } = measureFrame(parent);
-    const weaponParts = new Set(
-      weapons?.querySelectorAll<HTMLElement>(".ada-disc,.ada-ammo,.ada-pips"),
-    );
-    for (const node of observedWeapons) {
-      if (!weaponParts.has(node)) {
-        resize.unobserve(node);
-        observedWeapons.delete(node);
-      }
-    }
-    for (const node of weaponParts) {
-      if (!observedWeapons.has(node)) {
-        resize.observe(node);
-        observedWeapons.add(node);
-      }
-    }
-    const occupied = [...left, ...weaponParts]
-      .map(box)
-      .filter(({ height, width }) => width > 0 && height > 0)
-      .sort((a, b) => a.y - b.y);
     const style = getComputedStyle(parent);
     const inset = (property: string) => parseFloat(style.getPropertyValue(property)) || 0;
-    const center = host.width / 2;
-    let minimum = Math.max(
-      inset(VIEW_PROPERTIES.areaTop) + hudGap,
-      inset(VIEW_PROPERTIES.safe("top")),
+    const top =
+      (host.height + inset(VIEW_PROPERTIES.areaTop) - inset(VIEW_PROPERTIES.areaBottom)) / 2;
+    const shieldBox = shield && box(shield);
+    const reservedTop =
+      host.height - inset(VIEW_PROPERTIES.hud("bottom")) - SHIELD_PILL.pill.height * unit;
+    let bottom = Math.floor(
+      Math.min(reservedTop, shieldBox?.height ? shieldBox.y : reservedTop) - stackGap,
     );
-    if (boss) {
-      const bar = box(boss);
-      if (bar.height > 0) {
-        minimum = Math.max(minimum, bar.y + bar.height + stackGap);
+    const width = shortNoticeWidth(touch.map(box), {
+      bottom,
+      center: host.width / 2,
+      gap: SPACING.rowGap * unit,
+      top,
+    });
+    const maxWidth = `min(${units(CONVERSATION_BOX.maxWidth)}, ${SAFE_NOTICE_WIDTH}, ${pixels(width)})`;
+    for (const notice of [panel, equip]) {
+      if (notice.style.maxWidth !== maxWidth) {
+        notice.style.maxWidth = maxWidth;
       }
     }
     const place = (notice: HTMLElement, top: number) => {
@@ -171,16 +165,11 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
         notice.style.top = value;
       }
     };
-    if (!panel.hidden) {
-      const size = box(panel);
-      const top = scanFeedbackTop(occupied, hudGap, center, size, minimum);
-      place(panel, top);
-      minimum = top + size.height + stackGap;
-    }
     if (equipped && !equip.hidden) {
       const size = box(equip);
-      let top = scanFeedbackTop(occupied, hudGap, center, size, minimum);
-      let obscured = false;
+      const equipTop = bottom - size.height;
+      const scanSpace = panel.hidden ? 0 : stackGap + box(panel).height;
+      let obscured = equipTop - scanSpace < top;
       if (lineKey !== undefined) {
         if (!dialogue) {
           dialogue = parent.querySelector(".ada-conversation");
@@ -189,29 +178,27 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
           }
         }
         if (dialogue && !dialogue.hidden) {
-          // Dialogue owns its slot. An overlapping equip notice waits below it or pauses.
+          // Keep the lower slot stable and let dialogue take priority where they meet.
           const line = box(dialogue);
-          const bottom = line.y + line.height;
-          if (line.height > 0 && top < bottom && top + size.height > line.y) {
-            top = scanFeedbackTop(occupied, hudGap, center, size, bottom + stackGap);
-            const limit =
-              host.height -
-              Math.max(inset(VIEW_PROPERTIES.areaBottom), inset(VIEW_PROPERTIES.safe("bottom")));
-            obscured = top + size.height > limit;
-          }
+          obscured ||= line.height > 0 && equipTop < line.y + line.height && bottom > line.y;
         }
       }
-      place(equip, top);
+      place(equip, equipTop);
       // Retain the box's dimensions for the next fit without painting or running its clock.
       equip.style.visibility = obscured ? "hidden" : "";
       if (obscured) {
         delete equipped.shownAt;
+      } else {
+        bottom = equipTop - stackGap;
       }
       equipNeedsFit = false;
     }
+    if (!panel.hidden) {
+      place(panel, bottom - box(panel).height);
+    }
   };
   const resize = new ResizeObserver(fit);
-  for (const node of [parent, ...left, weapons, boss, panel, equip]) {
+  for (const node of [parent, shield, ...touch, panel, equip]) {
     if (node) {
       resize.observe(node);
     }
@@ -267,7 +254,11 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
       }
       if (covered) {
         delete equipped.shownAt;
+        const wasVisible = !equip.hidden;
         hide(equip);
+        if (wasVisible) {
+          fit();
+        }
         return;
       }
       if (equip.hidden) {
@@ -297,11 +288,11 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
     },
     reset(): void {
       queue.reset();
-      clearEquip();
       panel.hidden = true;
       panel.style.display = "none";
       panel.replaceChildren();
       current = undefined;
+      clearEquip();
     },
   };
 }

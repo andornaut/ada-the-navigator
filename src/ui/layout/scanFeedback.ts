@@ -1,26 +1,17 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
-/** The highest centered position with room for the notice's laid-out width and height. */
-export function scanFeedbackTop(
+/** Width of the centered lower column between the visible touch controls. */
+export function shortNoticeWidth(
   occupied: readonly Rect[],
-  gap: number,
-  center: number,
-  notice: Pick<Rect, "width" | "height">,
-  minimum: number,
+  { bottom, center, gap, top }: { bottom: number; center: number; gap: number; top: number },
 ): number {
-  const left = center - notice.width / 2;
-  const right = center + notice.width / 2;
-  let top = Math.ceil(minimum);
+  let halfWidth = center;
   for (const box of occupied) {
-    const bottom = box.y + box.height;
-    if (
-      left < box.x + box.width + gap &&
-      right > box.x - gap &&
-      top < bottom + gap &&
-      top + notice.height + gap > box.y
-    ) {
-      top = Math.ceil(bottom + gap);
+    if (box.width <= 0 || box.height <= 0 || box.y >= bottom + gap || box.y + box.height <= top) {
+      continue;
     }
+    const distance = box.x + box.width / 2 < center ? center - box.x - box.width : box.x - center;
+    halfWidth = Math.min(halfWidth, distance - gap);
   }
-  return top;
+  return Math.max(0, Math.floor(2 * halfWidth));
 }

@@ -100,10 +100,13 @@ function setup() {
     width: parent.clientWidth,
   });
   const controls = new Node();
-  const weapons = new Node();
-  controls.selectors.set(".ada-weapon-selector", weapons);
-  const boss = new Node();
-  controls.selectors.set(".ada-boss-hud", boss);
+  const shield = new Node();
+  shield.offsetTop = 320;
+  shield.offsetHeight = 28;
+  shield.offsetWidth = 180;
+  controls.selectors.set(".ada-shield", shield);
+  const touch = new Node();
+  controls.parts.push(touch);
   const view = createScanFeedbackView(
     parent as unknown as HTMLElement,
     controls as unknown as HTMLElement,
@@ -113,53 +116,43 @@ function setup() {
     node.offsetHeight = 38;
   }
   return {
-    boss,
     disconnect,
     equip: parent.children[1]!,
     observed,
     panel: parent.children[0]!,
     parent,
     resize,
+    shield,
+    touch,
     unobserve,
     view,
-    weapons,
   };
 }
 afterEach(() => vi.unstubAllGlobals());
-const row = `${SPACING.rowGap}px`;
-const ammo = (weapons: Node, bottom: number) => {
-  const pill = new Node();
-  pill.offsetLeft = 365;
-  pill.offsetWidth = 35;
-  pill.offsetHeight = 24;
-  pill.offsetTop = bottom - pill.offsetHeight;
-  weapons.parts.push(pill);
-  return pill;
-};
+const lowerTop = `${320 - SPACING.gap - 38}px`;
 
 describe("native scan receipt view", () => {
-  it("uses the high slot and centers with a layout-independent transform", () => {
+  it("uses the slot above the shield and centers with a layout-independent transform", () => {
     const { panel, view } = setup();
     view.enqueue([receipt()]);
     view.render(context, 0);
     expect(panel.style.left).toBe("50%");
     expect(panel.style.transform).toBe("translateX(-50%)");
-    expect(panel.style.top).toBe(row);
+    expect(panel.style.top).toBe(lowerTop);
     expect(panel.style.width).toBe("max-content");
   });
-  it("moves the same panel below the visible boss bar and restores it when the boss leaves", () => {
-    const { boss, panel, resize, view } = setup();
+  it("keeps the same panel above the shield when the HUD changes size or position", () => {
+    const { panel, resize, shield, view } = setup();
     view.enqueue([receipt()]);
     view.render(context, 0);
     const text = panel.children[1];
-    boss.offsetTop = 12;
-    boss.offsetHeight = 44;
+    shield.offsetTop = 301;
     resize();
-    expect(panel.style.top).toBe(`${56 + SPACING.gap}px`);
+    expect(panel.style.top).toBe(`${301 - SPACING.gap - 38}px`);
     expect(panel.children[1]).toBe(text);
-    boss.offsetHeight = 0;
+    shield.offsetTop = 320;
     resize();
-    expect(panel.style.top).toBe(row);
+    expect(panel.style.top).toBe(lowerTop);
   });
   it("renders neutral actual target identity and canonical glyph, never a quest completion", () => {
     const { panel, view } = setup();
@@ -253,9 +246,9 @@ describe("native scan receipt view", () => {
 
 describe("equipped weapon notice", () => {
   it.each([720, 360])(
-    "centers in a %ipx viewport without intercepting focus and stacks below visible notices",
+    "centers in a %ipx viewport and stacks up from the shield without intercepting focus",
     (width) => {
-      const { boss, equip, panel, parent, resize, view } = setup();
+      const { equip, panel, parent, view } = setup();
       parent.clientWidth = width;
       expect(equip.hidden).toBe(true);
       view.equip("heavyMissile", "Heavy Missile");
@@ -264,10 +257,11 @@ describe("equipped weapon notice", () => {
       expect(glyph?.attributes.get("aria-hidden")).toBe("true");
       expect(glyph?.style.mask).toContain(weaponGlyphPath("heavyMissile"));
       expect(label?.textContent).toBe("Heavy Missile");
-      expect(equip.style.top).toBe(row);
+      expect(equip.style.top).toBe(lowerTop);
       expect(equip.style.left).toBe("50%");
+      const safeWidth = `100% - 2 * max(${fromHudEdge("left")}, ${fromHudEdge("right")})`;
       expect(equip.style.maxWidth).toBe(
-        `min(${units(CONVERSATION_BOX.maxWidth)}, 100% - 2 * max(${fromHudEdge("left")}, ${fromHudEdge("right")}))`,
+        `min(${units(CONVERSATION_BOX.maxWidth)}, ${safeWidth}, ${width}px)`,
       );
       expect(equip.style.pointerEvents).toBe("none");
       expect(equip.attributes.get("tabindex")).toBeUndefined();
@@ -275,30 +269,20 @@ describe("equipped weapon notice", () => {
       expect(equip.style.zIndex).toBe("1");
       expect(CONVERSATION_STYLE).toMatch(/\.ada-conversation\{[^}]+z-index:5;/u);
 
-      boss.offsetTop = 12;
-      boss.offsetHeight = 68;
-      resize();
-      expect(equip.style.top).toBe(`${80 + SPACING.gap}px`);
       view.enqueue([receipt()]);
-      panel.offsetTop = 90;
       panel.offsetHeight = 30;
       view.render(context, 0);
-      expect(equip.style.top).toBe(`${118 + SPACING.gap}px`);
+      expect(equip.style.top).toBe(lowerTop);
+      expect(panel.style.top).toBe(`${274 - SPACING.gap - 30}px`);
       expect(panel.children[1]!.textContent).toBe("Actual target");
-      boss.offsetHeight = 0;
-      view.render(context, 2500);
-      view.render(context, 0);
-      resize();
-      expect(equip.style.top).toBe(row);
+      view.clearEquip();
+      expect(panel.style.top).toBe(`${320 - SPACING.gap - 30}px`);
     },
   );
 
-  it("moves only on dialogue overlap and remeasures at layout changes, never on steady frames", () => {
-    const { boss, equip, observed, parent, resize, unobserve, view, weapons } = setup();
-    ammo(weapons, 62);
+  it("keeps its lower slot behind overlapping dialogue and reads only on geometry changes", () => {
+    const { equip, observed, parent, resize, shield, unobserve, view } = setup();
     const dialogue = new Node();
-    equip.offsetTop = 66;
-    equip.offsetHeight = 38;
     dialogue.offsetHeight = 60;
     const readDialogueTop = vi.fn(() => 125);
     Object.defineProperty(dialogue, "offsetTop", { get: readDialogueTop });
@@ -306,45 +290,34 @@ describe("equipped weapon notice", () => {
 
     view.equip("rapidMissile", "Rapid Missile");
     view.renderEquip(false, 0, "speaker:first");
-    expect(equip.style.top).toBe("66px");
+    expect(equip.style.top).toBe(lowerTop);
     expect(observed).toHaveBeenCalledWith(dialogue);
     readDialogueTop.mockClear();
     view.renderEquip(false, 100, "speaker:first");
     view.renderEquip(false, 200, "speaker:first");
     expect(readDialogueTop).not.toHaveBeenCalled();
 
-    readDialogueTop.mockReturnValue(66);
+    readDialogueTop.mockReturnValue(260);
     view.renderEquip(false, 300, "speaker:center");
     expect(readDialogueTop).toHaveBeenCalledOnce();
-    expect(equip.style.top).toBe(`${126 + SPACING.gap}px`);
-    dialogue.offsetHeight = 80;
+    expect(equip.style.top).toBe(lowerTop);
+    expect(equip.style.visibility).toBe("hidden");
+    readDialogueTop.mockReturnValue(110);
     resize();
-    expect(equip.style.top).toBe(`${146 + SPACING.gap}px`);
-    readDialogueTop.mockReturnValue(75);
+    expect(equip.style.visibility).toBe("");
+    shield.offsetTop = 310;
     parent.ownerDocument.defaultView.dispatchEvent(new Event(VIEW_SCALE_EVENT));
-    expect(equip.style.top).toBe(`${155 + SPACING.gap}px`);
-
-    boss.offsetTop = 12;
-    boss.offsetHeight = 200;
-    equip.offsetTop = 220;
-    resize();
-    expect(equip.style.top).toBe(`${212 + SPACING.gap}px`);
-    view.renderEquip(false, 400);
-    expect(equip.style.top).toBe(`${212 + SPACING.gap}px`);
+    expect(equip.style.top).toBe(`${310 - SPACING.gap - 38}px`);
     view.clearEquip();
     expect(unobserve).toHaveBeenCalledWith(dialogue);
     view.dispose();
   });
 
-  it("suspends visible time when the notice cannot fit below the dialogue and resumes on resize", () => {
-    const { equip, parent, resize, view, weapons } = setup();
-    ammo(weapons, 46);
+  it("suspends visible time during dialogue overlap and resumes when it clears", () => {
+    const { equip, parent, resize, view } = setup();
     const dialogue = new Node();
     parent.selectors.set(".ada-conversation", dialogue);
-    parent.clientHeight = 150;
-    equip.offsetTop = 50;
-    equip.offsetHeight = 38;
-    dialogue.offsetTop = 66;
+    dialogue.offsetTop = 263;
     dialogue.offsetHeight = 60;
 
     view.equip("laser", "Laser");
@@ -355,10 +328,10 @@ describe("equipped weapon notice", () => {
     view.renderEquip(false, 10000, "captain");
     expect(equip.style.visibility).toBe("hidden");
 
-    parent.clientHeight = 360;
+    dialogue.offsetTop = 66;
     resize();
     expect(equip.style.visibility).toBe("");
-    expect(equip.style.top).toBe(`${126 + SPACING.gap}px`);
+    expect(equip.style.top).toBe(lowerTop);
     view.renderEquip(false, 10000, "captain");
     view.renderEquip(false, 11000, "captain");
     expect(equip.style.opacity).toBe("1");
@@ -369,17 +342,21 @@ describe("equipped weapon notice", () => {
     view.dispose();
   });
 
-  it("refits above a narrower ammo pill and observes size changes without steady-frame reads", () => {
-    const { observed, panel, resize, view, weapons } = setup();
-    const pill = ammo(weapons, 60);
+  it("fits between the lower controls and never reads their boxes on steady frames", () => {
+    const { observed, panel, resize, touch, view } = setup();
+    touch.offsetLeft = 520;
+    touch.offsetWidth = 70;
+    touch.offsetTop = 230;
+    touch.offsetHeight = 80;
     view.enqueue([receipt()]);
     view.render(context, 0);
-    expect(panel.style.top).toBe("64px");
-    expect(observed).toHaveBeenCalledWith(pill);
-    pill.offsetLeft = 430;
+    expect(panel.style.top).toBe(lowerTop);
+    expect(panel.style.maxWidth).toContain("312px)");
+    expect(observed).toHaveBeenCalledWith(touch);
+    touch.offsetLeft = 560;
     resize();
-    expect(panel.style.top).toBe(row);
-    const measure = vi.spyOn(pill, "getBoundingClientRect");
+    expect(panel.style.maxWidth).toContain("392px)");
+    const measure = vi.spyOn(touch, "getBoundingClientRect");
     view.render(context, 16);
     expect(measure).not.toHaveBeenCalled();
   });
