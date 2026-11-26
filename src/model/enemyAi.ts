@@ -10,6 +10,7 @@ import {
   type RetreatPolicy,
   RING_BOLTS,
 } from "../data/enemyCatalog.ts";
+import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
 import { type HeavyHullProfile, retaliatorVariant } from "../data/enemyIdentity.ts";
 import { MUZZLE_ART, muzzleArtForDefinition, muzzleLayout } from "../data/enemyMuzzles.ts";
 import {
@@ -626,7 +627,11 @@ function packMembers(context: EnemyContext, state: EnemyState): PackMember[] {
         : member.age,
     home: member.home,
     id: member.id,
-    spacing: spacingRadius(context.routePosition, member),
+    // The larger of its spacing radius and its collision radius.
+    spacing: Math.max(
+      spacingRadius(context.routePosition, member),
+      (context.adaWidth / 2) * ENEMY_SIZE_RATIOS[member.archetype],
+    ),
   }));
 }
 
@@ -663,24 +668,25 @@ function packCourse(
 }
 
 /**
- * A leader's top patrol speed: its class top speed at its patrol share, and for a siege leader its
- * behaviour's speed share too. None for a ship without navigation.
+ * A leader's current top pace from its working engines: its siege advance while it fights, else
+ * its patrol speed (with a siege leader's speed share). None for a ship without navigation.
  */
-function topPatrolSpeed(leader: EnemyState): number {
+function leaderPace(leader: EnemyState): number {
   const definition = shipCatalogEntry(leader.archetype);
   if (!definition?.navigation) {
     return 0;
   }
-  const combatShare =
-    definition.behaviour.kind === "siege" ? definition.behaviour.speedFraction : 1;
-  return definition.physics.maxSpeed * definition.navigation.patrolShare * combatShare;
+  const top = definition.physics.maxSpeed * enemyEffects(definition, leader).thrust;
+  const siege = definition.behaviour.kind === "siege" ? definition.behaviour.speedFraction : 1;
+  const sieging = definition.behaviour.kind === "siege" && leader.engaged && !leader.returning;
+  return top * siege * (sieging ? 1 : definition.navigation.patrolShare);
 }
 
 /**
  * An escort's request on its leader's station ring: its station `gap` from the leader turns with
  * the leader's age on the leader's seeded side, so a leader's escorts keep their equal angles. The
- * ring moves each escort at the minimum share of its speed plus its leader's top patrol speed, so
- * it keeps the floor even when its leader moves against the ring.
+ * ring moves each escort at the minimum share of its speed plus its leader's current top pace,
+ * so it keeps the floor even when its leader moves against the ring.
  */
 function escortRing(
   definition: EnemyDefinition,
@@ -691,7 +697,7 @@ function escortRing(
 ): Point {
   const gap = spacingRadius(context.routePosition, leader) + escortTuning.stationGap;
   const side = seeded(leader.id, 14) < 0.5 ? -1 : 1;
-  const rate = (ENEMY_KEEP_MOVING.minimumShare * speed + topPatrolSpeed(leader)) / gap;
+  const rate = (ENEMY_KEEP_MOVING.minimumShare * speed + leaderPace(leader)) / gap;
   const angle = state.phase + side * rate * leader.age;
   const radial = { x: Math.cos(angle), y: Math.sin(angle) };
   const station = {

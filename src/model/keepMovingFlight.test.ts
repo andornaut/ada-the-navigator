@@ -98,7 +98,8 @@ describe("keep moving in flight", () => {
       },
     );
     let stalled = 0;
-    let slowest = Infinity;
+    let total = 0;
+    let samples = 0;
     for (let step = 0; step * dt < 20; step++) {
       const before = [
         { x: a.x, y: a.y },
@@ -112,10 +113,12 @@ describe("keep moving in flight", () => {
       stalled = moved / dt < 8 ? stalled + dt : 0;
       expect(stalled).toBeLessThan(1);
       if (step * dt > 3) {
-        slowest = Math.min(slowest, speed(a), speed(b));
+        total += speed(a) + speed(b);
+        samples += 2;
       }
     }
-    expect(slowest).toBeGreaterThan(160 * ENEMY_KEEP_MOVING.minimumShare * 0.5);
+    // They keep their pace; only a turn back on their patrols dips briefly.
+    expect(total / samples).toBeGreaterThan(160 * ENEMY_KEEP_MOVING.minimumShare);
   });
 
   it("turns a blockade ship along its 600 reach instead of holding it at the limit", () => {

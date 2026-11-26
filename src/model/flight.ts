@@ -2318,31 +2318,36 @@ function minerInput(
   };
 }
 
+/** World units within which a ship already counts as touching a peer or protected area. */
+const CONTACT_SLACK = 0.5;
+
 /**
- * A moving enemy's velocity for one movement substep (gameplay/ships.md "Keep moving"): where a
- * peer would block it, it slides along the contact at the same speed, wedged
- * between peers it leaves between them, and at a Phantom blockade's reach it turns along the
- * limit instead of pressing into it.
+ * A powered enemy's velocity for one movement substep (gameplay/ships.md "Keep moving"): a peer
+ * or protected-area contact never stops it. It slides along the contact at least at `floor` speed, two ships head
+ * on turn the same way round it and pass, wedged between peers it leaves along their mean contact
+ * direction, and at a Phantom blockade's reach it turns along the limit.
  */
 function keepClear(
   content: GameContent,
   flight: FlightState,
   blockade: boolean,
+  floor: number,
   velocity: Vec,
   drift: Vec,
   dt: number,
   object: SpaceObject,
 ): Vec {
   const enemy = object.enemy!;
-  const speed = Math.hypot(velocity.x, velocity.y);
+  // A ship pressing its request into a contact would otherwise slide ever slower.
+  const speed = Math.max(Math.hypot(velocity.x, velocity.y), floor);
   if (!speed) {
     return velocity;
   }
   const world = flightWorldContext(flight);
-  /** `velocity` without its component into `normal`, kept at speed, else along on `side`. */
+  /** `velocity` without its component into `normal` at `speed`, else along it on `side`. */
   const slide = (side: number, normal: Vec, current: Vec): Vec => {
     const into = current.x * normal.x + current.y * normal.y;
-    if (into >= 0) {
+    if (into >= 0 && (current.x || current.y)) {
       return current;
     }
     const along = { x: current.x - into * normal.x, y: current.y - into * normal.y };
@@ -2355,15 +2360,25 @@ function keepClear(
   };
   let next = velocity;
   const ahead = { x: object.x + (next.x + drift.x) * dt, y: object.y + (next.y + drift.y) * dt };
+  /** Within `reach` of `other` after this step, or touching it already. */
+  const touches = (other: SpaceObject, reach: number): boolean =>
+    worldDistance(world, other, ahead) < reach ||
+    worldDistance(world, other, object) <= reach + CONTACT_SLACK;
+  // Peers and exclusion zones it would enter or already touches all count as contacts, so a
+  // slide off one never runs into another.
   const normals = flight.objects.flatMap((other) => {
-    if (
-      other === object ||
-      other.kind !== "enemy" ||
-      other.hp <= 0 ||
-      other.enemy?.salvaged ||
-      exclusionZoneRadius(content, other) !== null ||
-      worldDistance(world, other, ahead) >= enemySpacing(object, other)
-    ) {
+    if (other === object) {
+      return [];
+    }
+    const zone = exclusionZoneRadius(content, other);
+    const contact =
+      zone !== null
+        ? touches(other, zone + object.radius)
+        : other.kind === "enemy" &&
+          other.hp > 0 &&
+          !other.enemy?.salvaged &&
+          touches(other, enemySpacing(object, other));
+    if (!contact) {
       return [];
     }
     const away = worldDelta(world, other, object);
@@ -3926,6 +3941,7 @@ function enemies(
           content,
           flight,
           Boolean(blockade),
+          definition.physics.maxSpeed * intent.effects.thrust * ENEMY_KEEP_MOVING.minimumShare,
           velocity,
           drift,
           dt / steps,

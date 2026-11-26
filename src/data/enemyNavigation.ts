@@ -48,9 +48,10 @@ export const ENEMY_FORWARD_GUNS: ForwardGuns = {
  * Every enemy ship that can move keeps moving (gameplay/ships.md "Keep moving"). Its request never
  * falls below `minimumShare` of its current top speed. A turret ship that would hold a point
  * circles it at `turretHoldRadii` times its spacing radius. Pack members on their shared route keep
- * at least the galaxy's member spacing and the sum of both spacing radii plus `packGap` apart. A
- * miner traces a rock's drawn outline with its centre its spacing radius plus `edgeGap` from it,
- * for a seeded `dwellSeconds` per rock, and never picks one of its last `recentPicks` again.
+ * at least the galaxy's member spacing and the sum of both radii plus `packGap` apart, each the
+ * larger of its spacing and collision radius. A miner traces a rock's drawn outline with its
+ * centre its spacing radius plus `edgeGap` from it, for a seeded `dwellSeconds` per rock, and
+ * never picks one of its last `recentPicks` again.
  */
 export interface EnemyKeepMoving {
   dwellSeconds: readonly [number, number];
