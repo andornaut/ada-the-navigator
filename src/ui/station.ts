@@ -307,7 +307,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       ),
     );
   };
-  const textAction = (label: string, role: "primary" | "secondary", run: () => void) => {
+  const textAction = (
+    label: string,
+    role: "primary" | "secondary",
+    run: () => void,
+    actionId?: string,
+  ) => {
     const action = createStandardTextAction(parent, label, {
       availability: (button) =>
         button?.disabled
@@ -319,9 +324,13 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       run,
       separateFace: true,
     });
+    const button = action.element;
+    if (actionId !== undefined) {
+      button.dataset.action = actionId;
+    }
     bindings.push(action);
-    action.element.classList.toggle("ada-primary", role === "primary");
-    setButtonRole(role, action.element);
+    button.classList.toggle("ada-primary", role === "primary");
+    setButtonRole(role, button);
     return action;
   };
   const modal = document.createElement("div");
@@ -374,11 +383,13 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       components: {
         button: {
           create(initial) {
-            const action = textAction(initial.label, initial.role, menuActions[initial.id]);
+            const action = textAction(
+              initial.label,
+              initial.role,
+              menuActions[initial.id],
+              initial.actionId,
+            );
             const button = action.element;
-            if (initial.actionId !== undefined) {
-              button.dataset.action = initial.actionId;
-            }
             menuButtons.set(initial.id, button);
             return {
               dispose() {},
@@ -446,11 +457,14 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     title: "",
   });
   confirmCard.card.dataset.dialog = "confirm";
-  const cancel = textAction(labels.confirmCancel, "secondary", () => back()).element;
-  cancel.dataset.action = "confirm-cancel";
-  const buyAction = textAction(labels.confirmBuy, "primary", () => buyConfirmed());
+  const cancel = textAction(
+    labels.confirmCancel,
+    "secondary",
+    () => back(),
+    "confirm-cancel",
+  ).element;
+  const buyAction = textAction(labels.confirmBuy, "primary", () => buyConfirmed(), "confirm-buy");
   const buy = buyAction.element;
-  buy.dataset.action = "confirm-buy";
   const confirmActions = createActions([
     { button: cancel, role: "secondary" },
     { button: buy, role: "primary" },
