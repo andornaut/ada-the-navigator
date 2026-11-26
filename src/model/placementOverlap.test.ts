@@ -7,6 +7,20 @@ import { createEnemy } from "./enemyAi.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
 import { placementOutlinesOverlap } from "./placementOverlap.ts";
 
+function largestPartsFirst(parts: Parts): Parts {
+  const doubledArea = (part: Parts[number]) =>
+    Math.abs(
+      part.reduce((sum, { x, y }, index) => {
+        const next = part[(index + 1) % part.length]!;
+        return sum + x * next.y - y * next.x;
+      }, 0),
+    );
+  return parts
+    .map((part) => ({ area: doubledArea(part), part }))
+    .sort((a, b) => b.area - a.area)
+    .map(({ part }) => part);
+}
+
 it("matches contact existence at separation, touching boundaries, seams and containment", () => {
   const box: Parts = [
     [
@@ -45,6 +59,11 @@ it.each(["fighter", "frigate", "capital"] as const)(
     }
     enemy.facing = { x: 1, y: 0 };
     const disabled = enemyPhysicalBody(ROUTE_POSITION[6], enemy)!;
+    // Search larger capital polygons first so the oracle finds covering parts sooner at seams.
+    const [oracleIntact, oracleDisabled] =
+      archetype === "capital"
+        ? [largestPartsFirst(intact), largestPartsFirst(disabled)]
+        : [intact, disabled];
     for (const offset of [
       { x: 0, y: 0 },
       { x: 90, y: 150 },
@@ -53,7 +72,7 @@ it.each(["fighter", "frigate", "capital"] as const)(
       const origin = { x: 12000, y: -12000 };
       const at = { x: origin.x + offset.x, y: origin.y + offset.y };
       expect(placementOutlinesOverlap(intact, origin, disabled, at)).toBe(
-        Boolean(outlinesContact(intact, origin, disabled, at)),
+        Boolean(outlinesContact(oracleIntact, origin, oracleDisabled, at)),
       );
     }
   },
