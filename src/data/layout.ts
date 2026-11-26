@@ -13,6 +13,9 @@ import { SCREEN } from "./screen.ts";
 // (art/layout.md). src/ui/layout derives positions, rects and measured sizes from these values and
 // re-exports them under the same names.
 
+// Above every page layer and the modal layer (modal.test.ts "modal stacking").
+export const LOADING_LAYER = 40;
+
 // tokens (src/ui/layout/tokens.ts)
 
 export const SPACING = {
@@ -500,6 +503,16 @@ export const START_SCREEN = {
 // The touch chrome's frames (src/ui/touchChrome.ts): the 75 ring and Use frame, the 11 knob.
 export const TOUCH_CHROME_FRAME = 75;
 export const TOUCH_KNOB_FRAME = 11;
+
+// The UI manifest sheet each kind reads its frames, tags and timing from. Both rings use the
+// move hint's frames; the aim ring omits the chevrons.
+export const TOUCH_CHROME_SHEETS = {
+  aim: "ui-move-hint",
+  knob: "ui-move-knob",
+  move: "ui-move-hint",
+} as const;
+
+export type TouchChromeKind = keyof typeof TOUCH_CHROME_SHEETS;
 
 // The on-screen joysticks (art/layout.md "HUD and overlays", Sticks), in logical canvas px: 75
 // frames, each ring's drawn edge side in from the screen's outer left (move) or right (aim)

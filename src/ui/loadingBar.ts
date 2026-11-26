@@ -4,6 +4,7 @@ import {
   type DomProgressTiming,
 } from "@andornaut/game-kit/runtime/web/progress/dom/progressBar";
 
+import { LOADING_LAYER } from "../data/layout.ts";
 import { SCREEN } from "../data/screen.ts";
 import { subscribeLoadingProgress } from "../loading/progress.ts";
 import { pixels } from "./layout/css.ts";
@@ -32,9 +33,6 @@ export const LOADING_BAR = {
   track: TEXT_TOKENS.buttonLabel,
   trackAlpha: 0.6,
 } as const;
-
-// Above every page layer and the modal layer (modal.test.ts "modal stacking").
-export const LOADING_LAYER = 40;
 
 // The host spans the view's width in logical px, scaled to the play area; the kit's bar draws in it.
 export const LOADING_STYLE = `

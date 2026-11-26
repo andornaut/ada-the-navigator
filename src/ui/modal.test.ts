@@ -3,13 +3,13 @@ import { readdirSync, readFileSync } from "node:fs";
 import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/runtime/art/aseprite";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { HUD_BUTTON } from "../data/layout.ts";
+import { HUD_BUTTON, LOADING_LAYER } from "../data/layout.ts";
 import { CARD_CLOSE } from "./layout/cardFrame.ts";
 import { ADA_CONTROL_PRESENTATION_STYLE } from "./layout/controlPresentation.ts";
 import { CONTROL_ROW, FOCUS_RING, TEXT_BUTTON } from "./layout/controls.ts";
 import { font, slice, units } from "./layout/css.ts";
 import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP, TYPE } from "./layout/tokens.ts";
-import { LOADING_LAYER, LOADING_STYLE } from "./loadingBar.ts";
+import { LOADING_STYLE } from "./loadingBar.ts";
 import {
   actionOrder,
   BUTTON_SLICE,

@@ -7,7 +7,7 @@
 
 import { clamp01 } from "@andornaut/game-kit/runtime/numbers";
 
-import { TOUCH_CHROME_FRAME } from "../data/layout.ts";
+import { TOUCH_CHROME_FRAME, type TouchChromeKind } from "../data/layout.ts";
 import type { UseAction } from "../model/types.ts";
 import { COLOURS } from "./layout/colours.ts";
 
@@ -18,7 +18,6 @@ export interface Point {
   readonly y: number;
 }
 
-export type TouchChromeKind = "aim" | "knob" | "move";
 export type TouchChromePose = "held" | "held-left" | "held-right" | "rest";
 export const TOUCH_CHROME_POSES: readonly TouchChromePose[] = [
   "rest",
@@ -44,14 +43,6 @@ export const TOUCH_CHROME_COLOURS: TouchChromeColours = {
 };
 
 export const TOUCH_CHROME_ALPHA = 0.85;
-
-// The UI manifest sheet each kind reads its frames, tags and timing from. Both rings use the
-// move hint's frames; the aim ring omits the chevrons.
-export const TOUCH_CHROME_SHEETS: Readonly<Record<TouchChromeKind, string>> = {
-  aim: "ui-move-hint",
-  knob: "ui-move-knob",
-  move: "ui-move-hint",
-};
 
 export function isTouchChromePose(tag: string): tag is TouchChromePose {
   return (TOUCH_CHROME_POSES as readonly string[]).includes(tag);

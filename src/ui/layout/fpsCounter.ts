@@ -1,4 +1,4 @@
-import { LOADING_LAYER } from "../loadingBar.ts";
+import { LOADING_LAYER } from "../../data/layout.ts";
 import { UNLISTED_COLOURS } from "./colours.ts";
 import { pixels } from "./css.ts";
 

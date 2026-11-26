@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
+import { TOUCH_CHROME_SHEETS } from "../data/layout.ts";
 import type { UseAction } from "../model/types.ts";
 import { REFUSAL } from "./refusal.ts";
 import {
@@ -12,7 +13,6 @@ import {
   layerBounds,
   TOUCH_CHROME_ALPHA,
   TOUCH_CHROME_COLOURS,
-  TOUCH_CHROME_SHEETS,
   touchChromeLayers,
   touchChromePixel,
   USE_CALLOUT_CENTRE,

@@ -12,7 +12,7 @@ import {
   mountLoadingFailure,
 } from "@andornaut/game-kit/runtime/web/progress/dom/loadingFailure";
 
-import { FRAME_LINE, TEXT_BUTTON } from "../data/layout.ts";
+import { FRAME_LINE, LOADING_LAYER, TEXT_BUTTON } from "../data/layout.ts";
 import {
   type InstallationPresentation,
   observeInstallation,
@@ -22,7 +22,6 @@ import { bindAdaRecoveryActionRoot } from "../ui/holdActionsAdapter.ts";
 import { SCROLL } from "../ui/layout/contentCard.ts";
 import { viewScale } from "../ui/layout/playView.ts";
 import { VIEW_SCALE_EVENT } from "../ui/layout/viewScale.ts";
-import { LOADING_LAYER } from "../ui/loadingBar.ts";
 import { TEXT_TOKENS } from "../ui/modal.ts";
 import { rootPressGuard } from "../ui/pressScope.ts";
 import { EntryReloadRequired } from "./entryRecovery.ts";

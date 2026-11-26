@@ -7,6 +7,7 @@ import {
 import { setTextureFilters } from "@andornaut/game-kit/runtime/view/phaser/textureFilter";
 import { GameObjects, Scene, Textures } from "phaser";
 
+import { TOUCH_CHROME_SHEETS, type TouchChromeKind } from "../data/layout.ts";
 import type { UseAction } from "../model/types.ts";
 import {
   isTouchChromePose,
@@ -18,9 +19,7 @@ import {
   TOUCH_CHROME_ALPHA,
   TOUCH_CHROME_COLOURS,
   TOUCH_CHROME_FRAME,
-  TOUCH_CHROME_SHEETS,
   TOUCH_KNOB_FRAME,
-  type TouchChromeKind,
   type TouchChromeLayer,
   touchChromeLayers,
   touchChromePixel,
@@ -49,7 +48,7 @@ interface UiManifest {
   readonly sprites?: readonly UiSprite[];
 }
 
-const SHEET_KEYS = [...new Set(Object.values(TOUCH_CHROME_SHEETS))];
+const SHEET_KEYS: readonly string[] = [...new Set(Object.values(TOUCH_CHROME_SHEETS))];
 
 // Queues the UI manifest and, once it loads, the joystick sheets it lists.
 export function preloadTouchChrome(scene: Scene, supplied?: unknown): void {
