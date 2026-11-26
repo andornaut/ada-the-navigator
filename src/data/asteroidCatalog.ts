@@ -1,5 +1,5 @@
 import ART_FILE from "../../public/art/asteroids.json" with { type: "json" };
-import type { Vec } from "../model/types.ts";
+import type { Vec } from "./types.ts";
 
 export const ASTEROID_SIZES = ["small", "medium", "large", "huge"] as const;
 export type AsteroidSize = (typeof ASTEROID_SIZES)[number];

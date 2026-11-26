@@ -1,6 +1,5 @@
-import type { Vec } from "../model/types.ts";
 import { SCREEN } from "./screen.ts";
-import type { GalaxyNumber } from "./types.ts";
+import type { GalaxyNumber, Vec } from "./types.ts";
 
 export type StoryShipId = "miner" | "visitor-1" | "visitor-2" | "blocker";
 export type StorySceneId = "blocked" | "docking";

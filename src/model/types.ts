@@ -6,7 +6,7 @@ import type { EnemyArchetype } from "../data/enemyCatalog.ts";
 import type { HeavyHullProfile, OrdinaryHeavy } from "../data/enemyIdentity.ts";
 import type { JobType } from "../data/jobs.ts";
 import type { StorySceneId } from "../data/storyShips.ts";
-import type { GalaxyNumber, Weapon } from "../data/types.ts";
+import type { GalaxyNumber, Vec, Weapon } from "../data/types.ts";
 import type { AchievementState } from "./achievements.ts";
 import type { EnemyState } from "./enemyAi.ts";
 import type { ExplorationSites, ExplorationState } from "./explorationState.ts";
@@ -21,10 +21,10 @@ import type { TargetKnowledgeRecord } from "./targetMarkers.ts";
 export type UseAction =
   "deliver" | "deposit" | "dock" | "salvage" | "scan" | "talk" | "tow" | "use";
 
-export interface Vec {
-  x: number;
-  y: number;
-}
+// CLEANUP (added 2026-11-26): Remove when the remaining model, scene, UI and test callers
+// import Vec from data/types.ts.
+export type { Vec };
+
 export interface FlightInput {
   /** Explicit fire request; absent preserves the legacy aim-to-fire control. */
   fire?: boolean;

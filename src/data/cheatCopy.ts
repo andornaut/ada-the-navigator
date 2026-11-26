@@ -1,4 +1,14 @@
-import type { CheatId } from "../model/cheats.ts";
+/** The cheats in gameplay/cheats.md, in the Cheats modal's order. */
+export const CHEAT_IDS = [
+  "unlockAllWeapons",
+  "unlockAllEquipment",
+  "unlockAllGalaxies",
+  "maxWeaponLevels",
+  "addOre",
+  "addStardust",
+] as const;
+
+export type CheatId = (typeof CHEAT_IDS)[number];
 
 /** The Cheats modal's strings (gameplay/player-copy.md and gameplay/cheats.md). */
 export const CHEAT_COPY = {

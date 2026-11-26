@@ -7,7 +7,7 @@ import {
   type CrystalSelection,
 } from "../data/asteroidCatalog.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
-import type { GalaxyNumber } from "../data/types.ts";
+import type { GalaxyNumber, Vec } from "../data/types.ts";
 import {
   closestOnSegment,
   type Contact,
@@ -20,7 +20,7 @@ import {
   worldContact,
   worldParts,
 } from "./convex.ts";
-import type { SpaceObject, Vec } from "./types.ts";
+import type { SpaceObject } from "./types.ts";
 import { type WorldContext, worldPoint } from "./worldContacts.ts";
 
 export type { Contact } from "./convex.ts";

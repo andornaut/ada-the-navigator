@@ -5,8 +5,9 @@ import {
   type StorySceneId,
   type StoryShipId,
 } from "../data/storyShips.ts";
+import type { Vec } from "../data/types.ts";
 import { fundedProjects, type ProjectProgress } from "./projects.ts";
-import type { GalaxyProgress, Vec } from "./types.ts";
+import type { GalaxyProgress } from "./types.ts";
 
 /** A story ship's world position, unit heading and whether its thrust jets fire. */
 export interface StoryShip extends Vec {

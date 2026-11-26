@@ -1,20 +1,13 @@
+import { CHEAT_IDS, type CheatId } from "../data/cheatCopy.ts";
 import { ECONOMY } from "../data/economy.ts";
 import type { Weapon } from "../data/types.ts";
 import { shopRow } from "./shop.ts";
 import type { EconomyState, GameState } from "./types.ts";
 import { addWeaponGrant, UPGRADE_WEAPONS } from "./weapons.ts";
 
-/** The cheats in gameplay/cheats.md, in the Cheats modal's order. */
-export const CHEAT_IDS = [
-  "unlockAllWeapons",
-  "unlockAllEquipment",
-  "unlockAllGalaxies",
-  "maxWeaponLevels",
-  "addOre",
-  "addStardust",
-] as const;
-
-export type CheatId = (typeof CHEAT_IDS)[number];
+// CLEANUP (added 2026-11-26): Remove when GameModel, the scene and their tests import
+// the cheat IDs and type from data/cheatCopy.ts.
+export { CHEAT_IDS, type CheatId };
 
 /** What Add 1,000 ore and Add 1,000 Stardust add on every press. */
 export const CHEAT_AMOUNT = 1000;

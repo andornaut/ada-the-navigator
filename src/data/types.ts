@@ -2,6 +2,11 @@ import type { InstallStepsKind } from "@andornaut/game-kit/runtime/web/pwa/insta
 
 import type { ShipPhysics } from "./shipPhysics.ts";
 
+export interface Vec {
+  x: number;
+  y: number;
+}
+
 export type GalaxyNumber = 1 | 2 | 3 | 4 | 5 | 6;
 export type Weapon =
   "laser" | "rapidMissile" | "multiLaser" | "heavyMissile" | "scattershot" | "phaser";
