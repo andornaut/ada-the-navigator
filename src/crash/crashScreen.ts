@@ -186,13 +186,12 @@ const bindHoldAction: HoldActionBinding = (action) => {
     return () => {};
   }
   metadata.add(stop);
-  if (
-    metadata.size === host.querySelectorAll("button").length &&
-    recovery === completed &&
-    completed.live
-  ) {
-    completed.root.assertBindings();
+  const allBound = metadata.size === host.querySelectorAll("button").length;
+  if (allBound) {
     placeCrashActions(host);
+  }
+  if (allBound && recovery === completed && completed.live) {
+    completed.root.assertBindings();
   }
   return stop;
 };
