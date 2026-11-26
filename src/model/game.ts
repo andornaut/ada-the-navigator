@@ -180,6 +180,7 @@ import {
 } from "./flightTopology.ts";
 import { initializeGalaxyGeography } from "./galaxyGeography.ts";
 import { encounterCues, stationsInRange } from "./game/encounterCues.ts";
+import { jobIndicator, jobMapTarget, type JobNavigationContext } from "./game/jobNavigation.ts";
 import {
   floatingHolodisk,
   holodiskTouched,
@@ -4937,97 +4938,17 @@ export class GameModel {
       ? `job:${held.id}`
       : null;
   }
-  /**
-   * Where the held job sends Ada now: a survey's landmark; a delivery's destination, or the
-   * issuing station to replace a lost item; a stranded craft, then the nearest safe place while
-   * towing; a hunt's area centre while Ada is outside it.
-   */
+  private readonly jobNavigation: JobNavigationContext = {
+    held: () => this.held,
+    jobObjective: () => this.jobObjective,
+    state: () => this.state,
+    towPlaces: (flight) => this.towPlaces(flight),
+  };
   private jobIndicator(f: FlightState): IndicatorTarget | null {
-    const held = this.held;
-    const target = this.jobTarget(f);
-    // A hunt's indicator hides while Ada is inside its search area.
-    return held?.type === "hunt" &&
-      worldDistance(flightWorldContext(f), held.target, f.player) <= JOB_TUNING.hunt.radius
-      ? null
-      : target;
+    return jobIndicator(this.jobNavigation, f);
   }
-  /** The held job's target on the Map, named by the job's title. */
   private jobMapTarget(f: FlightState): MapContext["job"] {
-    const target = this.jobTarget(f);
-    const title = this.jobObjective;
-    const held = this.held;
-    // A hunt's target is its search area's centre, which the Map rings.
-    return target && title !== null
-      ? {
-          area: held?.type === "hunt" ? JOB_TUNING.hunt.radius : null,
-          id: target.id,
-          label: title,
-          type: held?.type ?? null,
-          x: target.x,
-          y: target.y,
-        }
-      : null;
-  }
-  /** Where the held job sends Ada now, for the indicator and the Map. */
-  private jobTarget(f: FlightState): IndicatorTarget | null {
-    const held = this.held;
-    if (!held) {
-      return this.activityTarget(f);
-    }
-    const mark = ({ id, x, y }: JobTarget): IndicatorTarget => ({
-      id: id || `job:${held.id}`,
-      kind: "job",
-      x,
-      y,
-    });
-    if (held.type === "survey") {
-      const site = landmarkById(f.galaxy, held.target.id);
-      return site ? mark(site) : null;
-    }
-    if (held.type === "delivery") {
-      const station = held.carrying ? held.target.id : held.station;
-      const place =
-        stationById(ECONOMY, f.galaxy, station) ??
-        f.objects.find((object) => object.kind === "destination" && object.id === station) ??
-        held.target;
-      return mark({ id: station, x: place.x, y: place.y });
-    }
-    if (held.type === "rescue") {
-      const place = f.tow
-        ? nearestWorldSafePlace(flightWorldContext(f), this.towPlaces(f), f.tow)
-        : held.target;
-      return place ? mark(place) : null;
-    }
-    return mark(held.target);
-  }
-  /**
-   * Where the activity sends Ada now: a supply run's destination, or its issuing outpost to
-   * replace a lost item; the hub for a mining contract; the calf until it follows, then the family.
-   */
-  private activityTarget(f: FlightState): IndicatorTarget | null {
-    const activity = heldActivity(f.galaxy, this.state);
-    if (!activity) {
-      return null;
-    }
-    const mark = ({ x, y }: Vec, id: string): IndicatorTarget => ({ id, kind: "job", x, y });
-    const place = (id: string) =>
-      f.objects.find((object) => object.kind === "destination" && object.id === id);
-    if (activity.id === "guideCalf") {
-      const calf = f.calf;
-      const family = place("family");
-      return calf && !calf.following
-        ? mark(calf, "activity:calf")
-        : family
-          ? mark(family, "family")
-          : null;
-    }
-    // A supply run's item goes to its station; a lost one is replaced at the issuing outpost.
-    if (activity.id === "supplyRun" && activity.carrying && activity.target) {
-      const site = stationById(ECONOMY, f.galaxy, activity.target.id) ?? activity.target;
-      return mark(site, activity.target.id);
-    }
-    const at = place(activity.place);
-    return at ? mark(at, activity.place) : null;
+    return jobMapTarget(this.jobNavigation, f);
   }
   /** Landmarks and the held job's craft, search area and glint, for the scene. */
   get jobScenery(): JobScenery {
