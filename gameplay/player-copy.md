@@ -1151,6 +1151,18 @@ Phantom:
 - Quiet stretch: Astra: "Whatever is waiting, I'm not running this time." Ada:
   "Neither am I."
 
+## Captain Tally and Hammer
+
+These [Sunflower boss cues](quests.md#captain-tally) appear in the small
+conversation box.
+
+- Approach, Captain Tally: "Food, parts, repairs. I counted three outposts. I
+  didn't count on them working together."
+- First hardpoint lost, Astra: "That's one hardpoint down. The others are still
+  live."
+- Resolved, Astra: "The patrol's clear. I marked a supply cache and a safer
+  route between the outposts."
+
 ## Greeters
 
 Normal Dock opens the Station welcome. It shows the keeper paragraph and the

@@ -261,6 +261,32 @@ resumes it, and a fresh entry starts it at zero.
   as for a board hunt.
 - A site posts at most one lead. A scanned site offers no further Scan.
 
+## Captain Tally
+
+Captain Tally is an uncrewed drone commander in Sunflower. After the outposts
+complete their exchange circuit, the local map charts Hammer as an optional
+detour. Hammer's patrol stays clear of the required circuit, and the outposts'
+holodisk handover remains independent. Ada flies to the detour normally.
+
+While Hammer is engaged, the boss HUD shows Hammer, Captain Tally and
+remaining hull health. It clears on disengagement and restores the current
+hull on re-entry. When the disabled hull is in reach and Use offers Salvage,
+the HUD shows "Disabled". [Tally's approach and Astra's first-hardpoint
+reaction](player-copy.md#captain-tally-and-hammer) are shown once each. If
+the same hit would trigger both a hardpoint and a final resolution cue, the
+resolution takes priority.
+
+Disabling Hammer and using Salvage resolves the encounter and awards half its
+rolled Stardust, rounded down. Destroying the hull resolves it and drops the
+full roll through the ordinary wreck payout. Either outcome also reveals a
+normal-flight waypoint labeled "Safer route and supply cache" and a single Ore
+pickup. Collecting the Ore once changes the waypoint label to "Safer route".
+Astra's resolution line is shared by both outcomes.
+
+The encounter retains its actor, damage and shown cues through Continue and
+leaving and returning to Sunflower. The resolved encounter stays resolved, and
+the unclaimed cache remains available across flights until collected.
+
 ## Landmarks
 
 Each galaxy targets roughly 200 landmarks for surveys to chart: nebulae, wrecks
