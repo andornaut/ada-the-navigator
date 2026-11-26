@@ -16,6 +16,10 @@ export const stationDistance = (context: WorldCellContext, a: Vec, b: Vec): numb
     ? Math.hypot(a.x - b.x, a.y - b.y)
     : wrappedDistance(context.worldSide, a, b);
 
+export interface PrimaryStationContext extends WorldCellContext {
+  readonly primaryStationClear?: (point: Vec) => boolean;
+}
+
 export interface StationSite extends Vec {
   id: string;
 }
@@ -42,13 +46,23 @@ export function stationId(cell: Vec): string {
   return `station:${cell.x},${cell.y}`;
 }
 
+/** Sample a fixed set of points inside the permitted square around an anchor. */
+export function* stationPlacementCandidates(anchor: Vec, extent: number): Iterable<Vec> {
+  const offsets = [0, -extent / 2, extent / 2, -extent, extent];
+  for (const x of offsets) {
+    for (const y of offsets) {
+      yield { x: anchor.x + x, y: anchor.y + y };
+    }
+  }
+}
+
 /**
  * The station in one placement cell, or null. A station sits inside the cell's central
  * band of side `jitter`, so stations in different cells are at least
  * `grid.pitch - jitter` apart.
  */
 export function worldStationInCell(
-  context: WorldCellContext,
+  context: PrimaryStationContext,
   catalog: EconomyCatalog,
   galaxy: GalaxyNumber,
   rawCell: Vec,
@@ -68,14 +82,25 @@ export function worldStationInCell(
   if (stationDistance(context, { x: 0, y: 0 }, { x, y }) < originClearance) {
     return null;
   }
-  return { id: stationId(cell), x, y };
+  const id = stationId(cell);
+  const clear = context.primaryStationClear;
+  if (!clear || clear({ x, y })) {
+    return { id, x, y };
+  }
+  const center = { x: origin.x + grid.pitch / 2, y: origin.y + grid.pitch / 2 };
+  for (const point of stationPlacementCandidates(center, jitter / 2)) {
+    if (stationDistance(context, { x: 0, y: 0 }, point) >= originClearance && clear(point)) {
+      return { id, ...point };
+    }
+  }
+  return null;
 }
 
 /** Cartwheel's mining hub is its galaxy's station by this id (gameplay/rules.md). */
 export const HUB_STATION = "hub";
 
 export function worldLegacyStationById(
-  context: WorldCellContext,
+  context: PrimaryStationContext,
   catalog: EconomyCatalog,
   galaxy: GalaxyNumber,
   id: string,
@@ -100,7 +125,7 @@ export function worldLegacyStationById(
 
 /** Stations whose centres are within `radius` of a point. */
 export function worldLegacyStationsNear(
-  context: WorldCellContext,
+  context: PrimaryStationContext,
   catalog: EconomyCatalog,
   galaxy: GalaxyNumber,
   radius: number,

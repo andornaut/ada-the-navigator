@@ -5,7 +5,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import { settlementsNear } from "./andromedaPlaces.ts";
+import { settlementById, settlementsNear } from "./andromedaPlaces.ts";
 import { ensureDestination, ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { retainedSettlementWithin } from "./legacySettlements.ts";
@@ -16,9 +16,10 @@ import {
   worldInfillStationInCell,
   worldLegacyStationsNear,
   worldStationById,
+  worldStationInCell,
   worldStationsNear,
 } from "./stations.ts";
-import { periodicWorldGrid } from "./worldCells.ts";
+import { periodicWorldGrid, worldCellAt, worldCellCenter } from "./worldCells.ts";
 import { wrappedDistance } from "./worldGeometry.ts";
 
 describe("additive station density", () => {
@@ -63,6 +64,39 @@ describe("additive station density", () => {
         [],
       );
     }
+  });
+
+  it("keeps Andromeda's conflicting primary station in its cell and clear of the retained settlement", () => {
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
+    model.state.prologueSeen = true;
+    model.state.unlocked = [1, 5];
+    model.state.progress[5].opened = true;
+    model.startGalaxy(5);
+    const flight = model.state.flight!;
+    const context = flightStationContext(flight);
+    const settlement = settlementById(ECONOMY, "settlement:5,-8")!;
+    const cell = { x: 5, y: -7 };
+    const station = worldStationInCell(context, ECONOMY, 5, cell)!;
+    const grid = periodicWorldGrid(context, ECONOMY.station.cellSize);
+
+    expect(station.id).toBe("station:5,-7");
+    expect(worldCellAt(grid, station)).toEqual(cell);
+    const center = worldCellCenter(grid, cell);
+    expect(
+      Math.max(Math.abs(station.x - center.x), Math.abs(station.y - center.y)),
+    ).toBeLessThanOrEqual(ECONOMY.station.jitter / 2);
+    expect(worldStationById(context, ECONOMY, 5, station.id)).toEqual(station);
+    expect(wrappedDistance(GALAXY_SIDE, station, settlement)).toBeGreaterThanOrEqual(
+      ECONOMY.station.destinationClearance,
+    );
+    flight.player = { x: station.x, y: station.y };
+    model.state.dialogue = null;
+    model.step(0.01, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
+    expect(flight.objects).toContainEqual(expect.objectContaining(station));
+    flight.player = { x: settlement.x, y: settlement.y };
+    model.state.dialogue = null;
+    model.step(0.01, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
+    expect(flight.objects).toContainEqual(expect.objectContaining(settlement));
   });
 
   it("keeps Andromeda's original settlement clear when the new grid admits a nearby infill cell", () => {

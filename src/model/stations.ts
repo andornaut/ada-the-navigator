@@ -8,12 +8,14 @@ import {
   GALAXY_SEEDS,
   HUB_STATION,
   mix,
+  type PrimaryStationContext,
   stationDistance as distance,
+  stationPlacementCandidates,
   type StationSite,
   unit,
-  worldLegacyStationById,
-  worldLegacyStationsNear,
-  worldStationInCell,
+  worldLegacyStationById as legacyStationById,
+  worldLegacyStationsNear as legacyStationsNear,
+  worldStationInCell as legacyStationInCell,
 } from "./legacyStations.ts";
 import { retainedLandmarkSites as landmarkSites } from "./retainedLandmarks.ts";
 import type { FlightState, Vec } from "./types.ts";
@@ -26,13 +28,7 @@ import {
   worldCellsNear,
 } from "./worldCells.ts";
 import { wrapPoint } from "./worldGeometry.ts";
-export {
-  HUB_STATION,
-  type StationSite,
-  worldLegacyStationById,
-  worldLegacyStationsNear,
-  worldStationInCell,
-} from "./legacyStations.ts";
+export { HUB_STATION, type StationSite } from "./legacyStations.ts";
 
 export interface StationPlacementContext extends WorldCellContext {
   readonly stationExclusions?: readonly Vec[];
@@ -46,6 +42,61 @@ export function flightStationContext(flight: FlightState): StationPlacementConte
   };
 }
 
+// Legacy settlement generation reads the original station grid without this flight constraint.
+function primaryStationContext(
+  context: WorldCellContext,
+  catalog: EconomyCatalog,
+  galaxy: GalaxyNumber,
+): PrimaryStationContext {
+  if (galaxy !== 5 || context.worldSide === undefined) {
+    return context;
+  }
+  return {
+    primaryStationClear: (point) =>
+      !retainedSettlementWithin(context, catalog, catalog.station.destinationClearance, point),
+    worldSide: context.worldSide,
+  };
+}
+
+export function worldStationInCell(
+  context: WorldCellContext,
+  catalog: EconomyCatalog,
+  galaxy: GalaxyNumber,
+  cell: Vec,
+): StationSite | null {
+  return legacyStationInCell(
+    primaryStationContext(context, catalog, galaxy),
+    catalog,
+    galaxy,
+    cell,
+  );
+}
+
+export function worldLegacyStationById(
+  context: WorldCellContext,
+  catalog: EconomyCatalog,
+  galaxy: GalaxyNumber,
+  id: string,
+): StationSite | null {
+  return legacyStationById(primaryStationContext(context, catalog, galaxy), catalog, galaxy, id);
+}
+
+export function worldLegacyStationsNear(
+  context: WorldCellContext,
+  catalog: EconomyCatalog,
+  galaxy: GalaxyNumber,
+  radius: number,
+  point: Vec,
+): StationSite[] {
+  return legacyStationsNear(
+    primaryStationContext(context, catalog, galaxy),
+    catalog,
+    galaxy,
+    radius,
+    point,
+  );
+}
+
 export function worldNamesStation(
   context: StationPlacementContext,
   catalog: EconomyCatalog,
@@ -57,7 +108,7 @@ export function worldNamesStation(
   );
 }
 
-/** An additional station near a grid vertex; original cell sites never move. */
+/** An additional station near a grid vertex, with clearance from primary stations. */
 export function worldInfillStationInCell(
   context: StationPlacementContext,
   catalog: EconomyCatalog,
@@ -78,48 +129,40 @@ export function worldInfillStationInCell(
   if (extent < 0) {
     return null;
   }
-  const offsets = [0, -extent / 2, extent / 2, -extent, extent];
-  for (const x of offsets) {
-    for (const y of offsets) {
-      const raw = { x: origin.x + x, y: origin.y + y };
-      const point = context.worldSide === undefined ? raw : wrapPoint(context.worldSide, raw);
-      if (distance(context, { x: 0, y: 0 }, point) < catalog.station.originClearance) {
-        continue;
-      }
-      if (
-        worldLegacyStationsNear(
-          context,
-          catalog,
-          galaxy,
-          catalog.station.minimumSpacing,
-          point,
-        ).some((site) => distance(context, site, point) < catalog.station.minimumSpacing)
-      ) {
-        continue;
-      }
-      if (
-        landmarkSites(galaxy).some(
-          (site) => distance(context, site, point) <= LANDMARK_TUNING.placeClearance,
-        )
-      ) {
-        continue;
-      }
-      if (
-        galaxy === 5 &&
-        retainedSettlementWithin(context, catalog, catalog.station.destinationClearance, point)
-      ) {
-        continue;
-      }
-      if (
-        context.stationExclusions?.some(
-          (destination) =>
-            distance(context, destination, point) < catalog.station.destinationClearance,
-        )
-      ) {
-        return null;
-      }
-      return { ...point, id: `station:infill:${cell.x},${cell.y}` };
+  for (const raw of stationPlacementCandidates(origin, extent)) {
+    const point = context.worldSide === undefined ? raw : wrapPoint(context.worldSide, raw);
+    if (distance(context, { x: 0, y: 0 }, point) < catalog.station.originClearance) {
+      continue;
     }
+    if (
+      worldLegacyStationsNear(context, catalog, galaxy, catalog.station.minimumSpacing, point).some(
+        (site) => distance(context, site, point) < catalog.station.minimumSpacing,
+      )
+    ) {
+      continue;
+    }
+    if (
+      landmarkSites(galaxy).some(
+        (site) => distance(context, site, point) <= LANDMARK_TUNING.placeClearance,
+      )
+    ) {
+      continue;
+    }
+    if (
+      galaxy === 5 &&
+      retainedSettlementWithin(context, catalog, catalog.station.destinationClearance, point)
+    ) {
+      continue;
+    }
+    if (
+      context.stationExclusions?.some(
+        (destination) =>
+          distance(context, destination, point) < catalog.station.destinationClearance,
+      )
+    ) {
+      return null;
+    }
+    return { ...point, id: `station:infill:${cell.x},${cell.y}` };
   }
   return null;
 }
