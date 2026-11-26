@@ -271,17 +271,22 @@ describe("integrated combat", () => {
     expect(expected).toContain("bolt");
     expect(expected).toContain("missile");
     expect([...kinds].sort()).toEqual([...expected].sort());
-    const missile = flight.shots.find((shot) => shot.projectile === "missile")!;
+    // The freshest missile, flown for a slice inside its remaining reach.
+    const missile = flight.shots
+      .filter((shot) => shot.projectile === "missile")
+      .reduce((a, b) => (b.life > a.life ? b : a));
     const velocity = { ...missile.velocity };
     const position = { x: missile.x, y: missile.y };
+    const slice = Math.min(0.1, missile.life / 2);
     flight.player.y = 200;
     resumed.player.y = 200;
-    stepFlight(CONTENT, 0.1, wide, flight);
-    stepFlight(CONTENT, 0.1, wide, resumed);
+    stepFlight(CONTENT, slice, wide, flight);
+    stepFlight(CONTENT, slice, wide, resumed);
     expect(resumed).toEqual(flight);
+    expect(flight.shots).toContain(missile);
     expect(missile.velocity).toEqual(velocity);
-    expect(missile.x).toBeCloseTo(position.x + velocity.x * 0.1);
-    expect(missile.y).toBeCloseTo(position.y + velocity.y * 0.1);
+    expect(missile.x).toBeCloseTo(position.x + velocity.x * slice);
+    expect(missile.y).toBeCloseTo(position.y + velocity.y * slice);
   });
 
   it("damages only targeted parts, disables a heavy without weapons and destroys it at 0 hull", () => {
@@ -370,7 +375,7 @@ describe("integrated combat", () => {
   });
 
   it("salvages a disabled heavy within Talk range for its Stardust and spares it", () => {
-    // Sunflower's frigate: a 20 HP hull.
+    // Sunflower's frigate: a 40 HP hull.
     const flight = empty();
     const target = ship("frigate", { x: 120, y: 0 }, enemyDefinition(1, "frigate"));
     flight.objects.push(target);
@@ -397,7 +402,7 @@ describe("integrated combat", () => {
     hit(flight, { x: target.x, y: target.y }, 3);
     flight.player = { x: target.x, y: target.y };
     stepFlight(CONTENT, 0.1, idle, flight);
-    expect(target.enemy!.hp).toBe(20);
+    expect(target.enemy!.hp).toBe(40);
     expect(flight.player).toEqual({ x: target.x, y: target.y });
     expect(flight.shots.filter((shot) => shot.enemy)).toEqual([]);
     expect(flight.objects).toContain(target);
@@ -718,7 +723,7 @@ describe("integrated combat", () => {
       for (const [index, bolt] of bolts.entries()) {
         expect(bolt).toMatchObject({ damage: 1.5, enemy: true, projectile: "bolt" });
         const speed = Math.hypot(bolt.velocity.x, bolt.velocity.y);
-        expect(speed).toBeCloseTo(240, 9);
+        expect(speed).toBeCloseTo(320, 9);
         const turn = Math.atan2(bolt.velocity.y, bolt.velocity.x);
         expect(Math.cos(turn - (index * Math.PI) / 4)).toBeCloseTo(1, 9);
       }

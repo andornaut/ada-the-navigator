@@ -162,12 +162,14 @@ export function muzzleLayout(
   }
   const turrets = new Map<string, MuzzleTurret>();
   for (const part of definition.hardpoints) {
+    // A fixed front weapon carries no turret top: only a top Art draws for that hardpoint.
     const carried =
-      (part.kind === "weapon" ? art.weaponTops.get(part.fire.weapon) : undefined) ??
+      (part.kind === "weapon" && !part.fixed ? art.weaponTops.get(part.fire.weapon) : undefined) ??
       art.own.get(part.id);
     const tips = carried && art.tops.get(carried.top);
-    if (carried && tips) {
-      turrets.set(part.id, { aft: carried.aft, pivots: art.pivots.get(part.id)!, tips });
+    const pivots = art.pivots.get(part.id);
+    if (carried && tips && pivots) {
+      turrets.set(part.id, { aft: carried.aft, pivots, tips });
     }
   }
   const primary =

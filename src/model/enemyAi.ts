@@ -14,6 +14,7 @@ import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
 import { type HeavyHullProfile, retaliatorVariant } from "../data/enemyIdentity.ts";
 import { MUZZLE_ART, muzzleArtForDefinition, muzzleLayout } from "../data/enemyMuzzles.ts";
 import {
+  ENEMY_FORWARD_GUNS,
   ENEMY_KEEP_MOVING,
   ENEMY_STEERING,
   ENEMY_STRAFE,
@@ -351,6 +352,14 @@ export function enemyFireLine(
       ? { x: state.position.x + offset.x, y: state.position.y + offset.y }
       : { ...state.position },
   };
+}
+
+/**
+ * Whether a fixed forward weapon's unit line of fire lies within `arcRadians` either side of the
+ * unit hull `facing`: the nose arc a fixed gun fires inside.
+ */
+export function withinNoseArc(arcRadians: number, facing: Point, line: Point): boolean {
+  return line.x * facing.x + line.y * facing.y >= Math.cos(arcRadians);
 }
 
 /** Whether an enemy is destroyed: its hull at 0 HP, whatever its hardpoints. */
@@ -1509,7 +1518,7 @@ export function stepEnemy(
     };
   }
   const fire: FireIntent[] = [];
-  const canFire =
+  const engagedFire =
     !summoned &&
     !effects.defeated &&
     !effects.disabled &&
@@ -1520,16 +1529,24 @@ export function stepEnemy(
     context.targetable &&
     context.visibility === "visible" &&
     context.inPlayView &&
-    distance <= definition.engagement &&
-    // A fixed forward weapon fires only while its aim point is inside the nose arc.
-    (forward === null ||
-      pointed.x * next.facing.x + pointed.y * next.facing.y >= Math.cos(forward.arcRadians));
+    distance <= definition.engagement;
+  // A fixed forward weapon fires only while its aim point is inside the nose arc.
+  const canFire =
+    engagedFire && (forward === null || withinNoseArc(forward.arcRadians, next.facing, pointed));
   const phasedHeavy = definition.fireClockPolicy === "staggered-and-paused";
   if (phasedHeavy && canFire && !state.firePhasesInitialized) {
     // A legacy active clock or burst resumes as saved rather than receiving a second phase.
     const resumed = state.hardpoints.some((part) => part.cooldown > 0 || (part.burst ?? 0) > 0);
     if (!resumed) {
-      const fill = definition.mounts?.fill ?? definition.hardpoints.map((part) => part.id);
+      // Front Lasers take their phases after the mounts.
+      const fill = definition.mounts
+        ? [
+            ...definition.mounts.fill,
+            ...definition.hardpoints.flatMap((part) =>
+              part.kind === "weapon" && part.fixed ? [part.id] : [],
+            ),
+          ]
+        : definition.hardpoints.map((part) => part.id);
       const weapons = fill.flatMap((id) => {
         const part = definition.hardpoints.find((part) => part.id === id);
         return part?.kind === "weapon" ? [part] : [];
@@ -1564,10 +1581,12 @@ export function stepEnemy(
     return offset ? { x: state.position.x + offset.x, y: state.position.y + offset.y } : origin;
   };
   /**
-   * Fires each volley due this step and returns the next cooldown and burst position. A
-   * burst's bolts follow `gap` apart and its next burst starts `interval` after its first.
+   * Fires each volley due this step while `armed` and returns the next cooldown and burst
+   * position. A burst's bolts follow `gap` apart and its next burst starts `interval` after its
+   * first.
    */
   const cycle = (
+    armed: boolean,
     profile: FireProfile,
     origin: Point,
     muzzleAim: Point,
@@ -1578,7 +1597,7 @@ export function stepEnemy(
     const interval = firingInterval(profile);
     const count = Math.max(1, profile.burst?.count ?? 1);
     const gap = Math.min(interval / count, Math.max(0, profile.burst?.gap ?? 0));
-    if (!canFire) {
+    if (!armed) {
       return phasedHeavy
         ? { burst, cooldown }
         : { burst: 0, cooldown: Math.max(0, cooldown - context.dt) };
@@ -1628,20 +1647,30 @@ export function stepEnemy(
     }
     return { burst: bolt, cooldown: delay - context.dt };
   };
-  // A fixed forward hull weapon aims along the facing; hardpoint weapons are turrets.
+  // A fixed forward hull weapon aims along the facing; hardpoint weapons are turrets unless fixed.
   next.aim = forward ? { ...next.facing } : track(state.position, state.aim, definition.fire);
   const hullAim = next.aim ?? { x: 0, y: 0 };
   next.primaryCooldown = definition.hardpoints.length
     ? 0
-    : cycle(definition.fire, state.position, hullAim, null, state.primaryCooldown).cooldown;
+    : cycle(canFire, definition.fire, state.position, hullAim, null, state.primaryCooldown)
+        .cooldown;
   for (const part of definition.hardpoints) {
     const value = next.hardpoints.find((entry) => entry.id === part.id);
     if (part.kind === "weapon" && value && value.hp > 0) {
       // Muzzles sit on the hull as it faced at the start of the step.
       const offset = hardpointOffset(definition, context.adaWidth, state.facing, part);
       const origin = { x: state.position.x + offset.x, y: state.position.y + offset.y };
-      value.aim = track(origin, value.aim, part.fire);
+      // A fixed front weapon aims along the facing and fires while its aim point is in the nose
+      // arc; the hull never turns toward it.
+      const line = part.fixed ? lineOfFire(origin, part.fire) : null;
+      value.aim = part.fixed ? { ...next.facing } : track(origin, value.aim, part.fire);
+      const armed = part.fixed
+        ? engagedFire &&
+          line !== null &&
+          withinNoseArc(ENEMY_FORWARD_GUNS.arcRadians, next.facing, line)
+        : canFire;
       const fired = cycle(
+        armed,
         part.fire,
         origin,
         value.aim ?? { x: 0, y: 0 },

@@ -488,12 +488,12 @@ describe("galaxy difficulty", () => {
       enemyDefinition(galaxy, "frigate").hardpoints.at(-1)!.hp,
     ]);
     expect(rows).toEqual([
-      [2, 4, 3, 8, 20, 40, 10, 5, 5],
-      [2, 5, 3, 9, 22, 44, 11, 5, 5],
-      [3, 5, 4, 10, 30, 60, 15, 6, 6],
-      [3, 6, 4, 11, 32, 64, 16, 6, 6],
-      [3, 6, 5, 11, 44, 88, 22, 7, 7],
-      [3, 6, 5, 12, 48, 96, 24, 7, 7],
+      [2, 4, 3, 8, 40, 80, 20, 10, 10],
+      [2, 5, 3, 9, 44, 88, 22, 10, 10],
+      [3, 5, 4, 10, 60, 120, 30, 12, 12],
+      [3, 6, 4, 11, 64, 128, 32, 12, 12],
+      [3, 6, 5, 11, 88, 176, 44, 14, 14],
+      [3, 6, 5, 12, 96, 192, 48, 14, 14],
     ]);
     const retreat = (galaxy: GalaxyNumber) => {
       const behaviour = enemyDefinition(galaxy, "fighter").behaviour;

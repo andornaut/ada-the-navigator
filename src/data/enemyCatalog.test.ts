@@ -185,7 +185,7 @@ describe("enemy fire profiles", () => {
       "engine-left",
       "engine-right",
     ]);
-    expect(new Set(capital.map((part) => part.hp))).toEqual(new Set([7]));
+    expect(new Set(capital.map((part) => part.hp))).toEqual(new Set([14]));
   });
 
   it("arms small craft by position with the shared player cadence and unchanged projectile speeds", () => {
@@ -207,10 +207,10 @@ describe("enemy fire profiles", () => {
     expect(enemyFire("frigate", { level: 1, weapon: "heavyMissile" }).interval).toBe(
       weaponAt("heavyMissile", 1).intervalSeconds,
     );
-    // Every enemy projectile flies 0.6 of Ada's level 1 speed for its weapon, the ring burst a
-    // fixed 240; the Phaser and the lance are hitscan and mines lie still.
-    const speed = (weapon: EnemyWeapon) =>
-      enemyFire("frigate", { level: 1, weapon }).projectileSpeed;
+    // A heavy's projectiles fly 0.8 of Ada's level 1 speed for the weapon, the ring burst a
+    // fixed 320; the Phaser and the lance are hitscan and mines lie still.
+    const speed = (weapon: EnemyWeapon, archetype = "frigate") =>
+      enemyFire(archetype, { level: 1, weapon }).projectileSpeed;
     expect(
       (
         [
@@ -225,8 +225,37 @@ describe("enemy fire profiles", () => {
           "mineLayer",
         ] as const
       ).map((weapon) => Math.round(speed(weapon) * 1e9) / 1e9),
-    ).toEqual([300, 240, 300, 240, 360, 0, 240, 0, 0]);
-    expect(speed("laser")).toBeCloseTo(ENEMY_SPEED_SHARE * weaponSpeed("laser", 1), 9);
+    ).toEqual([400, 320, 400, 320, 480, 0, 320, 0, 0]);
+    expect(speed("laser")).toBeCloseTo(ENEMY_SPEED_SHARE.heavy * weaponSpeed("laser", 1), 9);
+    // Every heavy class shares the heavy speed; forward-gun small craft keep 0.6.
+    for (const heavy of ["capital", "frigate", "platform", "hostileStation"]) {
+      expect([speed("laser", heavy), speed("rapidMissile", heavy)]).toEqual([400, 400]);
+    }
+    for (const craft of ["swarm", "fighter", "interceptor", "retaliator"]) {
+      expect([speed("laser", craft), speed("rapidMissile", craft)]).toEqual([300, 300]);
+    }
+    expect(speed("laser", "swarm")).toBeCloseTo(
+      ENEMY_SPEED_SHARE.forward * weaponSpeed("laser", 1),
+      9,
+    );
+    // Each heavy's own shipped weapons, at every route position, fly at the heavy speed.
+    for (const galaxy of GALAXY_NUMBERS) {
+      for (const archetype of ["capital", "frigate", "platform", "hostileStation"] as const) {
+        if (archetype === "hostileStation" && ROUTE_POSITION[galaxy] < 4) {
+          continue;
+        }
+        for (const part of enemyDefinition(galaxy, archetype).hardpoints) {
+          if (part.kind === "weapon" && part.fire.projectileSpeed > 0) {
+            expect(part.fire.projectileSpeed).toBeCloseTo(
+              part.fire.weapon === "ringBurst"
+                ? 320
+                : ENEMY_SPEED_SHARE.heavy * weaponSpeed(part.fire.weapon as Weapon, 1),
+              9,
+            );
+          }
+        }
+      }
+    }
     expect(ENEMY_FIRE.chargedLance.interval).toBe(6);
     // The platform's Laser fires two-shot bursts 0.15 s apart.
     const turret = enemyDefinition(2, "platform").hardpoints[0]!;
@@ -236,11 +265,11 @@ describe("enemy fire profiles", () => {
 
 describe("approved heavy health and independent rewards", () => {
   it("applies route part HP alongside the approved hull HP", () => {
-    const partHp = [5, 5, 6, 6, 7, 7];
+    const partHp = [10, 10, 12, 12, 14, 14];
     const hulls = {
-      capital: [40, 44, 60, 64, 88, 96],
-      frigate: [20, 22, 30, 32, 44, 48],
-      platform: [10, 11, 15, 16, 22, 24],
+      capital: [80, 88, 120, 128, 176, 192],
+      frigate: [40, 44, 60, 64, 88, 96],
+      platform: [20, 22, 30, 32, 44, 48],
     };
     for (const galaxy of GALAXY_NUMBERS) {
       const index = ROUTE_POSITION[galaxy] - 1;
@@ -253,10 +282,10 @@ describe("approved heavy health and independent rewards", () => {
     }
   });
 
-  it("keeps the flagship hull and floor while assigning nine HP to every part", () => {
+  it("gives the flagship a 320 HP hull, its floor and 18 HP on every part", () => {
     const flagship = enemyDefinition(6, "capital", PHANTOM_FLAGSHIP_ID);
-    expect(flagship.hardpoints.every((part) => part.hp === 9)).toBe(true);
-    expect(flagship.hp).toBe(160);
+    expect(flagship.hardpoints.every((part) => part.hp === 18)).toBe(true);
+    expect(flagship.hp).toBe(320);
     expect(flagship.hullFloor).toBe(1);
   });
 });

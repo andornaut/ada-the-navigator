@@ -379,7 +379,9 @@ describe("pacing simulation runs", () => {
     const dearer = armed(base.packPrice * 2);
     expect(dearer.packPrice).toBe(50);
     expect(dearer.ammoSpentPerMinute).toBeCloseTo((dearer.packsPerHour / 60) * dearer.packPrice, 6);
-    expect(dearer.ammoSpentPerMinute).toBeGreaterThan(base.ammoSpentPerMinute);
+    // It never buys more packs, and a pilot whose budget binds spends the same Stardust.
+    expect(dearer.packsPerHour).toBeLessThanOrEqual(base.packsPerHour);
+    expect(dearer.ammoSpentPerMinute).toBeGreaterThanOrEqual(base.ammoSpentPerMinute);
     // A player who never restocks spends nothing and runs out to Laser.
     const unstocked = armed(ECONOMY.ammo.packPrice, 0);
     expect(unstocked.ammoSpentPerMinute).toBe(0);

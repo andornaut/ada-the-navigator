@@ -594,10 +594,10 @@ describe("enemy rules", () => {
     };
     const second = stepEnemy(definition, observation(ready), ready);
     expect(second.fire.map((shot) => shot.hardpointId)).toEqual([mountOf("laser")]);
-    // Each weapon's projectiles fly 0.6 of Ada's level 1 speed for it: Laser 300, Heavy 240.
+    // A heavy's projectiles fly 0.8 of Ada's level 1 speed for the weapon: Laser 400, Heavy 320.
     const speedOf = (weapon: string) => first.fire.find((shot) => shot.weapon === weapon)!.speed;
-    expect(speedOf("laser")).toBeCloseTo(300, 9);
-    expect(speedOf("heavyMissile")).toBeCloseTo(240, 9);
+    expect(speedOf("laser")).toBeCloseTo(400, 9);
+    expect(speedOf("heavyMissile")).toBeCloseTo(320, 9);
   });
 
   it.each(["capital"] as const)(
@@ -1194,15 +1194,19 @@ describe("enemy aim", () => {
     expect(aimDrift("ship:2", 0)).not.toBe(aimDrift("ship:1", 0));
   });
 
-  it("leads a moving Ada by the same share shot to shot, ahead of where she is", () => {
+  it("leads a moving Ada by the same share shot to shot, ahead of a direct aim", () => {
     const shots = platformShots(8);
     expect(shots.length).toBeGreaterThan(8);
+    // Without lead the same turrets aim at Ada, give or take the drift and their turning lag.
+    const direct = platformShots(8, 0);
+    expect(direct.map(({ part, time }) => [part, time])).toEqual(
+      shots.map(({ part, time }) => [part, time]),
+    );
+    // Each shot leaves ahead of the same shot aimed straight at her, whatever the drift.
+    for (const [index, shot] of shots.entries()) {
+      expect(shot.ahead).toBeGreaterThan(direct[index]!.ahead);
+    }
     for (const part of parts(shots)) {
-      // Each shot's angle ahead of the line to Ada is the ship's lead plus its slow drift.
-      const ahead = shots.filter((shot) => shot.part === part).map((shot) => shot.ahead);
-      for (const value of ahead) {
-        expect(value).toBeGreaterThan(0);
-      }
       // The canonical anchor and aim time constant define the per-frame intercept track.
       const error = shots.filter((shot) => shot.part === part).map((shot) => shot.aimError);
       for (const value of error) {
@@ -1212,9 +1216,9 @@ describe("enemy aim", () => {
         2 * ENEMY_AIM.driftRadians + 0.01,
       );
     }
-    // Without lead the same turrets aim at Ada, give or take the drift and their turning lag.
-    const direct = platformShots(8, 0).map((shot) => shot.ahead);
-    expect(mean(shots.map((shot) => shot.ahead))).toBeGreaterThan(mean(direct) + 0.1);
+    expect(mean(shots.map((shot) => shot.ahead))).toBeGreaterThan(
+      mean(direct.map((shot) => shot.ahead)) + 0.1,
+    );
   });
 
   it("sweeps a burst's shots during steady motion rather than scattering them", () => {

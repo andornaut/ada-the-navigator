@@ -102,5 +102,5 @@ it("derives the approved station hull from actual galaxy part HP without early s
     ROUTE.map((galaxy) =>
       hostileStationHullHp(difficultyOf(galaxy).hardpointHp, ROUTE_POSITION[galaxy]),
     ),
-  ).toEqual([undefined, undefined, undefined, 72, 98, 112]);
+  ).toEqual([undefined, undefined, undefined, 144, 196, 224]);
 });

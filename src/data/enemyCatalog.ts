@@ -73,8 +73,12 @@ interface HardpointBase {
   /** Fraction of hull width in the hull's local frame: `-y` forward, `+x` starboard. */
   offset: Point;
 }
+/**
+ * A weapon hardpoint is a turret that tracks Ada unless `fixed`: a fixed front weapon fires only
+ * along the hull facing, while its aim point is within the forward guns' nose arc.
+ */
 export type HardpointDefinition = HardpointBase &
-  ({ kind: "engine" | "command" } | { fire: FireProfile; kind: "weapon" });
+  ({ kind: "engine" | "command" } | { fire: FireProfile; fixed?: true; kind: "weapon" });
 /**
  * Movement behaviours an engaged enemy uses. Small craft fight with their weapons, not their
  * hulls: each holds its `standoff` band from Ada and never presses in to ram (gameplay/ships.md
@@ -141,8 +145,9 @@ export const ENEMY_NAVIGATION: EnemyNavigation = {
 
 /**
  * How a ship's hull weapon is mounted, which also sets how its hull faces. `turrets`: every
- * weapon tracks Ada and the hull faces its travel. `forward`: fixed forward guns (ForwardGuns);
- * the hull keeps its nose on Ada and strafes while fighting her. Hardpoint weapons are turrets.
+ * turret tracks Ada and the hull faces its travel. `forward`: fixed forward guns (ForwardGuns);
+ * the hull keeps its nose on Ada and strafes while fighting her. Hardpoint weapons are turrets,
+ * except a heavy's `fixed` front Lasers.
  */
 export type EnemyGuns = { kind: "turrets" } | ({ kind: "forward" } & ForwardGuns);
 const FORWARD_GUNS: EnemyGuns = { kind: "forward", ...ENEMY_FORWARD_GUNS };
@@ -194,13 +199,25 @@ export const ENEMY_FIRE: Readonly<Record<EnemyOnlyWeapon, Cadence>> = {
   mineLayer: { interval: 5 },
   ringBurst: { interval: 3.5 },
 };
-/** An enemy projectile flies this share of Ada's level 1 speed for the same weapon. */
-export const ENEMY_SPEED_SHARE = 0.6;
+/**
+ * An enemy projectile flies this share of Ada's level 1 speed for the same weapon: `forward` from
+ * the forward-gun small craft, `heavy` from heavies and hostile stations (gameplay/ships.md
+ * "Enemy weapons").
+ */
+export const ENEMY_SPEED_SHARE = { forward: 0.6, heavy: 0.8 } as const;
+/** Frigates, capitals and platforms: hull HP and hardpoints, disabled and salvaged. */
+export const HEAVIES: readonly EnemyArchetype[] = ["frigate", "capital", "platform"];
+/** The share of Ada's level 1 speed an archetype's shared-weapon projectiles fly at. */
+export function enemySpeedShare(archetype: string): number {
+  return archetype === "hostileStation" || HEAVIES.some((heavy) => heavy === archetype)
+    ? ENEMY_SPEED_SHARE.heavy
+    : ENEMY_SPEED_SHARE.forward;
+}
 /** World units per second the enemy-only weapons' projectiles fly: the ring burst's bolts. */
 const ENEMY_ONLY_SPEED: Readonly<Record<EnemyOnlyWeapon, number>> = {
   chargedLance: 0,
   mineLayer: 0,
-  ringBurst: 240,
+  ringBurst: 320,
 };
 /** Seconds an enemy Phaser's fixed aim line shows before its beam fires along it. */
 export const PHASER_AIM_SECONDS = 0.4;
@@ -229,8 +246,8 @@ export function enemyOnly(weapon: EnemyWeapon): weapon is EnemyOnlyWeapon {
 
 /**
  * An archetype's fire profile for a weapon at a level: the weapon's fan and projectile at that
- * level, the same whoever fires it, at the enemy's own cadence, its projectiles at
- * ENEMY_SPEED_SHARE of Ada's level 1 speed for the weapon.
+ * level, the same whoever fires it, at the enemy's own cadence, its projectiles at the
+ * archetype's ENEMY_SPEED_SHARE of Ada's level 1 speed for the weapon.
  */
 export function enemyFire(archetype: string, mounted: MountedWeapon): FireProfile {
   const { weapon } = mounted;
@@ -248,7 +265,7 @@ export function enemyFire(archetype: string, mounted: MountedWeapon): FireProfil
     projectile: shared?.projectileKind ?? ENEMY_ONLY_PROJECTILE[weapon as EnemyOnlyWeapon],
     projectileSpeed: enemyOnly(weapon)
       ? ENEMY_ONLY_SPEED[weapon]
-      : ENEMY_SPEED_SHARE * weaponSpeed(weapon, 1),
+      : enemySpeedShare(archetype) * weaponSpeed(weapon, 1),
     weapon,
   };
 }
@@ -765,12 +782,12 @@ const position = (
 
 /** Difficulty by route position (gameplay/ships.md "Difficulty"). */
 export const POSITION_DIFFICULTY: Readonly<Record<RoutePosition, PositionDifficulty>> = {
-  1: position([2, 4, 3, 8], 1, [1.2, 1.44, 1.725], 5, [20, 40], 1),
-  2: position([2, 5, 3, 9], 1, [1.3, 1.63, 1.8975], 5, [22, 44], 1),
-  3: position([3, 5, 4, 10], 2, [1.4, 1.81, 2.07], 6, [30, 60], 1.2),
-  4: position([3, 6, 4, 11], 2, [1.45, 1.88, 2.2425], 6, [32, 64], 1.3),
-  5: position([3, 6, 5, 11], 3, [1.5, 1.94, 2.415], 7, [44, 88], 1.4),
-  6: position([3, 6, 5, 12], 3, [1.5, 2, 2.5875], 7, [48, 96], 1.5),
+  1: position([2, 4, 3, 8], 1, [1.2, 1.44, 1.725], 10, [40, 80], 1),
+  2: position([2, 5, 3, 9], 1, [1.3, 1.63, 1.8975], 10, [44, 88], 1),
+  3: position([3, 5, 4, 10], 2, [1.4, 1.81, 2.07], 12, [60, 120], 1.2),
+  4: position([3, 6, 4, 11], 2, [1.45, 1.88, 2.2425], 12, [64, 128], 1.3),
+  5: position([3, 6, 5, 11], 3, [1.5, 1.94, 2.415], 14, [88, 176], 1.4),
+  6: position([3, 6, 5, 12], 3, [1.5, 2, 2.5875], 14, [96, 192], 1.5),
 };
 
 /** A galaxy's difficulty, by its route position. */
@@ -791,9 +808,6 @@ export function unscaledHullHp(galaxy: GalaxyNumber, archetype: EnemyArchetype):
       return difficulty.hp[archetype];
   }
 }
-
-/** Frigates, capitals and platforms: hull HP and hardpoints, disabled and salvaged. */
-export const HEAVIES: readonly EnemyArchetype[] = ["frigate", "capital", "platform"];
 
 /** Inclusive whole-number destruction payouts, regardless of route position or HP. */
 export const ENEMY_STARDUST_RANGES = {
@@ -904,7 +918,60 @@ export function encounterQuiet(galaxy: GalaxyNumber): { distance: number; second
 }
 
 export { PHANTOM_FLAGSHIP_ID };
-export const FLAGSHIP_PART_HP = 9;
+/** Archie's flagship: its hull HP and every part's, its front Lasers included. */
+export const FLAGSHIP_HULL_HP = 320;
+export const FLAGSHIP_PART_HP = 18;
+
+/**
+ * Fixed front Lasers each moving heavy carries in addition to its mounts (gameplay/ships.md
+ * "Difficulty"): a frigate one and a capital, the flagship included, two. Platforms and hostile
+ * stations carry none.
+ */
+export const FRONT_LASER_COUNT = { capital: 2, frigate: 1 } as const;
+/** One fixed front Laser's mount on a hull design: Art's prow position. */
+export interface FrontLaserMount {
+  id: string;
+  /** Fraction of hull width in the hull's local frame: `-y` forward, `+x` starboard. */
+  offset: Point;
+}
+/** Front Laser mounts by hull design; each design lists exactly its class's FRONT_LASER_COUNT. */
+export type FrontLaserMounts = Readonly<
+  Partial<Record<EnemyGeometryKey, readonly FrontLaserMount[]>>
+>;
+/**
+ * Art's prow mounts for the Shoulder and Twin hull frigates, the six capital designs and the
+ * flagship. A design without them carries no front Lasers until Art places them.
+ */
+export const FRONT_LASER_MOUNTS: FrontLaserMounts = {};
+
+/**
+ * A moving heavy's fixed front Laser hardpoints on its hull design's mounts, each firing the
+ * shared Laser at `weaponLevel` before the galaxy's fire rate and part HP apply; none for a design
+ * without mounts or a ship that carries none.
+ */
+export function frontLaserHardpoints(
+  frontMounts: FrontLaserMounts,
+  weaponLevel: WeaponLevel,
+  archetype: EnemyActorKind,
+  assetKey: EnemyGeometryKey,
+): HardpointDefinition[] {
+  const count = Object.hasOwn(FRONT_LASER_COUNT, archetype)
+    ? FRONT_LASER_COUNT[archetype as keyof typeof FRONT_LASER_COUNT]
+    : 0;
+  const mounts = count ? (frontMounts[assetKey] ?? []) : [];
+  if (mounts.length && mounts.length !== count) {
+    throw new RangeError(`${assetKey} needs ${count} front Laser mounts, not ${mounts.length}`);
+  }
+  return mounts.map(({ id, offset }) => ({
+    fire: enemyFire(archetype, { level: weaponLevel, weapon: "laser" }),
+    fixed: true,
+    hp: 0,
+    id,
+    kind: "weapon",
+    offset: { ...offset },
+  }));
+}
+
 /** Shared weapons use the player cadence share; enemy-only weapons retain their galaxy curve. */
 export function enemyFireRate(
   galaxy: GalaxyNumber,
@@ -919,14 +986,34 @@ export function enemyFireRate(
         enemyRelativeFireRate(archetype, weapon);
 }
 
-const scaled = new Map<string, EnemyDefinition>();
+const scaled = new WeakMap<FrontLaserMounts, Map<string, EnemyDefinition>>();
 /**
  * The catalog definition at a galaxy's route position: its roster behaviour, its position's
  * weapons, hull and hardpoint HP, perception and fire rate, with
  * difficultyScale on HP and fire rate. A heavy's weapon hardpoints are its tier's armed mounts,
- * armed with the loadout ship `shipId` draws (heavyLoadout).
+ * armed with the loadout ship `shipId` draws (heavyLoadout), then its front Lasers on Art's prow
+ * mounts (FRONT_LASER_MOUNTS).
  */
 export function enemyDefinition(
+  galaxy: GalaxyNumber,
+  archetype: EnemyActorKind,
+  shipId = "",
+  weaponLevel: WeaponLevel = 1,
+  hullProfile?: HeavyHullProfile,
+): EnemyDefinition {
+  return mountedEnemyDefinition(
+    FRONT_LASER_MOUNTS,
+    galaxy,
+    archetype,
+    shipId,
+    weaponLevel,
+    hullProfile,
+  );
+}
+
+/** enemyDefinition with its front Lasers on `frontMounts` in place of FRONT_LASER_MOUNTS. */
+export function mountedEnemyDefinition(
+  frontMounts: FrontLaserMounts,
   galaxy: GalaxyNumber,
   archetype: EnemyActorKind,
   shipId = "",
@@ -959,7 +1046,9 @@ export function enemyDefinition(
   const flagship = galaxy === 6 && archetype === "capital" && shipId === PHANTOM_FLAGSHIP_ID;
   const weapons = loadout ? [...loadout.values()].join(",") : "";
   const key = `${assetKey}:${flagship ? "flagship:" : ""}${galaxy}:${archetype}:${weaponLevel}:${weapons}`;
-  let definition = scaled.get(key);
+  const cache = scaled.get(frontMounts) ?? new Map<string, EnemyDefinition>();
+  scaled.set(frontMounts, cache);
+  let definition = cache.get(key);
   if (!definition) {
     const difficulty = difficultyOf(galaxy);
     const entry: EnemyDefinition = enemyCatalog[archetype];
@@ -984,6 +1073,7 @@ export function enemyDefinition(
               loadout,
               weaponLevel,
             ),
+            ...frontLaserHardpoints(frontMounts, weaponLevel, archetype, assetKey),
           ]
         : entry.hardpoints,
     };
@@ -1011,12 +1101,12 @@ export function enemyDefinition(
         ...definition,
         behaviour: { kind: "siege", speedFraction: 0.25 },
         hardpoints: definition.hardpoints.map((part) => ({ ...part, hp: FLAGSHIP_PART_HP })),
-        hp: 160,
+        hp: FLAGSHIP_HULL_HP,
         hullFloor: 1,
         sizeRatio: ENEMY_SIZE_RATIOS.flagship,
       };
     }
-    scaled.set(key, definition);
+    cache.set(key, definition);
   }
   return definition;
 }

@@ -391,9 +391,9 @@ describe("per-role encounter restore", () => {
   const destroy = (model: GameModel, object: SpaceObject) => {
     const definition = shipCatalogEntry(object.enemy!.archetype)!;
     for (const part of definition.hardpoints) {
-      object.enemy = damageEnemy(definition, { amount: 99, hardpointId: part.id }, object.enemy!);
+      object.enemy = damageEnemy(definition, { amount: 999, hardpointId: part.id }, object.enemy!);
     }
-    object.enemy = damageEnemy(definition, { amount: 99, hardpointId: null }, object.enemy!);
+    object.enemy = damageEnemy(definition, { amount: 999, hardpointId: null }, object.enemy!);
     const before = model.state.progress[model.state.flight!.galaxy].destroyedEnemies;
     model.step(0.001, idle);
     expect(model.state.progress[model.state.flight!.galaxy].destroyedEnemies).toBe(before + 1);
