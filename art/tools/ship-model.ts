@@ -538,22 +538,29 @@ export function retroRoot(
 }
 
 /** Project the forward plume roots through ordinary, banked or stretched ship poses. */
+/**
+ * Each forward mouth's projected plume root, axis and round-flame side vector, port then
+ * starboard, without the occluders: the geometry `forwardJetMouths` publishes.
+ */
+export function forwardJetMouthGeometry(pivot: number, pose: Pose) {
+  const projected = (centre: number, point: Point) =>
+    projectAt(centre, centre, place(pose, point)).map(round) as [number, number];
+  return [-1, 1].map((sign) => ({
+    anchor: projected(pivot, plumeRoot(sign)),
+    axis: projected(0, [0, 1, 0]),
+    half: plumeSide(pose, [0, 1, 0], [sign, 0, 0]),
+  }));
+}
+
 export function forwardJetMouths(
   pivot: number,
   pose: Pose,
   reach: { halfWidth: number; length: number },
 ) {
-  const projected = (centre: number, point: Point) =>
-    projectAt(centre, centre, place(pose, point)).map(round) as [number, number];
-  return [-1, 1].map((sign) => {
-    const half = plumeSide(pose, [0, 1, 0], [sign, 0, 0]);
-    return {
-      anchor: projected(pivot, plumeRoot(sign)),
-      axis: projected(0, [0, 1, 0]),
-      half,
-      occluders: plumeOccluders(pivot, pose, plumeRoot(sign), reach, half),
-    };
-  });
+  return forwardJetMouthGeometry(pivot, pose).map((mouth, index) => ({
+    ...mouth,
+    occluders: plumeOccluders(pivot, pose, plumeRoot(index === 0 ? -1 : 1), reach, mouth.half),
+  }));
 }
 
 /**

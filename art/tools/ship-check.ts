@@ -29,6 +29,7 @@ import {
   drawn,
   drawnParts,
   ENGINE_MATERIAL_RELATIONSHIPS,
+  forwardJetMouthGeometry,
   forwardJetMouths,
   FRAME,
   PAINT_SLOTS,
@@ -490,6 +491,20 @@ test("the start screen's lower plume draws over the tail and the upper one under
   const upper = mouths.find((mouth) => mouth !== lower)!;
   assert.equal(covered(lower), 0);
   assert(upper.occluders!.length > 0);
+});
+
+test("the forward mouth geometry is the published mouths without their occluders", () => {
+  const reach = plumeReach(JET_LENGTH.base + JET_LENGTH.scale);
+  for (const yaw of ALL) {
+    assert.deepEqual(
+      forwardJetMouthGeometry(FRAME / 2, { yaw }),
+      forwardJetMouths(FRAME / 2, { yaw }, reach).map(({ anchor, axis, half }) => ({
+        anchor,
+        axis,
+        half,
+      })),
+    );
+  }
 });
 
 test("a plume layer is a closed teardrop from its root to a point", () => {
