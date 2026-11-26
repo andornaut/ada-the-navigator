@@ -524,20 +524,29 @@ discovered place for the reveal, so a hunt's search area is never fogged.
 - `maxScale = min(innerWidth / minBox.width, zoomHeight / minBox.height)`,
   where `zoomHeight` is the page rect's height less `2 * fitMargin` (284 at
   the 720 base).
-- `minScale` fits the charting disc: `min(innerWidth / (2 sqrt(2) R),
-innerHeight / (sqrt(2) R))` for `R = chartRadius`.
-- Opening fit: the bounding box of Ada and every discovered place, projected,
-  grown about its centre to at least `minBox`; `scale = clamp(min(innerWidth /
-box width, innerHeight / box height), minScale, maxScale)`; the box centre at
-  the inner region's centre. When `minScale` clamps it (a discovered station
-  far outside the disc), pan the least distance that brings Ada inside the
-  inner region.
-  Nothing is selected on opening.
+- `minScale = max(disc fit, max(fieldWidth / (2 side), fieldHeight / side))`,
+  where the disc fit is `min(innerWidth / (2 sqrt(2) R), innerHeight /
+(sqrt(2) R))` for `R = chartRadius` and `side` is the wrap square's 240000.
+  The disc fit is the tighter at every supported view, so the table below
+  holds.
+- Opening fit: the bounding box of Ada and every discovered place, at their
+  canonical positions in the wrap square, projected, grown about its centre to
+  at least `minBox`; `scale = clamp(min(innerWidth / box width, innerHeight /
+box height), minScale, maxScale)`; the box centre at the inner region's
+  centre. Near the seam the box widens, often to `minScale`. When `minScale`
+  clamps it, pan the least distance that brings Ada inside the inner region;
+  the view is then clamped to the pan limit, which near a tip can leave Ada
+  outside the inner region but still in view. Nothing is selected on opening.
 - Pan limit: pan and zoom stay within one wrap period, the canonical
-  240000-unit square that flight wraps into. Panning stops at the seam instead
-  of crossing it, and the view's edge stays inside the square. Zoom-out is
-  capped at the tighter of the charting-disc fit and the square; zooming out
-  near an edge re-centres the view so its edge stays inside the square.
+  240000-unit square that flight wraps into, which the map projects as a 2:1
+  diamond. The inner region's centre stays inside the diamond (`|x| / 2 + |y|
+<= side / 2`), and the whole map field's edge stays inside the diamond's
+  bounding box (x within +-240000, y within +-120000), so up to half the view
+  can show past a diagonal seam and every point, the tips included, stays
+  reachable. A pan beyond the limits moves to the nearest allowed centre.
+  Every zoom and pan path applies the limit, so zooming out near an edge
+  re-centres. Every position draws at its canonical point in the square, so a
+  place just across the seam from Ada draws at the far edge.
 - Stations exist outside the charting disc in every galaxy (the station
   catalog fills every cell). Once discovered, each is a place, and the opening
   fit reaches it within the square.
