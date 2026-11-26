@@ -285,7 +285,9 @@ Mining Freighter beside a large rock, six frames 300 ms apart. `resources` captu
 dark and a light field and every UI view that draws their icons. `markers`
 takes the edge markers of an identified enemy, heavy, route guard and hostile
 station and an unidentified contact on Cartwheel's light field and Phantom's dark
-field, with Phantom's flagship as the story's target there. `crystal-rocks`
+field, with Phantom's flagship as the story's target there, then Phantom's field
+with Ada, a fighter, a frigate, a plain and a crystal rock, the pickups and the
+edge markers at once, each in its ink edge. `crystal-rocks`
 lays plain rocks beside small-crystal variants of the same shapes at game scale
 in each galaxy outside Cartwheel, every variant in one of them, and Cartwheel's
 first ore field, each rock full of crystals. `approach-ring` takes Ada 150 and

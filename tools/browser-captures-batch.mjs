@@ -1537,8 +1537,11 @@ export function batchCaptures(ctx) {
   // Edge markers (art/space-palette.md "Edge markers"), each target past a different edge or
   // corner of the game area: an identified fighter, frigate, route-guarding frigate and hostile
   // station, and a sensed fighter drawn as the unidentified `?`, on Cartwheel's light field and
-  // Phantom's dark field, where they draw over Phantom's white outline. On Phantom the battle's
-  // flagship is the story's target, the one enemy a task targets.
+  // Phantom's dark field, each outlined in ink. On Phantom the battle's flagship is the story's
+  // target, the one enemy a task targets. Then Phantom's field with the ink edge on every
+  // foreground kind at once: Ada, a fighter and a frigate, a plain and a crystal rock, Stardust,
+  // ore, the ammo pack, the upgrade and a lit discovery cache in view, and the edge markers of an
+  // identified fighter, frigate and hostile station and a sensed contact.
   async function markers() {
     await inTurn(
       [
@@ -1647,6 +1650,98 @@ export function batchCaptures(ctx) {
         await ctx.pageShot(`markers-${field}.png`);
       },
     );
+    const model = flightModel(6);
+    const flight = model.state.flight;
+    flight.objects = [];
+    const shape = (size) => ASTEROID_ART.asteroids.find((rock) => rock.size === size).id;
+    const rock = (id, size, screen, crystals) => {
+      const asteroid = shape(size);
+      flight.objects.push({
+        asteroid,
+        hp: 99,
+        id,
+        kind: "rock",
+        radius: ASTEROID_ART.asteroids.find((entry) => entry.id === asteroid).footprintRadius,
+        ...(crystals ? { crystals } : {}),
+        ...at(flight, screen),
+      });
+    };
+    rock("browser-phantom:rock", "medium", { x: -280, y: -100 });
+    rock("browser-phantom:crystal", "large", { x: 270, y: -90 }, "small");
+    const pickup = (id, screen, fields) =>
+      flight.objects.push({ hp: 1, id, kind: "pickup", ...at(flight, screen), ...fields });
+    const pickupRadius = CONTENT.tuning.flight.pickupRadius;
+    pickup("stardust:browser-1", { x: -250, y: 120 }, { amount: 1, radius: 10, role: "stardust" });
+    pickup("stardust:browser-5", { x: -170, y: 120 }, { amount: 5, radius: 12, role: "stardust" });
+    pickup("piece:browser-5", { x: -90, y: 120 }, { amount: 5, radius: 7, role: "cargo" });
+    pickup(
+      "drop:browser-ammo",
+      { x: 90, y: 120 },
+      { ammoPack: true, radius: pickupRadius, role: "drop" },
+    );
+    pickup(
+      "drop:browser-upgrade",
+      { x: 170, y: 120 },
+      { radius: pickupRadius, role: "drop", upgrade: true },
+    );
+    pickup("browser-cache:lit", { x: 250, y: 120 }, { amount: 5, radius: 10, role: "discovery" });
+    addEnemy(model, {
+      archetype: "fighter",
+      id: "browser-phantom:fighter",
+      screen: { x: -130, y: -60 },
+    });
+    addEnemy(model, {
+      archetype: "frigate",
+      id: "browser-phantom:frigate",
+      screen: { x: 130, y: -50 },
+    });
+    const enemy = addEnemy(model, {
+      archetype: "fighter",
+      id: "browser-art:marker-enemy",
+      screen: { x: 560, y: 0 },
+    });
+    const station = addEnemy(model, {
+      archetype: "hostileStation",
+      id: "browser-art:marker-station",
+      screen: { x: -640, y: 0 },
+    });
+    const contact = addEnemy(model, {
+      archetype: "fighter",
+      id: "browser-art:marker-contact",
+      screen: { x: 0, y: 330 },
+    });
+    const heavy = addEnemy(model, {
+      archetype: "frigate",
+      id: "browser-art:marker-heavy",
+      screen: { x: 520, y: -300 },
+    });
+    flight.markerActors = {
+      encounterSeed: flightEncounterSeed(flight),
+      knowledge: {
+        [contact.id]: "sensed",
+        [enemy.id]: "identified",
+        [heavy.id]: "identified",
+        [station.id]: "identified",
+      },
+    };
+    const expected = {
+      [contact.id]: { identified: false },
+      [enemy.id]: { identified: true, symbol: "enemy" },
+      [heavy.id]: { identified: true, symbol: "heavy" },
+      [station.id]: { identified: true, symbol: "hostileStation" },
+    };
+    const shown = Object.fromEntries(
+      model
+        .targetMarkers(GAME_AREA)
+        .filter(({ id }) => Object.hasOwn(expected, id))
+        .map(({ id, identified, symbol }) => [
+          id,
+          identified ? { identified, symbol } : { identified },
+        ]),
+    );
+    assert.deepEqual(shown, expected, "Phantom's field shows each edge marker");
+    await open(canonical(model, "markers-phantom-field"));
+    await ctx.pageShot("markers-phantom-field.png");
   }
 
   // The holodisk item icons as served: icon-holodisk-24 and the 16 and 20 px vectors at their
