@@ -249,10 +249,10 @@ station with jobs. Every station offers Exchange. Jobs-only stations retain
 Jobs & Projects and Exchange. Retail stations have two distinct stock panes
 selected from Weapons, Equipment and Ammo. Equipment includes ship upgrades
 and paint. Reachable shops in a galaxy collectively offer all three categories.
-Select offer identities from stable station identity and the galaxy catalogue,
-independently of balance, ownership, ammunition counts and visits. Each pane
-shows two to four distinct eligible offers, or all eligible offers if fewer
-than two exist. Sunflower's Ammo pane only offers Multi-Laser ammunition.
+Select initial offer identities from stable station identity and the galaxy
+catalogue, independently of balance, ownership and ammunition counts. Each
+pane shows two to four distinct eligible offers, or all eligible offers if
+fewer than two exist. Sunflower's Ammo pane only offers Multi-Laser ammunition.
 The Cartwheel mining hub reserves one Equipment slot for its mandatory
 holodisk whenever the story allows that purchase. Every station has an
 individual keeper identity and galaxy-specific welcome variants.
@@ -314,8 +314,12 @@ matches its level 2 upgrade:
 | Phaser        |    1000 |    1900 |
 
 Engine tuning raises Ada's top speed. See [ship speeds](ships.md#values) for
-how it compares with enemy craft. Owned weapons retain upgrade rows, and maxed
-items remain visible.
+how it compares with enemy craft. A purchased gear offer stays in the same
+slot marked “Owned.” It can rotate to another eligible offer on a later
+visit after 300 seconds of active flight since the purchase. Time paused,
+docked, hidden or offline does not count. Each galaxy, station and slot tracks
+its own rotation. Ownership, shop categories, prices and the one-time story
+holodisk follow their existing rules. Restocking never buys gear for Ada.
 Unowned ammunition stays visible with “Requires {weapon}” and its purchase
 guard. Names, prices and unlocks follow the canonical catalogue.
 
