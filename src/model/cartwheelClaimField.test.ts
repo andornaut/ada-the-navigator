@@ -6,7 +6,7 @@ import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
-import { selectCartwheelClaimField } from "./cartwheelClaimField.ts";
+import { CARTWHEEL_CLAIM_SEARCH_RADIUS, selectCartwheelClaimField } from "./cartwheelClaimField.ts";
 import { GameModel } from "./game.ts";
 import { ORE_FIELD_ROLE, worldOreFieldsNear } from "./oreFields.ts";
 import { readRequiredRolePlan } from "./requiredRolePlans.ts";
@@ -41,7 +41,10 @@ it("selects a seeded field that ordinary flight populates while leaving the requ
   const field = selectCartwheelClaimField(context)!;
   expect(field).not.toBeNull();
   expect(field.guard).toBeNull();
-  expect(worldOreFieldsNear(context, 2, TARGET_MARKER_RANGE, context.hub)).toContainEqual(field);
+  expect(worldOreFieldsNear(context, 2, TARGET_MARKER_RANGE, context.hub)).toEqual([]);
+  expect(worldOreFieldsNear(context, 2, CARTWHEEL_CLAIM_SEARCH_RADIUS, context.hub)).toContainEqual(
+    field,
+  );
   expect(selectCartwheelClaimField(context)).toEqual(field);
   expect(model.save()).toBe(before);
 
@@ -70,11 +73,16 @@ it("skips fields that fail formation fit or are too close to a jump arrival", ()
     ...context,
     arrivals: [first],
   });
-  expect(rejected).toBeNull();
-  expect(arrival).toBeNull();
+  expect(rejected).not.toBeNull();
+  expect(rejected?.id).not.toBe(first.id);
+  expect(arrival).toEqual(rejected);
+  expect(worldDistance(context, first, arrival!)).toBeGreaterThanOrEqual(
+    ORE_FIELDS.clearance + ORE_FIELDS.diameter / 2,
+  );
+  expect(selectCartwheelClaimField({ ...context, canPlace: () => false })).toBeNull();
 });
 
-it("refuses selection when every field in the cue range overlaps the required approach clearance", () => {
+it("refuses selection when every field in the search range overlaps the required approach clearance", () => {
   const { context } = launchCartwheel();
   const canPlace = () => {
     throw new Error("The formation check must only receive clear candidates");
@@ -83,7 +91,7 @@ it("refuses selection when every field in the cue range overlaps the required ap
     selectCartwheelClaimField({
       ...context,
       canPlace,
-      combatClearance: TARGET_MARKER_RANGE + 1,
+      combatClearance: CARTWHEEL_CLAIM_SEARCH_RADIUS + 1,
     }),
   ).toBeNull();
 });

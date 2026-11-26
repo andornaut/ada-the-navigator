@@ -28,7 +28,7 @@ import {
 import { calfRouteMidpoint, calfStart, crossesCurrent } from "./calf.ts";
 import { activateRequiredRoute, ensureDestination, ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { stationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations.ts";
 import type { FlightState, GameState, HeldActivity, Vec } from "./types.ts";
 
 /** Test support: admit the saved required encounter, then disable its actual noncombat-fixture guard. */
@@ -99,7 +99,7 @@ function atPlace(galaxy: GalaxyNumber, place: string, resolved = true) {
   const at = ensureDestination(CONTENT, place, flight);
   // Sunflower's supply runs go to a known station at least 3000 from the issuer.
   if (galaxy === 1) {
-    progress.stations = [supplyStation(at).id];
+    progress.stations = [supplyStation(flight, at).id];
   }
   flight.player = { x: at.x, y: at.y };
   flight.velocity = { x: 0, y: 0 };
@@ -110,9 +110,9 @@ function atPlace(galaxy: GalaxyNumber, place: string, resolved = true) {
 }
 
 /** Galaxy one's nearest station at least the delivery minimum from a point. */
-function supplyStation(from: Vec) {
+function supplyStation(flight: FlightState, from: Vec) {
   const gap = (site: Vec) => Math.hypot(site.x - from.x, site.y - from.y);
-  return stationsNear(ECONOMY, 1, 40_000, from)
+  return worldStationsNear(flightStationContext(flight), ECONOMY, 1, 40_000, from)
     .filter((site) => gap(site) >= JOB_TUNING.delivery.min)
     .sort((a, b) => gap(a) - gap(b))[0]!;
 }
@@ -362,7 +362,13 @@ describe("repeatable activities", () => {
     };
     expect(model.jobBusyLine).toBe("Finish your activity first.");
     model.state.dialogue = null;
-    const jobStation = stationsNear(ECONOMY, 2, 100000, { x: 0, y: 0 }).find(({ id }) => {
+    const jobStation = worldStationsNear(
+      flightStationContext(model.state.flight!),
+      ECONOMY,
+      2,
+      100000,
+      { x: 0, y: 0 },
+    ).find(({ id }) => {
       model.state.docked = id;
       return model.stationServices!.jobs;
     });
@@ -380,7 +386,10 @@ describe("repeatable activities", () => {
   it("heads every board in its galaxy with the active activity, marked Active with Drop", () => {
     const model = atPlace(2, "hub");
     takeContract(model);
-    const sites = stationsNear(ECONOMY, 2, 30000, { x: 0, y: 0 });
+    const sites = worldStationsNear(flightStationContext(model.state.flight!), ECONOMY, 2, 30000, {
+      x: 0,
+      y: 0,
+    });
     const capabilities = new Set<boolean>();
     for (const site of sites) {
       model.state.docked = site.id;
@@ -490,9 +499,15 @@ describe("repeatable activities", () => {
     const model = atPlace(1, "growers");
     const flight = model.state.flight!;
     const growers = flight.objects.find((o) => o.kind === "destination" && o.id === "growers")!;
-    const site = supplyStation(growers);
+    const site = supplyStation(flight, growers);
     // A nearer station under the minimum and a farther one do not change the destination.
-    const others = stationsNear(ECONOMY, 1, 40_000, growers).filter(({ id }) => id !== site.id);
+    const others = worldStationsNear(
+      flightStationContext(flight),
+      ECONOMY,
+      1,
+      40_000,
+      growers,
+    ).filter(({ id }) => id !== site.id);
     model.state.progress[1].stations = [site.id, ...others.map(({ id }) => id)];
     model.interact();
     expect(model.state.dialogue).not.toBeNull();

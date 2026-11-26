@@ -11,14 +11,15 @@ import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { greetingLines, stationKeeper, stationRank, worldStationKeeper } from "./keepers.ts";
-import { HUB_STATION, namesStation, stationsNear } from "./stations.ts";
-import type { DialogueState } from "./types.ts";
+import { flightStationContext, HUB_STATION, namesStation, worldStationsNear } from "./stations.ts";
+import type { DialogueState, FlightState } from "./types.ts";
 
 const COPY = readFileSync(new URL("../../gameplay/player-copy.md", import.meta.url), "utf8");
 
 /** A galaxy's stations within reach of its origin, nearest first. */
-function nearest(galaxy: GalaxyNumber, count: number) {
-  return stationsNear(ECONOMY, galaxy, 40_000, { x: 0, y: 0 })
+function nearest(galaxy: GalaxyNumber, count: number, flight?: FlightState) {
+  const context = flight ? flightStationContext(flight) : {};
+  return worldStationsNear(context, ECONOMY, galaxy, 40_000, { x: 0, y: 0 })
     .sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y))
     .slice(0, count);
 }
@@ -29,7 +30,7 @@ function beside() {
   model.state.prologueSeen = true;
   model.startGalaxy(1);
   const flight = model.state.flight!;
-  const [station] = nearest(1, 1);
+  const [station] = nearest(1, 1, flight);
   flight.objects = [];
   ensureStation(CONTENT, station!.id, flight);
   model.state.progress[1].stations.push(station!.id);
@@ -281,7 +282,7 @@ describe("a keeper's greeting at the station card", () => {
       model.startGalaxy(galaxy);
       const flight = model.state.flight!;
       const personalNames = new Set<string>();
-      for (const station of nearest(galaxy, 3)) {
+      for (const station of nearest(galaxy, 3, flight)) {
         model.undock();
         model.state.dialogue = null;
         flight.objects = [];

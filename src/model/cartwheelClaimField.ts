@@ -9,6 +9,9 @@ import { type StationPlacementContext, worldStationsNear } from "./stations.ts";
 import type { Vec } from "./types.ts";
 import { worldDistance, worldPoint } from "./worldContacts.ts";
 
+// Search one ore-grid cell beyond the ordinary cue range when the nearby fields cannot fit.
+export const CARTWHEEL_CLAIM_SEARCH_RADIUS = TARGET_MARKER_RANGE + ORE_FIELDS.cellSize;
+
 export interface CartwheelClaimFieldContext extends StationPlacementContext {
   readonly arrivals: readonly Vec[];
   /** Maximum reach from the field centre of the proposed encounter, including pursuit. */
@@ -28,7 +31,7 @@ export function selectCartwheelClaimField(context: CartwheelClaimFieldContext): 
   const routeClearance = Math.max(combatClearance, ORE_FIELD_CLEAR_RADIUS);
   // Match the ore-field generator's clearance from the hub, stations and arrivals.
   const fieldClearance = ORE_FIELDS.clearance + ORE_FIELDS.diameter / 2;
-  const candidates = worldOreFieldsNear(context, galaxy, TARGET_MARKER_RANGE, hub)
+  const candidates = worldOreFieldsNear(context, galaxy, CARTWHEEL_CLAIM_SEARCH_RADIUS, hub)
     .filter(({ guard }) => guard === null)
     .map((field) => ({ distance: worldDistance(context, hub, field), field }))
     .sort((a, b) => a.distance - b.distance || a.field.id.localeCompare(b.field.id, "en"));
