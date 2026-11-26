@@ -156,10 +156,9 @@ describe("weapon shop glyphs", () => {
 
 describe("shop style", () => {
   it("centres the stock wells and right-hand badges on the full tile lip", () => {
-    expect(STATION_STYLE).toContain(
-      '.ada-controls [data-shop-stock] .ada-shop-row:not([data-state=unaffordable]) > ' +
-        ':is(.ada-well,.ada-shop-slot){',
-    );
+    const row = ".ada-controls [data-shop-stock] .ada-shop-row";
+    const selector = `${row}:not([data-state=unaffordable]) > :is(.ada-well,.ada-shop-slot)`;
+    expect(STATION_STYLE).toContain(`${selector}{`);
     expect(STATION_STYLE).toContain("inset-block-start:calc(var(--ada-unit) * 2px)");
   });
 
