@@ -34,11 +34,15 @@ for (const name of [
   ".lintstagedrc",
   "eslint.config.mjs",
   "eslint.config.base.mjs",
+  "tools/eslint-import-layers.mjs",
+  "tools/imports-check.ts",
   ".prettierrc",
   ".prettierignore",
   ".markdownlint-cli2.yaml",
 ]) {
-  cpSync(join(root, name), join(project, name));
+  const destination = join(project, name);
+  mkdirSync(dirname(destination), { recursive: true });
+  cpSync(join(root, name), destination);
 }
 mkdirSync(join(project, ".husky"));
 cpSync(join(root, ".husky/pre-commit"), join(project, ".husky/pre-commit"));
