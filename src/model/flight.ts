@@ -2221,14 +2221,14 @@ function guardPatrolFrame(
 const atRest = (object: SpaceObject): boolean =>
   !object.orbit && !(object.velocity && (object.velocity.x || object.velocity.y));
 
-/** The loop samples a miner checks for protected areas, safe areas and the Needle channel. */
+/** The loop samples a miner checks for exclusion zones and the Needle channel. */
 const MINER_LOOP_SAMPLES = 16;
 
 /**
  * A Mining Freighter's runtime facts (gameplay/ships.md "Miners"): its traced rock's edge while
  * that rock is live and at rest, and, when it picks, the rocks that qualify. A rock qualifies when
  * it is live and at rest, its traced loop `offset` beyond its reach lies within the industrial
- * leash of home and clear of protected areas, safe areas and the Needle channel, and the straight
+ * leash of home and clear of exclusion zones and the Needle channel, and the straight
  * course to the loop clears other scenery at the passage berth.
  */
 function minerInput(
@@ -2318,7 +2318,7 @@ function minerInput(
   };
 }
 
-/** World units within which a ship already counts as touching a peer or protected area. */
+/** World units within which a ship already counts as touching a peer or exclusion zone. */
 const CONTACT_SLACK = 0.5;
 
 /**

@@ -1043,10 +1043,10 @@ asteroid edges:
   moving.
 - **Next rock:** the nearest qualifying rock to its current position that is not
   among its last 3 picks. A rock qualifies when it is live and at rest, its
-  traced loop lies within 2000 world units of home and outside protected areas,
-  safe areas and the Needle channel, and the straight course to its loop clears
-  other scenery at the passage berth. The Freighter travels at its patrol pace to
-  the nearest point of that loop, then traces it.
+  traced loop lies within 2000 world units of home and outside station and
+  destination exclusion zones and the Needle channel, and the straight course to
+  its loop clears other scenery at the passage berth. The Freighter travels at its
+  patrol pace to the nearest point of that loop, then traces it.
 - **No rock:** with no qualifying rock it patrols home on the standard ellipse
   and checks again after each seeded 6 to 12 second dwell.
 - **State:** the traced rock's ID, the arrival time, the pick count and the last
