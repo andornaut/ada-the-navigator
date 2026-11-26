@@ -17,6 +17,20 @@
   margin: 0;
 }
 
+@media (max-height: 400px) {
+  .crash > .crash-panel {
+    padding-block: 16px;
+  }
+
+  .crash-panel > :is(.crash-body, .crash-details) {
+    margin-bottom: 8px;
+  }
+
+  .crash-panel .crash-stack {
+    max-height: 2lh;
+  }
+}
+
 .crash-panel > .crash-actions {
   display: flex;
   flex-wrap: wrap;

@@ -41,6 +41,7 @@ export const CRASH_COLOURS: CrashColours = {
 
 let recovery:
   | {
+      readonly bind: HoldActionBinding;
       readonly host: HTMLElement;
       live: boolean;
       readonly root: ReturnType<typeof bindAdaRecoveryActionRoot>;
@@ -153,6 +154,13 @@ const bindHoldAction: HoldActionBinding = (action) => {
   }
   if (!recovery) {
     recovery = {
+      bind: createAdaFactoryHoldBinding(
+        {
+          current: () => host.isConnected,
+          slopPx: () => SCROLL.dragThreshold * readViewUnit(host),
+        },
+        host,
+      ),
       host,
       live: true,
       root: bindAdaRecoveryActionRoot({ guard: rootPressGuard(host) }, host),
@@ -160,14 +168,13 @@ const bindHoldAction: HoldActionBinding = (action) => {
     window.addEventListener("pagehide", onPageHide);
   }
   const completed = recovery;
-  const bind = createAdaFactoryHoldBinding(
-    {
-      current: () => host.isConnected && (details?.open ?? true),
-      slopPx: () => SCROLL.dragThreshold * readViewUnit(host),
-    },
-    host,
-  );
-  const unbind = bind(action);
+  const bind = completed.bind;
+  const unbind = details
+    ? bind({
+        ...action,
+        available: () => details.open && !element.hidden && action.available(),
+      })
+    : bind(action);
   const stopPress = isReload ? bindReloadPress(element) : undefined;
   const stop = () => {
     metadata.delete(stop);
