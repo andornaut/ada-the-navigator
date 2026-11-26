@@ -177,7 +177,7 @@ for medium, 2% for large and 4% for huge. Ammo drops require owning a weapon
 other than Laser. The pack's contents are chosen when Ada collects it, using the
 weights Multi-Laser 16, Rapid Missile 12, Heavy Missile 9, Scattershot 7 and
 Phaser 5 among eligible weapons. A world pickup gives exactly one third of its
-shop pack: 100 Multi-Laser bolts, 60 Rapid Missiles, 25 Heavy Missiles, 40
+shop pack: 30 Multi-Laser volleys, 60 Rapid Missiles, 25 Heavy Missiles, 40
 Scattershot volleys or 25 Phaser shots. The HUD shows +N by the weapon icon
 using the actual ammunition added.
 
@@ -341,19 +341,19 @@ swatches, Paint swatches and the paint notice show both.
 Laser fire is unlimited. Each finite-ammunition weapon holds at most 9,999 shots.
 Rapid Missile and Heavy Missile use missiles, Multi-Laser and
 Phaser use energy packs, and Scattershot uses shells. Each weapon tracks its own
-count, so Phaser energy is separate from Multi-Laser energy. Multi-Laser spends
-one unit per bolt, so a full fan costs 3, 4 or 5 units by level. If the count
-is lower, it fires only the affordable bolts, taking the angles closest to aim
-first. This higher ammo cost balances the fan's easier aiming. Other weapons
-spend one unit per volley, including all three rows of a Scattershot volley.
+count, so Phaser energy is separate from Multi-Laser energy. Each attack spends
+one unit of its weapon's ammunition. Multi-Laser fires a full fan of 3, 4 or 5
+bolts by level even with only one unit left. Scattershot fires all three rows
+of its volley for one shell.
 
 Ammunition is sold per weapon in the shop. Every pack costs 25 Stardust and
-gives three world pickups' worth: Multi-Laser 300 bolts, Rapid Missile 180
+gives three world pickups' worth: Multi-Laser 90 volleys, Rapid Missile 180
 missiles, Heavy Missile 75 missiles, Scattershot 120 volleys and Phaser 75
-shots. A new weapon includes its own starting ammo: 900, 780, 120, 180 and
+shots. A new weapon includes its own starting ammo: 270, 780, 120, 180 and
 120 units respectively. The shop shows the ammo name and its pack size on
 separate lines, for example "Rapid Missile ammo" and "×180". Ammunition
-persists across flights and the jump home.
+persists across flights and the jump home. A duplicate Multi-Laser grants
+90 ammo.
 
 When the selected weapon runs out, Ada switches to Laser at once and Astra's
 notice says "Out of ammo." An empty weapon's icon shows
