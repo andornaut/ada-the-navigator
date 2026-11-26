@@ -419,6 +419,17 @@ Ask more:
 - "Where is the disk?" Whale family: "Ahead on the current. Follow our song."
 - "Is it guarded?" Whale family: "Drones guard it. Take care on your way."
 
+### Captain Sounder and Manta Dreadnought
+
+These [Whirlpool boss cues](quests.md#captain-sounder) appear in the small
+conversation box after the family reveals the disk waypoint.
+
+- Approach, Captain Sounder: "I followed their calls. Stay out of this current."
+- First hardpoint lost, Astra: "One hardpoint down. Ride the current around the
+  escorts."
+- Resolved, Astra: "Sounder's out of the way. The disk is where the family said
+  it would be."
+
 Home resolution: "Ada returns to the same moment. Penny is still waiting by the
 door. Ada thinks of the whale, who wanted to roam and find its family. Penny
 wants to explore too."

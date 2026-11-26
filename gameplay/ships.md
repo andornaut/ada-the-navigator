@@ -598,10 +598,11 @@ holodisk drifted. They chase rather than hit and run.
 | `retaliator`  | Solo         |     1 |   0.10 | `retaliate`, then `chase`; three-bolt spread |
 | `frigate`     | Solo         |     1 |   0.15 | `siege`; size 5 Ada widths                   |
 
-The whale and family sites each keep their authored capital guard. Whirlpool's
-ambient roster has no capitals. Hunting packs are placed near whale destinations
-and along the calf-guiding
-route. Hunters never target or damage whales; their shots pass through them.
+The whale and family sites each keep their authored capital guard.
+[Sounder](quests.md#captain-sounder) guards the holodisk route after the
+reunion. Whirlpool's ambient roster has no capitals. Hunting packs appear near
+whale destinations and along the calf-guiding route. Hunters never target or
+damage whales. Their shots pass through them.
 Space currents push small craft and leave frigates and capitals unaffected (see
 [the version one rules](rules.md#galaxy-two-whirlpool-whale-family)). Whirlpool adds no new
 archetype: currents change how the existing ones fight.

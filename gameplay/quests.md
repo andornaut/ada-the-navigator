@@ -287,6 +287,34 @@ The encounter retains its actor, damage and shown cues through Continue and
 leaving and returning to Sunflower. The resolved encounter stays resolved, and
 the unclaimed cache remains available across flights until collected.
 
+## Captain Sounder
+
+Captain Sounder is an uncrewed drone commander in Whirlpool. The whale and
+family retain their earlier capital guards. After the reunion, the family's
+song reveals the holodisk waypoint and opens the Sounder encounter. The
+waypoint is visible on the map with no jump action. The physical holodisk
+becomes collectible only after the encounter resolves.
+
+Manta Dreadnought guards the disk site with two fighter escorts and four swarm
+ships. Currents carry Ada and the small ships around the capital. The engaged
+HUD shows Manta Dreadnought, Captain Sounder and its current hull health.
+It clears on disengagement and returns with the current hull on re-entry.
+A disabled hull in Salvage reach shows "Disabled". The approach, first
+hardpoint and resolution use [Sounder's exchange](player-copy.md#captain-sounder-and-manta-dreadnought).
+
+Disable all of the capital's weapon hardpoints or destroy its hull to release
+the disk. The escorts and swarm are separate threats. Ada can collect the disk after
+either resolution without using Salvage. Heavy destruction and optional
+Salvage use their ordinary Stardust rules. The disk is a separate pickup at
+the family's waypoint and can be collected only once.
+
+Continue preserves the encounter, current flight damage and shown cues.
+Leaving Whirlpool during the unresolved encounter retains the surviving
+formation for re-entry. Once resolved, the boss stays resolved across
+flights and the disk stays collectible until recovered. A legacy unresolved
+disk guard migrates to Sounder without an extra reward. A recovered disk
+stays recovered.
+
 ## Landmarks
 
 Each galaxy targets roughly 200 landmarks for surveys to chart: nebulae, wrecks
