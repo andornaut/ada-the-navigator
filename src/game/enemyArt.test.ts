@@ -196,7 +196,9 @@ describe("enemy frame sets", () => {
   it("finds each archetype's data files in the core sidecars map", () => {
     const sidecars = readSidecars(CORE_MANIFEST.sidecars)!;
     expect(enemyJetsPath(sidecars, "fighter")).toBe("/art/enemies/fleetFighter-jets.json");
-    expect(enemyHardpointsPath(sidecars, "capital")).toBe("/art/enemies/fleetCapital-prow.json");
+    expect(enemyHardpointsPath(sidecars, "capital")).toBe(
+      "/art/enemies/fleetCapital-hardpoints.json",
+    );
     expect(enemyHardpointsPath(sidecars, "fighter")).toBeUndefined();
   });
 });
@@ -539,7 +541,12 @@ describe("composed heavies", () => {
       [5, []],
     ] as const) {
       const sprites = composeEnemy(frigate, pose([], world(0), position), hull);
-      const plain = (id: string) => id === "engine" || (capped as readonly string[]).includes(id);
+      // The engine and the fixed front Laser carry no top, nor does a capped mount.
+      const fixed = frigateHardpoints.hardpoints.flatMap((part) =>
+        "aim" in part && part.aim === "facing" ? [part.id] : [],
+      );
+      const plain = (id: string) =>
+        id === "engine" || fixed.includes(id) || (capped as readonly string[]).includes(id);
       const expected = layout.order.flatMap((id) =>
         id === "hull" ? ["hull"] : plain(id) ? [`${id}:base`] : [`${id}:base`, `${id}:top`],
       );

@@ -6,7 +6,7 @@ import {
   type HeavyHullProfile,
   PHANTOM_FLAGSHIP_ID,
 } from "./enemyIdentity.ts";
-import { FLEET_FRONT_LASER_MOUNTS } from "./enemyMuzzles.ts";
+import { ARCHIE_FRONT_LASER_IDS, FLEET_FRONT_LASER_MOUNTS } from "./enemyMuzzles.ts";
 import { ENEMY_FORWARD_GUNS, type ForwardGuns } from "./enemyNavigation.ts";
 import {
   ENEMY_FIRE_MULTIPLIERS,
@@ -515,16 +515,27 @@ export type FrontLaserMounts = Readonly<
   Partial<Record<EnemyGeometryKey, readonly FrontLaserMount[]>>
 >;
 /**
+ * The flagship's front Laser offsets by id, from Art's normalized layout (art/heavies.md
+ * "Archie"): its hardpoints file names the Lasers but carries no offsets.
+ */
+const ARCHIE_FRONT_LASER_OFFSETS: Readonly<Record<string, Point>> = {
+  "prow-left": { x: -0.11238709677419356, y: -0.5187096774193549 },
+  "prow-right": { x: 0.11238709677419356, y: -0.5187096774193549 },
+};
+/**
  * Art's prow mounts for the Shoulder and Twin hull frigates, the six capital designs and the
- * flagship: the fleet's read from their hardpoints files, and the flagship's Art layout offsets
- * (art/heavies.md "Archie"), which its hardpoints file does not carry.
+ * flagship: the fleet's read from their hardpoints files, and the flagship's Lasers named by its
+ * hardpoints file at ARCHIE_FRONT_LASER_OFFSETS.
  */
 export const FRONT_LASER_MOUNTS: FrontLaserMounts = {
   ...FLEET_FRONT_LASER_MOUNTS,
-  archie: [
-    { id: "prow-left", offset: { x: -0.11238709677419356, y: -0.5187096774193549 } },
-    { id: "prow-right", offset: { x: 0.11238709677419356, y: -0.5187096774193549 } },
-  ],
+  archie: ARCHIE_FRONT_LASER_IDS.map((id) => {
+    const offset = ARCHIE_FRONT_LASER_OFFSETS[id];
+    if (!offset) {
+      throw new RangeError(`Archie's front Laser ${id} has no offset`);
+    }
+    return { id, offset: { ...offset } };
+  }),
 };
 
 /**

@@ -50234,11 +50234,11 @@
   "sidecars": {
     "archie": {
       "jets": "/art/enemies/archie-jets.json",
-      "hardpoints": "/art/enemies/archie-prow.json"
+      "hardpoints": "/art/enemies/archie-hardpoints.json"
     },
     "capital": {
       "jets": "/art/enemies/fleetCapital-jets.json",
-      "hardpoints": "/art/enemies/fleetCapital-prow.json"
+      "hardpoints": "/art/enemies/fleetCapital-hardpoints.json"
     },
     "fighter": {
       "jets": "/art/enemies/fleetFighter-jets.json",
@@ -50246,7 +50246,7 @@
     },
     "frigate": {
       "jets": "/art/enemies/fleetFrigate-jets.json",
-      "hardpoints": "/art/enemies/fleetFrigate-prow.json"
+      "hardpoints": "/art/enemies/fleetFrigate-hardpoints.json"
     },
     "hostileStation": {
       "hardpoints": "/art/enemies/hostileStationCoral-hardpoints.json"

@@ -32959,7 +32959,7 @@
     },
     "capital": {
       "jets": "/art/enemies/fleetCapitalOutrigger-jets.json",
-      "hardpoints": "/art/enemies/fleetCapitalOutrigger-prow.json"
+      "hardpoints": "/art/enemies/fleetCapitalOutrigger-hardpoints.json"
     },
     "fighter": {
       "jets": "/art/enemies/fleetFighter-jets.json",
@@ -32967,7 +32967,7 @@
     },
     "frigate": {
       "jets": "/art/enemies/fleetFrigate-jets.json",
-      "hardpoints": "/art/enemies/fleetFrigate-prow.json"
+      "hardpoints": "/art/enemies/fleetFrigate-hardpoints.json"
     },
     "hostileStation": {
       "hardpoints": "/art/cartwheel/enemies/hostileStationClaim-hardpoints.json"

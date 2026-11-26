@@ -14745,7 +14745,7 @@
     },
     "capitalForked": {
       "jets": "/art/enemies/fleetCapitalForked-jets.json",
-      "hardpoints": "/art/enemies/fleetCapitalForked-prow.json"
+      "hardpoints": "/art/enemies/fleetCapitalForked-hardpoints.json"
     },
     "courierrunner": {
       "jets": "/art/phantom/friendly-craft-jets.json"

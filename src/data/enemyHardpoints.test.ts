@@ -10,7 +10,7 @@ import { exportHardpoints } from "./enemyHardpoints.ts";
 interface ArtFile {
   fill: string[];
   frame: number;
-  hardpoints: { id: string; role: string }[];
+  hardpoints: { aim?: string; id: string; role: string }[];
   tiers: { mounts: Record<string, { armed: true } | null>; positions: number[] }[];
   weaponTops: Record<string, { aim: string; top: string }>;
 }
@@ -63,8 +63,12 @@ describe("hardpoint export for Art", () => {
     (archetype) => {
       const file = art[archetype];
       const listed = exportHardpoints().archetypes[archetype]!.hardpoints;
+      // The export omits the fixed front Lasers, whose offsets the fleet's files carry.
       expect(listed.map((part) => part.id).sort()).toEqual(
-        file.hardpoints.map((part) => part.id).sort(),
+        file.hardpoints
+          .filter((part) => part.aim !== "facing")
+          .map((part) => part.id)
+          .sort(),
       );
       for (const part of listed) {
         expect(part.role).toBe(file.hardpoints.find(({ id }) => id === part.id)!.role);

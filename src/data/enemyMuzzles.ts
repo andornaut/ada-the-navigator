@@ -1,15 +1,15 @@
 import ring from "../../public/art/andromeda/enemies/hostileStationGarnet-hardpoints.json" with { type: "json" };
 import station from "../../public/art/cartwheel/enemies/hostileStationClaim-hardpoints.json" with { type: "json" };
 import platform from "../../public/art/cartwheel/enemies/platformWheel-hardpoints.json" with { type: "json" };
-import archie from "../../public/art/enemies/archie-prow.json" with { type: "json" };
-import capital from "../../public/art/enemies/fleetCapital-prow.json" with { type: "json" };
-import capitalBroad from "../../public/art/enemies/fleetCapitalBroad-prow.json" with { type: "json" };
-import capitalCrossbow from "../../public/art/enemies/fleetCapitalCrossbow-prow.json" with { type: "json" };
-import capitalForked from "../../public/art/enemies/fleetCapitalForked-prow.json" with { type: "json" };
-import capitalManta from "../../public/art/enemies/fleetCapitalManta-prow.json" with { type: "json" };
-import capitalOutrigger from "../../public/art/enemies/fleetCapitalOutrigger-prow.json" with { type: "json" };
-import frigate from "../../public/art/enemies/fleetFrigate-prow.json" with { type: "json" };
-import frigateTwin from "../../public/art/enemies/fleetFrigateTwin-prow.json" with { type: "json" };
+import archie from "../../public/art/enemies/archie-hardpoints.json" with { type: "json" };
+import capital from "../../public/art/enemies/fleetCapital-hardpoints.json" with { type: "json" };
+import capitalBroad from "../../public/art/enemies/fleetCapitalBroad-hardpoints.json" with { type: "json" };
+import capitalCrossbow from "../../public/art/enemies/fleetCapitalCrossbow-hardpoints.json" with { type: "json" };
+import capitalForked from "../../public/art/enemies/fleetCapitalForked-hardpoints.json" with { type: "json" };
+import capitalManta from "../../public/art/enemies/fleetCapitalManta-hardpoints.json" with { type: "json" };
+import capitalOutrigger from "../../public/art/enemies/fleetCapitalOutrigger-hardpoints.json" with { type: "json" };
+import frigate from "../../public/art/enemies/fleetFrigate-hardpoints.json" with { type: "json" };
+import frigateTwin from "../../public/art/enemies/fleetFrigateTwin-hardpoints.json" with { type: "json" };
 import retaliator from "../../public/art/enemies/fleetRetaliator-hardpoints.json" with { type: "json" };
 import cargo from "../../public/art/enemies/fleetRetaliatorCargoHauler-hardpoints.json" with { type: "json" };
 import mining from "../../public/art/enemies/fleetRetaliatorMiningFreighter-hardpoints.json" with { type: "json" };
@@ -156,9 +156,17 @@ export function readFrontLaserMounts(file: HardpointsFile): FrontLaserMount[] {
   });
 }
 
+/** The ids of a hardpoints file's fixed front Lasers, its `facing` hardpoints, in Art's order. */
+export function readFrontLaserIds(file: HardpointsFile): string[] {
+  return file.hardpoints.flatMap(({ aim, id }) => (aim === "facing" ? [id] : []));
+}
+
+/** The ids of the flagship's front Lasers in Art's hardpoints file. */
+export const ARCHIE_FRONT_LASER_IDS: readonly string[] = readFrontLaserIds(archie);
+
 /**
- * Art's front Laser mounts on the fleet frigates and capitals. Archie's hardpoints file carries
- * no offsets or hull size, so the catalog states the flagship's.
+ * Art's front Laser mounts on the fleet frigates and capitals. Archie's hardpoints file names its
+ * Lasers but carries no offsets or hull size, so the catalog states the flagship's offsets.
  */
 export const FLEET_FRONT_LASER_MOUNTS: Partial<Record<EnemyGeometryKey, FrontLaserMount[]>> = {
   capital: readFrontLaserMounts(capital),

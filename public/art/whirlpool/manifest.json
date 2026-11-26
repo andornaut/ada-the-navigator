@@ -20490,11 +20490,11 @@
   "sidecars": {
     "frigateTwin": {
       "jets": "/art/enemies/fleetFrigateTwin-jets.json",
-      "hardpoints": "/art/enemies/fleetFrigateTwin-prow.json"
+      "hardpoints": "/art/enemies/fleetFrigateTwin-hardpoints.json"
     },
     "capitalManta": {
       "jets": "/art/enemies/fleetCapitalManta-jets.json",
-      "hardpoints": "/art/enemies/fleetCapitalManta-prow.json"
+      "hardpoints": "/art/enemies/fleetCapitalManta-hardpoints.json"
     }
   }
 }

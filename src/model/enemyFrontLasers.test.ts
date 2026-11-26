@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import capital from "../../public/art/enemies/fleetCapital-prow.json" with { type: "json" };
-import capitalBroad from "../../public/art/enemies/fleetCapitalBroad-prow.json" with { type: "json" };
-import capitalCrossbow from "../../public/art/enemies/fleetCapitalCrossbow-prow.json" with { type: "json" };
-import capitalForked from "../../public/art/enemies/fleetCapitalForked-prow.json" with { type: "json" };
-import capitalManta from "../../public/art/enemies/fleetCapitalManta-prow.json" with { type: "json" };
-import capitalOutrigger from "../../public/art/enemies/fleetCapitalOutrigger-prow.json" with { type: "json" };
-import frigateFile from "../../public/art/enemies/fleetFrigate-prow.json" with { type: "json" };
-import frigateTwin from "../../public/art/enemies/fleetFrigateTwin-prow.json" with { type: "json" };
+import capital from "../../public/art/enemies/fleetCapital-hardpoints.json" with { type: "json" };
+import capitalBroad from "../../public/art/enemies/fleetCapitalBroad-hardpoints.json" with { type: "json" };
+import capitalCrossbow from "../../public/art/enemies/fleetCapitalCrossbow-hardpoints.json" with { type: "json" };
+import capitalForked from "../../public/art/enemies/fleetCapitalForked-hardpoints.json" with { type: "json" };
+import capitalManta from "../../public/art/enemies/fleetCapitalManta-hardpoints.json" with { type: "json" };
+import capitalOutrigger from "../../public/art/enemies/fleetCapitalOutrigger-hardpoints.json" with { type: "json" };
+import frigateFile from "../../public/art/enemies/fleetFrigate-hardpoints.json" with { type: "json" };
+import frigateTwin from "../../public/art/enemies/fleetFrigateTwin-hardpoints.json" with { type: "json" };
 import {
   ENEMY_AIM,
   ENEMY_SPEED_SHARE,

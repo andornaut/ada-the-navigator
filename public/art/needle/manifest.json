@@ -21012,7 +21012,7 @@
   "sidecars": {
     "capital": {
       "jets": "/art/enemies/fleetCapitalCrossbow-jets.json",
-      "hardpoints": "/art/enemies/fleetCapitalCrossbow-prow.json"
+      "hardpoints": "/art/enemies/fleetCapitalCrossbow-hardpoints.json"
     },
     "fighter": {
       "jets": "/art/enemies/fleetFighter-jets.json",
@@ -21020,7 +21020,7 @@
     },
     "frigate": {
       "jets": "/art/enemies/fleetFrigateTwin-jets.json",
-      "hardpoints": "/art/enemies/fleetFrigateTwin-prow.json"
+      "hardpoints": "/art/enemies/fleetFrigateTwin-hardpoints.json"
     },
     "glider": {
       "jets": "/art/needle/friendly-glider-jets.json"
