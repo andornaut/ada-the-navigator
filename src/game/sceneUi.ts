@@ -1378,7 +1378,7 @@ export function renderConversation(scene: UiContext): void {
     const elapsed = scanCovered || scan.time === undefined ? 0 : Math.max(0, now - scan.time);
     scan.time = scanCovered ? undefined : now;
     scan.view.render({ covered: scanCovered, time: now }, elapsed);
-    scan.view.renderEquip(scanCovered, now);
+    scan.view.renderEquip(scanCovered, now, line?.key);
   }
   const penny = pennyLayers.get(scene);
   if (!penny) {

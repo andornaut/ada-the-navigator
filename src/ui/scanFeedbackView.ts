@@ -3,11 +3,11 @@ import { visualNoticeTiming } from "../data/noticeTiming.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
 import type { ScanOutcome } from "../model/scanOutcomes.ts";
 import { createCompletionIndicator } from "./completionIndicator.ts";
-import { font, fromHudEdge, pixels, units } from "./layout/css.ts";
+import { font, fromHudEdge, pixels, units, VIEW_PROPERTIES } from "./layout/css.ts";
 import { ITEM_NOTICE } from "./layout/itemNotice.ts";
 import { scanFeedbackSlot } from "./layout/scanFeedback.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { TEXT_TOKENS } from "./modal.ts";
 import {
   type ScanFeedbackContent,
@@ -55,6 +55,9 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
   equip.style.maxWidth = `min(${units(CONVERSATION_BOX.maxWidth)}, ${safeWidth})`;
   equip.style.overflowWrap = "anywhere";
   let equipped: { elapsed: number; shownAt?: number } | undefined;
+  let lineKey: string | undefined;
+  let dialogue: HTMLElement | null = null;
+  let equipNeedsFit = false;
   const { fadeMs, holdMs } = visualNoticeTiming("brief", "");
   const hide = (notice: HTMLElement) => {
     if (!notice.hidden) {
@@ -64,6 +67,11 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
   };
   const clearEquip = () => {
     equipped = undefined;
+    if (dialogue) {
+      resize.unobserve(dialogue);
+      dialogue = null;
+    }
+    lineKey = undefined;
     hide(equip);
     equip.textContent = "";
   };
@@ -132,26 +140,69 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
         panel.style.top = slot.top;
       }
     }
-    if (!equip.hidden) {
+    if (equipped && !equip.hidden) {
       const scanBottom = panel.hidden ? 0 : panel.offsetTop + panel.offsetHeight;
       const bottom = Math.max(bossBottom, scanBottom);
-      // This existing HUD clearance includes the weapon ammo pills below their discs.
+      // This HUD clearance includes the weapon ammo pills below their discs.
       const rowTop = fromHudEdge("top", CONVERSATION_BOX.top);
       const top = bottom > 0 ? `max(${rowTop}, ${pixels(bottom + SPACING.gap * unit)})` : rowTop;
       if (equip.style.top !== top) {
         equip.style.top = top;
       }
+      let obscured = false;
+      if (lineKey !== undefined) {
+        if (!dialogue) {
+          dialogue = parent.querySelector(".ada-conversation");
+          if (dialogue) {
+            resize.observe(dialogue);
+          }
+        }
+        if (dialogue && !dialogue.hidden) {
+          const notice = equip.getBoundingClientRect();
+          const box = dialogue.getBoundingClientRect();
+          if (
+            notice.left < box.right &&
+            notice.right > box.left &&
+            notice.top < box.bottom &&
+            notice.bottom > box.top
+          ) {
+            const area = parent.getBoundingClientRect();
+            const bottomInset =
+              parseFloat(getComputedStyle(parent).getPropertyValue(VIEW_PROPERTIES.areaBottom)) ||
+              0;
+            const below = box.bottom + SPACING.gap * unit;
+            obscured = below + notice.height > area.bottom - bottomInset;
+            if (!obscured) {
+              equip.style.top = pixels(below - area.top);
+            }
+          }
+        }
+      }
+      // Retain the box's dimensions for the next fit without painting or running its clock.
+      equip.style.visibility = obscured ? "hidden" : "";
+      if (obscured) {
+        delete equipped.shownAt;
+      }
+      equipNeedsFit = false;
     }
   };
   const resize = new ResizeObserver(fit);
-  for (const node of [parent, ...left, weapons, boss, panel]) {
+  for (const node of [parent, ...left, weapons, boss, panel, equip]) {
     if (node) {
       resize.observe(node);
     }
   }
+  const window = parent.ownerDocument.defaultView;
+  const fitScaledEquip = () => {
+    if (!equip.hidden) {
+      fit();
+    }
+  };
+  window?.addEventListener(VIEW_SCALE_EVENT, fitScaledEquip);
   return {
     clearEquip,
     dispose(): void {
+      window?.removeEventListener(VIEW_SCALE_EVENT, fitScaledEquip);
       resize.disconnect();
       queue.reset();
       panel.remove();
@@ -162,6 +213,7 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
     },
     equip(name: string): void {
       equipped = { elapsed: 0 };
+      equipNeedsFit = true;
       equip.textContent = name;
     },
     render(context: ScanFeedbackContext, milliseconds: number): void {
@@ -182,13 +234,25 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
         panel.style.opacity = opacity;
       }
     },
-    renderEquip(covered: boolean, time: number): void {
+    renderEquip(covered: boolean, time: number, nextLine?: string): void {
       if (!equipped) {
         return;
       }
       if (covered) {
         delete equipped.shownAt;
         hide(equip);
+        return;
+      }
+      if (equip.hidden) {
+        equip.hidden = false;
+        equip.style.display = "flex";
+        equipNeedsFit = true;
+      }
+      if (equipNeedsFit || nextLine !== lineKey) {
+        lineKey = nextLine;
+        fit();
+      }
+      if (equip.style.visibility === "hidden") {
         return;
       }
       if (equipped.shownAt !== undefined) {
@@ -198,11 +262,6 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
       if (equipped.elapsed >= holdMs + fadeMs) {
         clearEquip();
         return;
-      }
-      if (equip.hidden) {
-        equip.hidden = false;
-        equip.style.display = "flex";
-        fit();
       }
       const nextOpacity = String(1 - Math.max(0, equipped.elapsed - holdMs) / fadeMs);
       if (equip.style.opacity !== nextOpacity) {

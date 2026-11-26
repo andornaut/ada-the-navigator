@@ -4,9 +4,10 @@ import { CONVERSATION_BOX } from "../data/layout.ts";
 import { visualNoticeTiming } from "../data/noticeTiming.ts";
 import { immutableScanOutcome, type ScanOutcome } from "../model/scanOutcomes.ts";
 import { CONVERSATION_STYLE } from "./conversation.ts";
-import { fromHudEdge, units } from "./layout/css.ts";
+import { fromHudEdge, units, VIEW_PROPERTIES } from "./layout/css.ts";
 import { STATUS_PILL } from "./layout/playView.ts";
 import { SPACING } from "./layout/tokens.ts";
+import { VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { createScanFeedbackView } from "./scanFeedbackView.ts";
 class Node {
   readonly style = Object.assign({ setProperty: vi.fn() }, {} as Record<string, string>);
@@ -14,7 +15,8 @@ class Node {
   readonly attributes = new Map<string, string>();
   readonly children: Node[] = [];
   readonly selectors = new Map<string, Node>();
-  readonly ownerDocument = doc;
+  readonly ownerDocument = { ...doc, defaultView: new EventTarget() };
+  readonly getBoundingClientRect = vi.fn(() => rect(0, 0, 0, 0));
   className = "";
   hidden = false;
   clientWidth = 720;
@@ -42,6 +44,13 @@ class Node {
   }
 }
 const doc = { createElement: () => new Node() };
+const rect = (left: number, top: number, width: number, height: number) => ({
+  bottom: top + height,
+  height,
+  left,
+  right: left + width,
+  top,
+});
 const quest = {
   icon: { jobType: "survey" as const, symbol: "job" as const },
   id: "survey",
@@ -61,15 +70,19 @@ const receipt = (
 const context = { covered: false };
 function setup() {
   vi.stubGlobal("document", doc);
-  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
+  vi.stubGlobal("getComputedStyle", () => ({
+    getPropertyValue: (name: string) => (name === VIEW_PROPERTIES.unit ? "1" : "0px"),
+  }));
   const observed = vi.fn();
   const disconnect = vi.fn();
+  const unobserve = vi.fn();
   let resize = () => {};
   vi.stubGlobal(
     "ResizeObserver",
     class {
       observe = observed;
       disconnect = disconnect;
+      unobserve = unobserve;
       constructor(callback: () => void) {
         resize = callback;
       }
@@ -91,6 +104,7 @@ function setup() {
     panel: parent.children[0]!,
     parent,
     resize,
+    unobserve,
     view,
   };
 }
@@ -249,6 +263,75 @@ describe("equipped weapon notice", () => {
       expect(equip.style.top).toBe(row);
     },
   );
+
+  it("moves only on dialogue overlap and remeasures at layout changes, never on steady frames", () => {
+    const { boss, equip, observed, parent, resize, unobserve, view } = setup();
+    const dialogue = new Node();
+    const row = fromHudEdge("top", CONVERSATION_BOX.top);
+    parent.selectors.set(".ada-conversation", dialogue);
+    parent.getBoundingClientRect.mockReturnValue(rect(0, 0, 720, 360));
+    equip.getBoundingClientRect.mockReturnValue(rect(304, 65.5, 112, 38));
+    dialogue.getBoundingClientRect.mockReturnValue(rect(5, 65.5, 150, 60));
+
+    view.equip("Rapid Missile");
+    view.renderEquip(false, 0, "speaker:left");
+    expect(equip.style.top).toBe(row);
+    expect(observed).toHaveBeenCalledWith(dialogue);
+    view.renderEquip(false, 100, "speaker:left");
+    view.renderEquip(false, 200, "speaker:left");
+    expect(dialogue.getBoundingClientRect).toHaveBeenCalledTimes(1);
+
+    dialogue.getBoundingClientRect.mockReturnValue(rect(120, 65.5, 480, 60));
+    view.renderEquip(false, 300, "speaker:center");
+    expect(equip.style.top).toBe(`${125.5 + SPACING.gap}px`);
+    dialogue.getBoundingClientRect.mockReturnValue(rect(120, 65.5, 480, 80));
+    resize();
+    expect(equip.style.top).toBe(`${145.5 + SPACING.gap}px`);
+    dialogue.getBoundingClientRect.mockReturnValue(rect(120, 75, 480, 80));
+    parent.ownerDocument.defaultView.dispatchEvent(new Event(VIEW_SCALE_EVENT));
+    expect(equip.style.top).toBe(`${155 + SPACING.gap}px`);
+
+    boss.offsetTop = 12;
+    boss.offsetHeight = 200;
+    equip.getBoundingClientRect.mockReturnValue(rect(304, 220, 112, 38));
+    resize();
+    expect(equip.style.top).toBe(`max(${row}, ${212 + SPACING.gap}px)`);
+    view.renderEquip(false, 400);
+    expect(equip.style.top).toBe(`max(${row}, ${212 + SPACING.gap}px)`);
+    view.clearEquip();
+    expect(unobserve).toHaveBeenCalledWith(dialogue);
+    view.dispose();
+  });
+
+  it("suspends visible time when the notice cannot fit below the dialogue and resumes on resize", () => {
+    const { equip, parent, resize, view } = setup();
+    const dialogue = new Node();
+    parent.selectors.set(".ada-conversation", dialogue);
+    parent.getBoundingClientRect.mockReturnValue(rect(0, 0, 720, 150));
+    equip.getBoundingClientRect.mockReturnValue(rect(304, 50, 112, 38));
+    dialogue.getBoundingClientRect.mockReturnValue(rect(120, 65.5, 480, 60));
+
+    view.equip("Laser");
+    view.renderEquip(false, 0);
+    view.renderEquip(false, 1000);
+    view.renderEquip(false, 1000, "captain");
+    expect(equip.style.visibility).toBe("hidden");
+    view.renderEquip(false, 10000, "captain");
+    expect(equip.style.visibility).toBe("hidden");
+
+    parent.getBoundingClientRect.mockReturnValue(rect(0, 0, 720, 360));
+    resize();
+    expect(equip.style.visibility).toBe("");
+    expect(equip.style.top).toBe(`${125.5 + SPACING.gap}px`);
+    view.renderEquip(false, 10000, "captain");
+    view.renderEquip(false, 11000, "captain");
+    expect(equip.style.opacity).toBe("1");
+    view.renderEquip(false, 11250, "captain");
+    expect(equip.style.opacity).toBe("0.5");
+    view.renderEquip(false, 11500, "captain");
+    expect(equip.hidden).toBe(true);
+    view.dispose();
+  });
 
   it("holds two seconds, fades over 500ms, and replaces the previous name and timing", () => {
     const { equip, view } = setup();

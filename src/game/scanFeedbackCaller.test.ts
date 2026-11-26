@@ -69,7 +69,7 @@ it("retains production scan receipts under cover without screen or target measur
   expect(view.enqueue).toHaveBeenCalledWith([receipt]);
   const first = view.render.mock.calls[0]!;
   expect(first[0].covered).toBe(true);
-  expect(view.renderEquip).toHaveBeenLastCalledWith(true, 20);
+  expect(view.renderEquip).toHaveBeenLastCalledWith(true, 20, undefined);
   expect(first[1]).toBe(0);
   expect(first[0].time).toBe(20);
   expect(first[0]).toEqual({ covered: true, time: 20 });
@@ -77,7 +77,7 @@ it("retains production scan receipts under cover without screen or target measur
   scene.time.now = 40;
   render(scene);
   expect(view.render.mock.calls[1]![0].covered).toBe(false);
-  expect(view.renderEquip).toHaveBeenLastCalledWith(false, 40);
+  expect(view.renderEquip).toHaveBeenLastCalledWith(false, 40, undefined);
   expect(view.render.mock.calls[1]![0].time).toBe(40);
   expect(view.render.mock.calls[1]![1]).toBe(0);
   scene.time.now = 140;
