@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import { posix } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { beforeAll, describe, expect, it } from "vitest";
@@ -14,7 +15,8 @@ import {
 } from "../../tools/ui-strings-collect.ts";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
-const { decompress } = createRequire(import.meta.url)("wawoff2") as {
+const require = createRequire(import.meta.url);
+const { decompress } = require("wawoff2") as {
   decompress(font: Uint8Array): Promise<Uint8Array>;
 };
 
@@ -54,8 +56,15 @@ describe("collectUiStrings", () => {
       }),
     );
     // The build label's separator comes from the kit, not from game source.
+    const { exports } = require("@andornaut/game-kit/package.json") as {
+      exports: Record<string, string | { import: string }>;
+    };
+    const label = exports["./runtime/web/buildLabel"]!;
     expect(strings).toContainEqual({
-      source: "node_modules/@andornaut/game-kit/dist/web/build/buildLabel.js",
+      source: posix.join(
+        "node_modules/@andornaut/game-kit",
+        typeof label === "string" ? label : label.import,
+      ),
       text: " · ",
     });
     expect(sources).toContain("public/art/ship-paint.json");
