@@ -145,7 +145,8 @@ function calm(flight: FlightState): void {
 /**
  * Holds Ada at a point in calm space, tapping through each line until the time limit or terminal
  * instance. Generates the area before clearing its drones so a drone warning in the launch's
- * world never takes the box's slot from the line listened for.
+ * world never takes the box's slot from the line listened for. Its rocks are cleared too, since no
+ * line depends on them and each step would otherwise resolve Ada against every one.
  */
 function listen(
   model: GameModel,
@@ -156,6 +157,7 @@ function listen(
   const flight = model.state.flight!;
   flight.player = { ...point };
   stepFlight(CONTENT, 0.05, idle, flight);
+  flight.objects = flight.objects.filter((object) => object.kind !== "rock");
   const heard: string[] = [];
   for (let step = 0; step < seconds / 0.05; step++) {
     calm(flight);
@@ -883,7 +885,8 @@ describe("jobs in play", () => {
     expect(sensed.filter((instance) => instance.startsWith("penny:1:"))).toHaveLength(1);
     const instance = `penny:1:job:${held.id}`;
     expect(listen(model, { x: spot.x + 1501, y: spot.y }, 0.05)).not.toContain(instance);
-    expect(listen(model, { x: spot.x + 1500, y: spot.y }, 30)).toContain(instance);
+    // Listening stops at the sensed line, so the next 30 s follow it directly.
+    expect(listen(model, { x: spot.x + 1500, y: spot.y }, 30, instance)).toContain(instance);
     expect(listen(model, { x: spot.x + 1500, y: spot.y }, 30)).not.toContain(instance);
   });
 });
