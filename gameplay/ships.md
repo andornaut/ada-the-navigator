@@ -1154,7 +1154,7 @@ lives on `SpaceObject.enemy`; ballistic debris uses `SpaceObject.velocity`.
 `Shot.projectile` is optional and distinguishes bolt, missile and dot projectiles.
 There is no parallel enemy-state collection or save-version migration.
 
-`src/model/save.ts` validates these optional fields when present while accepting
+`src/saving/codec.ts` validates these optional fields when present while accepting
 complete version-1 saves without them. Enemy state validates catalog membership,
 identity, finite vectors, nonnegative timers and HP, and exactly one state entry per
 catalog hardpoint. Route IDs and route encounters must belong to the selected galaxy.
