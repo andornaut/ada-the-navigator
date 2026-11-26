@@ -546,7 +546,7 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
     updateFeedback(now: number, running: boolean): void {
       const ms = lastFeedbackTime === undefined ? 0 : now - lastFeedbackTime;
       lastFeedbackTime = now;
-      const frames = feedback.advance(ms, running);
+      const frames = feedback.advance(ms, running, options.reducedMotion());
       for (const [weapon, button] of buttons) {
         const gain = button.querySelector<HTMLElement>(".ada-ammo-gain");
         if (!gain) {

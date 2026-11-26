@@ -39,45 +39,55 @@ const labels: WeaponLabels = {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("weapon refill presentation", () => {
-  it("shows +actual added beside only the matching weapon, coalesces, pauses and clears", () => {
-    vi.stubGlobal("document", { createElement: () => new Element() });
-    const host = new Element();
-    const selector = createWeaponSelector(host as unknown as HTMLElement, {
-      labels,
-      onSelect: () => false,
-      reducedMotion: () => false,
-    });
-    selector.setWeapons([
-      { ammo: 99, id: "phaser", level: 1, selected: false },
-      { ammo: 10, id: "rapidMissile", level: 1, selected: true },
-    ]);
-    selector.setEnabled(true);
-    const buttons = host.children[0]!.children;
-    const gain = buttons[0]!.querySelector(".ada-ammo-gain")!;
-    const other = buttons[1]!.querySelector(".ada-ammo-gain")!;
-    selector.showAmmoGain("phaser", 1);
-    selector.showAmmoGain("phaser", 2);
-    selector.updateFeedback(0, true);
-    expect(gain.hidden).toBe(false);
-    expect(gain.textContent).toBe("+3");
-    expect(gain.attributes.get("aria-label")).toBe("Phaser +3");
-    expect(other.hidden).toBe(true);
-    expect(buttons[0]!.querySelector(".ada-ammo")!.textContent).toBe("99");
-    expect(buttons[0]!.attributes.get("aria-pressed")).toBe("false");
-    selector.updateFeedback(100, false);
-    expect(gain.hidden).toBe(true);
-    selector.updateFeedback(10000, false);
-    selector.updateFeedback(10000, true);
-    expect(gain.hidden).toBe(false);
-    expect(gain.textContent).toBe("+3");
-    selector.updateFeedback(11200, true);
-    expect(gain.hidden).toBe(true);
-    selector.showAmmoGain("rapidMissile", 4);
-    selector.updateFeedback(11200, true);
-    expect(other.textContent).toBe("+4");
-    selector.clearFeedback();
-    expect(other.hidden).toBe(true);
-    expect(other.textContent).toBe("");
-    selector.dispose();
-  });
+  it.each([
+    [false, 600, 750],
+    [true, 750, 825],
+  ])(
+    "shows the actual gain, pauses and fades with reduced motion %s",
+    (reduced, hold, halfFade) => {
+      vi.stubGlobal("document", { createElement: () => new Element() });
+      const host = new Element();
+      const selector = createWeaponSelector(host as unknown as HTMLElement, {
+        labels,
+        onSelect: () => false,
+        reducedMotion: () => reduced,
+      });
+      selector.setWeapons([
+        { ammo: 99, id: "phaser", level: 1, selected: false },
+        { ammo: 10, id: "rapidMissile", level: 1, selected: true },
+      ]);
+      selector.setEnabled(true);
+      const buttons = host.children[0]!.children;
+      const gain = buttons[0]!.querySelector(".ada-ammo-gain")!;
+      const other = buttons[1]!.querySelector(".ada-ammo-gain")!;
+      selector.showAmmoGain("phaser", 1);
+      selector.showAmmoGain("phaser", 2);
+      selector.updateFeedback(0, true);
+      expect(gain.hidden).toBe(false);
+      expect(gain.textContent).toBe("+3");
+      expect(gain.attributes.get("aria-label")).toBe("Phaser +3");
+      expect(other.hidden).toBe(true);
+      expect(buttons[0]!.querySelector(".ada-ammo")!.textContent).toBe("99");
+      expect(buttons[0]!.attributes.get("aria-pressed")).toBe("false");
+      selector.updateFeedback(100, false);
+      expect(gain.hidden).toBe(true);
+      selector.updateFeedback(10000, false);
+      selector.updateFeedback(10000, true);
+      expect(gain.hidden).toBe(false);
+      expect(gain.textContent).toBe("+3");
+      selector.updateFeedback(10000 + hold, true);
+      expect(gain.style.opacity).toBe("1");
+      selector.updateFeedback(10000 + halfFade, true);
+      expect(gain.style.opacity).toBe("0.5");
+      selector.updateFeedback(10900, true);
+      expect(gain.hidden).toBe(true);
+      selector.showAmmoGain("rapidMissile", 4);
+      selector.updateFeedback(10900, true);
+      expect(other.textContent).toBe("+4");
+      selector.clearFeedback();
+      expect(other.hidden).toBe(true);
+      expect(other.textContent).toBe("");
+      selector.dispose();
+    },
+  );
 });

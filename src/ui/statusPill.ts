@@ -1,4 +1,5 @@
 import type { StatusAboardKind } from "../data/hudIconBearings.ts";
+import { HUD_TICK_TIMING } from "../data/noticeTiming.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { LIGHT_FIELD } from "../game/lightField.ts";
 import {
@@ -69,9 +70,6 @@ export const STATUS_TIMING = {
   flashMs: 100,
   // The low pulse's cycle.
   pulseMs: 1000,
-  // Resource ticks hold, then rise and fade. Reduced motion holds longer and fades in place.
-  tick: { fadeMs: 300, holdMs: 600 },
-  tickReduced: { fadeMs: 150, holdMs: 750 },
 } as const;
 
 export interface ShieldInput {
@@ -598,7 +596,7 @@ function createCounter(
     node.setAttribute("aria-hidden", "true");
     node.textContent = `${total < 0 ? "-" : "+"}${pillCount(Math.abs(total))}`;
     slot.append(node);
-    const { fadeMs, holdMs } = reduced ? STATUS_TIMING.tickReduced : STATUS_TIMING.tick;
+    const { fadeMs, holdMs } = HUD_TICK_TIMING[reduced ? "reduced" : "normal"];
     const duration = holdMs + fadeMs;
     const hold = holdMs / duration;
     const rise = reduced ? "0px" : units(-STATUS_PILL.tick.rise);

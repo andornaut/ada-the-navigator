@@ -1,7 +1,5 @@
+import { HUD_TICK_TIMING } from "../data/noticeTiming.ts";
 import type { Weapon } from "../data/types.ts";
-
-/** A brief refill label by the corresponding weapon, measured in unpaused play time. */
-export const AMMO_FEEDBACK_MS = 1200;
 
 export interface AmmoFeedback {
   readonly added: number;
@@ -24,16 +22,18 @@ export class AmmoFeedbackQueue {
     this.entries.set(weapon, { added: (current?.added ?? 0) + added, elapsed: 0 });
   }
 
-  advance(ms: number, running: boolean): ReadonlyMap<Weapon, AmmoFeedback> {
+  advance(ms: number, running: boolean, reducedMotion = false): ReadonlyMap<Weapon, AmmoFeedback> {
+    const { fadeMs, holdMs } = HUD_TICK_TIMING[reducedMotion ? "reduced" : "normal"];
+    const duration = holdMs + fadeMs;
     const frames = new Map<Weapon, AmmoFeedback>();
     for (const [weapon, entry] of this.entries) {
       entry.elapsed += running ? Math.max(0, ms) : 0;
-      if (entry.elapsed >= AMMO_FEEDBACK_MS) {
+      if (entry.elapsed >= duration) {
         this.entries.delete(weapon);
       } else {
         frames.set(weapon, {
           added: entry.added,
-          opacity: Math.min(1, (AMMO_FEEDBACK_MS - entry.elapsed) / 300),
+          opacity: Math.min(1, (duration - entry.elapsed) / fadeMs),
         });
       }
     }

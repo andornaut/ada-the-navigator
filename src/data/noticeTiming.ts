@@ -1,3 +1,9 @@
+/** Short numeric resource and ammunition feedback, in milliseconds. */
+export const HUD_TICK_TIMING = {
+  normal: { fadeMs: 300, holdMs: 600 },
+  reduced: { fadeMs: 150, holdMs: 750 },
+} as const;
+
 /** The notices' timing in ms (art/layout.md "Item notice"). */
 export const NOTICE_TIMING = {
   appearMs: 180,

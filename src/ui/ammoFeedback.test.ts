@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { AMMO_FEEDBACK_MS, AmmoFeedbackQueue } from "./ammoFeedback.ts";
+import { AmmoFeedbackQueue } from "./ammoFeedback.ts";
 
 describe("grant-time ammo feedback", () => {
   it("coalesces actual added amounts per weapon independently", () => {
@@ -25,16 +25,19 @@ describe("grant-time ammo feedback", () => {
     expect(queue.advance(0, true).get("heavyMissile")?.added).toBe(1);
   });
 
-  it("pauses under a cover, fades out, and starts a fresh amount after expiry", () => {
+  it.each([
+    [false, 600, 300],
+    [true, 750, 150],
+  ])("pauses under a cover and expires at 900 ms with reduced motion %s", (reduced, hold, fade) => {
     const queue = new AmmoFeedbackQueue();
     queue.push("phaser", 4);
-    expect(queue.advance(1000, true).get("phaser")?.opacity).toBeCloseTo(2 / 3);
-    expect(queue.advance(10000, false).get("phaser")?.opacity).toBeCloseTo(2 / 3);
-    expect(queue.advance(200, true).size).toBe(0);
+    expect(queue.advance(hold, true, reduced).get("phaser")?.opacity).toBe(1);
+    expect(queue.advance(fade / 2, true, reduced).get("phaser")?.opacity).toBe(0.5);
+    expect(queue.advance(10000, false, reduced).get("phaser")?.opacity).toBe(0.5);
+    expect(queue.advance(fade / 2, true, reduced).size).toBe(0);
     queue.push("phaser", 2);
-    expect(queue.advance(0, true).get("phaser")?.added).toBe(2);
+    expect(queue.advance(0, true, reduced).get("phaser")?.added).toBe(2);
     queue.clear();
-    expect(queue.advance(0, true).size).toBe(0);
-    expect(AMMO_FEEDBACK_MS).toBe(1200);
+    expect(queue.advance(0, true, reduced).size).toBe(0);
   });
 });
