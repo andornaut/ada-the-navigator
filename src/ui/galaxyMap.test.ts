@@ -39,6 +39,10 @@ it("ties the filled state cues to the marker labels and retains the unlock pulse
   expect(GALAXY_MAP_STYLE).not.toContain(".ada-route-ring");
   expect(GALAXY_MAP_STYLE).not.toContain(".ada-route-frame");
   expect(GALAXY_MAP_STYLE).toContain(".ada-route-pulse{");
+  expect(GALAXY_MAP_STYLE).toContain(
+    ".ada-route-marker[data-selected]:not([data-earth]) > .ada-route-disc{\n" +
+      "  border-color:var(--hue)\n}",
+  );
 });
 
 // The destination actions as the scene reads them from content.

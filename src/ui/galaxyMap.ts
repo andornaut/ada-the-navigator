@@ -310,6 +310,9 @@ ${mapCloseActionStyle(".ada-controls .ada-route > .ada-close")}
   color:${colors.ink};
   transition:background-color ${GALAXY_MAP_MOVE.unlock.fade}s ease-out
 }
+.ada-controls .ada-route-marker[data-selected]:not([data-earth]) > .ada-route-disc{
+  border-color:var(--hue)
+}
 .ada-controls .ada-route-pulse{
   position:absolute;
   box-sizing:border-box;
