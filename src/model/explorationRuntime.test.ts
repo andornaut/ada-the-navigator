@@ -2,24 +2,26 @@ import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
 import { questReward } from "../data/questRewards.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { stationJobsRows, type StationRow } from "../ui/station.ts";
 import { dropRandom, enemyStardust } from "./drops.ts";
+import { createEnemy } from "./enemyAi.ts";
 import { ROUTE_OPPORTUNITY_SECONDS } from "./explorationPacing.ts";
 import { ensureStation } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
-import { rerollBoards } from "./jobs.ts";
+import { jobHostiles, rerollBoards } from "./jobs.ts";
 import { proceduralPoisNear } from "./proceduralPois.ts";
 import { restoreSave } from "./save.ts";
 import { scanOutcomeLines } from "./scanOutcomeSpeech.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
 import { stationSpecialty } from "./stationServices.ts";
-import type { FlightState, Vec } from "./types.ts";
+import type { FlightState, SpaceObject, Vec } from "./types.ts";
 import { periodicWorldGrid, worldCellAt, worldCellKey } from "./worldCells.ts";
 import { worldDistance } from "./worldContacts.ts";
 
@@ -333,7 +335,7 @@ it("posts an admitted near-route hunt on Scan, then accepts and pays through the
   throw new Error("No near-route hunt fixture admitted");
 });
 
-it("admits a far rescue after Continue and places its craft at the scanned lead", () => {
+function admittedFarRescue() {
   const world = { worldSide: GALAXY_SIDE };
   const far = { x: 25_000, y: 31_800 };
   for (let seed = 1; seed <= 20; seed++) {
@@ -352,10 +354,16 @@ it("admits a far rescue after Continue and places its craft at the scanned lead"
     progress.geography = { seed, sitePolicy: "seeded", version: 1 };
     model.startGalaxy(1);
     const flight = model.state.flight!;
-    const issuer = worldStationsNear(flightStationContext(flight), ECONOMY, 1, 60_000, far).find(
-      ({ id }) => stationSpecialty(1, id) === "jobs",
-    );
-    if (!issuer) {
+    const [closer, issuer] = worldStationsNear(
+      flightStationContext(flight),
+      ECONOMY,
+      1,
+      60_000,
+      far,
+    )
+      .filter(({ id }) => stationSpecialty(1, id) === "jobs")
+      .sort((a, b) => worldDistance(world, site, a) - worldDistance(world, site, b));
+    if (!issuer || !closer) {
       continue;
     }
     progress.stations = [issuer.id];
@@ -376,27 +384,83 @@ it("admits a far rescue after Continue and places its craft at the scanned lead"
     if (typeof entry !== "object" || entry.kind !== "rescue") {
       continue;
     }
-    expect(restored.exploration?.pacing).toEqual({ freshSeconds: 0, nextOpportunity: 1 });
-    restored.player = { x: site.x, y: site.y };
-    expect(resumed.contextAction).toBe("scan");
-    resumed.interact();
-    const [offer] = resumed.state.jobs.boards[1]![issuer.id]!;
-    const id = `lead:${site.id}`;
-    expect(offer).toMatchObject({ id, target: { id: "", x: site.x, y: site.y }, type: "rescue" });
-    expect(resumed.state.tasks[1]).toBeUndefined();
-
-    ensureStation(CONTENT, issuer.id, restored);
-    restored.player = { x: issuer.x, y: issuer.y };
-    restored.dangerFor = 0;
-    resumed.interact();
-    expect(resumed.state.docked).toBe(issuer.id);
-    expect(resumed.acceptJob(id)).toBe("accepted");
-    resumed.undock();
-    restored.player = { x: site.x, y: site.y };
-    expect(resumed.contextAction).toBe("tow");
-    resumed.interact();
-    expect(restored.tow).toEqual({ x: site.x, y: site.y });
-    return;
+    return { closer, issuer, restored, resumed, site, world };
   }
   throw new Error("No far rescue fixture admitted");
+}
+
+it("admits a far rescue after Continue and places its craft at the scanned lead", () => {
+  const { issuer, restored, resumed, site } = admittedFarRescue();
+  expect(restored.exploration?.pacing).toEqual({ freshSeconds: 0, nextOpportunity: 1 });
+  restored.player = { x: site.x, y: site.y };
+  expect(resumed.contextAction).toBe("scan");
+  resumed.interact();
+  const [offer] = resumed.state.jobs.boards[1]![issuer.id]!;
+  const id = `lead:${site.id}`;
+  expect(offer).toMatchObject({ id, target: { id: "", x: site.x, y: site.y }, type: "rescue" });
+  expect(resumed.state.tasks[1]).toBeUndefined();
+
+  ensureStation(CONTENT, issuer.id, restored);
+  restored.player = { x: issuer.x, y: issuer.y };
+  restored.dangerFor = 0;
+  resumed.interact();
+  expect(resumed.state.docked).toBe(issuer.id);
+  expect(resumed.acceptJob(id)).toBe("accepted");
+  resumed.undock();
+  restored.player = { x: site.x, y: site.y };
+  expect(resumed.contextAction).toBe("tow");
+  resumed.interact();
+  expect(restored.tow).toEqual({ x: site.x, y: site.y });
+});
+
+it("posts a saved rescue at its admitted site after a heavy enters clearance range", () => {
+  const { closer, issuer, restored, resumed, site, world } = admittedFarRescue();
+  const id = `lead:${site.id}`;
+  const hold = { x: site.x + 1_600, y: site.y };
+  expect(
+    jobHostiles({ objects: stationPopulationObjects(restored) }).every(
+      (heavy) => worldDistance(world, site, heavy) >= JOB_TUNING.hostileClearance,
+    ),
+  ).toBe(true);
+  const definition = enemyDefinition(1, "frigate", "late-frigate");
+  const frigate: SpaceObject = {
+    ...hold,
+    enemy: createEnemy(
+      definition,
+      { archetype: "frigate", id: "late-frigate", packId: null, phase: 0 },
+      hold,
+    ),
+    hp: definition.hp,
+    id: "late-frigate",
+    kind: "enemy",
+    radius: CONTENT.tuning.flight.shipRadius * definition.sizeRatio,
+  };
+  restored.objects.push(frigate);
+  const returned = new GameModel(CONTENT, resumed.save());
+  returned.continueGame();
+  const flight = returned.state.flight!;
+  const heavy = flight.objects.find((object) => object.id === frigate.id)!;
+  expect(heavy).toBeDefined();
+  expect(worldDistance(world, site, heavy)).toBeGreaterThan(JOB_TUNING.hostileClearance);
+  const arrived = { x: site.x + 750, y: site.y };
+  Object.assign(heavy, arrived);
+  heavy.enemy!.position = arrived;
+  expect(worldDistance(world, site, heavy)).toBeLessThan(JOB_TUNING.hostileClearance);
+  expect(worldDistance(world, site, closer)).toBeLessThan(worldDistance(world, site, issuer));
+  const progress = returned.state.progress[1];
+  progress.stations.push(closer.id);
+  flight.player = { x: site.x, y: site.y };
+
+  expect(returned.contextAction).toBe("scan");
+  returned.interact();
+  const [outcome] = returned.drainScanOutcomes();
+  expect(outcome).toMatchObject({ completions: [], targetId: site.id });
+  expect(progress.explorationSites?.[site.id]).toEqual({ kind: "rescue", scanned: true });
+  expect(returned.state.jobs.boards[1]?.[issuer.id]).toBeUndefined();
+  expect(returned.state.jobs.boards[1]?.[closer.id]).toMatchObject([
+    { id, station: closer.id, target: { id: "", x: site.x, y: site.y }, type: "rescue" },
+  ]);
+  expect(returned.state.tasks[1]).toBeUndefined();
+  returned.interact();
+  expect(returned.drainScanOutcomes()).toEqual([]);
 });

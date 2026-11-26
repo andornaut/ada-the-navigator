@@ -165,6 +165,7 @@ import {
   completeJob,
   dropJob,
   explorationLeadOffer,
+  type ExplorationLeadPhase,
   heldJob,
   isPostedLead,
   jobHostiles,
@@ -3445,7 +3446,7 @@ export class GameModel {
       if (sites && site !== undefined) {
         let leadStation: string | undefined;
         if (typeof site !== "boolean" && (site.kind === "rescue" || site.kind === "hunt")) {
-          const lead = this.explorationOffer(this.state.flight, scan, site.kind);
+          const lead = this.explorationOffer(this.state.flight, "scan", scan, site.kind);
           if (!lead) {
             return;
           }
@@ -3641,6 +3642,7 @@ export class GameModel {
 
   private explorationOffer(
     flight: FlightState,
+    phase: ExplorationLeadPhase,
     site: JobTarget,
     kind: LeadJobType,
     stations = this.discoveredJobStations(flight),
@@ -3657,7 +3659,7 @@ export class GameModel {
       ...this.jobContext(flight),
       hostiles: jobHostiles({ objects: stationPopulationObjects(flight) }),
     };
-    return explorationLeadOffer(world, context, flight.seed, issuer, site, kind);
+    return explorationLeadOffer(world, context, flight.seed, issuer, site, kind, phase);
   }
 
   private admitExplorationSite(
@@ -3683,7 +3685,7 @@ export class GameModel {
         const next = dropRandom(flight.seed, `exploration-lead-kind:${candidate.id}`);
         const kind = jobTemplates[Math.floor(next() * jobTemplates.length)]!;
         kinds.set(candidate.id, kind);
-        return this.explorationOffer(flight, candidate, kind, stations) !== null;
+        return this.explorationOffer(flight, "placement", candidate, kind, stations) !== null;
       },
       inRegion,
       opportunityEligibility: { jobTemplates, region },

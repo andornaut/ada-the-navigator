@@ -184,9 +184,10 @@ function huntTarget(
 }
 
 export type LeadJobType = Extract<JobType, "rescue" | "hunt">;
+export type ExplorationLeadPhase = "placement" | "scan";
 export const isPostedLead = (offer: JobOffer): boolean => offer.id.startsWith("lead:poi:");
 
-/** A lead uses the board reward and job pool while keeping its site identity. */
+/** A lead uses the board reward and job pool; rescue clearance applies at placement. */
 export function explorationLeadOffer(
   world: WorldContext,
   context: BoardContext,
@@ -194,6 +195,7 @@ export function explorationLeadOffer(
   station: StationSite,
   site: JobTarget,
   type: LeadJobType,
+  phase: ExplorationLeadPhase = "placement",
 ): JobOffer | null {
   const reward = byPosition(JOB_REWARDS, context.galaxy)[type];
   if (reward === null || reward === undefined) {
@@ -206,9 +208,10 @@ export function explorationLeadOffer(
     const item = pick(next, JOB_POOL[context.galaxy]!.craft);
     if (
       !item ||
-      context.hostiles.some(
-        (hostile) => worldDistance(world, hostile, site) < JOB_TUNING.hostileClearance,
-      )
+      (phase === "placement" &&
+        context.hostiles.some(
+          (hostile) => worldDistance(world, hostile, site) < JOB_TUNING.hostileClearance,
+        ))
     ) {
       return null;
     }
