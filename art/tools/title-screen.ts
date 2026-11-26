@@ -14,7 +14,7 @@ import { linkData, replaceEntries } from "./manifest.ts";
 import { json, SHIP_HEADINGS, SHIP_HEADING_CONTRACT } from "./projection.ts";
 import { Random } from "./random.ts";
 import { JET_LENGTH, plumeReach } from "./ship-jet-layers.ts";
-import { FRAME, forwardJetMouths, mouthDirection } from "./ship-model.ts";
+import { FRAME, mouthEdgeJetMouths } from "./ship-model.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 
@@ -250,16 +250,14 @@ function field(): RgbaImage {
   return image;
 }
 
-// The start screen ship's plumes: 1.3 times the flight jet length, each turned in the exhaust
-// plane about its unchanged root to its engine mouth's own direction, square to the trailing
-// edge, so it leaves the lit opening in line. These mouths replace the flight
-// file's mouths at the title frame; widths, roots and the length curve's shape are the flight's.
+// The start screen ship's plumes: 1.3 times the flight jet length, aimed straight back as in
+// flight, each starting on the bottom edge of its lit engine mouth with its start line along it.
+// These mouths replace the flight file's mouths at the title frame.
 const TITLE_SHIP = { frame: (SHIP_HEADINGS * 292.5) / 360, jetSpeed: 0.8, jetLengthScale: 1.3 };
-const titleMouths = forwardJetMouths(
+const titleMouths = mouthEdgeJetMouths(
   FRAME / 2,
   { yaw: TITLE_SHIP.frame },
   plumeReach((JET_LENGTH.base + JET_LENGTH.scale) * TITLE_SHIP.jetLengthScale),
-  mouthDirection,
 );
 
 const mark = wordmark();

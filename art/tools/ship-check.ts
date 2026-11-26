@@ -32,7 +32,7 @@ import {
   forwardJetMouths,
   FRAME,
   PAINT_SLOTS,
-  mouthDirection,
+  mouthEdgeJetMouths,
   plumeRoot,
   plumeSide,
   retroMouthAxis,
@@ -358,27 +358,24 @@ test("forward plumes root at the mouth centres with three layers and the hull re
   assert(jets.headings[8]!.mouths.every((mouth) => mouth.occluders!.length > 0));
 });
 
-test("the start screen's plumes run 1.3 times as long, each along its engine mouth", () => {
+test("the start screen's plumes run 1.3 times as long from the bottom of each lit mouth", () => {
   const title = JSON.parse(readFileSync(new URL("title-screen.json", assets), "utf8")) as {
-    ship: { frame: number; jetLengthScale: number; jetMouths: unknown };
+    ship: { frame: number; jetLengthScale: number; jetMouths: Mouth[] };
   };
+  const flight = JSON.parse(readFileSync(new URL("ship-jets.json", assets), "utf8")) as Jets;
   assert.equal(title.ship.jetLengthScale, 1.3);
   assert.deepEqual(
     title.ship.jetMouths,
-    forwardJetMouths(
+    mouthEdgeJetMouths(
       FRAME / 2,
       { yaw: title.ship.frame },
       plumeReach((JET_LENGTH.base + JET_LENGTH.scale) * 1.3),
-      mouthDirection,
     ),
   );
-  for (const sign of [-1, 1]) {
-    const [x, y, z] = mouthDirection(sign);
-    // Square to the trailing edge from the tip (21.44, 20.48) to the notch (5.44, 15.68).
-    assert(Math.abs(sign * x * 16 + y * 4.8) < 1e-9);
-    assert.equal(z, 0);
-    assert(y > 0 && sign * x < 0, "rearward and inboard");
-  }
+  // The flight's angle; only the start line moves.
+  title.ship.jetMouths.forEach((mouth, index) =>
+    assert.deepEqual(mouth.axis, flight.headings[title.ship.frame]!.mouths[index]!.axis),
+  );
 });
 
 test("only the halo draws under the hull and on the 42 px flight sprite alone", () => {

@@ -47,18 +47,19 @@ The title ship is the in-game ship art, not a separate drawing.
   length curve, so the jet length is 27.77 ship units, 1.3 times the flight's
   21.36. `ship.jetMouths` replaces the flight file's two mouths at the title
   frame, port then starboard, in the same `anchor`, `axis`, `half` and
-  `occluders` form: the roots are the flight roots, and each axis turns in
-  the exhaust plane to its engine mouth's own direction, square to the
-  trailing edge and 16.7 degrees inboard of straight back, so the plume
-  leaves the lit opening in line. On screen the upper plume turns from 166.6
-  to 154.8 degrees and the lower from 166.6 to 176.7 (clockwise from screen
-  right). Widths are the flight's.
+  `occluders` form (`mouthEdgeJetMouths` in
+  [ship-model.ts](tools/ship-model.ts)). Each plume keeps the flight's axis,
+  straight back, and starts on the bottom edge of its lit engine mouth: the
+  root is the edge's midpoint and `half` the projected edge direction per
+  ship unit, so the start line runs along the edge. The layer widths are the
+  flight's; on screen the plumes are as wide as the mouth edge projects.
 - The outer flame and core draw at the frame's scale (280 / 96), composed with
   the hull as in flight. The halo is a flight-sprite layer and does not draw
-  here. The lower plume draws over the tail; the upper one passes behind it.
+  here. The lower plume runs clear below the tail with no hull in front of
+  it; the upper one passes behind the tail.
 - Held still: no bob, flicker or jet change (`ship.animated` is false).
 - Ink extents at the [layout](layout.md#start-screen) position: hull 281 to
-  484 by 42 to 141 in play-view px, jets reaching 226.4 (y 56.6 to 131.4).
+  484 by 42 to 141 in play-view px, jets reaching 211.2 (y 64.4 to 138.7).
 
 ## Field
 

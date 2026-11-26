@@ -538,31 +538,49 @@ export function forwardJetMouths(
   pivot: number,
   pose: Pose,
   reach: { halfWidth: number; length: number },
-  exhaust: (sign: number) => Point = () => [0, 1, 0],
 ) {
   const projected = (centre: number, point: Point) =>
     projectAt(centre, centre, place(pose, point)).map(round) as [number, number];
   return [-1, 1].map((sign) => {
-    const axis = exhaust(sign);
-    const half = plumeSide(pose, axis, [sign, 0, 0]);
+    const half = plumeSide(pose, [0, 1, 0], [sign, 0, 0]);
     return {
       anchor: projected(pivot, plumeRoot(sign)),
-      axis: projected(0, axis),
+      axis: projected(0, [0, 1, 0]),
       half,
-      occluders: plumeOccluders(pivot, pose, sign, reach, half, axis),
+      occluders: plumeOccluders(pivot, pose, plumeRoot(sign), reach, half),
     };
   });
 }
 
 /**
- * The sign side engine mouth's own exhaust direction in the horizontal exhaust plane, local: its
- * rear wall's outward normal without the wall's lean, square to the trailing edge, 16.7 degrees
- * inboard of straight back.
+ * Plumes that start on the bottom edge of each lit engine mouth, for the start screen: aimed
+ * straight back as in flight, each root on the midpoint of its mouth's bottom edge and its start
+ * line along that edge, `half` the projected edge direction per ship unit, pointing outboard.
  */
-export function mouthDirection(sign: number): Point {
-  const [tip, notch] = wallOf(sign);
-  const [x, y] = leaning(tip, notch).n;
-  return unit([x, y, 0]);
+export function mouthEdgeJetMouths(
+  pivot: number,
+  pose: Pose,
+  reach: { halfWidth: number; length: number },
+) {
+  const projected = (centre: number, point: Point) =>
+    projectAt(centre, centre, place(pose, point)).map(round) as [number, number];
+  return [-1, 1].map((sign) => {
+    // The bottom edge's ends: the mouth's lowest points farthest apart.
+    const points = mouth(sign);
+    const low = Math.min(...points.map((p) => p[2]));
+    const edge = points.filter((p) => p[2] - low < 1e-9).toSorted((p, q) => p[0] - q[0]);
+    const [a, b] = [edge[0]!, edge.at(-1)!];
+    const root: Point = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+    let along = unit(minus(b, a));
+    if (sign * along[0] < 0) along = [-along[0], -along[1], -along[2]];
+    const half = projected(0, along);
+    return {
+      anchor: projected(pivot, root),
+      axis: projected(0, [0, 1, 0]),
+      half,
+      occluders: plumeOccluders(pivot, pose, root, reach, half),
+    };
+  });
 }
 
 /**
@@ -912,14 +930,12 @@ function plumeDepthPlane(
 export function plumeOccluders(
   pivot: number,
   pose: Pose,
-  sign: number,
+  root: Point,
   reach: { halfWidth: number; length: number },
   half: readonly [number, number],
-  exhaust: Point = [0, 1, 0],
 ): V2[][] {
-  const root = plumeRoot(sign);
   const anchor = projectAt(pivot, pivot, place(pose, root));
-  const axis = projectAt(0, 0, minus(place(pose, exhaust), place(pose, [0, 0, 0])));
+  const axis = projectAt(0, 0, minus(place(pose, [0, 1, 0]), place(pose, [0, 0, 0])));
   const corners = [
     [-reach.halfWidth, 0],
     [reach.halfWidth, 0],
@@ -941,7 +957,7 @@ export function plumeOccluders(
     const edge: Point = [winding * (b[1] - a[1]), winding * (a[0] - b[0]), 0];
     return { normal: edge, distance: edge[0] * a[0] + edge[1] * a[1] };
   });
-  const depth = plumeDepthPlane(pose, root, exhaust);
+  const depth = plumeDepthPlane(pose, root, [0, 1, 0]);
   const fragments = ordered(viewer(pose), geometry().tree).flatMap((surface) => {
     const above = split(depth, surface.points).front;
     if (above.length < 3) return [];
