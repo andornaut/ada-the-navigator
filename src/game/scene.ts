@@ -140,6 +140,7 @@ import { hasPlayerHeadingPackage } from "./playerHeadingPackage.ts";
 import { setRendering } from "./renderLoop.ts";
 import { drawAndromeda } from "./sceneAndromeda.ts";
 import {
+  filterLoadedSvg,
   filterTexture,
   loadGalaxyArt,
   loadGalaxyAsset,
@@ -522,7 +523,11 @@ export class GameScene extends Scene {
 
       const filter = fileFilter(type);
       if (filter && this.textures.exists(key)) {
-        filterTexture(this, key, filter);
+        if (type === "svg") {
+          filterLoadedSvg(this, key);
+        } else {
+          filterTexture(this, key, filter);
+        }
       }
       const stale = type === "svg" ? this.rasters.loaded(key) : undefined;
       if (stale) {

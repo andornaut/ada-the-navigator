@@ -2,7 +2,7 @@
 // Functions over the scene's AssetsContext.
 import { setTextureFilters } from "@andornaut/game-kit/runtime/view/phaser/textureFilter";
 import { MAX_RENDER_SCALE } from "@andornaut/game-kit/runtime/view/renderScale";
-import { GameObjects, Loader, Scenes } from "phaser";
+import { GameObjects, Loader, Scenes, Textures } from "phaser";
 
 import {
   BAND_AREA,
@@ -1369,6 +1369,40 @@ export function replaceImage(scene: AssetsContext, key: string, from: string): v
 /** Sets a texture's filter on every source it draws from. */
 export function filterTexture(scene: AssetsContext, key: string, filter: TextureFilter): void {
   setTextureFilters(scene.textures, new Map([[key, filter]]));
+}
+
+/** Selects linear sampling for a freshly uploaded SVG image without uploading its pixels again. */
+export function filterLoadedSvg(scene: AssetsContext, key: string): void {
+  const sources = scene.textures.get(key).source;
+  const source = sources.length === 1 ? sources[0] : undefined;
+  const renderer = source?.renderer;
+  const texture = source?.glTexture;
+  if (
+    source?.image instanceof HTMLImageElement &&
+    renderer &&
+    "gl" in renderer &&
+    texture?.webGLTexture &&
+    texture.pixels === source.image &&
+    !renderer.gl.isContextLost() &&
+    !texture.needsMipmapRegeneration &&
+    texture.minFilter === renderer.gl.NEAREST &&
+    texture.magFilter === renderer.gl.NEAREST
+  ) {
+    const { gl, glTextureUnits } = renderer;
+    const previous = glTextureUnits.units[0];
+    glTextureUnits.bind(texture, 0);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    // Keep Phaser's records current for raster replacement and WebGL context restoration.
+    texture.minFilter = gl.LINEAR;
+    texture.magFilter = gl.LINEAR;
+    source.scaleMode = Textures.FilterMode.LINEAR;
+    if (previous) {
+      glTextureUnits.bind(previous, 0);
+    }
+  } else {
+    filterTexture(scene, key, "linear");
+  }
 }
 
 /**
