@@ -297,7 +297,7 @@ the unclaimed cache remains available across flights until collected.
 Captain Sounder is an uncrewed drone commander in Whirlpool. The whale and
 family retain their earlier capital guards. After the reunion, the family's
 song reveals the holodisk waypoint and opens the Sounder encounter. The
-waypoint is visible on the map with no jump action. The physical holodisk
+waypoint is visible on the map and uses its usual Travel here rules. The physical holodisk
 becomes collectible only after the encounter resolves.
 
 Manta Dreadnought guards the disk site with two fighter escorts and four swarm
@@ -323,7 +323,7 @@ stays recovered.
 
 Captain Cadence is an uncrewed drone commander in Needle. Lighting the last
 gate of the Eye makes the optional Crossbow detour eligible. Once placed,
-the local map labels it "Crossbow" with no jump action. The detour stays
+the local map labels it "Crossbow" and offers Travel here under the usual rules. The detour stays
 outside the gate channel and clear of the holodisk pickup route. Elder Loom's
 practice, the Eye, and collection of the disk follow their existing steps.
 

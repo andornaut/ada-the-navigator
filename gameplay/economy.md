@@ -2,7 +2,8 @@
 
 Stardust is the game's one currency. It is shimmering dust released by destroyed
 ships and asteroids, and friendly stations trade in it. Hostile stations offer
-no Dock, shop or jump action. Stardust and purchases persist
+neither Dock nor shops. Identified hostile sites follow the usual Local Map
+Travel here rules. Stardust and purchases persist
 across flights with story progress. All amounts, prices and rates are provisional
 tuning toward one typical income per route position, Stardust per minute
 without jobs as the pacing simulation measures it:

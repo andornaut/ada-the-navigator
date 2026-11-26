@@ -447,7 +447,7 @@ require a clear pair of sites off Pip's routes. If a safe pair is unavailable,
 the encounter stays unplaced. Pip's confession, repair and disk handover
 follow their existing steps regardless of the detour.
 
-Once placed, Broad Wing appears on the local map with no jump action. The
+Once placed, Broad Wing appears on the local map and uses its usual Travel here rules. The
 boss hull meter carries the "Captain Redact" badge. It clears on disengagement
 and restores the current hull on re-entry.
 [Redact's exchange](player-copy.md#captain-redact-and-broad-wing) covers the
@@ -530,7 +530,7 @@ and resolution.
 
 Destroy the hull or disable and Salvage the carrier to open the same seeded
 field for ordinary mining and replace the boss's map waypoint with "Ore field".
-Neither waypoint offers a map jump. Use the ordinary heavy Stardust payout
+Both waypoints use the usual Travel here rules while visible. Use the ordinary heavy Stardust payout
 once, full on destruction or half rounded down on Salvage. The encounter's
 state persists through Continue and return. Once resolved, the field stays
 open and the carrier does not return.
@@ -892,7 +892,9 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   enter the explored record. The
   explored area persists per galaxy (see
   [What each event keeps](#what-each-event-keeps)). Choosing
-  a discovered destination or station offers "Travel here". The button shows
+  any visible named map marker, including a charted point of interest, offers
+  "Travel here". Travel moves Ada to the marker’s visible coordinate. It leaves
+  quest and interaction gates in force and grants no loot. The button shows
   the Stardust icon and the price, 50. If Ada has less than 50 Stardust, the
   button stays visible and is disabled. Deduct 50 Stardust once after a
   successful local map jump. A refused jump leaves Ada and her balance where
@@ -1790,7 +1792,7 @@ separately from each encounter's combat actors and casualties. Resolve current
 status from the canonical loaded actor, then authoritative retained actor state.
 Unloaded does not mean destroyed.
 Report unresolved when the current body cannot be resolved; never infer defeat or reuse a prior encounter outcome.
-These sites offer no Dock, shop or jump action.
+A visible site uses the usual Travel here rules. These sites offer neither Dock nor a shop.
 
 Defenders and combat retention follow
 [Ships](ships.md#hostile-station-defenders-and-encounter-lifetime); payouts follow
