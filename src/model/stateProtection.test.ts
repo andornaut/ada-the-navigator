@@ -8,6 +8,7 @@ import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { relaunch } from "../testing/launch.ts";
+import { seedLaunches } from "../testing/launchSeeds.ts";
 import { createEnemy } from "./enemyAi.ts";
 import {
   activeEnemyBeams,
@@ -492,6 +493,8 @@ describe("guards fire back wherever Ada attacks from", () => {
   });
 
   it("answers within three seconds when Ada fires on an ambient frigate beside a station", () => {
+    // This hand-placed frigate needs the fixture's clear approach lane.
+    seedLaunches(1);
     const model = sunflower();
     const flight = model.state.flight!;
     model.state.dialogue = null;
