@@ -21,7 +21,7 @@ import { enemyEquipmentDefinition } from "../model/enemyEquipment.ts";
 import { GameModel } from "../model/game.ts";
 import { restoreSave } from "../model/save.ts";
 import type { Vec } from "../model/types.ts";
-import { playOpening } from "../testing/launch.ts";
+import { playOpening, supportEntropy } from "../testing/launch.ts";
 
 interface Heavy {
   archetype: EnemyActorKind;
@@ -72,6 +72,7 @@ function fixtureFactory() {
       "GameModel",
       "CONTENT",
       "playOpening",
+      "supportEntropy",
       "restoreSave",
       "enemyActorDefinition",
       "enemyActorAvailable",
@@ -85,6 +86,7 @@ function fixtureFactory() {
       GameModel,
       CONTENT,
       playOpening,
+      supportEntropy,
       restoreSave,
       enemyActorDefinition,
       enemyActorAvailable,
