@@ -51,10 +51,6 @@ function actualLeaves(): string {
   const variable = (node: ts.Statement, name: string) =>
     ts.isVariableStatement(node) &&
     node.declarationList.declarations.some((d) => d.name.getText(source) === name);
-  const first = statements.findIndex((n) => variable(n, "achievementsButton"));
-  const last = statements.findIndex((n) =>
-    n.getText(source).startsWith("settings.openButton.before(achievementsButton)"),
-  );
   const exit = statements.filter(
     (n) =>
       variable(n, "exitButton") ||
@@ -89,7 +85,6 @@ function actualLeaves(): string {
   const cleanup =
     disposal?.body?.statements.filter((n) =>
       [
-        "achievementsAction.dispose();",
         "exitAction?.dispose();",
         "exitPose?.dispose();",
         "useAction.dispose();",
@@ -98,12 +93,10 @@ function actualLeaves(): string {
       ].includes(n.getText(source)),
     ) ?? [];
   if (
-    first < 0 ||
-    last < first ||
     exit.length !== 5 ||
     !use ||
     !updateBack ||
-    cleanup.length !== 7 ||
+    cleanup.length !== 6 ||
     listeners.length !== 2 ||
     !updateExit ||
     !updateContext
@@ -112,14 +105,13 @@ function actualLeaves(): string {
   }
   return [
     "let disposed = false;",
-    ...statements.slice(first, last + 1).map((n) => n.getText(source)),
     ...exit.map((n) => n.getText(source)),
     use.getText(source),
     ...audits.map((n) => n.getText(source)),
     updateBack.getText(source),
     ...keys,
     ...listeners.map((n) => n.getText(source)),
-    `({achievementsButton, exitButton, ${updateExit.getText(source)}, updateContext(view) {
+    `({exitButton, ${updateExit.getText(source)}, updateContext(view) {
       ${updateContext.getText(source)}
     }, dispose(){ disposed = true;`,
     ...cleanup.map((n) => n.getText(source)),
@@ -235,20 +227,18 @@ afterEach(() => {
 });
 function fixture(
   exit = true,
-  missing?: "achievements" | "exit" | "settings" | "use",
+  missing?: "exit" | "use",
   update?: { defer(): void; isOpen(): boolean },
 ) {
   vi.useFakeTimers();
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
   const document = new FixtureDocument(),
     root = document.createElement(),
-    openButton = document.createElement("button"),
+    pauseButton = document.createElement("button"),
     useButton = document.createElement("button");
   root.connected = true;
-  openButton.dataset.action = "settings";
-  openButton.hidden = true;
   useButton.hidden = true;
-  root.append(openButton, useButton);
+  root.append(pauseButton, useButton);
   const register: typeof bindAdaAction = (options, element) => {
     const binding = bindAdaAction(options, element);
     const kind = element === (useButton as unknown as HTMLElement) ? "use" : element.dataset.action;
@@ -258,15 +248,6 @@ function fixture(
     stops.push(binding.dispose);
     return binding;
   };
-  // The real Settings factory binds the launcher before returning it to Controls.
-  register(
-    {
-      click: { availability: () => ({ kind: "omitted" }), run() {} },
-      current: () => true,
-      slopPx: () => 0,
-    },
-    openButton as unknown as HTMLElement,
-  );
   let ready = true,
     notify = () => {};
   const host = root as unknown as HTMLElement;
@@ -282,11 +263,9 @@ function fixture(
     host,
   );
   stops.push(binding.dispose);
-  const achievements = { open: vi.fn() };
   const backStack = createBackStack();
   const openNavigation = vi.fn();
   const options = {
-    achievements: { title: "Achievements" },
     requiredReady: () => ready,
     ...(exit ? { exit: { label: "Exit", onExit: vi.fn() } } : {}),
   };
@@ -300,7 +279,6 @@ function fixture(
       HTMLElement: Element,
       PHONE_BACK_PRESSED,
       SCROLL,
-      achievements,
       assertAdaActionBindings,
       backStack,
       bindAdaAction: register,
@@ -311,16 +289,15 @@ function fixture(
       openNavigation,
       options,
       // The Menu, which Exit follows in the root.
-      pauseButton: openButton,
+      pauseButton,
       pressBack,
       readViewUnit,
-      settings: { openButton, root, useButton },
+      settings: { root, useButton },
       state: { accepts: () => false },
       update,
       window: document.defaultView,
     }),
   ) as {
-    achievementsButton: Element;
     exitButton?: Element;
     dispose: () => void;
     setExitButton(shown: boolean): void;
@@ -369,14 +346,12 @@ function fixture(
   };
   return {
     ...value,
-    achievements,
     backStack,
     click,
     document,
     down,
     host,
     key,
-    openButton,
     openNavigation,
     options,
     phoneBack: () => document.defaultView.dispatchEvent(new Event(PHONE_BACK_PRESSED)),
@@ -389,88 +364,79 @@ function fixture(
     useButton,
   };
 }
-it.each(["achievements", "exit"] as const)(
-  "routes the actual %s leaf through one hold and current native callback",
-  (kind) => {
-    const f = fixture(),
-      node = kind === "achievements" ? f.achievementsButton : f.exitButton!;
-    node.hidden = false;
-    const initial = kind === "achievements" ? f.achievements.open : f.options.exit!.onExit;
-    const current = vi.fn();
-    f.down(node);
-    vi.advanceTimersByTime(499);
-    expect(initial).not.toHaveBeenCalled();
-    if (kind === "achievements") {
-      f.achievements.open = current;
-    } else {
-      f.options.exit!.onExit = current;
-    }
-    vi.advanceTimersByTime(1);
-    expect(current).toHaveBeenCalledOnce();
-    expect(f.up(node).defaultPrevented).toBe(true);
-    expect(current).toHaveBeenCalledOnce();
-    f.click(node, 0);
-    expect(current).toHaveBeenCalledTimes(2);
-    expect(initial).not.toHaveBeenCalled();
-  },
-);
-it.each(["achievements", "exit"] as const)(
-  "keeps actual %s unavailable under hidden, inert, covered, readiness and disposal guards",
-  (kind) => {
-    const f = fixture(),
-      node = kind === "achievements" ? f.achievementsButton : f.exitButton!;
-    const run = kind === "achievements" ? f.achievements.open : f.options.exit!.onExit;
+it("routes actual Exit through one hold and the current native callback", () => {
+  const f = fixture();
+  const node = f.exitButton!;
+  node.hidden = false;
+  const initial = f.options.exit!.onExit;
+  const current = vi.fn();
+  f.down(node);
+  vi.advanceTimersByTime(499);
+  expect(initial).not.toHaveBeenCalled();
+  f.options.exit!.onExit = current;
+  vi.advanceTimersByTime(1);
+  expect(current).toHaveBeenCalledOnce();
+  expect(f.up(node).defaultPrevented).toBe(true);
+  expect(current).toHaveBeenCalledOnce();
+  f.click(node, 0);
+  expect(current).toHaveBeenCalledTimes(2);
+  expect(initial).not.toHaveBeenCalled();
+});
+
+it("keeps actual Exit unavailable under hidden, inert, covered, readiness and disposal guards", () => {
+  const f = fixture();
+  const node = f.exitButton!;
+  const run = f.options.exit!.onExit;
+  f.click(node);
+  expect(run).not.toHaveBeenCalled();
+  node.hidden = false;
+  for (const flag of ["hidden", "inert", "disabled"] as const) {
+    node[flag] = true;
     f.click(node);
     expect(run).not.toHaveBeenCalled();
-    node.hidden = false;
-    for (const flag of ["hidden", "inert", "disabled"] as const) {
-      node[flag] = true;
-      f.click(node);
-      expect(run).not.toHaveBeenCalled();
-      node[flag] = false;
-    }
-    f.setReady(false);
-    f.click(node);
-    expect(run).not.toHaveBeenCalled();
-    f.setReady(true);
-    const dialog = new Element(node.ownerDocument);
-    dialog.parentElement = f.root;
-    f.down(node);
-    const leave = enterPressView(f.host, dialog as unknown as HTMLElement);
-    vi.advanceTimersByTime(500);
-    f.up(node);
-    expect(run).not.toHaveBeenCalled();
-    leave();
-    node.parentElement = null;
-    f.click(node);
-    expect(run).not.toHaveBeenCalled();
-    node.parentElement = f.root;
-    f.down(node);
-    f.dispose();
-    vi.advanceTimersByTime(500);
-    f.up(node);
-    f.click(node);
-    expect(resolveAdaHoldAction(f.host, node)).toBeNull();
-    expect(run).not.toHaveBeenCalled();
-  },
-);
-it.each(["achievements", "exit", "settings", "use"] as const)(
+    node[flag] = false;
+  }
+  f.setReady(false);
+  f.click(node);
+  expect(run).not.toHaveBeenCalled();
+  f.setReady(true);
+  const dialog = new Element(node.ownerDocument);
+  dialog.parentElement = f.root;
+  f.down(node);
+  const leave = enterPressView(f.host, dialog as unknown as HTMLElement);
+  vi.advanceTimersByTime(500);
+  f.up(node);
+  expect(run).not.toHaveBeenCalled();
+  leave();
+  node.parentElement = null;
+  f.click(node);
+  expect(run).not.toHaveBeenCalled();
+  node.parentElement = f.root;
+  f.down(node);
+  f.dispose();
+  vi.advanceTimersByTime(500);
+  f.up(node);
+  f.click(node);
+  expect(resolveAdaHoldAction(f.host, node)).toBeNull();
+  expect(run).not.toHaveBeenCalled();
+});
+
+it.each(["exit", "use"] as const)(
   "rejects completed Controls construction with unbound %s",
   (control) => {
     expect(() => fixture(true, control)).toThrow("no registered action binding");
   },
 );
 
-it("retains an absent optional Exit without constructing a control or binding", () => {
+it("keeps optional Exit absent and retains the owned Use binding", () => {
   const f = fixture(false);
   expect(f.exitButton).toBeUndefined();
   expect(f.options.exit).toBeUndefined();
-  expect(f.achievementsButton.hidden).toBe(true);
-  expect(f.openButton.hidden).toBe(true);
   expect(f.useButton.hidden).toBe(true);
-  expect(resolveAdaHoldAction(f.host, f.achievementsButton)).not.toBeNull();
+  expect(f.root.querySelectorAll("[data-action]")).toEqual([]);
+  expect(resolveAdaHoldAction(f.host, f.useButton)).not.toBeNull();
   f.dispose();
-  expect(resolveAdaHoldAction(f.host, f.achievementsButton)).toBeNull();
+  expect(resolveAdaHoldAction(f.host, f.useButton)).toBeNull();
 });
 
 it("routes bare eligible Start Q once and leaves Escape and phone Back with their own listener", () => {

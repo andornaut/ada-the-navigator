@@ -161,7 +161,7 @@ export interface Controls {
   closePause(): void;
   // Focuses the local map's Galaxies, as the galaxy map over it closes.
   focusGalaxies(): void;
-  // Opens the Achievements card, as the start screen's Achievements does.
+  // Opens the Achievements card.
   openAchievements(): void;
   // Adds a card that back and Escape close while it is open, innermost so far.
   registerBack(layer: BackLayer): () => void;
@@ -182,10 +182,6 @@ export interface Controls {
   // Plays the refusal cue on the Use disc; a repeat while it plays restarts it.
   refuseUse(): void;
   setEnabled(enabled: boolean): void;
-  // Shows the HUD settings button (the start screen); in play Settings opens from the Paused card.
-  setSettingsButton(shown: boolean): void;
-  // Shows the start screen's Achievements button.
-  setAchievementsButton(shown: boolean): void;
   // Shows the start screen's Exit where the game offers to leave.
   setExitButton(shown: boolean): void;
   setPause(state: PauseState): void;
@@ -356,11 +352,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     reducedMotion: () => reducedMotion,
     shipFrame: (heading) => options.pause.shipFrame?.(heading),
   });
-  // The start screen's Achievements disc remains in the HUD.
   const achievements = createAchievementsCard(settings.root, {
     labels: options.achievements,
     onOpenChange: (open) => {
-      achievementsButton.setAttribute("aria-expanded", String(open));
       if (!open && returnToMenu) {
         const reopen = returnToMenu;
         returnToMenu = undefined;
@@ -372,38 +366,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       syncModal();
     },
   });
-  const achievementsButton = document.createElement("button");
-  achievementsButton.type = "button";
-  achievementsButton.className = "ada-achievements-open";
-  achievementsButton.dataset.action = "achievements";
-  achievementsButton.setAttribute("aria-label", options.achievements.title);
-  achievementsButton.title = options.achievements.title;
-  achievementsButton.setAttribute("aria-haspopup", "dialog");
-  achievementsButton.setAttribute("aria-expanded", "false");
-  achievementsButton.hidden = true;
-  const achievementsDisc = document.createElement("span");
-  achievementsDisc.className = "ada-disc";
-  achievementsDisc.setAttribute("aria-hidden", "true");
-  achievementsButton.append(achievementsDisc);
-  const achievementsAction = bindAdaAction(
-    {
-      click: {
-        availability: () =>
-          achievementsButton.disabled || achievementsButton.closest("[hidden], [inert]")
-            ? { kind: "omitted" }
-            : { kind: "available" },
-        run: () => achievements.open(),
-      },
-      current: () =>
-        !disposed &&
-        achievementsButton.isConnected &&
-        inCurrentView(settings.root, achievementsButton),
-      slopPx: () => SCROLL.dragThreshold * readViewUnit(achievementsButton),
-    },
-    achievementsButton,
-  );
-  settings.openButton.before(achievementsButton);
-  settings.openButton.hidden = true;
   settings.root.classList.add("ada-no-settings-button");
   // The start screen's Exit disc at the top right, where it shows; it follows the Menu in Tab order.
   const exitButton = options.exit ? document.createElement("button") : undefined;
@@ -774,7 +736,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
     settings.useButton,
   );
-  for (const button of [achievementsButton, exitButton, settings.openButton, settings.useButton]) {
+  for (const button of [exitButton, settings.useButton]) {
     if (button) {
       assertAdaActionBindings(button);
     }
@@ -1037,7 +999,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       weapons.dispose();
       cheats.dispose();
       update?.dispose();
-      achievementsAction.dispose();
       exitAction?.dispose();
       exitPose?.dispose();
       achievements.dispose();
@@ -1105,9 +1066,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       );
     },
     setAchievements: (entries) => achievements.setEntries(entries),
-    setAchievementsButton() {
-      achievementsButton.hidden = true;
-    },
     setContext(next) {
       state.setUseAvailable(next !== undefined);
       if (
@@ -1165,10 +1123,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       menu.setContext(menuContext);
       pause.setState(view);
       syncNavigationEntry();
-    },
-    setSettingsButton() {
-      settings.openButton.hidden = true;
-      settings.root.classList.toggle("ada-no-settings-button", true);
     },
     setStatus(view) {
       statusView = view;

@@ -20,7 +20,7 @@ function statement(match: (node: ts.Node) => boolean): string {
   };
   visit(source);
   if (!found) {
-    throw new Error("Missing production title Settings adapter");
+    throw new Error("Missing production Exit placement");
   }
   return found.getText(source);
 }
@@ -31,66 +31,27 @@ function evaluate(text: string, context: object): unknown {
   );
 }
 
-describe("nested Settings controls adapter", () => {
-  it("keeps the standalone button hidden even on title eligibility", () => {
-    const classes = new Set(["ada-no-settings-button"]);
-    const button = { hidden: true };
-    const settings = {
-      openButton: button,
-      root: {
-        classList: {
-          toggle: (name: string, shown: boolean) =>
-            shown ? classes.add(name) : classes.delete(name),
-        },
-      },
-    };
-    const method = statement(
-      (node) => ts.isMethodDeclaration(node) && node.name.getText(source) === "setSettingsButton",
-    );
-    const show = evaluate(`({${method}}).setSettingsButton`, { settings }) as (
-      shown: boolean,
-    ) => void;
-    show(true);
-    expect(button.hidden).toBe(true);
-    expect(classes.has("ada-no-settings-button")).toBe(true);
-    show(false);
-    expect(button.hidden).toBe(true);
-    expect(classes.has("ada-no-settings-button")).toBe(true);
-    expect(settings.openButton).toBe(button);
+describe("top navigation controls adapter", () => {
+  it("has no standalone Settings or Achievements launchers", () => {
+    expect(source.text).not.toMatch(/ada-(settings|achievements)-open|settings\.openButton/u);
+    expect(source.text).not.toMatch(/set(?:Settings|Achievements)Button/u);
+    expect(source.text).toContain('settings.root.classList.add("ada-no-settings-button")');
   });
 
-  it("keeps Achievements before the hidden Settings node and Exit right after the Menu", () => {
-    const children = ["settings", "menu"];
-    const insert = (anchor: string, offset: number) => (node: string) =>
-      children.splice(children.indexOf(anchor) + offset, 0, node);
-    const settings = {
-      openButton: { after: insert("settings", 1), before: insert("settings", 0) },
+  it("puts optional Exit immediately after the Menu", () => {
+    const children = ["menu"];
+    const pauseButton = {
+      after: (node: string) => children.splice(children.indexOf("menu") + 1, 0, node),
     };
-    const pauseButton = { after: insert("menu", 1), before: insert("menu", 0) };
-    const context = {
-      achievementsButton: "achievements",
-      exitButton: "exit",
-      pauseButton,
-      settings,
-    };
-    evaluate(
-      statement(
-        (node) =>
-          ts.isCallExpression(node) &&
-          node.expression.getText(source) === "settings.openButton.before",
-      ),
-      context,
+    const placement = statement(
+      (node) =>
+        ts.isIfStatement(node) &&
+        node.expression.getText(source) === "exitButton" &&
+        node.thenStatement.getText(source).includes("pauseButton.after(exitButton)"),
     );
-    evaluate(
-      statement(
-        (node) =>
-          ts.isIfStatement(node) &&
-          node.expression.getText(source) === "exitButton" &&
-          node.thenStatement.getText(source).includes("pauseButton.after(exitButton)"),
-      ),
-      context,
-    );
-    expect(children).toEqual(["achievements", "settings", "menu", "exit"]);
-    expect(source.text).not.toContain("settings.openButton.after(");
+    evaluate(placement, { exitButton: undefined, pauseButton });
+    expect(children).toEqual(["menu"]);
+    evaluate(placement, { exitButton: "exit", pauseButton });
+    expect(children).toEqual(["menu", "exit"]);
   });
 });

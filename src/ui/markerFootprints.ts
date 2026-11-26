@@ -12,7 +12,6 @@ const MARKER_SELECTORS = [
   ".ada-pips",
   ".ada-ammo-gain",
   ".ada-pause",
-  ".ada-settings-open",
   ".ada-use",
   ".ada-status-tick",
   ".ada-conversation",

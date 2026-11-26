@@ -723,7 +723,8 @@ it("retains native widgets while the entire Install row leaves and rejoins the t
 
 it("isolates Settings, releases its foreground once and restores the original opener", () => {
   const { settings } = setup();
-  const origin = settings.openButton as unknown as Element;
+  const origin = document.createElement("button") as unknown as Element;
+  (settings.root.parentElement as unknown as Element).append(origin);
   origin.focus();
   const guard = rootPressGuard(settings.root);
   const before = guard.gate.capture();
@@ -794,16 +795,10 @@ it("publishes bound Settings and Install Steps, then returns to the same native 
   });
   fixtureActionRoot(settings.root);
   expect(published).toEqual([
-    [
-      "close-install-steps",
-      "close-install-steps",
-      "close-settings",
-      "install",
-      "settings",
-      "settings-close",
-    ],
+    ["close-install-steps", "close-install-steps", "close-settings", "install", "settings-close"],
   ]);
-  (settings.openButton as unknown as Element).click();
+  expect(settings.root.querySelector(".ada-settings-open")).toBeNull();
+  settings.open();
   const root = settings.root as unknown as Element;
   const modal = root.children.find((node) => node.className === "ada-modal")!;
   const [frame, steps] = modal.children;
@@ -828,13 +823,13 @@ it("publishes bound Settings and Install Steps, then returns to the same native 
   expect(onOpenChange.mock.calls).toEqual([[true], [false]]);
 });
 
-it.each(["settings", "close-settings", "close-install-steps"])(
+it.each(["move", "close-settings", "close-install-steps"])(
   "rejects missing Settings semantic metadata %s before publication and releases its registrations",
   (id) => {
     const original = actionBinding.bindAdaAction;
     const disposals: (() => void)[] = [];
     vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) => {
-      if (element.dataset.action === id) {
+      if ((element.dataset.action ?? element.dataset.setting) === id) {
         return { activate: () => false, dispose() {}, update() {} };
       }
       const binding = original(options, element);

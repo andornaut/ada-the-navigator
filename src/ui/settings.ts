@@ -21,7 +21,7 @@ import {
   writeSetting,
 } from "./deviceSettings.ts";
 import { type InstallPort, startInstall, watchInstallRow } from "./installRow.ts";
-import { COLOURS, UNLISTED_COLOURS } from "./layout/colours.ts";
+import { UNLISTED_COLOURS } from "./layout/colours.ts";
 import { CARD_CONTENT, SCROLL } from "./layout/contentCard.ts";
 import { CONTROL_ROW, WHOLE_PX_EDGES } from "./layout/controls.ts";
 import { font, fromHudEdge, units, viewStyle } from "./layout/css.ts";
@@ -54,7 +54,6 @@ import { type SettingsLayoutSchema, type SettingsNative, settingsTree } from "./
 import { createStandardTextAction } from "./standardTextAction.ts";
 import { alignSwitchRowIcons, createInkMeasure } from "./switchRowInk.ts";
 import { applyButtonSkin } from "./uiSkin.ts";
-import { hudDiscStyle } from "./weapons.ts";
 
 export type { ControlVisibility } from "./deviceSettings.ts";
 
@@ -101,17 +100,6 @@ export interface SettingsOptions {
   readonly storage: DeviceStorage | undefined;
 }
 
-// The start screen's Settings glyph (art/settings-icon.md): the 20 vector gear, a mask drawn with
-// smooth sampling, as the Achievements trophy is.
-export const SETTINGS_GLYPH = uiIconUrl("settings");
-
-// The start screen's Achievements glyph (art/achievements-icon.md): the 20 vector trophy, a mask
-// drawn with smooth sampling.
-export const ACHIEVEMENTS_GLYPH = uiIconUrl("achievements");
-
-// Every start-screen disc while a press holds: the pause disc's held face and a white glyph.
-export const NAV_DISC_PRESSED = { face: COLOURS.pressedFace, glyph: COLOURS.white } as const;
-
 const DEFAULT_CONTROL_FOCUS = `.ada-controls button:focus-visible:not(:where(
   .ada-close,.ada-route-marker,.ada-use,.ada-row[role=switch],.ada-quest-endpoint,
   ${NAVIGATION_DISCS},${LEGACY_TEXT_BUTTON},${SETTINGS_INSTALL_BUTTON},${STANDARD_CARD_TEXT_BUTTON}
@@ -154,39 +142,11 @@ ${DEFAULT_CONTROL_FOCUS}{${FOCUS_STYLE}
   }
 }
 
-/* The retired start-screen Settings disc, which never shows: an idle HUD disc button on the HUD
-   rect's top-right corner, its 20 gear a mask in the idle glyph colour. */
-.ada-controls .ada-settings-open{
-  position:absolute;
-  ${navPlace(0)};
-  --glyph:url('${SETTINGS_GLYPH}')
-}
-${hudDiscStyle(".ada-controls .ada-settings-open", ".ada-disc")}
-
-/* The retired start-screen Achievements disc, which never shows: the same HUD disc button one
-   pitch left of Settings, its 20 trophy a mask in the idle glyph colour. */
-.ada-controls .ada-achievements-open{
-  position:absolute;
-  ${navPlace(1)};
-  --glyph:url('${ACHIEVEMENTS_GLYPH}')
-}
-${hudDiscStyle(".ada-controls .ada-achievements-open", ".ada-disc")}
-
 /* The start screen's Exit, where it shows (startNavOrder): the same HUD disc button alone at the
    far top right. Where it does not show it is never made, so it has no press area. */
 .ada-controls .ada-exit-open{
   position:absolute;
   ${navPlace(startNavOrder(true).indexOf("exit"))}
-}
-
-/* Pressed, on every start-screen disc: the pause disc's held face and a white glyph. */
-.ada-controls .ada-settings-open:active,
-.ada-controls .ada-achievements-open:active{
-  color:${NAV_DISC_PRESSED.glyph}
-}
-.ada-controls .ada-settings-open:active .ada-disc,
-.ada-controls .ada-achievements-open:active .ada-disc{
-  background:${NAV_DISC_PRESSED.face}
 }
 
 /* Each joystick's pointer target, placed over its rest ring (touchControls.ts). */
@@ -315,17 +275,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   root.className = "ada-controls";
   applyAdaControlTheme(root);
   root.dataset.fontRole = FONT_ROLES.body;
-  const openButton = document.createElement("button");
-  openButton.className = "ada-settings-open";
-  openButton.dataset.action = "settings";
-  openButton.setAttribute("aria-label", options.labels.settings);
-  openButton.title = options.labels.settings;
-  openButton.setAttribute("aria-haspopup", "dialog");
-  openButton.setAttribute("aria-expanded", "false");
-  const openDisc = document.createElement("span");
-  openDisc.className = "ada-disc";
-  openDisc.setAttribute("aria-hidden", "true");
-  openButton.append(openDisc);
   const useButton = document.createElement("button");
   useButton.type = "button";
   useButton.className = "ada-use";
@@ -511,7 +460,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   setScrollGroup(stepsParts, stepsLine);
   options.onFeedbackChange?.(feedback());
   options.onVisibilityChange(visibility());
-  root.append(...joystickTargets, openButton, useButton, modal);
+  root.append(...joystickTargets, useButton, modal);
   const layer = createModalLayer(modal);
   let disposed = false;
   let open = false;
@@ -706,7 +655,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     if (open) {
       fitSettings();
     }
-    openButton.setAttribute("aria-expanded", String(open));
     if (open) {
       previousFocus =
         document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
@@ -726,7 +674,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     }
     options.onOpenChange(open);
   };
-  registerAction(openButton, () => setOpen(true));
   const dispose = () => {
     if (disposed) {
       return;
@@ -747,7 +694,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   };
   try {
     // Controls installs the live action root and binds contextual Use after this factory returns.
-    assertAdaActionMetadata(openButton);
     assertAdaActionMetadata(cardFrame);
     assertAdaActionMetadata(stepsFrame);
     parent.append(root);
@@ -766,7 +712,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     isOpen: () => open,
     joystickTargets,
     open: () => setOpen(true),
-    openButton,
     root,
     stepsOpen,
     useButton,

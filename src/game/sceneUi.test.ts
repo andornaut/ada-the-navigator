@@ -416,12 +416,11 @@ describe("universal pause caller", () => {
     const model = new GameModel(CONTENT);
     expect(pauseView(model).place).toBeNull();
     expect(pauseView(model, "loading").place).toBeNull();
-    expect(runInContext(controlArgument("setSettingsButton"), createContext({ start: true }))).toBe(
-      false,
-    );
-    expect(
-      runInContext(controlArgument("setSettingsButton"), createContext({ start: false })),
-    ).toBe(false);
+    expect(source.text).not.toMatch(/controls\.set(?:Settings|Achievements)Button/u);
+    const exit = controlArgument("setExitButton");
+    expect(runInContext(exit, createContext({ exitShown: () => true, start: true }))).toBe(true);
+    expect(runInContext(exit, createContext({ exitShown: () => true, start: false }))).toBe(false);
+    expect(runInContext(exit, createContext({ exitShown: () => false, start: true }))).toBe(false);
   });
 
   it("uses Menu during nonpausable flight dialogue and docking", () => {
