@@ -24,7 +24,10 @@ const read = (name: string) =>
     .trim();
 // The player copy, and the job lines in the quests document.
 // Inline icon copy compares its accessible control name.
-const COPY = read("player-copy.md").replaceAll("{useIcon}", CONTROL_WORDS.use);
+const COPY = read("player-copy.md")
+  .replaceAll("{useIcon}", CONTROL_WORDS.use)
+  .replace(/Astra, first hardpoint lost while the flagship stays active:/gu, "Astra:")
+  .replace(/Admiral Archie, (?:as the flagship attacks|flagship disabled):/gu, "Admiral Archie:");
 const QUESTS = read("quests.md");
 
 // A copy passage from its heading or lead-in up to until, by default the next heading.
@@ -41,15 +44,9 @@ function passage(start: string, until = " ## "): string {
 // follows its line as (desktop: "...") and has no speaker of its own.
 function spokenLines(text: string): { mood?: string; name: string; text: string }[] {
   return Array.from(
-    text
-      .replace(/Astra, first hardpoint lost while the flagship stays active:/gu, "Astra:")
-      .replace(
-        /Admiral Archie, (?:as the flagship attacks|flagship disabled):/gu,
-        "Admiral Archie:",
-      )
-      .matchAll(
-        /(Astra|Ada|Penny|Unknown voice|Admiral Archie|Captain \w+): "([^"]+)"(?: \((happy|neutral|upset)\))?/gu,
-      ),
+    text.matchAll(
+      /(Astra|Ada|Penny|Unknown voice|Admiral Archie|Captain \w+): "([^"]+)"(?: \((happy|neutral|upset)\))?/gu,
+    ),
     ([, name = "", line = "", mood]) => (mood ? { mood, name, text: line } : { name, text: line }),
   );
 }
@@ -103,13 +100,7 @@ describe("in-flight conversations", () => {
           expect(QUESTS).toContain(`"${text}"`);
           continue;
         }
-        const source =
-          trigger.kind === "job"
-            ? QUESTS
-            : COPY.replace(
-                /Admiral Archie, (?:as the flagship attacks|flagship disabled):/gu,
-                "Admiral Archie:",
-              );
+        const source = trigger.kind === "job" ? QUESTS : COPY;
         expect(source).toContain(`${nameOf(conversation, speaker)}: "${text}"`);
         if (desktop !== undefined) {
           expect(COPY).toContain(`${text}" (desktop: "${desktop}")`);
