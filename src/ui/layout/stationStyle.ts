@@ -223,6 +223,11 @@ export const STATION_STYLE = `
   text-overflow:ellipsis;
   white-space:nowrap
 }
+/* Shop wells and status badges centre on the full tile, including its bottom lip. */
+.ada-controls [data-shop-stock] .ada-shop-row:not([data-state=unaffordable]) > :is(.ada-well,.ada-shop-slot){
+  position:relative;
+  inset-block-start:${units(TEXT_BUTTON.lipHeight / 2)}
+}
 /* Locked ammo keeps its pack size and requirement together beneath its name. */
 .ada-controls [data-shop-stock] .ada-shop-row:disabled .ada-shop-name{
   grid-template-columns:max-content minmax(0,1fr);
