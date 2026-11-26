@@ -278,8 +278,8 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     }
   };
   const bindings: { dispose(): void }[] = [];
-  const shopBindings: ReturnType<typeof bindAdaAction>[] = [];
-  const jobBindings: ReturnType<typeof bindAdaAction>[] = [];
+  const shopBindings: typeof bindings = [];
+  const jobBindings: typeof bindings = [];
   const clearBindings = (group: typeof bindings) => {
     for (const binding of group.splice(0)) {
       binding.dispose();
@@ -292,20 +292,21 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     inCurrentView(parent, element) &&
     !element.hidden &&
     !element.closest("[hidden], [inert]");
-  const register = (element: HTMLButtonElement, run: () => void, group = bindings) => {
-    group.push(
-      bindAdaAction(
-        {
-          click: {
-            availability: () => (element.disabled ? { kind: "omitted" } : { kind: "available" }),
-            run,
-          },
-          current: () => canUse(element),
-          slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
+  const createRowButton = (run: (button: HTMLButtonElement) => void) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    const binding = bindAdaAction(
+      {
+        click: {
+          availability: () => (button.disabled ? { kind: "omitted" } : { kind: "available" }),
+          run: () => run(button),
         },
-        element,
-      ),
+        current: () => canUse(button),
+        slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
+      },
+      button,
     );
+    return { button, dispose: () => binding.dispose() };
   };
   const textAction = (
     label: string,
@@ -617,7 +618,40 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   const shopLayouts: { dispose(): void }[] = [];
   const rowElement = (row: StationRow, catalog: RowCatalogue): HTMLButtonElement => {
-    const node = document.createElement("button");
+    const control = createRowButton((node) => {
+      const liveRow = liveRows(catalog).find((item) => item.key === row.key);
+      if (!liveRow) {
+        render();
+        return;
+      }
+      if (liveRow.project) {
+        openProject(liveRow, node);
+        return;
+      }
+      if (liveRow.requiresWeapon !== undefined) {
+        return;
+      }
+      const action = rowAction(liveRow.state);
+      if (action === "select") {
+        options.select(row.key);
+        render();
+        if (view === "shop") {
+          focusShop(row.key);
+        }
+        return;
+      }
+      if (action === "none") {
+        return;
+      }
+      const request = options.request(row.key);
+      if (request.kind === "refused") {
+        refuse(node, options.reducedMotion());
+        return;
+      }
+      openConfirm(liveRow, request, catalog, node);
+    });
+    const node = control.button;
+    (row.project ? jobBindings : shopBindings).push(control);
     const host = document.createElement("div");
     const layout = mountLayout<StationShopRowSchema>(
       {
@@ -647,7 +681,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
           },
           row: {
             create(initial) {
-              node.type = "button";
               node.className = "ada-shop-row";
               node.dataset.item = initial.id;
               node.dataset.state = initial.state;
@@ -687,42 +720,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     if (row.project) {
       node.style.setProperty("--station-task-accent", TASK_COLORS.project);
     }
-    register(
-      node,
-      () => {
-        const liveRow = liveRows(catalog).find((item) => item.key === row.key);
-        if (!liveRow) {
-          render();
-          return;
-        }
-        if (liveRow.project) {
-          openProject(liveRow, node);
-          return;
-        }
-        if (liveRow.requiresWeapon !== undefined) {
-          return;
-        }
-        const action = rowAction(liveRow.state);
-        if (action === "select") {
-          options.select(row.key);
-          render();
-          if (view === "shop") {
-            focusShop(row.key);
-          }
-          return;
-        }
-        if (action === "none") {
-          return;
-        }
-        const request = options.request(row.key);
-        if (request.kind === "refused") {
-          refuse(node, options.reducedMotion());
-          return;
-        }
-        openConfirm(liveRow, request, catalog, node);
-      },
-      row.project ? jobBindings : shopBindings,
-    );
     return node;
   };
 
@@ -761,7 +758,25 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
 
   const jobLayouts: { dispose(): void }[] = [];
   const jobElement = (job: StationJob): HTMLButtonElement => {
-    const node = document.createElement("button");
+    const control = createRowButton((node) => {
+      const services = options.services();
+      const liveJob = options.jobs().find((item) => item.id === job.id);
+      if (
+        !liveJob ||
+        !stationJobsShown(services) ||
+        (liveJob.state !== "held" && !services?.jobs)
+      ) {
+        render();
+        return;
+      }
+      if (jobAction(liveJob.state) === "drop") {
+        openDrop(liveJob, node);
+      } else {
+        openJob(liveJob, node);
+      }
+    });
+    const node = control.button;
+    jobBindings.push(control);
     const host = document.createElement("div");
     jobLayouts.push(
       mountLayout<StationJobRowSchema>(
@@ -795,7 +810,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
             },
             row: {
               create(initial) {
-                node.type = "button";
                 node.className = "ada-shop-row ada-job-row";
                 node.dataset.job = initial.id;
                 node.style.setProperty("--station-task-accent", TASK_COLORS.job);
@@ -825,27 +839,6 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
         },
         stationJobRowTree(labels, job),
       ),
-    );
-    register(
-      node,
-      () => {
-        const services = options.services();
-        const liveJob = options.jobs().find((item) => item.id === job.id);
-        if (
-          !liveJob ||
-          !stationJobsShown(services) ||
-          (liveJob.state !== "held" && !services?.jobs)
-        ) {
-          render();
-          return;
-        }
-        if (jobAction(liveJob.state) === "drop") {
-          openDrop(liveJob, node);
-        } else {
-          openJob(liveJob, node);
-        }
-      },
-      jobBindings,
     );
     return node;
   };
