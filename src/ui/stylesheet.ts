@@ -1,6 +1,7 @@
 import layoutTreeCss from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree.css?raw";
 
 import { ACHIEVEMENTS_STYLE } from "./achievementsCard.ts";
+import { BOSS_HUD_STYLE } from "./bossHud.ts";
 import { COMPLETION_INDICATOR_STYLE } from "./completionIndicator.ts";
 import { CONTROL_HELP_STYLE } from "./controlHelp.ts";
 import { CONVERSATION_STYLE } from "./conversation.ts";
@@ -53,6 +54,7 @@ export const UI_STYLESHEET = [
   WEAPON_STYLE,
   DETAIL_CARD_STYLE,
   STATUS_PILL_STYLE,
+  BOSS_HUD_STYLE,
   ITEM_NOTICE_STYLE,
   DISABLED_BANNER_STYLE,
   PENNY_MARKERS_STYLE,
