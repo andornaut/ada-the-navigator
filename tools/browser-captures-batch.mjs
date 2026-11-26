@@ -178,6 +178,36 @@ function addEnemy(model, { archetype, fire = [], id, screen, setup, weaponLevel 
   });
   return enemy;
 }
+/**
+ * Phantom's battle at its last phase, every settlement freed, with the flagship at its waypoint at
+ * a screen offset from Ada, holding its fire.
+ */
+function phantomFlagship(model, screen) {
+  const flight = model.state.flight;
+  const waypoint = at(flight, screen);
+  model.state.progress[6].phantom = {
+    broken: [...PHANTOM_DESTINATIONS],
+    flagshipKnown: true,
+    freed: [...PHANTOM_DESTINATIONS],
+  };
+  Object.assign(flight.phantom, {
+    blockades: {},
+    enemyIds: [PHANTOM_FLAGSHIP],
+    phase: "flagship",
+    wave: 3,
+    waypoint,
+  });
+  delete flight.phantom.pendingEncounter;
+  const flagship = spawnChapterEnemy(CONTENT, "capital", PHANTOM_FLAGSHIP, waypoint, flight, {
+    home: waypoint,
+  });
+  assert.ok(flagship?.enemy, "Phantom's flagship spawns at its waypoint");
+  flagship.enemy.primaryCooldown = 999;
+  for (const part of flagship.enemy.hardpoints) {
+    part.cooldown = 999;
+  }
+  return flagship.enemy;
+}
 const destroyWeapons = (enemy) => {
   for (const part of enemy.hardpoints) {
     if (!["command", "engine", "engine-left", "engine-right"].includes(part.id)) {
@@ -1606,34 +1636,7 @@ export function batchCaptures(ctx) {
           [station.id]: { identified: true, symbol: "hostileStation", taskCategory: "generic" },
         };
         if (galaxy === 6) {
-          // The battle's last phase: every settlement freed and the flagship at its waypoint.
-          const waypoint = at(flight, { x: 0, y: -340 });
-          model.state.progress[6].phantom = {
-            broken: [...PHANTOM_DESTINATIONS],
-            flagshipKnown: true,
-            freed: [...PHANTOM_DESTINATIONS],
-          };
-          Object.assign(flight.phantom, {
-            blockades: {},
-            enemyIds: [PHANTOM_FLAGSHIP],
-            phase: "flagship",
-            wave: 3,
-            waypoint,
-          });
-          delete flight.phantom.pendingEncounter;
-          const flagship = spawnChapterEnemy(
-            CONTENT,
-            "capital",
-            PHANTOM_FLAGSHIP,
-            waypoint,
-            flight,
-            { home: waypoint },
-          );
-          assert.ok(flagship?.enemy, "Phantom's flagship spawns at its waypoint");
-          flagship.enemy.primaryCooldown = 999;
-          for (const part of flagship.enemy.hardpoints) {
-            part.cooldown = 999;
-          }
+          phantomFlagship(model, { x: 0, y: -340 });
           expected[PHANTOM_FLAGSHIP] = { identified: true, symbol: "heavy", taskCategory: "story" };
         }
         const shown = Object.fromEntries(
@@ -1742,6 +1745,60 @@ export function batchCaptures(ctx) {
     assert.deepEqual(shown, expected, "Phantom's field shows each edge marker");
     await open(canonical(model, "markers-phantom-field"));
     await ctx.pageShot("markers-phantom-field.png");
+  }
+
+  // Fixed front Lasers (gameplay/ships.md "Difficulty"): Sunflower's frigate and capital and
+  // Phantom's flagship cruising nose on to Ada at two headings with only their front Lasers
+  // armed, then each with its first port destroyed. Each case is released from its saved start
+  // and stepped four frames 150 ms of clock time apart.
+  async function heavyFrontLasers() {
+    const ships = [
+      ["frigate", 1, "frigate"],
+      ["capital", 1, "capital"],
+      ["flagship", 6, "capital"],
+    ];
+    const headings = [
+      ["west", { x: -260, y: 0 }],
+      ["north", { x: 80, y: -210 }],
+    ];
+    const cases = [
+      ...ships.flatMap((ship) => headings.map((heading) => [ship, heading, false])),
+      ...ships.map((ship) => [ship, headings[0], true]),
+    ];
+    await inTurn(cases, async ([[name, galaxy, archetype], [side, screen], destroyed]) => {
+      const model = flightModel(galaxy);
+      const flight = model.state.flight;
+      withoutEnemies(flight);
+      const enemy =
+        name === "flagship"
+          ? phantomFlagship(model, screen)
+          : addEnemy(model, { archetype, id: `browser-art:front-lasers-${name}`, screen });
+      const size = Math.hypot(
+        flight.player.x - enemy.position.x,
+        flight.player.y - enemy.position.y,
+      );
+      const nose = {
+        x: (flight.player.x - enemy.position.x) / size,
+        y: (flight.player.y - enemy.position.y) / size,
+      };
+      enemy.engaged = true;
+      enemy.facing = nose;
+      enemy.heading = nose;
+      enemy.velocity = { x: nose.x * 20, y: nose.y * 20 };
+      enemy.firePhasesInitialized = true;
+      const ports = enemy.hardpoints.filter(({ id }) => id.startsWith("prow"));
+      assert.equal(ports.length, name === "frigate" ? 1 : 2, `The ${name} carries front Lasers`);
+      for (const part of ports) {
+        part.cooldown = 0.2;
+      }
+      if (destroyed) {
+        ports[0].hp = 0;
+      }
+      const fixture = `heavy-front-lasers-${name}-${destroyed ? "destroyed" : side}`;
+      await open(canonical(model, fixture));
+      await ctx.release();
+      await ctx.frames(fixture, { every: 150, shots: 4 });
+    });
   }
 
   // The holodisk item icons as served: icon-holodisk-24 and the 16 and 20 px vectors at their
@@ -1890,6 +1947,7 @@ export function batchCaptures(ctx) {
     fleet,
     "fleet-craft": fleetCraft,
     "fleet-tops": fleetTops,
+    "heavy-front-lasers": heavyFrontLasers,
     "holodisk-icon": holodiskIcon,
     "jet-halo": jetHalo,
     hostile,
