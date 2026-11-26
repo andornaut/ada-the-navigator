@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { CONVERSATION_BOX } from "../data/layout.ts";
 import { visualNoticeTiming } from "../data/noticeTiming.ts";
 import { immutableScanOutcome, type ScanOutcome } from "../model/scanOutcomes.ts";
-import { fromHudEdge } from "./layout/css.ts";
+import { CONVERSATION_STYLE } from "./conversation.ts";
+import { fromHudEdge, units } from "./layout/css.ts";
 import { STATUS_PILL } from "./layout/playView.ts";
 import { SPACING } from "./layout/tokens.ts";
 import { createScanFeedbackView } from "./scanFeedbackView.ts";
@@ -81,7 +83,16 @@ function setup() {
     parent as unknown as HTMLElement,
     controls as unknown as HTMLElement,
   );
-  return { boss, disconnect, observed, panel: parent.children[0]!, resize, view };
+  return {
+    boss,
+    disconnect,
+    equip: parent.children[1]!,
+    observed,
+    panel: parent.children[0]!,
+    parent,
+    resize,
+    view,
+  };
 }
 afterEach(() => vi.unstubAllGlobals());
 describe("native scan receipt view", () => {
@@ -196,5 +207,70 @@ describe("native scan receipt view", () => {
     view.dispose();
     expect(panel.removed).toBe(true);
     expect(disconnect).toHaveBeenCalledOnce();
+  });
+});
+
+describe("equipped weapon notice", () => {
+  it.each([720, 360])(
+    "centers below HUD rows within a %ipx viewport without intercepting focus",
+    (width) => {
+      const { boss, equip, panel, parent, resize, view } = setup();
+      parent.clientWidth = width;
+      const row = fromHudEdge("top", CONVERSATION_BOX.top);
+      expect(equip.hidden).toBe(true);
+      view.equip("Heavy Missile");
+      view.renderEquip(false, 0);
+      expect(equip.textContent).toBe("Heavy Missile");
+      expect(equip.style.top).toBe(row);
+      expect(equip.style.left).toBe("50%");
+      expect(equip.style.maxWidth).toBe(
+        `min(${units(CONVERSATION_BOX.maxWidth)}, 100% - ${fromHudEdge("left")} - ${fromHudEdge("right")})`,
+      );
+      expect(equip.style.pointerEvents).toBe("none");
+      expect(equip.attributes.get("tabindex")).toBeUndefined();
+      expect(equip.attributes.get("role")).toBe("status");
+      expect(equip.style.zIndex).toBe("1");
+      expect(CONVERSATION_STYLE).toMatch(/\.ada-conversation\{[^}]+z-index:5;/u);
+
+      boss.offsetTop = 12;
+      boss.offsetHeight = 68;
+      resize();
+      expect(equip.style.top).toBe(`max(${row}, ${80 + SPACING.gap}px)`);
+      view.enqueue([receipt()]);
+      panel.offsetTop = 90;
+      panel.offsetHeight = 30;
+      view.render(context, 0);
+      expect(equip.style.top).toBe(`max(${row}, ${120 + SPACING.gap}px)`);
+      expect(panel.children[1]!.textContent).toBe("Actual target");
+      boss.offsetHeight = 0;
+      view.render(context, 2500);
+      view.render(context, 0);
+      resize();
+      expect(equip.style.top).toBe(row);
+    },
+  );
+
+  it("holds two seconds, fades over 500ms, and replaces the previous name and timing", () => {
+    const { equip, view } = setup();
+    view.equip("Multi-Laser");
+    view.renderEquip(false, 0);
+    view.renderEquip(false, 2000);
+    expect(equip.style.opacity).toBe("1");
+    view.renderEquip(false, 2250);
+    expect(equip.style.opacity).toBe("0.5");
+    view.equip("Phaser");
+    view.renderEquip(false, 2250);
+    expect(equip.textContent).toBe("Phaser");
+    expect(equip.style.opacity).toBe("1");
+    view.renderEquip(true, 2250);
+    expect(equip.hidden).toBe(true);
+    view.renderEquip(false, 10000);
+    view.renderEquip(false, 12250);
+    expect(equip.style.opacity).toBe("0.5");
+    view.renderEquip(false, 12500);
+    expect(equip.hidden).toBe(true);
+    expect(equip.textContent).toBe("");
+    view.dispose();
+    expect(equip.removed).toBe(true);
   });
 });

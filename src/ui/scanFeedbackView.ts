@@ -1,7 +1,9 @@
+import { CONVERSATION_BOX } from "../data/layout.ts";
+import { visualNoticeTiming } from "../data/noticeTiming.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
 import type { ScanOutcome } from "../model/scanOutcomes.ts";
 import { createCompletionIndicator } from "./completionIndicator.ts";
-import { font, units } from "./layout/css.ts";
+import { font, fromHudEdge, pixels, units } from "./layout/css.ts";
 import { ITEM_NOTICE } from "./layout/itemNotice.ts";
 import { scanFeedbackSlot } from "./layout/scanFeedback.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
@@ -14,10 +16,10 @@ import {
   ScanFeedbackQueue,
 } from "./scanFeedback.ts";
 import { STATUS_COLOURS } from "./statusPill.ts";
-/** Native receipt presentation shares the map glyph identity and read-only completion control. */
-export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElement) {
+
+function createShortFlightPanel(parent: HTMLElement, className: string) {
   const panel = parent.ownerDocument.createElement("div");
-  panel.className = "ada-item-notice-panel ada-scan-feedback";
+  panel.className = `ada-item-notice-panel ${className}`;
   panel.hidden = true;
   panel.setAttribute("role", "status");
   panel.setAttribute("aria-live", "polite");
@@ -42,6 +44,29 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
   });
   panel.style.setProperty("--notice-accent", STATUS_COLOURS.count);
   parent.append(panel);
+  return panel;
+}
+
+/** Native receipt presentation shares the map glyph identity and read-only completion control. */
+export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElement) {
+  const panel = createShortFlightPanel(parent, "ada-scan-feedback");
+  const equip = createShortFlightPanel(parent, "ada-weapon-equip-notice");
+  const safeWidth = `100% - ${fromHudEdge("left")} - ${fromHudEdge("right")}`;
+  equip.style.maxWidth = `min(${units(CONVERSATION_BOX.maxWidth)}, ${safeWidth})`;
+  equip.style.overflowWrap = "anywhere";
+  let equipped: { elapsed: number; shownAt?: number } | undefined;
+  const { fadeMs, holdMs } = visualNoticeTiming("brief", "");
+  const hide = (notice: HTMLElement) => {
+    if (!notice.hidden) {
+      notice.hidden = true;
+      notice.style.display = "none";
+    }
+  };
+  const clearEquip = () => {
+    equipped = undefined;
+    hide(equip);
+    equip.textContent = "";
+  };
   const queue = new ScanFeedbackQueue();
   let current: ScanFeedbackContent | undefined;
   let opacity = "";
@@ -81,51 +106,68 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
   const weapons = controls.querySelector<HTMLElement>(".ada-weapon-selector");
   const boss = controls.querySelector<HTMLElement>(".ada-boss-hud");
   const fit = (): void => {
-    if (panel.hidden) {
+    if (panel.hidden && equip.hidden) {
       return;
     }
-    const width = parent.clientWidth;
-    const slot = scanFeedbackSlot({
-      bossBottom: boss?.offsetHeight ? boss.offsetTop + boss.offsetHeight : 0,
-      leftEnd: Math.max(
-        0,
-        ...left
-          .filter((node) => node.offsetWidth > 0)
-          .map((node) => node.offsetLeft + node.offsetWidth),
-      ),
-      rightStart: weapons?.offsetWidth ? weapons.offsetLeft : width,
-      unit: readViewUnit(parent),
-      width,
-    });
-    if (panel.style.maxWidth !== slot.maxWidth) {
-      panel.style.maxWidth = slot.maxWidth;
+    const unit = readViewUnit(parent);
+    const bossBottom = boss?.offsetHeight ? boss.offsetTop + boss.offsetHeight : 0;
+    if (!panel.hidden) {
+      const width = parent.clientWidth;
+      const slot = scanFeedbackSlot({
+        bossBottom,
+        leftEnd: Math.max(
+          0,
+          ...left
+            .filter((node) => node.offsetWidth > 0)
+            .map((node) => node.offsetLeft + node.offsetWidth),
+        ),
+        rightStart: weapons?.offsetWidth ? weapons.offsetLeft : width,
+        unit,
+        width,
+      });
+      if (panel.style.maxWidth !== slot.maxWidth) {
+        panel.style.maxWidth = slot.maxWidth;
+      }
+      if (panel.style.top !== slot.top) {
+        panel.style.top = slot.top;
+      }
     }
-    if (panel.style.top !== slot.top) {
-      panel.style.top = slot.top;
+    if (!equip.hidden) {
+      const scanBottom = panel.hidden ? 0 : panel.offsetTop + panel.offsetHeight;
+      const bottom = Math.max(bossBottom, scanBottom);
+      // This existing HUD clearance includes the weapon ammo pills below their discs.
+      const rowTop = fromHudEdge("top", CONVERSATION_BOX.top);
+      const top = bottom > 0 ? `max(${rowTop}, ${pixels(bottom + SPACING.gap * unit)})` : rowTop;
+      if (equip.style.top !== top) {
+        equip.style.top = top;
+      }
     }
   };
   const resize = new ResizeObserver(fit);
-  for (const node of [parent, ...left, weapons, boss]) {
+  for (const node of [parent, ...left, weapons, boss, panel]) {
     if (node) {
       resize.observe(node);
     }
   }
   return {
+    clearEquip,
     dispose(): void {
       resize.disconnect();
       queue.reset();
       panel.remove();
+      equip.remove();
     },
     enqueue(outcomes: readonly ScanOutcome[]): void {
       queue.enqueue(outcomes);
     },
+    equip(name: string): void {
+      equipped = { elapsed: 0 };
+      equip.textContent = name;
+    },
     render(context: ScanFeedbackContext, milliseconds: number): void {
       const frame = queue.frame(context, milliseconds);
       if (!frame) {
-        if (!panel.hidden) {
-          panel.hidden = true;
-          panel.style.display = "none";
-        }
+        hide(panel);
         return;
       }
       content(frame.content);
@@ -140,8 +182,36 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
         panel.style.opacity = opacity;
       }
     },
+    renderEquip(covered: boolean, time: number): void {
+      if (!equipped) {
+        return;
+      }
+      if (covered) {
+        delete equipped.shownAt;
+        hide(equip);
+        return;
+      }
+      if (equipped.shownAt !== undefined) {
+        equipped.elapsed += Math.max(0, time - equipped.shownAt);
+      }
+      equipped.shownAt = time;
+      if (equipped.elapsed >= holdMs + fadeMs) {
+        clearEquip();
+        return;
+      }
+      if (equip.hidden) {
+        equip.hidden = false;
+        equip.style.display = "flex";
+        fit();
+      }
+      const nextOpacity = String(1 - Math.max(0, equipped.elapsed - holdMs) / fadeMs);
+      if (equip.style.opacity !== nextOpacity) {
+        equip.style.opacity = nextOpacity;
+      }
+    },
     reset(): void {
       queue.reset();
+      clearEquip();
       panel.hidden = true;
       panel.style.display = "none";
       panel.replaceChildren();

@@ -180,6 +180,7 @@ import {
   buildScene,
   flushScene,
   observeFeedback,
+  observeWeaponEquip,
   refreshScene,
   renderConversation,
 } from "./sceneUi.ts";
@@ -800,7 +801,9 @@ export class GameScene extends Scene {
       };
       // Use can open a quest modal while this frame consumes its input.
       if (!this.settingsOpen) {
+        const previousWeapon = flight.weapon;
         this.model.step(Math.min(milliseconds / 1000, 0.05), input);
+        observeWeaponEquip(this, flight, previousWeapon);
       }
       observeFeedback(this);
       startRockBreaks(this, time);

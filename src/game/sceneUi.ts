@@ -123,6 +123,7 @@ import { readUpgradePickup } from "./upgradePickup.ts";
 const scanViews = new WeakMap<
   object,
   {
+    equipFlight?: FlightState;
     view: ReturnType<typeof createScanFeedbackView>;
     state: GameModel["state"];
     time: number | undefined;
@@ -620,7 +621,12 @@ export function buildScene(scene: UiContext): void {
       if (!scene.settingsOpen && state.mode === "space" && !state.dialogue && !state.docked) {
         apply(
           () => {
+            const flight = state.flight;
+            const previous = flight?.weapon;
             refused = !scene.model.selectWeapon(weapon);
+            if (!refused && flight && previous !== undefined) {
+              observeWeaponEquip(scene, flight, previous);
+            }
           },
           { preserveInput: true },
         );
@@ -1153,6 +1159,7 @@ export function buildScene(scene: UiContext): void {
     const scan = scanViews.get(scene);
     if (scan) {
       scan.time = undefined;
+      scan.view.renderEquip(true, scene.time.now);
     }
     pauseNetworkPlayClock(scene);
     scene.controls.reset();
@@ -1340,12 +1347,21 @@ export function renderConversation(scene: UiContext): void {
   }
   const { insets, view } = scene.controls.layout();
   const area = safeGameArea(insets, view);
-  const flight = scene.model.state.flight;
+  const state = scene.model.state;
+  const flight = state.flight;
   const scan = scanViews.get(scene);
   if (scan) {
-    if (scan.state !== scene.model.state) {
+    if (scan.state !== state) {
       scan.view.reset();
-      scan.state = scene.model.state;
+      scan.state = state;
+      delete scan.equipFlight;
+    }
+    if (
+      scan.equipFlight &&
+      (scan.equipFlight !== flight || state.mode !== "space" || scene.startShown)
+    ) {
+      scan.view.clearEquip();
+      delete scan.equipFlight;
     }
     scan.view.enqueue(scene.model.drainScanOutcomes());
     const scanCovered =
@@ -1362,6 +1378,7 @@ export function renderConversation(scene: UiContext): void {
     const elapsed = scanCovered || scan.time === undefined ? 0 : Math.max(0, now - scan.time);
     scan.time = scanCovered ? undefined : now;
     scan.view.render({ covered: scanCovered, time: now }, elapsed);
+    scan.view.renderEquip(scanCovered, now);
   }
   const penny = pennyLayers.get(scene);
   if (!penny) {
@@ -1383,6 +1400,25 @@ export function renderConversation(scene: UiContext): void {
     },
     markers,
   );
+}
+
+export function observeWeaponEquip(
+  scene: UiContext,
+  flight: FlightState,
+  previous: FlightState["weapon"],
+): void {
+  const state = scene.model.state;
+  const scan = scanViews.get(scene);
+  if (
+    scan?.state === state &&
+    !scene.startShown &&
+    state.mode === "space" &&
+    state.flight === flight &&
+    flight.weapon !== previous
+  ) {
+    scan.equipFlight = flight;
+    scan.view.equip(weaponName(CONTENT.labels, flight.weapon));
+  }
 }
 
 export function observeFeedback(scene: UiContext): void {

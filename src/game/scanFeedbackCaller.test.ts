@@ -17,10 +17,16 @@ it("retains production scan receipts under cover without screen or target measur
   const declaration = source.statements.find(
     (node) => ts.isFunctionDeclaration(node) && node.name?.text === "renderConversation",
   )!;
-  const view = { enqueue: vi.fn(), render: vi.fn(), reset: vi.fn() };
+  const view = {
+    clearEquip: vi.fn(),
+    enqueue: vi.fn(),
+    render: vi.fn(),
+    renderEquip: vi.fn(),
+    reset: vi.fn(),
+  };
   const state = { flight: { galaxy: 1, player: { x: 0, y: 0 } }, mode: "space", notice: "" };
   const receipt = { galaxy: 1, targetId: "actual-landmark" };
-  const scan = { state, time: 0, view };
+  const scan = { equipFlight: state.flight, state, time: 0, view };
   const drain = vi.fn().mockReturnValue([receipt]);
   const scene = {
     boxOccupant: null,
@@ -63,6 +69,7 @@ it("retains production scan receipts under cover without screen or target measur
   expect(view.enqueue).toHaveBeenCalledWith([receipt]);
   const first = view.render.mock.calls[0]!;
   expect(first[0].covered).toBe(true);
+  expect(view.renderEquip).toHaveBeenLastCalledWith(true, 20);
   expect(first[1]).toBe(0);
   expect(first[0].time).toBe(20);
   expect(first[0]).toEqual({ covered: true, time: 20 });
@@ -70,6 +77,7 @@ it("retains production scan receipts under cover without screen or target measur
   scene.time.now = 40;
   render(scene);
   expect(view.render.mock.calls[1]![0].covered).toBe(false);
+  expect(view.renderEquip).toHaveBeenLastCalledWith(false, 40);
   expect(view.render.mock.calls[1]![0].time).toBe(40);
   expect(view.render.mock.calls[1]![1]).toBe(0);
   scene.time.now = 140;
@@ -79,4 +87,5 @@ it("retains production scan receipts under cover without screen or target measur
   scene.model.state = { ...state };
   render(scene);
   expect(view.reset).toHaveBeenCalledOnce();
+  expect(scan.equipFlight).toBeUndefined();
 });

@@ -16,6 +16,7 @@ import { CHEAT_AMOUNT, type CheatId } from "../model/cheats.ts";
 import { ensureDestination } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
+import { weaponName } from "../model/shop.ts";
 import type { GameSave } from "../model/types.ts";
 import { UPGRADE_WEAPONS } from "../model/weapons.ts";
 import { createAdaSaves, SAVE_KEYS, SAVE_RESTORE } from "../saving/index.ts";
@@ -194,14 +195,20 @@ describe("in-flight weapon selection", () => {
       settingsOpen: false,
     };
     const requiredReady = vi.fn(() => true);
+    const equip = vi.fn();
+    const scanViews = new Map([[scene, { state: model.state, view: { equip } }]]);
     const context = createContext({
+      CONTENT,
       flushScene,
       newer: false,
       observeFeedback: vi.fn(),
       refreshScene: vi.fn(),
       requiredReady,
+      scanViews,
       scene,
+      weaponName,
     });
+    context.observeWeaponEquip = runInContext(callback("observeWeaponEquip"), context);
     context.apply = runInContext(callback("apply"), context);
     const select = runInContext(callback("onWeaponSelect"), context) as (
       weapon: typeof current.weapon,
@@ -222,6 +229,74 @@ describe("in-flight weapon selection", () => {
     select("laser");
     expect(current.weapon).toBe("multiLaser");
     expect(flushScene).toHaveBeenCalledTimes(2);
+
+    requiredReady.mockReturnValue(true);
+    expect(select("multiLaser")).toBe(false);
+    expect(select("heavyMissile")).toBe(true);
+    model.state.dialogue = { choices: [], context: "test", text: "Panel", title: "Weapon detail" };
+    select("laser");
+    expect(current.weapon).toBe("multiLaser");
+    expect(equip.mock.calls).toEqual([["Rapid Missile"], ["Multi-Laser"]]);
+  });
+
+  it("uses the real flight step to report Laser on the last shot and ignores unchanged or restored weapons", () => {
+    const model = flight();
+    const state = model.state;
+    const current = state.flight!;
+    current.ownedWeapons = ["rapidMissile"];
+    current.ammo.rapidMissile = 1;
+    expect(model.selectWeapon("rapidMissile")).toBe(true);
+    const scene = { model, settingsOpen: false };
+    const equip = vi.fn();
+    const scan = { state, view: { equip } };
+    const context = createContext({
+      CONTENT,
+      scanViews: new Map([[scene, scan]]),
+      weaponName,
+    });
+    context.observeWeaponEquip = runInContext(callback("observeWeaponEquip"), context);
+    const sceneSource = ts.createSourceFile(
+      "scene.ts",
+      readFileSync(new URL("./scene.ts", import.meta.url), "utf8"),
+      ts.ScriptTarget.Latest,
+      true,
+    );
+    let step: ts.IfStatement | undefined;
+    function visit(node: ts.Node): void {
+      if (
+        ts.isIfStatement(node) &&
+        ts.isBlock(node.thenStatement) &&
+        node.thenStatement.statements.some(
+          (statement) =>
+            ts.isExpressionStatement(statement) &&
+            ts.isCallExpression(statement.expression) &&
+            statement.expression.expression.getText(sceneSource) === "this.model.step",
+        )
+      ) {
+        step = node;
+      }
+      ts.forEachChild(node, visit);
+    }
+    visit(sceneSource);
+    if (!step) {
+      throw new Error("Missing production flight step");
+    }
+    const dispatch = runInContext(
+      `(function (flight, milliseconds, input) { ${step.getText(sceneSource)} })`,
+      context,
+    ) as (this: typeof scene, flight: typeof current, milliseconds: number, input: object) => void;
+    const input = { aim: { x: 0, y: -1 }, fire: true, move: { x: 0, y: 0 }, use: false };
+    expect(equip).not.toHaveBeenCalled();
+    dispatch.call(scene, current, 10, input);
+    expect(current.ammo.rapidMissile).toBe(0);
+    expect(current.weapon).toBe("laser");
+    expect(state.notice).toBe("Out of ammo.");
+    dispatch.call(scene, current, 10, input);
+    expect(equip.mock.calls).toEqual([["Laser"]]);
+
+    // A detached flight cannot announce a weapon on behalf of this scene.
+    context.observeWeaponEquip(scene, { ...current }, "rapidMissile");
+    expect(equip.mock.calls).toEqual([["Laser"]]);
   });
 });
 
