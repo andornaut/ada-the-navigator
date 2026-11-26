@@ -34,6 +34,7 @@ const INPUT_STATE = new Set([
   "src/input/state.ts",
 ]);
 const ENTRIES = new Set([
+  "src/crash/install.ts",
   "src/landing/main.ts",
   "src/lifecycle.ts",
   "src/loading/bootstrap.ts",
@@ -271,9 +272,6 @@ export function importFindings(graph: Graph): string[] {
  * and ESLint guards the layers.
  */
 export const KNOWN_VIOLATIONS: readonly string[] = [
-  "src/crash/crashScreen.ts (platform) imports src/ui/actionBinding.ts (ui)",
-  "src/crash/crashScreen.ts (platform) imports src/ui/holdActionsAdapter.ts (ui)",
-  "src/crash/crashScreen.ts (platform) imports src/ui/pressScope.ts (ui)",
   "src/loading/startup.ts (platform) imports src/ui/actionBinding.ts (ui)",
   "src/loading/startup.ts (platform) imports src/ui/holdActionsAdapter.ts (ui)",
   "src/loading/startup.ts (platform) imports src/ui/modal.ts (ui)",

@@ -44,7 +44,7 @@ vi.mock("./ui/holdActionsAdapter.ts", () => ({
 }));
 vi.mock("./ui/pressScope.ts", () => ({ rootPressGuard: () => boot.appGuard }));
 vi.mock("./crash/install.ts", () => ({}));
-vi.mock("./crash/crashScreen.ts", () => ({
+vi.mock("./ui/crashScreen.ts", () => ({
   CRASH_SCREEN: {
     stopGameOnCrash: (callback: () => void) => {
       boot.crash = callback;

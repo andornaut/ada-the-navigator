@@ -17,7 +17,6 @@ import { lockGameOrientation } from "@andornaut/game-kit/runtime/web/view/dom/wa
 import { followFrameTurn } from "@andornaut/game-kit/runtime/web/view/phaser/followFrameTurn";
 import { Core, Game, Scale, Scenes, WEBGL } from "phaser";
 
-import { CRASH_SCREEN } from "./crash/crashScreen.ts";
 import { SCREEN } from "./data/screen.ts";
 import { saves } from "./game/persistence.ts";
 import { GameScene } from "./game/scene.ts";
@@ -30,6 +29,7 @@ import { requireBootJets, validateBootCore } from "./loading/requiredCore.ts";
 import { requireSceneFiles } from "./loading/requiredFiles.ts";
 import { startupFence } from "./loading/startup.ts";
 import { launchPhoneApp, requireNewerVersion, setupPhoneApp } from "./pwa/index.ts";
+import { CRASH_SCREEN } from "./ui/crashScreen.ts";
 import { bindAdaActionRoot } from "./ui/holdActionsAdapter.ts";
 import { rootPressGuard } from "./ui/pressScope.ts";
 import { FRAME_TURN } from "./view/frameTurn.ts";

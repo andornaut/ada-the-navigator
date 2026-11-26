@@ -4,8 +4,8 @@ import "@andornaut/game-kit/runtime/web/progress/dom/progressBar.css";
 
 import type { LaunchResult } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 
-import { CRASH_SCREEN } from "../crash/crashScreen.ts";
 import { preparePhoneLaunch } from "../pwa/index.ts";
+import { CRASH_SCREEN } from "../ui/crashScreen.ts";
 import { mountLoading } from "../ui/loadingBar.ts";
 import type { RequiredBootResources } from "./bootReveal.ts";
 import { EntryReloadRequired } from "./entryRecovery.ts";

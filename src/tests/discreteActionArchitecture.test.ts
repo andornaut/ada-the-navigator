@@ -867,8 +867,8 @@ const recoveryStartup = {
 };
 
 const recoveryCrash = {
-  path: "src/crash/crashScreen.ts",
-  text: readFileSync(new URL("../crash/crashScreen.ts", import.meta.url), "utf8"),
+  path: "src/ui/crashScreen.ts",
+  text: readFileSync(new URL("../ui/crashScreen.ts", import.meta.url), "utf8"),
 };
 
 const crashAssertion = "completed.root.assertBindings()";
@@ -904,7 +904,7 @@ it.each([
   [
     "a foreign root factory",
     recoveryCrash,
-    'from "../ui/holdActionsAdapter.ts"',
+    'from "./holdActionsAdapter.ts"',
     'from "./foreignRecovery.ts"',
   ],
   [
@@ -972,7 +972,7 @@ it.each([
     const result = scanDiscreteActionProject([
       ...recoverySources.map((source) => (source.path === input.path ? mutated : source)),
       {
-        path: "src/crash/foreignRecovery.ts",
+        path: "src/ui/foreignRecovery.ts",
         text: "export function bindAdaRecoveryActionRoot() { return { assertBindings() {} }; }",
       },
     ]);

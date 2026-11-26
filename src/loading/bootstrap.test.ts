@@ -13,7 +13,7 @@ const fixture = vi.hoisted(() => ({
   subscribe: vi.fn(),
 }));
 vi.mock("../crash/install.ts", () => ({}));
-vi.mock("../crash/crashScreen.ts", () => ({
+vi.mock("../ui/crashScreen.ts", () => ({
   CRASH_SCREEN: { stopGameOnCrash: fixture.stopOnCrash },
 }));
 vi.mock("../pwa/index.ts", () => ({ preparePhoneLaunch: fixture.prepare }));
