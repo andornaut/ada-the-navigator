@@ -987,7 +987,8 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   equipped weapon level, with that level's damage, blast, spread and reach,
   plus three enemy-only weapons at level 1. Equipped levels, fire-rate shares
   and projectile speeds are in [Ships](ships.md#enemy-weapons); enemy
-  projectiles fly at 0.6 times Ada's level 1 speed for the weapon. An enemy
+  projectiles fly at 0.6 times Ada's level 1 speed for the weapon from forward-gun
+  ships and 0.8 times from heavies. An enemy
   fires only while it is inside the visible game area. An enemy Heavy Missile
   hit removes 5, 6 or 7 HP at levels 1, 2 and 3.
 - Laser bolts travel at 500, 600 and 700 world units per second at weapon

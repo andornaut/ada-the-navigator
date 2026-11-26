@@ -266,12 +266,12 @@ Heavies:
 
 | Position | Hardpoint | `frigate` hull | Frigate weapons | `capital` hull | Capital weapons | Heavy share |
 | -------: | --------: | -------------: | --------------: | -------------: | --------------: | ----------: |
-|        1 |         5 |             20 |               2 |             40 |               4 |          ×1 |
-|        2 |         5 |             22 |               2 |             44 |               4 |          ×1 |
-|        3 |         6 |             30 |               3 |             60 |               6 |        ×1.2 |
-|        4 |         6 |             32 |               3 |             64 |               6 |        ×1.3 |
-|        5 |         7 |             44 |               4 |             88 |               8 |        ×1.4 |
-|        6 |         7 |             48 |               4 |             96 |               8 |        ×1.5 |
+|        1 |        10 |             40 |               2 |             80 |               4 |          ×1 |
+|        2 |        10 |             44 |               2 |             88 |               4 |          ×1 |
+|        3 |        12 |             60 |               3 |            120 |               6 |        ×1.2 |
+|        4 |        12 |             64 |               3 |            128 |               6 |        ×1.3 |
+|        5 |        14 |             88 |               4 |            176 |               8 |        ×1.4 |
+|        6 |        14 |             96 |               4 |            192 |               8 |        ×1.5 |
 
 - Small-craft columns are hull HP. Outside Sunflower's staged ambient roster,
   the group bonus adds to both ends of each `swarm` and `fighter` group range. Lead is how much of Ada's movement enemy
@@ -279,8 +279,8 @@ Heavies:
   relative to the base catalog. The Fire column applies to enemy-only weapons; shared
   weapons use the equipped-level rate shares below. Enemy group densities are in [Spawn targets](rules.md#spawn-targets).
 - Every heavy hardpoint (weapon, engine, command and platform turret) has the
-  position's hardpoint HP: 5, 5, 6, 6, 7 and 7 along the route. The flagship's
-  parts have 9 HP. A `platform` hull has half the frigate hull.
+  position's hardpoint HP: 10, 10, 12, 12, 14 and 14 along the route. The
+  flagship's parts have 18 HP. A `platform` hull has half the frigate hull.
 - Heavy share multiplies the roster's `frigate` and `capital` weights; the weights
   then renormalize. Placed platforms are not weighted.
 
@@ -342,8 +342,10 @@ coincident shots are allowed. Platforms and stations do not use these phases.
 
 Shared weapon damage is 100% of the player's damage at the equipped level.
 Blast, spread and reach use that level's canonical weapon definition; more fan
-bolts do not add physical mounts. Projectile speed stays at 0.6 times the
-player's level-1 speed for that weapon, without level speed scaling. Enemies
+bolts do not add physical mounts. Projectiles from forward-gun ships (swarm,
+fighter, interceptor, retaliator) fly at 0.6 times the player's level-1 speed
+for that weapon; projectiles from heavies (frigates, capitals, the flagship,
+platforms and hostile stations) fly at 0.8 times, with no level speed scaling. Enemies
 carry no ammunition.
 
 | Archetype       | Weapon signature                                            |
@@ -376,19 +378,20 @@ line along its facing for 0.4 seconds before the beam fires along it. The aim
 line stays where it started, so Ada can move off it. The fighter's Multi-Laser fan
 is centred on its facing.
 
-| Enemy weapon  | Projectile speed | Notes                                               |
-| ------------- | ---------------: | --------------------------------------------------- |
-| Laser         |              300 | Platform two-shot bursts 0.15 s apart               |
-| Multi-Laser   |              240 | The equipped level's fan, centred on the facing     |
-| Rapid Missile |              300 | Equipped-level cadence; its blast damages Ada       |
-| Heavy Missile |              240 | Equipped-level damage; its blast damages Ada        |
-| Scattershot   |              360 | Equipped-level pellet count, damage, range and fade |
-| Phaser        |          Hitscan | 0.4 s fixed aim line along the facing before firing |
+| Enemy weapon  | Projectile speed | Notes                                                             |
+| ------------- | ---------------: | ----------------------------------------------------------------- |
+| Laser         |        300 / 400 | Swarm 300; heavies 400; platform two-shot bursts 0.15 s apart     |
+| Multi-Laser   |              240 | The equipped level's fan, centred on the facing                   |
+| Rapid Missile |        300 / 400 | Retaliator 300; hostile station 400; its blast damages Ada        |
+| Heavy Missile |              320 | Frigate only; equipped-level damage; its blast damages Ada        |
+| Scattershot   |              480 | Capital only; equipped-level pellet count, damage, range and fade |
+| Phaser        |          Hitscan | 0.4 s fixed aim line along the facing before firing               |
 
 Projectile speeds are world units per second. The three enemy-only weapons:
 
 - **Ring burst:** 8 bolts outward in a ring, 1.5 damage each, every 3.5 seconds,
-  at 240 world units per second.
+  at 320 world units per second, raised by the same 0.8 to 0.6 ratio as
+  heavies' shared weapons.
 - **Mine layer:** drops a stationary mine behind the ship every 5 seconds, at most
   4 at a time. A mine deals 3 damage when Ada's drawn ship touches its drawn
   silhouette, then is gone; Ada's shots
@@ -433,7 +436,7 @@ Frigates, capitals and platforms have hull HP and hardpoints.
 
 Hostile stations have six active weapon parts in Andromeda, seven in Cartwheel
 and eight in Phantom. Their hull HP is twice the active weapon count times the
-route part HP: 72, 98 and 112 respectively. Part hits damage only the selected
+route part HP: 144, 196 and 224 respectively. Part hits damage only the selected
 part, with no hull damage or overflow. Hull hits damage only the hull. A station
 has no hull floor: zero hull destroys it, and disabling every weapon disables it.
 Friendly stations retain one HP. Existing ship hull HP and the flagship hull floor
