@@ -125,9 +125,6 @@ export const NO_LANDMARKS: LandmarkChart = { charted: [], total: 0 };
 export type MapPlaceKind =
   "destination" | "holodisk" | "hostileStation" | "job" | "landmark" | "station";
 
-// CLEANUP (added 2026-11-26): Remove after scan outcomes and Map layout import the authored type.
-export type { MapSymbol };
-
 /** A story destination's symbol: the Map kind its data declares (data/destinations.ts). */
 function destinationSymbol(id: string): MapSymbol {
   return DESTINATIONS[id]?.mapKind ?? "destination";

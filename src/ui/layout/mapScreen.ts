@@ -1,6 +1,7 @@
 import { clamp } from "@andornaut/game-kit/runtime/numbers";
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
+import type { MapSymbol } from "../../data/destinations.ts";
 import {
   HUD_BUTTON,
   MAP_HUD_LABEL_WIDTHS,
@@ -10,7 +11,7 @@ import {
   TEXT_BUTTON,
 } from "../../data/layout.ts";
 import { TASK_COLORS } from "../../data/taskCategories.ts";
-import { CHARTING_RADIUS, type MapSymbol } from "../../model/map.ts";
+import { CHARTING_RADIUS } from "../../model/map.ts";
 import { wrapPoint } from "../../model/worldGeometry.ts";
 import { CARD_CLOSE } from "./cardFrame.ts";
 import { COLOURS, UNLISTED_COLOURS } from "./colours.ts";

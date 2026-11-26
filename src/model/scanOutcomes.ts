@@ -1,6 +1,6 @@
+import type { MapSymbol } from "../data/destinations.ts";
 import type { JobType } from "../data/jobs.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import type { MapSymbol } from "./map.ts";
 
 export interface ScanQuestIdentity {
   readonly id: string;
