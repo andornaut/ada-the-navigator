@@ -294,14 +294,31 @@ export function mapImage(view: Pick<MapView, "worldSide">, world: Point): Point 
   return wrapPoint(view.worldSide, world);
 }
 
-/** A world position's place on screen, in logical px. */
-export function toScreen(inner: Rect, view: MapView, world: Point): Point {
-  const projected = mapProjection(mapImage(view, world));
+function projectedToScreen(inner: Rect, view: MapView, projected: Point): Point {
   const middle = centreOf(inner);
   return {
     x: middle.x + (projected.x - view.centre.x) * view.scale,
     y: middle.y + (projected.y - view.centre.y) * view.scale,
   };
+}
+
+/** A world position's place on screen, in logical px. */
+export function toScreen(inner: Rect, view: MapView, world: Point): Point {
+  return projectedToScreen(inner, view, mapProjection(mapImage(view, world)));
+}
+
+/** The four unwrapped tips of the playable square's projection, in screen order. */
+export function mapWorldDiamond(inner: Rect, view: MapView): readonly [Point, Point, Point, Point] {
+  const centre = projectedToScreen(inner, view, { x: 0, y: 0 });
+  const { height, width } = squareExtent(view.worldSide);
+  const dx = (width * view.scale) / 2;
+  const dy = (height * view.scale) / 2;
+  return [
+    { x: centre.x, y: centre.y - dy },
+    { x: centre.x + dx, y: centre.y },
+    { x: centre.x, y: centre.y + dy },
+    { x: centre.x - dx, y: centre.y },
+  ];
 }
 
 /** The canonical survey oval in logical screen coordinates. */

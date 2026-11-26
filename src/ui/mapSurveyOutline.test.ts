@@ -6,7 +6,14 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
 import { CHARTING_ORIGIN, CHARTING_RADIUS, withinChartingRadius } from "../model/map.ts";
-import { MAP_COLORS, type MapView, panView, scaleLimits, toScreen } from "./layout/mapScreen.ts";
+import {
+  MAP_COLORS,
+  type MapView,
+  mapWorldDiamond,
+  panView,
+  scaleLimits,
+  toScreen,
+} from "./layout/mapScreen.ts";
 import { drawMapSurveyOutline } from "./mapSurveyOutline.ts";
 
 const INNER = { height: 240, width: 600, x: 30, y: 80 };
@@ -124,7 +131,7 @@ describe("central survey outline", () => {
   });
 });
 
-it("draws the survey outline after fog and before search markers, including an unexplored map", () => {
+it("draws the survey after fog and covers only the exterior after search markers", () => {
   const source = ts.createSourceFile(
     "mapScreen.ts",
     readFileSync(new URL("./mapScreen.ts", import.meta.url), "utf8"),
@@ -150,30 +157,65 @@ it("draws the survey outline after fog and before search markers, including an u
   ).outputText;
   for (const explored of [[], [{ x: 0, y: 0 }]]) {
     const calls: string[] = [];
-    const context = { clearRect: () => calls.push("clear") };
+    const path: number[][] = [];
+    const fills: { colour: string; rule: CanvasFillRule }[] = [];
+    const context = {
+      beginPath: () => {
+        path.length = 0;
+      },
+      clearRect: () => calls.push("clear"),
+      closePath: () => calls.push("close path"),
+      fill: (rule: CanvasFillRule) => {
+        calls.push("outer");
+        fills.push({ colour: context.fillStyle, rule });
+      },
+      fillStyle: "",
+      lineTo: (x: number, y: number) => path.push([x, y]),
+      moveTo: (x: number, y: number) => path.push([x, y]),
+      rect: (...args: number[]) => path.push(args),
+      restore: () => calls.push("restore"),
+      save: () => calls.push("save"),
+    };
     const state = { field: { fog: "#000" }, map: { explored } };
-    const fog = { getContext: () => context, height: 360, width: 720 };
+    const fog = { getContext: () => context, height: 0, width: 0 };
     const draw = new Function(
       "state",
       "fog",
       "screen",
       "devicePixelRatio",
       "fogOver",
+      "mapWorldDiamond",
       "drawMapSurveyOutline",
       "drawSearchArea",
       body,
     )(
       state,
       fog,
-      { clientHeight: 360, clientWidth: 720 },
-      1,
+      { clientHeight: 400, clientWidth: 800 },
+      2,
       () => calls.push("fog"),
+      mapWorldDiamond,
       () => calls.push("survey"),
       () => calls.push("search"),
     ) as (inner: Rect, unit: number, view: MapView) => void;
-    draw(INNER, 1, { centre: { x: 0, y: 0 }, scale: 0.01, worldSide: SIDE });
-    expect(calls).toEqual(
-      explored.length ? ["clear", "fog", "survey", "search"] : ["clear", "survey", "search"],
-    );
+    draw(INNER, 1.25, { centre: { x: 60_000, y: -30_000 }, scale: 0.002, worldSide: 240_000 });
+    expect(calls).toEqual([
+      "clear",
+      ...(explored.length ? ["fog"] : []),
+      "survey",
+      "search",
+      "save",
+      "close path",
+      "outer",
+      "restore",
+    ]);
+    expect(path).toEqual([
+      [0, 0, 1600, 800],
+      [525, 50],
+      [1725, 650],
+      [525, 1250],
+      [-675, 650],
+    ]);
+    expect(fills).toEqual([{ colour: "#131119", rule: "evenodd" }]);
   }
 });

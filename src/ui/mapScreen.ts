@@ -61,6 +61,7 @@ import {
   mapHeaderLeft,
   type MapTool,
   type MapView,
+  mapWorldDiamond,
   openingView,
   panelMaxWidth,
   panView,
@@ -1338,6 +1339,20 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     }
     drawMapSurveyOutline(context, inner, current, px);
     drawSearchArea(context, inner, current, map, px);
+    // The field is the CSS background. Cover only the canvas outside the playable diamond,
+    // after the fog and its reveals, while leaving the separate map content and chrome above it.
+    const [top, ...tips] = mapWorldDiamond(inner, current);
+    context.save();
+    context.fillStyle = "#131119";
+    context.beginPath();
+    context.rect(0, 0, width, height);
+    context.moveTo(top.x * px, top.y * px);
+    for (const tip of tips) {
+      context.lineTo(tip.x * px, tip.y * px);
+    }
+    context.closePath();
+    context.fill("evenodd");
+    context.restore();
   };
 
   const presentation = createMapPresentationRevision();

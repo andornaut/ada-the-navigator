@@ -35,6 +35,7 @@ import {
   mapQuestsRect,
   mapSurveyEllipse,
   type MapView,
+  mapWorldDiamond,
   openingView,
   panelMaxWidth,
   panView,
@@ -387,6 +388,30 @@ describe("fog and Ada", () => {
 describe("the square bound", () => {
   const { field, fit, inner } = regionsAt(BASE);
   const wide = regionsAt({ height: 720, width: 1280 });
+
+  it("projects all four unwrapped tips as the map pans, zooms, and refits", () => {
+    const worldSide = 240_000;
+    const region = { height: 240, width: 640, x: 78, y: 65 };
+    const view = { centre: { x: 60_000, y: -30_000 }, scale: 0.002, worldSide };
+    expect(mapWorldDiamond(region, view)).toEqual([
+      { x: 278, y: 5 },
+      { x: 758, y: 245 },
+      { x: 278, y: 485 },
+      { x: -202, y: 245 },
+    ]);
+    expect(
+      mapWorldDiamond(
+        { height: 300, width: 800, x: 78, y: 65 },
+        { ...view, centre: { x: 0, y: 30_000 }, scale: 0.004 },
+      ),
+    ).toEqual([
+      { x: 478, y: -385 },
+      { x: 1438, y: 95 },
+      { x: 478, y: 575 },
+      { x: -482, y: 95 },
+    ]);
+  });
+
   const tolerance = 1e-3;
   /** The view's projected extent across the whole field. */
   const extent = (frame: { field: Rect; inner: Rect }, view: MapView) => {
