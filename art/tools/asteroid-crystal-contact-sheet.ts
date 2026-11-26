@@ -1,13 +1,12 @@
 // Review sheets of the crystal variants: `node art/tools/asteroid-crystal-contact-sheet.ts <dir>`
-// writes, for each galaxy, `<dir>/crystal-variants-<galaxy>-<scale>x.svg` (every medium and
-// larger shape plain, with its small and with its full variant, at spin frames 0, 6, 12 and 18,
-// at 1x or 2x display size) and `<dir>/crystal-field-<galaxy>.svg` (a 960 by 540 display px field
-// of ordinary rocks picked by the selection rule), `<dir>/crystal-ore-fields-cartwheel.svg` (two
+// writes, for each galaxy, `<dir>/crystal-variants-<galaxy>-<scale>x.svg` (every medium and larger
+// shape plain, with its small and with its full variant, at spin frames 0, 6, 12 and 18, at 1x or
+// 2x display size) and `<dir>/crystal-field-<galaxy>.svg` (a 960 by 540 display px field of
+// ordinary rocks picked by the selection rule), `<dir>/crystal-ore-fields-cartwheel.svg` (two
 // Cartwheel ore fields at game scale) and `<dir>/crystal-frames.svg` (every spin frame of every
-// spinning variant at 2x on Cartwheel). Every rock draws over its 1 px edge: the ink keyline on
-// light fields, white on Phantom. `<dir>/crystal-fits.json` lists each variant's fitted crystal
-// sizes or vein lifts and, per frame, the pixels its shipped SVG draws outside its plain rock's
-// shipped SVG at 4 px per frame px.
+// spinning variant at 2x on Cartwheel). Every rock draws over its 1 px ink keyline.
+// `<dir>/crystal-fits.json` lists each variant's fitted crystal sizes or vein lifts and, per frame,
+// the pixels its shipped SVG draws outside its plain rock's shipped SVG at 4 px per frame px.
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -46,7 +45,7 @@ const catalog = read<{
 }>(`${art}asteroids.json`);
 
 const galaxies = read<{
-  galaxies: Record<string, { colors: { background: string }; foregroundEdge?: string }>;
+  galaxies: Record<string, { colors: { background: string } }>;
 }>(`${art}galaxies.json`).galaxies;
 const oreField = read<{
   variants: {
@@ -60,7 +59,7 @@ const FIELDS = ["sunflower", "cartwheel", "andromeda", "needle", "whirlpool", "p
   (id) => ({
     id,
     field: galaxies[id]!.colors.background,
-    edge: galaxies[id]!.foregroundEdge ?? INK,
+    edge: INK,
   }),
 );
 const SAMPLE_FRAMES = [0, 6, 12, 18];

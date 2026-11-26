@@ -1,9 +1,8 @@
 // Review sheet of the station producer's structures: `node art/tools/station-contact-sheet.ts
-// <dir>` writes `<dir>/stations.svg`, the frames of each state at 1x and 2x display
-// size on its galaxy's field, with the 2 px ink destination keyline on light fields and
-// Phantom's 1 px white edge. An overlay shows on its whole model, then alone. A third argument
-// `marks` writes `<dir>/stations-marks.svg` with a cross on each pivot, a dot on each berth and a
-// square on each dock.
+// <dir>` writes `<dir>/stations.svg`, the frames of each state at 1x and 2x display size on its
+// galaxy's field, with the 2 px ink destination keyline. An overlay shows on its whole model, then
+// alone. A third argument `marks` writes `<dir>/stations-marks.svg` with a cross on each pivot, a
+// dot on each berth and a square on each dock.
 import { mkdirSync, writeFileSync } from "node:fs";
 
 import { projectAt } from "./projection.ts";
@@ -17,7 +16,7 @@ const FIELDS: Readonly<Record<string, { field: string; edge: string; keyline: nu
   whirlpool: { field: "#B8CEC4", ...LIGHT },
   needle: { field: "#C6BBA6", ...LIGHT },
   andromeda: { field: "#9298B5", ...LIGHT },
-  phantom: { field: "#514955", edge: "#FFFFFF", keyline: 1 },
+  phantom: { field: "#514955", ...LIGHT },
 };
 const SCALES = [1, 2];
 const GAP = 14;

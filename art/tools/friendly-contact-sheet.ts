@@ -1,13 +1,13 @@
-// Review sheet of the friendly object producer:
-// `node art/tools/friendly-contact-sheet.ts <dir> [scale ...]` writes `<dir>/friendly-objects.svg`,
-// every frame of each object at the given display scales (1 and 2 by default) on its galaxy's
-// field with the 1 px ink keyline; the objects every galaxy shows are on the lightest field and
-// on Phantom's with its white edge. A 42 px square beside each row is Ada's frame. The ring gate
-// rows show each axis lit and dark with a stand-in for Ada between the back and front layers,
-// then each layer alone. `<dir>/friendly-craft.svg` shows each craft's 16 headings at the same
-// scales on its home galaxy's field, blink frames B after frames A, and the finale allies again
-// on Phantom's field. `<dir>/friendly-pickup-loops.svg` shows each animated pickup's strip, frame
-// by frame, at 1x and 4x on the lightest field and on Phantom's, with its loop's timings.
+// Review sheet of the friendly object producer: `node art/tools/friendly-contact-sheet.ts <dir>
+// [scale ...]` writes `<dir>/friendly-objects.svg`, every frame of each object at the given display
+// scales (1 and 2 by default) on its galaxy's field with the 1 px ink keyline; the objects every
+// galaxy shows are on the lightest field and on Phantom's. A 42 px square beside each row is Ada's
+// frame. The ring gate rows show each axis lit and dark with a stand-in for Ada between the back
+// and front layers, then each layer alone. `<dir>/friendly-craft.svg` shows each craft's 16
+// headings at the same scales on its home galaxy's field, blink frames B after frames A, and the
+// finale allies again on Phantom's field. `<dir>/friendly-pickup-loops.svg` shows each animated
+// pickup's strip, frame by frame, at 1x and 4x on the lightest field and on Phantom's, with its
+// loop's timings.
 import { mkdirSync, writeFileSync } from "node:fs";
 
 import { DISPLAY_SCALE } from "./crafts.ts";
@@ -21,7 +21,7 @@ const FIELDS = {
   whirlpool: { name: "Whirlpool", field: "#B8CEC4", edge: INK },
   needle: { name: "Needle", field: "#C6BBA6", edge: INK },
   andromeda: { name: "Andromeda", field: "#9298B5", edge: INK },
-  phantom: { name: "Phantom", field: "#514955", edge: "#FFFFFF" },
+  phantom: { name: "Phantom", field: "#514955", edge: INK },
 } as const;
 type Field = keyof typeof FIELDS;
 const GAP = 8;

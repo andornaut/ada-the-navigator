@@ -1,14 +1,14 @@
 // Review sheets of the fleet producer's craft: `node art/tools/fleet-contact-sheet.ts <dir> [name]`
-// writes `<dir>/fleet-small-craft.svg`, `<dir>/fleet-retaliators.svg` and one sheet per frigate
-// and capital, every heading of each craft at 1x and 2x display size on the field of each galaxy
-// that flies it, with the 1 px ink keyline on light fields and Phantom's white edge. A craft with
-// hardpoints is composed as the game composes it, hull then bases then tops. A retaliator shows
-// once aimed ahead and once aimed 112.5 degrees off the bow; a frigate shows fully armed and
-// aimed ahead, then at route positions 1 to 2 (spine and bow capped) aimed off the bow, then
-// with every hardpoint destroyed. A capital shows its lance profile fully armed and aimed ahead,
-// its mine profile aimed off the bow with the hopper held aft, route positions 1 to 2 (the claw
-// and stern pairs capped), then every hardpoint destroyed. `<dir>/fleet-weapon-tops.svg` shows
-// every weapon top on a mount collar at its 16 aims, at 1x, 2x and 4x.
+// writes `<dir>/fleet-small-craft.svg`, `<dir>/fleet-retaliators.svg` and one sheet per frigate and
+// capital, every heading of each craft at 1x and 2x display size on the field of each galaxy that
+// flies it, with the 1 px ink keyline. A craft with hardpoints is composed as the game composes it,
+// hull then bases then tops. A retaliator shows once aimed ahead and once aimed 112.5 degrees off
+// the bow; a frigate shows fully armed and aimed ahead, then at route positions 1 to 2 (spine and
+// bow capped) aimed off the bow, then with every hardpoint destroyed. A capital shows its lance
+// profile fully armed and aimed ahead, its mine profile aimed off the bow with the hopper held aft,
+// route positions 1 to 2 (the claw and stern pairs capped), then every hardpoint destroyed.
+// `<dir>/fleet-weapon-tops.svg` shows every weapon top on a mount collar at its 16 aims, at 1x, 2x
+// and 4x.
 import { mkdirSync, writeFileSync } from "node:fs";
 
 import { DISPLAY_SCALE } from "./crafts.ts";
@@ -64,7 +64,7 @@ const NEEDLE: Field = {
 const PHANTOM: Field = {
   name: "Phantom, coral",
   field: "#514955",
-  edge: "#FFFFFF",
+  edge: "#181425",
   family: "coral",
 };
 const FIELDS: readonly Field[] = [SUNFLOWER, CARTWHEEL, ANDROMEDA, NEEDLE, PHANTOM];

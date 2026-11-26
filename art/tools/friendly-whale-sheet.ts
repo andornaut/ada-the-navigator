@@ -1,10 +1,9 @@
-// Review sheet of the whale swim loop:
-// `node art/tools/friendly-whale-sheet.ts <dir> [kind]` writes `<dir>/friendly-whale-loop.svg`,
-// one kind's 8 loop frames at four headings (the three-quarter view, the profile, toward the
-// viewer and away) at 1x and 2x on Whirlpool's field with the 1 px ink keyline, the rest pose
-// beside each row, and the 1x rows again on Phantom's field with its white edge. It also writes
-// `<dir>/friendly-whales.svg`: every kind's 16 headings at loop frame 0, at 1x and 2x on
-// Whirlpool's field, and Marlo's at 1x on Phantom's.
+// Review sheet of the whale swim loop: `node art/tools/friendly-whale-sheet.ts <dir> [kind]` writes
+// `<dir>/friendly-whale-loop.svg`, one kind's 8 loop frames at four headings (the three-quarter
+// view, the profile, toward the viewer and away) at 1x and 2x on Whirlpool's field with the 1 px
+// ink keyline, the rest pose beside each row, and the 1x rows again on Phantom's field with the
+// same keyline. It also writes `<dir>/friendly-whales.svg`: every kind's 16 headings at loop frame
+// 0, at 1x and 2x on Whirlpool's field, and Marlo's at 1x on Phantom's.
 import { mkdirSync, writeFileSync } from "node:fs";
 
 import { DISPLAY_SCALE } from "./crafts.ts";
@@ -61,7 +60,7 @@ function main() {
     parts.push(`<rect x="0" y="${top}" width="100%" height="${y - top}" fill="${fill}"/>`, ...rows);
   };
   band("Whirlpool", "#B8CEC4", "#181425", [1, 2]);
-  band("Phantom", "#514955", "#FFFFFF", [1]);
+  band("Phantom", "#514955", "#181425", [1]);
   mkdirSync(out, { recursive: true });
   writeFileSync(
     `${out}/friendly-whale-loop.svg`,
@@ -112,7 +111,7 @@ function overview(out: string) {
     parts.push(`<rect x="0" y="${top}" width="100%" height="${y - top}" fill="${fill}"/>`, ...rows);
   };
   band("Whirlpool", "#B8CEC4", "#181425", WHALE_KINDS, [1, 2]);
-  band("Phantom", "#514955", "#FFFFFF", ["whale"], [1]);
+  band("Phantom", "#514955", "#181425", ["whale"], [1]);
   writeFileSync(
     `${out}/friendly-whales.svg`,
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${y}">${parts.join("")}</svg>\n`,

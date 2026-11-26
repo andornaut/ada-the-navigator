@@ -12,7 +12,7 @@ import { baseKey, DESIGNS, draw, order } from "./hostile-stations.ts";
 import { ENEMY_HEADINGS } from "./projection.ts";
 
 const FIELDS: Readonly<Record<string, { field: string; edge: string }>> = {
-  core: { field: "#514955", edge: "#FFFFFF" },
+  core: { field: "#514955", edge: "#181425" },
   cartwheel: { field: "#BC9D90", edge: "#181425" },
   andromeda: { field: "#9298B5", edge: "#181425" },
 };

@@ -37,7 +37,7 @@ const reverse = read(new URL("ship-retro-jets.json", art)) as Jets;
 
 const FIELDS = {
   sunflower: { field: "#d8c994", keyline: "#181425", light: true },
-  phantom: { field: "#514955", keyline: "#ffffff", light: false },
+  phantom: { field: "#514955", keyline: "#181425", light: false },
 } as const;
 type Field = (typeof FIELDS)[keyof typeof FIELDS];
 const FRAME = 96;
