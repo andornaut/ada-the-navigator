@@ -25,7 +25,6 @@ import {
 } from "../data/conversations.ts";
 import { BUILT } from "../data/galaxies.ts";
 import { NOTICE_TIMING } from "../data/noticeTiming.ts";
-import { PHANTOM_FIRST_HARDPOINT_LINE } from "../data/phantom.ts";
 import {
   type PoiApproachKind,
   poiApproachPool,
@@ -184,14 +183,6 @@ const dronesPress: Holds = (facts) => facts.inDanger && facts.dronesNear;
 
 // Timers sum many frame slices, so a deadline counts as reached within float error.
 const EPSILON = 1e-9;
-
-const PHANTOM_HARDPOINT_CUE: Conversation = {
-  id: "chapter:phantom:flagshipHardpoint",
-  lines: [PHANTOM_FIRST_HARDPOINT_LINE],
-  priority: "warning",
-  repeat: "flight",
-  trigger: { galaxy: 6, id: "flagshipHardpoint", kind: "chapter" },
-};
 
 /** Penny's instance for one point of interest. */
 export function pennyInstance(galaxy: GalaxyNumber, point: string): string {
@@ -560,13 +551,9 @@ export class ConversationDirector {
       return;
     }
     for (const key of chatter) {
-      const conversation =
-        key === "flagshipHardpoint"
-          ? PHANTOM_HARDPOINT_CUE
-          : this.conversations.find(
-              ({ trigger }) =>
-                trigger.kind === "chapter" && trigger.galaxy === 6 && trigger.id === key,
-            );
+      const conversation = this.conversations.find(
+        ({ trigger }) => trigger.kind === "chapter" && trigger.galaxy === 6 && trigger.id === key,
+      );
       if (conversation) {
         this.enqueue({
           conversation,

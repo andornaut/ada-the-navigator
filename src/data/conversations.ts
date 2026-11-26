@@ -216,18 +216,24 @@ const pool = (
 const WOOF = happy("penny", "Woof! Woof!");
 
 export const CONVERSATIONS: readonly Conversation[] = [
-  ...(["battleAllies", "battleAlone", "flagshipAttack", "flagshipDisabled"] as const).map(
-    (id): Conversation => ({
-      id: `chapter:phantom:${id}`,
-      lines: PHANTOM_COPY[id]!.lines.map((line) => ({
-        ...line,
-        speaker: line.speaker as Speaker,
-      })),
-      priority: "warning",
-      repeat: "flight",
-      trigger: { galaxy: 6, id, kind: "chapter" },
-    }),
-  ),
+  ...(
+    [
+      "battleAllies",
+      "battleAlone",
+      "flagshipAttack",
+      "flagshipHardpoint",
+      "flagshipDisabled",
+    ] as const
+  ).map((id): Conversation => ({
+    id: `chapter:phantom:${id}`,
+    lines: PHANTOM_COPY[id]!.lines.map((line) => ({
+      ...line,
+      speaker: line.speaker as Speaker,
+    })),
+    priority: "warning",
+    repeat: "flight",
+    trigger: { galaxy: 6, id, kind: "chapter" },
+  })),
   {
     id: "lesson:move",
     lines: [line("astra", "Fly with the {move}.", "Fly with WASD.")],
@@ -833,30 +839,32 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
     ]),
   ),
   ...Object.fromEntries(
-    Object.entries(PHANTOM_COPY).map(([key, copy]): [string, InteractionCopy] => [
-      `6.phantom.${key}`,
-      {
-        lines: copy.lines.map((line) => ({
-          speaker: displayChapterSpeaker(line.speaker),
-          text: line.text,
-        })),
-        party:
-          key === "phantomSettlement3"
-            ? "Dollop"
-            : key.startsWith("phantomSettlement")
-              ? "Blurbs"
-              : key === "flagshipSalvage"
-                ? "Astra"
-                : ARCHIE_NAMED.name,
-        topics: (copy.topics ?? []).map((topic) => ({
-          label: topic.question,
-          lines: topic.lines.map((line) => ({
+    Object.entries(PHANTOM_COPY)
+      .filter(([key]) => key !== "flagshipHardpoint")
+      .map(([key, copy]): [string, InteractionCopy] => [
+        `6.phantom.${key}`,
+        {
+          lines: copy.lines.map((line) => ({
             speaker: displayChapterSpeaker(line.speaker),
             text: line.text,
           })),
-        })),
-      },
-    ]),
+          party:
+            key === "phantomSettlement3"
+              ? "Dollop"
+              : key.startsWith("phantomSettlement")
+                ? "Blurbs"
+                : key === "flagshipSalvage"
+                  ? "Astra"
+                  : ARCHIE_NAMED.name,
+          topics: (copy.topics ?? []).map((topic) => ({
+            label: topic.question,
+            lines: topic.lines.map((line) => ({
+              speaker: displayChapterSpeaker(line.speaker),
+              text: line.text,
+            })),
+          })),
+        },
+      ]),
   ),
   "1.deliveryComplete": {
     lines: [

@@ -42,6 +42,7 @@ function passage(start: string, until = " ## "): string {
 function spokenLines(text: string): { mood?: string; name: string; text: string }[] {
   return Array.from(
     text
+      .replace(/Astra, first hardpoint lost while the flagship stays active:/gu, "Astra:")
       .replace(
         /Admiral Archie, (?:as the flagship attacks|flagship disabled):/gu,
         "Admiral Archie:",
@@ -143,14 +144,16 @@ describe("in-flight conversations", () => {
     expect(cues).toEqual(spokenLines(authored));
   });
 
-  it("speaks exactly the four authored Phantom battle cues with their moods and known Admiral", () => {
+  it("speaks exactly the authored Phantom battle cues with their moods and known Admiral", () => {
     expect(BATTLE_CUES.map(({ id }) => id)).toEqual([
       "chapter:phantom:battleAllies",
       "chapter:phantom:battleAlone",
       "chapter:phantom:flagshipAttack",
+      "chapter:phantom:flagshipHardpoint",
       "chapter:phantom:flagshipDisabled",
     ]);
     expect(spoken(BATTLE_CUES)).toEqual(spokenLines(BATTLE));
+    expect(INTERACTION_COPY["6.phantom.flagshipHardpoint"]).toBeUndefined();
     expect(
       BATTLE_CUES.every(({ trigger }) => trigger.kind === "chapter" && trigger.galaxy === 6),
     ).toBe(true);

@@ -89,7 +89,7 @@ const line = (speaker: string, text: string, mood?: Mood): PhantomLine => ({
   text,
   ...(mood ? { mood } : {}),
 });
-export const PHANTOM_FIRST_HARDPOINT_LINE = {
+const PHANTOM_FIRST_HARDPOINT_LINE = {
   speaker: "astra",
   text: "One hardpoint down. Keep aiming for the glowing parts.",
 } as const satisfies ConversationLine;
