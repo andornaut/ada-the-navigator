@@ -1042,9 +1042,9 @@ asteroid edges:
   world units from the rock. The offset is the target; the Freighter never
   touches the rock. It traces on its seeded side at the minimum speed, 0.25 of
   its current top speed (30 world units per second at its class top speed of
-  120), so it holds close to the offset. Obstacle steering checks the traced rock
-  at that edge offset instead of the avoidance berths; every other obstacle keeps
-  the berths.
+  120), so it holds close to the offset. For the traced rock, obstacle steering
+  uses at most half the edge gap (10 world units) as clearance. Every other
+  obstacle keeps the usual avoidance berths.
 - **Dwell:** counting from its arrival at the rock, it follows the edge for a
   seeded 6 to 12 seconds, seeded from its ship ID and pick count, then picks the
   next rock. It picks at once when the traced rock is destroyed or starts
