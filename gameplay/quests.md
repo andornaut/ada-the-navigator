@@ -315,6 +315,27 @@ flights and the disk stays collectible until recovered. A legacy unresolved
 disk guard migrates to Sounder without an extra reward. A recovered disk
 stays recovered.
 
+## Captain Cadence
+
+Captain Cadence is an uncrewed drone commander in Needle. Lighting the last
+gate of the Eye makes the optional Crossbow detour eligible. Once placed,
+the local map labels it "Crossbow" with no jump action. The detour stays
+outside the gate channel and clear of the holodisk pickup route. Elder Loom's
+practice, the Eye, and collection of the disk follow their existing steps.
+
+While Crossbow is engaged, the boss HUD shows Crossbow, Captain Cadence and
+the current hull health. The HUD clears when Ada disengages and restores
+the current hull on re-entry. With a disabled hull in reach and Salvage
+available, it shows "Disabled". The approach, first hardpoint loss while the
+ship remains active, and resolution use
+[Cadence's exchange](player-copy.md#captain-cadence-and-crossbow).
+
+Destroy the hull or disable and Salvage Crossbow to record one transmission
+in the flight log. Before the third holodisk memory finishes, the entry
+attributes the orders to fleet command. After the memory, the same entry names
+Admiral Archie. Continue and return preserve damage and encounter progress.
+Resolution and the normal heavy Stardust payout occur once.
+
 ## Landmarks
 
 Each galaxy targets roughly 200 landmarks for surveys to chart: nebulae, wrecks

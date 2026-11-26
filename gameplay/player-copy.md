@@ -556,6 +556,22 @@ Objectives, in order:
 5. Collect the holodisk.
 6. Go home to Earth when ready.
 
+### Captain Cadence and Crossbow
+
+These [Needle boss cues](quests.md#captain-cadence) appear in the small
+conversation box. The flight log uses the attribution appropriate to the
+current memory progress.
+
+- Approach, Captain Cadence: "Hold at the channel mouth. Fire when they come
+  through."
+- First hardpoint lost, Ada: "There's a pause between shots. I can use that."
+- Resolved, Astra: "I picked up a transmission. I've saved it to our flight
+  log."
+- Flight log before the third holodisk memory: "Orders from fleet command:
+  Hold the exits. Recover every disk."
+- Flight log after the third holodisk memory: "Admiral Archie's orders: Hold
+  the exits. Recover every disk."
+
 ## Chapter four: the beacon
 
 Panel title: The Dark Beacon.
