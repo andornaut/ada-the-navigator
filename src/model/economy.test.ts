@@ -1,3 +1,4 @@
+import { strictEqual } from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 import { describe, expect, it, vi } from "vitest";
@@ -565,7 +566,7 @@ describe("Stardust drops", () => {
       const reward = enemyStardust(identity, archetype);
       for (let index = 0; index < draws; index++) {
         const drop = rollEnemyDrop(ECONOMY, identity, archetype, dropRandom(11, `wreck:${index}`));
-        expect(drop.stardust).toBe(reward);
+        strictEqual(drop.stardust, reward);
         dropped += drop.upgrade ? 1 : 0;
       }
       expect(Math.abs(dropped / draws - 0.0025)).toBeLessThan(0.0025 * 0.15);
