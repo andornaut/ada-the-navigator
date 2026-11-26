@@ -12,6 +12,7 @@ import { createPauseCards, type PauseLabels, type PauseState } from "./pauseCard
 import { inCurrentView } from "./pressScope.ts";
 import * as refusal from "./refusal.ts";
 import type { ShipView } from "./shipCard.ts";
+import { createShipPaintCard } from "./shipPaintCard.ts";
 
 // Every focus() call, latest last, with the options of the latest.
 const focusLog: FakeElement[] = [];
@@ -358,6 +359,79 @@ function mountedRoot() {
   PAGE.body!.append(root);
   return root;
 }
+
+function shipPaintFixture() {
+  const root = mountedRoot();
+  let selected = "classic";
+  const select = vi.fn((id: string) => {
+    selected = id;
+  });
+  const card = createShipPaintCard(root as unknown as HTMLElement, {
+    applyLabel: "Apply",
+    closeLabel: "Close",
+    current: () => selected,
+    inUseLabel: "In use",
+    onClose: vi.fn(),
+    schemes: () => [
+      { id: "classic", name: "Classic" },
+      { id: "cobalt", name: "Cobalt" },
+    ],
+    select,
+    title: "Ship paint",
+  });
+  return { card, root, select };
+}
+
+it("retains the attached paint buttons, selection guard and focus transfer", () => {
+  const { card, root, select } = shipPaintFixture();
+  try {
+    card.open();
+    const [classic, cobalt] = root.querySelectorAll('[data-action="apply-ship-paint"]');
+    expect(classic!.textContent).toBe("In use");
+    expect(classic!.matches(":disabled")).toBe(true);
+    classic!.click();
+    expect(select).not.toHaveBeenCalled();
+    expect(cobalt!.getAttribute("aria-describedby")).toBe("ada-ship-paint-name-cobalt");
+    cobalt!.focus();
+    actionBinding
+      .resolveAdaHoldAction(root as unknown as HTMLElement, cobalt as unknown as HTMLElement)!
+      .activate();
+    expect(select).toHaveBeenCalledExactlyOnceWith("cobalt");
+    expect(root.querySelectorAll('[data-action="apply-ship-paint"]')).toEqual([classic, cobalt]);
+    expect(classic!.textContent).toBe("Apply");
+    expect(cobalt!.textContent).toBe("In use");
+    expect(focused()).toBe(classic);
+  } finally {
+    card.dispose();
+  }
+});
+
+it("rejects a paint button missing its binding before attaching that tile", () => {
+  const { card, root, select } = shipPaintFixture();
+  const grid = root.querySelector(".ada-ship-paint-grid")!;
+  const append = vi.spyOn(grid, "append");
+  const bind = actionBinding.bindAdaAction;
+  const registered: HTMLElement[] = [];
+  vi.spyOn(actionBinding, "bindAdaAction")
+    .mockImplementationOnce((options, button) => {
+      registered.push(button);
+      return bind(options, button);
+    })
+    .mockImplementationOnce(() => ({ activate: () => false, dispose() {}, update() {} }));
+  try {
+    expect(() => card.open()).toThrow("no registered action binding");
+    expect(append.mock.calls.flat().map((tile) => tile.dataset.paint)).toEqual(["classic"]);
+    expect(grid.children).toEqual([]);
+    expect(card.isOpen()).toBe(false);
+    expect(registered).toHaveLength(1);
+    expect(() => actionBinding.assertAdaActionMetadata(registered[0]!)).toThrow(
+      "no registered action binding",
+    );
+    expect(select).not.toHaveBeenCalled();
+  } finally {
+    card.dispose();
+  }
+});
 
 function cards(detached = false, beforeCreate?: (root: FakeElement) => void) {
   const root = detached ? new FakeElement() : mountedRoot();

@@ -96,6 +96,25 @@ export function createShipPaintCard(
     parts.fit();
   }
 
+  const createApplyButton = (id: string, descriptionId: string) => {
+    const action = createStandardTextAction(
+      root,
+      id === selected ? options.inUseLabel : options.applyLabel,
+      {
+        availability: () => (id === selected ? { kind: "disabled" } : { kind: "available" }),
+        current,
+        run: () => apply(id),
+      },
+    );
+    const button = action.element;
+    button.dataset.action = "apply-ship-paint";
+    button.setAttribute("aria-describedby", descriptionId);
+    setButtonRole("secondary", button);
+    actions.set(id, action);
+    assertAdaActionMetadata(button);
+    return button;
+  };
+
   return {
     close,
     dispose() {
@@ -131,20 +150,7 @@ export function createShipPaintCard(
           label.id = `ada-ship-paint-name-${id}`;
           label.textContent = name;
           heading.append(label);
-          const action = createStandardTextAction(
-            root,
-            id === selected ? options.inUseLabel : options.applyLabel,
-            {
-              availability: () => (id === selected ? { kind: "disabled" } : { kind: "available" }),
-              current,
-              run: () => apply(id),
-            },
-          );
-          action.element.dataset.action = "apply-ship-paint";
-          action.element.setAttribute("aria-describedby", label.id);
-          setButtonRole("secondary", action.element);
-          actions.set(id, action);
-          tile.append(heading, action.element);
+          tile.append(heading, createApplyButton(id, label.id));
           grid.append(tile);
         }
         assertAdaActionBindings(modal);
