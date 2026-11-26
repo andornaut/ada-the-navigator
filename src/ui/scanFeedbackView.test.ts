@@ -16,9 +16,9 @@ class Node {
   readonly children: Node[] = [];
   readonly selectors = new Map<string, Node>();
   readonly ownerDocument = { ...doc, defaultView: new EventTarget() };
-  readonly getBoundingClientRect = vi.fn(() => rect(0, 0, 0, 0));
   className = "";
   hidden = false;
+  clientHeight = 360;
   clientWidth = 720;
   offsetHeight = 0;
   offsetTop = 0;
@@ -44,13 +44,6 @@ class Node {
   }
 }
 const doc = { createElement: () => new Node() };
-const rect = (left: number, top: number, width: number, height: number) => ({
-  bottom: top + height,
-  height,
-  left,
-  right: left + width,
-  top,
-});
 const quest = {
   icon: { jobType: "survey" as const, symbol: "job" as const },
   id: "survey",
@@ -268,32 +261,36 @@ describe("equipped weapon notice", () => {
     const { boss, equip, observed, parent, resize, unobserve, view } = setup();
     const dialogue = new Node();
     const row = fromHudEdge("top", CONVERSATION_BOX.top);
+    equip.offsetTop = 66;
+    equip.offsetHeight = 38;
+    dialogue.offsetHeight = 60;
+    const readDialogueTop = vi.fn(() => 125);
+    Object.defineProperty(dialogue, "offsetTop", { get: readDialogueTop });
     parent.selectors.set(".ada-conversation", dialogue);
-    parent.getBoundingClientRect.mockReturnValue(rect(0, 0, 720, 360));
-    equip.getBoundingClientRect.mockReturnValue(rect(304, 65.5, 112, 38));
-    dialogue.getBoundingClientRect.mockReturnValue(rect(5, 65.5, 150, 60));
 
     view.equip("Rapid Missile");
-    view.renderEquip(false, 0, "speaker:left");
+    view.renderEquip(false, 0, "speaker:first");
     expect(equip.style.top).toBe(row);
     expect(observed).toHaveBeenCalledWith(dialogue);
-    view.renderEquip(false, 100, "speaker:left");
-    view.renderEquip(false, 200, "speaker:left");
-    expect(dialogue.getBoundingClientRect).toHaveBeenCalledTimes(1);
+    readDialogueTop.mockClear();
+    view.renderEquip(false, 100, "speaker:first");
+    view.renderEquip(false, 200, "speaker:first");
+    expect(readDialogueTop).not.toHaveBeenCalled();
 
-    dialogue.getBoundingClientRect.mockReturnValue(rect(120, 65.5, 480, 60));
+    readDialogueTop.mockReturnValue(66);
     view.renderEquip(false, 300, "speaker:center");
-    expect(equip.style.top).toBe(`${125.5 + SPACING.gap}px`);
-    dialogue.getBoundingClientRect.mockReturnValue(rect(120, 65.5, 480, 80));
+    expect(readDialogueTop).toHaveBeenCalledOnce();
+    expect(equip.style.top).toBe(`${126 + SPACING.gap}px`);
+    dialogue.offsetHeight = 80;
     resize();
-    expect(equip.style.top).toBe(`${145.5 + SPACING.gap}px`);
-    dialogue.getBoundingClientRect.mockReturnValue(rect(120, 75, 480, 80));
+    expect(equip.style.top).toBe(`${146 + SPACING.gap}px`);
+    readDialogueTop.mockReturnValue(75);
     parent.ownerDocument.defaultView.dispatchEvent(new Event(VIEW_SCALE_EVENT));
     expect(equip.style.top).toBe(`${155 + SPACING.gap}px`);
 
     boss.offsetTop = 12;
     boss.offsetHeight = 200;
-    equip.getBoundingClientRect.mockReturnValue(rect(304, 220, 112, 38));
+    equip.offsetTop = 220;
     resize();
     expect(equip.style.top).toBe(`max(${row}, ${212 + SPACING.gap}px)`);
     view.renderEquip(false, 400);
@@ -307,9 +304,11 @@ describe("equipped weapon notice", () => {
     const { equip, parent, resize, view } = setup();
     const dialogue = new Node();
     parent.selectors.set(".ada-conversation", dialogue);
-    parent.getBoundingClientRect.mockReturnValue(rect(0, 0, 720, 150));
-    equip.getBoundingClientRect.mockReturnValue(rect(304, 50, 112, 38));
-    dialogue.getBoundingClientRect.mockReturnValue(rect(120, 65.5, 480, 60));
+    parent.clientHeight = 150;
+    equip.offsetTop = 50;
+    equip.offsetHeight = 38;
+    dialogue.offsetTop = 66;
+    dialogue.offsetHeight = 60;
 
     view.equip("Laser");
     view.renderEquip(false, 0);
@@ -319,10 +318,10 @@ describe("equipped weapon notice", () => {
     view.renderEquip(false, 10000, "captain");
     expect(equip.style.visibility).toBe("hidden");
 
-    parent.getBoundingClientRect.mockReturnValue(rect(0, 0, 720, 360));
+    parent.clientHeight = 360;
     resize();
     expect(equip.style.visibility).toBe("");
-    expect(equip.style.top).toBe(`${125.5 + SPACING.gap}px`);
+    expect(equip.style.top).toBe(`${126 + SPACING.gap}px`);
     view.renderEquip(false, 10000, "captain");
     view.renderEquip(false, 11000, "captain");
     expect(equip.style.opacity).toBe("1");

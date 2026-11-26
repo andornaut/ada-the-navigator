@@ -158,22 +158,19 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
           }
         }
         if (dialogue && !dialogue.hidden) {
-          const notice = equip.getBoundingClientRect();
-          const box = dialogue.getBoundingClientRect();
-          if (
-            notice.left < box.right &&
-            notice.right > box.left &&
-            notice.top < box.bottom &&
-            notice.bottom > box.top
-          ) {
-            const area = parent.getBoundingClientRect();
+          // Both boxes share the same centered axis and are positioned in this parent's frame.
+          const noticeTop = equip.offsetTop;
+          const noticeHeight = equip.offsetHeight;
+          const dialogueTop = dialogue.offsetTop;
+          const dialogueBottom = dialogueTop + dialogue.offsetHeight;
+          if (noticeTop < dialogueBottom && noticeTop + noticeHeight > dialogueTop) {
             const bottomInset =
               parseFloat(getComputedStyle(parent).getPropertyValue(VIEW_PROPERTIES.areaBottom)) ||
               0;
-            const below = box.bottom + SPACING.gap * unit;
-            obscured = below + notice.height > area.bottom - bottomInset;
+            const below = dialogueBottom + SPACING.gap * unit;
+            obscured = below + noticeHeight > parent.clientHeight - bottomInset;
             if (!obscured) {
-              equip.style.top = pixels(below - area.top);
+              equip.style.top = pixels(below);
             }
           }
         }
