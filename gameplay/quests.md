@@ -638,12 +638,11 @@ the final delivery rewards. Stored base rewards use the same one-time
 | Andromeda | Courier run       | Pip                 | Fly a parcel with Pip to a settlement, keeping within 600 of him. |        700 |
 | Cartwheel | Mining contract   | The hub             | Deposit 30 ore at the hub; partial loads count.                   |        750 |
 
-- **Supply run**: follows the delivery job rules in full, 3000 minimum
-  included: the outpost's item goes to a known station at least 3000 world
-  units away, preferring the nearest, and pays the final delivery rewards
-  (150 short, 225 long). With no such station known, the outpost makes no offer. The items
-  are fresh food, repaired tools and spare parts; a lost item is replaced
-  through Talk at the issuing outpost.
+- **Supply run**: uses the delivery job rules and payouts in the table above.
+  The outpost's item goes to the nearest known station at least 3000 world
+  units away. With no qualifying station, the outpost makes no offer. The
+  items are fresh food, repaired tools and spare parts. Talk at the issuing
+  outpost to replace a lost item.
 - **Mining contract**: counts only deposits made after accepting, from 0; the
   hub's story deposit total keeps counting alongside. At most half of
   ore fields have a platform guarding them, so unguarded ore is always available.
