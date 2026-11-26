@@ -3,10 +3,11 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 import { REFUSAL_ATTRIBUTES } from "@andornaut/game-kit/runtime/web/ui/dom/refusalCue";
 
+import type { MapSymbol } from "../data/destinations.ts";
 import { TASK_COLORS, type TaskCategory } from "../data/taskCategories.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
-import type { MapPlace, MapSymbol } from "../model/map.ts";
+import type { MapPlace } from "../model/map.ts";
 import type { QuestEntry, QuestObjective } from "../model/questDetails.ts";
 import {
   assertAdaActionBindings,

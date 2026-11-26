@@ -1,10 +1,10 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
+import type { MapSymbol } from "../data/destinations.ts";
 import type { EdgeMarkerKind } from "../data/edgeMarkers.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import type { TaskCategory } from "../data/taskCategories.ts";
 import { gameAreaPoint } from "./edgeMarkers.ts";
-import type { MapSymbol } from "./map.ts";
 import { recordTargetKnowledge } from "./targetKnowledgeStore.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 import { worldPoint } from "./worldContacts.ts";

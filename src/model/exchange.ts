@@ -1,9 +1,4 @@
-import { IMMEDIATE_EXCHANGE_UNIT_COST } from "../data/exchange.ts";
-
-export interface ExchangeRates {
-  readonly buyOre: number;
-  readonly sellOre: number;
-}
+import { type ExchangeRates, IMMEDIATE_EXCHANGE_UNIT_COST } from "../data/exchange.ts";
 
 export interface ExchangeBalances {
   readonly ore: number;

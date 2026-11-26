@@ -1,4 +1,19 @@
-import type { MapSymbol } from "../model/map.ts";
+/**
+ * A place's map symbol (art/map.md "Symbols"): a station, galaxy one's three outposts by name,
+ * any other story destination, the holodisk, each landmark kind, or a held job's own spot.
+ */
+export type MapSymbol =
+  | "beacon"
+  | "destination"
+  | "growers"
+  | "holodisk"
+  | "hostileStation"
+  | "job"
+  | "nebula"
+  | "salvagers"
+  | "station"
+  | "workshop"
+  | "wreck";
 
 export interface DestinationData {
   /**

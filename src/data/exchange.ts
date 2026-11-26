@@ -1,4 +1,7 @@
-import type { ExchangeRates } from "../model/exchange.ts";
+export interface ExchangeRates {
+  readonly buyOre: number;
+  readonly sellOre: number;
+}
 
 export const EXCHANGE_RATES: ExchangeRates = { buyOre: 2, sellOre: 1 };
 

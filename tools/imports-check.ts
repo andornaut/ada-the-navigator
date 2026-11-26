@@ -276,8 +276,6 @@ export const KNOWN_VIOLATIONS: readonly string[] = [
   "src/crash/crashScreen.ts (platform) imports src/ui/pressScope.ts (ui)",
   "src/data/asteroidCatalog.ts (data) imports src/model/types.ts (model)",
   "src/data/cheatCopy.ts (data) imports src/model/cheats.ts (model)",
-  "src/data/destinations.ts (data) imports src/model/map.ts (model)",
-  "src/data/exchange.ts (data) imports src/model/exchange.ts (model)",
   "src/data/storyShips.ts (data) imports src/model/types.ts (model)",
   "src/loading/progress.ts (platform) imports src/ui/loadingBar.ts (ui)",
   "src/loading/requiredFiles.ts (platform) imports src/ui/touchChrome.ts (ui)",

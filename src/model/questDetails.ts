@@ -1,11 +1,12 @@
 import { MINING_CONTRACT_DEPOSITS, SUPPLY_ITEMS } from "../data/activities.ts";
+import type { MapSymbol } from "../data/destinations.ts";
 import { carriedItemName, STORY_ITEM_NAMES } from "../data/itemNames.ts";
 import type { JobType } from "../data/jobs.ts";
 import { questReward } from "../data/questRewards.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { questItemDestination } from "./indicators.ts";
 import { landmarkById } from "./landmarks.ts";
-import type { MapSymbol, QuestDetails, QuestLine } from "./map.ts";
+import type { QuestDetails, QuestLine } from "./map.ts";
 import { fill } from "./shop.ts";
 import type { GalaxyProgress, HeldJob, OptionalTask, Vec } from "./types.ts";
 

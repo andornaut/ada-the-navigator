@@ -1,4 +1,4 @@
-import { DESTINATIONS } from "../data/destinations.ts";
+import { DESTINATIONS, type MapSymbol } from "../data/destinations.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
 import type { JobType, LandmarkKind } from "../data/jobs.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
@@ -125,22 +125,8 @@ export const NO_LANDMARKS: LandmarkChart = { charted: [], total: 0 };
 export type MapPlaceKind =
   "destination" | "holodisk" | "hostileStation" | "job" | "landmark" | "station";
 
-/**
- * A place's map symbol (art/map.md "Symbols"): a station, galaxy one's three outposts by name,
- * any other story destination, the holodisk, each landmark kind, or a held job's own spot.
- */
-export type MapSymbol =
-  | "beacon"
-  | "destination"
-  | "growers"
-  | "holodisk"
-  | "hostileStation"
-  | "job"
-  | "nebula"
-  | "salvagers"
-  | "station"
-  | "workshop"
-  | "wreck";
+// CLEANUP (added 2026-11-26): Remove after scan outcomes and Map layout import the authored type.
+export type { MapSymbol };
 
 /** A story destination's symbol: the Map kind its data declares (data/destinations.ts). */
 function destinationSymbol(id: string): MapSymbol {

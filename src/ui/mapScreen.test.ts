@@ -3,8 +3,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import type { MapSymbol } from "../data/destinations.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
-import type { MapPlace, MapSymbol } from "../model/map.ts";
+import type { MapPlace } from "../model/map.ts";
 import { MAP_FACES, MAP_GLYPHS } from "./layout/mapScreen.ts";
 import {
   chipFace,
