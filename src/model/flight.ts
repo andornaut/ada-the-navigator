@@ -23,7 +23,6 @@ import {
   enemyOnly,
   FRIGATE_ESCORT_COUNT,
   LANCE_TELL,
-  MINE_LAYER,
   PHASER_AIM_SECONDS,
 } from "../data/enemyCatalog.ts";
 import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
@@ -126,6 +125,7 @@ import {
   recordBlastFlash,
   recordProjectileImpact,
 } from "./flight/impactFeedback.ts";
+import { armed, layMine, stepMines, strikeMines } from "./flight/mines.ts";
 import { projectileContact, projectileSceneryContact } from "./flight/projectileContact.ts";
 import { flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
 import {
@@ -231,7 +231,7 @@ import { carriesStardust } from "./drops.ts";
 import { enemyHull, enemyPartOutline, enemyPhysicalBody } from "./enemyBody.ts";
 import { enemyBeamReach, planEnemyProjectile } from "./enemyProjectiles.ts";
 import { landmarkSites } from "./landmarks.ts";
-import { MINE_PARTS, MINE_REACH, mineTouches } from "./mineShape.ts";
+import { MINE_REACH } from "./mineShape.ts";
 import { activeNeedleCourses } from "./needle.ts";
 import {
   clearNeedleEnemies,
@@ -4578,34 +4578,6 @@ export function activeRingEmissions(flight: FlightState): readonly RingEmission[
   return ringEmissions.get(flight) ?? [];
 }
 
-/** Lays a mine where the mine layer fires, unless its ship already has its most out. */
-function layMine(
-  damage: number,
-  fire: Pick<FireIntent, "delay" | "origin">,
-  ownerId: string,
-  flight: FlightState,
-): void {
-  const out = flight.mines.filter((mine) => mine.ownerId === ownerId && !mine.end).length;
-  if (
-    out >= MINE_LAYER.count ||
-    needleChannelContains({ radius: MINE_CHANNEL_REACH }, flight, fire.origin)
-  ) {
-    return;
-  }
-  flight.mines.push({
-    age: -fire.delay,
-    damage,
-    id: `mine:${flight.nextId++}`,
-    ownerId,
-    x: fire.origin.x,
-    y: fire.origin.y,
-  });
-}
-
-/** How long a mine's fizzle and pop play (art/weapons.md "Mine"). */
-const MINE_END_SECONDS = { fizzle: 0.2, pop: 0.22 } as const;
-// The inverse isometric projection stretches a screen-space radius by at most sqrt(2).
-const MINE_CHANNEL_REACH = Math.SQRT2 * MINE_REACH;
 /** A shot's strike against a mine's drawn silhouette: a 6 px square about the shot. */
 const SHOT_PARTS: Parts = [
   [
@@ -4617,82 +4589,7 @@ const SHOT_PARTS: Parts = [
 ];
 
 const shotRadius = (shot: Shot) => (shot.projectile === "missile" ? MISSILE_HIT_RADIUS : 3);
-
-/** Whether a mine still collides: laid, and neither fizzling nor popped. */
-function armed(mine: Mine): boolean {
-  return mine.end === undefined && mine.age >= 0;
-}
-
-/**
- * Ages each mine: one touching Ada's drawn ship pops and damages her; one past its life fizzles,
- * harmless. Each goes once its fizzle or pop has played.
- */
-function stepMines(dt: number, flight: FlightState): void {
-  const body = shipBody(flight.facing);
-  flight.mines = flight.mines.filter(
-    (mine) => !needleChannelContains({ radius: MINE_CHANNEL_REACH }, flight, mine),
-  );
-  for (const mine of flight.mines) {
-    mine.age += dt;
-    if (mine.end) {
-      mine.end.age += dt;
-    } else if (mine.age >= MINE_LAYER.lifeSeconds) {
-      mine.end = { age: mine.age - MINE_LAYER.lifeSeconds, kind: "fizzle" };
-    } else if (
-      armed(mine) &&
-      mineTouches(mine, body, worldPoint(flightWorldContext(flight), mine, flight.player))
-    ) {
-      damage(mine.damage, flight);
-      mine.end = { age: 0, kind: "pop" };
-    }
-  }
-  flight.mines = flight.mines.filter(
-    (mine) => !mine.end || mine.end.age < MINE_END_SECONDS[mine.end.kind],
-  );
-}
-
-/** Ada's shot pops each armed mine it touches that it has not; true once the shot is spent. */
-function strikeMines(
-  content: GameContent,
-  shot: Shot,
-  flight: FlightState,
-  events: FlightEvent[],
-): boolean {
-  for (const mine of flight.mines) {
-    if (
-      armed(mine) &&
-      !shot.hitIds.includes(mine.id) &&
-      (shot.projectile === "missile"
-        ? outlineContact(
-            MINE_PARTS,
-            mine,
-            worldPoint(flightWorldContext(flight), mine, shot),
-            MISSILE_HIT_RADIUS,
-          ) !== null
-        : mineTouches(mine, SHOT_PARTS, worldPoint(flightWorldContext(flight), mine, shot)))
-    ) {
-      shot.hitIds.push(mine.id);
-      mine.end = { age: 0, kind: "pop" };
-      if (shot.blast !== undefined) {
-        const contact = outlineContact(
-          MINE_PARTS,
-          mine,
-          worldPoint(flightWorldContext(flight), mine, shot),
-          shotRadius(shot),
-        );
-        const at = contact
-          ? impactSurface({ contact, projected: false, radius: shotRadius(shot) }, shot)
-          : shot;
-        blast(content, shot.damage, shot.blast, at, null, flight, events);
-      }
-      if (!shot.piercing) {
-        shot.life = 0;
-        return true;
-      }
-    }
-  }
-  return false;
-}
+const mineStrike = { blast, shotParts: SHOT_PARTS, shotRadius };
 
 function segmentDistance(point: Vec, start: Vec, end: Vec): number {
   const dx = end.x - start.x;
@@ -4923,7 +4820,7 @@ function shots(
         shot.life = 0;
         continue;
       }
-      if (strikeMines(content, shot, flight, events)) {
+      if (strikeMines(mineStrike, content, shot, flight, events)) {
         continue;
       }
       strike(content, shot, flight, events, from);
@@ -5781,7 +5678,7 @@ export function stepFlight(
     }
     releasePendingPellets(content, slice, flight, events, shotDelays);
     shots(content, slice, flight, events, shotDelays);
-    stepMines(slice, flight);
+    stepMines(damage, slice, flight);
     stepWrecks(content, slice, input.reducedMotion ?? false, flight);
     for (const object of flight.objects) {
       if (object.kind === "hazard" && touchesAda(flight, object, object.radius)) {
