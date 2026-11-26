@@ -21,10 +21,10 @@ interface Allowed {
   readonly selectors?: RegExp;
 }
 
-const ALLOWED: readonly Allowed[] = [
+const ALLOWED_SIZES: readonly Allowed[] = [
   {
     file: "layout/bootSplash.css",
-    reason: "Loads before the interface script, so it cannot read the layout or colour modules",
+    reason: "Uses viewport sizing before the interface script can set a view unit",
   },
 ];
 
@@ -129,9 +129,11 @@ const COLOUR_SOURCES = [...allSources(UI), PAGE_STYLE].filter(
   (path) => relative(UI, path) !== COLOUR_MODULE,
 );
 const HEX_COLOUR = /#[\da-f]{3,8}\b/giu;
+const BOOT_COLOUR_SOURCES = new Set(["layout/bootSplash.css", "layout/bootSplashColours.ts"]);
+const RAW_RGB_COLOUR = /\brgba?\(\s*(?:\d|\.\d)[^\n)]*\)/giu;
 
-function isAllowed(file: string, selector: string): boolean {
-  return ALLOWED.some(
+function isSizeAllowed(file: string, selector: string): boolean {
+  return ALLOWED_SIZES.some(
     (entry) =>
       entry.file === file && (entry.selectors === undefined || entry.selectors.test(selector)),
   );
@@ -140,14 +142,16 @@ function isAllowed(file: string, selector: string): boolean {
 export function colourFindings(file: string, text: string): string[] {
   const code = withoutComments(text);
   const blanked = withoutSubstitutions(code);
-  return [...code.matchAll(HEX_COLOUR)].flatMap((match) => {
-    const selector = selectorAt(blanked, match.index);
-    if (isAllowed(file, selector)) {
-      return [];
-    }
-    const line = code.slice(0, match.index).split("\n").length;
-    return [`${file}:${line} hex colour: ${match[0]}${selector ? ` in ${selector}` : ""}`];
-  });
+  const findings = (kind: string, pattern: RegExp) =>
+    [...code.matchAll(pattern)].map((match) => {
+      const selector = selectorAt(blanked, match.index);
+      const line = code.slice(0, match.index).split("\n").length;
+      return `${file}:${line} ${kind}: ${match[0]}${selector ? ` in ${selector}` : ""}`;
+    });
+  return [
+    ...findings("hex colour", HEX_COLOUR),
+    ...(BOOT_COLOUR_SOURCES.has(file) ? findings("raw RGB colour", RAW_RGB_COLOUR) : []),
+  ];
 }
 
 export function rawPixelFindings(file: string, text: string): string[] {
@@ -161,7 +165,7 @@ export function rawPixelFindings(file: string, text: string): string[] {
         continue;
       }
       const selector = selectorAt(blanked, match.index);
-      if (!isAllowed(file, selector)) {
+      if (!isSizeAllowed(file, selector)) {
         const line = code.slice(0, match.index).split("\n").length;
         findings.push(`${file}:${line} ${name}: ${match[0]}${selector ? ` in ${selector}` : ""}`);
       }
@@ -205,7 +209,7 @@ describe("DOM UI sizes", () => {
       1,
     );
     expect(rawPixelFindings("weapons.ts", "`.ada-controls .ada-weapon{gap:4px}`")).toHaveLength(1);
-    expect(ALLOWED.every((entry) => entry.reason.length > 0)).toBe(true);
+    expect(ALLOWED_SIZES.every((entry) => entry.reason.length > 0)).toBe(true);
   });
 
   it("draw every colour from the colour module, never a hex literal", () => {
@@ -214,7 +218,13 @@ describe("DOM UI sizes", () => {
     );
     expect(findings).toEqual([]);
     expect(COLOUR_SOURCES.map((path) => relative(UI, path))).toEqual(
-      expect.arrayContaining(["../style.css", "layout/mapScreen.ts", "modal.ts"]),
+      expect.arrayContaining([
+        "../style.css",
+        "layout/bootSplash.css",
+        "layout/bootSplashColours.ts",
+        "layout/mapScreen.ts",
+        "modal.ts",
+      ]),
     ); // One token per colour value.
     const values = [...Object.values(COLOURS), ...Object.values(UNLISTED_COLOURS)].map((value) =>
       value.toLowerCase(),
@@ -232,7 +242,17 @@ describe("DOM UI sizes", () => {
       "example.ts:1 hex colour: #FF6B6B",
       "example.ts:1 hex colour: #000",
     ]);
-    expect(colourFindings("layout/bootSplash.css", "html{background:#101010}")).toEqual([]);
+  });
+
+  it("checks early boot colours while keeping the pre-script size allowance", () => {
+    const css = "#boot-splash{width:4px;background:#101010}";
+    expect(rawPixelFindings("layout/bootSplash.css", css)).toEqual([]);
+    expect(colourFindings("layout/bootSplash.css", css)).toEqual([
+      "layout/bootSplash.css:1 hex colour: #101010 in #boot-splash",
+    ]);
+    expect(
+      colourFindings("layout/bootSplashColours.ts", 'const track = "rgb(24 20 37 / 0.6)";'),
+    ).toEqual(["layout/bootSplashColours.ts:1 raw RGB colour: rgb(24 20 37 / 0.6)"]);
   });
 
   it("cover the layout style modules and the page stylesheet, and allow only existing files", () => {
@@ -247,7 +267,9 @@ describe("DOM UI sizes", () => {
     );
     expect(checked).not.toContain("layout/css.ts");
     expect(
-      ALLOWED.filter((entry) => !existsSync(join(UI, entry.file)) || !checked.includes(entry.file)),
+      ALLOWED_SIZES.filter(
+        (entry) => !existsSync(join(UI, entry.file)) || !checked.includes(entry.file),
+      ),
     ).toEqual([]);
   });
 });

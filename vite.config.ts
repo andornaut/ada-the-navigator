@@ -34,6 +34,11 @@ export default ({ command }: ConfigEnv) =>
       modules.homePagePlugin(),
       modules.sitePages(),
       modules.phaserBuildPlugin(modules.PHASER_BUILD),
+      modules.uiStylePlugin({
+        kind: "boot",
+        source: repoPath("src/ui/layout/bootSplashColours.ts"),
+        stylesheet: repoPath("src/ui/layout/bootSplash.css"),
+      }),
       modules.uiStylePlugin({ kind: "crash", source: repoPath("src/ui/layout/crashRecovery.ts") }),
       modules.uiStylePlugin({ source: repoPath("src/ui/stylesheet.ts") }),
       modules.hashedIconsPlugin({ icons: modules.ICONS }),
