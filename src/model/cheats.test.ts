@@ -4,7 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
-import { playOpening, readStory, supportEntropy } from "../testing/launch.ts";
+import { playOpening, readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import { CHEAT_AMOUNT, CHEAT_IDS } from "./cheats.ts";
 import { GameModel } from "./game.ts";
 import { UPGRADE_WEAPONS } from "./weapons.ts";
@@ -22,7 +22,7 @@ function launched(): GameModel {
 }
 
 describe("cheats", () => {
-  it("unlocks every weapon with starting ammunition, keeping levels, selection and Stardust", () => {
+  it("unlocks every weapon and fills every ammo pool, keeping levels, selection and Stardust", () => {
     const model = home();
     const economy = model.state.economy;
     economy.ownedWeapons = ["multiLaser"];
@@ -32,11 +32,11 @@ describe("cheats", () => {
     expect(model.cheat("unlockAllWeapons")).toBe(true);
     expect([...economy.ownedWeapons].sort()).toEqual([...UPGRADE_WEAPONS].sort());
     const ammo = {
-      heavyMissile: 120,
-      multiLaser: 5,
-      phaser: 120,
-      rapidMissile: 780,
-      scattershot: 180,
+      heavyMissile: ECONOMY.ammo.capacity,
+      multiLaser: ECONOMY.ammo.capacity,
+      phaser: ECONOMY.ammo.capacity,
+      rapidMissile: ECONOMY.ammo.capacity,
+      scattershot: ECONOMY.ammo.capacity,
     };
     expect(economy.ammo).toEqual(ammo);
     expect(economy).toMatchObject({
@@ -46,6 +46,11 @@ describe("cheats", () => {
     });
     expect(model.cheatAvailable("unlockAllWeapons")).toBe(false);
     expect(model.cheat("unlockAllWeapons")).toBe(false);
+    expect(economy.ammo).toEqual(ammo);
+    economy.ownedWeapons.pop();
+    expect(model.cheatAvailable("unlockAllWeapons")).toBe(true);
+    expect(model.cheat("unlockAllWeapons")).toBe(true);
+    expect([...economy.ownedWeapons].sort()).toEqual([...UPGRADE_WEAPONS].sort());
     expect(economy.ammo).toEqual(ammo);
   });
 
@@ -61,6 +66,30 @@ describe("cheats", () => {
     expect(Object.values(flight.levels.weapons).every((level) => level === 3)).toBe(true);
     expect(model.cheat("unlockAllEquipment")).toBe(true);
     expect(flight.levels).toMatchObject({ engine: 3, shield: 3, tractor: 3 });
+  });
+
+  it("re-enables the cheat as soon as shots spend ammo and keeps the refill on Continue", () => {
+    const model = launched();
+    const flight = model.state.flight!;
+    const cap = ECONOMY.ammo.capacity;
+
+    expect(model.cheat("unlockAllWeapons")).toBe(true);
+    expect(model.cheatAvailable("unlockAllWeapons")).toBe(false);
+    expect(model.selectWeapon("multiLaser")).toBe(true);
+    model.step(0.01, { aim: { x: 1, y: 0 }, move: { x: 0, y: 0 }, use: false });
+    expect(flight.shots).toHaveLength(3);
+    expect(flight.ammo.multiLaser).toBe(cap - 3);
+    expect(model.cheatAvailable("unlockAllWeapons")).toBe(true);
+    expect(model.cheat("unlockAllWeapons")).toBe(true);
+    expect(flight.weapon).toBe("multiLaser");
+    expect(Object.values(flight.ammo)).toEqual(UPGRADE_WEAPONS.map(() => cap));
+    expect(model.cheatAvailable("unlockAllWeapons")).toBe(false);
+    expect(model.cheat("unlockAllWeapons")).toBe(false);
+
+    const resumed = relaunch(CONTENT, model.save());
+    expect(resumed.state.flight?.ammo).toEqual(flight.ammo);
+    expect(resumed.state.flight?.weapon).toBe("multiLaser");
+    expect(resumed.cheatAvailable("unlockAllWeapons")).toBe(false);
   });
 
   it("raises equipment to level 3 and owns every paint, keeping the selected paint", () => {

@@ -3,7 +3,7 @@ import { ECONOMY } from "../data/economy.ts";
 import type { Weapon } from "../data/types.ts";
 import { shopRow } from "./shop.ts";
 import type { EconomyState, GameState } from "./types.ts";
-import { addWeaponGrant, UPGRADE_WEAPONS } from "./weapons.ts";
+import { UPGRADE_WEAPONS } from "./weapons.ts";
 
 // CLEANUP (added 2026-11-26): Remove when GameModel, the scene and their tests import
 // the cheat IDs and type from data/cheatCopy.ts.
@@ -35,7 +35,10 @@ export function economyCheatAvailable(
   economy: EconomyState,
 ): boolean {
   if (id === "unlockAllWeapons") {
-    return UPGRADE_WEAPONS.some((weapon) => !economy.ownedWeapons.includes(weapon));
+    return UPGRADE_WEAPONS.some(
+      (weapon) =>
+        !economy.ownedWeapons.includes(weapon) || economy.ammo[weapon] < ECONOMY.ammo.capacity,
+    );
   }
   if (id === "unlockAllEquipment") {
     return (
@@ -62,12 +65,11 @@ export function applyEconomyCheat(
   const economy = state.economy;
   switch (id) {
     case "unlockAllWeapons":
-      // Each new weapon includes its starting ammunition, on top of ammunition kept from before.
       for (const weapon of UPGRADE_WEAPONS) {
         if (!economy.ownedWeapons.includes(weapon)) {
           economy.ownedWeapons.push(weapon);
-          addWeaponGrant(ECONOMY, weapon, economy.ammo);
         }
+        economy.ammo[weapon] = ECONOMY.ammo.capacity;
       }
       return;
     case "unlockAllEquipment":
