@@ -424,16 +424,16 @@
         }
       },
       "hullDark": {
-        "color": "#28558A",
-        "minimum": 1,
+        "color": "#4D6584",
+        "minimum": 1.095,
         "location": {
-          "camera": 7,
-          "x": 455,
-          "y": 211,
-          "luminance": 0.08783095866744486,
-          "sourceColor": "#575163",
-          "sourceX": 455,
-          "sourceY": 211
+          "camera": 6,
+          "x": 371,
+          "y": 206,
+          "luminance": 0.11030006740511494,
+          "sourceColor": "#625A6D",
+          "sourceX": 384,
+          "sourceY": 202
         }
       }
     }

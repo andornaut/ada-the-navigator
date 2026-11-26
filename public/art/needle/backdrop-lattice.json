@@ -749,8 +749,8 @@
         }
       },
       "hullDark": {
-        "color": "#28558A",
-        "minimum": 3.612,
+        "color": "#4D6584",
+        "minimum": 2.836,
         "location": {
           "camera": 3,
           "x": 711,
