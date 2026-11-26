@@ -24,6 +24,8 @@ import {
   MAP_SCREEN,
   MAP_SYMBOL,
   MAP_TOOLS,
+  mapCardLift,
+  mapCardWidth,
   mapCloseRect,
   mapGalaxiesRect,
   mapHeaderCap,
@@ -173,6 +175,17 @@ describe("map projection and fit", () => {
     // The close target reserves a fixed width to the right of the zoom tools.
     expect(mapHeaderCap(NO_INSETS, BASE)).toBe(518 - CARD_CLOSE.hit.width);
     expect(mapHeaderCap(phone, BASE)).toBe(464 - CARD_CLOSE.hit.width);
+  });
+
+  it("fits a shared card width and lifts the selection only where it meets the footer", () => {
+    const phone = { bottom: 19, left: 43, right: 43, top: 0 };
+    const width = mapCardWidth(NO_INSETS, BASE, 362, 2);
+    expect(width).toBe(365);
+    expect(mapCardLift(width, 374)).toBe(0);
+    const compactWidth = mapCardWidth(phone, BASE, 362, 2);
+    expect(compactWidth).toBe(362);
+    expect(mapCardLift(compactWidth, 320)).toBe(56);
+    expect(mapCardWidth(phone, BASE, 500, 2)).toBe(mapHeaderCap(phone, BASE));
   });
 
   it("fills one survey pip per whole tenth of the displayed percent", () => {

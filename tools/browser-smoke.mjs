@@ -648,6 +648,13 @@ try {
       pixelUnit,
     );
     const narrowest = mapLayout.mapHeaderGeometry(0, 0, measured.note, pixelUnit);
+    const current = mapLayout.mapHeaderGeometry(
+      measured.name,
+      measured.percentInk,
+      measured.note,
+      pixelUnit,
+    );
+    const expectedWidth = mapLayout.mapCardWidth(insets, view, current.width, pixelUnit);
     const { divider, padding, pip, pipPitch, pips } = mapLayout.MAP_SCREEN.header;
     const pixels = (logical) => Math.round(logical * pixelUnit);
     // The note sets a floor from actual ink and two insets. The four row segments add
@@ -719,8 +726,8 @@ try {
         noteRounding >= 0 &&
         noteRounding < gaps &&
         headerRounding >= 0 &&
-        headerRounding < gaps,
-      `${name}: header fits its ${cap} cap and the ink floors with only gap rounding: ${JSON.stringify(
+        Math.abs(width - expectedWidth) <= 0.5,
+      `${name}: header fits its ${cap} cap and ink floors at the shared card width: ${JSON.stringify(
         mapHeaders[name],
       )}`,
     );
@@ -3003,6 +3010,7 @@ try {
       lineHeight: jobLine ? parseFloat(getComputedStyle(jobLine).lineHeight) : 0,
       panel: box(screen.querySelector(".ada-map-panel")),
       quests: box(screen.querySelector('[data-action="map-quests"]')),
+      header: box(screen.querySelector(".ada-map-header")),
       unit: Number(getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit")),
     };
   });
@@ -3019,10 +3027,13 @@ try {
     jobPanel.jobHeight > 1.5 * jobPanel.lineHeight,
     `A long Job line wraps inside the panel: ${JSON.stringify(jobPanel)}`,
   );
-  // The panel's maxWidth keeps it at least SPACING.gap left of the footer (art/map.md).
+  // The selection matches the header and leaves a gap to the footer, beside or above it.
   assert.ok(
-    jobPanel.panel.right <= jobPanel.quests.left - 8 * jobPanel.unit + 0.5,
-    `The panel stays SPACING.gap left of the footer: ${JSON.stringify(jobPanel)}`,
+    Math.abs(jobPanel.panel.left - jobPanel.header.left) <= 0.5 &&
+      Math.abs(jobPanel.panel.width - jobPanel.header.width) <= 0.5 &&
+      (jobPanel.panel.right <= jobPanel.quests.left - 8 * jobPanel.unit + 0.5 ||
+        jobPanel.panel.bottom <= jobPanel.quests.top - 8 * jobPanel.unit + 0.5),
+    `The matched selection panel clears the footer: ${JSON.stringify(jobPanel)}`,
   );
   assert.ok(
     jobPanel.chip.bottom < jobPanel.panel.top,

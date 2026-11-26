@@ -226,14 +226,12 @@ describe("map screen place panel", () => {
     expect(MAP_SCREEN_STYLE).toContain("--map-place-rim:ButtonText;");
   });
 
-  it("sizes the panel to its content between the card floor and the script-set maximum", () => {
-    const panel = (() => {
-      const from = MAP_SCREEN_STYLE.indexOf("/* The place panel:");
-      return MAP_SCREEN_STYLE.slice(from, MAP_SCREEN_STYLE.indexOf("}", from));
-    })();
+  it("keeps the unselected panel content-sized and the Travel action on one line", () => {
+    const panel = MAP_SCREEN_STYLE.match(/\.ada-map-panel\{([^}]*width:max-content[^}]*)\}/u)?.[1];
     expect(panel).toContain("width:max-content");
     expect(panel).toContain("min-width:");
     expect(panel).not.toContain("max-width");
+    expect(MAP_SCREEN_STYLE).toMatch(/\.ada-map-row \.ada-button\{[^}]*white-space:nowrap/u);
   });
 });
 

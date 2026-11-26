@@ -56,6 +56,8 @@ import {
   MAP_SCREEN,
   MAP_SYMBOL,
   MAP_TOOLS,
+  mapCardLift,
+  mapCardWidth,
   mapGlyphSize,
   mapHeaderGeometry,
   mapHeaderLeft,
@@ -561,7 +563,6 @@ export const MAP_SCREEN_STYLE = `
 }
 .ada-controls .ada-map-survey-info{
   display:flex;
-  justify-content:center;
   box-sizing:border-box;
   margin:0;
   padding:0 ${units(MAP_SCREEN.header.padding)};
@@ -622,7 +623,7 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
   }
 }
 
-/* The place panel: a card face with no close X, centred in the page safe rect on its bottom. */
+/* The place panel is left-aligned, above the footer when it needs the extra width. */
 .ada-controls .ada-map-panel{
   position:absolute;
   left:${safeEdge("left", SAFE_MARGIN.page)};
@@ -652,7 +653,8 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
 }
 .ada-controls .ada-map-row{
   min-height:${units(MAP_PANEL.row)};
-  display:flex;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) max-content;
   align-items:center;
   gap:${units(MAP_PANEL.markGap)}
 }
@@ -665,21 +667,41 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
   flex:none
 }
 .ada-controls .ada-map-text{
-  flex:1;
   min-width:0;
   display:grid;
   padding:${units(MAP_PANEL.textTop)} 0;
   margin-right:${units(MAP_PANEL.actionGap - MAP_PANEL.markGap)}
+}
+.ada-controls .ada-map-text,.ada-controls .ada-map-reason{
+  overflow-wrap:anywhere
 }
 .ada-controls .ada-map-name{
   font:${font(TYPE.label)};
   color:${MAP_COLORS.cream}
 }
 .ada-controls .ada-map-row .ada-button{
-  flex:none
+  min-width:max-content;
+  white-space:nowrap
+}
+.ada-controls .ada-map-panel[data-above-footer] .ada-map-row{
+  grid-template-columns:auto minmax(0,1fr)
+}
+.ada-controls .ada-map-panel[data-above-footer] .ada-map-row .ada-button{
+  grid-column:1 / -1;
+  justify-self:start
+}
+@media ${COMPACT_VIEWPORT}{
+  .ada-controls .ada-map-row{
+    grid-template-columns:auto minmax(0,1fr)
+  }
+  .ada-controls .ada-map-row .ada-button{
+    grid-column:1 / -1;
+    justify-self:start
+  }
 }
 .ada-controls .ada-map-travel-cost{
   display:inline-flex;
+  flex:none;
   align-items:center;
   gap:${units(BALANCE.markGap)}
 }
@@ -1260,6 +1282,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   let textMeasure: CanvasRenderingContext2D | null | undefined;
   const inkMeasurements = new Map<string, { offset: number; width: number }>();
   let view: MapView | null = null;
+  let cardWidth = 0;
   const chips = new Map<string, HTMLButtonElement>();
   let order = "";
 
@@ -1309,7 +1332,10 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     if (!panelShown()) {
       return null;
     }
-    const bottom = size.height - Math.max(SAFE_MARGIN.page, insets.bottom);
+    const bottom =
+      size.height -
+      Math.max(SAFE_MARGIN.page, insets.bottom) -
+      (panel.hasAttribute("data-above-footer") ? MAP_SCREEN.hudRow.height + SPACING.gap : 0);
     if (!panel.hidden) {
       const measured = frameBoxIn(screen, panel);
       if (measured.height > 0) {
@@ -1417,16 +1443,15 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     }
   };
   const renderQueue = createMapRenderQueue(window, () => render());
-  const render = () => {
+  const render = (refitSelection = false) => {
     renderQueue.cancel();
     if (!state || screen.hidden) {
       return;
     }
-    const { field, inner, insets, size, unit } = layout();
+    const { field, fit, inner, insets, size, unit } = layout();
     if (!view) {
       view = openingView(inner, field, worldSide(), places(), state.map.player);
     }
-    const current = view;
     screen.style.setProperty("--map-field", state.field?.background ?? "");
     // Header.
     galaxyInk.textContent = state.field?.name ?? "";
@@ -1492,10 +1517,11 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     const percentWidth = measureInk(percent, percentInk);
     const noteWidth = measureInk(noteInk, noteInk);
     const geometry = mapHeaderGeometry(nameWidth, percentWidth, noteWidth, pixelUnit);
+    cardWidth = mapCardWidth(insets, size, geometry.width, pixelUnit);
     const page = safeRect(insets, SPACING.pageInset, size);
-    header.style.left = pixels(Math.round(mapHeaderLeft(insets, size) * pixelUnit) / density);
-    header.style.top = pixels(Math.round(page.y * pixelUnit) / density);
-    header.style.width = units(geometry.width);
+    header.style.left = pixels(Math.ceil(mapHeaderLeft(insets, size) * pixelUnit) / density);
+    header.style.top = pixels(Math.ceil(page.y * pixelUnit) / density);
+    header.style.width = units(cardWidth);
     header.style.setProperty("--map-header-gap", units(geometry.gap));
     divider.style.width = pixels(Math.round(MAP_SCREEN.header.divider.width * pixelUnit) / density);
     const diameter = Math.round(MAP_SCREEN.header.pip * pixelUnit);
@@ -1514,6 +1540,12 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       style.height = pixels(diameter / density);
       style.borderWidth = pixels(Math.round(MAP_SCREEN.header.pipRing * pixelUnit) / density);
     }
+    const refittedPlace = refitSelection ? selectedPlace() : null;
+    if (refittedPlace) {
+      dressPanel();
+      view = keepClear(fit, inner, field, panelTop(size, insets, unit), refittedPlace, view);
+    }
+    const current = view;
     // Chips, kept by id and placed in reading order so Tab follows it.
     const shown = places().map((place) => ({
       place,
@@ -1557,7 +1589,9 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     ada.style.left = units(at.x - MAP_SYMBOL.ada.size / 2);
     ada.style.top = units(at.y - MAP_SYMBOL.ada.size / 2);
     shipMarker.setFacing(state.map.facing);
-    dressPanel();
+    if (!refittedPlace) {
+      dressPanel();
+    }
     drawFog(inner, unit, current);
   };
 
@@ -1565,12 +1599,18 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   const dressPanel = () => {
     const { fit, insets, size } = layout();
     const navigation = frameSize(hudRow).width / readViewUnit(hudRow);
-    const width = units(panelMaxWidth(insets, size, navigation || undefined));
-    panel.style.maxWidth = width;
-    panel.style.setProperty("--map-panel-width", width);
+    const sideBySide = panelMaxWidth(insets, size, navigation || undefined);
     const place = selectedPlace();
     const travelling = travelNow();
-    const bottom = size.height - Math.max(SAFE_MARGIN.page, insets.bottom);
+    const lift = place ? mapCardLift(cardWidth, sideBySide) : 0;
+    const bottom = size.height - Math.max(SAFE_MARGIN.page, insets.bottom) - lift;
+    const width = units(place ? cardWidth : sideBySide);
+    panel.style.width = place ? width : "";
+    panel.style.left = place ? header.style.left : "";
+    panel.style.maxWidth = width;
+    panel.style.setProperty("--map-panel-width", width);
+    panel.style.bottom = lift ? units(size.height - bottom) : "";
+    panel.toggleAttribute("data-above-footer", lift > 0);
     panel.style.maxHeight = place ? units(selectedPanelMaxHeight(fit, bottom)) : "";
     panel.hidden = !panelShown();
     row.hidden = place === null;
@@ -1843,7 +1883,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     if (!screen.hidden && view) {
       const { field, inner } = layout();
       view = clampView(inner, field, view);
-      render();
+      render(true);
     }
   };
   let checkedAttached = false;
