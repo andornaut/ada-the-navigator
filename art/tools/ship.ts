@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import { editManifest } from "./manifest.ts";
 import { anchor, json, SHIP_HEADINGS, SHIP_HEADING_CONTRACT } from "./projection.ts";
+import { forwardFlightJson } from "./ship-forward-flight.ts";
 import {
   classic,
   DISPLAY,
@@ -22,6 +23,7 @@ import { check, rasterize, trace, type V2 } from "./silhouette.ts";
 const output = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const paintOnly = process.argv.includes("--paint-only");
 const jetsOnly = process.argv.includes("--jets-only");
+const forwardFlightOnly = process.argv.includes("--forward-flight-only");
 
 // Speed jets: plume roots at the mouth centres per heading, the profile and the layers by
 // Engine level, with the hull regions that draw over a plume at its longest.
@@ -78,8 +80,10 @@ function noses(): string {
 }
 
 mkdirSync(output, { recursive: true });
-if (!paintOnly) writeFileSync(`${output}ship-jets.json`, jets());
-if (!jetsOnly)
+if (forwardFlightOnly || (!paintOnly && !jetsOnly))
+  writeFileSync(`${output}ship-forward-flight.json`, forwardFlightJson());
+if (!forwardFlightOnly && !paintOnly) writeFileSync(`${output}ship-jets.json`, jets());
+if (!forwardFlightOnly && !jetsOnly)
   writeFileSync(
     `${output}ship-paint.json`,
     json({
@@ -93,7 +97,7 @@ if (!jetsOnly)
     }),
   );
 
-if (!paintOnly && !jetsOnly && !process.argv.includes("--data-only")) {
+if (!forwardFlightOnly && !paintOnly && !jetsOnly && !process.argv.includes("--data-only")) {
   writeFileSync(`${output}ship-nose.json`, noses());
 
   // All hulls use shared material geometry and retain their logical manifest entries.
@@ -131,4 +135,4 @@ if (!paintOnly && !jetsOnly && !process.argv.includes("--data-only")) {
   });
 }
 
-if (!paintOnly && !jetsOnly) writeShipMaterials();
+if (!forwardFlightOnly && !paintOnly && !jetsOnly) writeShipMaterials();
