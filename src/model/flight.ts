@@ -40,7 +40,7 @@ import { spacingRadius } from "../data/enemySpacing.ts";
 import { byPosition, ROUTE_POSITION, type RoutePosition } from "../data/galaxies.ts";
 import { CURRENTS, HUNTING_PACKS, ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
-import { JOB_TUNING, LANDMARK_TUNING } from "../data/jobs.ts";
+import { LANDMARK_TUNING } from "../data/jobs.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../data/phantom.ts";
 import { SCREEN } from "../data/screen.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
@@ -109,6 +109,7 @@ import { selectCartwheelClaimField } from "./cartwheelClaimField.ts";
 import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
 import { inBattle, inDanger } from "./flight/danger.ts";
+import { movementSpeedFraction, shipSpeedFraction, towing } from "./flight/handling.ts";
 import { flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
 import {
   createFrigateEscorts,
@@ -259,7 +260,7 @@ import {
   shipTouches,
   shipTouchesScreenCircle,
 } from "./shipBody.ts";
-import { direction, speedFraction, stepShipMotion, turnToward } from "./shipPhysics.ts";
+import { direction, stepShipMotion, turnToward } from "./shipPhysics.ts";
 import {
   worldFitsEncounter,
   worldRegionalEngagementAdmissions,
@@ -302,7 +303,7 @@ import { leveledValue, noLevels, type ShipTuning, shipTuning } from "./upgrades.
 import { markVisited, visitedChunk } from "./visited.ts";
 import { clampAmmo, ensureOwnedWeapons, grantedAmmo, shotsLeft, spendAmmo } from "./weapons.ts";
 
-export { inBattle, inDanger };
+export { inBattle, inDanger, movementSpeedFraction, shipSpeedFraction, towing };
 
 const length = (v: Vec) => Math.hypot(v.x, v.y);
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -3970,31 +3971,6 @@ function damage(amount: number, flight: FlightState): void {
   flight.sinceDamage = 0;
 }
 /**
- * Fraction of maxSpeed requested by a movement deflection from 0 (just past the dead zone)
- * to 1 (full reach). No input requests no speed; any input requests at least minSpeedFraction.
- */
-export function movementSpeedFraction(
-  tuning: Pick<GameContent["tuning"], "minSpeedFraction" | "speedCurveExponent">,
-  deflection: number,
-): number {
-  const m = Math.min(1, Math.max(0, deflection));
-  if (!m) {
-    return 0;
-  }
-  return tuning.minSpeedFraction + (1 - tuning.minSpeedFraction) * m ** tuning.speedCurveExponent;
-}
-/**
- * Current ship speed as a fraction of Ada's maximum speed at her engine level, clamped to
- * [0, 1], for jets. Flights without levels use the base engine.
- */
-export function shipSpeedFraction(
-  content: GameContent,
-  flight: Pick<FlightState, "velocity"> & Partial<Pick<FlightState, "levels">>,
-): number {
-  const physics = shipTuning(ECONOMY, content, flight.levels ?? noLevels()).physics;
-  return speedFraction(physics.maxSpeed, flight.velocity);
-}
-/**
  * Whether Ada's drawn ship reaches a pickup at `center`, by the one pickup rule: within the
  * pickup margin, in world units on the world plane, between the ship's drawn body and the
  * pickup's drawn `outline`, or its circle of `radius`.
@@ -4045,30 +4021,6 @@ export function undockFlight(content: GameContent, flight: FlightState): void {
   flight.velocity = { x: 0, y: 0 };
   movementHeadings.delete(flight);
   beginArrivalGrace(content, flight);
-}
-/**
- * While a tow line is attached, Ada's current handling scaled by the tow multipliers
- * (gameplay/quests.md "Tow handling"): a lower top speed, slower speed changes, wider turns.
- */
-export function towing<
-  T extends {
-    accelerationSeconds: number;
-    brakingSeconds: number;
-    maxSpeed: number;
-    turnSeconds: number;
-  },
->(flight: Pick<FlightState, "tow">, physics: T): T {
-  if (!flight.tow) {
-    return physics;
-  }
-  const { responseScale, topSpeedScale, turnScale } = JOB_TUNING.tow;
-  return {
-    ...physics,
-    accelerationSeconds: physics.accelerationSeconds * responseScale,
-    brakingSeconds: physics.brakingSeconds * responseScale,
-    maxSpeed: physics.maxSpeed * topSpeedScale,
-    turnSeconds: physics.turnSeconds * turnScale,
-  };
 }
 type FreshTravel = (distance: number, seconds: number, point: Vec) => void;
 
