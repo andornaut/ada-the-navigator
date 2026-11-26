@@ -1,60 +1,88 @@
 import type { CapitalBossHud } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATION_BOX, SHIELD_PILL } from "../data/layout.ts";
+import { TAB_COLOURS } from "./dialoguePortraits.ts";
 import { COLOURS } from "./layout/colours.ts";
-import { font, fromHudEdge, units } from "./layout/css.ts";
+import { font, fromHudEdge, hudCentreX, pixels, units } from "./layout/css.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
+import { STATUS_COLOURS } from "./statusPill.ts";
 
-// The longest ship and captain pair still fits on one line with Disabled.
-const MAX_WIDTH = 384;
-// Reserve the conversation slot throughout the fight. Compact vertical padding leaves room
-// above Ada's highest hull pixels in the 360-unit play area.
-const TOP = CONVERSATION_BOX.top + CONVERSATION_BOX.height + SHIELD_PILL.bar.inset;
+const { bar, bars } = SHIELD_PILL;
+const { name, panel, tab } = CONVERSATION_BOX;
 
 export const BOSS_HUD_STYLE = `
 .ada-controls .ada-boss-hud{
   position:absolute;
-  top:${fromHudEdge("top", TOP)};
-  left:${fromHudEdge("left")};
-  right:${fromHudEdge("right")};
-  box-sizing:border-box;
-  max-width:${units(MAX_WIDTH)};
-  margin-inline:auto;
-  padding:${units(SHIELD_PILL.bar.rim)} ${units(SPACING.gap)};
-  background:${COLOURS.navy};
-  color:${COLOURS.cream};
-  font:${font(TYPE.label)};
-  text-align:center;
+  top:${fromHudEdge("top")};
+  --ada-boss-start:max(${fromHudEdge("left")},var(--ada-boss-left,0px));
+  --ada-boss-end:max(${fromHudEdge("right")},var(--ada-boss-right,0px));
+  --ada-boss-width:clamp(0px,100% - var(--ada-boss-start) - var(--ada-boss-end),${units(bars[2])});
+  left:clamp(var(--ada-boss-start),${hudCentreX()} - var(--ada-boss-width) / 2,
+    100% - var(--ada-boss-end) - var(--ada-boss-width));
+  width:var(--ada-boss-width);
   pointer-events:none
 }
-.ada-boss-hud-names{
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center;
-  column-gap:${units(SPACING.gap)};
-  overflow-wrap:anywhere
+.ada-controls .ada-boss-hud-badge{
+  position:relative;
+  z-index:1;
+  display:block;
+  width:max-content;
+  max-width:100%;
+  box-sizing:border-box;
+  height:${units(tab.height)};
+  margin-bottom:${units(-tab.edge)};
+  padding:0 ${units(tab.labelInset - tab.edge)};
+  border:${units(tab.edge)} solid ${panel.ink};
+  border-radius:${units(tab.radius)};
+  background:${TAB_COLOURS.captainTally};
+  color:${panel.ink};
+  font:${font(name)};
+  line-height:${units(tab.height - 2 * tab.edge)};
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis
 }
-.ada-boss-hud-captain{
-  color:${COLOURS.supporting};
-  font:${font(TYPE.body)}
+.ada-controls .ada-boss-hud[data-compact] .ada-boss-hud-badge{
+  font-size:${units(TYPE.count.size)}
 }
-.ada-boss-hud-meter{
-  height:${units(SPACING.rowGap)};
-  margin-top:${units(SHIELD_PILL.bar.rim)};
-  background:${COLOURS.ink}
+.ada-controls .ada-boss-hud-meter{
+  --shield-bar:100%;
+  --shield-rim:${STATUS_COLOURS.rim};
+  outline:${units(bar.rim)} solid ${COLOURS.ink}
 }
-.ada-boss-hud-fill{
+.ada-controls .ada-boss-hud-track{
+  position:absolute;
+  inset:${units(bar.inset)}
+}
+.ada-controls .ada-boss-hud-fill{
   display:block;
   height:100%;
-  background:${COLOURS.refusalRed}
+  background:${STATUS_COLOURS.low}
+}
+.ada-controls .ada-boss-hud-caption{
+  display:flex;
+  justify-content:space-between;
+  gap:${units(SPACING.markGap)};
+  padding:0 ${units(bar.inset)};
+  background:${STATUS_COLOURS.panel};
+  color:${STATUS_COLOURS.count};
+  font:${font(TYPE.count)}
+}
+.ada-controls .ada-boss-hud-captain{
+  min-width:0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis
 }
 @media (forced-colors:active){
-  .ada-boss-hud-meter{
+  .ada-controls .ada-boss-hud-meter{
     forced-color-adjust:none;
-    background:Canvas;
-    box-shadow:inset 0 0 0 ${units(SHIELD_PILL.bar.rim)} CanvasText
+    --shield-rim:CanvasText;
+    outline-color:CanvasText;
+    background:Canvas
   }
-  .ada-boss-hud-fill{background:Highlight}
+  .ada-controls .ada-boss-hud-fill{background:Highlight}
 }
 `;
 
@@ -74,33 +102,67 @@ export function createBossHud(parent: HTMLElement): {
   root.className = "ada-boss-hud";
   root.hidden = true;
 
-  const names = document.createElement("div");
-  names.className = "ada-boss-hud-names";
   const ship = document.createElement("span");
+  ship.className = "ada-boss-hud-badge";
+  const caption = document.createElement("div");
+  caption.className = "ada-boss-hud-caption";
   const captain = document.createElement("span");
   captain.className = "ada-boss-hud-captain";
   const disabled = document.createElement("span");
   disabled.textContent = CONTENT.labels.disabledBanner ?? "";
   disabled.hidden = true;
-  names.append(ship, captain, disabled);
+  caption.append(captain, disabled);
 
   const meter = document.createElement("div");
-  meter.className = "ada-boss-hud-meter";
+  meter.className = "ada-status-bar ada-boss-hud-meter";
   meter.setAttribute("role", "meter");
   meter.setAttribute("aria-label", "Hull");
   meter.setAttribute("aria-valuemin", "0");
   const fill = document.createElement("span");
   fill.className = "ada-boss-hud-fill";
   fill.setAttribute("aria-hidden", "true");
-  meter.append(fill);
-  root.append(names, meter);
+  const track = document.createElement("div");
+  track.className = "ada-boss-hud-track";
+  track.append(fill);
+  meter.append(track);
+  root.append(ship, meter, caption);
   parent.append(root);
+
+  const left = Array.from(parent.querySelectorAll<HTMLElement>(".ada-pause,.ada-status"));
+  const weapons = parent.querySelector<HTMLElement>(".ada-weapon-selector");
+  const fit = () => {
+    if (root.hidden) {
+      return;
+    }
+    const unit = readViewUnit(parent);
+    const gap = SPACING.gap * unit;
+    const width = parent.clientWidth;
+    const leftEdge = Math.max(
+      0,
+      ...left
+        .filter((node) => node.offsetWidth > 0)
+        .map((node) => node.offsetLeft + node.offsetWidth + gap),
+    );
+    const rightEdge = weapons?.offsetWidth ? width - weapons.offsetLeft + gap : 0;
+    root.toggleAttribute("data-compact", width - leftEdge - rightEdge < bars[1] * unit);
+    root.style.setProperty("--ada-boss-left", pixels(leftEdge));
+    root.style.setProperty("--ada-boss-right", pixels(rightEdge));
+  };
+  // Sibling sizes change when resources or owned weapons change. Hull updates keep the same slot.
+  const size = new ResizeObserver(fit);
+  for (const node of [parent, ...left, ...(weapons ? [weapons] : [])]) {
+    size.observe(node);
+  }
+  const window = document.defaultView;
+  window?.addEventListener(VIEW_SCALE_EVENT, fit);
 
   let disposed = false;
   let previousRatio = -1;
   return {
     dispose() {
       disposed = true;
+      window?.removeEventListener(VIEW_SCALE_EVENT, fit);
+      size.disconnect();
       root.remove();
     },
     show(view) {
@@ -136,6 +198,7 @@ export function createBossHud(parent: HTMLElement): {
       }
       if (root.hidden) {
         root.hidden = false;
+        fit();
       }
     },
   };
