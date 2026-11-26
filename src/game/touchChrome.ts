@@ -11,6 +11,7 @@ import { TOUCH_CHROME_SHEETS, type TouchChromeKind } from "../data/layout.ts";
 import type { UseAction } from "../model/types.ts";
 import {
   isTouchChromePose,
+  layerBounds,
   type Point,
   SPEED_LINE_CAP,
   SPEED_LINE_CAPSULE,
@@ -73,6 +74,7 @@ type Size = { readonly height: number; readonly width: number };
 
 // What a chrome texture is painted from, kept on it so it can paint again at a new scale.
 interface ChromePaint {
+  readonly bases?: ReadonlyMap<string, readonly TouchChromeLayer[]> | undefined;
   readonly columns: number;
   readonly frames: ReadonlyMap<string, readonly TouchChromeLayer[]>;
   readonly logical: Size;
@@ -82,6 +84,25 @@ interface ChromePaint {
 
 const paintOf = (texture: Textures.Texture): ChromePaint =>
   (texture.customData as { chrome: ChromePaint }).chrome;
+
+function paintChromePixels(
+  image: ImageData,
+  texels: number,
+  layers: readonly TouchChromeLayer[],
+  bounds = { bottom: image.height, left: 0, right: image.width, top: 0 },
+): void {
+  for (let y = bounds.top; y < bounds.bottom; y++) {
+    for (let x = bounds.left; x < bounds.right; x++) {
+      image.data.set(
+        touchChromePixel(texels, layers, {
+          x: (x + 0.5) / texels,
+          y: (y + 0.5) / texels,
+        }),
+        4 * (y * image.width + x),
+      );
+    }
+  }
+}
 
 // Resizes the atlas and paints each named frame at its new position in the grid.
 function paintChrome(texture: Textures.CanvasTexture, paint: ChromePaint, scale: number): void {
@@ -97,21 +118,37 @@ function paintChrome(texture: Textures.CanvasTexture, paint: ChromePaint, scale:
   texture.setSize(strideX * columns, strideY * rows);
   const context = texture.getContext();
   context.clearRect(0, 0, texture.width, texture.height);
+  const baseImages = new Map<readonly TouchChromeLayer[], ImageData>();
   let index = 0;
   for (const [frame, layers] of frames) {
     const left = (index % columns) * strideX + 1;
     const top = Math.floor(index / columns) * strideY + 1;
-    const image = context.createImageData(width, height);
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        image.data.set(
-          touchChromePixel(texels, layers, {
-            x: (x + 0.5) / texels,
-            y: (y + 0.5) / texels,
-          }),
-          4 * (y * width + x),
-        );
+    const base = paint.bases?.get(frame);
+    let image: ImageData;
+    if (base) {
+      let painted = baseImages.get(base);
+      if (!painted) {
+        painted = context.createImageData(width, height);
+        paintChromePixels(painted, texels, base);
+        baseImages.set(base, painted);
       }
+      image = painted;
+      if (layers.length > base.length) {
+        image = context.createImageData(width, height);
+        image.data.set(painted.data);
+        const symbol = layerBounds(layers.slice(base.length));
+        // One extra texel covers the half-texel antialias fringe. Inside the symbol bounds,
+        // composite all layers from scratch to keep the original precision and paint order.
+        paintChromePixels(image, texels, layers, {
+          bottom: Math.min(height, Math.ceil(symbol.bottom * texels) + 1),
+          left: Math.max(0, Math.floor(symbol.left * texels) - 1),
+          right: Math.min(width, Math.ceil(symbol.right * texels) + 1),
+          top: Math.max(0, Math.floor(symbol.top * texels) - 1),
+        });
+      }
+    } else {
+      image = context.createImageData(width, height);
+      paintChromePixels(image, texels, layers);
     }
     context.putImageData(image, left, top);
     if (texture.has(frame)) {
@@ -131,13 +168,14 @@ function createChromeTexture(
   key: string,
   logical: Size,
   frames: ReadonlyMap<string, readonly TouchChromeLayer[]>,
-  grid?: { readonly columns: number; readonly textureLimit: number },
+  grid?: Pick<ChromePaint, "bases" | "columns" | "textureLimit">,
 ): void {
   const texture = scene.textures.createCanvas(key, 1, 1);
   if (!texture) {
     throw new Error(`Cannot create ${key}`);
   }
   const paint: ChromePaint = {
+    bases: grid?.bases,
     columns: grid?.columns ?? Math.max(1, frames.size),
     frames,
     logical,
@@ -225,9 +263,18 @@ export const useDiscFrame = (action: UseAction | "quest", pose: UseDiscPose): st
 export function createUseDisc(scene: Scene, scale: number): GameObjects.Sprite {
   if (!scene.textures.exists(USE_DISC_KEY)) {
     const frames = new Map<string, ReturnType<typeof useDiscLayers>>();
+    const poseBases = new Map(
+      USE_DISC_POSES.map((pose) => [pose, useDiscLayers(TOUCH_CHROME_COLOURS, "quest", pose)]),
+    );
+    const bases = new Map<string, readonly TouchChromeLayer[]>();
     for (const action of [...Object.keys(USE_SYMBOLS), "quest"] as (UseAction | "quest")[]) {
       for (const pose of USE_DISC_POSES) {
-        frames.set(useDiscFrame(action, pose), useDiscLayers(TOUCH_CHROME_COLOURS, action, pose));
+        const frame = useDiscFrame(action, pose);
+        // The symbol-free Quest layers are the common prefix of every action in this pose.
+        const base = poseBases.get(pose)!;
+        const layers = useDiscLayers(TOUCH_CHROME_COLOURS, action, pose);
+        frames.set(frame, layers);
+        bases.set(frame, base);
       }
     }
     const renderer = scene.game.renderer;
@@ -238,6 +285,7 @@ export function createUseDisc(scene: Scene, scale: number): GameObjects.Sprite {
       { height: TOUCH_CHROME_FRAME, width: TOUCH_CHROME_FRAME },
       frames,
       {
+        bases,
         columns: USE_DISC_POSES.length,
         textureLimit: "getMaxTextureSize" in renderer ? renderer.getMaxTextureSize() : Infinity,
       },
