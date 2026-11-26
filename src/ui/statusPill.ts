@@ -67,6 +67,8 @@ export const STATUS_TIMING = {
   // One hit flash, at most one start per flashEveryMs.
   flashEveryMs: 334,
   flashMs: 100,
+  // Keep gains visible longer before the existing fade. Ore debits retain their cadence.
+  gainExtraHoldMs: 300,
   // The low pulse's cycle.
   pulseMs: 1000,
   // The +N tick: hold, then rise and fade; reduced motion holds longer and only fades.
@@ -599,8 +601,9 @@ function createCounter(
     node.textContent = `${total < 0 ? "-" : "+"}${pillCount(Math.abs(total))}`;
     slot.append(node);
     const timing = reduced ? STATUS_TIMING.tickReduced : STATUS_TIMING.tick;
-    const duration = timing.holdMs + timing.fadeMs;
-    const hold = timing.holdMs / duration;
+    const holdMs = timing.holdMs + (amount > 0 ? STATUS_TIMING.gainExtraHoldMs : 0);
+    const duration = holdMs + timing.fadeMs;
+    const hold = holdMs / duration;
     const rise = reduced ? "0px" : units(-STATUS_PILL.tick.rise);
     const animation = node.animate(
       [
