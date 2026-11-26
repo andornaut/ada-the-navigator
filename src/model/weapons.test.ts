@@ -72,7 +72,7 @@ describe("owned upgrade weapons", () => {
     // Each found weapon includes its own starting ammo.
     expect(model.weapons()).toEqual([
       { ammo: null, id: "laser", level: 1, selected: false },
-      { ammo: 900, id: "multiLaser", level: 1, selected: true },
+      { ammo: 270, id: "multiLaser", level: 1, selected: true },
       { ammo: 780, id: "rapidMissile", level: 1, selected: false },
     ]);
     const before = model.save();
@@ -141,7 +141,7 @@ describe("owned upgrade weapons", () => {
     expect(model.state.flight!.encounterSeed).not.toBe(encounterSeed);
     expect(model.weapons()).toEqual([
       { ammo: null, id: "laser", level: 1, selected: true },
-      { ammo: 900, id: "multiLaser", level: 1, selected: false },
+      { ammo: 270, id: "multiLaser", level: 1, selected: false },
     ]);
     expect(model.state.progress[1].deposited).toBe(42);
   });
@@ -302,7 +302,7 @@ describe("ammunition", () => {
       kind: "bought",
       price: 25,
     });
-    expect(flight.ammo.multiLaser).toBe(300);
+    expect(flight.ammo.multiLaser).toBe(90);
     expect(model.state.economy.stardust).toBe(0);
     model.state.docked = null;
     expect(model.selectWeapon("multiLaser")).toBe(true);
@@ -344,6 +344,6 @@ describe("ammunition", () => {
     // Finding it again gives one pack, as for any weapon Ada owns.
     model.state.flight!.objects = [];
     pickup(model, "multiLaser");
-    expect(model.state.flight!.ammo.multiLaser).toBe(123 + 300);
+    expect(model.state.flight!.ammo.multiLaser).toBe(123 + 90);
   });
 });

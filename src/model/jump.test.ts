@@ -67,7 +67,7 @@ describe("weapon switching", () => {
     flight.dangerFor = 1;
     expect(model.weapons()).toEqual([
       { ammo: null, id: "laser", level: 1, selected: true },
-      { ammo: 900, id: "multiLaser", level: 1, selected: false },
+      { ammo: 270, id: "multiLaser", level: 1, selected: false },
       { ammo: 780, id: "rapidMissile", level: 1, selected: false },
     ]);
     flight.fireCooldown = 0.24;

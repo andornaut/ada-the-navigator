@@ -3793,24 +3793,14 @@ function fire(
 ): void {
   ensureOwnedWeapons(flight);
   const weapon = flight.weapon;
-  let definition = weaponAt(weapon, flight.levels.weapons[weapon]);
+  const definition = weaponAt(weapon, flight.levels.weapons[weapon]);
   const family = impactFamily(weapon);
   if ((weapon === "multiLaser" || weapon === "scattershot") && flight.ammo[weapon] === 0) {
     spendAmmo(flight, 0);
     events.push({ type: "outOfAmmo" });
     return;
   }
-  if (weapon === "multiLaser") {
-    const ammo = flight.ammo.multiLaser;
-    if (ammo < definition.anglesDegrees.length) {
-      // Preserve authored order for equal offsets (including roundoff in even fans).
-      const anglesDegrees = [...definition.anglesDegrees].sort((left, right) => {
-        const difference = Math.abs(left) - Math.abs(right);
-        return Math.abs(difference) < 1e-9 ? 0 : difference;
-      });
-      definition = { ...definition, anglesDegrees: anglesDegrees.slice(0, ammo) };
-    }
-  } else if (spendAmmo(flight, 1)) {
+  if (weapon !== "multiLaser" && spendAmmo(flight, 1)) {
     events.push({ type: "outOfAmmo" });
   }
   // Every shot and beam leaves the ship's nose for its heading; ranges run from there.
@@ -3834,7 +3824,8 @@ function fire(
     events,
   );
   flight.fireCooldown += volley.interval;
-  if (weapon === "multiLaser" && spendAmmo(flight, volley.projectiles.length)) {
+  // Release the full fan before spending its unit and potentially switching to Laser.
+  if (weapon === "multiLaser" && spendAmmo(flight, 1)) {
     events.push({ type: "outOfAmmo" });
   }
 }

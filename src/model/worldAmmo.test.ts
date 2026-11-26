@@ -20,7 +20,7 @@ import {
 } from "./weapons.ts";
 
 const PACKS = [
-  ["multiLaser", 300, 100, 900, 300],
+  ["multiLaser", 90, 30, 270, 90],
   ["rapidMissile", 180, 60, 780, 260],
   ["heavyMissile", 75, 25, 120, 40],
   ["scattershot", 120, 40, 180, 60],
@@ -71,8 +71,8 @@ describe("world ammunition quantities", () => {
     economy.ammo.multiLaser--;
     const added = applyUpgrade(ECONOMY, { kind: "ammo", weapon: "multiLaser" }, economy);
     economy.ammo.multiLaser--;
-    expect(added).toBe(100);
-    expect(economy.ammo.multiLaser - beforeFrame).toBe(98);
+    expect(added).toBe(30);
+    expect(economy.ammo.multiLaser - beforeFrame).toBe(28);
     expect(applyUpgrade(ECONOMY, { kind: "track", level: 2, track: "shield" }, economy)).toBe(0);
   });
 
@@ -92,6 +92,19 @@ describe("world ammunition quantities", () => {
       expect(restoreSave(model.save())!.flight!.ammo[weapon]).toBe(5 + world);
     },
   );
+
+  it("keeps existing Multi-Laser balances through save and Continue", () => {
+    const model = launched();
+    const flight = model.state.flight!;
+    flight.ownedWeapons = ["multiLaser"];
+    flight.weapon = "multiLaser";
+    flight.ammo.multiLaser = 900;
+    model.step(0.01, idle);
+    const restored = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, model.save());
+    restored.continueGame();
+    expect(restored.state.flight?.ammo.multiLaser).toBe(900);
+    expect(restored.state.economy.ammo.multiLaser).toBe(900);
+  });
 
   it("uses the same world quantities when a collected upgrade falls back to ammo", () => {
     const model = launched();

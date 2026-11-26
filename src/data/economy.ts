@@ -190,7 +190,7 @@ export function weaponUpgradePrices(
 const UPGRADE_PRICES = weaponUpgradePrices(LASER_UPGRADE_PRICES, UPGRADE_PRICE_STEP);
 const SHOP_AMMO_PACK = {
   heavyMissile: 75,
-  multiLaser: 300,
+  multiLaser: 90,
   phaser: 75,
   rapidMissile: 180,
   scattershot: 120,
@@ -206,12 +206,12 @@ export const ECONOMY: EconomyCatalog = {
     dropWeights: { heavyMissile: 9, multiLaser: 16, phaser: 5, rapidMissile: 12, scattershot: 7 },
     duplicate: {
       heavyMissile: 40,
-      multiLaser: 300,
+      multiLaser: 90,
       phaser: 40,
       rapidMissile: 260,
       scattershot: 60,
     },
-    grant: { heavyMissile: 120, multiLaser: 900, phaser: 120, rapidMissile: 780, scattershot: 180 },
+    grant: { heavyMissile: 120, multiLaser: 270, phaser: 120, rapidMissile: 780, scattershot: 180 },
     pack: SHOP_AMMO_PACK,
     packPrice: 25,
     rockDropChance: { huge: 0.04, large: 0.02, medium: 0.01, small: 0.005 },

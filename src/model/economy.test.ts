@@ -1550,14 +1550,14 @@ describe("shop purchases", () => {
     expect(economy.stardust).toBe(4600);
     expect(economy.ownedWeapons).toEqual(["multiLaser"]);
     // A bought weapon includes its own starting ammo.
-    expect(economy.ammo.multiLaser).toBe(900);
+    expect(economy.ammo.multiLaser).toBe(270);
   });
 
   it("sells packs of an owned weapon's ammunition, never sold out, and none for others", () => {
     const economy = rich();
     expect(ECONOMY.ammo.pack).toEqual({
       heavyMissile: 75,
-      multiLaser: 300,
+      multiLaser: 90,
       phaser: 75,
       rapidMissile: 180,
       scattershot: 120,

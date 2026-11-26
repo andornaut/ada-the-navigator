@@ -78,7 +78,7 @@ describe("cheats", () => {
     expect(model.selectWeapon("multiLaser")).toBe(true);
     model.step(0.01, { aim: { x: 1, y: 0 }, move: { x: 0, y: 0 }, use: false });
     expect(flight.shots).toHaveLength(3);
-    expect(flight.ammo.multiLaser).toBe(cap - 3);
+    expect(flight.ammo.multiLaser).toBe(cap - 1);
     expect(model.cheatAvailable("unlockAllWeapons")).toBe(true);
     expect(model.cheat("unlockAllWeapons")).toBe(true);
     expect(flight.weapon).toBe("multiLaser");

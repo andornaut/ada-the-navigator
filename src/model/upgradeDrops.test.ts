@@ -325,7 +325,7 @@ describe("collecting an upgrade pickup", () => {
     const flight = model.state.flight!;
     expect(model.state.economy.ownedWeapons).toContain("multiLaser");
     expect(flight.weapon).toBe("multiLaser");
-    expect(flight.ammo.multiLaser).toBeGreaterThanOrEqual(900);
+    expect(flight.ammo.multiLaser).toBe(270);
     expect(gains).toEqual([{ kind: "weapon", weapon: "multiLaser" }]);
     expect(model.drainPickupFeedback()).toEqual([]);
   });

@@ -87,7 +87,7 @@ describe("flight boundaries", () => {
     expect(flight.freshDistance).toBe(before);
   });
 
-  it("keeps movement independent of aim and spends Multi-Laser ammo per bolt only while aiming", () => {
+  it("keeps movement independent of aim and spends Multi-Laser ammo per fan only while aiming", () => {
     const flight = empty();
     flight.player = { x: 100, y: 100 };
     stepFlight(CONTENT, 0.5, { ...idle, move: { x: 1, y: 0 } }, flight);
@@ -97,7 +97,7 @@ describe("flight boundaries", () => {
     flight.ammo.multiLaser = 5;
     stepFlight(CONTENT, 0.01, { ...idle, aim: { x: 0, y: -1 } }, flight);
     expect(flight.shots).toHaveLength(3);
-    expect(flight.ammo.multiLaser).toBe(2);
+    expect(flight.ammo.multiLaser).toBe(4);
     expect(flight.weapon).toBe("multiLaser");
     expect(flight.facing.x).toBeGreaterThan(0);
     expect(flight.facing.y).toBeLessThan(0);
@@ -113,18 +113,17 @@ describe("flight boundaries", () => {
   });
 
   it.each([
-    [1, 1, [0]],
-    [2, 1, [-8 / 3]],
-    [2, 3, [-8 / 3, 8 / 3, -8]],
-    [3, 4, [0, -4, 4, -8]],
+    [1, [-8, 0, 8]],
+    [2, [-8, -8 / 3, 8 / 3, 8]],
+    [3, [-8, -4, 0, 4, 8]],
   ] as const)(
-    "fires the closest affordable level %i fan with %i ammo in stable order",
-    (level, ammo, angles) => {
+    "fires a full level %i fan in authored order with one ammo left, then switches to Laser",
+    (level, angles) => {
       const flight = empty();
       flight.player = { x: 100, y: 100 };
       flight.weapon = "multiLaser";
       flight.levels.weapons.multiLaser = level;
-      flight.ammo.multiLaser = ammo;
+      flight.ammo.multiLaser = 1;
       const input = { ...idle, aim: { x: 0, y: -1 } };
       const events = stepFlight(CONTENT, 0.01, input, flight);
       expect(events.filter((event) => event.type === "outOfAmmo")).toHaveLength(1);
@@ -141,10 +140,13 @@ describe("flight boundaries", () => {
       );
       stepFlight(CONTENT, 0.01, input, flight);
       expect(flight.shots).toHaveLength(angles.length);
+      stepFlight(CONTENT, flight.fireCooldown + 0.01, input, flight);
+      expect(flight.shots).toHaveLength(angles.length + 1);
+      expect(degrees(flight.shots.at(-1)!.velocity, flight.facing)).toBeLessThan(1e-9);
     },
   );
 
-  it.each([1, 2, 3])("spends one unit for each bolt in a full level %i fan", (level) => {
+  it.each([1, 2, 3])("spends one unit for a full level %i fan", (level) => {
     const flight = empty();
     flight.player = { x: 100, y: 100 };
     flight.weapon = "multiLaser";
@@ -152,14 +154,14 @@ describe("flight boundaries", () => {
     flight.ammo.multiLaser = 10;
     stepFlight(CONTENT, 0.01, { ...idle, aim: { x: 0, y: -1 } }, flight);
     expect(flight.shots).toHaveLength(level + 2);
-    expect(flight.ammo.multiLaser).toBe(10 - (level + 2));
+    expect(flight.ammo.multiLaser).toBe(9);
     expect(flight.weapon).toBe("multiLaser");
   });
 
-  it("refuses a Scattershot volley on an empty shell count", () => {
+  it.each(["multiLaser", "scattershot"] as const)("refuses an empty %s volley", (weapon) => {
     const flight = empty();
-    flight.weapon = "scattershot";
-    flight.ammo.scattershot = 0;
+    flight.weapon = weapon;
+    flight.ammo[weapon] = 0;
     expect(stepFlight(CONTENT, 0.01, { ...idle, aim: { x: 0, y: -1 } }, flight)).toContainEqual({
       type: "outOfAmmo",
     });
