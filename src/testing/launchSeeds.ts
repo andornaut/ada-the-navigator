@@ -1,3 +1,5 @@
+export const supportEntropy = () => crypto.getRandomValues(new Uint32Array(1))[0] ?? 1;
+
 // Test support: one shared deterministic stream for launch-seed consumers.
 let launchSeed = 1;
 

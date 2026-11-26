@@ -6,7 +6,7 @@ import { CONVERSATIONS } from "../data/conversations.ts";
 import { FRIGATE_ESCORT_COUNT } from "../data/enemyCatalog.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
-import { relaunch } from "../testing/launch.ts";
+import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { routeBlocked } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
@@ -17,7 +17,7 @@ import { readRequiredPlan } from "./requiredEncounterPlans.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function launch() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.prologueSeen = true;
   model.state.progress[1].opened = true;
   model.state.seenConversations.push(...CONVERSATIONS.map(({ id }) => id));
@@ -109,7 +109,7 @@ it("preserves hidden full states through Continue and retains site coordinates a
 });
 
 it("keeps Sounder and the disk formation outside Sunflower required-site planning", () => {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.unlocked = [1, 3];
   model.state.prologueSeen = true;
   model.state.progress[1].holodisk = true;

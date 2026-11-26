@@ -5,14 +5,14 @@ import {
   activateCartwheelHubFixture,
   visitCartwheelHubFixture,
 } from "../testing/cartwheelFixture.ts";
-import { relaunch } from "../testing/launch.ts";
+import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { ensureDestination, routeBlocked } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import { readRequiredRolePlan } from "./requiredRolePlans.ts";
 
 function launched() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   Object.assign(model.state, { prologueSeen: true, started: true, unlocked: [1, 2] });
   model.state.progress[2].opened = true;
   model.startGalaxy(2);
@@ -58,7 +58,7 @@ it("classifies direct ensureDestination after launch as a detached plan read, no
 });
 
 it("resolved board fixtures configured before launch have a loaded hub without a new guard", () => {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   Object.assign(model.state, { prologueSeen: true, started: true, unlocked: [1, 2] });
   Object.assign(model.state.progress[2], {
     introduced: true,

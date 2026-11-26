@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { GALAXIES } from "../data/storybook.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { boardAndJump, readStory, relaunch } from "../testing/launch.ts";
+import { boardAndJump, readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import {
@@ -116,7 +116,7 @@ describe("storybook pages", () => {
 
 /** A save whose galaxy is past its space quest and holodisk, in flight. */
 function questDone(galaxy: GalaxyNumber): GameModel {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   Object.assign(model.state, { prologueSeen: true, started: true });
   model.state.unlocked = ([1, 2, 3] as const).filter((id) => id <= galaxy);
   for (const id of model.state.unlocked) {
@@ -220,7 +220,7 @@ describe("home visits", () => {
 describe("story runs", () => {
   /** A new game's Start: galaxy one's opening chained to the prologue. */
   function started(): GameModel {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.start();
     return model;
   }
@@ -504,7 +504,7 @@ describe("galaxy selection", () => {
 
 describe("start flow", () => {
   it("offers Start for a new game and Continue for a saved story before the first flight", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     expect(model.screen).toBe("start");
     model.continueGame();
     expect(model.screen).toBe("start");
@@ -585,7 +585,7 @@ describe("start flow", () => {
     expect(reloaded.screen).toBe("start");
     // Achievements and their counts are all Restart keeps.
     expect(reloaded.state).toEqual({
-      ...new GameModel(CONTENT).state,
+      ...new GameModel(CONTENT, supportEntropy).state,
       achievements: { ...achievements, found: [], sensed: [] },
     });
     expect(achievements.unlocked).toContain("newNavigator");
@@ -598,7 +598,10 @@ describe("start flow", () => {
 
 describe("storybook save", () => {
   it("rejects malformed flags", () => {
-    const state = JSON.parse(new GameModel(CONTENT).save()) as Record<string, unknown>;
+    const state = JSON.parse(new GameModel(CONTENT, supportEntropy).save()) as Record<
+      string,
+      unknown
+    >;
     expect(restoreSave({ ...state, started: "yes" })).toBeNull();
     (state.progress as Record<string, Record<string, unknown>>)["1"]!.opened = 1;
     expect(restoreSave(state)).toBeNull();

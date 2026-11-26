@@ -2,10 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { GameModel } from "../model/game.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { acknowledgeCacheSprite, acknowledgeTargetDraws } from "./sceneTargetMarkers.ts";
 
 function fixture() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.prologueSeen = true;
   model.startGalaxy(1);
   model.state.dialogue = null;

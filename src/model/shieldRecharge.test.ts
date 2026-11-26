@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
-import { playOpening, relaunch } from "../testing/launch.ts";
+import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
 import { stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
@@ -31,7 +31,7 @@ function calm(flight: FlightState): void {
   flight.dangerFor = 0;
 }
 function launched() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.startGalaxy(1);
   playOpening(model);
   calm(model.state.flight!);

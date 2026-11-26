@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { stationsNear } from "./stations.ts";
@@ -10,7 +11,7 @@ import { stationSpecialty } from "./stationServices.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function fixture() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.prologueSeen = true;
   model.state.seenConversations.push("lesson:move", "lesson:aim", "lesson:dock", "lesson:stardust");
   model.startGalaxy(1);
@@ -42,7 +43,7 @@ describe("explicit landmark Scan", () => {
     model.interact();
     expect(model.state.progress[1].charted).toEqual([site.id]);
     expect(model.state.economy.stardust).toBe(before);
-    const restored = new GameModel(CONTENT, model.save());
+    const restored = new GameModel(CONTENT, supportEntropy, model.save());
     restored.continueGame();
     restored.interact();
     expect(restored.state.progress[1].charted).toEqual([site.id]);
@@ -109,7 +110,7 @@ describe("explicit landmark Scan", () => {
     model.step(0.01, idle);
     expect(model.conversation?.text).not.toBe(LANDMARK_SCAN_COPY.instruction);
     const save = model.save();
-    const restored = new GameModel(CONTENT, save);
+    const restored = new GameModel(CONTENT, supportEntropy, save);
     restored.continueGame();
     restored.landmarkDisplayed(site.id);
     restored.step(0.01, idle);

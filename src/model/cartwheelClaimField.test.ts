@@ -14,7 +14,7 @@ import { worldDistance } from "./worldContacts.ts";
 
 function launchCartwheel() {
   const seeds = [173, 301];
-  const model = new GameModel(CONTENT, undefined, () => seeds.shift()!);
+  const model = new GameModel(CONTENT, () => seeds.shift()!);
   model.state.unlocked = [1, 3, 4, 5, 2];
   model.state.prologueSeen = true;
   model.state.progress[2].opened = true;

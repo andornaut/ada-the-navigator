@@ -43,7 +43,7 @@ const watchdog = setTimeout(() => {
 const [
   { GameModel },
   { CONTENT },
-  { playOpening },
+  { playOpening, supportEntropy },
   { restoreSave },
   { enemyActorDefinition },
   { enemyActorAvailable },
@@ -233,7 +233,7 @@ function fixtureFile(name, scope, serialized) {
  * its hardpoints are listed, and an upgrade pickup at each of `pickups`' screen offsets.
  */
 function heavyFixture(galaxy, heavies, pickups = []) {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.unlocked = [1, 2, 3, 4, 5, 6];
   // The highest shield outlasts every capture's hits on Ada.
   model.state.economy.levels.shield = 3;

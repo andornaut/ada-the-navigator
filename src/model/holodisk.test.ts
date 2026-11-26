@@ -7,7 +7,7 @@ import { BUILT } from "../data/galaxies.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
-import { playOpening, readStory, relaunch } from "../testing/launch.ts";
+import { playOpening, readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import {
   activateRequiredRoute,
   ensureDestination,
@@ -87,7 +87,7 @@ function questDone(
   known: string[],
   recovered: readonly GalaxyNumber[] = [],
 ): GameModel {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.prologueSeen = true;
   model.state.unlocked = [1, 2, 3].filter((id) => id <= galaxy) as GalaxyNumber[];
   for (const held of recovered) {
@@ -563,7 +563,7 @@ describe("galaxy three's holodisk", () => {
 
 describe("holodisk save", () => {
   it("round-trips the recovered flags", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.state.progress[2].holodisk = true;
     const restored = restoreSave(model.save())!;
     expect([1, 2, 3].map((id) => restored.progress[id as GalaxyNumber].holodisk)).toEqual([
@@ -574,13 +574,19 @@ describe("holodisk save", () => {
   });
 
   it("rejects a malformed flag", () => {
-    const state = JSON.parse(new GameModel(CONTENT).save()) as Record<string, unknown>;
+    const state = JSON.parse(new GameModel(CONTENT, supportEntropy).save()) as Record<
+      string,
+      unknown
+    >;
     (state.progress as Record<string, Record<string, unknown>>)[1]!.holodisk = "yes";
     expect(restoreSave(state)).toBeNull();
   });
 
   it("rejects a malformed announcement flag", () => {
-    const malformed = JSON.parse(new GameModel(CONTENT).save()) as Record<string, unknown>;
+    const malformed = JSON.parse(new GameModel(CONTENT, supportEntropy).save()) as Record<
+      string,
+      unknown
+    >;
     malformed.announceGalaxy = 1;
     expect(restoreSave(malformed)).toBeNull();
   });

@@ -7,7 +7,7 @@ import { BUILT, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { NEEDLE } from "../data/needle.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
-import { readStory, relaunch } from "../testing/launch.ts";
+import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { interactionCopy } from "./conversations.ts";
 import { damageEnemy } from "./enemyAi.ts";
@@ -31,7 +31,7 @@ afterAll(() => {
 });
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function launch(seed?: number): GameModel {
-  const model = new GameModel(CONTENT, undefined, seed === undefined ? undefined : () => seed);
+  const model = new GameModel(CONTENT, seed === undefined ? supportEntropy : () => seed);
   Object.assign(model.state, { prologueSeen: true, started: true, unlocked: [...GALAXY_NUMBERS] });
   for (const progress of Object.values(model.state.progress)) {
     progress.opened = true;
@@ -164,7 +164,7 @@ describe("Captain Cadence admission and outcome", () => {
     model.returnHome();
     expect(model.state.progress[4].capitalBoss?.phase).toBe("away");
     const parked = model.state.progress[4].capitalBoss;
-    model = new GameModel(CONTENT, model.save(), () => 301);
+    model = new GameModel(CONTENT, () => 301, model.save());
     expect(model.state.progress[4].capitalBoss).toEqual(parked);
     model.startGalaxy(4);
     expect(model.state.progress[4].capitalBoss?.phase).toBe("active");

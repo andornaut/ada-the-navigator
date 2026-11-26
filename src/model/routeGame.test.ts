@@ -3,14 +3,14 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { activateCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
-import { playOpening, relaunch } from "../testing/launch.ts";
+import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
 import { ensureDestination } from "./flight.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
 function approach(galaxy: GalaxyNumber) {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.unlocked = [1, 2, 3];
   model.startGalaxy(galaxy);
   playOpening(model);
@@ -91,7 +91,7 @@ describe("galaxy route", () => {
 
   it("places each galaxy's route's first destination once Ada has flown the intro distance", () => {
     for (const galaxy of [1, 2, 3] as const) {
-      const model = new GameModel(CONTENT);
+      const model = new GameModel(CONTENT, supportEntropy);
       model.state.unlocked = [1, 2, 3];
       model.startGalaxy(galaxy);
       playOpening(model);

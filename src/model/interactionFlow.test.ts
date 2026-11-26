@@ -6,7 +6,7 @@ import { enemyDefinition } from "../data/enemyCatalog.ts";
 import type { GameContent } from "../data/types.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { visitCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
-import { relaunch } from "../testing/launch.ts";
+import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { activateRequiredRoute, ensureDestination } from "./flight.ts";
 import { GameModel } from "./game.ts";
@@ -31,7 +31,7 @@ function disableStoryGuard(content: GameContent, flight: FlightState, id: string
 }
 
 function offer() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.unlocked = [1, 2, 3];
   model.startGalaxy(1);
   Object.assign(model.state.progress[1], {
@@ -111,7 +111,7 @@ describe("Use card suspension", () => {
   });
 
   it("Deposit opens Astra's card and Close/reopen never credits the same ore twice", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.state.unlocked = [1, 2, 3];
     model.startGalaxy(2);
     visitCartwheelHubFixture(CONTENT, model);
@@ -139,7 +139,7 @@ describe("Use card suspension", () => {
 
 describe("mechanical outcome retention", () => {
   it("salvages a heavy once while Close/reopen only restores Astra's card", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.startGalaxy(1);
     const flight = model.state.flight!;
     flight.player = { x: 0, y: 0 };

@@ -951,7 +951,7 @@ try {
     { GameModel, galaxyRoute },
     { CONTENT },
     { ensureDestination, routeBlocked },
-    { playOpening, relaunch },
+    { playOpening, relaunch, supportEntropy },
     { SAVE_VERSION, restoreSave: restoreCalm },
     { ACHIEVEMENTS },
   ] = await Promise.all([
@@ -1884,7 +1884,7 @@ try {
   );
   events.checks.push("Reload resumes the persisted flight without regeneration");
 
-  const safeInput = new GameModel(CONTENT);
+  const safeInput = new GameModel(CONTENT, supportEntropy);
   safeInput.startGalaxy(1);
   playOpening(safeInput);
   Object.assign(safeInput.state.progress[1], {
@@ -3404,7 +3404,7 @@ try {
   // Cartwheel's space quest is complete the shop's Ship tab heads with the holodisk.
   // Cartwheel's story is resolved before its flight starts, as src/model/hubStation.test.ts does,
   // so the world holds the hub with no capital encounter planned around it.
-  const hubInput = new GameModel(CONTENT);
+  const hubInput = new GameModel(CONTENT, supportEntropy);
   hubInput.state.unlocked = [1, 2];
   Object.assign(hubInput.state.progress[2], {
     introduced: true,
@@ -4232,7 +4232,7 @@ try {
   // page returns across Grandma's garden into chapter one's opening, Skip from a mid-prologue page aboard
   // passes the rest of the run to galaxy selection, and Stay on Earth lands on Ada's room page,
   // which starts its run and, like every page with Next or a named action, offers Skip.
-  await seedOnce(new GameModel(CONTENT).save(), "ada-browser.story-run.v1");
+  await seedOnce(new GameModel(CONTENT, supportEntropy).save(), "ada-browser.story-run.v1");
   await page.locator('[data-action="start"]').click();
   const storyPanel = page.locator(".ada-story-panel:not(.ada-dialogue-panel):not([hidden])");
   const storyButton = (action) => storyPanel.locator(`[data-action="story-${action}"]`);
@@ -4379,8 +4379,8 @@ try {
     ["844", { height: 390, width: 844 }, {}],
     ["844-insets", { height: 390, width: 844 }, { bottom: 19, left: 43, right: 43, top: 0 }],
   ];
-  const fresh = new GameModel(CONTENT);
-  const saved = new GameModel(CONTENT);
+  const fresh = new GameModel(CONTENT, supportEntropy);
+  const saved = new GameModel(CONTENT, supportEntropy);
   saved.state.started = true;
   const startScreens = {};
   // One at a time, in order: each seeds or resizes the one page.
@@ -4719,7 +4719,7 @@ try {
 
   // As the hub station fixture: Cartwheel's story resolves before its flight starts, so the hub
   // is in the flight with no capital encounter planned around it.
-  const cargoSetup = new GameModel(CONTENT);
+  const cargoSetup = new GameModel(CONTENT, supportEntropy);
   cargoSetup.state.unlocked = [1, 2];
   Object.assign(cargoSetup.state.progress[2], {
     introduced: true,
@@ -4791,7 +4791,7 @@ try {
   );
 
   // This fixture proves only the saved-state UI boundary, not completion of the quest in a browser.
-  const fixture = new GameModel(CONTENT);
+  const fixture = new GameModel(CONTENT, supportEntropy);
   fixture.startGalaxy(1);
   playOpening(fixture);
   assert.ok(fixture.state.flight, "The real model must create a valid flight");
@@ -5032,7 +5032,7 @@ try {
   ]);
   // A claim platform beside Ada in Cartwheel: its hull is in Cartwheel's manifest and its turret
   // and port frames load when it first draws, after that manifest has loaded.
-  const claimModel = new GameModel(CONTENT);
+  const claimModel = new GameModel(CONTENT, supportEntropy);
   claimModel.state.unlocked = [1, 2];
   claimModel.state.prologueSeen = true;
   claimModel.startGalaxy(2);
@@ -5111,7 +5111,7 @@ try {
   // Live capitals keep a viewport-sized gap, so each large enemy renders from its own canonical
   // save at the offset its sampled screen region expects.
   function combatFixture(archetype, offset, missile) {
-    const combat = new GameModel(CONTENT);
+    const combat = new GameModel(CONTENT, supportEntropy);
     combat.startGalaxy(1);
     playOpening(combat);
     assert.ok(combat.state.flight, "Combat fixture requires a canonical flight");
@@ -5543,7 +5543,7 @@ try {
     { x: -1.6, y: -0.9 },
   ];
   function blastFixture(weapon) {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.startGalaxy(1);
     playOpening(model);
     const flight = model.state.flight;
@@ -5821,7 +5821,7 @@ try {
   // turning right, so her beam stays on her nose and turns with her aim while its spark stays
   // where it hit. The page clock is paused, so the frames fall at fire, mid-flash and late flash.
   async function provePhaserFollow() {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.startGalaxy(1);
     playOpening(model);
     const flight = model.state.flight;
@@ -5975,7 +5975,7 @@ try {
       import(new URL("../src/model/landmarks.ts", import.meta.url)),
       import(new URL("../src/data/landmarkScanCopy.ts", import.meta.url)),
     ]);
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.startGalaxy(1);
     playOpening(model);
     const flight = model.state.flight;

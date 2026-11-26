@@ -4,6 +4,7 @@ import { WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { CURRENTS } from "../data/galaxyFeatures.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { worldInCurrent } from "./currents.ts";
 import { createUnpopulatedFlight, planRequiredWhirlpoolRoutes } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
@@ -15,7 +16,7 @@ const ids = ["whale", "family", "holodisk"] as const;
 
 it("validates final Whirlpool reservations on the 240k chart without publishing actors or moving saved sites", () => {
   const plan = () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     const flight = createUnpopulatedFlight(CONTENT, 3, 1, model.state.economy, 2);
     flight.topology = { kind: "torus", side: GALAXY_SIDE, version: 1 };
     const progress = model.state.progress[3];

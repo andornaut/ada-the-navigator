@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
-import { relaunch } from "../testing/launch.ts";
+import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import {
   activateRouteEncounter,
@@ -89,7 +89,7 @@ describe("regenerating ordinary chunks and persistent notables", () => {
   ] as const)(
     "regenerates untouched %s after save/Continue (previous archive=%s)",
     (id, archived) => {
-      const model = new GameModel(CONTENT);
+      const model = new GameModel(CONTENT, supportEntropy);
       model.state.prologueSeen = true;
       model.startGalaxy(1);
       model.state.dialogue = null;

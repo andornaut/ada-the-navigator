@@ -123,7 +123,7 @@ export function observe(events, observed) {
 const [
   { GameModel },
   { CONTENT },
-  { playOpening },
+  { playOpening, supportEntropy },
   { restoreSave },
   { ASTEROID_ART },
   asteroidArt,
@@ -231,7 +231,7 @@ export function reseedFlight(model, seed) {
 // A flight in `galaxy` with its opening played and no play objects, reseeded so a near backdrop
 // rock shows in the open top centre.
 function emptyFlight(rockArt, debris, galaxy, unlocked) {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.unlocked = unlocked;
   model.startGalaxy(galaxy);
   playOpening(model);
@@ -252,7 +252,7 @@ function emptyFlight(rockArt, debris, galaxy, unlocked) {
 // galaxy's own equipment, as canonical saves carry it.
 const KEYLINE_SITES = { 2: "hub", 4: "needlePractice", 5: "pip" };
 export function keylineFixture(galaxy) {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.unlocked = [1, 2, 3, 4, 5, 6];
   model.startGalaxy(galaxy);
   playOpening(model);
@@ -330,7 +330,7 @@ export function keylineFixture(galaxy) {
 // story resolved, as the hub station fixture holds it, so the world places the hub and the miner
 // and visitors stand docked or moored beside it; Ada just below it, with no enemies near.
 export function hubFixture() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.unlocked = [1, 2];
   Object.assign(model.state.progress[2], {
     introduced: true,

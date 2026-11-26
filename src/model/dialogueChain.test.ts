@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GameModel } from "./game.ts";
 
 // One speaker a panel (gameplay/player-copy.md): a space panel that hands on to another speaker's
@@ -9,7 +10,7 @@ import { GameModel } from "./game.ts";
 
 /** The panels Continue walks through from a chapter's dialogue key, as [title, text]. */
 function walk(galaxy: GalaxyNumber, key: string): (readonly [string, string])[] {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.prologueSeen = true;
   model.state.unlocked = [1, 2, 3];
   model.startGalaxy(galaxy);

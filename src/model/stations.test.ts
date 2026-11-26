@@ -4,7 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { playOpening } from "../testing/launch.ts";
+import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createFlight, ensureDestination, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
@@ -48,7 +48,7 @@ function atStation(seed = 5): FlightState {
   return flight;
 }
 function launched(): GameModel {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.startGalaxy(1);
   playOpening(model);
   const flight = model.state.flight!;

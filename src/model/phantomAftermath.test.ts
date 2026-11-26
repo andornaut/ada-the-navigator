@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { createUnpopulatedFlight, populateFlight } from "./flight.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
@@ -9,7 +10,7 @@ import { validPhantomProgress } from "./phantom.ts";
 import { restoreSave } from "./save.ts";
 
 function aftermath() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.selectedGalaxy = 6;
   const progress = model.state.progress[6];
   progress.questComplete = true;
@@ -67,7 +68,7 @@ describe("Phantom aftermath completion", () => {
       validPhantomProgress({ ...progress, aftermathComplete: true, flagshipKnown: false }),
     ).toBe(false);
     expect(validPhantomProgress({ ...progress, aftermathComplete: true, freed: [] })).toBe(false);
-    const document = new GameModel(CONTENT).saveDocument();
+    const document = new GameModel(CONTENT, supportEntropy).saveDocument();
     document.progress[6].phantom = { ...progress, aftermathComplete: true };
     expect(restoreSave(document)).toBeNull();
   });

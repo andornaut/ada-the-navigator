@@ -278,7 +278,7 @@ export function buildScene(scene: UiContext): void {
   const clock = () => performance.now();
   const newer = saved.status === "newer";
   scene.savingUnavailable = newer || saved.status === "unavailable";
-  scene.model = new GameModel(CONTENT, newer ? undefined : saved.save, scene.entropy);
+  scene.model = new GameModel(CONTENT, scene.entropy, newer ? undefined : saved.save);
   scene.basePalette =
     readSpacePalette(scene.cache.json.get("space-palette")) ?? FALLBACK_SPACE_PALETTE;
   scene.palette = scene.basePalette;

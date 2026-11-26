@@ -5,7 +5,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { BUILT, GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
-import { readStory, relaunch } from "../testing/launch.ts";
+import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import { nearestSettlerStation } from "./andromedaPlaces.ts";
 import { ANDROMEDA_REDACT, andromedaRedactEligible } from "./andromedaRedact.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
@@ -28,7 +28,7 @@ beforeAll(() => built.add(5));
 afterAll(() => built.delete(5));
 
 function launch(seed?: number): GameModel {
-  const model = new GameModel(CONTENT, undefined, seed === undefined ? undefined : () => seed);
+  const model = new GameModel(CONTENT, seed === undefined ? supportEntropy : () => seed);
   Object.assign(model.state, { prologueSeen: true, started: true, unlocked: [...GALAXY_NUMBERS] });
   for (const progress of Object.values(model.state.progress)) {
     progress.opened = true;
@@ -292,7 +292,7 @@ describe("mounted Andromeda chapter", () => {
       flight.dangerFor = 0;
       model.returnHome();
       expect(model.state.flight).toBeNull();
-      model = new GameModel(CONTENT, model.save(), () => 301);
+      model = new GameModel(CONTENT, () => 301, model.save());
       model.startGalaxy(5);
       expect(capitalBossActor(model.state.flight!, id)).toBeUndefined();
       expect(model.flightLog).toEqual([entry]);

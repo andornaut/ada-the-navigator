@@ -6,6 +6,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { settlementsNear } from "./andromedaPlaces.ts";
 import { ConversationDirector } from "./conversations.ts";
 import { GameModel } from "./game.ts";
@@ -17,7 +18,7 @@ const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const prelude = CONVERSATIONS.filter(({ id }) => id === "arrival:4" || id === "meeting:4:avi");
 
 function launch(galaxy: GalaxyNumber): GameModel {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   Object.assign(model.state, { prologueSeen: true, started: true, unlocked: [...GALAXY_NUMBERS] });
   for (const progress of Object.values(model.state.progress)) {
     progress.opened = true;
@@ -91,7 +92,7 @@ describe("Later chapter first encounters", () => {
     expect(model.state.progress[4].needle?.met).toBe(false);
     expect(model.state.seenConversations.filter((id) => id === "meeting:4:avi")).toHaveLength(1);
     model.closeInteraction();
-    const loaded = new GameModel(CONTENT, model.save());
+    const loaded = new GameModel(CONTENT, supportEntropy, model.save());
     loaded.continueGame();
     loaded.interact();
     expect(loaded.state.dialogue?.context).toBe("needle.arrival");

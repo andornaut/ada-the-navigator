@@ -15,7 +15,7 @@ import type { FlightState } from "../model/types.ts";
 import { collectWeapon } from "../model/weapons.ts";
 import { createAdaSaves, SAVE_FORMAT, SAVE_KEYS, saves } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
-import { relaunch } from "../testing/launch.ts";
+import { relaunch, supportEntropy } from "../testing/launch.ts";
 
 /** Test support: admit the saved required encounter, then disable its actual noncombat-fixture guard. */
 function disableStoryGuard(content: GameContent, flight: FlightState, id: string): void {
@@ -44,7 +44,7 @@ function storage(raw?: string) {
   return { port, store: saveStore(port, SAVE_KEYS, SAVE_FORMAT), values };
 }
 function pendingOffer(): GameModel {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.startGalaxy(1);
   Object.assign(model.state.progress[1], {
     holodisk: true,
@@ -74,13 +74,13 @@ describe("canonical Ada save storage", () => {
   it("authorizes selective rewind only for a playable save with campaign support", async () => {
     const { port, values } = storage();
     const store = createAdaSaves(port, undefined, { lock: async (operation) => operation() });
-    const fresh = new GameModel(CONTENT);
+    const fresh = new GameModel(CONTENT, supportEntropy);
 
     expect(await store.readCampaign()).toBeNull();
     values.set(SAVE_KEYS.save, fresh.save());
     expect(await store.readCampaign()).toBeNull();
 
-    const played = new GameModel(CONTENT);
+    const played = new GameModel(CONTENT, supportEntropy);
     played.startGalaxy(1);
     values.set(SAVE_KEYS.save, played.save());
     expect((await store.readCampaign())?.save).toEqual(played.saveDocument());
@@ -97,10 +97,10 @@ describe("canonical Ada save storage", () => {
   it("keeps the existing key, schema and exact effective flight snapshot at the start screen", async () => {
     const boundary = storage();
     expect((await boundary.store.load()).status).toBe("new");
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.startGalaxy(1);
     const before = model.save();
-    const waiting = new GameModel(CONTENT, before);
+    const waiting = new GameModel(CONTENT, supportEntropy, before);
     expect(waiting.state.mode).toBe("home");
     expect(waiting.saveDocument().mode).toBe("space");
     expect(await boundary.store.save(waiting.saveDocument())).toEqual({ status: "saved" });
@@ -116,7 +116,7 @@ describe("canonical Ada save storage", () => {
     const question = structuredClone(model.state.dialogue);
     expect(model.state.dialogue).not.toBeNull();
     model.closeInteraction();
-    const waiting = new GameModel(CONTENT, model.save());
+    const waiting = new GameModel(CONTENT, supportEntropy, model.save());
     const boundary = storage();
     expect(await boundary.store.save(waiting.saveDocument())).toEqual({ status: "saved" });
     const loaded = await boundary.store.load();
@@ -136,7 +136,7 @@ describe("canonical Ada save storage", () => {
   });
 
   it("retains the post-depletion continuation and the flight loadout pulled into the snapshot", async () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.startGalaxy(1);
     collectWeapon("multiLaser", model.state.flight!);
     model.state.flight!.ammo.multiLaser = 7;
@@ -164,7 +164,7 @@ describe("canonical Ada save storage", () => {
     const loaded = await boundary.store.load();
     expect(loaded.status).toBe("loaded");
     expect(loaded.save.depletionContinuation).toBe(true);
-    const resumed = new GameModel(CONTENT, loaded.save);
+    const resumed = new GameModel(CONTENT, supportEntropy, loaded.save);
     // The continuation lives on the model: the resumed state is the state that was saved.
     expect(resumed.state).not.toHaveProperty("depletionContinuation");
     expect(resumed.state).toEqual(model.state);
@@ -200,7 +200,9 @@ describe("canonical Ada save storage", () => {
       const boundary = storage(raw);
       const loaded = await boundary.store.load();
       expect(loaded.status).toBe("newer");
-      expect(await boundary.store.save(new GameModel(CONTENT).saveDocument())).toMatchObject({
+      expect(
+        await boundary.store.save(new GameModel(CONTENT, supportEntropy).saveDocument()),
+      ).toMatchObject({
         status: "unavailable",
       });
       expect(boundary.port.write).not.toHaveBeenCalled();
@@ -227,7 +229,7 @@ describe("canonical Ada save storage", () => {
 
   it("reports quota failures and retries with the latest complete game snapshot", async () => {
     const boundary = storage();
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     await boundary.store.save(model.saveDocument());
     const saved = boundary.values.get(SAVE_KEYS.save);
     model.startGalaxy(1);
@@ -249,7 +251,9 @@ describe("canonical Ada save storage", () => {
     }
     expect((await boundary.store.load()).status).toBe("unavailable");
     const calls = boundary.port.write.mock.calls.length;
-    expect(await boundary.store.save(new GameModel(CONTENT).saveDocument())).toMatchObject({
+    expect(
+      await boundary.store.save(new GameModel(CONTENT, supportEntropy).saveDocument()),
+    ).toMatchObject({
       status: "unavailable",
     });
     expect(boundary.port.write).toHaveBeenCalledTimes(calls);
@@ -270,7 +274,9 @@ describe("canonical Ada save storage", () => {
     release("{broken");
     await loading;
     expect(boundary.port.write).not.toHaveBeenCalled();
-    expect(await boundary.store.save(new GameModel(CONTENT).saveDocument())).toEqual({
+    expect(
+      await boundary.store.save(new GameModel(CONTENT, supportEntropy).saveDocument()),
+    ).toEqual({
       reason: "game crashed",
       status: "unavailable",
     });
@@ -281,7 +287,9 @@ describe("canonical Ada save storage", () => {
     boundary.store.blockWrites("");
     boundary.store.blockWrites("later");
     await boundary.store.load();
-    expect(await boundary.store.save(new GameModel(CONTENT).saveDocument())).toEqual({
+    expect(
+      await boundary.store.save(new GameModel(CONTENT, supportEntropy).saveDocument()),
+    ).toEqual({
       reason: "",
       status: "unavailable",
     });
@@ -298,7 +306,9 @@ describe("canonical Ada save storage", () => {
     });
     const store = saveStore(localSaveStorage(), SAVE_KEYS, SAVE_FORMAT);
     expect((await store.load()).status).toBe("unavailable");
-    expect((await store.save(new GameModel(CONTENT).saveDocument())).status).toBe("unavailable");
+    expect((await store.save(new GameModel(CONTENT, supportEntropy).saveDocument())).status).toBe(
+      "unavailable",
+    );
   });
 
   it("the page-session store preserves its last browser save after the crash fence", async () => {
@@ -307,7 +317,7 @@ describe("canonical Ada save storage", () => {
       getItem: (key: string) => values.get(key) ?? null,
       setItem: (key: string, value: string) => values.set(key, value),
     });
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     expect(await saves.save(model.saveDocument())).toEqual({ status: "saved" });
     const before = [...values];
     saves.blockWrites("game crashed");

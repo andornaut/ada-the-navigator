@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
-import { playOpening } from "../testing/launch.ts";
+import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
@@ -19,7 +19,7 @@ import {
 import type { SpaceObject } from "./types.ts";
 
 function fixture() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.startGalaxy(1);
   playOpening(model);
   const flight = model.state.flight!;
@@ -85,7 +85,7 @@ describe("canonical marker save bindings", () => {
     store.set("growers", "identified");
     const saved = model.saveDocument();
     expect(restoreSave(saved)).not.toBeNull();
-    const continued = new GameModel(CONTENT, saved);
+    const continued = new GameModel(CONTENT, supportEntropy, saved);
     continued.continueGame();
     expect(continued.state.flight!.markerActors).toEqual(flight.markerActors);
     expect(continued.state.flight!.objects.find(({ id }) => id === object.id)).toEqual(object);

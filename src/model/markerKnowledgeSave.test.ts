@@ -2,7 +2,7 @@ import { expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
-import { playOpening } from "../testing/launch.ts";
+import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { flightEncounterSeed } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
@@ -16,7 +16,7 @@ import { restoreSave } from "./save.ts";
 import type { SpaceObject } from "./types.ts";
 
 function fixture(archetype: "capital" | "fighter" = "fighter") {
-  const game = new GameModel(CONTENT);
+  const game = new GameModel(CONTENT, supportEntropy);
   game.startGalaxy(1);
   playOpening(game);
   const saved = game.saveDocument();

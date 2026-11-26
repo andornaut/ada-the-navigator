@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GameModel } from "./game.ts";
 
 function room() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.started = true;
   model.state.prologueSeen = true;
   model.state.progress[1].opened = true;

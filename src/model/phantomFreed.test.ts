@@ -5,7 +5,7 @@ import { INTERACTION_COPY } from "../data/conversations.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import { PHANTOM_COPY, PHANTOM_DESTINATIONS } from "../data/phantom.ts";
-import { readStory, relaunch } from "../testing/launch.ts";
+import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import { clearPhantomTraffic } from "../testing/phantomTraffic.ts";
 import { interactionCopy } from "./conversations.ts";
 import { worldParts } from "./convex.ts";
@@ -107,7 +107,7 @@ function launch(): GameModel {
     });
   }
   expect(restoreSave(initial)).not.toBeNull();
-  const model = new GameModel(CONTENT, initial);
+  const model = new GameModel(CONTENT, supportEntropy, initial);
   model.continueGame();
   readStory(model);
   model.startGalaxy(6);

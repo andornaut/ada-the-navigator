@@ -5,7 +5,7 @@ import { CONVERSATIONS } from "../data/conversations.ts";
 import { shipCatalogEntry } from "../data/enemyActors.ts";
 import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { relaunch } from "../testing/launch.ts";
+import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy, damageEnemy } from "./enemyAi.ts";
 import {
   createUnpopulatedFlight,
@@ -80,7 +80,7 @@ function fixture() {
         (object) => !object.enemy?.packId?.startsWith("pack:") || object.enemy.packId === packId,
       );
       flight.combat = { initialPackSizes: { [packId]: 4 }, routeEncounters: [] };
-      const model = new GameModel(content);
+      const model = new GameModel(content, supportEntropy);
       model.state.flight = flight;
       model.state.mode = "space";
       // A flight has begun, as startGalaxy records.
@@ -411,7 +411,7 @@ describe("per-role encounter restore", () => {
         (trackLeader ? [capital, ...fighters] : fighters).map(({ id }) => [id, "identified"]),
       ),
     };
-    const model = new GameModel(content);
+    const model = new GameModel(content, supportEntropy);
     Object.assign(model.state, {
       flight,
       mode: "space",

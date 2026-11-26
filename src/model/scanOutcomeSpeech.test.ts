@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATION_TUNING, CONVERSATIONS } from "../data/conversations.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { ConversationDirector, type ConversationFacts } from "./conversations.ts";
 import { GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
@@ -225,7 +226,7 @@ it("lets a warning interrupt the receipt, which resumes after it", () => {
 });
 
 it("shows the receipt in the conversation box as soon as Use scans", () => {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.seenConversations.push(...CONVERSATIONS.map(({ id }) => id));
   model.startGalaxy(1);
   const flight = model.state.flight!;

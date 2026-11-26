@@ -3,6 +3,7 @@ import { expect, it, vi } from "vitest";
 import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { nearestSettlement, nearestSettlerStation } from "./andromedaPlaces.ts";
 import { chapterRuntime } from "./chapters.ts";
 import { GameModel } from "./game.ts";
@@ -10,7 +11,7 @@ import { stationPopulationObjects } from "./hostileStations.ts";
 import type { SpaceObject } from "./types.ts";
 
 function prepared() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.unlocked = [1, 3, 4, 5];
   model.state.prologueSeen = true;
   model.state.progress[5].opened = true;

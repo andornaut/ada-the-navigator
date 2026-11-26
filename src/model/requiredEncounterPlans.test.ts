@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
-import { relaunch } from "../testing/launch.ts";
+import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createUnpopulatedFlight } from "./flight.ts";
 import { CURRENT_FLIGHT_TOPOLOGY, flightEncounterSeed } from "./flightTopology.ts";
@@ -20,7 +20,7 @@ import { restoreSave } from "./save.ts";
 import type { RequiredEncounterPlan, SpaceObject } from "./types.ts";
 
 function fixture(supportCount = 0) {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   const progress = model.state.progress[1];
   progress.geography = freshGalaxyGeography(173);
   const flight = createUnpopulatedFlight(CONTENT, 1, 173, model.state.economy, 197);

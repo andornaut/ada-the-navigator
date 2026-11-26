@@ -5,7 +5,7 @@ import { CONTENT } from "../data/content.ts";
 import { JOB_REWARDS, JOB_TYPES } from "../data/jobs.ts";
 import { questReward } from "../data/questRewards.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
-import { playOpening } from "../testing/launch.ts";
+import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { activateRequiredRoute, ensureDestination } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
@@ -49,7 +49,7 @@ const context = (galaxy: GalaxyNumber = 1): QuestDetailContext => ({
   placeLabel: (id) => `known:${id}`,
 });
 function flight() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.startGalaxy(1);
   playOpening(model);
   return model;

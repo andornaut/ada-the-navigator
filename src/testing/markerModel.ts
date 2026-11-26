@@ -4,9 +4,10 @@ import { flightWorldContext } from "../model/flightTopology.ts";
 import { GameModel } from "../model/game.ts";
 import type { FlightState } from "../model/types.ts";
 import { worldPoint } from "../model/worldContacts.ts";
+import { supportEntropy } from "./launchSeeds.ts";
 
 export function markerModel(flight: FlightState): GameModel {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   Object.assign(model.state, {
     dialogue: null,
     flight,

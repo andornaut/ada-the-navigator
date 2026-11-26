@@ -4,6 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { enemyDefinition, escortTuning } from "../data/enemyCatalog.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { SPAWNER_POLICIES, SPAWNER_REGIONS } from "../data/spawnerCatalog.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { createEnemy, stepEnemy } from "./enemyAi.ts";
 import {
   createFlight,
@@ -67,7 +68,7 @@ it("creates two required escorts once and keeps the frigate as the only route bl
 });
 
 it("retains exact required followers through saving, region reentry and a casualty", () => {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.prologueSeen = true;
   model.startGalaxy(1);
   const flight = model.state.flight!;

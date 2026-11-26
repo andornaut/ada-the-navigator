@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
-import { playOpening } from "../testing/launch.ts";
+import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { activeWeaponImpacts, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import type { Shot } from "./types.ts";
 
 const idle = { aim: { x: 1, y: 0 }, fire: false, move: { x: 0, y: 0 }, use: false };
 function fixture() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.startGalaxy(1);
   playOpening(model);
   const flight = model.state.flight!;

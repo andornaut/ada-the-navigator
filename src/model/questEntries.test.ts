@@ -2,13 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { questReward } from "../data/questRewards.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { createFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
 import type { HeldJob } from "./types.ts";
 
 function model() {
-  const result = new GameModel(CONTENT);
+  const result = new GameModel(CONTENT, supportEntropy);
   result.state.mode = "space";
   result.state.selectedGalaxy = 3;
   result.state.flight = createFlight(CONTENT, 3, 123, { known: [] });

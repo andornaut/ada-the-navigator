@@ -5,6 +5,7 @@ import { CONTENT } from "../data/content.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { GameModel } from "../model/game.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { resolveAdaHoldAction } from "../ui/actionBinding.ts";
 import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
 import { rootPressGuard } from "../ui/pressScope.ts";
@@ -174,7 +175,7 @@ class Element extends EventTarget {
 let host: Element;
 let shell: StoryShell;
 let actionRoot: ReturnType<typeof bindAdaActionRoot> | undefined;
-function setup(model = new GameModel(CONTENT)) {
+function setup(model = new GameModel(CONTENT, supportEntropy)) {
   const actions = {
     continueGame: vi.fn(() => model.continueGame()),
     dismissNotice: vi.fn(),
@@ -302,7 +303,7 @@ describe("title Continue permission", () => {
 
 describe("held story title consumer", () => {
   function opening() {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.start();
     CONTENT.premise.gardenArrival.forEach(() => model.storyNext());
     expect(model.storyView?.page.id).toBe("opening");
@@ -331,7 +332,7 @@ describe("held story title consumer", () => {
       model.backToTitle();
       expect(model.screen).toBe("start");
       expect(model.state.started).toBe(false);
-      const active = reload ? new GameModel(CONTENT, model.save()) : model;
+      const active = reload ? new GameModel(CONTENT, supportEntropy, model.save()) : model;
       expect(active.canContinue).toBe(true);
       expect(active.state.started).toBe(false);
       continueFromTitle(active);
@@ -359,7 +360,7 @@ describe("held story title consumer", () => {
     const state = structuredClone(model.state);
     expect(before!.choices.length).toBe(questions - 1);
     model.backToTitle();
-    const active = new GameModel(CONTENT, model.save());
+    const active = new GameModel(CONTENT, supportEntropy, model.save());
     continueFromTitle(active);
     expect(active.state).toEqual(state);
     expect(active.storyView?.page).toEqual(before?.page);
@@ -372,7 +373,7 @@ describe("held story title consumer", () => {
   });
 
   it("continues the remaining sleep clock after reload instead of replaying the interlude", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.startGalaxy(1);
     const flight = model.state.flight!;
     flight.shield = CONTENT.tuning.hazardDamage;
@@ -384,7 +385,7 @@ describe("held story title consumer", () => {
     model.storyTick(OVERNIGHT_SLEEP.seconds, OVERNIGHT_SLEEP.seconds / 2);
     const saved = model.saveDocument();
     model.backToTitle();
-    const active = new GameModel(CONTENT, model.save());
+    const active = new GameModel(CONTENT, supportEntropy, model.save());
     continueFromTitle(active);
     expect(active.saveDocument()).toEqual(saved);
     expect(active.storyView?.page.sleep).toBe(true);

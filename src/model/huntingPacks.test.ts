@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import {
   activateRequiredWhirlpoolRoute,
   createFlight,
@@ -74,7 +75,7 @@ describe("hunting packs", () => {
     const cartwheel = createFlight(CONTENT, 2, 9, { known: [] });
     ensureHuntingPacks(CONTENT, cartwheel);
     expect(cartwheel.objects.some((object) => object.id.startsWith("hunt:"))).toBe(false);
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.state.unlocked = [1, 2, 3];
     model.startGalaxy(3);
     model.state.dialogue = null;

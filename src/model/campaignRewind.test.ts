@@ -1,13 +1,14 @@
 import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { openRewoundCampaign, rewindCampaign } from "./campaignRewind.ts";
-import { cryptoEntropy, GameModel } from "./game.ts";
+import { GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { inspectAdaSave } from "./saveIntegrity.ts";
 
 it("rewinds the campaign while keeping persisted equipment, ore, geography and earned credits", () => {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.startGalaxy(1);
   const save = model.saveDocument();
   save.unlocked = [1, 2, 3, 4, 5, 6];
@@ -72,7 +73,7 @@ it("rewinds the campaign while keeping persisted equipment, ore, geography and e
     stage: 0,
   });
   expect(rewind.achievements).not.toBe(save.achievements);
-  const next = openRewoundCampaign(CONTENT, cryptoEntropy, save);
+  const next = openRewoundCampaign(CONTENT, supportEntropy, save);
   expect(next.state.achievements.unlocked).toEqual(save.achievements.unlocked);
   expect(inspectAdaSave(next.save()).status).toBe("valid");
   expect(save.flight!.cargo).toBe(67);
@@ -80,18 +81,18 @@ it("rewinds the campaign while keeping persisted equipment, ore, geography and e
 });
 
 it("persists the new Sunflower Earth opening and reloads it through Continue", () => {
-  const old = new GameModel(CONTENT);
+  const old = new GameModel(CONTENT, supportEntropy);
   old.startGalaxy(1);
   const source = old.saveDocument();
   source.prologueSeen = true;
-  const next = openRewoundCampaign(CONTENT, cryptoEntropy, source);
+  const next = openRewoundCampaign(CONTENT, supportEntropy, source);
   expect(next.screen).toBe("story");
   expect(next.state.flight).toBeNull();
   expect(next.state.prologueSeen).toBe(true);
   expect(next.storyView?.page).toBeDefined();
   const checks = inspectAdaSave(next.save());
   expect(checks.status).toBe("valid");
-  const resumed = new GameModel(CONTENT, next.save());
+  const resumed = new GameModel(CONTENT, supportEntropy, next.save());
   expect(resumed.canContinue).toBe(true);
   resumed.continueGame();
   expect(resumed.storyView?.page).toEqual(next.storyView?.page);

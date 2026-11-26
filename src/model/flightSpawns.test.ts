@@ -6,6 +6,7 @@ import { spacingRadius } from "../data/enemySpacing.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createUnpopulatedFlight, stepFlight } from "./flight.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
@@ -220,7 +221,7 @@ describe("flight spawns from the planner", () => {
       capital.hp = capital.enemy!.hp;
       const escort = actor("fighter", escorts, { x: home.x, y: home.y + 160 });
       escort.enemy!.escortOf = capital.id;
-      const model = new GameModel(CONTENT, undefined, () => encounter);
+      const model = new GameModel(CONTENT, () => encounter);
       model.state.progress[GALAXY].geography = {
         seed: WORLD_SEED,
         sitePolicy: "seeded",
@@ -250,7 +251,7 @@ describe("flight spawns from the planner", () => {
       expect(flight.world.notables[capital.id]).toEqual(tracked ? capital : undefined);
       expect(flight.world.notables[escort.id]).toEqual(escort);
 
-      const loaded = new GameModel(CONTENT, model.save());
+      const loaded = new GameModel(CONTENT, supportEntropy, model.save());
       loaded.continueGame();
       const resumed = loaded.state.flight!;
       expect(resumed.combat?.unloadedPackMembers?.[pack]).toBe(tracked ? undefined : 1);

@@ -11,7 +11,7 @@ import { type EnemyArchetype, enemyCatalog } from "../data/enemyCatalog.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
-import { playOpening } from "../testing/launch.ts";
+import { playOpening, supportEntropy } from "../testing/launch.ts";
 import {
   ConversationDirector,
   type ConversationFacts,
@@ -709,7 +709,7 @@ describe("drone engagements in flight", () => {
     count: number,
     recovered: readonly GalaxyNumber[] = [],
   ): GameModel {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.state.prologueSeen = true;
     model.state.unlocked = [1, 2, 3];
     for (const held of recovered) {
@@ -805,7 +805,7 @@ describe("conversations in the game", () => {
    */
   // A first flight, with the heard conversations already heard.
   function flying(heard: readonly string[] = []): GameModel {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     // As after a real first launch: the prologue and its achievement are behind Ada.
     model.state.prologueSeen = true;
     model.state.achievements.unlocked.push("newNavigator");
@@ -1152,13 +1152,16 @@ describe("conversations in the game", () => {
     model.dismissConversation();
     const saved = model.save();
     expect(restoreSave(saved)?.seenConversations).toContain("lesson:move");
-    const resumed = new GameModel(CONTENT, saved);
+    const resumed = new GameModel(CONTENT, supportEntropy, saved);
     resumed.step(0.05, idle);
     expect(resumed.conversation?.key).not.toBe("lesson:move:0");
   });
 
   it("rejects a malformed seen-conversations list", () => {
-    const fresh = JSON.parse(new GameModel(CONTENT).save()) as Record<string, unknown>;
+    const fresh = JSON.parse(new GameModel(CONTENT, supportEntropy).save()) as Record<
+      string,
+      unknown
+    >;
     expect(restoreSave({ ...fresh, seenConversations: [1] })).toBeNull();
   });
 });
@@ -1492,7 +1495,7 @@ describe("Use conversation paging", () => {
       ),
     );
     for (const [galaxy, context] of contexts) {
-      const model = new GameModel(CONTENT);
+      const model = new GameModel(CONTENT, supportEntropy);
       model.state.unlocked = [galaxy];
       model.startGalaxy(galaxy);
       if (context === "holodiskHandover") {

@@ -11,7 +11,7 @@ import {
   PHANTOM_TUNING,
 } from "../data/phantom.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { readStory, relaunch } from "../testing/launch.ts";
+import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import { clearPhantomTraffic } from "../testing/phantomTraffic.ts";
 import { worldParts } from "./convex.ts";
 import { createEnemy, enemyIntegrity, hardpointOffset } from "./enemyAi.ts";
@@ -136,7 +136,7 @@ describe("Phantom full route under test-only chapter admission, not production r
         });
       }
       expect(restoreSave(JSON.stringify(initial))).not.toBeNull();
-      let model = new GameModel(CONTENT, JSON.stringify(initial));
+      let model = new GameModel(CONTENT, supportEntropy, JSON.stringify(initial));
       model.continueGame();
       readStory(model);
       expect(model.state.progress[6].opened).toBe(true);

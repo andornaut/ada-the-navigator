@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 
 function boarding(galaxy: 4 | 6, announce: boolean): GameModel {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   Object.assign(model.state, {
     announceGalaxy: announce,
     prologueSeen: true,
@@ -45,7 +46,7 @@ describe("Same-visit room and boarding context", () => {
       expect(before.pendingStory?.cursor.current.scene.background).toBe("adaRoomRecorder");
       model.backToTitle();
       expect(model.saveDocument()).toEqual(before);
-      const loaded = new GameModel(CONTENT, model.save());
+      const loaded = new GameModel(CONTENT, supportEntropy, model.save());
       loaded.continueGame();
       expect(loaded.storyView?.page).toEqual(page);
       expect(loaded.saveDocument()).toEqual(before);
@@ -60,7 +61,7 @@ describe("Same-visit room and boarding context", () => {
       expect(page?.background).toBe("adaRoomParty");
       const before = model.saveDocument();
       expect(before.pendingStory?.cursor.current.scene.background).toBe("adaRoomParty");
-      const loaded = new GameModel(CONTENT, model.save());
+      const loaded = new GameModel(CONTENT, supportEntropy, model.save());
       loaded.continueGame();
       expect(loaded.storyView?.page).toEqual(page);
       expect(loaded.saveDocument()).toEqual(before);
@@ -71,7 +72,7 @@ describe("Same-visit room and boarding context", () => {
     const saved = boarding(6, false).saveDocument();
     Object.assign(saved.pendingStory!.cursor.current.scene, { background: "adaRoomInvitations" });
     expect(restoreSave(saved)).not.toBeNull();
-    const loaded = new GameModel(CONTENT, JSON.stringify(saved));
+    const loaded = new GameModel(CONTENT, supportEntropy, JSON.stringify(saved));
     loaded.continueGame();
     expect(loaded.storyView?.page.background).toBe("adaRoomInvitations");
     expect(loaded.saveDocument().pendingStory?.cursor.current).toEqual(

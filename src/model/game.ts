@@ -546,9 +546,6 @@ export type PickupFeedback = Extract<ItemGain, { readonly kind: "ammo" }>;
 /** A source of uniform unsigned 32-bit draws, read for each new flight's geography and seed. */
 export type Entropy = () => number;
 
-/** The platform's cryptographic random source, the entropy a model draws unless given another. */
-export const cryptoEntropy: Entropy = () => crypto.getRandomValues(new Uint32Array(1))[0] ?? 1;
-
 export class GameModel {
   private readonly markerRegistry = new TargetMarkerRegistry();
   private readonly seenCacheGroups = new Set<string>();
@@ -611,7 +608,7 @@ export class GameModel {
   // The last unlock, flown on the route map at the next boarding: from the galaxy completed to
   // the farthest it opened, the opened positions still showing locked until then.
   private unlockFlight: RouteFlight | null = null;
-  constructor(content: GameContent, saved?: unknown, entropy: Entropy = cryptoEntropy) {
+  constructor(content: GameContent, entropy: Entropy, saved?: unknown) {
     this.content = content;
     this.entropy = entropy;
     const restored = restoreGameSave(content, saved);
@@ -5519,7 +5516,7 @@ export class GameModel {
     if (scene.replayGalaxy !== undefined) {
       return [scene];
     }
-    const copy = new GameModel(this.content, JSON.stringify(this.state), this.entropy);
+    const copy = new GameModel(this.content, this.entropy, JSON.stringify(this.state));
     copy.simulating = true;
     copy.depletionContinuation = this.depletionContinuation;
     copy.startShown = false;

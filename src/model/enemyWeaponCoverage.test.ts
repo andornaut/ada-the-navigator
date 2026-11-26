@@ -66,7 +66,7 @@ it("materializes the signature roster and both exclusive capital profiles throug
   expect(observe(5, redact!)).toEqual(new Set(["laser", "scattershot", "chargedLance"]));
 
   const seeds = [173, 301];
-  const cartwheelModel = new GameModel(CONTENT, undefined, () => seeds.shift() ?? 503);
+  const cartwheelModel = new GameModel(CONTENT, () => seeds.shift() ?? 503);
   cartwheelModel.state.prologueSeen = true;
   cartwheelModel.state.unlocked.push(2);
   cartwheelModel.state.progress[2].opened = true;

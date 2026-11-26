@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { createFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
@@ -19,7 +20,7 @@ import {
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function pickup(upgrade: boolean, ammo: number) {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.startGalaxy(1);
   const flight = model.state.flight!;
   flight.ownedWeapons = ["multiLaser"];
@@ -153,7 +154,7 @@ describe("finite ammunition capacity", () => {
   });
 
   it("normalizes copied loadouts and both saved stores without mutating the source", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.startGalaxy(1);
     const normal = model.save();
     expect(JSON.stringify(restoreSave(normal))).toBe(normal);
@@ -179,7 +180,7 @@ describe("finite ammunition capacity", () => {
   });
 
   it("keeps invalid negative or fractional saves rejected and the weapon cheat capped", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.startGalaxy(1);
     for (const value of [-1, 0.5]) {
       const saved = JSON.parse(model.save());

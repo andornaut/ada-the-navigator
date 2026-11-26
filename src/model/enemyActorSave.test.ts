@@ -5,13 +5,13 @@ import * as profiles from "../data/enemyActorDefinition.ts";
 import * as actors from "../data/enemyActors.ts";
 import * as catalog from "../data/enemyCatalog.ts";
 import { ROUTE } from "../data/galaxies.ts";
-import { playOpening } from "../testing/launch.ts";
+import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 
 function fixture() {
-  const game = new GameModel(CONTENT);
+  const game = new GameModel(CONTENT, supportEntropy);
   game.startGalaxy(1);
   playOpening(game);
   const saved = structuredClone(game.saveDocument());

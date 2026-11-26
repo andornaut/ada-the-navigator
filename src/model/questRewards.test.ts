@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { questReward } from "../data/questRewards.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { completeActivity, validActivity } from "./activities.ts";
 import { GameModel } from "./game.ts";
 import { type BoardContext, completeJob, stationBoard } from "./jobs.ts";
@@ -20,7 +21,7 @@ const context: BoardContext = {
 
 describe("saved quest reward boundaries", () => {
   it("keeps saved offered rewards in base units before accepting and paying", () => {
-    const game = new GameModel(CONTENT);
+    const game = new GameModel(CONTENT, supportEntropy);
     game.state.economy.stardust = 175;
     const station = stationsNear(ECONOMY, 1, 20000, { x: 0, y: 0 })[0]!;
     const offered = stationBoard(context, game.state, station);
@@ -33,7 +34,7 @@ describe("saved quest reward boundaries", () => {
   });
 
   it("retains legacy supply base and pays its displayed reward once", () => {
-    const game = new GameModel(CONTENT);
+    const game = new GameModel(CONTENT, supportEntropy);
     const station = stationsNear(ECONOMY, 1, 20000, { x: 0, y: 0 })[0]!;
     game.state.tasks[1] = {
       carrying: true,
@@ -53,7 +54,7 @@ describe("saved quest reward boundaries", () => {
   it.each([30, 73, 100])(
     "preserves saved base %i and pays its displayed amount only once",
     (base) => {
-      const game = new GameModel(CONTENT);
+      const game = new GameModel(CONTENT, supportEntropy);
       const task: HeldJob = {
         id: "legacy-survey",
         item: "landmark",
@@ -84,7 +85,7 @@ describe("saved quest reward boundaries", () => {
   ] as const)(
     "keeps galaxy %i's accepted activity base valid through save and completion",
     (galaxy, id, place, base) => {
-      const game = new GameModel(CONTENT);
+      const game = new GameModel(CONTENT, supportEntropy);
       game.state.tasks[galaxy] = {
         id,
         kind: "activity",

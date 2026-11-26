@@ -3,11 +3,12 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 
 function opening(): GameModel {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.start();
   CONTENT.premise.gardenArrival.forEach(() => model.storyNext());
   expect(model.storyView?.page.id).toBe("opening");
@@ -19,7 +20,7 @@ function resume(model: GameModel): GameModel {
   model.backToTitle();
   expect(model.screen).toBe("start");
   expect(model.canContinue).toBe(true);
-  const loaded = new GameModel(CONTENT, model.save());
+  const loaded = new GameModel(CONTENT, supportEntropy, model.save());
   expect(loaded.canContinue).toBe(true);
   loaded.continueGame();
   return loaded;
@@ -51,7 +52,7 @@ describe("Story Back to title and Continue", () => {
     });
     expect(JSON.stringify(saved.pendingStory)).not.toContain('"text"');
     expect(JSON.stringify(saved.pendingStory)).not.toContain('"choices"');
-    const loaded = new GameModel(CONTENT, saved);
+    const loaded = new GameModel(CONTENT, supportEntropy, saved);
     loaded.continueGame();
     expect(loaded.storyView?.page).toEqual(model.storyView?.page);
     expect(loaded.state.progress[1].opened).toBe(false);
@@ -78,7 +79,7 @@ describe("Story Back to title and Continue", () => {
   });
 
   it("preserves the actual elapsed recharge interlude instead of replaying it", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.startGalaxy(1);
     const flight = model.state.flight!;
     flight.shield = CONTENT.tuning.hazardDamage;

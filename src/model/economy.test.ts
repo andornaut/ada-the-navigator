@@ -18,6 +18,7 @@ import { type EnemyArchetype, enemyCatalog, HEAVIES } from "../data/enemyCatalog
 import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { SCREEN } from "../data/screen.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import * as asteroidLoot from "./asteroidLoot.ts";
 import { oreQuantityScale, rollAsteroidLoot } from "./asteroidLoot.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
@@ -386,7 +387,7 @@ describe("guaranteed destruction loot", () => {
         if (ore === 5) {
           expect(pieces[0]).toMatchObject({ x: target.x, y: target.y });
         }
-        const model = new GameModel(CONTENT);
+        const model = new GameModel(CONTENT, supportEntropy);
         model.state.mode = "space";
         model.state.flight = value;
         const resumed = restoreSave(model.save())!.flight!;
@@ -451,7 +452,7 @@ describe("guaranteed destruction loot", () => {
   });
 
   it.each(["rock"] as const)("preserves released %s loot across save and resume", (kind) => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.state.mode = "space";
     const value = flight();
     value.topology = CURRENT_FLIGHT_TOPOLOGY;
@@ -473,7 +474,7 @@ describe("guaranteed destruction loot", () => {
   });
 
   it("does not pay an already released wreck again after restoring a save", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.state.mode = "space";
     const value = flight();
     value.topology = CURRENT_FLIGHT_TOPOLOGY;
@@ -1671,7 +1672,7 @@ describe("shop purchases", () => {
     ["iris", "cobalt", "graphite", "seafoam", "amber"],
     ["amber", "seafoam", "graphite", "cobalt", "iris"],
   ])("prices paint by purchase order beginning with %s across saves", (...order) => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.state.economy.stardust = 12500;
     for (const [index, scheme] of order.entries()) {
       const economy = model.state.economy;

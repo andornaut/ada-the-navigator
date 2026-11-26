@@ -12,7 +12,7 @@ const [
   { GameModel },
   { CONTENT },
   { ECONOMY },
-  { playOpening },
+  { playOpening, supportEntropy },
   { restoreSave },
   { enemyActorDefinition },
   { createEnemy },
@@ -110,7 +110,7 @@ function located(model, id) {
 }
 /** A flight in `galaxy` with its opening played, no dialogue and no shots, held at rest. */
 function flightModel(galaxy, { unlocked = ALL } = {}) {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.unlocked = unlocked;
   // The highest shield outlasts every capture's hits on Ada.
   model.state.economy.levels.shield = 3;
@@ -363,7 +363,7 @@ export function batchCaptures(ctx) {
   }
   /** Cartwheel's hub with its story resolved, Ada below it, with the projects funded. */
   function hubModel(projects) {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.state.unlocked = [1, 2];
     Object.assign(model.state.progress[2], {
       introduced: true,
@@ -677,7 +677,7 @@ export function batchCaptures(ctx) {
       await settle();
       await ctx.frames(`craft-whirlpool-${id}`, { every: 250, shots: 3 });
     });
-    const story = new GameModel(CONTENT);
+    const story = new GameModel(CONTENT, supportEntropy);
     story.state.unlocked = [1, 2];
     story.startGalaxy(2);
     playOpening(story);

@@ -2,13 +2,14 @@ import { ROUTE_POSITION } from "../data/galaxies.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { GameModel } from "../model/game.ts";
 import type { StoryPage } from "../model/storybook.ts";
+import { supportEntropy } from "./launchSeeds.ts";
 
 /**
  * Test support: a launch from a save, which opens on the start screen, then Continue when the
  * save was made mid-flight, so the flight resumes as it was saved.
  */
 export function relaunch(content: GameContent, saved: unknown): GameModel {
-  const model = new GameModel(content, saved);
+  const model = new GameModel(content, supportEntropy, saved);
   let value = saved;
   if (typeof saved === "string") {
     try {
@@ -60,4 +61,4 @@ export function boardAndJump(model: GameModel, galaxy: GalaxyNumber, choice = 0)
   return pages;
 }
 
-export { pinnedRandomValues, seedLaunches } from "./launchSeeds.ts";
+export { pinnedRandomValues, seedLaunches, supportEntropy } from "./launchSeeds.ts";

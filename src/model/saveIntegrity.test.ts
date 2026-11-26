@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { createAdaSaves, SAVE_KEYS } from "../saving/index.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { routeBlocked, routeGuardPlanResult } from "./flight.ts";
 import { GameModel, newGameState } from "./game.ts";
 import { readRequiredPlan } from "./requiredEncounterPlans.ts";
@@ -35,7 +36,7 @@ describe("Ada save integrity policy", () => {
 });
 
 function legacyOpener() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.startGalaxy(1);
   const flight = model.state.flight!,
     progress = model.state.progress[1];

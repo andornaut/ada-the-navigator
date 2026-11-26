@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { damageEnemy } from "./enemyAi.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import { createUnpopulatedFlight, spawnPlannedHostileStation } from "./flight.ts";
@@ -18,7 +19,7 @@ import { planHostileStationFormation } from "./hostileStationSchedule.ts";
 import { hostileStationSites } from "./hostileStationSites.ts";
 
 function fixture() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.selectedGalaxy = 5;
   model.state.mode = "space";
   model.state.started = true;

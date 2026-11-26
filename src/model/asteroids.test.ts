@@ -6,7 +6,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
-import { playOpening, relaunch, seedLaunches } from "../testing/launch.ts";
+import { playOpening, relaunch, seedLaunches, supportEntropy } from "../testing/launch.ts";
 import {
   ASTEROID_SHAPES,
   bounce,
@@ -419,7 +419,7 @@ describe("asteroids in flight", () => {
   const LAUNCH_SEED = 173;
   function launched() {
     seedLaunches(LAUNCH_SEED);
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.startGalaxy(1);
     playOpening(model);
     const flight = model.state.flight!;

@@ -4,7 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import type { Weapon } from "../data/types.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
-import { playOpening, relaunch } from "../testing/launch.ts";
+import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
 import { beginArrivalGrace, ensureDestination, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
@@ -15,7 +15,7 @@ import { collectWeapon } from "./weapons.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function launched(): GameModel {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.startGalaxy(1);
   playOpening(model);
   model.state.flight!.objects = [];

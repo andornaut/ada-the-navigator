@@ -6,12 +6,12 @@ import { GameModel } from "../model/game.ts";
 import { restoreSave } from "../model/save.ts";
 import type { FlightInput } from "../model/types.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
-import { relaunch } from "../testing/launch.ts";
+import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { storyPageView } from "../ui/storybook.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function depleted() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.prologueSeen = true;
   model.state.progress[1].opened = true;
   model.state.economy.stardust = 17;

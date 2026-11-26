@@ -58,7 +58,7 @@ export function openRewoundCampaign(
   entropy: Entropy,
   saved: GameSave,
 ): GameModel {
-  const model = new GameModel(content, rewindCampaign(saved), entropy);
+  const model = new GameModel(content, entropy, rewindCampaign(saved));
   if (model.canContinue) {
     model.continueGame();
   } else {

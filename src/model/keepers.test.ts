@@ -6,7 +6,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { KEEPERS, PHANTOM_KEEPER_GREETINGS, SETTLER_GREETING } from "../data/keepers.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { relaunch } from "../testing/launch.ts";
+import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { greetingLines, stationKeeper, stationRank, worldStationKeeper } from "./keepers.ts";
@@ -25,7 +25,7 @@ function nearest(galaxy: GalaxyNumber, count: number) {
 
 /** A Sunflower flight beside its nearest station, discovered, nothing else in reach. */
 function beside() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.prologueSeen = true;
   model.startGalaxy(1);
   const flight = model.state.flight!;
@@ -276,7 +276,7 @@ describe("a keeper's greeting at the station card", () => {
   it.each([1, 2, 3, 4, 5] as const)(
     "exposes galaxy %i's actual station keeper key to the view",
     (galaxy) => {
-      const model = new GameModel(CONTENT);
+      const model = new GameModel(CONTENT, supportEntropy);
       model.state.unlocked = [...new Set([1, galaxy] as const)];
       model.startGalaxy(galaxy);
       const flight = model.state.flight!;

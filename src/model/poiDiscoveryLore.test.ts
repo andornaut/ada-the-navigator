@@ -10,7 +10,7 @@ import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { LANDMARK_KINDS } from "../data/jobs.ts";
 import { poiAmbientLine, poiApproachPool, poiDiscoveryPool } from "../data/poiDiscoveryLore.ts";
 import deck from "../data/poiFlavourCopy.json";
-import { playOpening, relaunch } from "../testing/launch.ts";
+import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
 import {
   ConversationDirector,
   type ConversationFacts,
@@ -112,7 +112,7 @@ it("binds all authored pools to the exact established identities and their two d
 });
 
 function newFlight() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.prologueSeen = true;
   model.state.achievements.unlocked.push("newNavigator");
   model.state.progress[1].opened = true;
@@ -293,7 +293,7 @@ it("deduplicates visible legacy and bundled caches by group, with no marker, rew
 });
 
 it("queues Whirlpool holodisk lore only for the loaded body without recovering it", () => {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.prologueSeen = true;
   model.state.unlocked = [1, 3];
   model.state.achievements.unlocked.push("newNavigator");
@@ -461,7 +461,7 @@ it("delivers distinct mixed confirmation events in order without starting a new 
 
 it("uses the existing quiet window, and revalidates speculative and known wording when covered", () => {
   const talk = new ConversationDirector([], []);
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   const progress = model.state.progress[1];
   const poiAmbient = () => {
     const second = ambientSecondThread(1, progress);
@@ -491,7 +491,7 @@ it("uses the existing quiet window, and revalidates speculative and known wordin
 });
 
 it("uses only recorded chapter or map facts for each ambient anchor and second thread", () => {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   const p = model.state.progress;
   for (const galaxy of GALAXY_NUMBERS) {
     expect(ambientSecondThread(galaxy, p[galaxy])).toBeUndefined();

@@ -8,7 +8,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { BUILT } from "../data/galaxies.ts";
 import { galaxyProjects, PROJECT_THANKS, PROJECTS } from "../data/projects.ts";
 import { GALAXIES } from "../data/storybook.ts";
-import { playOpening } from "../testing/launch.ts";
+import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import {
@@ -246,7 +246,7 @@ describe("community projects", () => {
 
 // A docked first flight in Sunflower with its chapter complete and Stardust to give.
 function docked(stardust: number) {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.startGalaxy(1);
   playOpening(model);
   Object.assign(model.state.progress[1], { holodisk: true, questComplete: true, resolved: true });
@@ -269,7 +269,7 @@ describe("donating at a station", () => {
   });
 
   it("keeps Jobs and held-task access in resolved Phantom without offering any projects", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.state.unlocked.push(6);
     model.startGalaxy(6);
     Object.assign(model.state.progress[6], { holodisk: true, questComplete: true, resolved: true });
@@ -353,7 +353,7 @@ describe("donating at a station", () => {
     const model = docked(1000);
     model.donate("greenhouseRing");
     expect(model.revealWorldChange(1, "greenhouseRing")).toBe(true);
-    const restored = new GameModel(CONTENT, model.save()).state.progress[1];
+    const restored = new GameModel(CONTENT, supportEntropy, model.save()).state.progress[1];
     expect(restored.donated).toEqual({ greenhouseRing: cost("greenhouseRing") });
     expect(restored.revealed).toEqual(["greenhouseRing"]);
   });
@@ -365,7 +365,7 @@ describe("donating at a station", () => {
   ] as const)(
     "retains partial funding and one reveal on Continue in galaxy %i",
     (galaxy, id, price) => {
-      const model = new GameModel(CONTENT);
+      const model = new GameModel(CONTENT, supportEntropy);
       model.state.unlocked.push(galaxy);
       model.startGalaxy(galaxy);
       const progress = model.state.progress[galaxy];
@@ -374,7 +374,7 @@ describe("donating at a station", () => {
       model.state.economy.stardust = price - 1;
       expect(model.donate(id)).toEqual({ amount: price - 1, funded: false, kind: "paid" });
       expect(model.revealWorldChange(galaxy, id)).toBe(false);
-      const resumed = new GameModel(CONTENT, model.save());
+      const resumed = new GameModel(CONTENT, supportEntropy, model.save());
       resumed.continueGame();
       expect(resumed.state.progress[galaxy].donated[id]).toBe(price - 1);
       expect(resumed.state.flight?.galaxy).toBe(galaxy);
@@ -382,7 +382,7 @@ describe("donating at a station", () => {
       resumed.state.economy.stardust = 1;
       expect(resumed.donate(id)).toEqual({ amount: 1, funded: true, kind: "paid" });
       expect(resumed.revealWorldChange(galaxy, id)).toBe(true);
-      const revealed = new GameModel(CONTENT, resumed.save());
+      const revealed = new GameModel(CONTENT, supportEntropy, resumed.save());
       revealed.continueGame();
       expect(revealed.worldChanges(galaxy)).toContainEqual({
         project: id,

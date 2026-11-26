@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import { buy, requestPurchase, selectPaint, shopRow, shopRows } from "./shop.ts";
@@ -53,7 +54,7 @@ describe("six ship paint schemes", () => {
   });
 
   it("restores existing ownership unchanged and offers the fifth paid scheme for 3500", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.state.economy.paints = ["classic", "cobalt", "seafoam", "graphite", "iris"];
     model.state.economy.paint = "graphite";
     model.state.economy.stardust = 3499;

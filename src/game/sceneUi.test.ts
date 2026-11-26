@@ -18,7 +18,7 @@ import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import type { GameSave } from "../model/types.ts";
 import { UPGRADE_WEAPONS } from "../model/weapons.ts";
 import { createAdaSaves, SAVE_KEYS } from "../saving/index.ts";
-import { readStory, relaunch } from "../testing/launch.ts";
+import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import type { CheatAction } from "../ui/cheatActions.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { NO_INSETS, safeGameArea } from "../ui/layout/playView.ts";
@@ -114,7 +114,7 @@ function pauseView(model: GameModel, screen: string = model.screen, covered = fa
 }
 
 function flight() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.unlocked = [1, 3];
   model.state.prologueSeen = true;
   model.startGalaxy(1);
@@ -458,7 +458,7 @@ describe("station service caller", () => {
 
 describe("universal pause caller", () => {
   it("keeps Pause absent on the title and loading screens, with Settings nested in navigation", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     expect(pauseView(model).place).toBeNull();
     expect(pauseView(model, "loading").place).toBeNull();
     expect(source.text).not.toMatch(/controls\.set(?:Settings|Achievements)Button/u);
@@ -505,7 +505,7 @@ describe("universal pause caller", () => {
   });
 
   it("offers Menu on each Earth story page without advancing or answering its choice", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.start();
     const pages: string[] = [];
     let choice = false;
@@ -528,7 +528,7 @@ describe("universal pause caller", () => {
   });
 
   it("offers Earth no Map and leaves the exact room through scene callbacks", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.state.started = true;
     model.state.prologueSeen = true;
     model.state.progress[1].opened = true;
@@ -552,7 +552,7 @@ describe("universal pause caller", () => {
   });
 
   it("cannot consume a mandatory Earth choice through Map or Back to title", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.start();
     for (let turn = 0; turn < 60 && !model.storyView?.choices.length; turn++) {
       model.storyNext();
@@ -628,7 +628,7 @@ describe("universal pause caller", () => {
 
 describe("held story Continue caller", () => {
   it("passes model permission to the shell without setting started", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     Object.defineProperty(model, "canContinue", { value: true });
     Object.defineProperty(model, "noticeOpacity", { value: 0.5 });
     let call: ts.CallExpression | undefined;
@@ -954,7 +954,7 @@ it("commits the stored campaign with its cheat grants and only then hands off", 
 });
 
 it("checks for updates when Continue leaves Start and when play returns to it", async () => {
-  const f = cheatScene(new GameModel(CONTENT, flight().save()));
+  const f = cheatScene(new GameModel(CONTENT, supportEntropy, flight().save()));
   const leave = runInContext(callback("onBackToTitle"), f.context) as () => void;
   const resume = runInContext(callback("continueGame"), f.context) as () => void;
   const check = f.context.requestUpdateCheck;
@@ -978,7 +978,7 @@ it("checks for updates when Continue leaves Start and when play returns to it", 
 });
 
 it("checks for updates when starting a new game from Start", async () => {
-  const f = cheatScene(new GameModel(CONTENT));
+  const f = cheatScene(new GameModel(CONTENT, supportEntropy));
   const start = runInContext(callback("start"), f.context) as () => void;
   expect(f.scene.model.screen).toBe("start");
   start();
@@ -1034,7 +1034,7 @@ describe("cheats on the real save", () => {
   it("applies start-screen cheats to the flight Continue resumes", async () => {
     const played = flight();
     const cargo = played.state.flight!.cargo;
-    const f = cheatScene(new GameModel(CONTENT, played.save()));
+    const f = cheatScene(new GameModel(CONTENT, supportEntropy, played.save()));
     await f.flush();
     expect(f.scene.model.screen).toBe("start");
     f.cheat("unlockAllGalaxies").run();
@@ -1054,7 +1054,7 @@ describe("cheats on the real save", () => {
   });
 
   it("applies start-screen cheats to the game Start begins", async () => {
-    const f = cheatScene(new GameModel(CONTENT));
+    const f = cheatScene(new GameModel(CONTENT, supportEntropy));
     const start = runInContext(callback("start"), f.context) as () => void;
     f.cheat("addStardust").run();
     f.cheat("unlockAllWeapons").run();
@@ -1068,7 +1068,7 @@ describe("cheats on the real save", () => {
   });
 
   it("returns to a new save on Restart after cheats", async () => {
-    const f = cheatScene(new GameModel(CONTENT, flight().save()));
+    const f = cheatScene(new GameModel(CONTENT, supportEntropy, flight().save()));
     f.cheat("addStardust").run();
     f.cheat("unlockAllGalaxies").run();
     f.cheat("unlockAllWeapons").run();
@@ -1077,7 +1077,7 @@ describe("cheats on the real save", () => {
     f.apply(() => f.scene.model.restart());
     await f.settle();
     // Restart keeps achievements; everything else is a new save.
-    const fresh = JSON.parse(new GameModel(CONTENT).save()) as GameSave;
+    const fresh = JSON.parse(new GameModel(CONTENT, supportEntropy).save()) as GameSave;
     expect({ ...f.stored(), achievements: fresh.achievements }).toEqual(fresh);
     expect(f.scene.model.canContinue).toBe(false);
   });
@@ -1101,7 +1101,7 @@ describe("cheats on the real save", () => {
 describe("canonical save caller", () => {
   it("passes the full effective snapshot and reflects asynchronous save status", async () => {
     const model = flight();
-    const held = new GameModel(CONTENT, model.save());
+    const held = new GameModel(CONTENT, supportEntropy, model.save());
     expect(held.state.mode).toBe("home");
     const save = vi
       .fn()

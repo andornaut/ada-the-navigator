@@ -7,6 +7,7 @@ import { JOB_TUNING } from "../data/jobs.ts";
 import { questReward } from "../data/questRewards.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { stationJobsRows, type StationRow } from "../ui/station.ts";
 import { dropRandom, enemyStardust } from "./drops.ts";
 import { createEnemy } from "./enemyAi.ts";
@@ -45,7 +46,7 @@ function fixture(kind: "resources" | "salvage") {
 function approach(kind: "resources" | "salvage", seed: number) {
   const world = { worldSide: GALAXY_SIDE };
   const galaxy = kind === "resources" ? 1 : 5;
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   const progress = model.state.progress[galaxy];
   progress.geography = { seed, sitePolicy: "seeded", version: 1 };
   model.state.prologueSeen = true;
@@ -125,7 +126,7 @@ it("admits an optional Scan from fresh piloting and retains its exact map identi
   });
   const saved = model.saveDocument();
   expect(restoreSave(saved)?.progress[1].explorationSites).toEqual(progress.explorationSites);
-  const resumed = new GameModel(CONTENT, model.save());
+  const resumed = new GameModel(CONTENT, supportEntropy, model.save());
   resumed.continueGame();
   expect(resumed.state.flight?.exploration).toEqual(flight.exploration);
   expect(resumed.map!.places.find(({ id }) => id === candidate.id)).toEqual(
@@ -153,7 +154,7 @@ it("materializes the actual disabled frigate and salvages once through contextua
   const id = `${candidate.id}:salvage`;
   const wreck = stationPopulationObjects(flight).find((object) => object.id === id)!;
   expect(wreck.enemy).toMatchObject({ archetype: "frigate", disabled: true });
-  const resumed = new GameModel(CONTENT, model.save());
+  const resumed = new GameModel(CONTENT, supportEntropy, model.save());
   resumed.continueGame();
   const restored = resumed.state.flight!;
   expect(stationPopulationObjects(restored).find((object) => object.id === id)).toEqual(wreck);
@@ -185,7 +186,7 @@ function pilotAt(model: GameModel, flight: FlightState, point: Vec) {
 }
 
 it("credits fresh far travel at half rate and saves the earned region until a new far cell", () => {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.progress[1].geography = { seed: 13, sitePolicy: "seeded", version: 1 };
   model.startGalaxy(1);
   const flight = model.state.flight!;
@@ -203,7 +204,7 @@ it("credits fresh far travel at half rate and saves the earned region until a ne
   const pending = exploration.pacing.pending;
   expect(pending?.region).toBe("far");
   expect(model.state.progress[1].explorationSites).toBeUndefined();
-  const resumed = new GameModel(CONTENT, model.save());
+  const resumed = new GameModel(CONTENT, supportEntropy, model.save());
   resumed.continueGame();
   const restored = resumed.state.flight!;
   expect(restored.exploration?.pacing?.pending).toEqual(pending);
@@ -216,7 +217,7 @@ it("credits fresh far travel at half rate and saves the earned region until a ne
 it("posts an admitted near-route hunt on Scan, then accepts and pays through the issuer's board", () => {
   const world = { worldSide: GALAXY_SIDE };
   for (let seed = 1; seed <= 128; seed++) {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     const progress = model.state.progress[1];
     progress.geography = { seed, sitePolicy: "seeded", version: 1 };
     model.startGalaxy(1);
@@ -349,7 +350,7 @@ function admittedFarRescue() {
     if (!site) {
       continue;
     }
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     const progress = model.state.progress[1];
     progress.geography = { seed, sitePolicy: "seeded", version: 1 };
     model.startGalaxy(1);
@@ -375,7 +376,7 @@ function admittedFarRescue() {
     };
     pilotAt(model, flight, { x: approach.x - CONTENT.tuning.chunkSize, y: approach.y });
     expect(flight.exploration.pacing?.pending?.region).toBe("far");
-    const resumed = new GameModel(CONTENT, model.save());
+    const resumed = new GameModel(CONTENT, supportEntropy, model.save());
     resumed.continueGame();
     const restored = resumed.state.flight!;
     pilotAt(resumed, restored, approach);
@@ -436,7 +437,7 @@ it("posts a saved rescue at its admitted site after a heavy enters clearance ran
     radius: CONTENT.tuning.flight.shipRadius * definition.sizeRatio,
   };
   restored.objects.push(frigate);
-  const returned = new GameModel(CONTENT, resumed.save());
+  const returned = new GameModel(CONTENT, supportEntropy, resumed.save());
   returned.continueGame();
   const flight = returned.state.flight!;
   const heavy = flight.objects.find((object) => object.id === frigate.id)!;

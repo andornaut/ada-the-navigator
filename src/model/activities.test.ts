@@ -14,7 +14,7 @@ import { JOB_TUNING } from "../data/jobs.ts";
 import { questReward } from "../data/questRewards.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
-import { playOpening, relaunch } from "../testing/launch.ts";
+import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
 import {
   acceptActivity,
   activityOffer,
@@ -74,7 +74,7 @@ function takeContract(model: GameModel): void {
 }
 
 function atPlace(galaxy: GalaxyNumber, place: string, resolved = true) {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.unlocked = [1, 2, 3];
   if (galaxy === 1) {
     model.startGalaxy(galaxy);
@@ -415,13 +415,16 @@ describe("repeatable activities", () => {
   });
 
   it("fills the mining objective's goal placeholder from the contract requirement", () => {
-    const model = new GameModel({
-      ...CONTENT,
-      labels: {
-        ...CONTENT.labels,
-        contractObjective: "Deposit ore at the hub: {have} of {need}.",
+    const model = new GameModel(
+      {
+        ...CONTENT,
+        labels: {
+          ...CONTENT.labels,
+          contractObjective: "Deposit ore at the hub: {have} of {need}.",
+        },
       },
-    });
+      supportEntropy,
+    );
     model.state.selectedGalaxy = 2;
     model.state.tasks[2] = {
       deposited: 9,

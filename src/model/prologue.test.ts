@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { readStory } from "../testing/launch.ts";
+import { readStory, supportEntropy } from "../testing/launch.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import type { StoryPage } from "./storybook.ts";
@@ -16,7 +16,7 @@ const summary = ({ action, background, choices, questions, speaker, text }: Stor
 
 /** A first launch: Start, Grandma's garden and galaxy one's opening read with choice `choice`. */
 function started(choice = 0): GameModel {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   expect(model.screen).toBe("start");
   model.start();
   const garden = CONTENT.premise.gardenArrival.map(({ text }) => text);
@@ -43,7 +43,7 @@ const questions = ["What's a holodisk?", "Can Penny come?", "How do I get home?"
 
 describe("prologue", () => {
   it("frames chapter one's first-launch opening with Grandma's garden", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.start();
     const pages: StoryPage[] = [];
     while (model.storyView?.page.background === "grandmaGarden") {
@@ -266,7 +266,7 @@ describe("prologue", () => {
 
   it("Skip reaches galaxy selection from every Next page after explicit story choices", () => {
     for (let at = 0; at < 30; at++) {
-      const model = new GameModel(CONTENT);
+      const model = new GameModel(CONTENT, supportEntropy);
       model.start();
       for (let turn = 0; turn < at && model.screen === "story"; turn++) {
         if (model.storyView?.page.choices?.length) {
@@ -310,13 +310,16 @@ describe("prologue", () => {
 
 describe("prologue save flag", () => {
   it("round-trips", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.state.prologueSeen = true;
     expect(restoreSave(model.save())?.prologueSeen).toBe(true);
   });
 
   it("rejects a malformed flag", () => {
-    const state = JSON.parse(new GameModel(CONTENT).save()) as Record<string, unknown>;
+    const state = JSON.parse(new GameModel(CONTENT, supportEntropy).save()) as Record<
+      string,
+      unknown
+    >;
     state.prologueSeen = "yes";
     expect(restoreSave(state)).toBeNull();
   });

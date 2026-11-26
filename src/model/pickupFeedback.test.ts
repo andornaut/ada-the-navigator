@@ -3,13 +3,13 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY, worldAmmoPack } from "../data/economy.ts";
 import type { Weapon } from "../data/types.ts";
-import { relaunch } from "../testing/launch.ts";
+import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { GameModel } from "./game.ts";
 import { gainSnapshot, itemGains } from "./itemGains.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function pickup(upgrade = false) {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.startGalaxy(1);
   const flight = model.state.flight!;
   flight.ownedWeapons = ["multiLaser"];

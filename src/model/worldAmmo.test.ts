@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY, worldAmmoPack } from "../data/economy.ts";
-import { playOpening } from "../testing/launch.ts";
+import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { rollAmmoDrop, rollRockAmmoDrop } from "./drops.ts";
 import { createFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
@@ -29,7 +29,7 @@ const PACKS = [
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
 function launched() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.startGalaxy(1);
   playOpening(model);
   model.state.flight!.objects = [];

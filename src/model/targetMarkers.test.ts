@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { ensureDestination } from "./flight.ts";
 import { GameModel } from "./game.ts";
@@ -143,7 +144,7 @@ describe("unified authoritative target registry", () => {
 
 describe("production world object resolver", () => {
   it("prefers loaded state, preserves actual retained identity and distinguishes tombstones from absence", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.state.prologueSeen = true;
     model.startGalaxy(1);
     const flight = model.state.flight!;

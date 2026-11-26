@@ -7,7 +7,7 @@ import { LANDMARK_TUNING } from "../data/jobs.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { activateCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
-import { playOpening } from "../testing/launch.ts";
+import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { ensureDestination } from "./flight.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
@@ -31,7 +31,7 @@ import type { GameState } from "./types.ts";
 
 // A first flight in galaxy one with nothing discovered.
 function flying() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.startGalaxy(1);
   playOpening(model);
   return model;
@@ -369,7 +369,7 @@ describe("galaxy map", () => {
   });
 
   it("shows the known holodisk waypoint as a Holodisk chip without Travel until it is recovered", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.state.unlocked = [1, 2, 3];
     model.startGalaxy(3);
     const progress = model.state.progress[3];
@@ -457,7 +457,7 @@ describe("galaxy map", () => {
     expect(model.state.flight!.player).toEqual({ x: 0, y: 0 });
     expect(model.map?.explored).toContainEqual(centre);
     model.returnHome();
-    const reloaded = new GameModel(CONTENT, model.save());
+    const reloaded = new GameModel(CONTENT, supportEntropy, model.save());
     expect(reloaded.state.progress[1].explored).toContain(chunkId(size, far));
     reloaded.restart();
     expect(reloaded.screen).toBe("start");
@@ -485,7 +485,7 @@ describe("galaxy map", () => {
   });
 
   it("keeps a saved explored record and refuses an invalid one", () => {
-    const saved = JSON.parse(new GameModel(CONTENT).save()) as GameState;
+    const saved = JSON.parse(new GameModel(CONTENT, supportEntropy).save()) as GameState;
     saved.progress[2].explored = ["0,0", "1,-1"];
     expect(restoreSave(saved)?.progress[2].explored).toEqual(["0,0", "1,-1"]);
     for (const bad of [["0,0", "0,0"], ["200,0"], ["x"], {}]) {
@@ -531,7 +531,7 @@ describe("galaxy map", () => {
   });
 
   it("leaves Cartwheel's waiting miner and visitors off the Map, with the hub standing for them", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.state.unlocked = [1, 2];
     model.startGalaxy(2);
     model.state.dialogue = null;
@@ -573,7 +573,7 @@ describe("galaxy map", () => {
       expect(placeType({ symbol: DESTINATIONS[story]!.mapKind }), story).toBe("story");
     }
     // The Map's hub place reads its kind from that field.
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.state.unlocked = [1, 2];
     model.startGalaxy(2);
     model.state.dialogue = null;
@@ -625,7 +625,7 @@ function seeded(galaxy: GalaxyNumber) {
 }
 // A launch that knows the whole route, and galaxy three's waypoint, places them from the start.
 function launched(galaxy: GalaxyNumber) {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.unlocked = [1, 2, 3];
   model.startGalaxy(galaxy);
   const flight = model.state.flight!;

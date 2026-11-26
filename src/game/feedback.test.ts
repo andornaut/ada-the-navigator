@@ -11,7 +11,7 @@ import { createEnemy } from "../model/enemyAi.ts";
 import { wreckId } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { syncFlightRegion } from "../model/geography.ts";
-import { playOpening } from "../testing/launch.ts";
+import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { publicJson } from "../testing/publicArt.ts";
 import {
   type CameraShake,
@@ -26,7 +26,7 @@ import { shakeIntensity } from "./playCamera.ts";
 import { readSpacePalette } from "./spacePalette.ts";
 
 function launched() {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.startGalaxy(1);
   playOpening(model);
   const feedback = new ModelFeedback();

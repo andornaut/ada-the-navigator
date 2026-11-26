@@ -14,6 +14,7 @@ import {
   roomScene,
   type StoryPage,
 } from "../../model/storybook.ts";
+import { supportEntropy } from "../../testing/launchSeeds.ts";
 import { lineCount, measure } from "../../testing/textMetrics.ts";
 import { type ArtAsset, backgroundOverlays, storyBases } from "../storyArt.ts";
 import { STORY_BUTTON } from "./controls.ts";
@@ -333,7 +334,7 @@ describe("story background placement", () => {
   });
 
   it("anchors the first launch's run on its tallest page on each background", () => {
-    const model = new GameModel(CONTENT);
+    const model = new GameModel(CONTENT, supportEntropy);
     model.start();
     const run = model.storyView!.run.pages;
     const tops = (screen: Screen) => {

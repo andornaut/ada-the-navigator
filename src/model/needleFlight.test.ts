@@ -5,6 +5,7 @@ import { enemyCatalog, enemyDefinition, PHASER_AIM_SECONDS } from "../data/enemy
 import { BUILT, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { NEEDLE } from "../data/needle.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 import { placementRadius } from "./asteroids.ts";
 import { fromScreen } from "./convex.ts";
 import { createEnemy } from "./enemyAi.ts";
@@ -356,7 +357,7 @@ describe("mounted Needle flight physics", () => {
     const present = built.has(4);
     built.add(4);
     try {
-      const model = new GameModel(CONTENT);
+      const model = new GameModel(CONTENT, supportEntropy);
       Object.assign(model.state, {
         prologueSeen: true,
         started: true,

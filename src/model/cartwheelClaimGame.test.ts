@@ -34,7 +34,7 @@ function flyTo(model: GameModel, { x, y }: Vec): void {
 
 function beginClaim(): GameModel {
   const seeds = [173, 301];
-  const model = new GameModel(CONTENT, undefined, () => seeds.shift() ?? 503);
+  const model = new GameModel(CONTENT, () => seeds.shift() ?? 503);
   model.state.prologueSeen = true;
   model.state.unlocked = [1, 3, 4, 5, 2];
   model.state.progress[2].opened = true;
@@ -147,7 +147,7 @@ it.each(["defeated", "salvaged"] as const)(
     model.state.flight!.dangerFor = 0;
     model.returnHome();
     expect(model.state.progress[2].claim?.phase).toBe("away");
-    model = new GameModel(CONTENT, model.save(), () => 503);
+    model = new GameModel(CONTENT, () => 503, model.save());
     model.startGalaxy(2);
     expect(model.state.progress[2].claim).toEqual(claim);
     expect(capitalBossActor(model.state.flight!, id)).toEqual(beforeReturn);
@@ -266,7 +266,7 @@ it.each(["defeated", "salvaged"] as const)(
 
     flight.dangerFor = 0;
     model.returnHome();
-    model = new GameModel(CONTENT, model.save(), () => 907);
+    model = new GameModel(CONTENT, () => 907, model.save());
     model.startGalaxy(2);
     expect(capitalBossActor(model.state.flight!, id)).toBeUndefined();
     expect(model.state.progress[2].claim).toEqual({

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { playOpening } from "../testing/launch.ts";
+import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { rollEnemyDrop, rollSalvageDrop } from "./drops.ts";
 import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
@@ -17,7 +17,7 @@ const sites = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 }).sort(
 
 /** Sunflower's flight docked at its station nearest the origin, its two nearest discovered. */
 function docked(): GameModel {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   Object.assign(model.state, { prologueSeen: true, started: true });
   model.startGalaxy(1);
   playOpening(model);

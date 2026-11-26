@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { encounterTable, type EnemyArchetype, enemyDefinition } from "../data/enemyCatalog.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP, PHANTOM_TUNING as T } from "../data/phantom.ts";
-import { relaunch } from "../testing/launch.ts";
+import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createUnpopulatedFlight } from "./flight.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
@@ -54,7 +54,7 @@ function actor(
   };
 }
 function fixture(kind: PendingPhantomEncounter["kind"]) {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.state.selectedGalaxy = 6;
   model.state.unlocked = [1, 6];
   model.state.started = true;

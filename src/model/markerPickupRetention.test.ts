@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { playOpening } from "../testing/launch.ts";
+import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { stepFlight } from "./flight.ts";
 import { flightEncounterSeed } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
@@ -12,7 +12,7 @@ import type { SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function fixture() {
-  const game = new GameModel(CONTENT);
+  const game = new GameModel(CONTENT, supportEntropy);
   game.startGalaxy(1);
   playOpening(game);
   const flight = game.state.flight!;
@@ -44,7 +44,7 @@ it("retains a sensed discovery pickup through unload and Continue, then claims i
   expect(flight.world.notables[pickup.id]).toEqual(before);
   const document = game.saveDocument();
   expect(restoreSave(document)).toEqual(document);
-  const resumed = new GameModel(CONTENT, document);
+  const resumed = new GameModel(CONTENT, supportEntropy, document);
   resumed.continueGame();
   const continued = resumed.state.flight!;
   expect(continued).toEqual(flight);

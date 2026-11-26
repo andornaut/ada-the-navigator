@@ -4,6 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { GameModel, newGameState } from "../model/game.ts";
 import { restoreSave, SAVE_VERSION } from "../model/save.ts";
 import { createAdaSaves, SAVE_KEYS } from "../saving/index.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 
 function fixture(raw: string | null, version = "0.0.1") {
   const values = new Map<string, string>([
@@ -44,7 +45,7 @@ it.each([
   expect(await f.store.save(loaded.save)).toEqual({ status: "saved" });
 });
 it("retains actual required plans and complete flight clocks through valid Continue without repair", async () => {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.startGalaxy(1);
   const document = model.saveDocument(),
     raw = JSON.stringify(document),
@@ -60,7 +61,7 @@ it("retains actual required plans and complete flight clocks through valid Conti
   expect(invalid.values.get(SAVE_KEYS.backup)).toBe(JSON.stringify(document));
 });
 it("rotates the campaign generation once when replacing an older save format", async () => {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.startGalaxy(1);
   const played = model.saveDocument();
   const stamp = { generation: "previous-generation", revision: "previous-revision" };
@@ -195,7 +196,7 @@ it("retains an already-entered reset write result while keeping the crash write 
 });
 
 it("authorizes a real campaign read without repair and replaces only the exact authorized bytes", async () => {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.startGalaxy(1);
   const raw = model.save();
   const f = fixture(raw);
@@ -273,7 +274,7 @@ it("honors the existing write fence while an ordinary save is waiting for the sh
 });
 
 it("refuses a changed revision when participating saves return to the exact authorized game data", async () => {
-  const model = new GameModel(CONTENT);
+  const model = new GameModel(CONTENT, supportEntropy);
   model.startGalaxy(1);
   const original = model.saveDocument();
   const f = fixture(JSON.stringify(original));
