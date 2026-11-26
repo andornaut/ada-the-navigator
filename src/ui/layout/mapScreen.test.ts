@@ -33,6 +33,7 @@ import {
   mapImage,
   mapProjection,
   mapQuestsRect,
+  mapSurveyEllipse,
   type MapView,
   openingView,
   panelMaxWidth,
@@ -57,6 +58,27 @@ const regionsAt = (css: { height: number; width: number }, cssInsets = NO_INSETS
   return { field: { ...view, x: 0, y: 0 }, fit, inner: innerRegion(fit) };
 };
 const round = (value: number, digits: number) => Number(value.toFixed(digits));
+
+function surveyDistances(field: Rect, inner: Rect, view: MapView) {
+  const { rx, ry, x, y } = mapSurveyEllipse(inner, view);
+  const right = field.x + field.width;
+  const bottom = field.y + field.height;
+  const dx = Math.max(field.x - x, 0, x - right);
+  const dy = Math.max(field.y - y, 0, y - bottom);
+  return {
+    farthest: Math.hypot(
+      Math.max(x - field.x, right - x) / rx,
+      Math.max(y - field.y, bottom - y) / ry,
+    ),
+    nearest: Math.hypot(dx / rx, dy / ry),
+  };
+}
+
+function expectSurveyArc(field: Rect, inner: Rect, view: MapView) {
+  const { farthest, nearest } = surveyDistances(field, inner, view);
+  expect(nearest).toBeLessThan(1);
+  expect(farthest).toBeGreaterThan(1);
+}
 
 describe("map screen tokens", () => {
   it("are art/map.md's", () => {
@@ -423,9 +445,10 @@ describe("the square bound", () => {
   });
 
   it.each(Object.entries(directions))(
-    "stops a hard pan %s at the square at every zoom level",
+    "stops a hard pan %s at the survey oval or the square",
     (name, direction) => {
       for (const frame of [{ field, inner }, wide]) {
+        const { min } = scaleLimits(frame.inner, frame.field, SIDE);
         for (const scale of zoomLevels(frame)) {
           const start = { centre: { x: 0, y: 0 }, scale, worldSide: SIDE };
           const panned = panView(frame.inner, frame.field, hard(direction), start);
@@ -433,6 +456,13 @@ describe("the square bound", () => {
           expect(panned.scale).toBe(scale);
           // Panning on in the same direction moves it no further.
           const further = panView(frame.inner, frame.field, hard(direction), panned);
+          if (scale === min) {
+            expectInside(frame, further);
+            expectSurveyArc(frame.field, frame.inner, panned);
+            expectSurveyArc(frame.field, frame.inner, further);
+            expect(clampView(frame.inner, frame.field, panned)).toEqual(panned);
+            continue;
+          }
           expect(further.centre.x).toBeCloseTo(panned.centre.x, 3);
           expect(further.centre.y).toBeCloseTo(panned.centre.y, 3);
           const at = extent(frame, panned);
@@ -463,6 +493,22 @@ describe("the square bound", () => {
     },
   );
 
+  it("pulls back a diagonal view whose ellipse box overlaps but whose actual oval misses", () => {
+    const { min } = scaleLimits(inner, field, SIDE);
+    const start = { centre: { x: 0, y: 0 }, scale: min, worldSide: SIDE };
+    const { rx, ry, x, y } = mapSurveyEllipse(inner, start);
+    const requested = {
+      ...start,
+      centre: { x: (x + rx * 0.8) / min, y: (y + ry * 0.8) / min },
+    };
+    expect(surveyDistances(field, inner, requested).nearest).toBeCloseTo(Math.hypot(0.8, 0.8));
+    const view = clampView(inner, field, requested);
+    expectInside({ field, inner }, view);
+    expectSurveyArc(field, inner, view);
+    expect(surveyDistances(field, inner, view).nearest).toBeGreaterThan(0.98);
+    expect(clampView(inner, field, start)).toEqual(start);
+  });
+
   it("clamps recentre, keep clear and a direct clamp to the square", () => {
     const view = { centre: { x: 0, y: 0 }, scale: 0.02, worldSide: SIDE };
     const corner = { x: SIDE / 2 - 1, y: SIDE / 2 - 1 };
@@ -472,9 +518,20 @@ describe("the square bound", () => {
       { field, inner },
       clampView(inner, field, { ...view, centre: { x: 1e9, y: -1e9 } }),
     );
+    const { min } = scaleLimits(inner, field, SIDE);
+    const atMin = { ...view, scale: min };
+    for (const clamped of [
+      recentreView(inner, field, corner, atMin),
+      keepClear(fit, inner, field, 250, corner, atMin),
+      clampView(inner, field, { ...view, centre: { x: 1e9, y: -1e9 }, scale: 0 }),
+    ]) {
+      expect(clamped.scale).toBe(min);
+      expectInside({ field, inner }, clamped);
+      expectSurveyArc(field, inner, clamped);
+    }
   });
 
-  it("keeps Ada and every place reachable by panning, the square's corners included", () => {
+  it("keeps Ada and every place reachable at closer scales, the square's corners included", () => {
     const half = SIDE / 2 - 1;
     const points = [
       { x: 0, y: 0 },
@@ -487,7 +544,7 @@ describe("the square bound", () => {
       { x: 60_000, y: -110_000 },
     ];
     for (const frame of [{ field, inner }, wide]) {
-      for (const scale of zoomLevels(frame)) {
+      for (const scale of zoomLevels(frame).slice(1)) {
         for (const point of points) {
           const view = { centre: { x: 0, y: 0 }, scale, worldSide: SIDE };
           const centred = recentreView(frame.inner, frame.field, point, view);
@@ -521,6 +578,7 @@ describe("the square bound", () => {
         expectInside({ field, inner }, view);
       }
       expect(view.scale).toBeCloseTo(min, 9);
+      expectSurveyArc(field, inner, view);
       expect(zoomView(inner, field, 1 / MAP_SCREEN.zoomStep, anchor, view).refused).toBe(true);
     }
   });
@@ -535,6 +593,7 @@ describe("the square bound", () => {
       expectInside({ field, inner }, view);
     }
     expect(view.scale).toBeCloseTo(min, 9);
+    expectSurveyArc(field, inner, view);
   });
 
   it("caps zoom-out at the charting disc while the square is larger than the view", () => {
@@ -588,21 +647,18 @@ describe("the square bound", () => {
     ]);
   });
 
-  it("opens with Ada in view beside the seam and places across it at the far edge", () => {
+  it("opens at minScale with the oval in view and places on their canonical sides", () => {
     const player = { x: SIDE / 2 - 500, y: 0 };
     const across = { x: -SIDE / 2 + 500, y: 0 };
     const view = openingView(inner, field, SIDE, [across], player);
     expectInside({ field, inner }, view);
     const ada = toScreen(inner, view, player);
-    expect(ada.x).toBeGreaterThanOrEqual(inner.x - tolerance);
-    expect(ada.x).toBeLessThanOrEqual(inner.x + inner.width + tolerance);
-    expect(ada.y).toBeGreaterThanOrEqual(inner.y - tolerance);
-    expect(ada.y).toBeLessThanOrEqual(inner.y + inner.height + tolerance);
+    expectSurveyArc(field, inner, view);
     // The place draws at its canonical point, a square's width from Ada on the map.
     expect(toScreen(inner, view, across).x).toBeLessThan(ada.x);
   });
 
-  it("keeps Ada on screen after the opening fit beside every tip and seam", () => {
+  it("keeps the oval in the minScale opening fit and Ada on screen at closer openings", () => {
     const half = SIDE / 2;
     const steps = 24;
     const wrap = (point: Point) => mapImage({ worldSide: SIDE }, point);
@@ -645,7 +701,9 @@ describe("the square bound", () => {
             at.x <= frame.field.x + frame.field.width + tolerance &&
             at.y >= frame.field.y - tolerance &&
             at.y <= frame.field.y + frame.field.height + tolerance;
-          if (!shown) {
+          if (view.scale === min) {
+            expectSurveyArc(frame.field, frame.inner, view);
+          } else if (!shown) {
             failures.push(`${frame.field.width}x${frame.field.height} ${kind} ${ada.x},${ada.y}`);
           }
           const inInner =
@@ -662,7 +720,7 @@ describe("the square bound", () => {
       }
     }
     expect(failures).toEqual([]);
-    // Near a tip the clamp moves Ada out of the inner region, and she still shows.
+    // Near a tip the clamp can move Ada out of the inner region.
     expect(outsideInner).toBeGreaterThan(0);
   });
 });

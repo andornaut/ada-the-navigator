@@ -15,9 +15,11 @@ import {
   clampView,
   keepClear,
   MAP_SCREEN,
+  mapSurveyEllipse,
   type MapView,
   panView,
   recentreView,
+  scaleLimits,
   toScreen,
   zoomView,
 } from "./layout/mapScreen.ts";
@@ -689,6 +691,17 @@ function expectInSquare(view: MapView) {
   );
 }
 
+function expectSurveyAtMin(view: MapView) {
+  expect(view.scale).toBe(scaleLimits(FIELD, FIELD, SIDE).min);
+  const { rx, ry, x, y } = mapSurveyEllipse(FIELD, view);
+  expect(
+    Math.hypot(Math.max(-x, 0, x - FIELD.width) / rx, Math.max(-y, 0, y - FIELD.height) / ry),
+  ).toBeLessThan(1);
+  expect(
+    Math.hypot(Math.max(x, FIELD.width - x) / rx, Math.max(y, FIELD.height - y) / ry),
+  ).toBeGreaterThan(1);
+}
+
 /** The spatial fixture with the actual zoom, wheel, select, goTo and refit wired in. */
 function boundFixture() {
   const f = spatialFixture([
@@ -744,6 +757,18 @@ it.each(DIRECTIONS)("keeps a hard drag toward %j inside the square", (direction)
   expect(f.context.view.centre.y).toBeCloseTo(stopped.centre.y, 3);
 });
 
+it.each(DIRECTIONS)(
+  "keeps the survey oval on screen during a minScale drag toward %j",
+  (direction) => {
+    const f = boundFixture();
+    f.context.view.scale = scaleLimits(FIELD, FIELD, SIDE).min;
+    f.down({ clientX: 100, clientY: 100 });
+    f.send("pointermove", { clientX: 100 - direction.x * 1e7, clientY: 100 - direction.y * 1e7 });
+    expectInSquare(f.context.view);
+    expectSurveyAtMin(f.context.view);
+  },
+);
+
 it("keeps a two-pointer pinch out and pan inside the square", () => {
   const f = boundFixture();
   f.down({ clientX: 90, clientY: 100 });
@@ -757,6 +782,7 @@ it("keeps a two-pointer pinch out and pan inside the square", () => {
     expectInSquare(f.context.view);
   }
   expect(f.context.view.scale).toBeLessThan(0.1);
+  expectSurveyAtMin(f.context.view);
 });
 
 it.each([
@@ -779,6 +805,7 @@ it.each([
       f.send("wheel", { clientX: 10 + 30 * step, clientY: 190, ...wheel });
       expectInSquare(f.context.view);
     }
+    expectSurveyAtMin(f.context.view);
   }
 });
 
@@ -799,6 +826,7 @@ it("keeps the zoom tools inside the square near an edge and refuses at the cap",
     f.execute("zoom(1 / MAP_SCREEN.zoomStep, { x: 50, y: 50 }, {})");
     expectInSquare(f.context.view);
   }
+  expectSurveyAtMin(f.context.view);
   expect(f.context.refuse).toHaveBeenCalled();
   f.context.refuse.mockClear();
   f.execute("zoom(1 / MAP_SCREEN.zoomStep, { x: 50, y: 50 }, {})");
@@ -815,4 +843,8 @@ it("keeps recentre on a corner place, its selection and a refit inside the squar
   f.context.view = { centre: { x: 4e6, y: -4e6 }, scale: 1, worldSide: SIDE };
   f.execute("refit()");
   expectInSquare(f.context.view);
+  f.context.view = { centre: { x: 4e6, y: -4e6 }, scale: 0, worldSide: SIDE };
+  f.execute("refit()");
+  expectInSquare(f.context.view);
+  expectSurveyAtMin(f.context.view);
 });

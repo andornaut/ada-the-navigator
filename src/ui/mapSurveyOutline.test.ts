@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
 import { CHARTING_ORIGIN, CHARTING_RADIUS, withinChartingRadius } from "../model/map.ts";
-import { MAP_COLORS, type MapView, toScreen } from "./layout/mapScreen.ts";
+import { MAP_COLORS, type MapView, panView, scaleLimits, toScreen } from "./layout/mapScreen.ts";
 import { drawMapSurveyOutline } from "./mapSurveyOutline.ts";
 
 const INNER = { height: 240, width: 600, x: 30, y: 80 };
@@ -92,6 +92,35 @@ describe("central survey outline", () => {
     drawMapSurveyOutline(context as unknown as CanvasRenderingContext2D, INNER, view, 1);
     const at = toScreen(INNER, view, CHARTING_ORIGIN);
     expect(commands.find(({ name }) => name === "ellipse")?.args.slice(0, 2)).toEqual([at.x, at.y]);
+  });
+
+  it.each([
+    { x: 1e7, y: 0 },
+    { x: 0, y: -1e7 },
+    { x: 1e7, y: -1e7 },
+    { x: -1e7, y: 1e7 },
+  ])("draws a visible arc after a minScale drag of %j", (delta) => {
+    const { commands, context } = canvas();
+    const field = { ...context.canvas, x: 0, y: 0 };
+    const scale = scaleLimits(INNER, field, SIDE).min;
+    const view = panView(INNER, field, delta, { centre: { x: 0, y: 0 }, scale, worldSide: SIDE });
+    drawMapSurveyOutline(context as unknown as CanvasRenderingContext2D, INNER, view, 1);
+    const [x, y, rx, ry] = commands.find(({ name }) => name === "ellipse")!.args as [
+      number,
+      number,
+      number,
+      number,
+    ];
+    const closest = Math.hypot(
+      Math.max(0, -x, x - field.width) / rx,
+      Math.max(0, -y, y - field.height) / ry,
+    );
+    const farthest = Math.hypot(
+      Math.max(x, field.width - x) / rx,
+      Math.max(y, field.height - y) / ry,
+    );
+    expect(closest).toBeLessThan(1);
+    expect(farthest).toBeGreaterThan(1);
   });
 });
 

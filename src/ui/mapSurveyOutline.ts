@@ -1,7 +1,6 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
-import { CHARTING_ORIGIN, CHARTING_RADIUS } from "../model/map.ts";
-import { MAP_COLORS, type MapView, toScreen } from "./layout/mapScreen.ts";
+import { MAP_COLORS, mapSurveyEllipse, type MapView } from "./layout/mapScreen.ts";
 
 /** The progress outline uses the full canvas; the separate UI layers occlude only their own ink. */
 export function drawMapSurveyOutline(
@@ -10,8 +9,7 @@ export function drawMapSurveyOutline(
   view: MapView,
   px: number,
 ): void {
-  const at = toScreen(inner, view, CHARTING_ORIGIN);
-  const rx = CHARTING_RADIUS * Math.SQRT2 * view.scale * px;
+  const { rx, ry, x, y } = mapSurveyEllipse(inner, view);
   context.save();
   context.beginPath();
   context.rect(0, 0, context.canvas.width, context.canvas.height);
@@ -28,7 +26,7 @@ export function drawMapSurveyOutline(
     context.lineWidth = width * px;
     context.strokeStyle = colour;
     context.beginPath();
-    context.ellipse(at.x * px, at.y * px, rx, rx / 2, 0, 0, Math.PI * 2);
+    context.ellipse(x * px, y * px, rx * px, ry * px, 0, 0, Math.PI * 2);
     context.stroke();
   }
   context.restore();

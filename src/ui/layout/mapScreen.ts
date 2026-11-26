@@ -11,7 +11,7 @@ import {
   TEXT_BUTTON,
 } from "../../data/layout.ts";
 import { TASK_COLORS } from "../../data/taskCategories.ts";
-import { CHARTING_RADIUS } from "../../model/map.ts";
+import { CHARTING_ORIGIN, CHARTING_RADIUS } from "../../model/map.ts";
 import { wrapPoint } from "../../model/worldGeometry.ts";
 import { CARD_CLOSE } from "./cardFrame.ts";
 import { COLOURS, UNLISTED_COLOURS } from "./colours.ts";
@@ -304,6 +304,13 @@ export function toScreen(inner: Rect, view: MapView, world: Point): Point {
   };
 }
 
+/** The canonical survey oval in logical screen coordinates. */
+export function mapSurveyEllipse(inner: Rect, view: MapView) {
+  const centre = toScreen(inner, view, CHARTING_ORIGIN);
+  const rx = CHARTING_RADIUS * Math.SQRT2 * view.scale;
+  return { ...centre, rx, ry: rx / 2 };
+}
+
 /** A projected bounding box. */
 function bounds(points: readonly Point[]): Rect {
   const xs = points.map(({ x }) => x);
@@ -365,7 +372,7 @@ interface CentreRegion {
 /**
  * The centres a view may take at its scale: the view's edge stays inside the square's projected
  * extent, so it stops at each of the diamond's tips, and its centre stays inside the diamond, so
- * it stops at each seam. Every point of the square stays reachable by panning.
+ * it stops at each seam.
  */
 function centreRegion(inner: Rect, field: Rect, side: number, scale: number): CentreRegion {
   const middle = centreOf(inner);
@@ -417,18 +424,54 @@ function nearestInside({ box, seams: planes }: CentreRegion, point: Point): Poin
   return best;
 }
 
+/** Keep part of the oval past the field edge at maximum zoom-out. */
+function keepSurveyVisible(inner: Rect, field: Rect, region: CentreRegion, view: MapView): Point {
+  const { rx, ry, x, y } = mapSurveyEllipse(inner, view);
+  // Test the nearest point of a one-logical-pixel inset field in ellipse space. This requires
+  // real overlap at corners and leaves a margin against a tangent that paints no visible arc.
+  const inset = Math.min(1, field.width / 4, field.height / 4);
+  const overlaps = (centre: Point): boolean => {
+    const cx = x + (view.centre.x - centre.x) * view.scale;
+    const cy = y + (view.centre.y - centre.y) * view.scale;
+    const dx = clamp(field.x + inset, field.x + field.width - inset, cx) - cx;
+    const dy = clamp(field.y + inset, field.y + field.height - inset, cy) - cy;
+    return Math.hypot(dx / rx, dy / ry) < 1;
+  };
+  if (overlaps(view.centre)) {
+    return view.centre;
+  }
+  const middle = centreOf(field);
+  const aligned = nearestInside(region, {
+    x: view.centre.x + (x - middle.x) / view.scale,
+    y: view.centre.y + (y - middle.y) / view.scale,
+  });
+  // The segment stays in the convex square bounds. Bisect it to retain the furthest admissible
+  // centre along the requested pan, testing the actual ellipse at each step.
+  let inside = aligned;
+  let outside = view.centre;
+  for (let step = 0; step < 32; step++) {
+    const next = { x: (inside.x + outside.x) / 2, y: (inside.y + outside.y) / 2 };
+    if (overlaps(next)) {
+      inside = next;
+    } else {
+      outside = next;
+    }
+  }
+  return inside;
+}
+
 /**
  * A view with its scale clamped to the zoom range and its centre to the least pan that keeps it
- * inside the square (centreRegion). `field` is the screen rect the map draws on.
+ * inside the square (centreRegion). At minScale the survey oval also stays partly in the field.
  */
 export function clampView(inner: MapRegion, field: Rect, view: MapView): MapView {
   const { max, min } = scaleLimits(inner, field, view.worldSide);
   const scale = clamp(min, max, view.scale);
-  return {
-    ...view,
-    centre: nearestInside(centreRegion(inner, field, view.worldSide, scale), view.centre),
-    scale,
-  };
+  const region = centreRegion(inner, field, view.worldSide, scale);
+  const clamped = { ...view, centre: nearestInside(region, view.centre), scale };
+  return scale === min
+    ? { ...clamped, centre: keepSurveyVisible(inner, field, region, clamped) }
+    : clamped;
 }
 
 /** Pans the least distance that brings a screen point inside a rect. */
@@ -446,7 +489,7 @@ function panInside(rect: Rect, point: Point, view: MapView): MapView {
  * The opening fit: the bounding box of Ada and every place at their positions in the square,
  * grown about its centre to at least minBox, at the scale that fits it, clamped to the zoom range,
  * its centre at the inner centre. When minScale clamps it (a discovered station far outside the
- * disc), pan the least distance that brings Ada inside the inner region; then clamp to the square.
+ * disc), pan to bring Ada inside the inner region where the square and survey bounds allow it.
  */
 export function openingView(
   inner: MapRegion,
