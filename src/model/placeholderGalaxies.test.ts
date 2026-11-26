@@ -136,6 +136,11 @@ describe("placeholder galaxies under an explicit incomplete-roster fixture", () 
     expect(model.objective).toBe("");
     for (let step = 0; step < 200; step++) {
       model.step(0.05, { ...idle, move: { x: 1, y: 0 } });
+      if (step === 0) {
+        // Rocks and enemies play no part in the story state, and stepping them dominates the cost.
+        const flight = model.state.flight!;
+        flight.objects = flight.objects.filter(({ kind }) => kind !== "enemy" && kind !== "rock");
+      }
     }
     expect(model.state.progress[galaxy]).toMatchObject({ holodisk: false, known: [], stage: 0 });
     expect(model.state.flight!.objects.some(({ kind }) => kind === "destination")).toBe(false);

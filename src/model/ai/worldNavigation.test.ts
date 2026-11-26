@@ -1,8 +1,10 @@
+import { isDeepStrictEqual } from "node:util";
+
 import { expect, it } from "vitest";
 
 import { enemyCatalog } from "../../data/enemyCatalog.ts";
 import { ASTEROID_SHAPES, scenerySilhouette } from "../asteroids.ts";
-import { outlinesContact } from "../convex.ts";
+import { type Contact, outlinesContact, type Parts } from "../convex.ts";
 import { createEnemy } from "../enemyAi.ts";
 import { enemyHull } from "../enemyBody.ts";
 import type { SpaceObject } from "../types.ts";
@@ -28,6 +30,11 @@ it("matches authored hull contacts across wrapped positions, headings, frames an
     { x: 980, y: 0 },
   );
   let metadataReads = 0;
+  const drawn = scenerySilhouette(rock)!;
+  // The authored contact depends on the frame only through its outline, so frames that share an
+  // outline share each pose's oracle result.
+  const oracles = new Map<Parts, Map<string, Contact | null>>();
+  const mismatches: unknown[] = [];
   for (const frame of [0, 1, 7]) {
     const context = {
       drawnOf: () => {
@@ -46,22 +53,36 @@ it("matches authored hull contacts across wrapped positions, headings, frames an
         for (const y of [-80, 0, 35, 120]) {
           const pose = { facing, position: { x, y }, time: 0 };
           for (const clearance of [0, 40, 80]) {
-            const drawn = scenerySilhouette(rock)!;
-            const hit = outlinesContact(
-              drawn.frames[frame % drawn.frames.length]!,
-              worldPoint(context, pose.position, rock),
-              enemyHull({ archetype: "frigate", facing })!,
-              pose.position,
-              clearance,
-            );
-            expect(query.clear(pose, clearance)).toBe(hit === null);
-            expect(query.escape(pose, clearance)).toEqual(hit?.normal ?? null);
+            const outline = drawn.frames[frame % drawn.frames.length]!;
+            const results = oracles.get(outline) ?? new Map<string, Contact | null>();
+            oracles.set(outline, results);
+            const key = `${heading}:${x}:${y}:${clearance}`;
+            if (!results.has(key)) {
+              results.set(
+                key,
+                outlinesContact(
+                  outline,
+                  worldPoint(context, pose.position, rock),
+                  enemyHull({ archetype: "frigate", facing })!,
+                  pose.position,
+                  clearance,
+                ),
+              );
+            }
+            const hit = results.get(key) ?? null;
+            const clear = query.clear(pose, clearance);
+            const escape = query.escape(pose, clearance);
+            const normal = hit?.normal ?? null;
+            if (clear !== (hit === null) || !isDeepStrictEqual(escape, normal)) {
+              mismatches.push({ clear, clearance, escape, frame, heading, normal, x, y });
+            }
           }
         }
       }
     }
     expect(metadataReads).toBe(preparedReads);
   }
+  expect(mismatches).toEqual([]);
 });
 
 it("tests a moving rock where its velocity puts it at each pose's time", () => {

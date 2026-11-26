@@ -118,6 +118,7 @@ describe("mounted Needle flight physics", () => {
 
   it("keeps every planned rock's footprint outside every active channel", () => {
     let rocks = 0;
+    const inside: string[] = [];
     // Far from the launch, so the chunks along the courses generate after the courses exist.
     const anchor = { x: 40 * CONTENT.tuning.chunkSize, y: 0 };
     for (const seed of [1, 2, 3, 4, 42, 417, 486273566]) {
@@ -126,21 +127,22 @@ describe("mounted Needle flight physics", () => {
       for (const gate of [...practice.gates, ...eye.gates]) {
         flight.player = { ...gate.point };
         stepFlight(CONTENT, 0.001, idle, flight);
+        // Enemies play no part in rock planning, and stepping them dominates the cost.
+        flight.objects = flight.objects.filter(({ kind }) => kind !== "enemy");
       }
+      const courses = activeNeedleCourses(flight);
       for (const object of flight.objects) {
         if (object.kind !== "rock" || !/^rock(-feature)?:/.test(object.id)) {
           continue;
         }
         rocks++;
         const radius = placementRadius(object) + (object.orbit?.radius ?? 0);
-        expect(
-          activeNeedleCourses(flight).some((course) =>
-            inNeedleChannel({ radius }, course, object.orbit ?? object),
-          ),
-          `${seed}:${object.id}`,
-        ).toBe(false);
+        if (courses.some((course) => inNeedleChannel({ radius }, course, object.orbit ?? object))) {
+          inside.push(`${seed}:${object.id}`);
+        }
       }
     }
+    expect(inside).toEqual([]);
     expect(rocks).toBeGreaterThan(0);
   });
 
