@@ -6,7 +6,7 @@ import { Scale, type Scene, Scenes } from "phaser";
 import PROJECTS_FILE from "../../public/art/projects.json" with { type: "json" };
 import { CHEAT_COPY } from "../data/cheatCopy.ts";
 import { CONTENT } from "../data/content.ts";
-import { noticeDuration } from "../data/conversations.ts";
+import { lineDuration } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { BUILT, ROUTE } from "../data/galaxies.ts";
@@ -605,6 +605,9 @@ export function buildScene(scene: UiContext): void {
     },
     onPauseChange: (paused) => {
       scene.settingsOpen = paused;
+      if (paused) {
+        pauseNetworkPlayClock(scene);
+      }
       armBack(scene);
       flushScene(scene);
     },
@@ -1148,6 +1151,7 @@ export function buildScene(scene: UiContext): void {
     if (scan) {
       scan.time = undefined;
     }
+    pauseNetworkPlayClock(scene);
     scene.controls.reset();
     flushScene(scene);
   };
@@ -1247,14 +1251,20 @@ const networkPlays = new WeakMap<
   { reason: NetworkPlayNotice["reason"]; remaining?: number; shownAt?: number | undefined }
 >();
 
+function pauseNetworkPlayClock(scene: object): void {
+  const notice = networkPlays.get(scene);
+  if (notice) {
+    notice.shownAt = undefined;
+  }
+}
+
 /**
- * Whether the network-play notice wants the save status slot: once per launch from the first
- * flight while the game plays from the network, timed only while it
- * shows (slotFree: no line or game notice holds the slot). It shows with no control.
+ * Whether the network-play notice wants the save status slot. Once per launch from the first
+ * flight, the notice uses the line's full reading time, running only between visible samples.
  */
 export function showNetworkPlay(
   scene: Pick<UiContext, "model" | "shell" | "time">,
-  slotFree: boolean,
+  visible: boolean,
 ): boolean {
   const notice = networkPlays.get(scene);
   if (!notice) {
@@ -1262,15 +1272,17 @@ export function showNetworkPlay(
   }
   const { flight, mode } = scene.model.state;
   const now = scene.time.now;
-  if (notice.remaining === undefined && mode === "space" && flight) {
+  const inFlight = mode === "space" && Boolean(flight);
+  if (notice.remaining === undefined && inFlight) {
     const label = notice.reason === "quota" ? "networkPlayQuota" : "networkPlayUnsupported";
-    notice.remaining = noticeDuration(CONTENT.labels[label] ?? "") * 1000;
+    notice.remaining = lineDuration(CONTENT.labels[label] ?? "") * 1000;
   }
-  if (notice.shownAt !== undefined && notice.remaining !== undefined) {
-    notice.remaining -= now - notice.shownAt;
+  const reading = visible && inFlight;
+  if (reading && notice.shownAt !== undefined && notice.remaining !== undefined) {
+    notice.remaining -= Math.max(0, now - notice.shownAt);
   }
   const wanted = notice.remaining !== undefined && notice.remaining > 0;
-  notice.shownAt = wanted && slotFree ? now : undefined;
+  notice.shownAt = wanted && reading ? now : undefined;
   scene.shell.setNetworkPlay(wanted ? notice.reason : undefined);
   return wanted;
 }
@@ -1299,7 +1311,15 @@ export function renderConversation(scene: UiContext): void {
   // UI covers retain the scene box beneath their scrim; actual interaction replaces it.
   const showsLine = line !== null && !sceneCovered;
   const showsNotice = notice !== "" && !sceneCovered;
-  const networkPlay = showNetworkPlay(scene, !showsLine && !showsNotice);
+  const networkPlay = showNetworkPlay(
+    scene,
+    !showsLine &&
+      !showsNotice &&
+      !covered &&
+      !scene.jumping &&
+      !document.hidden &&
+      scene.model.screen === "space",
+  );
   const occupant = boxOccupant({
     line: showsLine,
     notice: showsNotice,

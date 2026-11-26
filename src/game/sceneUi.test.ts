@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CHEAT_COPY } from "../data/cheatCopy.ts";
 import { CONTENT } from "../data/content.ts";
+import { lineDuration } from "../data/conversations.ts";
 import { ECONOMY, worldAmmoPack } from "../data/economy.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { STATUS_PILL_LAYOUT } from "../data/layout.ts";
@@ -207,7 +208,7 @@ describe("conversation exposure under covering cards", () => {
     };
     const markers = vi.spyOn(model, "targetMarkers").mockReturnValue([marker]);
     const place = vi.fn();
-    const read = vi.fn(() => line);
+    const read = vi.fn((): typeof line | null => line);
     Object.defineProperty(model, "conversation", { get: read });
     const returning = { text: "Return" };
     const render = vi.fn();
@@ -216,6 +217,7 @@ describe("conversation exposure under covering cards", () => {
       controls: { layout: () => ({ insets: NO_INSETS, view: SCREEN }) },
       conversationBox: { render },
       emergencyReturn: { line: emergency ? returning : null },
+      jumping: false,
       light: false,
       litCaches: new Set<string>(),
       model,
@@ -227,6 +229,8 @@ describe("conversation exposure under covering cards", () => {
     const pennyLayers = new WeakMap([[scene, { place }]]);
     const hud = { height: 30, width: 100, x: 0, y: 0 };
     const footprints = vi.fn(() => [hud]);
+    const document = { getElementById: () => null, hidden: false };
+    const networkPlay = vi.fn(() => false);
     const context = createContext({
       BOX_OCCUPANT,
       VIEW_HOST_ID,
@@ -234,12 +238,12 @@ describe("conversation exposure under covering cards", () => {
       coarsePointer: () => false,
       coveredScenePaint: new WeakMap(),
       createCoveredPaint,
-      document: { getElementById: () => null },
+      document,
       markerFootprints: footprints,
       pennyLayers,
       safeGameArea,
       scanViews: new WeakMap(),
-      showNetworkPlay: () => false,
+      showNetworkPlay: networkPlay,
       window: {},
     });
     const update = runInContext(callback("renderConversation"), context) as (
@@ -247,12 +251,14 @@ describe("conversation exposure under covering cards", () => {
     ) => void;
     return {
       acknowledge,
+      document,
       footprints,
       hud,
       line,
       marker,
       markers,
       model,
+      networkPlay,
       place,
       read,
       render,
@@ -288,6 +294,30 @@ describe("conversation exposure under covering cards", () => {
       expect(ui.scene.boxOccupant).toBe("line");
     },
   );
+
+  it("counts network-play only when the flight's slot can be read", () => {
+    const ui = covered("settings", false);
+    ui.read.mockReturnValue(null);
+    const reading = (visible: boolean) => {
+      ui.update();
+      expect(ui.networkPlay).toHaveBeenLastCalledWith(ui.scene, visible);
+    };
+    reading(false);
+    ui.scene.settingsOpen = false;
+    reading(true);
+    ui.model.state.notice = "A flight notice";
+    reading(false);
+    ui.model.state.notice = "";
+    ui.read.mockReturnValueOnce(ui.line);
+    reading(false);
+    ui.document.hidden = true;
+    reading(false);
+    ui.document.hidden = false;
+    ui.scene.jumping = true;
+    reading(false);
+    ui.scene.jumping = false;
+    reading(true);
+  });
 
   it("measures the HUD footprints only for markers to place", () => {
     const ui = covered("docked", false);
@@ -334,41 +364,56 @@ describe("conversation exposure under covering cards", () => {
 });
 
 describe("network-play notice", () => {
-  it("shows once per launch for the notice duration from the first flight, timed only while shown", () => {
+  it.each([
+    ["quota", CONTENT.labels.networkPlayQuota!],
+    ["unsupported", CONTENT.labels.networkPlayUnsupported!],
+  ] as const)("gives %s one line's visible reading time per launch", (reason, text) => {
     const networkPlays = new WeakMap<object, { reason: string; remaining?: number }>();
-    const show = runInContext(
-      callback("showNetworkPlay"),
-      createContext({
-        CONTENT,
-        networkPlays,
-        noticeDuration: (text: string) => 5 + text.length * 0.05,
-      }),
-    ) as (value: typeof scene, slotFree: boolean) => boolean;
+    const context = createContext({ CONTENT, lineDuration, networkPlays });
+    const show = runInContext(callback("showNetworkPlay"), context) as (
+      value: typeof scene,
+      visible: boolean,
+    ) => boolean;
+    const pause = runInContext(callback("pauseNetworkPlayClock"), context) as (
+      value: typeof scene,
+    ) => void;
     const scene = {
       model: { state: { flight: null as object | null, mode: "home" } },
       shell: { setNetworkPlay: vi.fn() },
       time: { now: 1000 },
     };
+    const duration = lineDuration(text) * 1000;
     expect(show(scene, true)).toBe(false);
     expect(scene.shell.setNetworkPlay).not.toHaveBeenCalled();
-    networkPlays.set(scene, { reason: "quota" });
-    // Not before the first flight.
+    networkPlays.set(scene, { reason });
     expect(show(scene, true)).toBe(false);
     expect(scene.shell.setNetworkPlay).toHaveBeenLastCalledWith(undefined);
     scene.model.state = { flight: {}, mode: "space" };
-    const duration = (5 + CONTENT.labels.networkPlayQuota!.length * 0.05) * 1000;
-    // A game notice holds the slot first: its time does not run meanwhile.
     expect(show(scene, false)).toBe(true);
-    scene.time.now += 4000;
+    scene.time.now += 4 * duration;
     expect(show(scene, false)).toBe(true);
-    expect(scene.shell.setNetworkPlay).toHaveBeenLastCalledWith("quota");
+    expect(scene.shell.setNetworkPlay).toHaveBeenLastCalledWith(reason);
+
     expect(show(scene, true)).toBe(true);
-    scene.time.now += duration - 1;
+    scene.time.now += 1000;
     expect(show(scene, true)).toBe(true);
-    scene.time.now += 1;
+    // The first frame under a cover can follow a long gap in scene updates.
+    scene.time.now += 4 * duration;
+    expect(show(scene, false)).toBe(true);
+    scene.time.now += 4 * duration;
+    expect(show(scene, true)).toBe(true);
+    scene.time.now += 1000;
+    expect(show(scene, true)).toBe(true);
+    // Page visibility can change and return without a covered frame being sampled.
+    pause(scene);
+    scene.time.now += 4 * duration;
+    expect(show(scene, true)).toBe(true);
+    scene.time.now += duration - 2001;
+    expect(show(scene, true)).toBe(true);
+    scene.time.now += 2;
     expect(show(scene, true)).toBe(false);
     expect(scene.shell.setNetworkPlay).toHaveBeenLastCalledWith(undefined);
-    // A later flight in the same launch does not show it again.
+
     scene.model.state = { flight: null, mode: "home" };
     show(scene, true);
     scene.model.state = { flight: {}, mode: "space" };
