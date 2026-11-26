@@ -4,8 +4,10 @@ import { MAX_RENDER_SCALE } from "@andornaut/game-kit/runtime/view/renderScale";
 import { BlendModes, Geom, TintModes } from "phaser";
 
 import {
+  BACKDROP_DEPTH,
   type BackdropRock,
   backdropRock,
+  backdropRockDepth,
   type BackdropRockRule,
   type BackdropRules,
   backdropTint,
@@ -31,7 +33,6 @@ import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { FlightState } from "../model/types.ts";
 import { storyBackdropRect } from "../ui/layout/storyPage.ts";
-import { BACKDROP_DEPTH, backdropRockDepth } from "./drawOrder.ts";
 import { canvasSize, sceneFit } from "./playCamera.ts";
 import type { GameScene } from "./scene.ts";
 import { bakeScale, bakeTexture, rockTexture } from "./sceneAssets.ts";

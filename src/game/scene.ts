@@ -3,19 +3,49 @@ import type { StoreLoadResult } from "@andornaut/game-kit/runtime/save/saveStore
 import { GameObjects, Loader, Scene, Scenes } from "phaser";
 
 import {
+  ADA_LAYERS,
+  ADA_MISSILES,
+  adaDepth,
   type BackdropHaze,
   type BackdropRules,
   backdropTint,
+  beam,
   type BlinkArt,
+  boxWith,
   type CacheArt,
+  clipBehind,
   type DebrisArt,
+  type DrawnBox,
+  drawnBox,
+  effectBox,
+  type EffectShape,
+  enemyBolt,
+  enemyFan,
+  enemyMissileFlame,
+  enemyPellet,
+  type EnemyWeaponsArt,
+  fanVolley,
   type GalaxyBackdrop,
   type GalaxyStationArt,
+  heldFade,
   hexNumber,
+  impactEffect,
   type JobArt,
+  laserBolt,
   type LoopArt,
+  missileFlame,
+  missileFrame,
+  missileKind,
+  missileSolid,
+  overlaps,
+  type PassableDraw,
+  pellet,
+  type Placed,
   playDepth,
   type ProjectArtSet,
+  screenAngle,
+  selectPaintedShipAsset,
+  skipShipPreload,
   SPECK_RADIUS,
   speckField,
   spriteOwner,
@@ -23,6 +53,7 @@ import {
   type StardustArt,
   type StationArt,
   type StreakSpec,
+  type WeaponSolids,
   type WhaleArt,
   type WhirlpoolProjects,
 } from "../art/index.ts";
@@ -80,17 +111,6 @@ import {
   readShards,
   type ShardData,
 } from "./destructionArt.ts";
-import {
-  ADA_LAYERS,
-  adaDepth,
-  boxWith,
-  type DrawnBox,
-  drawnBox,
-  effectBox,
-  overlaps,
-  type PassableDraw,
-  type Placed,
-} from "./drawOrder.ts";
 import { EmergencyReturn, returnedOnDepletion } from "./emergencyReturn.ts";
 import {
   type EnemyArt,
@@ -100,13 +120,6 @@ import {
   readSidecars,
   type Sidecars,
 } from "./enemyArt.ts";
-import {
-  enemyBolt,
-  enemyFan,
-  enemyMissileFlame,
-  enemyPellet,
-  type EnemyWeaponsArt,
-} from "./enemyWeaponsArt.ts";
 import {
   FeedbackSound,
   HIT_FLASH_FILL,
@@ -171,7 +184,6 @@ import {
 } from "./sceneUi.ts";
 import { drawCurrents, drawJobs, drawStoryShips, drawWhirlpoolProjects } from "./sceneWorld.ts";
 import { StoryShell } from "./shell.ts";
-import { selectPaintedShipAsset, skipShipPreload } from "./shipArt.ts";
 import {
   type EngineJets,
   jetOccluderRegions,
@@ -189,23 +201,6 @@ import { fileFilter } from "./textures.ts";
 import { preloadTouchChrome } from "./touchChrome.ts";
 import type { StrandedCraftArt, TowLine } from "./towArt.ts";
 import type { UpgradePickupArt } from "./upgradePickup.ts";
-import {
-  ADA_MISSILES,
-  beam,
-  clipBehind,
-  type EffectShape,
-  fanVolley,
-  heldFade,
-  impactEffect,
-  laserBolt,
-  missileFlame,
-  missileFrame,
-  missileKind,
-  missileSolid,
-  pellet,
-  screenAngle,
-  type WeaponSolids,
-} from "./weaponEffects.ts";
 
 export class GameScene extends Scene {
   // Read from the save once the launch's update check lets the first screen show (build).

@@ -9,6 +9,7 @@ import {
   type DebrisArt,
   decorationRasterSize,
   paintBand,
+  paintFrames,
   PHANTOM_ALLIES_ART,
   type Raster,
   readBackdropBand,
@@ -73,7 +74,6 @@ import { readQuantumJump } from "./quantumJump.ts";
 import type { GameScene } from "./scene.ts";
 import type { Asset } from "./sceneShared.ts";
 import { readShardPalettePack } from "./shardPalettePack.ts";
-import { paintFrames } from "./shipArt.ts";
 import { readShipJets } from "./shipJets.ts";
 import {
   readShipMaterialPalettes,

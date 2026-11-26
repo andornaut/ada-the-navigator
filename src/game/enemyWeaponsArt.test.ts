@@ -18,13 +18,13 @@ import {
   readEnemyWeaponsArt,
   ringDart,
   ringEmission,
-} from "./enemyWeaponsArt.ts";
+} from "../art/enemyWeaponsArt.ts";
 import {
   type EffectShape,
   IMPACT_STYLE,
   type LineShape,
   type PolygonShape,
-} from "./weaponEffects.ts";
+} from "../art/weaponEffects.ts";
 
 const art = readEnemyWeaponsArt(file)!;
 const CORAL = 0xd68b72;

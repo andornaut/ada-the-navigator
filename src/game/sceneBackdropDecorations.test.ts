@@ -4,7 +4,7 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
-import { BACKDROP_DEPTH } from "./drawOrder.ts";
+import { BACKDROP_DEPTH } from "../art/drawOrder.ts";
 const source = ts.createSourceFile(
   "sceneBackdrop.ts",
   readFileSync(new URL("./sceneBackdrop.ts", import.meta.url), "utf8"),

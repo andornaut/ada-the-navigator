@@ -2,11 +2,11 @@
 // Functions over the scene's HudContext.
 import { GameObjects, Math as PhaserMath, ScaleModes, type Scene, Scenes, Textures } from "phaser";
 
+import { type EffectShape, USE_CALLOUT_DEPTH } from "../art/index.ts";
 import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { FlightState, Vec } from "../model/types.ts";
 import { USE_CALLOUT_FADE_MS, useCalloutAlpha, useCalloutLift } from "../ui/touchChrome.ts";
-import { USE_CALLOUT_DEPTH } from "./drawOrder.ts";
 import type { FeedbackPulse } from "./feedback.ts";
 import {
   alphaTopRow,
@@ -22,7 +22,6 @@ import type { GameScene } from "./scene.ts";
 import { filterTexture } from "./sceneAssets.ts";
 import type { JetTriangle } from "./shipJets.ts";
 import { createUseCallout } from "./touchChrome.ts";
-import type { EffectShape } from "./weaponEffects.ts";
 
 /** The scene state and methods this module's functions use. */
 export type HudContext = Partial<Pick<GameScene, "fieldLight">> &

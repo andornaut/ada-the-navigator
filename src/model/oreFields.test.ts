@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import { describe, expect, it } from "vitest";
 
+import { shipDirection } from "../art/shipArt.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
@@ -9,7 +10,6 @@ import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { ORE_FIELD_LAYOUTS, oreFieldLayout } from "../data/oreFieldLayouts.ts";
-import { shipDirection } from "../game/shipArt.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./enemyAi.ts";
 import { createFlight, PLATFORM_FACING, stepFlight } from "./flight.ts";

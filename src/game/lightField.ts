@@ -1,9 +1,9 @@
 import GALAXIES_FILE from "../../public/art/galaxies.json" with { type: "json" };
+import type { EffectShape } from "../art/weaponEffects.ts";
 import { byGalaxy } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { Vec } from "../model/types.ts";
 import { type JetLayer, readJetLayers, readLevelLayers } from "./shipJets.ts";
-import type { EffectShape } from "./weaponEffects.ts";
 
 // Art's light-field rule (art/galaxies.md "Light fields"): in every galaxy, light field or
 // Phantom's dark one, play objects sit in ink keylines, effects draw over ink edges and the

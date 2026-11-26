@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import manifest from "../../public/art/manifest.json";
-import { SHIP_HEADINGS } from "../model/nose.ts";
-import { ENEMY_HEADINGS } from "./enemyArt.ts";
 import {
   hasShipHeadings,
   paintFrames,
@@ -11,7 +9,9 @@ import {
   type ShipAsset,
   shipDirection,
   skipShipPreload,
-} from "./shipArt.ts";
+} from "../art/shipArt.ts";
+import { SHIP_HEADINGS } from "../model/nose.ts";
+import { ENEMY_HEADINGS } from "./enemyArt.ts";
 
 const asset = (id: string, directionIndex: number): ShipAsset => ({
   directionIndex,

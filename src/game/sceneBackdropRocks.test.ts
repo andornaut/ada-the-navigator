@@ -6,10 +6,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { backdropRock, backdropTint, hexNumber } from "../art/asteroidArt.ts";
 import { readBackdropRules } from "../art/backdropLayers.ts";
+import { BACKDROP_DEPTH, backdropRockDepth } from "../art/drawOrder.ts";
 import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import { SCREEN } from "../data/screen.ts";
 import { CORE_MANIFEST, publicJson } from "../testing/publicArt.ts";
-import { BACKDROP_DEPTH, backdropRockDepth } from "./drawOrder.ts";
 
 // drawBackdrop and its helpers run from the production source without Phaser.
 const source = ts.createSourceFile(

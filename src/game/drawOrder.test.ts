@@ -3,8 +3,6 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { playDepth } from "../art/asteroidArt.ts";
-import { SCREEN } from "../data/screen.ts";
-import { nosePoint, shipSilhouette } from "../model/nose.ts";
 import {
   ADA_LAYERS,
   adaDepth,
@@ -14,14 +12,16 @@ import {
   effectBox,
   overlaps,
   type Placed,
-} from "./drawOrder.ts";
+} from "../art/drawOrder.ts";
 import {
   clipBehind,
   type EffectShape,
   laserBolt,
   missileFlame,
   screenAngle,
-} from "./weaponEffects.ts";
+} from "../art/weaponEffects.ts";
+import { SCREEN } from "../data/screen.ts";
+import { nosePoint, shipSilhouette } from "../model/nose.ts";
 
 interface Frame {
   readonly displayHeight: number;

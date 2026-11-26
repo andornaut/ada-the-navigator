@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import file from "../../public/art/enemy-weapons.json";
-import { enemyPhaser, lance, mine, MINE_POP_MS, readEnemyWeaponsArt } from "./enemyWeaponsArt.ts";
+import {
+  enemyPhaser,
+  lance,
+  mine,
+  MINE_POP_MS,
+  readEnemyWeaponsArt,
+} from "../art/enemyWeaponsArt.ts";
 
 const art = readEnemyWeaponsArt(file)!;
 

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { CORE_MANIFEST } from "../testing/publicArt.ts";
 import {
   beam,
   BEAM_MISS_FADE,
@@ -28,7 +27,8 @@ import {
   screenAngle,
   spark,
   SPARK_MS,
-} from "./weaponEffects.ts";
+} from "../art/weaponEffects.ts";
+import { CORE_MANIFEST } from "../testing/publicArt.ts";
 
 // World directions of headings 14 (screen right), 2 (down) and 13 (between).
 const heading = (index: number) => ({

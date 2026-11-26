@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import file from "../../public/art/enemy-weapons.json";
+import { readEnemyWeaponsArt } from "../art/enemyWeaponsArt.ts";
+import { EFFECT_COLOURS, IMPACT_STYLE, impactEffect, SPARK_MS } from "../art/weaponEffects.ts";
 import { impactFamily, type WeaponImpact } from "../model/weaponImpacts.ts";
-import { readEnemyWeaponsArt } from "./enemyWeaponsArt.ts";
-import { EFFECT_COLOURS, IMPACT_STYLE, impactEffect, SPARK_MS } from "./weaponEffects.ts";
 
 const { ripple } = readEnemyWeaponsArt(file)!;
 const context = { at: { x: 100, y: 60 }, reducedMotion: false, ripple };

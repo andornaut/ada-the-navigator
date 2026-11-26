@@ -4,8 +4,8 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
+import { ADA_LAYERS } from "../art/drawOrder.ts";
 import { drawShipTail } from "../ui/shipJetCanvas.ts";
-import { ADA_LAYERS } from "./drawOrder.ts";
 import { jetOccluderRegions, jetTriangles, type ShipJets } from "./shipJets.ts";
 
 const region = [

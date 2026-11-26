@@ -3,7 +3,19 @@
 import { densityTexels } from "@andornaut/game-kit/runtime/view/renderScale";
 import { Math as PhaserMath, type Scene, TintModes } from "phaser";
 
-import { playDepth } from "../art/index.ts";
+import {
+  type EffectShape,
+  type EnemyEffect,
+  enemyInkEdges,
+  enemyPhaser,
+  type EnemyWeaponsView,
+  lance,
+  mine,
+  mineSolid,
+  playDepth,
+  ringDart,
+  ringEmission,
+} from "../art/index.ts";
 import { CONTENT } from "../data/content.ts";
 import { enemyActorLoadout } from "../data/enemyActorDefinition.ts";
 import { MINE_LAYER } from "../data/enemyCatalog.ts";
@@ -22,16 +34,6 @@ import {
   type PartSprite,
   selectEnemyFrame,
 } from "./enemyArt.ts";
-import {
-  type EnemyEffect,
-  enemyInkEdges,
-  enemyPhaser,
-  type EnemyWeaponsView,
-  lance,
-  mine,
-  ringDart,
-  ringEmission,
-} from "./enemyWeaponsArt.ts";
 import { SALVAGED, salvagedMatrix, showsBanner, spritesBounds } from "./heavyStates.ts";
 import { keylineOffsets, LIGHT_FIELD } from "./lightField.ts";
 import type { GameScene } from "./scene.ts";
@@ -40,7 +42,6 @@ import { drawCraftJets, keylineSilhouette, keylineSprite } from "./sceneHud.ts";
 import type { Asset } from "./sceneShared.ts";
 import { drawTaper, objectSprite } from "./sceneSprites.ts";
 import { acknowledgePrimitiveTarget } from "./sceneTargetMarkers.ts";
-import { type EffectShape, mineSolid } from "./weaponEffects.ts";
 
 /** The scene state and methods this module's functions use. */
 export type EnemiesContext = Partial<Pick<GameScene, "fieldLight">> &

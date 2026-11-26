@@ -7,8 +7,8 @@ import { jetLength as artJetLength, plumePolygon } from "../../art/tools/ship-pl
 import manifest from "../../public/art/manifest.json";
 import art from "../../public/art/ship-jets.json";
 import retroArt from "../../public/art/ship-retro-jets.json";
+import { hasShipHeadings } from "../art/shipArt.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
-import { hasShipHeadings } from "./shipArt.ts";
 import {
   engineJets,
   type JetDisplay,

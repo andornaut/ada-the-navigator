@@ -43,6 +43,38 @@ export {
   readDebrisArt,
 } from "./debrisArt.ts";
 export {
+  ADA_LAYERS,
+  adaDepth,
+  BACKDROP_DEPTH,
+  backdropRockDepth,
+  boxWith,
+  type DrawnBox,
+  drawnBox,
+  EDGE_MARKER_DEPTH,
+  effectBox,
+  HIT_FLASH_DEPTH,
+  overlaps,
+  type PassableDraw,
+  type Placed,
+  USE_CALLOUT_DEPTH,
+} from "./drawOrder.ts";
+export {
+  enemyBolt,
+  type EnemyEffect,
+  enemyFan,
+  enemyInkEdges,
+  enemyMissileFlame,
+  enemyPellet,
+  enemyPhaser,
+  type EnemyWeaponsArt,
+  type EnemyWeaponsView,
+  lance,
+  mine,
+  readEnemyWeaponsArt,
+  ringDart,
+  ringEmission,
+} from "./enemyWeaponsArt.ts";
+export {
   beaconLandmarkFrame,
   dashes,
   glintFrame,
@@ -83,6 +115,14 @@ export {
 export { decorationRasterSize, viewDecorations } from "./rareDecorations.ts";
 export { RockFrames } from "./rockFrames.ts";
 export { sceneryDetail } from "./scenery.ts";
+export {
+  hasShipHeadings,
+  paintFrames,
+  selectPaintedShipAsset,
+  type ShipAsset,
+  shipDirection,
+  skipShipPreload,
+} from "./shipArt.ts";
 export { SPECK_RADIUS, speckField } from "./speckField.ts";
 export {
   BEACON_SUFFIX,
@@ -123,6 +163,26 @@ export {
   type StationLoop,
   stationLoopFrame,
 } from "./stationArt.ts";
+export {
+  ADA_MISSILES,
+  beam,
+  clipBehind,
+  type EffectShape,
+  fanVolley,
+  heldFade,
+  impactEffect,
+  laserBolt,
+  mineSolid,
+  missileFlame,
+  missileFrame,
+  missileKind,
+  missileSolid,
+  pellet,
+  readWeaponSolids,
+  screenAngle,
+  type TaperShape,
+  type WeaponSolids,
+} from "./weaponEffects.ts";
 export {
   familyMembers,
   readMarloArt,

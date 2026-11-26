@@ -6,14 +6,19 @@ import { Scale, type Scene, Scenes } from "phaser";
 import PROJECTS_FILE from "../../public/art/projects.json" with { type: "json" };
 import {
   AMMO_PACK_FRAMES,
+  EDGE_MARKER_DEPTH,
+  hasShipHeadings,
+  HIT_FLASH_DEPTH,
   HOLODISK_FRAMES,
   readBeaconArt,
   readCacheArt,
+  readEnemyWeaponsArt,
   readLoopArt,
   readOutpostArt,
   readProjectArt,
   readStardustArt,
   readStationArt,
+  readWeaponSolids,
 } from "../art/index.ts";
 import { CHEAT_COPY } from "../data/cheatCopy.ts";
 import { CONTENT } from "../data/content.ts";
@@ -81,9 +86,7 @@ import { createStorybook, storyPageView } from "../ui/storybook.ts";
 import { readTitleScreen, type TitleScreenArt } from "../ui/titleScreen.ts";
 import { type CoreManifest, galaxyManifestKey, readGalaxyManifest } from "./artManifest.ts";
 import { readDestruction } from "./destructionArt.ts";
-import { EDGE_MARKER_DEPTH, HIT_FLASH_DEPTH } from "./drawOrder.ts";
 import { enemyPartFrame, GALAXY_FAMILIES } from "./enemyArt.ts";
-import { readEnemyWeaponsArt } from "./enemyWeaponsArt.ts";
 import { type CameraShake, HIT_SHAKE_SHARE, shakeCounter, TELEPORT_DISTANCE } from "./feedback.ts";
 import { LIGHT_FIELD, lightGalaxy, readLightGalaxies } from "./lightField.ts";
 import { fitPlayCamera, sceneFit, shakeIntensity } from "./playCamera.ts";
@@ -104,7 +107,6 @@ import {
 import { coverShip, endJump, jumpScene } from "./sceneJump.ts";
 import { type Asset, projectId, TITLE_SCREEN_KEY } from "./sceneShared.ts";
 import { StoryShell } from "./shell.ts";
-import { hasShipHeadings } from "./shipArt.ts";
 import { engineJets } from "./shipJets.ts";
 import { shopItemDetail, stationRow } from "./shopView.ts";
 import {
@@ -117,7 +119,6 @@ import { staticShipJets } from "./staticShipJets.ts";
 import { aboardGalaxy } from "./storyPresentation.ts";
 import { RASTER_SCALE_EVENT } from "./svgRasters.ts";
 import { readUpgradePickup } from "./upgradePickup.ts";
-import { readWeaponSolids } from "./weaponEffects.ts";
 
 const scanViews = new WeakMap<
   object,

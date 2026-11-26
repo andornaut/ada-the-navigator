@@ -16,6 +16,7 @@ import {
   debrisPiece,
   drawnRockId,
   driftChips,
+  type EffectShape,
   familyMembers,
   FLASH_SUFFIX,
   footprintOutline,
@@ -35,6 +36,7 @@ import {
   revealAlpha,
   rockArt,
   sceneryDetail,
+  shipDirection,
   stardustDrawn,
   stardustFrame,
   stardustPhase,
@@ -90,10 +92,8 @@ import {
   acknowledgeCacheSprite,
   acknowledgePrimitiveTarget,
 } from "./sceneTargetMarkers.ts";
-import { shipDirection } from "./shipArt.ts";
 import { spaceObjectColor } from "./spacePalette.ts";
 import { UPGRADE_CHEVRON, upgradeFrame } from "./upgradePickup.ts";
-import type { EffectShape } from "./weaponEffects.ts";
 
 /** The scene state and methods this module's functions use. */
 export type ObjectsContext = Partial<Pick<GameScene, "fieldLight">> &

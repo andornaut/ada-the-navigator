@@ -8,6 +8,7 @@ import {
   buoyFrame,
   buoyPlaces,
   dashes,
+  type EffectShape,
   frameBounds,
   glintFrame,
   glintPing,
@@ -48,7 +49,6 @@ import {
   type TowLine,
   towOffset,
 } from "./towArt.ts";
-import type { EffectShape } from "./weaponEffects.ts";
 
 /** The scene state and methods this module's functions use. */
 export type WorldContext = Partial<Pick<GameScene, "fieldLight">> &

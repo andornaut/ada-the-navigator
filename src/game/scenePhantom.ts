@@ -5,6 +5,7 @@ import {
   type PhantomAllyArt,
   playDepth,
   readPhantomAllyArt,
+  shipDirection,
 } from "../art/index.ts";
 import { CONTENT } from "../data/content.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
@@ -34,7 +35,6 @@ import {
 import { drawPhantomSong } from "./scenePhantomSong.ts";
 import type { Asset } from "./sceneShared.ts";
 import { objectSprite } from "./sceneSprites.ts";
-import { shipDirection } from "./shipArt.ts";
 const jump = readQuantumJump(jumpData)!;
 const stateOf = (flight: FlightState) =>
   (
