@@ -96,6 +96,7 @@ describe("cycles", () => {
 describe("layers", () => {
   it("places each area in one layer, lowest first", () => {
     expect(layerOf("src/data/galaxies.ts")).toBe(layer("data"));
+    expect(layerOf("src/art/index.ts")).toBe(layer("art"));
     expect(layerOf("src/game/shipJets.ts")).toBe(layer("art"));
     expect(layerOf("src/game/sceneHud.ts")).toBe(layer("scene"));
     expect(layerOf("src/ui/layout/tokens.ts")).toBe(layer("layout and input state"));

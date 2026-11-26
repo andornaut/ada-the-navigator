@@ -67,7 +67,8 @@ export const LAYERS: readonly Layer[] = [
   { band: "Model", holds: (path) => path.startsWith("src/model/"), name: "model" },
   {
     band: "Presentation",
-    holds: (path) => path.startsWith("src/game/") && !sceneModule(path),
+    holds: (path) =>
+      path.startsWith("src/art/") || (path.startsWith("src/game/") && !sceneModule(path)),
     name: "art",
   },
   {

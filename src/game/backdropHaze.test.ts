@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { readBackdropHaze } from "../art/index.ts";
 import { GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
-import { readBackdropHaze } from "./backdropHaze.ts";
 
 const andromeda = GALAXY_MANIFESTS.get(5)!;
 const file = publicJson(andromeda.links.backdropHaze!);

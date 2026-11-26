@@ -4,6 +4,7 @@ import { setTextureFilters } from "@andornaut/game-kit/runtime/view/phaser/textu
 import { MAX_RENDER_SCALE } from "@andornaut/game-kit/runtime/view/renderScale";
 import { GameObjects, Loader, Scenes } from "phaser";
 
+import { BAND_AREA, paintBand, readBackdropBand, readBackdropHaze } from "../art/index.ts";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyAssetKey, hullDesign, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
@@ -18,8 +19,6 @@ import {
   galaxyTowKey,
   readGalaxyManifest,
 } from "./artManifest.ts";
-import { BAND_AREA, paintBand, readBackdropBand } from "./backdropBand.ts";
-import { readBackdropHaze } from "./backdropHaze.ts";
 import { type Raster, readBackdropRules, readGalaxyBackdrop } from "./backdropLayers.ts";
 import {
   craftArt,
