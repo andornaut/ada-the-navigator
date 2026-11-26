@@ -719,6 +719,61 @@ export function batchCaptures(ctx) {
     await page.waitForTimeout(800);
     return page;
   }
+  // The local map's bound at 720x360 in Sunflower and Phantom, with every landmark charted:
+  // fully zoomed out, then dragged hard toward each of the square's four tips and four seams,
+  // where panning stops.
+  const MAP_BOUND_DRAGS = {
+    down: { x: 0, y: -200 },
+    "down-left": { x: 400, y: -200 },
+    "down-right": { x: -400, y: -200 },
+    left: { x: 600, y: 0 },
+    right: { x: -600, y: 0 },
+    up: { x: 0, y: 200 },
+    "up-left": { x: 400, y: 200 },
+    "up-right": { x: -400, y: 200 },
+  };
+  async function mapBounds() {
+    await inTurn([1, 6], async (galaxy) => {
+      const model = flightModel(galaxy);
+      model.state.prologueSeen = true;
+      model.state.progress[galaxy].opened = true;
+      model.state.progress[galaxy].charted = landmarkSites(galaxy).map(({ id }) => id);
+      model.state.flight.objects = [];
+      const name = `map-bounds-${GALAXY_ID[galaxy]}`;
+      await ctx.openFixture(canonical(model, name), {
+        frozen: false,
+        viewport: { height: 360, width: 720 },
+      });
+      const page = ctx.page();
+      await page.clock.resume();
+      await page.locator('[data-action="pause"]').click();
+      await page.locator('[data-action="pause-map"]').click();
+      await page.locator('[data-dialog="map"]').waitFor();
+      await page.waitForTimeout(400);
+      // The view's centre, clear of the header, tools, footer and panel.
+      const centre = { x: 360, y: 180 };
+      const eight = [0, 1, 2, 3, 4, 5, 6, 7];
+      await page.mouse.move(centre.x, centre.y);
+      await inTurn(eight, async () => {
+        await page.mouse.wheel(0, 400);
+        await page.waitForTimeout(60);
+      });
+      await page.waitForTimeout(200);
+      await ctx.pageShot(`${name}-zoomed-out.png`);
+      await inTurn(Object.entries(MAP_BOUND_DRAGS), async ([edge, drag]) => {
+        // Eight drags cross the square's projected extent at minScale: the view stops at its edge.
+        await inTurn(eight, async () => {
+          await page.mouse.move(centre.x - drag.x / 2, centre.y - drag.y / 2);
+          await page.mouse.down();
+          await page.mouse.move(centre.x + drag.x / 2, centre.y + drag.y / 2, { steps: 4 });
+          await page.mouse.up();
+        });
+        await page.waitForTimeout(200);
+        await ctx.pageShot(`${name}-${edge}.png`);
+      });
+    });
+  }
+
   /** Moves the open Galaxies view's selection from galaxy one to Whirlpool. */
   async function selectWhirlpool(page) {
     await page.locator('[data-action="galaxy-jump"]').focus();
@@ -1714,6 +1769,7 @@ export function batchCaptures(ctx) {
     "hostile-tops": hostileTops,
     "keep-moving": keepMoving,
     landmarks,
+    "map-bounds": mapBounds,
     markers,
     needle,
     "nose-heavy-missile": noseSet("heavyMissile", 1),
