@@ -1285,10 +1285,11 @@ export class GameScene extends Scene {
     drawFeedback(this);
     this.ship.setPosition(SCREEN.width / 2, SCREEN.height / 2);
     const travel = shipJetDirection(flight.facing, flight.velocity);
+    // Ada's flight uses the same direction-specific engine colors in every galaxy.
     const activeJets = travelJets(
       this.shipJets,
       this.shipRetroJets,
-      this.light ? LIGHT_FIELD.jets.shipLevels : undefined,
+      undefined,
       flight.levels.engine,
       travel,
       flight.levels.engine === 1 ? ENGINE_ONE_FLIGHT_JET_COLORS : undefined,
