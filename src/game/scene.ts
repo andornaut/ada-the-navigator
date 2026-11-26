@@ -6,6 +6,7 @@ import {
   type BackdropHaze,
   type BackdropRules,
   backdropTint,
+  type DebrisArt,
   type GalaxyBackdrop,
   hexNumber,
   playDepth,
@@ -59,7 +60,6 @@ import {
 } from "./artManifest.ts";
 import { craftFrameSets, type HubArt } from "./cartwheelArt.ts";
 import type { StreakSpec } from "./currentStreaks.ts";
-import type { DebrisArt } from "./debrisArt.ts";
 import {
   type DestructionData,
   readDestruction,

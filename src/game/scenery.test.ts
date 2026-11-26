@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { sceneryDetail } from "./scenery.ts";
+import { sceneryDetail } from "../art/scenery.ts";
 
 const ids = ["a", "b", "c"];
 

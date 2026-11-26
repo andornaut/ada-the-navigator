@@ -34,4 +34,13 @@ export {
   viewStars,
   viewStreaks,
 } from "./backdropLayers.ts";
+export {
+  type DebrisArt,
+  debrisFrame,
+  debrisMarks,
+  debrisPiece,
+  readDebrisArt,
+} from "./debrisArt.ts";
 export { decorationRasterSize, viewDecorations } from "./rareDecorations.ts";
+export { RockFrames } from "./rockFrames.ts";
+export { sceneryDetail } from "./scenery.ts";

@@ -6,13 +6,16 @@ import { GameObjects, Loader, Scenes } from "phaser";
 
 import {
   BAND_AREA,
+  type DebrisArt,
   decorationRasterSize,
   paintBand,
   type Raster,
   readBackdropBand,
   readBackdropHaze,
   readBackdropRules,
+  readDebrisArt,
   readGalaxyBackdrop,
+  RockFrames,
 } from "../art/index.ts";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { ECONOMY } from "../data/economy.ts";
@@ -38,7 +41,6 @@ import {
   storyNoses,
 } from "./cartwheelArt.ts";
 import { readStreakSpec } from "./currentStreaks.ts";
-import { type DebrisArt, readDebrisArt } from "./debrisArt.ts";
 import { readShards, type ShardData } from "./destructionArt.ts";
 import {
   composedArchetypes,
@@ -62,7 +64,6 @@ import { readJobArt } from "./jobArt.ts";
 import { PHANTOM_ALLIES_ART } from "./phantomAllyArt.ts";
 import { sceneFit } from "./playCamera.ts";
 import { readQuantumJump } from "./quantumJump.ts";
-import { RockFrames } from "./rockFrames.ts";
 import type { GameScene } from "./scene.ts";
 import type { Asset } from "./sceneShared.ts";
 import { readShardPalettePack } from "./shardPalettePack.ts";

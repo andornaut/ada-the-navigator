@@ -11,13 +11,13 @@ import {
   playDepth,
   rockArt,
 } from "../art/asteroidArt.ts";
+import { debrisFrame, debrisMarks, debrisPiece, readDebrisArt } from "../art/debrisArt.ts";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { rockFrame } from "../model/asteroids.ts";
 import { debrisPieceIndex } from "../model/debrisBody.ts";
 import { carriesStardust } from "../model/drops.ts";
 import { orePickupFrameSize } from "../model/pickupBody.ts";
 import type { SpaceObject } from "../model/types.ts";
-import { debrisFrame, debrisMarks, debrisPiece, readDebrisArt } from "./debrisArt.ts";
 
 // Execute the production render boundary without starting Phaser's DOM renderer.
 const source = ts.createSourceFile(

@@ -5,12 +5,16 @@ import { Math as PhaserMath, type Scene } from "phaser";
 
 import {
   type AsteroidOutline,
+  debrisFrame,
+  debrisMarks,
+  debrisPiece,
   drawnRockId,
   driftChips,
   footprintOutline,
   hexNumber,
   playDepth,
   rockArt,
+  sceneryDetail,
 } from "../art/index.ts";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { CONTENT } from "../data/content.ts";
@@ -33,7 +37,6 @@ import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
 import { shipTuning } from "../model/upgrades.ts";
 import { worldDelta } from "../model/worldContacts.ts";
 import { hubLayers } from "./cartwheelArt.ts";
-import { debrisFrame, debrisMarks, debrisPiece } from "./debrisArt.ts";
 import { reducedAt, shardFamily, shardPolygons, wreckFlashAt } from "./destructionArt.ts";
 import { selectEnemyFrame } from "./enemyArt.ts";
 import { inkEdges, keylineOffsets, LIGHT_FIELD } from "./lightField.ts";
@@ -56,7 +59,6 @@ import {
 } from "./sceneAssets.ts";
 import { drawEffect, drawEnemy } from "./sceneEnemies.ts";
 import { keylineEdges, keylineSilhouette, keylineSprite } from "./sceneHud.ts";
-import { sceneryDetail } from "./scenery.ts";
 import type { Asset } from "./sceneShared.ts";
 import { objectSprite } from "./sceneSprites.ts";
 import {

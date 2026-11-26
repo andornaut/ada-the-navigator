@@ -1,8 +1,8 @@
 import { expect, it } from "vitest";
 
+import { RockFrames } from "../art/rockFrames.ts";
 import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import { rockFrame } from "../model/asteroids.ts";
-import { RockFrames } from "./rockFrames.ts";
 
 const art = ASTEROID_ART.asteroids.find((rock) => rock.frames.length > 1)!;
 
