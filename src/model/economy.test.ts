@@ -1033,23 +1033,30 @@ describe("tractor beam and pickup reach", () => {
     ["ammo pack", { ammoPack: true, radius: 10 }],
   ] as const;
 
-  it.each(KINDS.flatMap(([name, extra]) => TRACTOR.map((row) => [name, ...row, extra] as const)))(
-    "pulls a %s at tractor level %i from within %i at %i a second, and none beyond",
-    (_, level, radius, speed, extra) => {
+  it.each(TRACTOR)(
+    "pulls every pickup kind at tractor level %i from within %i at %i a second, and none beyond",
+    (level, radius, speed) => {
       const value = flight();
       value.levels = { ...noLevels(), tractor: level };
-      value.objects.push(
-        { hp: 1, id: "inside", kind: "pickup", x: radius - 1, y: 0, ...extra },
-        { hp: 1, id: "outside", kind: "pickup", x: 0, y: radius + 1, ...extra },
-      );
+      for (const [name, extra] of KINDS) {
+        value.objects.push(
+          { hp: 1, id: `inside:${name}`, kind: "pickup", x: radius - 1, y: 0, ...extra },
+          { hp: 1, id: `outside:${name}`, kind: "pickup", x: 0, y: radius + 1, ...extra },
+        );
+      }
       stepFlight(CONTENT, 0.05, idle, value);
-      const inside = value.objects.find((object) => object.id === "inside")!;
-      expect(inside.x).toBeCloseTo(radius - 1 - speed * 0.05, 6);
-      expect(inside.y).toBeCloseTo(0, 9);
-      expect(value.objects.find((object) => object.id === "outside")).toMatchObject({
-        x: 0,
-        y: radius + 1,
-      });
+      for (const [name] of KINDS) {
+        const inside = value.objects.find((object) => object.id === `inside:${name}`);
+        expect(inside?.x, name).toBeCloseTo(radius - 1 - speed * 0.05, 6);
+        expect(inside?.y, name).toBeCloseTo(0, 9);
+        expect(
+          value.objects.find((object) => object.id === `outside:${name}`),
+          name,
+        ).toMatchObject({
+          x: 0,
+          y: radius + 1,
+        });
+      }
     },
   );
 
