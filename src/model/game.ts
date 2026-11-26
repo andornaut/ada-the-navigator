@@ -180,6 +180,12 @@ import {
 } from "./flightTopology.ts";
 import { initializeGalaxyGeography } from "./galaxyGeography.ts";
 import { encounterCues, stationsInRange } from "./game/encounterCues.ts";
+import {
+  floatingHolodisk,
+  holodiskTouched,
+  holodiskWaypoint,
+  whirlpoolDiskWaypoint,
+} from "./game/whirlpoolHolodisk.ts";
 import { liveEnemy, worldSyncFlightRegion } from "./geography.ts";
 import { hostileStationMapPlaces } from "./hostileStationMap.ts";
 import { acknowledgeHostileStationIdentification } from "./hostileStationPersistence.ts";
@@ -3922,35 +3928,19 @@ export class GameModel {
     return objectiveDestination(galaxy, p, p.deposited >= this.content.tuning.miningMilestones[1]);
   }
   private get holodiskWaypoint(): boolean {
-    const phase = this.current.sounder?.phase;
-    return (
-      this.state.flight?.galaxy === 3 &&
-      phase !== undefined &&
-      phase !== "hidden" &&
-      !this.current.holodisk
-    );
+    return holodiskWaypoint(this.state);
   }
 
   private whirlpoolDiskWaypoint(flight: FlightState): Vec | null {
-    if (flight.galaxy !== 3 || !this.holodiskWaypoint) {
-      return null;
-    }
-    return this.floatingHolodisk(flight) ?? this.current.requiredSites?.holodisk ?? null;
+    return whirlpoolDiskWaypoint(this.state, flight);
   }
 
-  /** The family can mark the site while the physical pickup remains held by Sounder. */
   private floatingHolodisk(f: FlightState): SpaceObject | undefined {
-    return this.holodiskWaypoint && this.current.sounder?.phase === "resolved"
-      ? f.objects.find((o) => o.kind === "destination" && o.id === "holodisk")
-      : undefined;
+    return floatingHolodisk(this.state, f);
   }
-  /** Ada is within pickup reach of the holodisk, a pickup-sized object. */
+
   private holodiskTouched(f: NonNullable<GameState["flight"]>): boolean {
-    const disk = this.floatingHolodisk(f);
-    return (
-      disk !== undefined &&
-      pickupTouched(this.content, f, disk, this.content.tuning.flight.pickupRadius)
-    );
+    return holodiskTouched(this.state, this.content, f);
   }
   /**
    * The pickups the model holds outside the flight's objects, the floating holodisk and a hunt's
