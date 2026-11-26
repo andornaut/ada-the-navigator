@@ -288,7 +288,8 @@ describe("mounted Andromeda chapter", () => {
       flight = model.state.flight!;
       expect(model.flightLog).toEqual([entry]);
       flight.dangerFor = 0;
-      model.teleport(relayId);
+      model.state.economy.stardust = 50;
+      expect(model.teleport(relayId)).toBe(true);
       expect(flight.player).toMatchObject(active.relay);
       model.step(0.01, idle);
       expect(model.flightEvents).not.toContainEqual({ id: relayId, type: "discovered" });

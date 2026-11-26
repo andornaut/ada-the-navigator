@@ -121,7 +121,8 @@ describe("regenerating ordinary chunks and persistent notables", () => {
       expect(ensureStation(CONTENT, id, loaded.state.flight!)).toEqual(expected);
       expect(loaded.state.progress[1].greetings[id]).toBe(visits);
       expect(loaded.state.flight!.world.notables).not.toHaveProperty(id);
-      loaded.teleport(id);
+      loaded.state.economy.stardust = 50;
+      expect(loaded.teleport(id)).toBe(true);
       loaded.interact();
       expect(loaded.state.docked).toBe(id);
       expect(loaded.state.progress[1].greetings[id]).toBe(visits! + 1);

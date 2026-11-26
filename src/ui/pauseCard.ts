@@ -97,6 +97,7 @@ export interface PauseState {
   readonly place: PausePlace | null;
   /** The Ship card's facts, or null outside a flight. */
   readonly ship: ShipView | null;
+  readonly stardust: number | null;
   /** A rescue's tow line is attached: Travel here refuses. */
   readonly towing: boolean;
   /** A delivery's or a supply run's item is aboard: Travel here refuses. */
@@ -342,6 +343,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     map: null,
     place: null,
     ship: null,
+    stardust: null,
     towing: false,
   };
   let layer: ReturnType<typeof createModalLayer> | undefined;
@@ -557,6 +559,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       inDanger: state.inDanger,
       job: state.job,
       map: state.map ?? NO_MAP,
+      stardust: state.stardust,
       towing: state.towing,
     });
     const signature = JSON.stringify([state.place, state.canMap]);

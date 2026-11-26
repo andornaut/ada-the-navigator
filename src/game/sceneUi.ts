@@ -658,7 +658,7 @@ export function buildScene(scene: UiContext): void {
       },
       onGalaxies: () => scene.openGalaxies(),
       onTravel: (id) => {
-        if (!scene.model.inDanger && !scene.model.towing && !scene.model.carrying) {
+        if (scene.model.canTeleport(id)) {
           jumpThen(() => scene.model.teleport(id));
         }
       },
@@ -1553,6 +1553,7 @@ export function refreshScene(scene: UiContext, covered = false): void {
     place: entry === "pause" ? "flight" : null,
     questEntries: scene.model.quests,
     ship: state.mode === "space" && state.flight ? shipView(scene) : null,
+    stardust: state.economy.stardust,
     towing: scene.model.towing,
   });
   scene.controls.setAchievements(scene.model.achievements);

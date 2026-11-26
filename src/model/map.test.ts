@@ -8,7 +8,7 @@ import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { activateCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
-import { playOpening, supportEntropy } from "../testing/launch.ts";
+import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
 import { ensureDestination } from "./flight.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
@@ -43,6 +43,67 @@ const beyond = stationInCell(ECONOMY, 1, {
   x: Math.ceil(CHARTING_RADIUS / ECONOMY.station.cellSize) + 3,
   y: 0,
 })!;
+
+describe("priced local Map teleport", () => {
+  it.each(["destination", "station"] as const)(
+    "charges once after a successful %s arrival and saves both",
+    (kind) => {
+      const model = flying();
+      const flight = model.state.flight!;
+      const progress = model.state.progress[1];
+      const target =
+        kind === "destination" ? ensureDestination(CONTENT, "growers", flight) : beyond;
+      if (kind === "destination") {
+        progress.known.push(target.id);
+      } else {
+        progress.stations.push(target.id);
+      }
+      model.state.economy.stardust = 49;
+      expect(model.map?.places.find(({ id }) => id === target.id)?.travel).toBe(true);
+      const start = { ...flight.player };
+      expect(model.canTeleport(target.id)).toBe(false);
+      expect(model.teleport(target.id)).toBe(false);
+      expect(flight.player).toEqual(start);
+      expect(model.state.economy.stardust).toBe(49);
+
+      model.state.economy.stardust = 50;
+      expect(model.canTeleport(target.id)).toBe(true);
+      expect(model.teleport(target.id)).toBe(true);
+      const arrival = { x: target.x, y: target.y };
+      expect(flight.player).toEqual(arrival);
+      expect(model.state.economy.stardust).toBe(0);
+      const loaded = relaunch(CONTENT, model.save());
+      expect(loaded.state.flight?.player).toEqual(arrival);
+      expect(loaded.state.economy.stardust).toBe(0);
+      expect(loaded.teleport(target.id)).toBe(false);
+      expect(loaded.state.flight?.player).toEqual(arrival);
+      expect(loaded.state.economy.stardust).toBe(0);
+    },
+  );
+
+  it("keeps position and balance when the destination is undiscovered, missing or unsafe", () => {
+    const model = flying();
+    const flight = model.state.flight!;
+    const progress = model.state.progress[1];
+    const target = ensureDestination(CONTENT, "growers", flight);
+    model.state.economy.stardust = 75;
+    const start = { ...flight.player };
+    expect(model.canTeleport(target.id)).toBe(false);
+    expect(model.teleport(target.id)).toBe(false);
+    progress.known.push(target.id);
+    flight.dangerFor = 1;
+    expect(model.canTeleport(target.id)).toBe(false);
+    expect(model.teleport(target.id)).toBe(false);
+    expect(model.state.notice).toBe(CONTENT.labels.travelUnavailable);
+    flight.dangerFor = 0;
+    expect(model.canTeleport(target.id)).toBe(true);
+    flight.objects = flight.objects.filter(({ id }) => id !== target.id);
+    expect(model.canTeleport(target.id)).toBe(false);
+    expect(model.teleport(target.id)).toBe(false);
+    expect(flight.player).toEqual(start);
+    expect(model.state.economy.stardust).toBe(75);
+  });
+});
 
 function context(
   model: GameModel,

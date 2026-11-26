@@ -757,7 +757,8 @@ describe("Guide a calf", () => {
     flight.objects = flight.objects.filter((o) => o.kind !== "enemy");
     flight.dangerFor = 0;
     model.state.dialogue = null;
-    model.teleport("family");
+    model.state.economy.stardust = 50;
+    expect(model.teleport("family")).toBe(true);
     expect(flight.calf).toMatchObject({ following: false, x: at.x, y: at.y });
   });
 

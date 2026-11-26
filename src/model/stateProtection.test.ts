@@ -242,7 +242,8 @@ describe("arrival grace", () => {
     flight.player = { x: site.x + 6000, y: site.y };
     model.step(SIMULATION_STEP_SECONDS, idle);
     flight.dangerFor = 0;
-    model.teleport(site.id);
+    model.state.economy.stardust = 50;
+    expect(model.teleport(site.id)).toBe(true);
     expect(flight.player).toEqual({ x: site.x, y: site.y });
     expect(arrivalGraceActive(flight)).toBe(true);
     incoming(flight);

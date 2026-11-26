@@ -686,7 +686,12 @@ describe("jobs in play", () => {
     expect(model.jobScenery).toMatchObject({ craft: flight.tow, towing: true });
     // Out of danger, so towing alone refuses Travel.
     flight.dangerFor = 0;
-    model.teleport(station.id);
+    model.state.economy.stardust = 50;
+    const before = { ...flight.player };
+    expect(model.canTeleport(station.id)).toBe(false);
+    expect(model.teleport(station.id)).toBe(false);
+    expect(flight.player).toEqual(before);
+    expect(model.state.economy.stardust).toBe(50);
     expect(model.state.notice).toBe("Unavailable while towing.");
     expect(distance(flight.player, held.target)).toBeLessThan(200);
     // Closing the game resumes the tow exactly.

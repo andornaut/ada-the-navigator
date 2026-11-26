@@ -12,7 +12,8 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import JOBS from "../../public/art/jobs.json" with { type: "json" };
 import { readMapArea } from "../art/index.ts";
-import { HUD_BUTTON } from "../data/layout.ts";
+import { BALANCE, HUD_BUTTON } from "../data/layout.ts";
+import { canAffordMapJump, MAP_JUMP_COST, travelState } from "../data/mapJump.ts";
 import { TASK_COLORS } from "../data/taskCategories.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
@@ -100,6 +101,8 @@ import { refuse } from "./refusal.ts";
 import { createStandardTextAction } from "./standardTextAction.ts";
 import { HUD_DISC_STATES, hudDiscStyle } from "./weapons.ts";
 
+export { travelState } from "../data/mapJump.ts";
+
 // The pause menu's full-screen map (art/map.md): the galaxy's field under its fog, a chip per
 // discovered place, Ada's arrow, the header, the tool column and the place panel. It takes input
 // exclusively while it shows; the Paused card and its dim hide under it.
@@ -140,6 +143,7 @@ export interface MapScreenLabels {
   readonly questsEmpty: string;
   readonly towTravel: string;
   readonly carryTravel: string;
+  readonly travelCost: string;
   readonly travelEmpty: string;
   readonly travelHere: string;
   readonly travelUnavailable: string;
@@ -193,6 +197,7 @@ export function mapScreenLabels(strings: Readonly<Record<string, string>>): MapS
     quests: label("quests"),
     questsEmpty: label("questsEmpty"),
     towTravel: label("towTravel"),
+    travelCost: label("stardustAmount").replace("{amount}", String(MAP_JUMP_COST)),
     travelEmpty: label("travelEmpty"),
     travelHere: label("travelHere"),
     travelUnavailable: label("travelUnavailable"),
@@ -224,6 +229,7 @@ export interface MapScreenState {
   /** The held station job's objective, or null without one. */
   readonly job: string | null;
   readonly map: LocalMap;
+  readonly stardust: number | null;
   readonly towing: boolean;
   /** A job item is aboard, which refuses Travel here as towing does. */
   readonly carrying: boolean;
@@ -241,33 +247,6 @@ export interface MapScreenOptions {
   readonly onGalaxies: () => void;
   readonly onTravel: (destination: string) => void;
   readonly reducedMotion: () => boolean;
-}
-
-/**
- * Travel here for a place: offered only by destinations and stations, refused in danger, while
- * towing and while carrying a job item, with the one reason line that shows. The danger reason
- * shows in every state, since Galaxies refuses in danger too; the others only beside Travel here.
- */
-export function travelState(
-  inDanger: boolean,
-  towing: boolean,
-  carrying: boolean,
-  place: Pick<MapPlace, "travel"> | null,
-): {
-  readonly offered: boolean;
-  readonly reason: "carrying" | "danger" | "towing" | null;
-} {
-  const offered = Boolean(place?.travel);
-  return {
-    offered,
-    reason: inDanger
-      ? "danger"
-      : offered && towing
-        ? "towing"
-        : offered && carrying
-          ? "carrying"
-          : null,
-  };
 }
 
 /**
@@ -694,6 +673,18 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
 .ada-controls .ada-map-row .ada-button{
   flex:none
 }
+.ada-controls .ada-map-travel-cost{
+  display:inline-flex;
+  align-items:center;
+  gap:${units(BALANCE.markGap)};
+  margin-inline-start:${units(SPACING.gap)}
+}
+.ada-controls .ada-map-travel-cost::before{
+  content:"";
+  width:${units(BALANCE.icon)};
+  height:${units(BALANCE.icon)};
+  background:url('${uiIconUrl("icon-stardust-20")}') center / 100% 100% no-repeat
+}
 /* Every reason shares one cell, so the panel keeps the widest reason's width in every state. */
 .ada-controls .ada-map-reason{
   display:grid;
@@ -1091,11 +1082,15 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   const travelAction = createStandardTextAction(root, labels.travelHere, {
     availability: () => {
       const { offered, reason } = travelNow();
-      return !offered
-        ? { kind: "omitted" }
-        : reason === null
-          ? { kind: "available" }
-          : { kind: "unavailable", reason: travelReasons[reason] };
+      if (!offered) {
+        return { kind: "omitted" };
+      }
+      if (!state || !canAffordMapJump(state.stardust)) {
+        return { kind: "disabled" };
+      }
+      return reason === null
+        ? { kind: "available" }
+        : { kind: "unavailable", reason: travelReasons[reason] };
     },
     current: () => !disposed && !screen.hidden && inCurrentView(root, travelAction.element),
     refuse: () => refuse(travelAction.element, options.reducedMotion()),
@@ -1108,6 +1103,12 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   });
   const travel = travelAction.element;
   travel.dataset.action = "map-travel";
+  const travelCost = document.createElement("span");
+  travelCost.className = "ada-map-travel-cost";
+  travelCost.setAttribute("aria-hidden", "true");
+  travelCost.textContent = String(MAP_JUMP_COST);
+  travel.append(travelCost);
+  travel.setAttribute("aria-label", `${labels.travelHere}, ${labels.travelCost}`);
   setButtonRole("secondary", travel);
   actionBindings.add(travelAction);
   const empty = document.createElement("p");

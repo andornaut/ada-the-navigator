@@ -238,7 +238,8 @@ describe("station discovery and docking", () => {
     flight.player = { x: site.x + 6000, y: site.y };
     model.step(1 / 60, idle);
     flight.dangerFor = 0;
-    model.teleport(site.id);
+    model.state.economy.stardust = 50;
+    expect(model.teleport(site.id)).toBe(true);
     // Travel arrives at the station, where Use offers Dock; arriving never docks.
     expect(flight.player).toEqual({ x: site.x, y: site.y });
     model.step(0.1, idle);

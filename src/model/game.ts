@@ -42,6 +42,7 @@ import { HOLODISKS } from "../data/holodisks.ts";
 import { carriedItemName, STORY_ITEM_NAMES } from "../data/itemNames.ts";
 import { JOB_TUNING, type JobType } from "../data/jobs.ts";
 import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
+import { canAffordMapJump, MAP_JUMP_COST, travelState } from "../data/mapJump.ts";
 import { NEEDLE } from "../data/needle.ts";
 import { visualNoticeTiming } from "../data/noticeTiming.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
@@ -3028,47 +3029,58 @@ export class GameModel {
     this.closeSelection();
     this.startShown = true;
   }
-  teleport(id: string): void {
+  private mapTravel(id: string) {
+    const flight = this.state.flight;
+    if (!flight || this.state.mode !== "space" || this.state.dialogue || this.state.docked) {
+      return null;
+    }
+    const place = this.map?.places.find((entry) => entry.id === id && entry.travel);
+    if (!place) {
+      return null;
+    }
+    const { reason } = travelState(this.inDanger, this.towing, this.carrying, place);
+    return { flight, place, reason };
+  }
+  canTeleport(id: string): boolean {
+    const travel = this.mapTravel(id);
+    return (
+      travel !== null && travel.reason === null && canAffordMapJump(this.state.economy.stardust)
+    );
+  }
+  teleport(id: string): boolean {
     if (this.reopenInteraction()) {
-      return;
+      return false;
     }
-    const f = this.state.flight;
-    if (f?.galaxy === 4 && id === "holodisk") {
-      return;
+    const travel = this.mapTravel(id);
+    if (!travel) {
+      return false;
     }
-    const station = this.current.stations.includes(id);
-    if (
-      !f ||
-      this.state.mode !== "space" ||
-      this.state.dialogue ||
-      this.state.docked ||
-      !(this.current.known.includes(id) || station)
-    ) {
-      return;
+    const { flight, place, reason } = travel;
+    if (reason !== null) {
+      this.refuse(
+        this.label(
+          { carrying: "carryTravel", danger: "travelUnavailable", towing: "towTravel" }[reason],
+        ),
+      );
+      return false;
     }
-    if (this.inDanger) {
-      this.refuse(this.label("travelUnavailable"));
-      return;
+    const economy = this.state.economy;
+    if (!canAffordMapJump(economy.stardust)) {
+      return false;
     }
-    if (f.tow) {
-      this.refuse(this.label("towTravel"));
-      return;
+    if (place.kind === "station" && !ensureStation(this.content, id, flight)) {
+      return false;
     }
-    if (this.carrying) {
-      this.refuse(this.label("carryTravel"));
-      return;
+    if (!teleportFlight(this.content, id, flight)) {
+      return false;
     }
-    if (station) {
-      ensureStation(this.content, id, f);
-    } else {
-      ensureDestination(this.content, id, f);
-    }
+    economy.stardust -= MAP_JUMP_COST;
     // Travel ends a guide's follow: the calf waits where it is.
-    if (f.calf) {
-      f.calf.following = false;
+    if (flight.calf) {
+      flight.calf.following = false;
     }
-    teleportFlight(this.content, id, f);
-    this.explore(f);
+    this.explore(flight);
+    return true;
   }
   /**
    * Shield depletion quantum jumps Ada home and ends the flight. Its open-space enemies,

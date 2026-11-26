@@ -13,6 +13,7 @@ import { STATUS_PILL_LAYOUT } from "../data/layout.ts";
 import { SCREEN } from "../data/screen.ts";
 import { openRewoundCampaign } from "../model/campaignRewind.ts";
 import { CHEAT_AMOUNT, type CheatId } from "../model/cheats.ts";
+import { ensureDestination } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import type { GameSave } from "../model/types.ts";
@@ -139,6 +140,41 @@ function navigation(model: GameModel) {
   const onJump = runInContext(callback("onJump"), context) as () => void;
   return { controls, jumpThen, localMapOpen: () => localMapOpen, onJump, scene };
 }
+
+it("passes the live balance to Map and charges Travel here only at the quantum switch", () => {
+  const model = flight();
+  const live = model.state.flight!;
+  const target = ensureDestination(CONTENT, "growers", live);
+  model.state.progress[1].known.push(target.id);
+  const jumpThen = vi.fn<(action: () => void) => void>();
+  const onTravel = runInContext(
+    callback("onTravel"),
+    createContext({ jumpThen, scene: { model } }),
+  ) as (id: string) => void;
+  const before = { ...live.player };
+
+  model.state.economy.stardust = 49;
+  expect(pauseView(model).stardust).toBe(49);
+  onTravel(target.id);
+  expect(jumpThen).not.toHaveBeenCalled();
+
+  model.state.economy.stardust = 50;
+  expect(pauseView(model).stardust).toBe(50);
+  onTravel(target.id);
+  expect(jumpThen).toHaveBeenCalledOnce();
+  expect(live.player).toEqual(before);
+  expect(model.state.economy.stardust).toBe(50);
+  model.state.economy.stardust = 49;
+  jumpThen.mock.calls[0]![0]();
+  expect(live.player).toEqual(before);
+  expect(model.state.economy.stardust).toBe(49);
+
+  model.state.economy.stardust = 50;
+  onTravel(target.id);
+  jumpThen.mock.calls[1]![0]();
+  expect(live.player).toEqual({ x: target.x, y: target.y });
+  expect(model.state.economy.stardust).toBe(0);
+});
 
 describe("in-flight weapon selection", () => {
   it("keeps the active controls through consecutive swaps and honors the modal and readiness fences", () => {

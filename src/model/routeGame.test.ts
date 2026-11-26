@@ -71,7 +71,8 @@ describe("required route approach encounters", () => {
     model.state.flight!.dangerFor = 0;
     model.returnHome();
     model.startGalaxy(1);
-    model.teleport(target.id);
+    model.state.economy.stardust = 50;
+    expect(model.teleport(target.id)).toBe(true);
     model.step(1 / 60, idle);
     const flight = model.state.flight!;
     const friendly = flight.objects.find((object) => object.id === target.id)!;

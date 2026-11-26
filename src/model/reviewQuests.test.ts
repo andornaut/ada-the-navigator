@@ -48,8 +48,11 @@ describe("job board review decisions", () => {
     // Accepting loads the item.
     expect(model.carrying).toBe(true);
     const before = { ...model.state.flight!.player };
-    model.teleport(sites[1]!.id);
+    model.state.economy.stardust = 50;
+    expect(model.canTeleport(sites[1]!.id)).toBe(false);
+    expect(model.teleport(sites[1]!.id)).toBe(false);
     expect(model.state.flight!.player).toEqual(before);
+    expect(model.state.economy.stardust).toBe(50);
     expect(model.state.notice).toBe("Unavailable while carrying a delivery.");
   });
 

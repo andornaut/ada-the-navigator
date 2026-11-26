@@ -5,6 +5,7 @@ import { HIT_RULE, hitAround, pressedArea } from "@andornaut/game-kit/runtime/ui
 import ts from "typescript";
 import { afterEach, expect, it, vi } from "vitest";
 
+import { canAffordMapJump, MAP_JUMP_COST } from "../data/mapJump.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
 import { bindAdaAction, resolveAdaHoldAction } from "./actionBinding.ts";
 import { bindAdaActionRoot, bindAdaHoldActions } from "./holdActionsAdapter.ts";
@@ -368,11 +369,14 @@ it("keeps the actual travel refusal and rechecks travel eligibility for click an
     refuse = vi.fn();
   let danger = true;
   let offered = true;
+  const state = { stardust: MAP_JUMP_COST };
   Object.assign(f.context, {
+    canAffordMapJump,
     labels: { travelHere: "Travel here" },
     options: { onTravel, reducedMotion: () => true },
     refuse,
     selectedPlace: () => ({ id: "station" }),
+    state,
     travelNow: () => ({ offered, reason: danger ? "danger" : null }),
     travelReasons: { danger: "Danger" },
   });
@@ -397,6 +401,16 @@ it("keeps the actual travel refusal and rechecks travel eligibility for click an
   expect(refuse).toHaveBeenCalledTimes(3);
   expect(onTravel).not.toHaveBeenCalled();
   danger = false;
+  state.stardust--;
+  action.refresh();
+  expect(action.element.hidden).toBe(false);
+  expect(action.element.disabled).toBe(true);
+  f.down();
+  vi.advanceTimersByTime(600);
+  f.up();
+  f.click(0);
+  expect(onTravel).not.toHaveBeenCalled();
+  state.stardust++;
   action.refresh();
   expect(action.element.getAttribute("aria-disabled")).toBeNull();
   f.click(0);

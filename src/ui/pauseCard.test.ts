@@ -348,6 +348,7 @@ const state = (change: Partial<PauseState> = {}): PauseState => ({
   map: MAP,
   place: "flight",
   ship: SHIP,
+  stardust: 50,
   towing: false,
   ...change,
 });
@@ -530,6 +531,7 @@ function mapState(places: readonly MapPlace[]): MapScreenState {
     inDanger: false,
     job: null,
     map: { ...MAP, places },
+    stardust: 50,
     towing: false,
   };
 }
@@ -537,6 +539,27 @@ function mapMeasurement() {
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "", length: 0 }));
   vi.stubGlobal("devicePixelRatio", 1);
 }
+
+it("keeps the priced Travel here button visible and disabled below 50 Stardust", () => {
+  mapMeasurement();
+  const { map, root } = standaloneMap();
+  try {
+    map.setState({ ...mapState([STATION]), stardust: 49 });
+    map.open();
+    map.locate(STATION.id);
+    const travel = root.querySelector('[data-action="map-travel"]')!;
+    expect(travel.hidden).toBe(false);
+    expect(travel.matches(":disabled")).toBe(true);
+    expect(travel.getAttribute("aria-label")).toBe("Travel here, 50 Stardust");
+    expect(travel.querySelector(".ui-control-label")?.textContent).toBe("Travel here");
+    expect(travel.querySelector(".ada-map-travel-cost")?.textContent).toBe("50");
+    map.setState(mapState([STATION]));
+    expect(root.querySelector('[data-action="map-travel"]')).toBe(travel);
+    expect(travel.matches(":disabled")).toBe(false);
+  } finally {
+    map.dispose();
+  }
+});
 
 function isMapTravelBinding(
   options: actionBinding.AdaActionOptions,
