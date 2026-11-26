@@ -1759,7 +1759,8 @@ export function batchCaptures(ctx) {
     ];
     const headings = [
       ["west", { x: -260, y: 0 }],
-      ["north", { x: 80, y: -210 }],
+      // Inside the 640 by 320 view, so the whole hull shows nose on to Ada.
+      ["north-east", { x: 150, y: -90 }],
     ];
     const cases = [
       ...ships.flatMap((ship) => headings.map((heading) => [ship, heading, false])),
