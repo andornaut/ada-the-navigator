@@ -69,4 +69,4 @@ what it clears and keeps.
 | ada-0356 | Fit Cheats in two columns and open it from game navigation               | [ada-0356.md](../work/ada-0356.md) |
 | ada-0372 | Keep full-save restart on the Start screen                               | [ada-0372.md](../work/ada-0372.md) |
 | ada-0382 | Remove the cheat session so cheats act on the real save                  | [ada-0382.md](../work/ada-0382.md) |
-| ada-0415 | Refill ammunition through Unlock all weapons                            | [ada-0415.md](../work/ada-0415.md) |
+| ada-0415 | Refill ammunition through Unlock all weapons                             | [ada-0415.md](../work/ada-0415.md) |
