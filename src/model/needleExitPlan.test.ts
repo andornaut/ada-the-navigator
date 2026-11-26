@@ -3,10 +3,17 @@ import { expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { encounterTable } from "../data/enemyCatalog.ts";
 import { NEEDLE } from "../data/needle.ts";
+import { createUnpopulatedFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import { planNeedleExit } from "./needleExitPlan.ts";
-import { initNeedle, needleCourses } from "./needleRuntime.ts";
+import {
+  initNeedle,
+  NEEDLE_CADENCE,
+  needleCadenceSite,
+  needleCadenceTransmission,
+  needleCourses,
+} from "./needleRuntime.ts";
 
 it("keeps authored swarm identities and ring geometry invariant under an anchor translation", () => {
   const center = { x: 4000, y: -2000 };
@@ -64,4 +71,60 @@ it("materializes the existing G4 swarm role once without adding a route leader o
     stationPopulationObjects(flight).filter((actor) => actor.enemy?.packId === "needle:exit"),
   ).toEqual(snapshot);
   expect(flight.needle!.exitPackPlaced).toBe(true);
+});
+
+it("admits the detour only after the last Eye gate and retries the other side when blocked", () => {
+  const model = new GameModel(CONTENT);
+  const progress = model.state.progress[4];
+  const flight = createUnpopulatedFlight(CONTENT, 4, 173, model.state.economy, 173);
+  const context = { content: CONTENT, flight, progress };
+  initNeedle(context);
+  const probes: { x: number; y: number }[] = [];
+  const placement = {
+    canPlace: (site: { x: number; y: number }) => probes.push(site) === 2,
+    hullReach: 92,
+    perception: 1540,
+    pursuitRadius: 1000,
+  };
+  Object.assign(progress.needle!, {
+    approach: "independent",
+    briefed: true,
+    eyeLit: NEEDLE.eyeGates - 1,
+    met: true,
+    practiceLit: NEEDLE.practiceGates,
+  });
+  expect(needleCadenceSite(context, placement)).toBeNull();
+  expect(probes).toHaveLength(0);
+  progress.needle!.eyeLit++;
+  const before = structuredClone(context.progress);
+  const disk = needleCourses(flight)!.eye.holodisk;
+  expect(needleCadenceSite(context, placement)).toEqual(probes[1]);
+  expect(probes).toHaveLength(2);
+  expect(probes[0]!.y).toBeGreaterThan(disk.y);
+  expect(probes[1]!.y).toBeLessThan(disk.y);
+  expect(context.progress).toEqual(before);
+  expect(needleCadenceSite(context, { ...placement, canPlace: () => false })).toBeNull();
+  progress.holodisk = true;
+  const admitted = needleCadenceSite(context, { ...placement, canPlace: () => true });
+  expect(admitted).toEqual(probes[0]);
+  progress.capitalBoss = { phase: "active", site: admitted! };
+  expect(needleCadenceSite(context, { ...placement, canPlace: () => true })).toBeNull();
+});
+
+it("projects one transmission from either saved outcome and names Archie only after reveal", () => {
+  const site = { x: 0, y: 0 };
+  expect(needleCadenceTransmission(undefined, false)).toBeNull();
+  expect(needleCadenceTransmission({ phase: "active", site }, true)).toBeNull();
+  for (const outcome of ["defeated", "salvaged"] as const) {
+    const boss = { cacheClaimed: false, outcome, phase: "resolved", site } as const;
+    const id = `${NEEDLE_CADENCE.id}:transmission`;
+    expect(needleCadenceTransmission(boss, false)).toEqual({
+      id,
+      text: "Orders from fleet command: Hold the exits. Recover every disk.",
+    });
+    expect(needleCadenceTransmission(boss, true)).toEqual({
+      id,
+      text: "Admiral Archie's orders: Hold the exits. Recover every disk.",
+    });
+  }
 });

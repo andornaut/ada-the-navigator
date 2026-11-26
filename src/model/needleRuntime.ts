@@ -1,8 +1,12 @@
+import { CAPITAL_CAPTAINS } from "../data/capitalCaptains.ts";
+import type { ConversationLine } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { NEEDLE, NEEDLE_PLACES } from "../data/needle.ts";
 import { NEEDLE_COPY, NEEDLE_LEARNING } from "../data/needleCopy.ts";
+import type { CapitalBossProgress } from "./capitalBossEncounter.ts";
 import type { ChapterContext, ChapterResult } from "./chapterProtocol.ts";
 import { ensureDestination, ensureDestinationAt, spawnChapterEnemy } from "./flight.ts";
+import { flightWorldContext } from "./flightTopology.ts";
 import {
   type NeedleApproach,
   needleCourses,
@@ -11,7 +15,11 @@ import {
   readNeedleProgress,
   stepNeedleCourse,
 } from "./needle.ts";
-import { planNeedleExit } from "./needleExitPlan.ts";
+import {
+  type NeedleCadencePlacement,
+  planNeedleCadence,
+  planNeedleExit,
+} from "./needleExitPlan.ts";
 import type {
   DialogueChoice,
   DialogueState,
@@ -53,6 +61,65 @@ const progressOf = (context: ChapterContext): NeedleChapterProgress =>
   });
 const stateOf = (context: ChapterContext) => (context.flight as ChapterFlight).needle;
 export { needleCourses } from "./needle.ts";
+export const NEEDLE_CADENCE = {
+  captain: CAPITAL_CAPTAINS.captainCadence.name,
+  id: "boss:needle:crossbow",
+  ship: "Crossbow",
+} as const;
+
+export const NEEDLE_CADENCE_CUES = {
+  approach: {
+    speaker: "captainCadence",
+    text: "Hold at the channel mouth. Fire when they come through.",
+  },
+  hardpoint: {
+    speaker: "ada",
+    text: "There's a pause between shots. I can use that.",
+  },
+  resolved: {
+    speaker: "astra",
+    text: "I picked up a transmission. I've saved it to our flight log.",
+  },
+} as const satisfies Record<string, ConversationLine>;
+
+/** The optional mark becomes eligible at the final gate, independently of disk collection. */
+export function needleCadenceSite(
+  context: ChapterContext,
+  placement: NeedleCadencePlacement,
+): Vec | null {
+  if (
+    context.flight.galaxy !== 4 ||
+    (context.progress as ChapterProgress).needle?.eyeLit !== NEEDLE.eyeGates ||
+    context.progress.capitalBoss
+  ) {
+    return null;
+  }
+  const courses = needleCourses(context.flight);
+  return courses
+    ? planNeedleCadence(
+        flightWorldContext(context.flight),
+        courses,
+        context.content.tuning.talkRange,
+        placement,
+      )
+    : null;
+}
+
+/** One log entry per outcome. The caller owns the completed-memory reveal gate. */
+export function needleCadenceTransmission(
+  boss: CapitalBossProgress | undefined,
+  archieRevealed: boolean,
+): { readonly id: string; readonly text: string } | null {
+  return boss?.phase === "resolved"
+    ? {
+        id: `${NEEDLE_CADENCE.id}:transmission`,
+        text: archieRevealed
+          ? "Admiral Archie's orders: Hold the exits. Recover every disk."
+          : "Orders from fleet command: Hold the exits. Recover every disk.",
+      }
+    : null;
+}
+
 /** Canonical placement and enemy helpers own world retention, pack accounting and physics. */
 export function initNeedle(context: ChapterContext): void {
   if (context.flight.galaxy !== 4) {
