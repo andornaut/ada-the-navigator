@@ -447,10 +447,9 @@ require a clear pair of sites off Pip's routes. If a safe pair is unavailable,
 the encounter stays unplaced. Pip's confession, repair and disk handover
 follow their existing steps regardless of the detour.
 
-Once placed, Broad Wing appears on the local map with no jump action. In
-combat the boss HUD shows Broad Wing, Captain Redact and current hull health.
-It clears on disengagement and restores the current hull on re-entry. With
-the disabled ship in reach and Salvage available, the HUD shows "Disabled".
+Once placed, Broad Wing appears on the local map with no jump action. The
+boss hull meter carries the "Captain Redact" badge. It clears on disengagement
+and restores the current hull on re-entry.
 [Redact's exchange](player-copy.md#captain-redact-and-broad-wing) covers the
 approach, first hardpoint loss while the ship remains active, and resolution.
 
@@ -523,10 +522,9 @@ normal-flight waypoint and the reserved field's rocks stay unavailable until
 resolution. Other ore fields remain available. The docking story and hub
 holodisk purchase follow their existing steps independently of the encounter.
 
-While the carrier is engaged, the boss HUD shows Outrigger Carrier, Captain
-Claim and its current hull health. It clears on disengagement and returns
-with current hull health on re-entry. A disabled carrier in reach with
-Salvage available shows "Disabled". [Claim's exchange](player-copy.md#captain-claim-and-outrigger-carrier)
+While the carrier is engaged, its hull meter carries the "Captain Claim"
+badge. It clears on disengagement and returns with current hull health on
+re-entry. [Claim's exchange](player-copy.md#captain-claim-and-outrigger-carrier)
 covers the approach, first hardpoint loss while the carrier remains active,
 and resolution.
 
@@ -718,15 +716,14 @@ space story runs in three acts:
    arrives when the last is destroyed, disabled or fled. The flagship and its
    escorts hold back until the third wave is gone.
 3. **The flagship.** Archie's own capital ([Ships](ships.md#archies-flagship))
-   then attacks. While engaged, the boss HUD shows "Archie's flagship",
-   "Admiral Archie" and its current hull health. It clears on disengagement and
+   then attacks. While engaged, the boss hull meter carries the "Admiral Archie"
+   badge. It clears on disengagement and
    returns with the current hull on re-entry. Astra reacts once when the first
    hardpoint is destroyed and the flagship stays active. Continue retains the
    cue until its first display. If the first hardpoint loss also disables the
    flagship on that hit, the fight goes straight to surrender.
    The flagship can be beaten only by disabling it. Its hull never drops below
-   1 HP. The boss HUD shows "Disabled" when Use offers Salvage, and Ada salvages
-   the last holodisk. Archie surrenders the disk, Astra's memory is complete, and
+   1 HP. When Use offers Salvage, Ada can recover the last holodisk. Archie surrenders the disk, Astra's memory is complete, and
    at Ada's request Astra shows him her whole map: galaxies past galaxies, without
    end. He relents and stays in Phantom to help the Blurbs mend the docks his
    blockades broke.
@@ -1177,6 +1174,11 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   character format as the count ("+44.4k"). Ore spent on shield recharge shows
   a "−10" tick under the ore count for each 10 ore paid, mirroring the gain
   ticks.
+- A boss hull meter has one dialogue-style name badge attached above its left
+  edge. Use the captain's name when available and the ship's name otherwise.
+  Hammer's badge reads "Captain Tally". Nothing appears below the meter.
+  When the disabled ship offers Salvage, the meter's accessible value text
+  reads "Disabled".
 - Weapon equip notice: when Ada's equipped weapon changes in flight, show its
   name in the [scan notice style](quests.md#completion-presentation). Center it
   below the top HUD icon row, clear of any visible boss bar. When it overlaps
