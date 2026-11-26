@@ -10,8 +10,9 @@ conversations, carried items and persistence.
 
 Stations with the jobs specialty have a board of small helping jobs. A job takes two to five
 minutes, reads simply for a 12-year-old and is non-violent at its core: no job
-asks Ada to destroy anything, and drones met on the way are incidental. Job
-targets keep 1000 world units clear of retained frigates, capitals and platforms.
+asks Ada to destroy anything, and drones met on the way are incidental. Ordinary
+job targets keep 1000 world units clear of retained frigates, capitals and
+platforms. Lost-item [exploration leads](#posted-leads) use this as a preference.
 
 ### Job board
 
@@ -258,7 +259,12 @@ resumes it, and a fresh entry starts it at zero.
   units from the issuer. Tow handling and completion at any known station or
   outpost are unchanged.
 - A lost-item lead's search area lies 3000 to 7000 world units from the issuer,
-  as for a board hunt.
+  as for a board hunt. When placing the lead and again on Scan, use the first
+  of the 24 seeded candidates at least 1000 world units from every retained
+  frigate, capital and platform. If all fall short, use the candidate farthest
+  from its nearest qualifying heavy, breaking ties by seeded order. Measure
+  the shortest wrapped distance. Heavy proximity cannot prevent placement
+  or posting of the Hunt lead.
 - A site posts at most one lead. A scanned site offers no further Scan.
 
 ## Captain Tally
