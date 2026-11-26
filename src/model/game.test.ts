@@ -191,6 +191,11 @@ function finishNeedle(model: GameModel): void {
     const course = needleCourses(model.state.flight!)![kind];
     for (const [index, gate] of course.gates.entries()) {
       const flight = model.state.flight!;
+      // Ambient ships and rocks play no part in lighting a gate, so each crossing meets only the
+      // region it generates and the channel's own debris.
+      flight.objects = flight.objects.filter(
+        (object) => object.kind !== "enemy" && object.kind !== "rock",
+      );
       flight.player = {
         x: gate.point.x - gate.tangent.x * 0.1,
         y: gate.point.y - gate.tangent.y * 0.1,
