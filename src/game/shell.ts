@@ -71,14 +71,18 @@ export class StoryShell {
     }
   }
 
-  render(state: GameState, screen: Screen, canContinue = state.started): void {
+  render(state: GameState, screen: Screen, canContinue = state.started, noticeOpacity = 1): void {
     const { flight } = state;
     this.status.dataset.mode = state.mode;
     this.status.dataset.x = String(flight?.player.x ?? 0);
     this.status.dataset.y = String(flight?.player.y ?? 0);
     const noticeChanged = this.status.textContent !== state.notice;
-    this.status.textContent = state.notice;
+    const opacity = noticeOpacity === 1 ? "" : String(noticeOpacity);
+    if (this.status.style.opacity !== opacity) {
+      this.status.style.opacity = opacity;
+    }
     if (noticeChanged) {
+      this.status.textContent = state.notice;
       assertAdaActionMetadata(this.status);
       if (this.status.isConnected) {
         assertAdaActionBindings(this.status);

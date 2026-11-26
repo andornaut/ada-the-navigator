@@ -61,7 +61,7 @@ class Element extends EventTarget {
   get nextSibling() {
     return this.parent?.children[this.parent.children.indexOf(this) + 1] ?? null;
   }
-  readonly style = { removeProperty() {}, setProperty() {} };
+  readonly style = { opacity: "", removeProperty() {}, setProperty() {} };
   removeAttribute(name: string): void {
     this.attributes.delete(name);
   }
@@ -455,6 +455,19 @@ it("unregisters disposed notice actions without replaying stale captures", () =>
   expect(f.resolve(status)).toBeNull();
   status.click();
   expect(dismiss).toHaveBeenCalledOnce();
+});
+
+it("only fades the current notice and resets opacity on a replacement", () => {
+  const { model, shell } = setup();
+  const status = host.children.find((node) => node.id === "game-status")!;
+  model.state.notice = "Current notice";
+  shell.render(model.state, "space", true, 0.5);
+  expect(status.textContent).toBe("Current notice");
+  expect(status.style.opacity).toBe("0.5");
+  model.state.notice = "Replacement";
+  shell.render(model.state, "space");
+  expect(status.textContent).toBe("Replacement");
+  expect(status.style.opacity).toBe("");
 });
 
 it("checks constructor-owned notice controls after semantic registration", () => {
