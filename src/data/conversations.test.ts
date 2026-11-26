@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { controlHelpText } from "../ui/controlHelp.ts";
 import { SHIELD_PILL } from "../ui/layout/playView.ts";
 import { ANDROMEDA_CHAPTER } from "./andromeda.ts";
-import { SUNFLOWER_BOSS_CUES } from "./capitalBosses.ts";
+import { SUNFLOWER_BOSS_CUES, WHIRLPOOL_BOSS_CUES } from "./capitalBosses.ts";
 import { CONTROL_WORDS } from "./controlWords.ts";
 import {
   ARCHIE_NAMED,
@@ -47,7 +47,7 @@ function spokenLines(text: string): { mood?: string; name: string; text: string 
         "Admiral Archie:",
       )
       .matchAll(
-        /(Astra|Ada|Penny|Unknown voice|Admiral Archie|Captain Tally): "([^"]+)"(?: \((happy|neutral|upset)\))?/gu,
+        /(Astra|Ada|Penny|Unknown voice|Admiral Archie|Captain \w+): "([^"]+)"(?: \((happy|neutral|upset)\))?/gu,
       ),
     ([, name = "", line = "", mood]) => (mood ? { mood, name, text: line } : { name, text: line }),
   );
@@ -132,6 +132,15 @@ describe("in-flight conversations", () => {
       text: written(text),
     }));
     expect(cues).toEqual(spokenLines(passage("## Captain Tally and Hammer")));
+  });
+
+  it("matches the actual Whirlpool boss cues to the authored radio lines in order", () => {
+    const cues = Object.values(WHIRLPOOL_BOSS_CUES).map(({ speaker, text }) => ({
+      name: SPEAKERS[speaker].name,
+      text: written(text),
+    }));
+    const authored = passage("### Captain Sounder and Manta Dreadnought", "Home resolution:");
+    expect(cues).toEqual(spokenLines(authored));
   });
 
   it("speaks exactly the four authored Phantom battle cues with their moods and known Admiral", () => {
