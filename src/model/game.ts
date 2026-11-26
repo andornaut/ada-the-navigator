@@ -750,6 +750,10 @@ export class GameModel {
     if (!f || this.screen !== "space" || this.state.dialogue || this.state.docked) {
       return;
     }
+    // The family's charted waypoint can display before Sounder releases the disk body.
+    if (f.galaxy === 3 && id === "holodisk" && !this.floatingHolodisk(f)) {
+      return;
+    }
     acknowledgeHostileStationIdentification(this.state.progress[f.galaxy], f, id);
     const store = this.markerStore(f);
     if (store.get(id) === "identified") {

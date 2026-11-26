@@ -1,13 +1,17 @@
 import { expect, it } from "vitest";
 
+import { WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
+import { FRIGATE_ESCORT_COUNT } from "../data/enemyCatalog.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import { relaunch } from "../testing/launch.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { routeBlocked } from "./flight.ts";
+import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
+import { escortPackId, worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import { readRequiredPlan } from "./requiredEncounterPlans.ts";
 
@@ -104,7 +108,7 @@ it("preserves hidden full states through Continue and retains site coordinates a
   expect(next.combat?.emptyRoutePlans).toBeUndefined();
 });
 
-it("keeps the real G3 holodisk leader and pack outside Sunflower required-site planning", () => {
+it("keeps Sounder and the disk formation outside Sunflower required-site planning", () => {
   const model = new GameModel(CONTENT);
   model.state.unlocked = [1, 3];
   model.state.prologueSeen = true;
@@ -123,15 +127,35 @@ it("keeps the real G3 holodisk leader and pack outside Sunflower required-site p
   expect(flight.galaxy).toBe(3);
   expect(Object.keys(flight.requiredPlans ?? {})).toEqual([]);
   model.step(SIMULATION_STEP_SECONDS, idle);
-  expect(flight.objects.some(({ id }) => id === "holodisk")).toBe(true);
+  expect(flight.objects.some(({ id }) => id === "holodisk")).toBe(false);
+  const site = model.state.progress[3].requiredSites!.holodisk!;
+  expect(model.map?.places.find(({ id }) => id === "holodisk")).toMatchObject(site);
   const population = stationPopulationObjects(flight);
   const leader = population.find((actor) => actor.routeId === "holodisk");
-  expect(leader?.enemy?.archetype).toBe(HOLODISKS.guard.leader);
-  const pack = population.filter((actor) => actor.enemy?.packId === "route:holodisk:pack");
+  expect(leader).toMatchObject({ enemy: { archetype: "capital" }, id: WHIRLPOOL_CAPITAL_BOSS.id });
+  const { id, swarmPack } = WHIRLPOOL_CAPITAL_BOSS;
+  const escortPack = escortPackId(id);
+  const escorts = population.filter((actor) => actor.enemy?.escortOf === id);
+  expect(escorts).toHaveLength(FRIGATE_ESCORT_COUNT);
+  expect(
+    escorts.every(
+      (actor) =>
+        actor.enemy?.archetype === "fighter" &&
+        actor.enemy.packId === escortPack &&
+        actor.persistent,
+    ),
+  ).toBe(true);
+  const pack = population.filter((actor) => actor.enemy?.packId === swarmPack);
   expect(pack).toHaveLength(HOLODISKS.guard.packSize);
   expect(
     pack.every((actor) => actor.enemy?.archetype === HOLODISKS.guard.pack && actor.persistent),
   ).toBe(true);
+  expect(flight.combat?.initialPackSizes[swarmPack]).toBe(HOLODISKS.guard.packSize);
+  expect(flight.combat?.initialPackSizes[escortPack]).toBe(FRIGATE_ESCORT_COUNT);
+  flight.player = { x: site.x + 20000, y: site.y };
+  worldSyncFlightRegion(flightWorldContext(flight), CONTENT, flight);
+  expect(flight.objects.some((actor) => actor.id === id)).toBe(false);
+  expect(flight.world.notables[id]).toBe(leader);
   expect(routeBlocked("holodisk", flight)).toBe(true);
   expect(relaunch(CONTENT, model.save()).state).toEqual(model.state);
 });

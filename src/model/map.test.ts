@@ -372,12 +372,26 @@ describe("galaxy map", () => {
     const model = new GameModel(CONTENT);
     model.state.unlocked = [1, 2, 3];
     model.startGalaxy(3);
-    Object.assign(model.state.progress[3], { introduced: true, questComplete: true, stage: 5 });
-    model.state.dialogue = null;
+    const progress = model.state.progress[3];
+    Object.assign(progress, {
+      introduced: true,
+      questComplete: true,
+      sounder: { phase: "hidden" },
+      stage: 5,
+    });
+    model.state.dialogue = {
+      choices: [{ id: "continue", label: "Continue" }],
+      context: "holodiskLead",
+      text: CONTENT.chapters[3]!.dialogue.holodiskLead!.text,
+      title: "Whale family",
+    };
     const flight = model.state.flight!;
     expect(model.map?.places.some(({ kind }) => kind === "holodisk")).toBe(false);
-    model.step(0.01, IDLE);
-    const disk = flight.objects.find((o) => o.kind === "destination" && o.id === "holodisk")!;
+    model.choose("continue");
+    expect(model.state.dialogue?.context).toBe("holodiskLeadSong");
+    expect(progress.sounder?.phase).toBe("active");
+    expect(flight.objects.some(({ id }) => id === "holodisk")).toBe(false);
+    const site = progress.requiredSites!.holodisk!;
     expect(model.map?.places.find(({ kind }) => kind === "holodisk")).toEqual({
       id: "holodisk",
       job: false,
@@ -387,8 +401,8 @@ describe("galaxy map", () => {
       symbol: "holodisk",
       taskCategory: "story",
       travel: false,
-      x: disk.x,
-      y: disk.y,
+      x: site.x,
+      y: site.y,
     });
     model.state.progress[3].holodisk = true;
     expect(model.map?.places.some(({ kind }) => kind === "holodisk")).toBe(false);

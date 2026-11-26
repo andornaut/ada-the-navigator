@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
@@ -9,6 +10,7 @@ import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { relaunch } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import {
+  activeEnemyBeams,
   activeProjectileImpacts,
   arrivalGraceActive,
   beginArrivalGrace,
@@ -16,7 +18,9 @@ import {
   routeBlocked,
   stepFlight,
 } from "./flight.ts";
+import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
+import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import { readRequiredPlan } from "./requiredEncounterPlans.ts";
 import { stationInCell, type StationSite } from "./stations.ts";
@@ -99,7 +103,6 @@ function answerTime(
   seconds: number,
 ): { answered: number | null; hit: boolean } {
   const flight = model.state.flight!;
-  const known = new Set(flight.shots.filter((shot) => shot.enemy).map((shot) => shot.id));
   const integrity = () =>
     target.enemy!.hp + target.enemy!.hardpoints.reduce((sum, part) => sum + part.hp, 0);
   const start = integrity();
@@ -110,6 +113,8 @@ function answerTime(
     const length = Math.hypot(aim.x, aim.y) || 1;
     model.state.dialogue = null;
     flight.shield = shieldMax;
+    const known = new Set(flight.shots.filter((shot) => shot.enemy).map((shot) => shot.id));
+    const seenBeams = new Set(activeEnemyBeams(flight).filter((beam) => beam.fired));
     model.step(SIMULATION_STEP_SECONDS, {
       ...idle,
       aim: hitAt === null ? { x: aim.x / length, y: aim.y / length } : { x: 0, y: 0 },
@@ -117,7 +122,13 @@ function answerTime(
     if (hitAt === null && integrity() < start) {
       hitAt = t;
     }
-    if (hitAt !== null && flight.shots.some((shot) => shot.enemy && !known.has(shot.id))) {
+    if (
+      hitAt !== null &&
+      (flight.shots.some((shot) => shot.enemy && !known.has(shot.id)) ||
+        activeEnemyBeams(flight).some(
+          (beam) => beam.ownerId === target.id && beam.fired && !seenBeams.has(beam),
+        ))
+    ) {
       return { answered: t - hitAt, hit: true };
     }
   }
@@ -431,8 +442,8 @@ describe("guards fire back wherever Ada attacks from", () => {
     expect(answered!).toBeLessThanOrEqual(3);
   });
 
-  it("answers within three seconds when Ada fires on Whirlpool's holodisk guard frigate from beside its site", () => {
-    const model = new GameModel(content);
+  it("answers within three seconds when Ada fires on Sounder's Manta Dreadnought from beside its site", () => {
+    const model = new GameModel(content, undefined, () => 173);
     model.state.unlocked = [1, 3];
     model.state.prologueSeen = true;
     model.state.progress[1].holodisk = true;
@@ -449,16 +460,31 @@ describe("guards fire back wherever Ada attacks from", () => {
     const flight = model.state.flight!;
     model.step(SIMULATION_STEP_SECONDS, idle);
     outlastGrace(model);
-    const leader = stationPopulationObjects(flight).find((actor) => actor.routeId === "holodisk")!;
-    expect(leader.enemy?.archetype).toBe("frigate");
-    flight.objects = flight.objects.filter(
-      (actor) => actor.kind !== "enemy" || actor.id === leader.id,
-    );
-    const site = flight.objects.find((actor) => actor.id === "holodisk")!;
+    const leader = stationPopulationObjects(flight).find(
+      ({ id }) => id === WHIRLPOOL_CAPITAL_BOSS.id,
+    )!;
+    expect(leader.enemy?.archetype).toBe("capital");
+    expect(routeBlocked("holodisk", flight)).toBe(true);
+    const site = model.state.progress[3].requiredSites!.holodisk!;
     const out = { x: leader.x - site.x, y: leader.y - site.y };
     const reach = Math.hypot(out.x, out.y);
     flight.player = { x: site.x + (out.x / reach) * 100, y: site.y + (out.y / reach) * 100 };
     flight.velocity = { x: 0, y: 0 };
+    expect(Math.hypot(flight.player.x - site.x, flight.player.y - site.y)).toBeLessThan(
+      content.tuning.exclusionRadius,
+    );
+    const world = flightWorldContext(flight);
+    worldSyncFlightRegion(world, content, flight);
+    model.step(SIMULATION_STEP_SECONDS, idle);
+    // Only the actual leader can supply the fresh response after Ada lands a hit.
+    for (const actor of stationPopulationObjects(flight)) {
+      if (actor.kind === "enemy" && actor !== leader) {
+        worldRecordObjectRemoval(world, content, actor, flight);
+      }
+    }
+    flight.objects = flight.objects.filter((actor) => actor.kind !== "enemy" || actor === leader);
+    flight.shots = [];
+    expect(flight.objects).toContain(leader);
     const { answered, hit } = answerTime(model, leader, 8);
     expect(hit).toBe(true);
     expect(answered).not.toBeNull();

@@ -2,6 +2,7 @@ import { seededRandom } from "@andornaut/game-kit/runtime/random";
 import { expect, it } from "vitest";
 
 import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
+import { WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATION_TUNING, CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
@@ -16,8 +17,13 @@ import {
   pennyInstance,
   pennyPoints,
 } from "./conversations.ts";
+import { damageEnemy } from "./enemyAi.ts";
+import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import { ensureStation } from "./flight.ts";
+import { flightWorldContext } from "./flightTopology.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
+import { worldSyncFlightRegion } from "./geography.ts";
+import { stationPopulationObjects } from "./hostileStations.ts";
 import { flightLandmarkSites, landmarkSites } from "./landmarks.ts";
 import { stardustPickupReach } from "./pickupBody.ts";
 import { ambientSecondThread } from "./poiDiscourse.ts";
@@ -303,13 +309,36 @@ it("queues Whirlpool holodisk lore only for the loaded body without recovering i
   const words = deck[3].storyPlace.holodisk.map(({ text }) => text);
   model.markerTargetDisplayed("holodisk");
   expect(hear(model, 0.05).filter((line) => words.includes(line))).toEqual([]);
-  model.state.progress[3].questComplete = true;
+  const progress = model.state.progress[3];
+  progress.questComplete = true;
   model.step(0.05, idle);
-  expect(
-    model.state.flight!.objects.some(({ id, kind }) => id === "holodisk" && kind === "destination"),
-  ).toBe(true);
-  const disk = model.state.flight!.objects.find(({ id }) => id === "holodisk")!;
-  model.state.flight!.player = { x: disk.x + 300, y: disk.y };
+  const flight = model.state.flight!;
+  const site = progress.requiredSites!.holodisk!;
+  flight.player = { x: site.x + 300, y: site.y };
+  worldSyncFlightRegion(flightWorldContext(flight), CONTENT, flight);
+  expect(model.map?.places.find(({ id }) => id === "holodisk")).toMatchObject(site);
+  expect(flight.objects.some(({ id }) => id === "holodisk")).toBe(false);
+  model.markerTargetDisplayed("holodisk");
+  settleUnrelatedCues(model);
+  model.step(0.05, idle);
+  expect(words).not.toContain(model.conversation?.text);
+  expect(progress.sounder?.phase).toBe("active");
+  const sounder = stationPopulationObjects(flight).find(
+    ({ id }) => id === WHIRLPOOL_CAPITAL_BOSS.id,
+  )!;
+  const definition = enemyEquipmentDefinition(3, sounder.enemy!);
+  for (const part of definition.hardpoints.filter(({ kind }) => kind === "weapon")) {
+    sounder.enemy = damageEnemy(
+      definition,
+      { amount: part.hp, hardpointId: part.id },
+      sounder.enemy!,
+    );
+  }
+  expect(sounder.enemy?.disabled).toBe(true);
+  model.step(0.05, idle);
+  expect(progress.sounder).toEqual({ outcome: "disabled", phase: "resolved" });
+  const disk = flight.objects.find(({ id }) => id === "holodisk");
+  expect(disk).toMatchObject({ ...site, kind: "destination" });
   model.markerTargetDisplayed("holodisk");
   model.markerTargetDisplayed("holodisk");
   expect(hear(model).filter((line) => words.includes(line))).toHaveLength(1);
