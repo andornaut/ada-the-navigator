@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { lineDuration } from "../data/conversations.ts";
 import { immutableScanOutcome, type ScanOutcome } from "../model/scanOutcomes.ts";
 import {
   scanFeedbackContents,
@@ -90,6 +91,29 @@ describe("authoritative scan presentation receipts", () => {
     expect(queue.frame(context, 250)).toEqual({ ...first, opacity: 0.5 });
     expect(queue.frame(context, 0)).toBeNull();
     expect(queue.length).toBe(0);
+  });
+  it("gives task prose dialogue reading time including the fade and pauses it under a cover", () => {
+    const queue = new ScanFeedbackQueue();
+    const task = { id: "follow-up", text: "Bring the transmitter to the station for repairs." };
+    queue.enqueue([
+      receipt([
+        { kind: "task", quest, task },
+        { kind: "quest", quest },
+      ]),
+    ]);
+
+    const duration = lineDuration(task.text) * 1000;
+    expect(queue.frame(context, duration - 500)).toMatchObject({
+      content: { text: task.text },
+      opacity: 1,
+    });
+    expect(queue.frame(context, 250)).toMatchObject({ opacity: 1 });
+    expect(queue.frame({ covered: true }, 10000)).toBeNull();
+    expect(queue.frame(context, 250)).toMatchObject({ opacity: 0.5 });
+    expect(queue.frame(context, 2000)).toMatchObject({
+      content: { text: quest.name },
+      opacity: 1,
+    });
   });
   it("does not advance on repeated native refreshes at the same scene time", () => {
     const queue = new ScanFeedbackQueue();

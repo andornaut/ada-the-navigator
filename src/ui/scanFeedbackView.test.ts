@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { visualNoticeTiming } from "../data/noticeTiming.ts";
 import { immutableScanOutcome, type ScanOutcome } from "../model/scanOutcomes.ts";
 import { fromHudEdge } from "./layout/css.ts";
 import { STATUS_PILL } from "./layout/playView.ts";
 import { SPACING } from "./layout/tokens.ts";
-import { SCAN_FEEDBACK_TIMING } from "./scanFeedback.ts";
 import { createScanFeedbackView } from "./scanFeedbackView.ts";
 class Node {
   readonly style = Object.assign({ setProperty: vi.fn() }, {} as Record<string, string>);
@@ -160,9 +160,9 @@ describe("native scan receipt view", () => {
     view.render({ ...context, covered: true }, 10000);
     expect(panel.hidden).toBe(true);
     expect(panel.style.display).toBe("none");
-    view.render(context, SCAN_FEEDBACK_TIMING.holdMs);
+    view.render(context, visualNoticeTiming("brief", "").holdMs);
     expect(panel.style.opacity).toBe("1");
-    view.render(context, SCAN_FEEDBACK_TIMING.fadeMs);
+    view.render(context, visualNoticeTiming("brief", "").fadeMs);
     view.render(context, 0);
     expect(panel.hidden).toBe(true);
     view.enqueue([outcome]);
@@ -172,7 +172,7 @@ describe("native scan receipt view", () => {
   it("changes only opacity during the fade and keeps its native node and position through dialogue", () => {
     const { panel, view } = setup();
     view.enqueue([receipt()]);
-    view.render(context, SCAN_FEEDBACK_TIMING.holdMs);
+    view.render(context, visualNoticeTiming("brief", "").holdMs);
     const left = panel.style.left;
     const top = panel.style.top;
     view.render(context, 250);

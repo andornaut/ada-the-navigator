@@ -404,6 +404,25 @@ follow the shield icon's current HUD-relative centre.
 - The conversation box's bottom (125.5) sits at least 24 above the ship's drawn
   top at the 360-high view (42.02).
 
+### Flight notice timing
+
+Timed notices count only visible time. A cover pauses the current phase until
+the notice is visible again.
+
+- **Short.** Stardust and Ore gain and debit labels (`+N` and `-N`) and ammo
+  gain labels (`+N`) hold for 600 ms and fade for 300 ms. With reduced motion
+  they hold for 750 ms and fade for 150 ms. Either mode takes 900 ms. Resource
+  labels rise 4 px during the normal ease-out fade and fade in place with
+  reduced motion. Ammo labels fade in place by their weapon in both modes.
+- **Medium.** Brief flight notices and scan receipts hold for 2000 ms and fade
+  for 500 ms.
+- **Dynamic.** Longer text-bearing notices use dialogue's `lineDuration(text)`
+  for their total visible time (currently 3 s plus 30 ms per character). Any
+  fade used by the notice fits within that total.
+- **Persistent.** A status such as saving unavailable stays eligible until its
+  condition clears. If a higher-priority message takes the slot, the status
+  returns when the slot is free and the condition still holds.
+
 ### Status pill
 
 Constants: `STATUS_PILL`, `playView.ts`. Colours and contrast
@@ -432,9 +451,8 @@ Quests closes back to the paused map through its existing navigation.
 | Pickup | The Stardust count increases | The count shows the new total at once and bumps; a `+N` label in `TYPE.label` with a 1 px ink outline under it | Bump: scale 1 to 1.12 to 1, 200 ms ease-out, origin left centre, at most once per 200 ms. |
 | Ore    | The ore count increases      | As Pickup, for the ore count and an ore `+N` label in the ore tick colour                                      | As Pickup                                                                                 |
 
-- Gain and debit labels both last 900 ms. They hold for 600 ms, then rise 4 px
-  and fade out over 300 ms ease-out. With reduced motion they hold for 750 ms
-  and fade out in place over 150 ms.
+- Gain and debit labels use the short cadence in
+  [Flight notice timing](#flight-notice-timing).
 - Each `+N` label sits under its own count: its 20 line box top
   `STATUS_PILL.tick.top` 27 below the count's line box top, which is
   `(PILL.height + TYPE.label.lineHeight) / 2 + STATUS_PILL.tick.gap` with the
@@ -626,7 +644,7 @@ around the game area's perimeter while the view gives its small shake
 
 Constants: `ITEM_NOTICE`, `itemNotice.ts`. Colours, icons and
 contrast are in [Controls](controls.md#item-notice). Gameplay's rule: every
-gain but Stardust and ore shows one, queued one at a time.
+gain except Stardust, Ore and ammo shows one, queued one at a time.
 
 | Part     | Geometry                                                                                                                                                                 |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -642,7 +660,7 @@ Destinations, at HUD rect top + 16.5 (the HUD row's centre line) on the y axis:
 | Gain                                           | Destination centre x                                                                                                                                                                           |
 | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Job, story or lost item, a tow                 | The cargo segment's icon: pill left + pill width - 16                                                                                                                                          |
-| New weapon, a weapon's ammo                    | That weapon's disc: its target's left + 24                                                                                                                                                     |
+| New weapon                                     | That weapon's disc: its target's left + 24                                                                                                                                                     |
 | Holodisk                                       | None; the chip centres on the pill and fades in place                                                                                                                                          |
 | Weapon level                                   | That weapon's disc: its target's left + 24                                                                                                                                                     |
 | Shield level                                   | The shield pill's shield icon: the shield pill's left + 15 (the icon box's centre), on the pill's centre line (y 334 at the 720 base, 327 with phone insets, 356 at 1280x720), not the HUD row |
@@ -683,8 +701,7 @@ collapse, fly or bump.
   after the previous one lands or fades. When a gain queues during a hold,
   that hold ends at 600 if still ahead, else at once.
 - Merge: a gain with the same label as a waiting or holding notice joins it;
-  the label shows the total, "+ Rapid Missile ammo ×2", and a holding notice
-  restarts its hold. Once a notice's Collapse starts, an identical gain queues
+  the label shows the total, and a holding notice restarts its hold. Once a notice's Collapse starts, an identical gain queues
   a new one. The chip keeps its centring rule and moves at once to fit its
   new width.
 - The chip hides with the pill while a modal card or storybook page shows,
@@ -706,20 +723,18 @@ it hidden the pill starts 50.75 further left and the room grows by as much:
 | 844x390               |     91.75 |       375.75 | 318.75 | 261.75 |
 | 844x390, insets 43    |     93.75 |       371.75 | 314.75 | 257.75 |
 
-The widest labels: "+ Heavy Missile ammo ×9" 193.00 (6.75 to spare in the
-smallest room), "+ Drifting lamp buoy" 155.12, "+ Heavy Missile" 118.74. A
-label wider than its room draws in `TYPE.body` instead ("+ Heavy Missile ammo
-×99" is 201.90 bold and 192.96 regular); it never wraps or truncates.
+Example labels are "+ Drifting lamp buoy" at 155.12 and "+ Heavy Missile" at
+118.74. A label wider than its room draws in `TYPE.body` without wrapping or
+truncating.
 
 Holds at the 720 base, with the pause button showing:
 
-| Case                                                  | Chip           |     Destination centre | Clearance to the leftmost target |
-| ----------------------------------------------------- | -------------- | ---------------------: | -------------------------------: |
-| "+ Spare parts", "1200" and "18", cargo, four weapons | 134.23, 278.05 |         206.14 (cargo) |                           218.45 |
-| "+ Scrap barge", "1200", tow, four weapons            | 77.21, 225.48  |           151.34 (tow) |                           271.02 |
-| "+ Phaser", the fifth weapon                          | 314.34, 423.50 |        691.50 (Phaser) |                     16 (clamped) |
-| "+ Holodisk", "1200" and "18", four weapons           | 64.27, 187.62  |          125.95 (pill) |                           308.88 |
-| "+ Heavy Missile ammo ×9", insets, six                | 100.50, 335.50 | 546.50 (Heavy Missile) |                     16 (clamped) |
+| Case                                                  | Chip           | Destination centre | Clearance to the leftmost target |
+| ----------------------------------------------------- | -------------- | -----------------: | -------------------------------: |
+| "+ Spare parts", "1200" and "18", cargo, four weapons | 134.23, 278.05 |     206.14 (cargo) |                           218.45 |
+| "+ Scrap barge", "1200", tow, four weapons            | 77.21, 225.48  |       151.34 (tow) |                           271.02 |
+| "+ Phaser", the fifth weapon                          | 314.34, 423.50 |    691.50 (Phaser) |                     16 (clamped) |
+| "+ Holodisk", "1200" and "18", four weapons           | 64.27, 187.62  |      125.95 (pill) |                           308.88 |
 
 Weapon level dots use `HUD_WEAPON_LEVEL.below`, derived from the containing
 ring's stroke centre: 14.5 below the disc centre. Level 1 shows no dot; levels
@@ -736,7 +751,9 @@ Constants: `HUD_AMMO_COUNT`, `playView.ts`. It replaces the
 placeholder count label (idle lavender, 38 to 58 below the target top).
 Colours, states and contrast are in [Controls](controls.md#ammunition-count).
 Each owned non-Laser weapon's `HUD_BUTTON` carries one pill showing Gameplay's
-ammunition count string; Laser shows none.
+ammunition count string; Laser shows none. An ammo gain shows `+N` below that
+weapon's count pill using the short cadence in
+[Flight notice timing](#flight-notice-timing).
 
 | Part     | Geometry                                                                                                                                                            |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

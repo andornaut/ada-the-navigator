@@ -1,7 +1,6 @@
+import { visualNoticeTiming } from "../data/noticeTiming.ts";
 import type { ScanOutcome, ScanQuestIdentity } from "../model/scanOutcomes.ts";
 import { chipGlyph } from "./mapScreen.ts";
-
-export const SCAN_FEEDBACK_TIMING = { fadeMs: 500, holdMs: 2000 } as const;
 
 export interface ScanFeedbackContent {
   readonly checkbox: boolean;
@@ -73,6 +72,7 @@ export interface ScanFeedbackContext {
 
 interface Pending {
   readonly content: ScanFeedbackContent;
+  readonly timing: ReturnType<typeof visualNoticeTiming>;
   elapsed: number;
   sampledAt?: number;
   sampledElapsed?: number;
@@ -92,7 +92,11 @@ export class ScanFeedbackQueue {
       }
       this.received.add(outcome);
       this.pending.push(
-        ...scanFeedbackContents(outcome).map((content) => ({ content, elapsed: 0 })),
+        ...scanFeedbackContents(outcome).map((content) => ({
+          content,
+          elapsed: 0,
+          timing: visualNoticeTiming(content.kind === "task" ? "reading" : "brief", content.text),
+        })),
       );
     }
   }
@@ -111,7 +115,7 @@ export class ScanFeedbackQueue {
     }
     const sameTime = context.time !== undefined && next.sampledAt === context.time;
     const elapsed = sameTime ? next.sampledElapsed! : next.elapsed;
-    const { fadeMs, holdMs } = SCAN_FEEDBACK_TIMING;
+    const { fadeMs, holdMs } = next.timing;
     const duration = holdMs + fadeMs;
     if (elapsed >= duration) {
       this.pending.shift();
