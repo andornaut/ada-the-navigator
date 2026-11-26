@@ -13,10 +13,9 @@ jump.
   as `allies`. Reruns are byte-identical.
 - Nothing is labelled: no text, signs or letters are drawn on or beside any
   craft.
-- Phantom is a dark field, `#514955`, with a white foreground edge
-  (`#FFFFFF`, [Light fields](galaxies.md#light-fields)): every ally, new craft,
-  reused story craft and whale alike, draws over its 1 px white keyline, 8.63:1
-  on the field.
+- Phantom is a dark field, `#514955`, with the ink foreground edge
+  (`#181425`, [Light fields](galaxies.md#light-fields)): every ally, new craft,
+  reused story craft and whale alike, draws over its 1 px ink keyline.
 
 ## Craft
 
@@ -64,7 +63,7 @@ Every new craft is a non-hostile story craft in the
 | `reed`         | Reed's glider (Needle)     |    80 |      35 | `#b9cfae` |       5.18:1 | Dumbbell: sage command ball and engine ball on a spine, rose thread bands                    |
 
 Contrast is WCAG against Phantom's `#514955`. The trainee's slate-blue hull,
-the lowest at 2.94:1, reads by its white edge. The student's ring reads
+the lowest at 2.94:1, draws over the ink keyline. The student's ring reads
 apart from [Elder Loom's saucer](needle.md#elder-looms-saucer) and from Reed's
 two sage balls; the courier trainee reverses Pip's cream and periwinkle and
 adds a tandem pod.
@@ -153,8 +152,8 @@ view.
   Over the tint, the rim `#b2a2cf` is 3.17:1, a ripple at its strongest
   `#7d718b` 1.63:1 and the drone ring `#cbb8ee` 4.12:1. Rendered at 1280x720
   and 720x360, the rim samples 3.22:1 and 3.18:1 and the drone ring 4.18:1.
-- The drone ring stays in the song's glow, apart from the white foreground
-  edge on the drone inside it.
+- The drone ring stays in the song's glow, apart from the ink foreground edge
+  on the drone inside it.
 
 ## Ally jump
 

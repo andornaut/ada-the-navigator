@@ -55,7 +55,7 @@ A model or paint change regenerates all of these, in this order:
 - `node art/tools/ship-contact-sheet.ts <directory>` draws review sheets from
   the published data: all 64 headings idle and at full thrust, the six paints,
   the jets by Engine level and the canopy at every heading, on a light field
-  with the ink keyline and on Phantom with the white edge.
+  and on Phantom, each with the ink keyline.
 - Runtime tests that read the ship art: `shipMaterials`, `shipArt`,
   `shipHeading64`, `shipJets`, `staticShipJets`, `reverseJets`, `retroClip`,
   `retroProfile`, `normalAperture`, `normalMaterialPolicy`, `normalJetDepth`,

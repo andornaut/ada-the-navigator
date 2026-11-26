@@ -348,11 +348,11 @@ cameras and the opening size).
 
 Area-tone caps preserve the galaxy's existing reference: its brightest backdrop
 tone on a dark field, or darkest on a light field. The reference includes fixed
-haze or band peaks where applicable. Recognition checks use the actual emitted
-foreground boundary independently of the palette's light/dark classification.
-All opened area samples must retain at least that boundary's contrast against
-the unchanged reference, within the existing 0.005 tolerance. Legacy dark fields
-without a boundary retain their direct signal checks.
+haze or band peaks where applicable. Recognition checks use the ink keyline on
+each light field: all opened area samples must retain at least the ink's
+contrast against the unchanged reference, within the existing 0.005 tolerance.
+Phantom's dark field takes the same ink with no recognition floor, so its
+`check` records no signal.
 
 The 5:1 field requirement applies to the base background and its recognition
 edge, not every bare ship fill over every formation. Separate diagnostics derive
@@ -393,7 +393,7 @@ Measured over the sampled cameras:
 | Needle    | 5.282 / 7.974                                 | 1.696 / 3.372                     |
 | Andromeda | 3.592 / 4.178                                 | 2.675 / 1.767                     |
 | Cartwheel | 4.036 / 5.727                                 | 2.247 / 2.422                     |
-| Phantom   | 4.848 / 6.136                                 | 6.136 / 1.000                     |
+| Phantom   | None                                          | 6.136 / 1.000                     |
 
 ## Placeholder galaxies
 

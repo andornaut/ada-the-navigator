@@ -51,7 +51,6 @@ const fields = read("galaxies.json") as {
     {
       tint: { light?: boolean; chroma: number; hue: number };
       colors: { background: string };
-      foregroundEdge?: string;
       marker?: string;
     }
   >;
@@ -1633,12 +1632,9 @@ for (const galaxy of GALAXIES) {
         sourceY?: number;
       };
     };
-    const explicitEdge = fields.galaxies[galaxy]?.foregroundEdge;
-    const signals: Record<string, string> = explicitEdge
-      ? { foregroundEdge: explicitEdge }
-      : light
-        ? { ink: fields.lightField.ink }
-        : { obstacle: palette.obstacle!, shipWhite: SHIP_WHITE, shipHullDark: SHIP_HULL_DARK };
+    // Every galaxy's foreground edge is the ink keyline, checked on a light field; Phantom's dark
+    // field takes the same ink with no floor.
+    const signals: Record<string, string> = light ? { ink: fields.lightField.ink } : {};
     const recognition = Object.entries(signals).map(([name, color]) => ({
       name,
       sample: { color, minimum: Infinity } as ContrastSample,

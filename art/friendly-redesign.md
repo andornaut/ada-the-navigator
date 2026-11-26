@@ -21,8 +21,8 @@ Stations, outposts, enemy ships and Ada's ship are outside this plan.
   has wings, fins, blades or a red hull or lamp.
 - Galaxy beacons, buoys and gates are the smallest members of their galaxy's
   station family and take its palette.
-- The shipped frames carry no keyline. The game draws the 1 px ink keyline on
-  light fields and Phantom's white edge.
+- The shipped frames carry no keyline. The game draws the 1 px ink keyline in
+  every galaxy.
 
 ## Pipeline
 
@@ -315,9 +315,8 @@ table are the rest frame's.
   collision part is the convex hull of the pair.
 - The holodisk is a black disc in the ink family (`#3a3448`, `#2a2536`,
   `#181425`) with the pink hologram ring `#e868c8` and a dark hub. The
-  waypoint beacon's dish takes the same ramp under its pink lamp. On light
-  fields the body merges with the ink keyline and the ring carries the read;
-  on Phantom's field the white edge outlines the body.
+  waypoint beacon's dish takes the same ramp under its pink lamp. In every
+  galaxy the body merges with the ink keyline and the ring carries the read.
 - The item icons `icon-holodisk` and `icon-holodisk-20`
   ([shared-resource-svg.ts](tools/shared-resource-svg.ts)) match: a `#2a2536`
   disc with a pink rim in place of the ink outline, so the disc reads on the

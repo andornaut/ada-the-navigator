@@ -220,9 +220,9 @@ The flash ends at 150 ms, Tech's `BEAM.flashSeconds`.
 - Muzzle bloom: opaque discs of radius `5 w`, `3.1 w` and `1.6 w` in the three
   band colours.
 - Light field and Phantom: the amber band and the amber bloom disc draw over
-  their silhouettes grown by 1 px in the field edge (ink, or white on Phantom;
-  `phaser.edge` in [Light fields](galaxies.md#light-fields)); the inner bands
-  and discs take none.
+  their silhouettes grown by 1 px in ink (`phaser.edge` in
+  [Light fields](galaxies.md#light-fields)); the inner bands and discs take
+  none.
 - Reduced motion: the beam's own bands at `w` 1 without bloom, alpha 1 to 90 ms,
   then the held fade of `1 - (t - 90) / 60`, with the same 1 px field edge. A
   miss keeps the 28 px end taper.
@@ -323,8 +323,7 @@ where it started.
 - A hit uses the shared `compactBright` contact at the fire-time contact
   point.
 - Light field and Phantom: the coral band and the coral bloom disc draw over
-  their silhouettes grown by 1 px in the field edge (ink, or white on Phantom);
-  the inner bands and discs take none. The aim line follows the
+  their silhouettes grown by 1 px in ink; the inner bands and discs take none. The aim line follows the
   [edged line](#enemy-only-conventions) rule.
 - Reduced motion (`reducedMotion`): the aim line is unchanged. The beam is its
   own bands at `w` 1 without bloom, alpha 1 to 90 ms (`holdMs`), then the held
@@ -340,10 +339,10 @@ their damage, intervals, speeds, counts and lifetimes
 - Rebuild with `node art/tools/enemy-weapons.ts`. It writes
   [enemy-weapons.json](../public/art/enemy-weapons.json), formatted with the
   project's Prettier settings, and links it from the core manifest as
-  `enemyWeapons`. Reruns are byte-identical. The build fails if a galaxy's boundary
-  edge (the ink on a light galaxy, `foregroundEdge` on Phantom) falls below 5:1
-  on its background, or a carrying colour below 5:1 on a dark galaxy without
-  one, or if the mine's collision parts leave any pixel of a frame uncovered,
+  `enemyWeapons`. Reruns are byte-identical. The build fails if the ink edge
+  falls below 5:1 on a light galaxy's background (Phantom's dark field takes
+  the same ink with no floor), or if the mine's collision parts leave any pixel
+  of a frame uncovered,
   trace the union of its frames with an IoU below 0.98 or stray more than
   0.5 px from its edge.
 
@@ -355,7 +354,7 @@ their damage, intervals, speeds, counts and lifetimes
   `#181425`. Coral marks every enemy shot, so the enemy beams are coral where
   Ada's are amber and cream.
 - Every shape that has to be seen draws at alpha 1 in `obstacle`, `plate`,
-  `weapon` or white, over the galaxy's boundary edge. Fades hold steps, and a
+  `weapon` or white, over the ink edge. Fades hold steps, and a
   fill inside an edged stroke, such as the shockwave's cream ellipse, carries
   nothing.
 - Widths and radii are logical px scaled by `s`; the `u`, `v` heading frame and
@@ -564,7 +563,7 @@ markers.
 - Reduced motion: the `rest` frame only.
 - Light field: keylined, kind `ammoPickup`: the frame's silhouette grown by
   1 px in ink, 10.90:1 on Sunflower. On Phantom's `#514955` it draws over the
-  white edge, where the crate's left wall is 4.68:1 on the field.
+  same ink keyline; the crate's left wall is 4.68:1 on the field.
 - Collision: `pickups.json` `frames["ammo-pack"]` holds four strictly convex
   parts in frame px from the frame's top left, the rest frame's outline, for
   every frame of the strip. Their farthest point is 8.76 display px from the

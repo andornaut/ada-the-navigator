@@ -408,22 +408,7 @@
     "todayContrast": 1.78,
     "extreme": "#625A6D",
     "extremeContrast": 1.317,
-    "signals": {
-      "foregroundEdge": {
-        "color": "#FFFFFF",
-        "today": 4.848,
-        "after": 6.55,
-        "location": {
-          "camera": 6,
-          "x": 371,
-          "y": 206,
-          "luminance": 0.11030006740511494,
-          "sourceColor": "#625A6D",
-          "sourceX": 384,
-          "sourceY": 202
-        }
-      }
-    },
+    "signals": {},
     "shipContrast": {
       "white": {
         "color": "#FFFFFF",

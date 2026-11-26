@@ -18,7 +18,7 @@ type Shape = { color: string; loops: V2[][] };
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 const fields = JSON.parse(readFileSync(`${art}galaxies.json`, "utf8")) as {
-  galaxies: Record<string, { colors: { background: string }; foregroundEdge?: string }>;
+  galaxies: Record<string, { colors: { background: string } }>;
   lightField: { ink: string };
   preview: { width: number; height: number; locked: { offset: number; scale: number } };
 };
@@ -192,7 +192,7 @@ function fitted(
 function card(galaxy: GalaxyId): RgbaImage {
   const field = fields.galaxies[galaxy]!;
   const background = field.colors.background;
-  const edge = rgba(field.foregroundEdge ?? INK).slice(0, 3);
+  const edge = rgba(INK).slice(0, 3);
   const c = canvas(rgba(background).slice(0, 3));
   c.paint(
     c.cover([

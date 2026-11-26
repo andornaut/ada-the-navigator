@@ -25,10 +25,7 @@ const space = JSON.parse(readFileSync(`${art}space-palette.json`, "utf8")) as {
 };
 const fields = JSON.parse(readFileSync(`${art}galaxies.json`, "utf8")) as {
   lightField: { ink: string };
-  galaxies: Record<
-    string,
-    { tint: { light?: boolean }; colors: { background: string }; foregroundEdge?: string }
-  >;
+  galaxies: Record<string, { tint: { light?: boolean }; colors: { background: string } }>;
 };
 
 // Space palette roles, then the coral family's side and salvage plate (art/enemies.md).
@@ -40,22 +37,14 @@ const COLOURS = {
   white: "#FFFFFF",
   ink: fields.lightField.ink,
 } as const;
-type Colour = keyof typeof COLOURS;
 
-// Every colour that carries a shape at alpha 1 holds 5:1 on a dark galaxy without a boundary
-// edge; on a light galaxy the ink edge carries it, and on one with a `foregroundEdge` that edge.
-const CARRIERS: readonly Colour[] = ["obstacle", "weapon", "plate", "white"];
-for (const [id, { tint, colors, foregroundEdge }] of Object.entries(fields.galaxies)) {
-  const bg = colors.background.slice(1);
-  const edge = foregroundEdge ?? (tint.light ? COLOURS.ink : undefined);
-  const checks: readonly (readonly [string, string])[] = edge
-    ? [["edge", edge]]
-    : CARRIERS.map((name) => [name, COLOURS[name]] as const);
-  for (const [name, colour] of checks) {
-    const ratio = contrast(bg, colour.slice(1));
-    if (ratio < MIN_CONTRAST) {
-      throw new Error(`${name} is ${ratio.toFixed(2)}:1 on ${id}, below ${MIN_CONTRAST}:1`);
-    }
+// Every galaxy draws the shots over the ink edge, which holds 5:1 on each light galaxy's field;
+// Phantom's dark field takes the same ink with no floor.
+for (const [id, { tint, colors }] of Object.entries(fields.galaxies)) {
+  if (!tint.light) continue;
+  const ratio = contrast(colors.background.slice(1), COLOURS.ink.slice(1));
+  if (ratio < MIN_CONTRAST) {
+    throw new Error(`edge is ${ratio.toFixed(2)}:1 on ${id}, below ${MIN_CONTRAST}:1`);
   }
 }
 

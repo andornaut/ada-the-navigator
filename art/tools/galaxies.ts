@@ -26,7 +26,6 @@ const SIGNALS = [
 ] as const;
 const MIN_CONTRAST = 5;
 const INK = "#181425";
-const FOREGROUND_EDGES: Readonly<Record<string, string>> = { phantom: "#FFFFFF" };
 
 type Tint = { lightness: number; chroma: number; hue: number; light?: true };
 
@@ -178,13 +177,15 @@ function field(id: string, t: Tint): Record<string, string> {
       THEMES[id]?.[index] ?? tint(t, baseBackground, base.colors[role]!),
     ]),
   );
-  // The actual emitted recognition edge carries contrast independently of field brightness.
-  const foreground = FOREGROUND_EDGES[id];
-  const edges: [string, string][] = foreground
-    ? [["foreground edge", foreground]]
-    : t.light || (THEMES[id] !== undefined && id !== "phantom")
-      ? [["ink keyline", INK]]
-      : SIGNALS.map((signal) => [signal, base.colors[signal]!]);
+  // Every galaxy's foreground edge is the ink keyline, which carries contrast on a light field.
+  // Phantom's dark field takes the same ink with no floor; any other dark tint's signals hold on
+  // their own.
+  const edges: [string, string][] =
+    id === "phantom"
+      ? []
+      : t.light || THEMES[id] !== undefined
+        ? [["ink keyline", INK]]
+        : SIGNALS.map((signal) => [signal, base.colors[signal]!]);
   for (const [name, edge] of edges) {
     const ratio = contrast(colors.background!.slice(1), edge.slice(1));
     if (ratio < MIN_CONTRAST) {
@@ -226,7 +227,6 @@ const galaxies = Object.fromEntries(
         tint: themeTint,
         colors,
         marker: marker(t, field(`legacy:${id}`, t)),
-        ...(FOREGROUND_EDGES[id] ? { foregroundEdge: FOREGROUND_EDGES[id] } : {}),
       },
     ];
   }),

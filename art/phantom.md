@@ -18,12 +18,12 @@ flagship the [Archie capital](heavies.md#archie), both in core.
 Dark plum, tint `lightness` 0.137, `chroma` 0.022, `hue` -45.4
 ([Galaxies](galaxies.md#field-hues)): background `#514955`, environment
 `#625868`, detail `#75677B` and marker `#DCBAE3` (5.00:1). It is a dark field
-with the white `foregroundEdge` `#FFFFFF`, 8.63:1 on the background, as its
-recognition boundary: the [light-field keyline](galaxies.md#light-fields)
-widths and kinds in white, 2 px round the station, settlements and story
-places and 1 px round the other keylined objects. Every signal is 3:1 or more
-on the background, lowest `threat` at 3.11:1 and `obstacle` at 3.20:1, and the
-ship's darkest hull tone `#9AABBF` is 3.68:1. Backdrop rocks tint to `#7A6D81`
+whose foreground takes the same ink edge `#181425` as the light fields: the
+[light-field keyline](galaxies.md#light-fields) widths and kinds, 2 px round
+the station, settlements and story places and 1 px round the other keylined
+objects. Every signal is 3:1 or more on the background, lowest `threat` at
+3.11:1 and `obstacle` at 3.20:1, and the ship's darkest hull tone `#9AABBF` is
+3.68:1. Backdrop rocks tint to `#7A6D81`
 lit (1.78:1) and `#625767` side. Its [backdrop](galaxies.md#backdrop-layers) is smoke:
 plates toned by drifting bands, one dim crescent and violet smoke-bank
 nebulae (`nebula-phantom-1`, `-2`).
@@ -98,16 +98,16 @@ px in the station's dock schema.
 
 ### Palette
 
-| Role           | Colour    | On the field | White edge |
-| -------------- | --------- | -----------: | ---------: |
-| Goo            | `#d4b8ee` |       4.88:1 |     8.63:1 |
-| Goo side       | `#a283c2` |       2.70:1 |     8.63:1 |
-| Gloss          | `#f4eafc` |       7.40:1 |     8.63:1 |
-| Float          | `#8a6fa8` |       2.02:1 |     8.63:1 |
-| Float side     | `#614b7e` |       1.16:1 |     8.63:1 |
-| Float inset    | `#9c82ba` |       2.59:1 |     8.63:1 |
-| Windows, lamps | `#ffe9b8` |       7.23:1 |     8.63:1 |
-| Lamp dim       | `#8a7a5c` |       2.06:1 |     8.63:1 |
+| Role           | Colour    | On the field |
+| -------------- | --------- | -----------: |
+| Goo            | `#d4b8ee` |       4.88:1 |
+| Goo side       | `#a283c2` |       2.70:1 |
+| Gloss          | `#f4eafc` |       7.40:1 |
+| Float          | `#8a6fa8` |       2.02:1 |
+| Float side     | `#614b7e` |       1.16:1 |
+| Float inset    | `#9c82ba` |       2.59:1 |
+| Windows, lamps | `#ffe9b8` |       7.23:1 |
+| Lamp dim       | `#8a7a5c` |       2.06:1 |
 
 Lilac goo sits in the field's own hue, lighter, so the Blurbs read as folk of
 the violet rim and take no signal band; the station family's cream collar,
@@ -125,9 +125,9 @@ sixteen enemy headings, the smallest square frame (a multiple of 16 px) with
 `frame`, `display`, `blink` and `frameMs`, and `headings[k].tow`, the tow point
 in frame px.
 
-| Craft                   | Job subject      | Manifest ids                            | Frame | Display | Frames per heading       | Hull top on field | White edge |
-| ----------------------- | ---------------- | --------------------------------------- | ----: | ------: | ------------------------ | ----------------: | ---------: |
-| `stranded-traveler-pod` | a traveler's pod | `craft-stranded-traveler-pod-{k}-{a,b}` |    64 |      28 | `a` lit, `b` dim, 700 ms |  `#ddd0e2` 5.83:1 |     8.63:1 |
+| Craft                   | Job subject      | Manifest ids                            | Frame | Display | Frames per heading       | Hull top on field |
+| ----------------------- | ---------------- | --------------------------------------- | ----: | ------: | ------------------------ | ----------------: |
+| `stranded-traveler-pod` | a traveler's pod | `craft-stranded-traveler-pod-{k}-{a,b}` |    64 |      28 | `a` lit, `b` dim, 700 ms |  `#ddd0e2` 5.83:1 |
 
 - Traveler's pod: a mauve passenger capsule with inset portholes, curved teal
   storage cheeks and a blinking lilac lamp. The bow lug takes the tow line.

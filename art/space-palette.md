@@ -70,7 +70,7 @@ A seen object outside the view shows a marker on the border of the safe game
 area, on the line from the view's centre to the object. The safe game area is
 the game area clamped by the safe insets, `safeRect(insets, SAFE_MARGIN.edge,
 view)` (each edge moved in by its own inset); the marker's outermost drawn
-pixel, its light-field ink outline included, sits 1 logical px inside it.
+pixel, its ink outline included, sits 1 logical px inside it.
 Positions are in [Layout](layout.md#edge-markers). Markers draw on the canvas
 above every play object and under the sticks and the HTML HUD, at alpha 1.
 Sizes are logical px, scaled by `s`.
@@ -88,12 +88,9 @@ never replaces the red on an enemy marker. Heavies keep the larger disc as
 their distinct marker; a hostile station draws the heavy disc, not a badge.
 
 `threat` is the one red in space, used only for these markers and the
-[hit flash](layout.md#hit-flash). Bare `threat` is 3.11:1 on Phantom's
-field (1.90:1 on its backdrop detail), so on Phantom every marker draws over a
-1 px white outline, the same `foregroundEdge` white as Phantom's other edges:
-8.63:1 on the field and 5.27:1 on backdrop detail. It matches `obstacle` in luminance
-(1.03:1), so the dot shape and the border position, not lightness, tell the
-markers apart from coral art. `pointOfInterest` is 7.1:1 or more there.
+[hit flash](layout.md#hit-flash). It matches `obstacle` in luminance (1.03:1),
+so the dot shape and the border position, not lightness, tell the markers apart
+from coral art.
 
 The guard's bar is a no-entry sign on the heavy's own disc: a guard is a heavy
 that blocks a route. The bar is 6.49:1 against `threat`, so the guard reads
@@ -106,14 +103,12 @@ fades from alpha 1 to 0 over `EDGE_MARKERS.swapMs` 150 ms, linear, over the
 unchanged disc, then the marker is the heavy's. Under reduced motion the bar is
 removed at once. A guard Ada has not seen yet still shows its marker (Gameplay).
 
-On a light field (`tint.light`) each marker draws over an ink outline
+In every galaxy each marker draws over an ink outline
 (`lightField.markerOutline` 1): a disc over an ink disc 1 larger in radius,
 the diamond over an ink stroke 2 wider (4) on the same path. The guard's bar
-draws on the disc in the same ink on every field, so it adds no outline. Ink on
-Sunflower is 10.90:1; bare `threat` there is 1.68:1. Phantom's white outline
-follows the same geometry as the ink outline. The 24 px edge badges (stations
-and the unidentified `?`) take the same field edge: their 1 px border is the
-field's foreground edge, white on Phantom and ink on light fields.
+draws on the disc in the same ink, so it adds no outline. Ink on Sunflower is
+10.90:1; bare `threat` there is 1.68:1. The 24 px edge badges (stations and the
+unidentified `?`) take a 1 px ink border.
 
 ## In-between
 

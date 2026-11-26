@@ -25,8 +25,8 @@ right faces darkest.
 | Hologram ring, lit lamp, rim | `#e868c8`                       |
 | Dim lamp                     | `#a83a96`                       |
 
-On light fields the body merges with the ink keyline and the pink ring carries
-the read; on Phantom's field the white edge outlines the body.
+In every galaxy the body merges with the ink keyline and the pink ring carries
+the read.
 
 ## Item icon
 
