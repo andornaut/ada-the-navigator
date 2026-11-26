@@ -52,12 +52,11 @@ function actualLeaves(): string {
     ts.isVariableStatement(node) &&
     node.declarationList.declarations.some((d) => d.name.getText(source) === name);
   const exit = statements.filter(
-    (n) =>
-      variable(n, "exitButton") ||
-      variable(n, "exitAction") ||
-      variable(n, "exitPose") ||
-      (ts.isIfStatement(n) && n.expression.getText(source) === "exitButton && options.exit") ||
-      (ts.isIfStatement(n) && n.expression.getText(source) === "exitButton"),
+    (node) =>
+      ["exitPose", "createExit", "exit", "exitButton", "exitAction"].some((name) =>
+        variable(node, name),
+      ) ||
+      (ts.isIfStatement(node) && node.expression.getText(source) === "exitButton"),
   );
   const use = statements.find((node) => variable(node, "useAction"));
   const updateBack = statements.find(
@@ -93,7 +92,7 @@ function actualLeaves(): string {
       ].includes(n.getText(source)),
     ) ?? [];
   if (
-    exit.length !== 5 ||
+    exit.length !== 6 ||
     !use ||
     !updateBack ||
     cleanup.length !== 6 ||

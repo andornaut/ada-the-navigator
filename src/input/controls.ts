@@ -277,7 +277,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
     storage: options.storage,
   });
-  let exitPose: ReturnType<typeof mountNavigationPose> | undefined;
+  const exitPresentation: { pose: ReturnType<typeof mountNavigationPose> | undefined } = {
+    pose: undefined,
+  };
   let pressedStoryButton: HTMLElement | undefined;
   const actionRoot = bindAdaActionRoot(
     {
@@ -294,8 +296,9 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
               ? element
               : undefined;
           pressedStoryButton?.setAttribute("data-story-pressed", "");
-          if (exitPose) {
-            const present = element === exitButton ? exitPose.press : exitPose.rest;
+          const pose = exitPresentation.pose;
+          if (pose) {
+            const present = element === exitButton ? pose.press : pose.rest;
             present();
           }
         },
@@ -368,36 +371,43 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   });
   settings.root.classList.add("ada-no-settings-button");
   // The start screen's Exit disc at the top right, where it shows; it follows the Menu in Tab order.
-  const exitButton = options.exit ? document.createElement("button") : undefined;
-  let exitAction: ReturnType<typeof bindAdaAction> | undefined;
-  if (exitButton && options.exit) {
-    const { label } = options.exit;
-    exitButton.type = "button";
-    exitButton.className = "ada-exit-open";
-    exitButton.dataset.action = "exit";
-    exitButton.setAttribute("aria-label", label);
-    exitButton.title = label;
-    exitButton.hidden = true;
-    exitPose = mountNavigationPose(exitButton);
-    exitAction = bindAdaAction(
+  const createExit = (label: string) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.action = "exit";
+    const action = bindAdaAction(
       {
         click: {
           availability: () =>
-            exitButton.disabled || exitButton.closest("[hidden], [inert]")
+            button.disabled || button.closest("[hidden], [inert]")
               ? { kind: "omitted" }
               : { kind: "available" },
           run: () => {
-            exitPose?.rest();
+            pose.rest();
             options.exit?.onExit();
           },
         },
-        current: () =>
-          !disposed && exitButton.isConnected && inCurrentView(settings.root, exitButton),
-        slopPx: () => SCROLL.dragThreshold * readViewUnit(exitButton),
+        current: () => !disposed && button.isConnected && inCurrentView(settings.root, button),
+        slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
       },
-      exitButton,
+      button,
     );
-  }
+    button.className = "ada-exit-open";
+    button.setAttribute("aria-label", label);
+    button.title = label;
+    button.hidden = true;
+    const pose = mountNavigationPose(button);
+    return {
+      action: { activate: () => action.activate(), dispose: () => action.dispose() },
+      button,
+      pose,
+    };
+  };
+  const exit = options.exit ? createExit(options.exit.label) : undefined;
+  const exitButton = exit?.button;
+  const exitAction = exit?.action;
+  const exitPose = exit?.pose;
+  exitPresentation.pose = exitPose;
   const menu = createMenuCard(settings.root, {
     closeLabel: options.pause.labels.close,
     labels: {
