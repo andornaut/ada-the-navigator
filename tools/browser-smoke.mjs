@@ -5132,9 +5132,12 @@ try {
       { archetype, id: `browser-combat:${archetype}`, packId: null, phase: 0 },
       at,
     );
-    const engine = definition.hardpoints.find((part) => part.kind === "engine");
-    assert.ok(engine, "Fixture requires a destructible engine");
-    enemy = damageEnemy(definition, { amount: engine.hp, hardpointId: engine.id }, enemy);
+    const engines = definition.hardpoints.filter((part) => part.kind === "engine");
+    assert.ok(engines.length > 0, "Fixture requires a destructible engine");
+    // Every engine destroyed, so the hull coasts to rest at its sampled place instead of moving.
+    for (const engine of engines) {
+      enemy = damageEnemy(definition, { amount: engine.hp, hardpointId: engine.id }, enemy);
+    }
     assert.ok(enemy.hardpoints.some((part) => part.hp === 0));
     assert.ok(enemy.hardpoints.some((part) => part.hp > 0));
     flight.objects.push({
