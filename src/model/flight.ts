@@ -1157,9 +1157,8 @@ function placeRock(placement: SpawnPlacement, existing: Set<string>, flight: Fli
 }
 
 /**
- * A planned enemy group as one pack of members on its line and, for frigates and capitals, an
- * escort pack. A pack seen before adds back only its unloaded survivors, preserving its
- * casualty count.
+ * A planned enemy group as one pack of members on its line and, for frigates, an escort pack.
+ * A pack seen before adds back only its unloaded survivors, preserving its casualty count.
  */
 function placeGroup(
   content: GameContent,
@@ -1168,6 +1167,19 @@ function placeGroup(
   existing: Set<string>,
   flight: FlightState,
 ): void {
+  // Saves can still own an earlier capital encounter at the same chunk key. Never spend its
+  // replacement budget on the new roster while that encounter is still represented.
+  const leaderId = packMemberId(packId, 0);
+  if (
+    flight.combat?.profiledPacks?.[packId] === "capital" ||
+    flight.world.notables[leaderId]?.enemy?.archetype === "capital" ||
+    (existing.has(leaderId) &&
+      flight.objects.some(
+        (object) => object.id === leaderId && object.enemy?.archetype === "capital",
+      ))
+  ) {
+    return;
+  }
   const leaders = group.filter((placement) => placement.leader === undefined);
   const archetype = leaders[0]!.archetype as EnemyArchetype;
   const ids = new Map(

@@ -61,7 +61,6 @@ describe("spawn target catalog", () => {
     // Andromeda flies the Twin hull (58), Phantom the Shoulder frigate (63).
     expect(line(5, "frigate")).toBe(136);
     expect(line(6, "frigate")).toBe(146);
-    expect(target(6, "capital").radius).toBe(91);
     // Each frigate's fighter escorts (13) station 60 beyond the frigate's spacing radius.
     expect(target(5, "frigate").escorts).toMatchObject({ radius: 13, ring: 58 + 60 });
     // A retaliator's hull follows from its ship id, its pack's chunk and its index, so each member
@@ -128,6 +127,12 @@ describe("spawn target catalog", () => {
     for (const galaxy of GALAXY_NUMBERS) {
       spawnRules(galaxy).bands.forEach((band, index) => {
         const table = SPAWN_TARGETS[galaxy][index]!;
+        expect(band.enemies.map(({ kind }) => kind).sort()).toEqual(
+          Object.entries(table.enemies)
+            .filter(([, density]) => density > 0)
+            .map(([kind]) => kind)
+            .sort(),
+        );
         for (const [kind, density] of Object.entries(table.enemies)) {
           const target = band.enemies.find((enemy) => enemy.kind === kind);
           expect(target?.density ?? 0, `${galaxy}:${index}:${kind}`).toBeCloseTo(

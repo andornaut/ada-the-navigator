@@ -1,13 +1,10 @@
 import type { EnemyArchetype } from "./enemyCatalog.ts";
 import type { GalaxyNumber } from "./types.ts";
 
-/** Ambient enemy group targets per region; `frigate` and `capital` groups include escorts. */
+/** Ambient enemy group targets per region; frigate groups include escorts. */
 export type EnemyGroupTargets = Readonly<
   Record<
-    Extract<
-      EnemyArchetype,
-      "capital" | "fighter" | "frigate" | "interceptor" | "retaliator" | "swarm"
-    >,
+    Extract<EnemyArchetype, "fighter" | "frigate" | "interceptor" | "retaliator" | "swarm">,
     number
   >
 >;
@@ -56,8 +53,7 @@ export const SPAWN_BLEND_WIDTH = 2000;
 const region = (
   features: number,
   moving: number,
-  [swarm, fighter, interceptor, retaliator, frigate, capital]: readonly [
-    number,
+  [swarm, fighter, interceptor, retaliator, frigate]: readonly [
     number,
     number,
     number,
@@ -65,7 +61,7 @@ const region = (
     number,
   ],
 ): RegionSpawnTargets => ({
-  enemies: { capital, fighter, frigate, interceptor, retaliator, swarm },
+  enemies: { fighter, frigate, interceptor, retaliator, swarm },
   features,
   moving,
 });
@@ -79,38 +75,38 @@ export const SPAWN_TARGETS: Readonly<
 > = {
   // Sunflower
   1: [
-    region(2.25, 5, [0.244, 0.2, 0, 0, 0, 0]),
-    region(2.4, 5, [0.2, 0.178, 0, 0.067, 0, 0]),
-    region(2.25, 5, [0.178, 0.155, 0.044, 0.067, 0, 0]),
+    region(2.25, 5, [0.244, 0.2, 0, 0, 0]),
+    region(2.4, 5, [0.2, 0.178, 0, 0.067, 0]),
+    region(2.25, 5, [0.178, 0.155, 0.044, 0.067, 0]),
   ],
   // Cartwheel
   2: [
-    region(2.1, 6, [0.131, 0.209, 0.063, 0.052, 0.073, 0.022]),
-    region(2.1, 6, [0.131, 0.209, 0.063, 0.052, 0.073, 0.022]),
-    region(1.95, 6, [0.131, 0.209, 0.063, 0.052, 0.073, 0.022]),
+    region(2.1, 6, [0.131, 0.209, 0.063, 0.052, 0.073]),
+    region(2.1, 6, [0.131, 0.209, 0.063, 0.052, 0.073]),
+    region(1.95, 6, [0.131, 0.209, 0.063, 0.052, 0.073]),
   ],
   // Whirlpool
   3: [
-    region(1.95, 7, [0.105, 0.126, 0.063, 0.042, 0.063, 0]),
-    region(1.8, 7, [0.105, 0.126, 0.063, 0.042, 0.063, 0]),
-    region(1.65, 7, [0.105, 0.126, 0.063, 0.042, 0.063, 0]),
+    region(1.95, 7, [0.105, 0.126, 0.063, 0.042, 0.063]),
+    region(1.8, 7, [0.105, 0.126, 0.063, 0.042, 0.063]),
+    region(1.65, 7, [0.105, 0.126, 0.063, 0.042, 0.063]),
   ],
   // Needle
   4: [
-    region(1.95, 8, [0.084, 0.105, 0.105, 0.033, 0.075, 0.035]),
-    region(2.1, 8, [0.084, 0.105, 0.105, 0.033, 0.075, 0.035]),
-    region(2.1, 8, [0.084, 0.105, 0.105, 0.033, 0.075, 0.035]),
+    region(1.95, 8, [0.084, 0.105, 0.105, 0.033, 0.075]),
+    region(2.1, 8, [0.084, 0.105, 0.105, 0.033, 0.075]),
+    region(2.1, 8, [0.084, 0.105, 0.105, 0.033, 0.075]),
   ],
   // Andromeda
   5: [
-    region(2.1, 9, [0.092, 0.137, 0.069, 0.046, 0.107, 0.042]),
-    region(2.25, 9, [0.092, 0.137, 0.069, 0.046, 0.107, 0.042]),
-    region(2.1, 9, [0.092, 0.137, 0.069, 0.046, 0.107, 0.042]),
+    region(2.1, 9, [0.092, 0.137, 0.069, 0.046, 0.107]),
+    region(2.25, 9, [0.092, 0.137, 0.069, 0.046, 0.107]),
+    region(2.1, 9, [0.092, 0.137, 0.069, 0.046, 0.107]),
   ],
   // Phantom
   6: [
-    region(2.1, 10, [0.129, 0.179, 0.107, 0.05, 0.268, 0.107]),
-    region(2.1, 10, [0.129, 0.179, 0.107, 0.05, 0.268, 0.107]),
-    region(1.95, 10, [0.129, 0.179, 0.107, 0.05, 0.268, 0.107]),
+    region(2.1, 10, [0.129, 0.179, 0.107, 0.05, 0.268]),
+    region(2.1, 10, [0.129, 0.179, 0.107, 0.05, 0.268]),
+    region(1.95, 10, [0.129, 0.179, 0.107, 0.05, 0.268]),
   ],
 };

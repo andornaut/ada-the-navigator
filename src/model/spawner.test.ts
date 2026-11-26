@@ -164,13 +164,15 @@ describe("spawner admission", () => {
       expect(policy.memberSpacing).toBe(galaxy === 3 || galaxy === 4 ? 110 : 100);
       for (const stage of policy.stages) {
         expect(stage.roster).toEqual(
-          encounterTable(galaxy).map((entry) =>
-            entry.archetype === "fighter"
-              ? { ...entry, groupSize: [FIGHTER_GROUP_TARGET, FIGHTER_GROUP_TARGET] }
-              : entry.archetype === "swarm"
-                ? { ...entry, groupSize: [SWARM_GROUP_MINIMUM, entry.groupSize[1]] }
-                : entry,
-          ),
+          encounterTable(galaxy)
+            .filter(({ archetype }) => archetype !== "capital")
+            .map((entry) =>
+              entry.archetype === "fighter"
+                ? { ...entry, groupSize: [FIGHTER_GROUP_TARGET, FIGHTER_GROUP_TARGET] }
+                : entry.archetype === "swarm"
+                  ? { ...entry, groupSize: [SWARM_GROUP_MINIMUM, entry.groupSize[1]] }
+                  : entry,
+            ),
         );
         expect(stage.maxNearbyArchetypes).toBe({ 2: 4, 3: 2, 4: 3, 5: 4, 6: 4 }[galaxy]);
         const objects = Array.from({ length: stage.localCap }, (_, index) =>

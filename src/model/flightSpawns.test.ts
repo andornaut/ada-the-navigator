@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import type { EnemyArchetype } from "../data/enemyCatalog.ts";
+import { type EnemyArchetype, enemyDefinition } from "../data/enemyCatalog.ts";
 import { spacingRadius } from "../data/enemySpacing.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
+import { createEnemy } from "./enemyAi.ts";
 import { createUnpopulatedFlight, stepFlight } from "./flight.ts";
-import { escortPackId } from "./geography.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
+import { GameModel } from "./game.ts";
+import { ambientPackId, escortPackId, packMemberId, worldSyncFlightRegion } from "./geography.ts";
 import { planRegion, type SpawnSeeds } from "./spawnPlanner.ts";
 import {
   chunkSpawnReach,
@@ -17,7 +20,7 @@ import {
   worldSpawnExclusions,
   worldSpawnSites,
 } from "./spawnTargets.ts";
-import type { Vec } from "./types.ts";
+import type { SpaceObject, Vec } from "./types.ts";
 import { periodicWorldGrid, worldCellAt, worldCellCenter, worldCellOrigin } from "./worldCells.ts";
 
 /** A planned object as flight shows it: kind, archetype and position. */
@@ -31,7 +34,7 @@ const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const context = { worldSide: GALAXY_SIDE };
 const grid = periodicWorldGrid(context, CONTENT.tuning.chunkSize);
 // Andromeda's route runs from its inner region, across the middle region's blend, to its outer
-// region, and its targets include every enemy kind.
+// region, and its targets include every ambient enemy kind.
 const GALAXY: GalaxyNumber = 5;
 const WORLD_SEED = 4471;
 const ROUTE = { from: 8000, to: 27000, y: 2600 } as const;
@@ -184,6 +187,88 @@ describe("flight spawns from the planner", () => {
       [...kinds].filter((kind) => kind !== "rock" && kind !== "debris").length,
     ).toBeGreaterThan(1);
   });
+
+  it.each([true, false])(
+    "continues an old capital pack without replacing its roster (tracked leader: %s)",
+    (tracked) => {
+      const chunk = inner(east).find((key) =>
+        [...planned({ encounter, world: WORLD_SEED }, key).values()].some(
+          ({ archetype }) => archetype !== undefined,
+        ),
+      )!;
+      const [x, y] = chunk.split(",").map(Number) as [number, number];
+      const home = worldCellCenter(grid, { x, y });
+      const away = worldCellCenter(grid, { x: x + 10, y });
+      const pack = ambientPackId(chunk);
+      const escorts = escortPackId(pack);
+      const actor = (archetype: EnemyArchetype, packId: string, point: Vec): SpaceObject => {
+        const id = packMemberId(packId, 0);
+        const definition = enemyDefinition(GALAXY, archetype, id);
+        const enemy = createEnemy(definition, { archetype, id, packId, phase: 0 }, point);
+        return {
+          ...point,
+          enemy,
+          hp: enemy.hp,
+          id,
+          kind: "enemy",
+          persistent: false,
+          radius: definition.sizeRatio * CONTENT.tuning.flight.shipRadius,
+        };
+      };
+      const capital = actor("capital", pack, home);
+      capital.enemy!.hp -= 5;
+      capital.hp = capital.enemy!.hp;
+      const escort = actor("fighter", escorts, { x: home.x, y: home.y + 160 });
+      escort.enemy!.escortOf = capital.id;
+      const model = new GameModel(CONTENT, undefined, () => encounter);
+      model.state.progress[GALAXY].geography = {
+        seed: WORLD_SEED,
+        sitePolicy: "seeded",
+        version: 1,
+      };
+      model.state.unlocked.push(GALAXY);
+      model.startGalaxy(GALAXY);
+      const flight = createUnpopulatedFlight(CONTENT, GALAXY, WORLD_SEED, undefined, encounter);
+      flight.topology = CURRENT_FLIGHT_TOPOLOGY;
+      model.state.flight = flight;
+      flight.player = away;
+      flight.objects.push(capital, escort);
+      flight.combat = {
+        initialPackSizes: { [escorts]: 4, [pack]: 1 },
+        profiledPacks: { [pack]: "capital" },
+        routeEncounters: [],
+      };
+      flight.markerActors = {
+        encounterSeed: encounter,
+        knowledge: {
+          [escort.id]: "identified",
+          ...(tracked ? { [capital.id]: "identified" } : {}),
+        },
+      };
+      worldSyncFlightRegion(context, CONTENT, flight);
+      expect(flight.objects).toEqual([]);
+      expect(flight.world.notables[capital.id]).toEqual(tracked ? capital : undefined);
+      expect(flight.world.notables[escort.id]).toEqual(escort);
+
+      const loaded = new GameModel(CONTENT, model.save());
+      loaded.continueGame();
+      const resumed = loaded.state.flight!;
+      expect(resumed.combat?.unloadedPackMembers?.[pack]).toBe(tracked ? undefined : 1);
+      resumed.player = home;
+      stepFlight(CONTENT, 1e-6, idle, resumed);
+      expect(resumed.chunks).toContain(chunk);
+      expect(
+        resumed.objects
+          .filter(({ enemy }) => enemy?.packId === pack || enemy?.packId === escorts)
+          .map(({ id }) => id)
+          .sort(),
+      ).toEqual(tracked ? [capital.id, escort.id].sort() : [escort.id]);
+      expect(resumed.objects.find(({ id }) => id === capital.id)?.hp).toBe(
+        tracked ? capital.hp : undefined,
+      );
+      expect(resumed.combat?.initialPackSizes).toMatchObject({ [escorts]: 4, [pack]: 1 });
+    },
+  );
 
   it("sizes each planned ship's footprint by the spacing radius of the hull it flies", () => {
     let checked = 0;

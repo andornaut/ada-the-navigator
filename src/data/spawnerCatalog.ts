@@ -71,13 +71,15 @@ function laterStages(
   maxNearbyArchetypes: number,
   localCaps: readonly [number, number, number],
 ): readonly SpawnerStage[] {
-  const roster = encounterTable(galaxy).map((entry) =>
-    entry.archetype === "fighter"
-      ? { ...entry, groupSize: fighterGroup }
-      : entry.archetype === "swarm"
-        ? { ...entry, groupSize: [SWARM_GROUP_MINIMUM, entry.groupSize[1]] as const }
-        : entry,
-  );
+  const roster = encounterTable(galaxy)
+    .filter((entry) => entry.archetype !== "capital" && entry.escorts?.archetype !== "capital")
+    .map((entry) =>
+      entry.archetype === "fighter"
+        ? { ...entry, groupSize: fighterGroup }
+        : entry.archetype === "swarm"
+          ? { ...entry, groupSize: [SWARM_GROUP_MINIMUM, entry.groupSize[1]] as const }
+          : entry,
+    );
   return SPAWNER_REGIONS.centerDistances.map((centerDistance, index) => ({
     centerDistance,
     localCap: localCaps[index]!,

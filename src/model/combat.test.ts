@@ -13,13 +13,10 @@ import {
   enemyDefinition,
   enemyFire,
   enemyFireRate,
-  escortTuning,
   galaxyEncounters,
   heavyLoadout,
 } from "../data/enemyCatalog.ts";
-import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
-import { spacingRadius } from "../data/enemySpacing.ts";
-import { byPosition, ROUTE_POSITION } from "../data/galaxies.ts";
+import { byPosition, GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
 import { SPAWNER_POLICIES, SPAWNER_REGIONS } from "../data/spawnerCatalog.ts";
 import type { EnemyWeapon, GalaxyNumber, Weapon } from "../data/types.ts";
@@ -48,6 +45,7 @@ import {
   stepFlight,
   teleport,
 } from "./flight.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
 import { playerWeaponCoverage } from "./playerWeaponCoverage.ts";
 import { shipBody, shipCircleContact } from "./shipBody.ts";
 import { direction as unit } from "./shipPhysics.ts";
@@ -1047,42 +1045,24 @@ describe("rotating hulls", () => {
 });
 
 describe("galaxy encounters", () => {
-  it("generates a capital battle as a capital pack and a four-fighter escort pack on station", () => {
-    // Andromeda's middle region plans capital battles; fly until one loads.
-    const flight = createFlight(CONTENT, 5, 17, progress);
-    let leader: SpaceObject | undefined;
-    for (let x = 12000; !leader && x < 60000; x += CONTENT.tuning.chunkSize) {
-      flight.player = { x, y: 12000 };
-      flight.shield = Infinity;
-      stepFlight(CONTENT, 0.001, idle, flight);
-      leader = flight.objects.find(
-        (object) =>
-          object.enemy?.archetype === "capital" && object.enemy.packId?.startsWith("pack:"),
-      );
+  it.each(GALAXY_NUMBERS)("generates ordinary packs without capitals in galaxy %i", (galaxy) => {
+    const flight = createUnpopulatedFlight(CONTENT, galaxy, 17);
+    flight.topology = CURRENT_FLIGHT_TOPOLOGY;
+    const packs = new Set<string>();
+    for (const x of [5000, 14000, 29500]) {
+      for (const y of [-3200, 2200, 5400]) {
+        flight.player = { x, y };
+        stepFlight(CONTENT, 0.001, idle, flight);
+        for (const object of flight.objects) {
+          const enemy = object.enemy;
+          if (enemy?.packId?.startsWith("pack:")) {
+            packs.add(enemy.packId);
+            expect(enemy.archetype, object.id).not.toBe("capital");
+          }
+        }
+      }
     }
-    expect(leader).toBeDefined();
-    const packId = leader!.enemy!.packId!;
-    expect(leader!.id).toBe(`${packId}:0`);
-    expect(leader!.radius).toBe(ENEMY_SIZE_RATIOS.capital * CONTENT.tuning.flight.shipRadius);
-    const escorts = flight.objects.filter((object) => object.enemy?.packId === `${packId}:escorts`);
-    expect(escorts).toHaveLength(4);
-    expect(flight.combat!.initialPackSizes).toMatchObject({
-      [packId]: 1,
-      [`${packId}:escorts`]: 4,
-    });
-    // Andromeda's Broad wing capital.
-    const spacing = spacingRadius(ROUTE_POSITION[5], leader!.enemy!);
-    expect(spacing).toBe(75);
-    for (const escort of escorts) {
-      expect(escort.enemy).toMatchObject({ archetype: "fighter", escortOf: leader!.id });
-      // Each escort starts on its ring, at least the station gap beyond the capital's spacing
-      // radius, and its phase points at its station.
-      const offset = { x: escort.x - leader!.x, y: escort.y - leader!.y };
-      const distance = Math.hypot(offset.x, offset.y);
-      expect(distance).toBeGreaterThanOrEqual(spacing + escortTuning.stationGap - 1);
-      expect(Math.cos(escort.enemy!.phase)).toBeCloseTo(offset.x / distance);
-      expect(Math.sin(escort.enemy!.phase)).toBeCloseTo(offset.y / distance);
-    }
+    expect(packs.size).toBeGreaterThan(0);
   });
 
   it.each([
@@ -1234,7 +1214,6 @@ describe("galaxy encounter tables", () => {
     expect(packs.size).toBeGreaterThan(3);
     for (const [id, archetypes] of packs) {
       expect(archetypes.size).toBe(1);
-      // A capital battle's escorts form their own pack of up to four fighters.
       const range = id.endsWith(":escorts") ? [1, 4] : ranges.get([...archetypes][0]!)!;
       expect(range).toBeDefined();
       const size = flight.combat!.initialPackSizes[id]!;
