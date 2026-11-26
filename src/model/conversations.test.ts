@@ -6,7 +6,6 @@ import {
   CONVERSATIONS,
   INTERACTION_COPY,
   lineDuration,
-  noticeDuration,
 } from "../data/conversations.ts";
 import { type EnemyArchetype, enemyCatalog } from "../data/enemyCatalog.ts";
 import { SCREEN } from "../data/screen.ts";
@@ -831,11 +830,8 @@ describe("conversations in the game", () => {
     return model;
   }
   const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
-  // Steps the travel notice shows for.
-  const noticeSteps = lineSteps(noticeDuration(CONTENT.labels.travelUnavailable ?? ""));
+  const noticeSteps = lineSteps(2.5);
   const outOfAmmo = CONTENT.labels.outOfAmmo ?? "";
-  // Steps the out-of-ammo notice shows for.
-  const ammoSteps = lineSteps(noticeDuration(outOfAmmo));
 
   it("show the touch and desktop wording with the speaker's name tab and side", () => {
     const model = flying();
@@ -948,14 +944,22 @@ describe("conversations in the game", () => {
     model.state.flight!.dangerFor = 0;
     expect(model.state.notice).toBe(CONTENT.labels.travelUnavailable);
     expect(model.conversation).toBeNull();
-    for (let i = 0; i < noticeSteps - 2; i++) {
+    expect(model.noticeOpacity).toBe(1);
+    for (let i = 0; i < lineSteps(2); i++) {
+      model.step(0.05, idle);
+    }
+    expect(model.noticeOpacity).toBe(1);
+    for (let i = 0; i < lineSteps(0.25); i++) {
       model.step(0.05, idle);
     }
     expect(model.state.notice).toBe(CONTENT.labels.travelUnavailable);
+    expect(model.noticeOpacity).toBeCloseTo(0.5, 9);
     expect(model.conversation).toBeNull();
-    model.step(0.05, idle);
-    model.step(0.05, idle);
+    for (let i = 0; i < lineSteps(0.25); i++) {
+      model.step(0.05, idle);
+    }
     expect(model.state.notice).toBe("");
+    expect(model.noticeOpacity).toBe(0);
     expect(model.conversation?.key).toBe(key);
   });
 
@@ -992,8 +996,25 @@ describe("conversations in the game", () => {
     expect(model.state.notice).toBe(CONTENT.labels.travelUnavailable);
     expect(model.conversation).toBeNull();
     model.dismissNotice();
+    expect(model.noticeOpacity).toBe(0);
     expect(model.state.notice).toBe("");
     expect(model.conversation?.key).toBe(key);
+  });
+
+  it("gives the out-of-ammo notice its full dwell after the shot that emits it", () => {
+    const model = flying();
+    const flight = model.state.flight!;
+    collectWeapon("rapidMissile", flight);
+    flight.ammo.rapidMissile = 1;
+    model.step(0.05, { ...idle, aim: { x: 0, y: -1 } });
+    expect(model.state.notice).toBe(outOfAmmo);
+
+    for (let i = 0; i < lineSteps(2); i++) {
+      model.step(0.05, idle);
+    }
+    expect(model.noticeOpacity).toBe(1);
+    model.step(0.05, idle);
+    expect(model.noticeOpacity).toBeCloseTo(0.9, 9);
   });
 
   it("show a warning over a notice, which waits with its time and resumes after", () => {
@@ -1032,8 +1053,8 @@ describe("conversations in the game", () => {
     model.dismissConversation();
     expect(model.warningShowing).toBe(false);
     expect(model.conversation).toBeNull();
-    // The notice showed for at most the firing step before the warning came over it.
-    for (let i = 0; i < ammoSteps - 3; i++) {
+    // The warning held the notice at its initial opacity.
+    for (let i = 0; i < noticeSteps - 3; i++) {
       model.step(0.05, idle);
     }
     expect(model.state.notice).toBe(outOfAmmo);
@@ -1041,6 +1062,8 @@ describe("conversations in the game", () => {
       model.step(0.05, idle);
     }
     expect(model.state.notice).toBe("");
+    expect(model.noticeOpacity).toBe(0);
+    model.step(0.05, idle);
     expect(model.conversation?.key).toBe("lesson:move:0");
   });
 

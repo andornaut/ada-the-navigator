@@ -7,6 +7,7 @@ import {
   MINING_CONTRACT_DEPOSITS,
 } from "../data/activities.ts";
 import { CONTENT } from "../data/content.ts";
+import { lineDuration } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
@@ -563,8 +564,34 @@ describe("repeatable activities", () => {
     });
     expect(model.state.dialogue).not.toBeNull();
     model.choose("take");
-    expect(model.state.notice).toBe("Finish your activity first.");
+    const notice = "Finish your activity first.";
+    expect(model.state.notice).toBe(notice);
     expect(heldActivity(1, model.state)?.place).toBe("growers");
+
+    const advance = (seconds: number) => {
+      const steps = Math.ceil(seconds / 0.05);
+      for (let i = 0; i < steps; i++) {
+        model.step(seconds / steps, idle);
+      }
+    };
+    advance(lineDuration(notice));
+    expect(model.noticeOpacity).toBe(1);
+    expect(model.state.notice).toBe(notice);
+    model.choose("skip");
+
+    advance(lineDuration(notice) - 0.25);
+    expect(model.noticeOpacity).toBeCloseTo(0.5, 9);
+    model.interact();
+    expect(model.state.dialogue?.context).toBe("activity:workshop");
+    advance(1);
+    expect(model.noticeOpacity).toBeCloseTo(0.5, 9);
+    model.choose("skip");
+
+    advance(0.2);
+    expect(model.state.notice).toBe(notice);
+    expect(model.noticeOpacity).toBeCloseTo(0.1, 9);
+    advance(0.05);
+    expect(model.state.notice).not.toBe(notice);
   });
 
   it("keeps an accepted activity through save and restore, and rejects one not the galaxy's", () => {

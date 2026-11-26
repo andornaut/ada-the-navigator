@@ -19,7 +19,6 @@ import {
   INTERACTION_COPY,
   type JobMoment,
   type Mood,
-  noticeDuration,
   type NoticeRank,
   SPEAKERS,
 } from "../data/conversations.ts";
@@ -42,6 +41,7 @@ import { HOLODISKS } from "../data/holodisks.ts";
 import { carriedItemName, STORY_ITEM_NAMES } from "../data/itemNames.ts";
 import { JOB_TUNING, type JobType } from "../data/jobs.ts";
 import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
+import { visualNoticeTiming } from "../data/noticeTiming.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { poiAmbientLine, type PoiApproachKind } from "../data/poiDiscoveryLore.ts";
 import { holodiskInsertion } from "../data/premiseCopy.ts";
@@ -531,7 +531,7 @@ export class GameModel {
   private readonly entropy: Entropy;
   private readonly talk: ConversationDirector;
   private pickupFeedback: PickupFeedback[] = [];
-  private noticeShownFor = 0;
+  private noticeClock = { elapsedMs: 0, ...visualNoticeTiming("brief", "") };
   /** The showing game notice's rank: a press refusal's, or an ordinary notice's. */
   private noticeRank: NoticeRank = "notice";
   /** Held-job moments since the last flight step, for the conversation director. */
@@ -662,26 +662,33 @@ export class GameModel {
   /**
    * A notice shows at once in the conversation box's slot, ahead of every line but a warning's or
    * a scan receipt's (BOX_PRIORITIES); lower lines wait under it and resume after. A warning or
-   * receipt interrupts a notice, which resumes after it. A game notice clears after a line's time
-   * shown in flight.
+   * receipt interrupts a notice, which resumes at the same point in its hold or fade.
    */
-  private notify(text: string): void {
+  private notify(text: string, timing: "brief" | "reading" = "brief"): void {
     this.state.notice = text;
     this.noticeRank = "notice";
-    this.noticeShownFor = 0;
+    this.noticeClock = { elapsedMs: 0, ...visualNoticeTiming(timing, text) };
   }
   /**
    * The notice answering Ada's own refused press (Dock, Travel here, Galaxies or any other
    * refused action): it takes the slot at once, over a warning too, and the line it interrupts
    * resumes after it if still relevant (BOX_PRIORITIES).
    */
-  private refuse(text: string): void {
-    this.notify(text);
+  private refuse(text: string, timing: "brief" | "reading" = "brief"): void {
+    this.notify(text, timing);
     this.noticeRank = "refusal";
   }
   /** A tap on a game notice dismisses it at once; lines waiting under it resume. */
   dismissNotice(): void {
     this.state.notice = "";
+  }
+  /** Opacity at the notice's current phase, which pauses while another surface covers it. */
+  get noticeOpacity(): number {
+    if (!this.noticeShowing) {
+      return 0;
+    }
+    const { elapsedMs, fadeMs, holdMs } = this.noticeClock;
+    return Math.max(0, 1 - Math.max(0, elapsedMs - holdMs) / fadeMs);
   }
   private get noticeShowing(): boolean {
     return this.state.notice !== "";
@@ -2432,7 +2439,7 @@ export class GameModel {
     }
     const busy = this.state.tasks[f.galaxy];
     if (busy) {
-      this.refuse(this.label(busy.kind === "job" ? "jobBusy" : "activityBusy"));
+      this.refuse(this.label(busy.kind === "job" ? "jobBusy" : "activityBusy"), "reading");
       return;
     }
     const terms = this.activityTerms(f, place);
@@ -2825,7 +2832,7 @@ export class GameModel {
   private complete(): void {
     this.current.questComplete = true;
     if (this.current.holodisk) {
-      this.notify(this.label("chapterComplete"));
+      this.notify(this.label("chapterComplete"), "reading");
     }
   }
   /**
@@ -2869,7 +2876,7 @@ export class GameModel {
     }
     this.unlockNext();
     if (p.questComplete) {
-      this.notify(this.label("chapterComplete"));
+      this.notify(this.label("chapterComplete"), "reading");
     }
     if (giver) {
       this.panel("holodiskHandover", this.content.premise.holodisk.handover, giver);
@@ -2938,6 +2945,7 @@ export class GameModel {
       this.reopenInteraction();
       return;
     }
+    const noticeAtStart = this.noticeClock;
     const runtime = chapterRuntime(f.galaxy);
     const context = runtime && this.chapterContext();
     if (context) {
@@ -3182,11 +3190,19 @@ export class GameModel {
     const near = (range: number) => (object: { x: number; y: number }) =>
       Math.hypot(object.x - f.player.x, object.y - f.player.y) <= range;
     const held = this.noticeShowing ? this.noticeRank : null;
-    // A game notice's time runs only while it shows, not under a warning or scan receipt.
-    if (this.state.notice && !this.talk.showsOver(this.noticeRank)) {
-      this.noticeShownFor += dt;
-      if (this.noticeShownFor >= noticeDuration(this.state.notice) - 1e-9) {
-        this.state.notice = "";
+    // Count the step only for a notice that was already present and is still uncovered.
+    const clock = this.noticeClock;
+    if (
+      held &&
+      clock === noticeAtStart &&
+      !this.state.dialogue &&
+      !this.state.docked &&
+      this.screen === "space" &&
+      !this.talk.showsOver(held)
+    ) {
+      clock.elapsedMs += dt * 1000;
+      if (clock.elapsedMs >= clock.holdMs + clock.fadeMs - 1e-6) {
+        this.dismissNotice();
       }
     }
     const landmarks = flightLandmarkSites(f);
@@ -4723,7 +4739,7 @@ export class GameModel {
     if (selected.refused) {
       const busy = this.state.tasks[this.state.selectedGalaxy];
       if (busy && dialogue.context.startsWith("activity:")) {
-        this.refuse(this.label(busy.kind === "job" ? "jobBusy" : "activityBusy"));
+        this.refuse(this.label(busy.kind === "job" ? "jobBusy" : "activityBusy"), "reading");
       }
       return;
     }
