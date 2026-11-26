@@ -20,6 +20,7 @@ import type { FlightTopology } from "./flightTopology.ts";
 import type { NeedleChapterProgress, NeedleFlight } from "./needleRuntime.ts";
 import type { PhantomFlight, PhantomProgress } from "./phantom.ts";
 import type { ProjectileFade } from "./playerProjectiles.ts";
+import type { StationRestockState } from "./stationRestock.ts";
 import type { StoryCursor } from "./storyCursor.ts";
 import type { TargetKnowledgeRecord } from "./targetMarkers.ts";
 
@@ -452,6 +453,7 @@ export interface GameState {
   /** The station whose card is open; action pauses as in a conversation. */
   docked: string | null;
   economy: EconomyState;
+  stationRestock?: StationRestockState;
   notice: string;
   /** The prologue plays once. */
   prologueSeen: boolean;

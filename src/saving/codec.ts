@@ -15,7 +15,7 @@ import { enemyActorAvailable, isEnemyActorKind } from "../data/enemyActors.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { type HeavyHullProfile, isHeavyHullProfile, wreckEnemyId } from "../data/enemyIdentity.ts";
 import { ENEMY_KEEP_MOVING } from "../data/enemyNavigation.ts";
-import { GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
 import { JOB_TYPES } from "../data/jobs.ts";
 import { NEEDLE, NEEDLE_PLACES } from "../data/needle.ts";
@@ -59,7 +59,14 @@ import { pendingPhantomEncounterUnshared } from "../model/phantomRequiredPlans.t
 import { requiredPlanConsistent, requiredPlanObjects } from "../model/requiredEncounterPlans.ts";
 import { requiredRolePlanConsistent } from "../model/requiredRolePlans.ts";
 import { SAVE_VERSION, type SaveRestore } from "../model/saveSchema.ts";
-import { namesStation, stationById } from "../model/stations.ts";
+import { onSale, stationShopRows, stationStock } from "../model/shop.ts";
+import {
+  STATION_RESTOCK_SECONDS,
+  type StationOffer,
+  type StationRestockState,
+} from "../model/stationRestock.ts";
+import { HUB_STATION, namesStation, stationById } from "../model/stations.ts";
+import { stationShopCategories, stationSpecialty } from "../model/stationServices.ts";
 import { currentPage, openingScene, resolutionScene } from "../model/storybook.ts";
 import { readStoryCursor } from "../model/storyCursor.ts";
 import { canReplayEarthChapter, resolveStoryScene } from "../model/storyScenes.ts";
@@ -932,6 +939,160 @@ function stationIds(galaxy: GalaxyNumber, value: unknown): boolean {
   );
 }
 
+function stationOffer(value: unknown): value is StationOffer {
+  if (!record(value) || Object.keys(value).length !== 2) {
+    return false;
+  }
+  switch (value.kind) {
+    case "ammo":
+    case "weapon":
+      return UPGRADE_WEAPONS.some((weapon) => weapon === value.weapon);
+    case "weaponUpgrade":
+      return typeof value.weapon === "string" && Object.hasOwn(WEAPON_CATALOG, value.weapon);
+    case "track":
+      return typeof value.track === "string" && Object.hasOwn(ECONOMY.trackPrices, value.track);
+    case "paint":
+      return (
+        typeof value.scheme === "string" &&
+        value.scheme !== ECONOMY.defaultPaint &&
+        Object.hasOwn(ECONOMY.paints, value.scheme)
+      );
+    default:
+      return false;
+  }
+}
+
+function purchasedStock(
+  economy: EconomyState,
+  item: StationOffer,
+  flightSeconds: number,
+  value: unknown,
+): boolean {
+  if (value === undefined) {
+    return true;
+  }
+  if (
+    !record(value) ||
+    Object.keys(value).length !== 2 ||
+    !finite(value.availableAfter) ||
+    value.availableAfter < STATION_RESTOCK_SECONDS ||
+    value.availableAfter > flightSeconds + STATION_RESTOCK_SECONDS
+  ) {
+    return false;
+  }
+  if (item.kind === "ammo" || item.kind === "weapon") {
+    return economy.ownedWeapons.includes(item.weapon) && value.level === null;
+  }
+  if (item.kind === "paint") {
+    return economy.paints.includes(item.scheme) && value.level === null;
+  }
+  const [prices, installed] =
+    item.kind === "track"
+      ? [ECONOMY.trackPrices[item.track], economy.levels[item.track]]
+      : [ECONOMY.weaponUpgradePrices[item.weapon], economy.levels.weapons[item.weapon]];
+  const level = value.level;
+  return (
+    record(level) &&
+    Object.keys(level).length === 2 &&
+    level.max === prices.length + 1 &&
+    finite(level.current) &&
+    Number.isInteger(level.current) &&
+    level.current >= 2 &&
+    level.current <= installed &&
+    (item.kind === "track" || item.weapon === "laser" || economy.ownedWeapons.includes(item.weapon))
+  );
+}
+
+function validStationRestock(
+  progress: GameState["progress"],
+  economy: EconomyState,
+  value: unknown,
+): boolean {
+  if (value === undefined) {
+    return true;
+  }
+  if (
+    !record(value) ||
+    !finite(value.flightSeconds) ||
+    value.flightSeconds < 0 ||
+    value.flightSeconds > Number.MAX_SAFE_INTEGER - STATION_RESTOCK_SECONDS ||
+    !record(value.stations)
+  ) {
+    return false;
+  }
+  const flightSeconds = value.flightSeconds;
+  for (const [key, slots] of Object.entries(value.stations)) {
+    const identity: unknown = JSON.parse(key);
+    if (!Array.isArray(identity) || identity.length !== 2) {
+      return false;
+    }
+    const [galaxy, id] = identity as [GalaxyNumber, unknown];
+    if (
+      !GALAXY_NUMBERS.includes(galaxy) ||
+      typeof id !== "string" ||
+      key !== JSON.stringify([galaxy, id]) ||
+      !(progress[galaxy].stations.includes(id) || (galaxy === 2 && id === HUB_STATION)) ||
+      !record(slots)
+    ) {
+      return false;
+    }
+    const specialty = stationSpecialty(galaxy, id);
+    const categories = stationShopCategories(
+      {
+        equipment: specialty === null || specialty === "equipment",
+        exchange: true,
+        heldTask: false,
+        jobs: false,
+        projects: false,
+        weaponsAmmo: specialty === null || specialty === "weaponsAmmo",
+      },
+      id,
+    );
+    const position = ROUTE_POSITION[galaxy];
+    const stock = stationStock(ECONOMY, position, id);
+    for (const [slot, entry] of Object.entries(slots)) {
+      if (!record(entry) || !stationOffer(entry.item) || !onSale(position, entry.item)) {
+        return false;
+      }
+      const { item } = entry;
+      const category =
+        item.kind === "ammo"
+          ? "ammo"
+          : item.kind === "paint" || item.kind === "track"
+            ? "equipment"
+            : "weapons";
+      const index = Number(slot.split(":")[1]);
+      if (
+        !categories?.includes(category) ||
+        !Number.isInteger(index) ||
+        index < 0 ||
+        index >= stock[category].length ||
+        slot !== `${category}:${index}` ||
+        !purchasedStock(economy, item, flightSeconds, entry.purchased)
+      ) {
+        return false;
+      }
+    }
+    const visit = { galaxy, state: value as unknown as StationRestockState, stationId: id };
+    const visibleStock =
+      galaxy === 2 && id === HUB_STATION && progress[galaxy].questComplete
+        ? { ...stock, equipment: stock.equipment.slice(0, 3) }
+        : stock;
+    for (const category of categories ?? []) {
+      const rows = stationShopRows(ECONOMY, economy, visibleStock, category, visit);
+      const identities = rows.map(({ item }) =>
+        item.kind === "weapon" || item.kind === "weaponUpgrade"
+          ? item.weapon
+          : JSON.stringify(item, ["kind", "scheme", "track", "weapon"]),
+      );
+      if (new Set(identities).size !== rows.length) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 /** Charted landmark ids: distinct landmarks of the galaxy. */
 function chartedIds(galaxy: GalaxyNumber, value: unknown): boolean {
   return (
@@ -1166,6 +1327,9 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
       }
     }
     const progress = value.progress as unknown as GameState["progress"];
+    if (!validStationRestock(progress, value.economy, value.stationRestock)) {
+      return null;
+    }
     const sunflowerBoss = progress[1].capitalBoss;
     const needleBoss = progress[4].capitalBoss;
     const redact = progress[5].redact;

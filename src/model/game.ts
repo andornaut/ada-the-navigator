@@ -289,6 +289,7 @@ import {
   type PurchaseRequest,
   type PurchaseResult,
   requestPurchase,
+  restockStationShop,
   selectPaint,
   type ShopItem,
   type ShopRow,
@@ -299,6 +300,7 @@ import {
 } from "./shop.ts";
 import { discoveryCacheGroup } from "./stardustPlacement.ts";
 import { stationDisplayName } from "./stationIdentity.ts";
+import { advanceStationRestock, newStationRestock } from "./stationRestock.ts";
 import {
   flightStationContext,
   HUB_STATION,
@@ -2232,8 +2234,9 @@ export class GameModel {
   private shopSupply() {
     const services = this.stationServices;
     const id = this.state.docked;
+    const galaxy = this.state.flight?.galaxy;
     const categories = services && id ? stationShopCategories(services, id) : undefined;
-    if (!id || !categories) {
+    if (!id || !galaxy || !categories) {
       return undefined;
     }
     const holodisk = this.holodiskRow();
@@ -2247,24 +2250,28 @@ export class GameModel {
         : [],
       weapons: categories.includes("weapons") ? eligible.weapons : [],
     };
-    return { categories, holodisk, stock };
+    const station = { galaxy, stationId: id };
+    const state = this.state.stationRestock;
+    const visit = state && { ...station, state, stock };
+    return { categories, holodisk, station, stock, visit };
   }
-  private stationSells(item: ShopItem): boolean {
-    const supply = this.shopSupply();
-    if (!supply) {
-      return false;
-    }
-    return item.kind === "holodisk" ? supply.holodisk !== null : stationStocks(supply.stock, item);
+  private stationSells(
+    supply: NonNullable<ReturnType<GameModel["shopSupply"]>>,
+    item: ShopItem,
+  ): boolean {
+    return item.kind === "holodisk"
+      ? supply.holodisk !== null
+      : stationStocks(supply.stock, item, supply.visit);
   }
   shopGroups() {
     const supply = this.shopSupply();
     if (!supply) {
       return undefined;
     }
-    const { categories, holodisk, stock } = supply;
+    const { categories, holodisk, stock, visit } = supply;
     this.pullLoadout();
     const group = (category: StationStockCategory) => {
-      const rows = stationShopRows(ECONOMY, this.state.economy, stock, category);
+      const rows = stationShopRows(ECONOMY, this.state.economy, stock, category, visit);
       if (category === "equipment" && holodisk) {
         rows.unshift(holodisk);
       }
@@ -2305,7 +2312,8 @@ export class GameModel {
     };
   }
   requestPurchase(item: ShopItem): PurchaseRequest {
-    if (!this.stationSells(item)) {
+    const supply = this.shopSupply();
+    if (!supply || !this.stationSells(supply, item)) {
       return { kind: "refused", reason: "notForSale" };
     }
     this.pullLoadout();
@@ -2321,14 +2329,15 @@ export class GameModel {
     if (!onSale(this.shopPosition, item)) {
       return { kind: "refused", reason: "notForSale" };
     }
-    return requestPurchase(ECONOMY, this.state.economy, item);
+    return requestPurchase(ECONOMY, this.state.economy, item, supply.visit);
   }
   /**
    * Purchases happen only while docked. Buying the hub's holodisk closes the station card and
    * plays its insertion, as funding a project closes it for the thank-you line.
    */
   buy(item: ShopItem): PurchaseResult {
-    if (!this.state.docked || !this.stationSells(item)) {
+    const supply = this.shopSupply();
+    if (!supply || !this.stationSells(supply, item)) {
       return { kind: "refused", reason: "notForSale" };
     }
     if (item.kind === "holodisk") {
@@ -2346,7 +2355,15 @@ export class GameModel {
     if (!onSale(this.shopPosition, item)) {
       return { kind: "refused", reason: "notForSale" };
     }
-    const result = buy(ECONOMY, item, this.state.economy);
+    const visit = supply.visit ?? {
+      ...supply.station,
+      state: newStationRestock(),
+      stock: supply.stock,
+    };
+    const result = buy(ECONOMY, item, this.state.economy, visit);
+    if (result.kind === "bought") {
+      this.state.stationRestock = visit.state;
+    }
     this.pushLoadout();
     this.syncAchievements();
     return result;
@@ -2583,6 +2600,19 @@ export class GameModel {
       return;
     }
     this.state.docked = id;
+    if (this.state.stationRestock) {
+      const supply = this.shopSupply();
+      if (supply?.visit) {
+        this.pullLoadout();
+        restockStationShop(
+          ECONOMY,
+          this.state.economy,
+          this.shopPosition,
+          supply.stock,
+          supply.visit,
+        );
+      }
+    }
     this.dockedThisFlight = true;
     this.greet(f.galaxy, id);
     const held = this.held;
@@ -3269,6 +3299,7 @@ export class GameModel {
     const grid = periodicWorldGrid(world, this.content.tuning.chunkSize);
     const cellOf = (point: Vec) => worldCellKey(grid, worldCellAt(grid, point));
     const pacingActive = f.topology && this.current.geography?.seed === f.seed;
+    const flightTimeBeforeStep = f.time;
     const events = stepFlight(
       this.content,
       dt,
@@ -3309,6 +3340,9 @@ export class GameModel {
           }
         : undefined,
     );
+    if (this.state.stationRestock) {
+      advanceStationRestock(this.state.stationRestock, f.time - flightTimeBeforeStep);
+    }
     const { attempt, nearRoute } = travel;
     if (nearRoute && attempt && cellOf(f.player) === attempt.cell) {
       const inRegion = (point: Vec) => nearRoute(point) === (attempt.region === "near");
