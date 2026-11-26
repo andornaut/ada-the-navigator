@@ -2,17 +2,17 @@ import { existsSync } from "node:fs";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { EDGE_MARKERS } from "../data/edgeMarkers.ts";
-import { GALAXY_NUMBERS } from "../data/galaxies.ts";
-import { TASK_COLORS, type TaskCategory } from "../data/taskCategories.ts";
-import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { foregroundEdge, LIGHT_FIELD, lightGalaxy, readLightGalaxies } from "../game/lightField.ts";
 import {
   galaxyPalettes,
   readGalaxyFields,
   readSpacePalette,
   spaceColorCss,
-} from "../game/spacePalette.ts";
+} from "../art/spacePalette.ts";
+import { EDGE_MARKERS } from "../data/edgeMarkers.ts";
+import { GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { TASK_COLORS, type TaskCategory } from "../data/taskCategories.ts";
+import { uiIconUrl } from "../data/uiIconUrl.ts";
+import { foregroundEdge, LIGHT_FIELD, lightGalaxy, readLightGalaxies } from "../game/lightField.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
 import { ART_MANIFEST, publicJson } from "../testing/publicArt.ts";
 import { units } from "./layout/css.ts";

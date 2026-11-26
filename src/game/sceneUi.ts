@@ -7,15 +7,19 @@ import PROJECTS_FILE from "../../public/art/projects.json" with { type: "json" }
 import {
   AMMO_PACK_FRAMES,
   EDGE_MARKER_DEPTH,
+  FALLBACK_SPACE_PALETTE,
+  galaxyPalettes,
   hasShipHeadings,
   HIT_FLASH_DEPTH,
   HOLODISK_FRAMES,
   readBeaconArt,
   readCacheArt,
   readEnemyWeaponsArt,
+  readGalaxyFields,
   readLoopArt,
   readOutpostArt,
   readProjectArt,
+  readSpacePalette,
   readStardustArt,
   readStationArt,
   readWeaponSolids,
@@ -109,12 +113,6 @@ import { type Asset, projectId, TITLE_SCREEN_KEY } from "./sceneShared.ts";
 import { StoryShell } from "./shell.ts";
 import { engineJets } from "./shipJets.ts";
 import { shopItemDetail, stationRow } from "./shopView.ts";
-import {
-  FALLBACK_SPACE_PALETTE,
-  galaxyPalettes,
-  readGalaxyFields,
-  readSpacePalette,
-} from "./spacePalette.ts";
 import { staticShipJets } from "./staticShipJets.ts";
 import { aboardGalaxy } from "./storyPresentation.ts";
 import { RASTER_SCALE_EVENT } from "./svgRasters.ts";

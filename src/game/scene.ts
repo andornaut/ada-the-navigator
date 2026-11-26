@@ -24,6 +24,7 @@ import {
   enemyMissileFlame,
   enemyPellet,
   type EnemyWeaponsArt,
+  FALLBACK_SPACE_PALETTE,
   fanVolley,
   type GalaxyBackdrop,
   type GalaxyStationArt,
@@ -45,7 +46,9 @@ import {
   type ProjectArtSet,
   screenAngle,
   selectPaintedShipAsset,
+  Silhouettes,
   skipShipPreload,
+  type SpacePalette,
   SPECK_RADIUS,
   speckField,
   spriteOwner,
@@ -205,8 +208,6 @@ import {
   type ShipJets,
   travelJets,
 } from "./shipJets.ts";
-import { Silhouettes } from "./silhouettes.ts";
-import { FALLBACK_SPACE_PALETTE, type SpacePalette } from "./spacePalette.ts";
 import { aboardGalaxy, storyCoversScene } from "./storyPresentation.ts";
 import { SvgRasters } from "./svgRasters.ts";
 import { fileFilter } from "./textures.ts";

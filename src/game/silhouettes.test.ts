@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { Silhouettes } from "./silhouettes.ts";
+import { Silhouettes } from "../art/silhouettes.ts";
 
 class ImageSource {}
 

@@ -37,6 +37,7 @@ import {
   rockArt,
   sceneryDetail,
   shipDirection,
+  spaceObjectColor,
   stardustDrawn,
   stardustFrame,
   stardustPhase,
@@ -92,7 +93,6 @@ import {
   acknowledgeCacheSprite,
   acknowledgePrimitiveTarget,
 } from "./sceneTargetMarkers.ts";
-import { spaceObjectColor } from "./spacePalette.ts";
 import { UPGRADE_CHEVRON, upgradeFrame } from "./upgradePickup.ts";
 
 /** The scene state and methods this module's functions use. */

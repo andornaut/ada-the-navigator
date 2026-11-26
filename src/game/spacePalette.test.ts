@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
-import { GALAXIES } from "../data/storybook.ts";
-import type { SpaceObject } from "../model/types.ts";
-import { ART_MANIFEST, publicJson } from "../testing/publicArt.ts";
 import {
   galaxyPalettes,
   readGalaxyFields,
   readSpacePalette,
   spaceColorCss,
   spaceObjectColor,
-} from "./spacePalette.ts";
+} from "../art/spacePalette.ts";
+import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { GALAXIES } from "../data/storybook.ts";
+import type { SpaceObject } from "../model/types.ts";
+import { ART_MANIFEST, publicJson } from "../testing/publicArt.ts";
 
 const colors = {
   active: "#65C9BF",

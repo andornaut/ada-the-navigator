@@ -4,9 +4,9 @@ import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import { HIT_RULE, hitAround, pressedArea } from "@andornaut/game-kit/runtime/ui/hitAreas";
 import { describe, expect, it } from "vitest";
 
+import { FALLBACK_SPACE_PALETTE, readGalaxyFields } from "../../art/spacePalette.ts";
 import type { GalaxyNumber } from "../../data/types.ts";
 import { uiIconUrl } from "../../data/uiIconUrl.ts";
-import { FALLBACK_SPACE_PALETTE, readGalaxyFields } from "../../game/spacePalette.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "../../model/flightTopology.ts";
 import { CARD_CLOSE } from "./cardFrame.ts";
 import {

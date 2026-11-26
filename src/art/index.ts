@@ -123,6 +123,15 @@ export {
   shipDirection,
   skipShipPreload,
 } from "./shipArt.ts";
+export { Silhouettes } from "./silhouettes.ts";
+export {
+  FALLBACK_SPACE_PALETTE,
+  galaxyPalettes,
+  readGalaxyFields,
+  readSpacePalette,
+  spaceObjectColor,
+  type SpacePalette,
+} from "./spacePalette.ts";
 export { SPECK_RADIUS, speckField } from "./speckField.ts";
 export {
   BEACON_SUFFIX,

@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import type { Point } from "@andornaut/game-kit/runtime/rect";
 import { describe, expect, it } from "vitest";
 
+import { readSpacePalette } from "../art/spacePalette.ts";
 import { CONTENT } from "../data/content.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { HIT_FLASH, HIT_SHAKE } from "../data/layout.ts";
@@ -24,7 +25,6 @@ import {
   shakeCounter,
 } from "./feedback.ts";
 import { shakeIntensity } from "./playCamera.ts";
-import { readSpacePalette } from "./spacePalette.ts";
 
 function launched() {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
