@@ -812,6 +812,18 @@ Objectives, in order:
 6. Buy the holodisk at the hub.
 7. Go home to Earth when ready.
 
+### Captain Claim and Outrigger Carrier
+
+These [Cartwheel boss cues](rules.md#captain-claim) appear in the small
+conversation box.
+
+- Approach, Captain Claim: "This field is under fleet claim. Miners, clear the
+  area."
+- First hardpoint lost, Ada: "The miners warned us about this side. One mount's
+  down."
+- Resolved, Astra: "The field is clear. The carrier's salvage can help pay for
+  the disk."
+
 ## Chapter six: the garden party
 
 Panel title: The Garden Party.

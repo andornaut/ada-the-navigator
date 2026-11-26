@@ -515,6 +515,30 @@ tones. Archie's claim-jumper drones harass miners at the ore fields with hit and
 run attacks, and fixed turret platforms guard some ore fields. Difficulty ramps
 along the route; the roster is in [Ships](ships.md#cartwheel-roster).
 
+#### Captain Claim
+
+Talking to Mica after the second ore deposit milestone makes Captain Claim,
+an uncrewed drone commander, eligible for an optional encounter. The carrier
+requires a safe site by a seeded ore field, clear of the mining hub's story
+route. If placement succeeds, the local map charts "Outrigger Carrier" as a
+normal-flight waypoint and the reserved field's rocks stay unavailable until
+resolution. Other ore fields remain available. The docking story and hub
+holodisk purchase follow their existing steps independently of the encounter.
+
+While the carrier is engaged, the boss HUD shows Outrigger Carrier, Captain
+Claim and its current hull health. It clears on disengagement and returns
+with current hull health on re-entry. A disabled carrier in reach with
+Salvage available shows "Disabled". [Claim's exchange](player-copy.md#captain-claim-and-outrigger-carrier)
+covers the approach, first hardpoint loss while the carrier remains active,
+and resolution.
+
+Destroy the hull or disable and Salvage the carrier to open the same seeded
+field for ordinary mining and replace the boss's map waypoint with "Ore field".
+Neither waypoint offers a map jump. Use the ordinary heavy Stardust payout
+once, full on destruction or half rounded down on Salvage. The encounter's
+state persists through Continue and return. Once resolved, the field stays
+open and the carrier does not return.
+
 ### Species and greeters
 
 Each galaxy's people are one kid-friendly alien species: animal folk in
