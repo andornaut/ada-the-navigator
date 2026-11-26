@@ -20,3 +20,4 @@ See [Ships](../../gameplay/ships.md) for physics, rosters and
 | ada-0394 | Fire small craft from the nose and turn large ships to their heading     | [ada-0394.md](../work/ada-0394.md) |
 | ada-0395 | Keep every enemy ship moving                                             | [ada-0395.md](../work/ada-0395.md) |
 | ada-0398 | Toughen heavies and give moving heavies front Lasers                     | [ada-0398.md](../work/ada-0398.md) |
+| ada-0399 | Turn capital ships into authored galaxy boss fights                      | [ada-0399.md](../work/ada-0399.md) |

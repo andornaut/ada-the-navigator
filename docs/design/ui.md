@@ -84,3 +84,4 @@ Reference: [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.
 | ada-0377 | Use the shared refusal cue for disabled buttons                                 | [ada-0377.md](../work/ada-0377.md) |
 | ada-0390 | Render the UI from shared components with one layout model                      | [ada-0390.md](../work/ada-0390.md) |
 | ada-0397 | Give heavies a distinct threat-red edge marker                                  | [ada-0397.md](../work/ada-0397.md) |
+| ada-0400 | Use the medium crash dialog and standard recovery buttons                       | [ada-0400.md](../work/ada-0400.md) |
