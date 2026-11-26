@@ -820,7 +820,10 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   the galactic-center mapping-progress and survey-area denominator stays 25000.
 - Each galaxy wraps on both axes across a square 240000 world units on a side.
   Flight crosses to the opposite edge with its direction and speed intact.
-  Map, flight and placement queries use the same wrap geometry. The transition
+  Flight, placement and distance queries use the same wrap geometry, so
+  distances run the short way across the seam. The local map shows one wrap
+  period: pan and zoom stay within the canonical 240000 square, panning stops
+  at the seam, and every position draws at its canonical point. The transition
   resets old saves once. New saves retain their own discoveries and story
   progress across later flights.
   Landmark labels use the stable shared [Quests](quests.md#landmarks) contract.
