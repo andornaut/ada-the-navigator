@@ -15,6 +15,7 @@ import {
   readBackdropRules,
   readDebrisArt,
   readGalaxyBackdrop,
+  readStreakSpec,
   RockFrames,
 } from "../art/index.ts";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
@@ -40,7 +41,6 @@ import {
   storyCraftSets,
   storyNoses,
 } from "./cartwheelArt.ts";
-import { readStreakSpec } from "./currentStreaks.ts";
 import { readShards, type ShardData } from "./destructionArt.ts";
 import {
   composedArchetypes,

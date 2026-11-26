@@ -2,8 +2,6 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { CURRENTS } from "../data/galaxyFeatures.ts";
-import { currentInCell, flowFraction } from "../model/currents.ts";
 import {
   dartStep,
   dartStyle,
@@ -15,7 +13,9 @@ import {
   rowOffset,
   type StreakMark,
   streakMarks,
-} from "./currentStreaks.ts";
+} from "../art/currentStreaks.ts";
+import { CURRENTS } from "../data/galaxyFeatures.ts";
+import { currentInCell, flowFraction } from "../model/currents.ts";
 
 const spec = readStreakSpec(
   JSON.parse(

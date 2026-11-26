@@ -1,8 +1,8 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import { describe, expect, it } from "vitest";
 
+import { SPECK_RADIUS, speckField } from "../art/speckField.ts";
 import { SCREEN } from "../data/screen.ts";
-import { SPECK_RADIUS, speckField } from "./speckField.ts";
 
 const RULE = { cell: 112, parallax: 0.7 };
 const VIEW: Rect = { height: SCREEN.height, width: SCREEN.width, x: 0, y: 0 };

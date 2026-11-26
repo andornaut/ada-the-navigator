@@ -34,6 +34,7 @@ export {
   viewStars,
   viewStreaks,
 } from "./backdropLayers.ts";
+export { readStreakSpec, streakMarks, type StreakSpec } from "./currentStreaks.ts";
 export {
   type DebrisArt,
   debrisFrame,
@@ -44,3 +45,4 @@ export {
 export { decorationRasterSize, viewDecorations } from "./rareDecorations.ts";
 export { RockFrames } from "./rockFrames.ts";
 export { sceneryDetail } from "./scenery.ts";
+export { SPECK_RADIUS, speckField } from "./speckField.ts";

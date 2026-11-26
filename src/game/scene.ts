@@ -10,6 +10,9 @@ import {
   type GalaxyBackdrop,
   hexNumber,
   playDepth,
+  SPECK_RADIUS,
+  speckField,
+  type StreakSpec,
 } from "../art/index.ts";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { CONTENT } from "../data/content.ts";
@@ -59,7 +62,6 @@ import {
   readGalaxyManifest,
 } from "./artManifest.ts";
 import { craftFrameSets, type HubArt } from "./cartwheelArt.ts";
-import type { StreakSpec } from "./currentStreaks.ts";
 import {
   type DestructionData,
   readDestruction,
@@ -171,7 +173,6 @@ import {
 } from "./shipJets.ts";
 import { Silhouettes } from "./silhouettes.ts";
 import { FALLBACK_SPACE_PALETTE, type SpacePalette } from "./spacePalette.ts";
-import { SPECK_RADIUS, speckField } from "./speckField.ts";
 import { spriteOwner, staleSpriteKeys } from "./spriteKeys.ts";
 import type { StardustArt } from "./stardustArt.ts";
 import type { GalaxyStationArt, StationArt } from "./stationArt.ts";
