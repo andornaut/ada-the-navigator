@@ -186,6 +186,8 @@ describe("keep moving in flight", () => {
     const model = flightModel(1, { x: point.x, y: point.y + 900 });
     const flight = model.state.flight!;
     const shape = [...ASTEROID_SHAPES.values()].find((entry) => entry.size === "large")!;
+    // One step generates the region around Ada first, so the traced rock is the only rock there.
+    stepModel(model);
     flight.objects = flight.objects.filter((object) => object.kind !== "rock");
     flight.objects.push({
       asteroid: shape.id,
