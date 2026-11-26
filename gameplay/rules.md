@@ -878,7 +878,9 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   Flight, placement and distance queries use the same wrap geometry, so
   distances run the short way across the seam. The local map shows one wrap
   period: pan and zoom stay within the canonical 240000 square, panning stops
-  at the seam, and every position draws at its canonical point. The transition
+  at the seam, and every position draws at its canonical point. At maximum
+  zoom-out, pan and zoom keep part of the survey oval visible, even if Ada
+  goes off screen near a seam. The transition
   resets old saves once. New saves retain their own discoveries and story
   progress across later flights.
   Landmark labels use the stable shared [Quests](quests.md#landmarks) contract.
