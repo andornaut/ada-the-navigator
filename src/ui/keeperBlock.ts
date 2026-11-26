@@ -1,26 +1,16 @@
-import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
-
 import { CAST, castPortrait } from "../data/cast.ts";
 import { ARCHIE_NAMED } from "../data/conversations.ts";
 import { KEEPERS } from "../data/keepers.ts";
-import type { KeeperKey, StationGreeting } from "../model/keepers.ts";
-import {
-  assertAdaActionBindings,
-  assertAdaActionMetadata,
-  bindAdaAction,
-} from "./actionBinding.ts";
+import type { KeeperKey } from "../model/keepers.ts";
 import {
   COMPACT_PORTRAITS,
   portraitBackground,
   portraitFrame,
-  selectPortraitCrop,
   TAB_COLOURS,
 } from "./dialoguePortraits.ts";
-import { SCROLL } from "./layout/contentCard.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
 import { font, units } from "./layout/css.ts";
 import { KEEPER_BLOCK } from "./layout/stationCard.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
 import { FOCUS_STYLE, TEXT_TOKENS } from "./modal.ts";
 import { PANEL_BACKGROUND } from "./notice.ts";
 
@@ -201,135 +191,3 @@ export const KEEPER_STYLE = `
 ${KEEPER_RULES}
 ${ARCHIE_RULES}
 `;
-
-export interface KeeperBlock {
-  /** Unregisters the advance action; the caller retains the mounted presentation. */
-  dispose(): void;
-  /** The block as it is now in the card: a button while lines are to come, a status otherwise. */
-  readonly element: () => HTMLElement;
-  /** Shows greeting, or the generic welcome for null. */
-  render(greeting: StationGreeting | null): void;
-}
-
-/**
- * The block, which shows each greeting rendered into it. A press on the button calls advance; when
- * the last line shows the button gives way to the status in place, and focus moves to
- * focusAfter if the button had it.
- */
-export function createKeeperBlock(options: {
-  readonly advance: () => void;
-  readonly focusAfter: () => HTMLElement;
-  readonly labels: { readonly nextLine: string; readonly welcome: string };
-}): KeeperBlock {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.setAttribute("aria-label", options.labels.nextLine);
-  const status = document.createElement("div");
-  for (const host of [button, status]) {
-    host.className = "ada-keeper";
-  }
-  const frame = document.createElement("span");
-  frame.className = "ada-keeper-frame";
-  frame.setAttribute("aria-hidden", "true");
-  const face = document.createElement("span");
-  face.className = "ada-keeper-portrait";
-  frame.append(face);
-  const body = document.createElement("span");
-  body.className = "ada-keeper-body";
-  const lines = document.createElement("span");
-  lines.className = "ada-keeper-lines";
-  const line = document.createElement("span");
-  line.className = "ada-keeper-line";
-  line.id = "ada-keeper-line";
-  line.setAttribute("aria-live", "polite");
-  const dots = document.createElement("span");
-  dots.className = "ada-keeper-pips";
-  dots.setAttribute("aria-hidden", "true");
-  const discs = Array.from({ length: pips.count }, () => {
-    const disc = document.createElement("span");
-    disc.className = "ada-keeper-pip";
-    return disc;
-  });
-  dots.append(...discs);
-  lines.append(line, dots);
-  body.append(lines);
-  const name = document.createElement("span");
-  name.className = "ada-keeper-name";
-  button.setAttribute("aria-describedby", line.id);
-  let current: HTMLElement = status;
-  let disposed = false;
-  let advancing = false;
-  let advanceAction: ReturnType<typeof bindAdaAction> | undefined;
-  status.append(frame, body, name);
-  assertAdaActionMetadata(status);
-  return {
-    dispose() {
-      disposed = true;
-      selectPortraitCrop(face, undefined);
-      advanceAction?.dispose();
-      advanceAction = undefined;
-    },
-    element: () => current,
-    render(greeting) {
-      if (disposed) {
-        return;
-      }
-      advancing = greeting !== null && greeting.index < greeting.count - 1;
-      if (advancing) {
-        advanceAction ??= bindAdaAction(
-          {
-            click: {
-              availability: () =>
-                advancing && !button.disabled ? { kind: "available" } : { kind: "omitted" },
-              run: () => options.advance(),
-            },
-            current: () => !disposed && current === button && button.isConnected,
-            slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
-          },
-          button,
-        );
-      } else {
-        advanceAction?.dispose();
-        advanceAction = undefined;
-      }
-      let restoreFocus = false;
-      const next = advancing ? button : status;
-      if (next !== current) {
-        const focused = document.activeElement === current;
-        next.append(frame, body, name);
-        current.replaceWith(next);
-        current = next;
-        if (focused && !advancing) {
-          restoreFocus = true;
-        }
-      }
-      line.textContent = greeting?.line ?? options.labels.welcome;
-      const keeper = greeting?.keeper;
-      selectPortraitCrop(
-        face,
-        keeper && keeper !== "archie" ? KEEPER_PORTRAITS.get(keeper) : undefined,
-      );
-      if (greeting) {
-        next.dataset.keeper = greeting.keeper;
-        name.textContent = keeperName(greeting.keeper);
-        next.removeAttribute("data-generic");
-      } else {
-        delete next.dataset.keeper;
-        name.textContent = "";
-        next.setAttribute("data-generic", "");
-      }
-      const counted = greeting !== null && greeting.count > 1;
-      next.toggleAttribute("data-pips", counted);
-      discs.forEach((disc, index) => {
-        disc.toggleAttribute("data-shown", counted && index <= greeting.index);
-      });
-      assertAdaActionMetadata(current);
-      if (current.isConnected) {
-        assertAdaActionBindings(current);
-      }
-      if (restoreFocus) {
-        focusTarget(options.focusAfter());
-      }
-    },
-  };
-}
