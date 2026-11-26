@@ -57,7 +57,6 @@ import { createCoveredPaint } from "../ui/modalScenePaint.ts";
 import { navigationEntry } from "../ui/navigationEntry.ts";
 import { BOX_OCCUPANT, boxOccupant } from "../ui/notice.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
-import type { PauseState } from "../ui/pauseCard.ts";
 import { createPennyMarkerLayer } from "../ui/pennyMarkers.ts";
 import { questContextIcon } from "../ui/questsScreen.ts";
 import { createRestartCard } from "../ui/restartCard.ts";
@@ -1526,10 +1525,7 @@ export function refreshScene(scene: UiContext, covered = false): void {
   }
   armBack(scene);
   scene.controls.setExitButton(start && exitShown());
-  const pauseModel: GameModel & { readonly pauseMapAvailable?: boolean } & Pick<
-      PauseState,
-      "flightLog"
-    > = scene.model;
+  const pauseModel: GameModel & { readonly pauseMapAvailable?: boolean } = scene.model;
   const entry = navigationEntry({
     background: document.hidden,
     dialogue: Boolean(state.dialogue),
@@ -1544,7 +1540,7 @@ export function refreshScene(scene: UiContext, covered = false): void {
     canMap: pauseModel.pauseMapAvailable === true,
     carrying: scene.model.carrying,
     field: mapField(scene),
-    flightLog: pauseModel.flightLog ?? [],
+    flightLog: scene.model.flightLog,
     ...(state.mode === "space" && state.flight ? { galaxy: state.flight.galaxy } : {}),
     inDanger: scene.model.inDanger,
     job: scene.model.jobObjective,
