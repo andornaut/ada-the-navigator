@@ -1,7 +1,7 @@
 # The toolchain stage is the scheduled gate image, named by its image ID in delivery-kit.json:
 # Node, ShellCheck and the non-root check user, with no project dependencies. The gate runs its
 # own npm ci, so a dependency change never changes the gate image.
-FROM node:24.22.2@sha256:8fa96264f302f58bbb13aa7339c541547b56975766ce956c875da149452a3e40 AS toolchain
+FROM node:26.13.0@sha256:438603bbb5cda404b9416f0b5c8026f61501ab911760d861ec28c36b5d675725 AS toolchain
 
 COPY --from=koalaman/shellcheck:v0.11.0@sha256:61862eba1fcf09a484ebcc6feea46f1782532571a34ed51fedf90dd25f925a8d /bin/shellcheck /usr/local/bin/shellcheck
 
