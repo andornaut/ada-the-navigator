@@ -343,7 +343,7 @@ describe("pacing simulation runs", () => {
     });
   });
 
-  it("meets Cartwheel's frigates and escorted capital battles from the spawn targets", () => {
+  it("meets Cartwheel's ambient frigates and fighters without ambient capitals", () => {
     const { summary } = run({
       ...options,
       galaxy: 2,
@@ -352,8 +352,7 @@ describe("pacing simulation runs", () => {
       seeds: 6,
     });
     expect(summary.metPerMinute.frigate ?? 0).toBeGreaterThan(0);
-    expect(summary.metPerMinute.capital ?? 0).toBeGreaterThan(0);
-    // Each capital battle brings four escort fighters.
+    expect(summary.metPerMinute.capital ?? 0).toBe(0);
     expect(summary.destroyedPerMinute.fighter ?? 0).toBeGreaterThan(0);
   });
   it("spends Stardust on ammunition for upgrade weapons, in proportion to the pack price", () => {

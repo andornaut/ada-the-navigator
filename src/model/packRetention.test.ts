@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { shipCatalogEntry } from "../data/enemyActors.ts";
-import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { relaunch } from "../testing/launch.ts";
 import { createEnemy, damageEnemy } from "./enemyAi.ts";
@@ -15,10 +15,12 @@ import {
   stepFlight,
   syncFlightRegion,
 } from "./flight.ts";
-import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
+import { CURRENT_FLIGHT_TOPOLOGY, flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
+import { ambientPackId, escortPackId, packMemberId } from "./geography.ts";
 import { restoreSave } from "./save.ts";
 import type { GalaxyProgress, SpaceObject, Vec } from "./types.ts";
+import { periodicWorldGrid, worldCellAt, worldCellKey } from "./worldCells.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const progress: GalaxyProgress = {
@@ -352,41 +354,79 @@ describe("casualty-preserving pack retention", () => {
 });
 
 describe("per-role encounter restore", () => {
-  /** Launches into Andromeda's middle region where a capital battle loads, then resumes. */
-  function battle() {
+  /** A v14 Andromeda flight containing an old capital and its separate escort pack. */
+  function battle(trackLeader = true) {
     const content = structuredClone(CONTENT);
-    // Enemy fire barely scratches Ada, so long fixtures never deplete her shield.
-    content.tuning.flight.playerShotDamage = 1e-6;
-    let flight = chartFlight(content, 5, 25);
-    let capital: SpaceObject | undefined;
-    for (let x = 12000; !capital && x < 60000; x += content.tuning.chunkSize) {
-      flight = chartFlight(content, 5, 25);
-      flight.player = { x, y: 12000 };
-      stepFlight(content, 0.001, idle, flight);
-      capital = flight.objects.find(
-        (object) =>
-          object.enemy?.archetype === "capital" && object.enemy.packId?.startsWith("pack:"),
+    const galaxy = 5;
+    const seed = 25;
+    const home = { x: 18000, y: 12000 };
+    const flight = createUnpopulatedFlight(content, galaxy, seed);
+    flight.topology = CURRENT_FLIGHT_TOPOLOGY;
+    flight.player = home;
+    const grid = periodicWorldGrid(flightWorldContext(flight), content.tuning.chunkSize);
+    const cell = worldCellKey(grid, worldCellAt(grid, home));
+    const packId = ambientPackId(cell);
+    const escorts = escortPackId(packId);
+    const leader = packMemberId(packId, 0);
+    const packActor = (
+      archetype: "capital" | "fighter",
+      packId: string,
+      index: number,
+      point: Vec,
+    ): SpaceObject => {
+      const id = packMemberId(packId, index);
+      const definition = enemyDefinition(galaxy, archetype, id);
+      const enemy = createEnemy(
+        definition,
+        { archetype, escortOf: archetype === "fighter" ? leader : null, id, packId, phase: 0 },
+        point,
       );
-    }
-    expect(capital).toBeDefined();
+      return {
+        ...point,
+        enemy,
+        hp: enemy.hp,
+        id,
+        kind: "enemy",
+        persistent: false,
+        radius: definition.sizeRatio * content.tuning.flight.shipRadius,
+      };
+    };
+    const capital = packActor("capital", packId, 0, home);
+    const fighters = [
+      { x: home.x - 180, y: home.y },
+      { x: home.x, y: home.y - 180 },
+      { x: home.x + 180, y: home.y },
+      { x: home.x, y: home.y + 180 },
+    ].map((point, index) => packActor("fighter", escorts, index, point));
+    flight.objects.push(capital, ...fighters);
+    flight.chunks.push(cell);
+    flight.combat = {
+      initialPackSizes: { [escorts]: 4, [packId]: 1 },
+      profiledPacks: { [packId]: "capital" },
+      routeEncounters: [],
+    };
+    flight.markerActors = {
+      encounterSeed: flight.encounterSeed ?? flight.seed,
+      knowledge: Object.fromEntries(
+        (trackLeader ? [capital, ...fighters] : fighters).map(({ id }) => [id, "identified"]),
+      ),
+    };
     const model = new GameModel(content);
     Object.assign(model.state, {
       flight,
       mode: "space",
-      selectedGalaxy: 5,
+      selectedGalaxy: galaxy,
       started: true,
-      unlocked: [1, 5],
+      unlocked: [1, galaxy],
     });
-    const packId = capital!.enemy!.packId!;
-    const leader = `${packId}:0`;
-    const escorts = `${packId}:escorts`;
+    model.state.seenConversations.push(...CONVERSATIONS.map(({ id }) => id));
     const resumed = relaunch(content, model.save());
-    expect(restoreSave(model.save())?.flight).toEqual(model.state.flight);
+    expect(restoreSave(model.save())?.flight).toEqual(flight);
     expect(members(resumed, packId).map(({ id }) => id)).toEqual([leader]);
     expect(resumed.state.flight!.combat!.profiledPacks?.[packId]).toBe("capital");
     expect(members(resumed, packId)[0]!.enemy!.hullProfile).toBeUndefined();
     expect(members(resumed, escorts)).toHaveLength(4);
-    return { content, escorts, leader, model: resumed, packId };
+    return { content, escorts, home, leader, model: resumed, packId };
   }
   const destroy = (model: GameModel, object: SpaceObject) => {
     const definition = shipCatalogEntry(object.enemy!.archetype)!;
@@ -398,69 +438,97 @@ describe("per-role encounter restore", () => {
     model.step(0.001, idle);
     expect(model.state.progress[model.state.flight!.galaxy].destroyedEnemies).toBe(before + 1);
   };
-  /** Takes Ada and the kept ships far enough away to unload the battle's cell, then back. */
   function revisit(
     content: typeof CONTENT,
+    home: Vec,
     model: GameModel,
-    kept: SpaceObject[],
-    check?: () => void,
-  ): void {
+    check: () => void,
+  ): GameModel {
     const flight = model.state.flight!;
-    const start = { ...flight.player };
-    const away = content.tuning.chunkSize * 12;
-    flight.player = { x: start.x + away, y: start.y };
-    kept.forEach((object, index) =>
-      reposition(object, start.x + away + 200 + index * 100, start.y + 100),
-    );
+    flight.player = { x: home.x + content.tuning.chunkSize * 12, y: home.y };
     syncFlightRegion(content, flight);
-    check?.();
-    flight.player = start;
-    kept.forEach((object, index) => reposition(object, start.x - 600 - index * 100, start.y));
-    model.step(0.001, idle);
+    check();
+    const save = model.save();
+    expect(restoreSave(save)).toEqual(model.state);
+    const resumed = relaunch(content, save);
+    resumed.state.flight!.player = home;
+    resumed.step(0.001, idle);
+    return resumed;
   }
 
-  it("keeps a destroyed capital destroyed while its escorts return as escorts", () => {
-    const { content, escorts, leader, model, packId } = battle();
+  it("keeps a destroyed capital destroyed while its saved escorts return as escorts", () => {
+    const { content, escorts, home, leader, model, packId } = battle();
     const capital = members(model, packId)[0]!;
     expect(capital.id).toBe(leader);
     destroy(model, capital);
     expect(members(model, packId)).toHaveLength(0);
-    const guards = members(model, escorts);
-    expect(guards).toHaveLength(4);
-    revisit(content, model, guards);
-    const flight = model.state.flight!;
-    expect(members(model, packId)).toHaveLength(0);
-    expect(flight.objects.some((object) => object.enemy?.archetype === "capital")).toBe(false);
-    expect(members(model, escorts)).toHaveLength(4);
+    const before = members(model, escorts)
+      .map(({ id }) => id)
+      .sort();
+    expect(before).toHaveLength(4);
+    const resumed = revisit(content, home, model, () => {
+      const { notables } = model.state.flight!.world;
+      expect(notables[leader]).toBeNull();
+      expect(before.every((id) => notables[id]?.enemy?.escortOf === leader)).toBe(true);
+    });
+    expect(members(resumed, packId)).toHaveLength(0);
     expect(
-      members(model, escorts).every(
+      resumed.state.flight!.objects.some((object) => object.enemy?.archetype === "capital"),
+    ).toBe(false);
+    expect(
+      members(resumed, escorts)
+        .map(({ id }) => id)
+        .sort(),
+    ).toEqual(before);
+    expect(
+      members(resumed, escorts).every(
         (object) => object.enemy?.archetype === "fighter" && object.enemy.escortOf === leader,
       ),
     ).toBe(true);
-    expect(flight.combat!.initialPackSizes).toMatchObject({ [escorts]: 4, [packId]: 1 });
+    expect(resumed.state.flight!.combat!.initialPackSizes).toMatchObject({
+      [escorts]: 4,
+      [packId]: 1,
+    });
   });
 
-  it("restores an unloaded capital as the capital while lost escorts stay lost", () => {
-    const { content, escorts, leader, model, packId } = battle();
-    const guards = members(model, escorts);
-    destroy(model, guards[0]!);
-    destroy(model, guards[1]!);
-    const survivors = members(model, escorts);
-    expect(survivors).toHaveLength(2);
-    revisit(content, model, survivors, () => {
-      const flight = model.state.flight!;
-      // The capital unloaded alive; its loaded escorts keep the encounter represented.
-      expect(members(model, packId)).toHaveLength(0);
-      expect(flight.combat!.unloadedPackMembers).toEqual({ [packId]: 1 });
-      expect(restoreSave(model.save())).toEqual(model.state);
-    });
-    const flight = model.state.flight!;
-    const restored = members(model, packId);
-    expect(restored.map((object) => [object.id, object.enemy?.archetype])).toEqual([
-      [leader, "capital"],
-    ]);
-    expect(members(model, escorts)).toHaveLength(2);
-    expect(flight.combat!.unloadedPackMembers?.[packId]).toBeUndefined();
-    expect(flight.combat!.initialPackSizes).toMatchObject({ [escorts]: 4, [packId]: 1 });
-  });
+  it.each([true, false])(
+    "preserves escort losses across paging and Continue (capital tracked: %s)",
+    (tracked) => {
+      const { content, escorts, home, leader, model, packId } = battle(tracked);
+      const guards = members(model, escorts);
+      destroy(model, guards[0]!);
+      destroy(model, guards[1]!);
+      const survivors = members(model, escorts)
+        .map(({ id }) => id)
+        .sort();
+      expect(survivors).toHaveLength(2);
+      const capital = members(model, packId)[0]!;
+      capital.hp -= 5;
+      capital.enemy!.hp = capital.hp;
+      const resumed = revisit(content, home, model, () => {
+        const flight = model.state.flight!;
+        expect(members(model, packId)).toHaveLength(0);
+        expect(members(model, escorts)).toHaveLength(0);
+        expect(flight.world.notables[leader]).toEqual(tracked ? capital : undefined);
+        expect(guards.slice(0, 2).every(({ id }) => flight.world.notables[id] === null)).toBe(true);
+        expect(flight.combat!.unloadedPackMembers?.[packId]).toBe(tracked ? undefined : 1);
+      });
+      const restored = members(resumed, packId);
+      expect(restored.map((object) => [object.id, object.enemy?.archetype, object.hp])).toEqual(
+        tracked ? [[leader, "capital", capital.hp]] : [],
+      );
+      expect(
+        members(resumed, escorts)
+          .map(({ id }) => id)
+          .sort(),
+      ).toEqual(survivors);
+      expect(resumed.state.flight!.combat!.unloadedPackMembers?.[packId]).toBe(
+        tracked ? undefined : 1,
+      );
+      expect(resumed.state.flight!.combat!.initialPackSizes).toMatchObject({
+        [escorts]: 4,
+        [packId]: 1,
+      });
+    },
+  );
 });

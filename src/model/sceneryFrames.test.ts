@@ -1,11 +1,11 @@
 import { afterEach, expect, it, vi } from "vitest";
 
+import { ANDROMEDA_REDACT } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import * as asteroids from "./asteroids.ts";
 import * as debris from "./debrisBody.ts";
 import { debrisFrameOf, debrisSilhouette } from "./debrisBody.ts";
-import { createFlight, stepFlight } from "./flight.ts";
-import { newProgress } from "./progress.ts";
+import { admitRedactEncounter, createUnpopulatedFlight, stepFlight } from "./flight.ts";
 import { SceneryFrames } from "./sceneryFrames.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
 
@@ -105,20 +105,31 @@ it("matches canonical frames across time, identity, shape, motion settings and d
 });
 
 it("deduplicates frame hashing in the actual capital encounter AI and projectile slice", () => {
-  const flight = createFlight(CONTENT, 5, 0, newProgress());
-  const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
-  // Andromeda's middle region plans capital battles; fly until one loads.
-  const capital = () => flight.objects.find((o) => o.enemy?.archetype === "capital");
-  for (let x = 12000; !capital() && x < 60000; x += CONTENT.tuning.chunkSize) {
-    flight.player = { x, y: 12000 };
-    flight.shield = Infinity;
-    stepFlight(CONTENT, 1 / 60, idle, flight);
-  }
-  expect(capital()).toBeDefined();
-  flight.player = { x: capital()!.x, y: capital()!.y + 300 };
+  const flight = createUnpopulatedFlight(CONTENT, 5, 0);
+  const site = { x: 12000, y: 12000 };
+  flight.player = { x: site.x, y: site.y + 300 };
+  admitRedactEncounter(CONTENT, flight, site, { x: site.x + 1000, y: site.y });
+  const capital = flight.objects.find(({ id }) => id === ANDROMEDA_REDACT.id)!;
+  expect(capital.enemy?.archetype).toBe("capital");
+  const age = capital.enemy!.age;
+  const target = { ...rock(), x: site.x, y: site.y + 130 };
+  flight.objects.push(target);
+  flight.shots.push({
+    damage: 1,
+    enemy: false,
+    hitIds: [],
+    id: "frame-shot",
+    life: 1,
+    piercing: false,
+    velocity: { x: 0, y: 0 },
+    x: target.x,
+    y: target.y,
+  });
   const compute = vi.spyOn(asteroids, "rockFrame");
-  stepFlight(CONTENT, 1 / 60, idle, flight);
-  expect(compute).toHaveBeenCalled();
+  stepFlight(CONTENT, 1 / 60, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false }, flight);
+  expect(capital.enemy!.age).toBeGreaterThan(age);
+  expect(target.hp).toBe(9);
+  expect(compute.mock.calls.some(([, , , id]) => id === target.id)).toBe(true);
   const keys = compute.mock.calls.map(([, seed, reduced, id, time, start]) =>
     JSON.stringify([seed, reduced, id, time, start]),
   );
