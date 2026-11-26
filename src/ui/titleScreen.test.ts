@@ -2,8 +2,16 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { JET_LENGTH, plumeReach } from "../../art/tools/ship-jet-layers.ts";
+import { FRAME, mouthEdgeJetMouths } from "../../art/tools/ship-model.ts";
 import { plumePolygon } from "../../art/tools/ship-plume.ts";
-import { engineJets, jetLength, layerColor, readEngineJets } from "../game/shipJets.ts";
+import {
+  engineJets,
+  jetLength,
+  layerColor,
+  readEngineJets,
+  readJetMouths,
+} from "../game/shipJets.ts";
 import { fromAreaLeft, fromAreaTop, units } from "./layout/css.ts";
 import { START_SCREEN } from "./layout/startScreen.ts";
 import { START_SCREEN_CLASS, START_SCREEN_STYLE } from "./startScreen.ts";
@@ -16,6 +24,17 @@ const data = publicJson(manifest.titleScreen) as Record<string, unknown>;
 // The title ship's jets draw at Engine level 1.
 const jets = engineJets(readEngineJets(publicJson("/art/ship-jets.json"))!, 1);
 const art = readTitleScreen(manifest.assets, jets, data)!;
+type Fields = Record<string, unknown>;
+const ship = data.ship as Fields & { jetMouths: Fields[] };
+// The title's own mouths and its jets' length at f 0.8: the flight curve times jetLengthScale.
+const mouths = readJetMouths(ship.jetMouths)!;
+const titleLength = jetLength(jets, 0.8) * 1.3;
+/** title-screen.json with its ship's jetMouths changed by `change`. */
+const withMouths = (change: (mouth: Fields, index: number) => Fields) => ({
+  ...data,
+  ship: { ...ship, jetMouths: ship.jetMouths.map(change) },
+});
+const coordinates = (points: string) => points.split(/[ ,]/u).map(Number);
 
 describe("title screen art", () => {
   it("links title-screen.json from the core manifest as titleScreen", () => {
@@ -41,8 +60,13 @@ describe("title screen art", () => {
     expect(titleShip(art, "unknown")).toBe("/art/ship-52.svg");
   });
 
-  it("holds frame 52 at f 0.8 with front teardrop plumes on the mouth roots", () => {
-    expect(data.ship).toMatchObject({ animated: false, frame: 52, jetSpeed: 0.8 });
+  it("holds frame 52 at f 0.8 with front teardrop plumes on the title's own mouths", () => {
+    expect(data.ship).toMatchObject({
+      animated: false,
+      frame: 52,
+      jetLengthScale: 1.3,
+      jetSpeed: 0.8,
+    });
     expect(art.frontJets).toBe(true);
     expect(art.jets.every(({ alpha }) => alpha === 1)).toBe(true);
     const scale = START_SCREEN.ship.size / jets.frame;
@@ -50,9 +74,9 @@ describe("title screen art", () => {
     // The 280 px ship is past the halo's maxDisplay: only the outer flame and core draw.
     const shown = jets.layers.filter(({ underHull }) => !underHull);
     expect(shown.map(({ name }) => name)).toEqual(["outer", "core"]);
-    expect(polygons).toHaveLength(jets.headings[52]!.length * shown.length);
+    expect(polygons).toHaveLength(mouths.length * shown.length);
     polygons.forEach((polygon, index) => {
-      const mouth = jets.headings[52]![Math.floor(index / shown.length)]!;
+      const mouth = mouths[Math.floor(index / shown.length)]!;
       const layer = shown[index % shown.length]!;
       expect(polygon.fill).toBe(`#${layerColor(layer, 0.8).toString(16).padStart(6, "0")}`);
       const expected = plumePolygon(
@@ -63,12 +87,71 @@ describe("title screen art", () => {
           half: [mouth.half.x, mouth.half.y],
         },
         layer,
-        jetLength(jets, 0.8),
+        titleLength,
       ).flatMap(([x, y]) => [x * scale, y * scale]);
       const actual = polygon.points.split(/[ ,]/u).map(Number);
       expect(actual).toHaveLength(expected.length);
       actual.forEach((value, at) => expect(value).toBeCloseTo(expected[at]!, 10));
     });
+  });
+
+  it("starts each plume on its lit mouth's bottom edge at the flight angle", () => {
+    const reach = plumeReach((JET_LENGTH.base + JET_LENGTH.scale) * 1.3);
+    const produced = mouthEdgeJetMouths(FRAME / 2, { yaw: 52 }, reach);
+    expect(mouths).toEqual(readJetMouths(produced));
+    // The flight file's axis at frame 52: straight back, as in flight.
+    for (const [index, mouth] of mouths.entries()) {
+      expect(mouth.axis).toEqual(jets.headings[52]![index]!.axis);
+    }
+    // Each plume's root samples lie on its start line, anchor + s * half, in display px.
+    const scale = START_SCREEN.ship.size / jets.frame;
+    jetPolygons(art).forEach((polygon, index) => {
+      const mouth = mouths[Math.floor(index / 2)]!;
+      const points = coordinates(polygon.points);
+      const anchor = { x: mouth.anchor.x * scale, y: mouth.anchor.y * scale };
+      const ends = [points.slice(0, 2), points.slice(-2)];
+      for (const [x, y] of ends) {
+        const cross = (x! - anchor.x) * mouth.half.y - (y! - anchor.y) * mouth.half.x;
+        expect(cross / Math.hypot(mouth.half.x, mouth.half.y)).toBeCloseTo(0, 9);
+      }
+    });
+  });
+
+  it("scales the flight length curve by jetLengthScale on the start screen only", () => {
+    const tip = (title: ReturnType<typeof readTitleScreen>) => {
+      const [outer] = jetPolygons(title!);
+      const points = coordinates(outer!.points);
+      // The outline's middle sample is the outer layer's tip.
+      const middle = (points.length / 2) & ~1;
+      return { x: points[middle]!, y: points[middle + 1]! };
+    };
+    const reach = (scale: number) => {
+      const title = readTitleScreen(manifest.assets, jets, {
+        ...data,
+        ship: { ...ship, jetLengthScale: scale },
+      });
+      const root = mouths[0]!.anchor;
+      const at = tip(title);
+      const px = START_SCREEN.ship.size / jets.frame;
+      return Math.hypot(at.x / px - root.x, at.y / px - root.y);
+    };
+    const axis = Math.hypot(mouths[0]!.axis.x, mouths[0]!.axis.y);
+    expect(reach(1.3)).toBeCloseTo(titleLength * axis, 9);
+    expect(reach(1.3) / reach(1)).toBeCloseTo(1.3, 9);
+    // Flight keeps its own curve: the title scales a copy.
+    expect(jets.length).toEqual(readEngineJets(publicJson("/art/ship-jets.json"))!.length);
+  });
+
+  it.each([
+    ["no jetLengthScale", { jetLengthScale: undefined }],
+    ["a zero jetLengthScale", { jetLengthScale: 0 }],
+    ["a non-numeric jetLengthScale", { jetLengthScale: "1.3" }],
+    ["no jetMouths", { jetMouths: undefined }],
+    ["empty jetMouths", { jetMouths: [] }],
+    ["a malformed mouth", { jetMouths: [{ anchor: [1], axis: [0, 1], half: [1, 0] }] }],
+  ])("reads no art from %s", (_, change) => {
+    const changed = { ...data, ship: { ...ship, ...change } };
+    expect(readTitleScreen(manifest.assets, jets, changed)).toBeNull();
   });
 
   it("draws no halo on the start screen ship and marks an under-hull layer it does draw", () => {
@@ -86,19 +169,12 @@ describe("title screen art", () => {
   });
 
   it("translates every plume with its mouth root", () => {
-    const moved = {
-      ...jets,
-      headings: jets.headings.map((mouths, heading) =>
-        heading === 52
-          ? mouths.map((mouth) => ({
-              ...mouth,
-              anchor: { x: mouth.anchor.x + 17, y: mouth.anchor.y - 9 },
-            }))
-          : mouths,
-      ),
-    };
+    const moved = withMouths((mouth) => {
+      const [x, y] = mouth.anchor as [number, number];
+      return { ...mouth, anchor: [x + 17, y - 9] };
+    });
     const original = jetPolygons(art);
-    const shifted = jetPolygons(readTitleScreen(manifest.assets, moved, data)!);
+    const shifted = jetPolygons(readTitleScreen(manifest.assets, jets, moved)!);
     const scale = START_SCREEN.ship.size / jets.frame;
     shifted.forEach((polygon, index) => {
       const points = polygon.points.split(/[ ,]/u).map(Number);
@@ -133,18 +209,14 @@ describe("title screen art", () => {
         { x: 20, y: 40 },
       ],
     ];
-    const masked = {
-      ...jets,
-      headings: jets.headings.map((mouths, heading) =>
-        heading === 52
-          ? mouths.map((mouth, index) => (index === 0 ? { ...mouth, occluders } : mouth))
-          : mouths,
-      ),
-    };
+    const authored = occluders.map((polygon) => polygon.map(({ x, y }) => [x, y]));
+    const masked = withMouths((mouth, index) =>
+      index === 0 ? { ...mouth, occluders: authored } : mouth,
+    );
     const assets = manifest.assets.map((asset) =>
       asset.id === "ship-52" ? { ...asset, pivot: { x: 0.2, y: 0.8 } } : asset,
     );
-    const title = readTitleScreen(assets, masked, data)!;
+    const title = readTitleScreen(assets, jets, masked)!;
     const polygons = jetPolygons(title);
     const expected = occluders.map((polygon) =>
       polygon

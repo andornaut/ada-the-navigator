@@ -254,7 +254,8 @@ function readOccluders(value: unknown): Vec[][] | undefined {
   return polygons;
 }
 
-function readMouths(value: unknown): JetMouth[] | undefined {
+/** A heading's mouths, as a jet file's `mouths`; undefined if empty or any mouth is malformed. */
+export function readJetMouths(value: unknown): JetMouth[] | undefined {
   if (!Array.isArray(value) || value.length === 0) {
     return undefined;
   }
@@ -323,7 +324,7 @@ export function readJetGeometry(value: unknown): JetGeometry | undefined {
   for (const entry of root.headings as unknown[]) {
     const heading = fields(entry);
     const index = heading?.index;
-    const mouths = readMouths(heading?.mouths);
+    const mouths = readJetMouths(heading?.mouths);
     if (
       !Number.isInteger(index) ||
       (index as number) < 0 ||

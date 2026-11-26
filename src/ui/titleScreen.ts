@@ -1,4 +1,10 @@
-import { type JetPlume, jetPlumes, jetsInFront, type ShipJets } from "../game/shipJets.ts";
+import {
+  type JetPlume,
+  jetPlumes,
+  jetsInFront,
+  readJetMouths,
+  type ShipJets,
+} from "../game/shipJets.ts";
 import { readShipHeadingContract, SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import type { Vec } from "../model/types.ts";
 import { START_SCREEN } from "./layout/startScreen.ts";
@@ -52,7 +58,9 @@ const positive = (value: unknown): value is number => finite(value) && value > 0
 /**
  * The title screen's art, or null if any part is missing: title-screen.json's field, ship frame
  * and wordmark in the manifest, and a Classic frame at that heading. Jets draw only with valid
- * ship-jets data for the heading; the ship is held still, as `animated` false asks.
+ * ship-jets data for the heading; the ship is held still, as `animated` false asks. The jets take
+ * the title's own `ship.jetMouths` at that heading and the flight length curve times
+ * `ship.jetLengthScale`, with the flight layers and profile.
  */
 export function readTitleScreen(
   assets: readonly TitleAsset[],
@@ -69,6 +77,8 @@ export function readTitleScreen(
   const fieldAsset = byId(field?.id);
   const wordmarkAsset = byId(wordmark?.id);
   const frame = ship?.frame;
+  const mouths = readJetMouths(ship?.jetMouths);
+  const lengthScale = ship?.jetLengthScale;
   if (
     root?.version !== 1 ||
     !readShipHeadingContract(root?.shipHeadings) ||
@@ -80,6 +90,8 @@ export function readTitleScreen(
     (frame as number) < 0 ||
     (frame as number) >= SHIP_HEADINGS ||
     !finite(ship?.jetSpeed) ||
+    !positive(lengthScale) ||
+    !mouths ||
     !fieldAsset ||
     !positive(fieldAsset.displayWidth) ||
     !positive(fieldAsset.displayHeight) ||
@@ -101,10 +113,19 @@ export function readTitleScreen(
   }
   const pivot = classic.pivot ?? { x: 0.5, y: 0.5 };
   const size = START_SCREEN.ship.size;
+  const titleJets = jets && {
+    ...jets,
+    headings: jets.headings.map((own, heading) => (heading === frame ? mouths : own)),
+    length: {
+      ...jets.length,
+      base: jets.length.base * lengthScale,
+      scale: jets.length.scale * lengthScale,
+    },
+  };
   const plumes =
-    jets && jets.headings[frame as number]
+    titleJets && titleJets.headings[frame as number]
       ? jetPlumes(
-          jets,
+          titleJets,
           { displayHeight: size, displayWidth: size, includeOccluders: true, pivot },
           frame as number,
           ship.jetSpeed,
@@ -119,7 +140,7 @@ export function readTitleScreen(
       width: fieldAsset.displayWidth,
     },
     jets: plumes,
-    ...(jetsInFront(jets, frame as number) ? { frontJets: true as const } : {}),
+    ...(jetsInFront(titleJets, frame as number) ? { frontJets: true as const } : {}),
     pivot,
     ships: new Map(frames.map((asset) => [asset.paint ?? null, asset.path])),
     wordmark: {
