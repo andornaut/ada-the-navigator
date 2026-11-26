@@ -8,6 +8,9 @@ import { oreQuantityScale, rollAsteroidLoot, stardustKeep } from "./asteroidLoot
 
 const rawContext = { ...ASTEROID_LOOT, oreQuantityMultiplier: 1, yieldScale: 1 };
 
+/** Follows a roll's last expected draw, so a roll that reads past its units is caught. */
+const SENTINEL_DRAW = 0.3141592653589793;
+
 /** Cartesian products of the given choices. */
 function products<T>(choices: readonly (readonly T[])[]): T[][] {
   return choices.reduce<T[][]>(
@@ -64,6 +67,7 @@ function distributionProof() {
       beforeMax = 0,
       afterMax = 0;
     const support = new Set<number>();
+    const violations: unknown[] = [];
     for (const [index, weight] of weights.entries()) {
       const total = minimum + index;
       const totalDraw = (start + weight / 2) / 100;
@@ -100,30 +104,36 @@ function distributionProof() {
           ...earlier,
           total > 0 ? segments(lastCuts) : [{ at: 0.5, width: 1 }],
         ])) {
-          const width = units.reduce((product, unit) => product * unit.width, 1);
-          const draws = [
-            totalDraw,
-            ...Array.from({ length: total }, (_, bit) => {
-              const unitResidual = units[bit]!.at;
-              return isOre(bit) ? p * unitResidual : p + (1 - p) * unitResidual;
-            }),
-            0.3141592653589793,
-          ];
+          let width = 1;
+          const draws = [totalDraw];
+          for (let bit = 0; bit < total; bit++) {
+            const unit = units[bit]!;
+            width *= unit.width;
+            draws.push(isOre(bit) ? p * unit.at : p + (1 - p) * unit.at);
+          }
+          draws.push(SENTINEL_DRAW);
           let calls = 0;
           const actual = rollAsteroidLoot(ASTEROID_LOOT, size, () => draws[calls++]!);
-          expect(calls).toBe(total + 1);
-          expect(draws[calls]).toBe(0.3141592653589793);
           let rawCalls = 0;
           const original = rollAsteroidLoot(rawContext, size, () => draws[rawCalls++]!);
-          expect(original).toEqual({ ore, stardust });
-          expect(rawCalls).toBe(calls);
-          expect(actual.stardust).toBeLessThanOrEqual(original.stardust);
-          expect(Number.isSafeInteger(actual.ore)).toBe(true);
-          expect(actual.ore).toBeGreaterThanOrEqual(0);
           const actualTotal = actual.ore + actual.stardust;
-          expect(actualTotal).toBeGreaterThanOrEqual(minimum);
-          expect(actualTotal).toBeLessThanOrEqual(cap);
-          expect(actual.ore).toBeLessThanOrEqual(original.ore);
+          // Plain comparisons keep the enumeration fast; each class asserts no violations, and the
+          // first few are kept for the failure message.
+          if (
+            violations.length < 5 &&
+            (calls !== total + 1 ||
+              rawCalls !== calls ||
+              original.ore !== ore ||
+              original.stardust !== stardust ||
+              !Number.isSafeInteger(actual.ore) ||
+              actual.ore < 0 ||
+              actual.ore > original.ore ||
+              actual.stardust > original.stardust ||
+              actualTotal < minimum ||
+              actualTotal > cap)
+          ) {
+            violations.push({ actual, calls, mask, original, rawCalls, size, total, units });
+          }
           conditionalOre += width * actual.ore;
           conditionalStardust += width * actual.stardust;
           const joint = probability * width;
@@ -140,6 +150,7 @@ function distributionProof() {
         expect(conditionalStardust).toBeCloseTo(keptMean, 12);
       }
     }
+    expect(violations).toEqual([]);
     expect(mass).toBeCloseTo(1, 12);
     expect(oreMean).toBeCloseTo(expectedTotal * 0.75 * 0.75 * 0.8, 12);
     expect(stardustMean).toBeCloseTo(expectedTotal * 0.25 * 0.8, 12);
