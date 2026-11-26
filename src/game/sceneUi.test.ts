@@ -630,6 +630,7 @@ describe("held story Continue caller", () => {
   it("passes model permission to the shell without setting started", () => {
     const model = new GameModel(CONTENT);
     Object.defineProperty(model, "canContinue", { value: true });
+    Object.defineProperty(model, "noticeOpacity", { value: 0.5 });
     let call: ts.CallExpression | undefined;
     const visit = (node: ts.Node): void => {
       if (ts.isCallExpression(node) && node.expression.getText(source) === "scene.shell.render") {
@@ -654,7 +655,7 @@ describe("held story Continue caller", () => {
         state: model.state,
       }),
     );
-    expect(render).toHaveBeenCalledWith(model.state, "start", true);
+    expect(render).toHaveBeenCalledWith(model.state, "start", true, 0.5);
     expect(model.state.started).toBe(false);
   });
 });
