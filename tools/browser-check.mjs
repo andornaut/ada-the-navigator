@@ -2,17 +2,20 @@ import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import {
   closeSync,
+  copyFileSync,
   createReadStream,
+  existsSync,
   lstatSync,
   mkdirSync,
   openSync,
   readdirSync,
   readFileSync,
   realpathSync,
+  rmSync,
   writeFileSync,
 } from "node:fs";
 import { createServer } from "node:http";
-import { relative, resolve, sep } from "node:path";
+import { dirname, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { guard, snapshot } from "./checks.mjs";
@@ -40,9 +43,12 @@ function save(path, value) {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
 }
 
-function artifactHash(directory) {
+function artifactHash(directory, excluded) {
   const hash = createHash("sha256");
   function visit(path) {
+    if (path === excluded) {
+      return;
+    }
     const stat = lstatSync(path);
     if (stat.isDirectory()) {
       for (const entry of readdirSync(path).sort()) {
@@ -57,6 +63,42 @@ function artifactHash(directory) {
   }
   visit(directory);
   return hash.digest("hex");
+}
+
+function stageCheckout(gate, source, checkout) {
+  const { image } = json(resolve(gate, "startup.json"));
+  if (!/^sha256:[a-f0-9]{64}$/.test(image ?? "")) {
+    throw new Error("Gate evidence is missing an exact dependency image ID");
+  }
+  for (const name of source.files) {
+    const from = resolve(root, name);
+    if (existsSync(from)) {
+      const to = resolve(checkout, name);
+      mkdirSync(dirname(to), { recursive: true });
+      copyFileSync(from, to);
+    }
+  }
+  if (source.fingerprint !== snapshot().fingerprint) {
+    throw new Error("Source changed while preparing the browser checkout");
+  }
+  const stagedFingerprint = artifactHash(checkout);
+  const helper = docker(["create", "--pull", "never", "--entrypoint", "node", image, "--version"]);
+  const lock = resolve(dirname(checkout), "dependency-lock.json");
+  try {
+    docker(["cp", `${helper}:/opt/check/package-lock.json`, lock]);
+    const lockBytes = readFileSync(lock);
+    if (!lockBytes.equals(readFileSync(resolve(checkout, "package-lock.json")))) {
+      throw new Error("Gate dependency image lock differs from the browser checkout lock");
+    }
+    docker(["cp", `${helper}:/opt/check/node_modules`, checkout]);
+    return {
+      dependencyImage: image,
+      dependencyLock: createHash("sha256").update(lockBytes).digest("hex"),
+      stagedFingerprint,
+    };
+  } finally {
+    docker(["rm", helper]);
+  }
 }
 
 // The gating smoke, or Art's review captures (`--captures`): each runs against the gate's built
@@ -86,10 +128,11 @@ function start(argument, mode = "browser", sets = []) {
   }
   const name = `${RUNS[mode].prefix}-${randomUUID()}`;
   const directory = resolve(evidenceRoot, name);
+  const checkout = resolve(directory, "checkout");
   mkdirSync(directory, { recursive: true });
-  save(resolve(directory, "source.json"), { ...source, gate, artifact: artifactHash(dist) });
+  const receipt = { ...source, gate, artifact: artifactHash(dist) };
+  save(resolve(directory, "source.json"), receipt);
   const network = `${name}-net`;
-  docker(["network", "create", "--internal", network]);
   const group = String(lstatSync(root).gid);
   const common = [
     "create",
@@ -117,12 +160,17 @@ function start(argument, mode = "browser", sets = []) {
     "--entrypoint",
     "node",
     "--mount",
-    `type=bind,source=${root},target=/source,readonly`,
+    `type=bind,source=${checkout},target=/source,readonly`,
     "--mount",
     `type=bind,source=${dist},target=/dist,readonly`,
   ];
   const created = [];
+  let networkCreated = false;
   try {
+    Object.assign(receipt, stageCheckout(gate, source, checkout));
+    save(resolve(directory, "source.json"), receipt);
+    docker(["network", "create", "--internal", network]);
+    networkCreated = true;
     docker([
       ...common,
       "--name",
@@ -164,7 +212,10 @@ function start(argument, mode = "browser", sets = []) {
       if (created.length) {
         docker(["rm", ...created]);
       }
-      docker(["network", "rm", network]);
+      if (networkCreated) {
+        docker(["network", "rm", network]);
+      }
+      rmSync(checkout, { recursive: true, force: true });
     } catch (cleanupError) {
       save(resolve(directory, "cleanup-error.json"), {
         message: cleanupError.message,
@@ -212,13 +263,21 @@ function collect(name) {
   let after;
   let verificationError;
   let artifact;
+  let stagedFingerprint;
+  const checkout = resolve(directory, "checkout");
   try {
     after = snapshot();
     artifact = artifactHash(resolve(before.gate, "dist"));
+    if (before.stagedFingerprint !== undefined) {
+      stagedFingerprint = artifactHash(checkout, resolve(checkout, "node_modules"));
+    }
   } catch (error) {
     verificationError = error.message;
   }
-  const stable = before.fingerprint === after?.fingerprint && before.artifact === artifact;
+  const stable =
+    before.fingerprint === after?.fingerprint &&
+    before.artifact === artifact &&
+    before.stagedFingerprint === stagedFingerprint;
   save(resolve(directory, "verification.json"), {
     stable,
     head: before.head,
@@ -226,6 +285,8 @@ function collect(name) {
     after: after?.fingerprint ?? null,
     artifactBefore: before.artifact,
     artifactAfter: artifact ?? null,
+    stagedBefore: before.stagedFingerprint ?? null,
+    stagedAfter: stagedFingerprint ?? null,
     verificationError: verificationError ?? null,
     missingEvidence,
     exitCode: state.ExitCode,
@@ -233,6 +294,9 @@ function collect(name) {
   docker(["stop", "--time", "5", `${name}-preview`]);
   docker(["rm", name, `${name}-preview`]);
   docker(["network", "rm", `${name}-net`]);
+  if (before.stagedFingerprint !== undefined) {
+    rmSync(checkout, { recursive: true });
+  }
   console.log(directory);
   process.exitCode = stable && !missingEvidence ? state.ExitCode : 1;
 }
