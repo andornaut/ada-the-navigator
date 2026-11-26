@@ -1,8 +1,4 @@
-import type { Rect } from "@andornaut/game-kit/runtime/rect";
-
 import type { ScanOutcome, ScanQuestIdentity } from "../model/scanOutcomes.ts";
-import type { Vec } from "../model/types.ts";
-import { scanFeedbackRect } from "./layout/scanFeedback.ts";
 import { chipGlyph } from "./mapScreen.ts";
 
 export const SCAN_FEEDBACK_TIMING = { fadeMs: 500, holdMs: 2000 } as const;
@@ -64,40 +60,25 @@ export function scanFeedbackParts(content: ScanFeedbackContent): readonly ScanFe
     : [icon, text];
 }
 export interface ScanFeedbackFrame {
-  readonly anchor: Vec;
   readonly content: ScanFeedbackContent;
   readonly opacity: number;
-  readonly rect: Rect;
 }
-/**
- * The footprints are read through functions, each a DOM measurement, so a frame with no receipt
- * to show measures nothing.
- */
+
 export interface ScanFeedbackContext {
-  readonly area: Rect;
-  readonly blocked: () => readonly Rect[];
   /** Covered includes paused, dialog, settings, unavailable renderer and loading states. */
   readonly covered: boolean;
-  /** The shown conversation box's parts to avoid at placement. */
-  readonly dialogue: () => readonly Rect[];
-  readonly measure: (content: ScanFeedbackContent) => {
-    readonly height: number;
-    readonly width: number;
-  };
-  /** Native caller clock: repeated refreshes in one scene frame reuse the displayed position. */
+  /** Repeated refreshes in one scene frame do not advance the timer. */
   readonly time?: number;
-  /** The caller uses the existing authoritative target resolver and scene projection. */
-  readonly resolveAnchor: (outcome: ScanOutcome) => Vec | undefined;
 }
+
 interface Pending {
   readonly content: ScanFeedbackContent;
   elapsed: number;
-  anchor?: Vec;
-  placement?: { readonly area: Rect; readonly rect: Rect };
   sampledAt?: number;
   sampledElapsed?: number;
 }
-/** Transient UI ownership begins after drain; cover and failed placement never consume receipts. */
+
+/** Transient UI ownership begins after drain. Covered time never consumes receipts. */
 export class ScanFeedbackQueue {
   private pending: Pending[] = [];
   private received = new WeakSet<ScanOutcome>();
@@ -136,31 +117,6 @@ export class ScanFeedbackQueue {
       this.pending.shift();
       return this.frame(context, 0);
     }
-    const anchor = next.anchor ?? context.resolveAnchor(next.content.outcome);
-    if (!anchor) {
-      return null;
-    }
-    const retained = next.placement?.area;
-    if (
-      !retained ||
-      retained.x !== context.area.x ||
-      retained.y !== context.area.y ||
-      retained.width !== context.area.width ||
-      retained.height !== context.area.height
-    ) {
-      const rect = scanFeedbackRect({
-        anchor,
-        area: context.area,
-        blocked: context.blocked(),
-        dialogue: context.dialogue(),
-        ...context.measure(next.content),
-      });
-      if (!rect) {
-        return null;
-      }
-      next.anchor = { ...anchor };
-      next.placement = { area: { ...context.area }, rect };
-    }
     const opacity = Math.max(0, 1 - Math.max(0, elapsed - holdMs) / fadeMs);
     if (context.time !== undefined) {
       next.sampledAt = context.time;
@@ -169,6 +125,6 @@ export class ScanFeedbackQueue {
     if (!sameTime && Number.isFinite(milliseconds) && milliseconds > 0) {
       next.elapsed += milliseconds;
     }
-    return { anchor, content: next.content, opacity, rect: next.placement!.rect };
+    return { content: next.content, opacity };
   }
 }

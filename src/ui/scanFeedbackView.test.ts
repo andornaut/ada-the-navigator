@@ -1,21 +1,23 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { immutableScanOutcome, type ScanOutcome } from "../model/scanOutcomes.ts";
-import { units, VIEW_PROPERTIES } from "./layout/css.ts";
+import { fromHudEdge } from "./layout/css.ts";
+import { STATUS_PILL } from "./layout/playView.ts";
+import { SPACING } from "./layout/tokens.ts";
 import { SCAN_FEEDBACK_TIMING } from "./scanFeedback.ts";
-import {
-  createScanFeedbackView,
-  scanFeedbackDialogue,
-  scanFeedbackFootprints,
-} from "./scanFeedbackView.ts";
+import { createScanFeedbackView } from "./scanFeedbackView.ts";
 class Node {
   readonly style = Object.assign({ setProperty: vi.fn() }, {} as Record<string, string>);
   readonly dataset: Record<string, string> = {};
   readonly attributes = new Map<string, string>();
   readonly children: Node[] = [];
+  readonly selectors = new Map<string, Node>();
   readonly ownerDocument = doc;
   className = "";
   hidden = false;
+  clientWidth = 720;
+  offsetHeight = 0;
+  offsetTop = 0;
   textContent = "";
   removed = false;
   setAttribute(name: string, value: string) {
@@ -30,8 +32,11 @@ class Node {
   remove() {
     this.removed = true;
   }
-  getBoundingClientRect() {
-    return { height: 40, width: 200 };
+  querySelectorAll() {
+    return [];
+  }
+  querySelector(selector: string): Node | null {
+    return this.selectors.get(selector) ?? null;
   }
 }
 const doc = { createElement: () => new Node() };
@@ -51,46 +56,58 @@ const receipt = (
     target: { id: "landmark:1:0", name: "Actual target", symbol: "wreck" },
     targetId: "landmark:1:0",
   });
-const context = {
-  area: { height: 360, width: 720, x: 0, y: 0 },
-  blocked: () => [],
-  covered: false,
-  dialogue: () => [],
-  resolveAnchor: () => ({ x: 360, y: 220 }),
-};
+const context = { covered: false };
 function setup() {
   vi.stubGlobal("document", doc);
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
+  const observed = vi.fn();
+  const disconnect = vi.fn();
+  let resize = () => {};
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe = observed;
+      disconnect = disconnect;
+      constructor(callback: () => void) {
+        resize = callback;
+      }
+    },
+  );
   const parent = new Node();
-  const view = createScanFeedbackView(parent as unknown as HTMLElement);
-  return { panel: parent.children[0]!, view };
+  const controls = new Node();
+  const boss = new Node();
+  controls.selectors.set(".ada-boss-hud", boss);
+  const view = createScanFeedbackView(
+    parent as unknown as HTMLElement,
+    controls as unknown as HTMLElement,
+  );
+  return { boss, disconnect, observed, panel: parent.children[0]!, resize, view };
 }
 afterEach(() => vi.unstubAllGlobals());
 describe("native scan receipt view", () => {
-  it("measures its panel in the frame's axes, so a turned frame keeps it a horizontal strip", () => {
+  it("uses the resource HUD's top inset and centers with a layout-independent transform", () => {
     const { panel, view } = setup();
-    const before = { height: 0, width: 0 };
     view.enqueue([receipt()]);
     view.render(context, 0);
-    before.height = Number.parseFloat(panel.style.height!.replace(/.*\* /u, ""));
-    before.width = Number.parseFloat(panel.style.width!.replace(/.*\* /u, ""));
-    view.reset();
-    // Turned by 90, the same 200x40 panel measures 40 across and 200 down on the page.
-    const turned = Object.assign(doc, {
-      documentElement: {
-        getAttribute: (name: string) => (name === "data-frame-turn" ? "90" : null),
-      },
-    });
-    panel.getBoundingClientRect = () => ({ height: 200, width: 40 });
-    try {
-      view.enqueue([receipt()]);
-      view.render(context, 0);
-      expect(panel.style.width).toBe(units(before.width));
-      expect(panel.style.height).toBe(units(before.height));
-      expect(before.width).toBeGreaterThan(before.height);
-    } finally {
-      delete (turned as { documentElement?: unknown }).documentElement;
-    }
+    expect(panel.style.left).toBe("50%");
+    expect(panel.style.transform).toBe("translateX(-50%)");
+    expect(panel.style.top).toBe(fromHudEdge("top", STATUS_PILL.y));
+    expect(panel.style.width).toBe("max-content");
+  });
+  it("moves the same panel below the visible boss bar and restores it when the boss leaves", () => {
+    const { boss, panel, resize, view } = setup();
+    view.enqueue([receipt()]);
+    view.render(context, 0);
+    const text = panel.children[1];
+    boss.offsetTop = 12;
+    boss.offsetHeight = 44;
+    resize();
+    const ordinary = fromHudEdge("top", STATUS_PILL.y);
+    expect(panel.style.top).toBe(`max(${ordinary}, ${56 + SPACING.gap}px)`);
+    expect(panel.children[1]).toBe(text);
+    boss.offsetHeight = 0;
+    resize();
+    expect(panel.style.top).toBe(ordinary);
   });
   it("renders neutral actual target identity and canonical glyph, never a quest completion", () => {
     const { panel, view } = setup();
@@ -136,14 +153,11 @@ describe("native scan receipt view", () => {
       expect(panel.children.some((node) => node.attributes.get("role") === "checkbox")).toBe(false);
     },
   );
-  it("retains receipt and time while covered or unplaceable, then displays once", () => {
+  it("retains receipt and time while covered, then displays once", () => {
     const { panel, view } = setup();
     const outcome = receipt();
     view.enqueue([outcome]);
     view.render({ ...context, covered: true }, 10000);
-    expect(panel.hidden).toBe(true);
-    expect(panel.style.display).toBe("none");
-    view.render({ ...context, blocked: () => [context.area] }, 10000);
     expect(panel.hidden).toBe(true);
     expect(panel.style.display).toBe("none");
     view.render(context, SCAN_FEEDBACK_TIMING.holdMs);
@@ -161,10 +175,9 @@ describe("native scan receipt view", () => {
     view.render(context, SCAN_FEEDBACK_TIMING.holdMs);
     const left = panel.style.left;
     const top = panel.style.top;
-    const dialogue = () => [{ height: 140, width: 320, x: 200, y: 80 }];
-    view.render({ ...context, dialogue }, 250);
+    view.render(context, 250);
     expect(panel.style.opacity).toBe("1");
-    view.render({ ...context, dialogue }, 250);
+    view.render(context, 250);
     expect(panel.style.opacity).toBe("0.5");
     expect(panel.style.left).toBe(left);
     expect(panel.style.top).toBe(top);
@@ -172,46 +185,8 @@ describe("native scan receipt view", () => {
     view.render(context, 0);
     expect(panel.hidden).toBe(true);
   });
-  it("uses canonical HUD selection with only conversation paint excluded", () => {
-    setup();
-    const querySelectorAll = vi.fn<(selector: string) => HTMLElement[]>(() => []);
-    scanFeedbackFootprints(
-      { querySelectorAll } as unknown as Document,
-      new Node() as unknown as HTMLElement,
-    );
-    const selector = querySelectorAll.mock.calls[0]![0];
-    expect(selector).toContain(".ada-shield:not(.ada-conversation, .ada-conversation *)");
-    expect(selector).toContain(".ada-conversation:not(.ada-conversation, .ada-conversation *)");
-  });
-  it("reads the shown touch controls with the HUD and the conversation box's parts apart", () => {
-    vi.stubGlobal("getComputedStyle", () => ({
-      display: "block",
-      getPropertyValue: (name: string) => (name === VIEW_PROPERTIES.unit ? "1" : "0"),
-      opacity: "1",
-      visibility: "visible",
-    }));
-    const shown = (left: number, top: number, width: number, height: number) => ({
-      closest: () => null,
-      getBoundingClientRect: () => ({ height, left, top, width }),
-      getClientRects: () => [{}],
-    });
-    const host = { getBoundingClientRect: () => ({ left: 0, top: 0 }) } as unknown as HTMLElement;
-    const querySelectorAll = (selector: string) =>
-      selector.includes("aim-joystick")
-        ? [shown(595, 235, 75, 75), shown(518, 135, 75, 75)]
-        : selector.startsWith(".ada-conversation,")
-          ? [shown(120, 66, 480, 60)]
-          : [shown(10, 10, 100, 30)];
-    const doc = { querySelectorAll } as unknown as Document;
-    expect(scanFeedbackFootprints(doc, host)).toEqual([
-      { height: 30, width: 100, x: 10, y: 10 },
-      { height: 75, width: 75, x: 595, y: 235 },
-      { height: 75, width: 75, x: 518, y: 135 },
-    ]);
-    expect(scanFeedbackDialogue(doc, host)).toEqual([{ height: 60, width: 480, x: 120, y: 66 }]);
-  });
   it("clears presentation at the model boundary and removes its native node on disposal", () => {
-    const { panel, view } = setup();
+    const { disconnect, panel, view } = setup();
     view.enqueue([receipt()]);
     view.render(context, 0);
     view.reset();
@@ -220,5 +195,6 @@ describe("native scan receipt view", () => {
     expect(panel.children).toEqual([]);
     view.dispose();
     expect(panel.removed).toBe(true);
+    expect(disconnect).toHaveBeenCalledOnce();
   });
 });

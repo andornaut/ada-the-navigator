@@ -21,7 +21,6 @@ import { CHEAT_IDS, type CheatId } from "../model/cheats.ts";
 import type { ImmediateExchangeOrder, ImmediateExchangeResult } from "../model/exchange.ts";
 import { GameModel } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
-import { landmarkById } from "../model/landmarks.ts";
 import { fill, itemName, type ShopItem, type ShopRow, shopRow, weaponName } from "../model/shop.ts";
 import type { FlightState } from "../model/types.ts";
 import {
@@ -52,7 +51,6 @@ import { createJumpOverlay, type SheetArt } from "../ui/jumpOverlay.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { fogColor } from "../ui/layout/mapScreen.ts";
 import { safeGameArea } from "../ui/layout/playView.ts";
-import { scanFeedbackArea } from "../ui/layout/scanFeedback.ts";
 import { type MapField, mapScreenLabels } from "../ui/mapScreen.ts";
 import { markerFootprints } from "../ui/markerFootprints.ts";
 import { createCoveredPaint } from "../ui/modalScenePaint.ts";
@@ -62,11 +60,7 @@ import { galaxiesAvailable } from "../ui/pause.ts";
 import { createPennyMarkerLayer } from "../ui/pennyMarkers.ts";
 import { questContextIcon } from "../ui/questsScreen.ts";
 import { createRestartCard } from "../ui/restartCard.ts";
-import {
-  createScanFeedbackView,
-  scanFeedbackDialogue,
-  scanFeedbackFootprints,
-} from "../ui/scanFeedbackView.ts";
+import { createScanFeedbackView } from "../ui/scanFeedbackView.ts";
 import { aboardLabel, type ShipView } from "../ui/shipCard.ts";
 import { createStationView } from "../ui/station.ts";
 import { stardustCount } from "../ui/statusPill.ts";
@@ -718,6 +712,7 @@ export function buildScene(scene: UiContext): void {
   partial.push(() => bossHud.dispose());
   const scanView = createScanFeedbackView(
     document.getElementById(VIEW_HOST_ID) ?? scene.controls.overlay,
+    scene.controls.overlay,
   );
   scanViews.set(scene, { state: scene.model.state, time: scene.time.now, view: scanView });
   partial.push(() => {
@@ -1343,23 +1338,7 @@ export function renderConversation(scene: UiContext): void {
     const now = scene.time.now;
     const elapsed = scanCovered || scan.time === undefined ? 0 : Math.max(0, now - scan.time);
     scan.time = scanCovered ? undefined : now;
-    scan.view.render(
-      {
-        area: scanFeedbackArea(insets, view),
-        blocked: () => scanFeedbackFootprints(document, document.getElementById(VIEW_HOST_ID)),
-        covered: scanCovered,
-        dialogue: () => scanFeedbackDialogue(document, document.getElementById(VIEW_HOST_ID)),
-        resolveAnchor: (outcome) => {
-          if (flight?.galaxy !== outcome.galaxy) {
-            return undefined;
-          }
-          const target = landmarkById(outcome.galaxy, outcome.targetId);
-          return target ? scene.project(target) : undefined;
-        },
-        time: now,
-      },
-      elapsed,
-    );
+    scan.view.render({ covered: scanCovered, time: now }, elapsed);
   }
   const penny = pennyLayers.get(scene);
   if (!penny) {
