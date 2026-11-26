@@ -5,7 +5,6 @@ import { visualNoticeTiming } from "../data/noticeTiming.ts";
 import { immutableScanOutcome, type ScanOutcome } from "../model/scanOutcomes.ts";
 import { CONVERSATION_STYLE } from "./conversation.ts";
 import { fromHudEdge, units, VIEW_PROPERTIES } from "./layout/css.ts";
-import { STATUS_PILL } from "./layout/playView.ts";
 import { SPACING } from "./layout/tokens.ts";
 import { VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { createScanFeedbackView } from "./scanFeedbackView.ts";
@@ -15,12 +14,15 @@ class Node {
   readonly attributes = new Map<string, string>();
   readonly children: Node[] = [];
   readonly selectors = new Map<string, Node>();
+  readonly parts: Node[] = [];
   readonly ownerDocument = { ...doc, defaultView: new EventTarget() };
   className = "";
   hidden = false;
   clientHeight = 360;
   clientWidth = 720;
   offsetHeight = 0;
+  offsetLeft = 0;
+  offsetWidth = 0;
   offsetTop = 0;
   textContent = "";
   removed = false;
@@ -36,8 +38,16 @@ class Node {
   remove() {
     this.removed = true;
   }
+  getBoundingClientRect() {
+    return {
+      height: this.offsetHeight,
+      left: this.offsetLeft,
+      top: this.offsetTop,
+      width: this.offsetWidth,
+    };
+  }
   querySelectorAll() {
-    return [];
+    return this.parts;
   }
   querySelector(selector: string): Node | null {
     return this.selectors.get(selector) ?? null;
@@ -82,13 +92,25 @@ function setup() {
     },
   );
   const parent = new Node();
+  parent.getBoundingClientRect = () => ({
+    height: parent.clientHeight,
+    left: 0,
+    top: 0,
+    width: parent.clientWidth,
+  });
   const controls = new Node();
+  const weapons = new Node();
+  controls.selectors.set(".ada-weapon-selector", weapons);
   const boss = new Node();
   controls.selectors.set(".ada-boss-hud", boss);
   const view = createScanFeedbackView(
     parent as unknown as HTMLElement,
     controls as unknown as HTMLElement,
   );
+  for (const node of parent.children) {
+    node.offsetWidth = 120;
+    node.offsetHeight = 38;
+  }
   return {
     boss,
     disconnect,
@@ -99,17 +121,29 @@ function setup() {
     resize,
     unobserve,
     view,
+    weapons,
   };
 }
 afterEach(() => vi.unstubAllGlobals());
+const row = `${SPACING.rowGap}px`;
+const ammo = (weapons: Node, bottom: number) => {
+  const pill = new Node();
+  pill.offsetLeft = 365;
+  pill.offsetWidth = 35;
+  pill.offsetHeight = 24;
+  pill.offsetTop = bottom - pill.offsetHeight;
+  weapons.parts.push(pill);
+  return pill;
+};
+
 describe("native scan receipt view", () => {
-  it("uses the resource HUD's top inset and centers with a layout-independent transform", () => {
+  it("uses the high slot and centers with a layout-independent transform", () => {
     const { panel, view } = setup();
     view.enqueue([receipt()]);
     view.render(context, 0);
     expect(panel.style.left).toBe("50%");
     expect(panel.style.transform).toBe("translateX(-50%)");
-    expect(panel.style.top).toBe(fromHudEdge("top", STATUS_PILL.y));
+    expect(panel.style.top).toBe(row);
     expect(panel.style.width).toBe("max-content");
   });
   it("moves the same panel below the visible boss bar and restores it when the boss leaves", () => {
@@ -120,12 +154,11 @@ describe("native scan receipt view", () => {
     boss.offsetTop = 12;
     boss.offsetHeight = 44;
     resize();
-    const ordinary = fromHudEdge("top", STATUS_PILL.y);
-    expect(panel.style.top).toBe(`max(${ordinary}, ${56 + SPACING.gap}px)`);
+    expect(panel.style.top).toBe(`${56 + SPACING.gap}px`);
     expect(panel.children[1]).toBe(text);
     boss.offsetHeight = 0;
     resize();
-    expect(panel.style.top).toBe(ordinary);
+    expect(panel.style.top).toBe(row);
   });
   it("renders neutral actual target identity and canonical glyph, never a quest completion", () => {
     const { panel, view } = setup();
@@ -219,11 +252,10 @@ describe("native scan receipt view", () => {
 
 describe("equipped weapon notice", () => {
   it.each([720, 360])(
-    "centers below HUD rows within a %ipx viewport without intercepting focus",
+    "centers in a %ipx viewport without intercepting focus and stacks below visible notices",
     (width) => {
       const { boss, equip, panel, parent, resize, view } = setup();
       parent.clientWidth = width;
-      const row = fromHudEdge("top", CONVERSATION_BOX.top);
       expect(equip.hidden).toBe(true);
       view.equip("Heavy Missile");
       view.renderEquip(false, 0);
@@ -231,7 +263,7 @@ describe("equipped weapon notice", () => {
       expect(equip.style.top).toBe(row);
       expect(equip.style.left).toBe("50%");
       expect(equip.style.maxWidth).toBe(
-        `min(${units(CONVERSATION_BOX.maxWidth)}, 100% - ${fromHudEdge("left")} - ${fromHudEdge("right")})`,
+        `min(${units(CONVERSATION_BOX.maxWidth)}, 100% - 2 * max(${fromHudEdge("left")}, ${fromHudEdge("right")}))`,
       );
       expect(equip.style.pointerEvents).toBe("none");
       expect(equip.attributes.get("tabindex")).toBeUndefined();
@@ -242,12 +274,12 @@ describe("equipped weapon notice", () => {
       boss.offsetTop = 12;
       boss.offsetHeight = 68;
       resize();
-      expect(equip.style.top).toBe(`max(${row}, ${80 + SPACING.gap}px)`);
+      expect(equip.style.top).toBe(`${80 + SPACING.gap}px`);
       view.enqueue([receipt()]);
       panel.offsetTop = 90;
       panel.offsetHeight = 30;
       view.render(context, 0);
-      expect(equip.style.top).toBe(`max(${row}, ${120 + SPACING.gap}px)`);
+      expect(equip.style.top).toBe(`${118 + SPACING.gap}px`);
       expect(panel.children[1]!.textContent).toBe("Actual target");
       boss.offsetHeight = 0;
       view.render(context, 2500);
@@ -258,9 +290,9 @@ describe("equipped weapon notice", () => {
   );
 
   it("moves only on dialogue overlap and remeasures at layout changes, never on steady frames", () => {
-    const { boss, equip, observed, parent, resize, unobserve, view } = setup();
+    const { boss, equip, observed, parent, resize, unobserve, view, weapons } = setup();
+    ammo(weapons, 62);
     const dialogue = new Node();
-    const row = fromHudEdge("top", CONVERSATION_BOX.top);
     equip.offsetTop = 66;
     equip.offsetHeight = 38;
     dialogue.offsetHeight = 60;
@@ -270,7 +302,7 @@ describe("equipped weapon notice", () => {
 
     view.equip("Rapid Missile");
     view.renderEquip(false, 0, "speaker:first");
-    expect(equip.style.top).toBe(row);
+    expect(equip.style.top).toBe("66px");
     expect(observed).toHaveBeenCalledWith(dialogue);
     readDialogueTop.mockClear();
     view.renderEquip(false, 100, "speaker:first");
@@ -292,16 +324,17 @@ describe("equipped weapon notice", () => {
     boss.offsetHeight = 200;
     equip.offsetTop = 220;
     resize();
-    expect(equip.style.top).toBe(`max(${row}, ${212 + SPACING.gap}px)`);
+    expect(equip.style.top).toBe(`${212 + SPACING.gap}px`);
     view.renderEquip(false, 400);
-    expect(equip.style.top).toBe(`max(${row}, ${212 + SPACING.gap}px)`);
+    expect(equip.style.top).toBe(`${212 + SPACING.gap}px`);
     view.clearEquip();
     expect(unobserve).toHaveBeenCalledWith(dialogue);
     view.dispose();
   });
 
   it("suspends visible time when the notice cannot fit below the dialogue and resumes on resize", () => {
-    const { equip, parent, resize, view } = setup();
+    const { equip, parent, resize, view, weapons } = setup();
+    ammo(weapons, 46);
     const dialogue = new Node();
     parent.selectors.set(".ada-conversation", dialogue);
     parent.clientHeight = 150;
@@ -330,6 +363,21 @@ describe("equipped weapon notice", () => {
     view.renderEquip(false, 11500, "captain");
     expect(equip.hidden).toBe(true);
     view.dispose();
+  });
+
+  it("refits above a narrower ammo pill and observes size changes without steady-frame reads", () => {
+    const { observed, panel, resize, view, weapons } = setup();
+    const pill = ammo(weapons, 60);
+    view.enqueue([receipt()]);
+    view.render(context, 0);
+    expect(panel.style.top).toBe("64px");
+    expect(observed).toHaveBeenCalledWith(pill);
+    pill.offsetLeft = 430;
+    resize();
+    expect(panel.style.top).toBe(row);
+    const measure = vi.spyOn(pill, "getBoundingClientRect");
+    view.render(context, 16);
+    expect(measure).not.toHaveBeenCalled();
   });
 
   it("holds two seconds, fades over 500ms, and replaces the previous name and timing", () => {

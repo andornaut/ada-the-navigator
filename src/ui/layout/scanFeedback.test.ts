@@ -1,29 +1,26 @@
 import { describe, expect, it } from "vitest";
 
-import { CONVERSATION_BOX } from "../../data/layout.ts";
-import { fromHudEdge } from "./css.ts";
-import { STATUS_PILL } from "./playView.ts";
-import { scanFeedbackSlot } from "./scanFeedback.ts";
-import { SPACING } from "./tokens.ts";
+import { scanFeedbackTop } from "./scanFeedback.ts";
 
-const row = { bossBottom: 0, leftEnd: 170, rightStart: 580, unit: 1, width: 720 };
+const center = 360;
+const gap = 4;
+const top = 8;
+const notice = { height: 32, width: 144 };
+const disc = { height: 33, width: 33, x: 392, y: 16 };
+const ammo = { height: 14, width: 48, x: 384.5, y: 50.5 };
 
-describe("top-centre scan notice slot", () => {
-  it("aligns to the resource pill and leaves room for the nearer HUD group", () => {
-    const slot = scanFeedbackSlot(row);
-    expect(slot.top).toBe(fromHudEdge("top", STATUS_PILL.y));
-    expect(slot.maxWidth).toContain(`${2 * (360 - 170 - SPACING.gap)}px`);
+describe("top-centre flight notice slot", () => {
+  it("uses the high slot when the full label fits between the actual HUD faces", () => {
+    expect(scanFeedbackTop([disc, ammo], gap, center, { ...notice, width: 48 }, top)).toBe(top);
   });
 
-  it("moves below the row if there is no centered strip wide enough for the notice", () => {
-    const slot = scanFeedbackSlot({ ...row, rightStart: 390 });
-    expect(slot.top).toBe(fromHudEdge("top", CONVERSATION_BOX.top));
-    expect(slot.maxWidth).toContain(fromHudEdge("left"));
-    expect(slot.maxWidth).toContain(fromHudEdge("right"));
+  it("passes below the ammo pill even where its wider face is the only overlap", () => {
+    expect(scanFeedbackTop([disc, ammo], gap, center, { ...notice, width: 40 }, 24)).toBe(24);
+    expect(scanFeedbackTop([disc, ammo], gap, center, { ...notice, width: 50 }, 24)).toBe(69);
   });
 
-  it("keeps the visible boss bar in its slot and reserves a gap for the receipt below", () => {
-    const slot = scanFeedbackSlot({ ...row, bossBottom: 60, unit: 2 });
-    expect(slot.top).toBe(`max(${fromHudEdge("top", STATUS_PILL.y)}, ${60 + 2 * SPACING.gap}px)`);
+  it("keeps moving below overlapping controls while honoring the minimum set by the boss or scan", () => {
+    expect(scanFeedbackTop([disc, ammo], gap, center, notice, top)).toBe(69);
+    expect(scanFeedbackTop([disc, ammo], gap, center, notice, 97)).toBe(97);
   });
 });
