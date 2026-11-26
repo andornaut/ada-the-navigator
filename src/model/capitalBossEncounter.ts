@@ -19,6 +19,12 @@ export type CapitalBossProgress = {
     }
 );
 
+/** Cartwheel holds one canonical ore field until its carrier is resolved. */
+export type CartwheelClaimProgress = CapitalBossProgress & {
+  readonly fieldId: string;
+  readonly fieldSite: Vec;
+};
+
 /** Required encounter outcomes are independent of the world's paging and guard records. */
 export type RequiredCapitalBossProgress =
   | { readonly phase: "hidden" | "revealed" | "active" }

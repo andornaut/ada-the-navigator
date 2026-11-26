@@ -5,6 +5,7 @@ import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import { ASTEROID_LOOT, CRYSTAL_MINIMUM_ORE } from "../data/asteroidLoot.ts";
 import {
   ANDROMEDA_REDACT,
+  CARTWHEEL_CLAIM,
   NEEDLE_CADENCE,
   SUNFLOWER_CAPITAL_BOSS,
   WHIRLPOOL_CAPITAL_BOSS,
@@ -104,6 +105,7 @@ import {
 } from "./proceduralPois.ts";
 export { rollEncounter } from "./encounterRoll.ts";
 import { settlementsNear } from "./andromedaPlaces.ts";
+import { selectCartwheelClaimField } from "./cartwheelClaimField.ts";
 import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
 import { flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
@@ -236,7 +238,7 @@ import {
   needleRims,
 } from "./needleFlight.ts";
 import { nosePoint } from "./nose.ts";
-import { ORE_FIELD_ROLE, worldOreFieldsNear } from "./oreFields.ts";
+import { ORE_FIELD_ROLE, type OreField, worldOreFieldsNear } from "./oreFields.ts";
 import {
   orePickupSize,
   pickupOutline,
@@ -390,7 +392,8 @@ function requiredOccupants(content: GameContent, flight: FlightState): RequiredW
             ? object.enemy?.packId === "needle:exit" || object.id === NEEDLE_CADENCE.id
             : flight.galaxy === 5
               ? object.id === ANDROMEDA_REDACT.id
-              : object.routeId !== undefined ||
+              : object.id === CARTWHEEL_CLAIM.id ||
+                object.routeId !== undefined ||
                 object.enemy?.packId?.startsWith("route:") ||
                 object.enemy?.escortOf?.startsWith("route:")),
       ),
@@ -1350,55 +1353,90 @@ function placeOreFields(
     if (owner.x !== cell.x || owner.y !== cell.y) {
       continue;
     }
-    const reach = ORE_FIELDS.clearance + ORE_FIELDS.diameter / 2;
-    const hub = flight.objects.find(
-      (object) => object.kind === "destination" && object.id === "hub",
-    );
+    if (claimedOreFields.get(flight) !== field.id) {
+      placeOreField(content, field, existing, flight);
+    }
+  }
+}
+
+const claimedOreFields = new WeakMap<FlightState, string>();
+
+function placeOreField(
+  content: GameContent,
+  field: OreField,
+  existing: Set<string>,
+  flight: FlightState,
+): void {
+  const reach = ORE_FIELDS.clearance + ORE_FIELDS.diameter / 2;
+  const hub = flight.objects.find((object) => object.kind === "destination" && object.id === "hub");
+  if (
+    worldStationsNear(flightStationContext(flight), ECONOMY, flight.galaxy, reach, field).length ||
+    (hub && worldDistance(flightWorldContext(flight), hub, field) < reach) ||
+    (flight.arrivals ?? []).some(
+      (arrival) => worldDistance(flightWorldContext(flight), arrival, field) < reach,
+    )
+  ) {
+    return;
+  }
+  const hp = byPosition(ASTEROID_FIELDS, flight.galaxy).hp;
+  field.rocks.forEach((rock, index) => {
+    const shape = ASTEROID_SHAPES.get(rock.asteroid)!;
+    const object: SpaceObject = {
+      ...rock,
+      crystals: ASTEROID_ART.crystals.selection.oreField,
+      hp: hp[shape.size],
+      id: `${field.id}:${index}`,
+      kind: "rock",
+      radius: shape.radius,
+      role: ORE_FIELD_ROLE,
+    };
     if (
-      worldStationsNear(flightStationContext(flight), ECONOMY, flight.galaxy, reach, field)
-        .length ||
-      (hub && worldDistance(flightWorldContext(flight), hub, field) < reach) ||
-      (flight.arrivals ?? []).some(
-        (arrival) => worldDistance(flightWorldContext(flight), arrival, field) < reach,
+      !existing.has(object.id) &&
+      !Object.hasOwn(flight.world.notables, object.id) &&
+      clearOf(flight, content.tuning.exclusionRadius, flight.player, object) &&
+      clearOfExclusionZones(content, object, flight) &&
+      flight.objects.every(
+        (other) =>
+          other.kind !== "rock" ||
+          worldDistance(flightWorldContext(flight), other, object) > other.radius + object.radius,
       )
     ) {
-      continue;
+      canonicalObject(flight, object);
+      flight.objects.push(object);
+      existing.add(object.id);
     }
-    const hp = byPosition(ASTEROID_FIELDS, flight.galaxy).hp;
-    field.rocks.forEach((rock, index) => {
-      const shape = ASTEROID_SHAPES.get(rock.asteroid)!;
-      const object: SpaceObject = {
-        ...rock,
-        crystals: ASTEROID_ART.crystals.selection.oreField,
-        hp: hp[shape.size],
-        id: `${field.id}:${index}`,
-        kind: "rock",
-        radius: shape.radius,
-        role: ORE_FIELD_ROLE,
-      };
-      if (
-        !existing.has(object.id) &&
-        !Object.hasOwn(flight.world.notables, object.id) &&
-        clearOf(flight, content.tuning.exclusionRadius, flight.player, object) &&
-        clearOfExclusionZones(content, object, flight) &&
-        flight.objects.every(
-          (other) =>
-            other.kind !== "rock" ||
-            worldDistance(flightWorldContext(flight), other, object) > other.radius + object.radius,
-        )
-      ) {
-        canonicalObject(flight, object);
-        flight.objects.push(object);
-        existing.add(object.id);
-      }
-    });
-    const id = `platform:${field.id}`;
-    if (field.guard && !existing.has(id) && !Object.hasOwn(flight.world.notables, id)) {
-      const platform = spawnEnemy(content, flight, "platform", id, field.guard);
-      platform.enemy!.facing = { ...PLATFORM_FACING };
-      flight.objects.push(platform);
-      existing.add(id);
-    }
+  });
+  const id = `platform:${field.id}`;
+  if (field.guard && !existing.has(id) && !Object.hasOwn(flight.world.notables, id)) {
+    const platform = spawnEnemy(content, flight, "platform", id, field.guard);
+    platform.enemy!.facing = { ...PLATFORM_FACING };
+    flight.objects.push(platform);
+    existing.add(id);
+  }
+}
+
+/** Keep the reserved field out of normal static-rock admission during the named encounter. */
+export function holdCartwheelClaimField(flight: FlightState, id: string): void {
+  claimedOreFields.set(flight, id);
+}
+
+/** Publish the same static field through its usual generator if its chunk is already loaded. */
+export function openCartwheelClaimField(
+  content: GameContent,
+  flight: FlightState,
+  claim: { readonly fieldId: string; readonly fieldSite: Vec },
+): void {
+  claimedOreFields.delete(flight);
+  const world = flightWorldContext(flight);
+  const grid = periodicWorldGrid(world, content.tuning.chunkSize);
+  if (!generatedChunks(flight).has(worldCellKey(grid, worldCellAt(grid, claim.fieldSite)))) {
+    return;
+  }
+  const field = worldOreFieldsNear(world, flight.galaxy, 1, claim.fieldSite).find(
+    ({ id }) => id === claim.fieldId,
+  );
+  if (field) {
+    placeOreField(content, field, new Set(flight.objects.map(({ id }) => id)), flight);
   }
 }
 
@@ -1702,6 +1740,81 @@ export function admitRedactEncounter(
   reserveAndromedaRelaySite(flight, relay);
   flight.objects.push(actor);
   worldSyncFlightRegion(flightWorldContext(flight), content, flight);
+}
+
+/** Select an untouched canonical field and admit one carrier outside its rock layout. */
+export function placeCartwheelClaim(
+  content: GameContent,
+  flight: FlightState,
+  hub: Vec,
+): { readonly fieldId: string; readonly fieldSite: Vec; readonly site: Vec } | null {
+  const world = flightWorldContext(flight);
+  const grid = periodicWorldGrid(world, content.tuning.chunkSize);
+  const actor = spawnEnemy(content, flight, "capital", CARTWHEEL_CLAIM.id, hub);
+  actor.persistent = true;
+  const definition = enemyEquipmentDefinition(flight.galaxy, actor.enemy!);
+  const placement = questGuardPlacementContext(content, flight);
+  const reach = questGuardFormationReach(placement, [actor]);
+  const fieldOffset = ORE_FIELDS.diameter / 2 + ORE_FIELDS.guardGap + reach;
+  const occupants = stationPopulationObjects(flight);
+  const field = selectCartwheelClaimField({
+    ...flightStationContext(flight),
+    ...placement,
+    canPlace: (candidate) => {
+      const owner = worldCellAt(grid, candidate);
+      const previouslyApproached = Array.from(
+        worldCellsNear(grid, grid.pitch * 2, worldCellCenter(grid, owner)),
+      ).some((cell) => visitedChunk(flight.visited, worldCellKey(grid, cell)));
+      if (generatedChunks(flight).has(worldCellKey(grid, owner)) || previouslyApproached) {
+        return false;
+      }
+      const offset = worldDelta(world, hub, candidate);
+      const heading = Math.atan2(offset.y, offset.x);
+      for (let spoke = 0; spoke < 8; spoke++) {
+        const angle = heading + (spoke * Math.PI) / 4;
+        Object.assign(actor, {
+          x: candidate.x + Math.cos(angle) * fieldOffset,
+          y: candidate.y + Math.sin(angle) * fieldOffset,
+        });
+        canonicalPosition(flight, actor);
+        if (
+          clearOfExclusionZones(content, actor, flight) &&
+          worldStationsNear(
+            flightStationContext(flight),
+            ECONOMY,
+            flight.galaxy,
+            ECONOMY.station.exclusionRadius + reach,
+            actor,
+          ).length === 0 &&
+          !occupants.some(
+            (other) =>
+              capital(other) && worldDistance(world, other, actor) < enemySpacing(actor, other),
+          ) &&
+          stationFormationClear(placement, [actor])
+        ) {
+          return true;
+        }
+      }
+      return false;
+    },
+    combatClearance:
+      fieldOffset +
+      reach +
+      definition.perception +
+      actorPursuitHomeRadius(flight.galaxy, definition.pursuit.homeRadius, false, actor),
+    flightStart: FLIGHT_START,
+    hub,
+  });
+  if (!field) {
+    return null;
+  }
+  const site = { x: actor.x, y: actor.y };
+  actor.enemy!.home = { ...site };
+  actor.enemy!.position = { ...site };
+  holdCartwheelClaimField(flight, field.id);
+  flight.objects.push(actor);
+  worldSyncFlightRegion(world, content, flight);
+  return { fieldId: field.id, fieldSite: { x: field.x, y: field.y }, site };
 }
 
 /** The repair cache is a single ordinary Ore pickup with a durable encounter identity. */
@@ -2748,7 +2861,10 @@ function actorPursuitHomeRadius(
   if (blockade) {
     return PHANTOM_TUNING.blockadeReach;
   }
-  if (galaxy === 6 && object.id === PHANTOM_FLAGSHIP_ID && object.enemy?.archetype === "capital") {
+  if (
+    (galaxy === 6 && object.id === PHANTOM_FLAGSHIP_ID && object.enemy?.archetype === "capital") ||
+    (galaxy === 2 && object.id === CARTWHEEL_CLAIM.id)
+  ) {
     return homeRadius;
   }
   return persistentObject(object) || object.enemy?.escortOf != null
@@ -5137,6 +5253,7 @@ function hit(
       events.push({ id: object.id, type: "enemyDisabled" });
     } else if (
       (object.id === PHANTOM_FLAGSHIP ||
+        object.id === CARTWHEEL_CLAIM.id ||
         object.id === NEEDLE_CADENCE.id ||
         object.id === ANDROMEDA_REDACT.id) &&
       part !== null &&

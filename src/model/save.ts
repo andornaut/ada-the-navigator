@@ -2,6 +2,7 @@ import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { CRYSTAL_FLAGS, type CrystalFlag } from "../data/asteroidCatalog.ts";
 import {
   ANDROMEDA_REDACT,
+  CARTWHEEL_CLAIM,
   NEEDLE_CADENCE,
   SUNFLOWER_CAPITAL_BOSS,
   WHIRLPOOL_CAPITAL_BOSS,
@@ -22,7 +23,7 @@ import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
 import { galaxyProjects } from "../data/projects.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
-import type { GalaxyNumber, GameContent, Weapon, WeaponLevel } from "../data/types.ts";
+import type { GalaxyNumber, GameContent, Vec, Weapon, WeaponLevel } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { validActivity } from "./activities.ts";
@@ -43,6 +44,7 @@ import { isLandmark } from "./landmarks.ts";
 import { validExplored } from "./map.ts";
 import { markerObjectTracked, validMarkerActors, validTargetKnowledge } from "./markerKnowledge.ts";
 import { readNeedleChapterProgress, validNeedleFlight } from "./needleRuntime.ts";
+import { worldOreFieldsNear } from "./oreFields.ts";
 import { validPhantomFlight, validPhantomProgress } from "./phantom.ts";
 import { pendingPhantomEncounterUnshared } from "./phantomRequiredPlans.ts";
 import { requiredPlanConsistent, requiredPlanObjects } from "./requiredEncounterPlans.ts";
@@ -415,8 +417,13 @@ function spaceObject(
     (value.ammoPack === undefined || (value.ammoPack === true && value.kind === "pickup"))
   );
 }
-function optionalBossActor(galaxy: 1 | 4 | 5, value: unknown): value is SpaceObject {
-  const ids = { 1: SUNFLOWER_CAPITAL_BOSS.id, 4: NEEDLE_CADENCE.id, 5: ANDROMEDA_REDACT.id };
+function optionalBossActor(galaxy: 1 | 2 | 4 | 5, value: unknown): value is SpaceObject {
+  const ids = {
+    1: SUNFLOWER_CAPITAL_BOSS.id,
+    2: CARTWHEEL_CLAIM.id,
+    4: NEEDLE_CADENCE.id,
+    5: ANDROMEDA_REDACT.id,
+  };
   const id = ids[galaxy];
   return (
     spaceObject(galaxy, [], value) &&
@@ -511,6 +518,74 @@ function bossFlightConsistent(
     );
   }
   return !boss && actor === undefined && cache === undefined;
+}
+
+function validClaimProgress(galaxy: GalaxyNumber, progress: Record<string, unknown>): boolean {
+  const claim = progress.claim;
+  if (claim === undefined) {
+    return true;
+  }
+  if (
+    galaxy !== 2 ||
+    Number(progress.stage) < 3 ||
+    !Array.isArray(progress.known) ||
+    !progress.known.includes(CARTWHEEL_STORY_SHIPS.station) ||
+    !record(claim) ||
+    !vector(claim.site) ||
+    !vector(claim.fieldSite) ||
+    (claim.firstHardpointLost !== undefined && claim.firstHardpointLost !== true)
+  ) {
+    return false;
+  }
+  const point = claim.fieldSite as Vec;
+  if (
+    !worldOreFieldsNear({ worldSide: GALAXY_SIDE }, 2, 1, point).some(
+      (field) =>
+        field.id === claim.fieldId &&
+        field.guard === null &&
+        field.x === point.x &&
+        field.y === point.y,
+    )
+  ) {
+    return false;
+  }
+  const entries = Object.keys(claim).length - Number(claim.firstHardpointLost === true);
+  switch (claim.phase) {
+    case "active":
+      return entries === 4;
+    case "away":
+      return (
+        entries === 5 && optionalBossActor(2, claim.actor) && claim.actor.enemy?.salvaged === false
+      );
+    case "resolved":
+      return entries === 5 && (claim.outcome === "defeated" || claim.outcome === "salvaged");
+    default:
+      return false;
+  }
+}
+
+function claimFlightConsistent(claim: GalaxyProgress["claim"], flight: FlightState): boolean {
+  const { id } = CARTWHEEL_CLAIM;
+  const actor = flight.objects.find((object) => object.id === id) ?? flight.world.notables[id];
+  if (flight.galaxy !== 2) {
+    return actor === undefined;
+  }
+  if (claim?.phase === "active") {
+    return (
+      optionalBossActor(2, actor) &&
+      actor.enemy?.salvaged === false &&
+      !flight.objects.some((object) => object.id.startsWith(`${claim.fieldId}:`))
+    );
+  }
+  if (claim?.phase === "resolved") {
+    return (
+      actor == null ||
+      (claim.outcome === "salvaged" &&
+        optionalBossActor(2, actor) &&
+        actor.enemy?.salvaged === true)
+    );
+  }
+  return !claim && actor === undefined;
 }
 
 function validRedactProgress(galaxy: GalaxyNumber, progress: Record<string, unknown>): boolean {
@@ -1000,6 +1075,7 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
         !record(p) ||
         !validBossProgress(id, p) ||
         !validRedactProgress(id, p) ||
+        !validClaimProgress(id, p) ||
         !validSounderProgress(id, p) ||
         (p.geography !== undefined && !validGalaxyGeography(p.geography)) ||
         (p.explorationSites !== undefined &&
@@ -1094,11 +1170,13 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
     const sunflowerBoss = progress[1].capitalBoss;
     const needleBoss = progress[4].capitalBoss;
     const redact = progress[5].redact;
+    const claim = progress[2].claim;
     if (
       (sunflowerBoss?.phase === "active" &&
         (value.selectedGalaxy !== 1 || value.flight === null)) ||
       (needleBoss?.phase === "active" && (value.selectedGalaxy !== 4 || value.flight === null)) ||
-      (redact?.phase === "active" && (value.selectedGalaxy !== 5 || value.flight === null))
+      (redact?.phase === "active" && (value.selectedGalaxy !== 5 || value.flight === null)) ||
+      (claim?.phase === "active" && (value.selectedGalaxy !== 2 || value.flight === null))
     ) {
       return null;
     }
@@ -1249,6 +1327,7 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
         !bossFlightConsistent(1, sunflowerBoss, f as unknown as FlightState) ||
         !bossFlightConsistent(4, needleBoss, f as unknown as FlightState) ||
         !redactFlightConsistent(redact, f as unknown as FlightState) ||
+        !claimFlightConsistent(claim, f as unknown as FlightState) ||
         !sounderFlightConsistent(whirlpool, f as unknown as FlightState)
       ) {
         return null;

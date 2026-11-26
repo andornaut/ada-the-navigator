@@ -6,6 +6,8 @@ import { ACTIVITIES, MINING_CONTRACT_DEPOSITS, SUPPLY_ITEMS } from "../data/acti
 import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import {
   type CapitalBossHud,
+  CARTWHEEL_CLAIM,
+  CARTWHEEL_CLAIM_CUES,
   SUNFLOWER_BOSS_CUES,
   SUNFLOWER_CAPITAL_BOSS,
   WHIRLPOOL_BOSS_CUES,
@@ -140,7 +142,10 @@ import {
   ensureHuntingPacks,
   ensureRouteEncounter,
   ensureStation,
+  holdCartwheelClaimField,
+  openCartwheelClaimField,
   pickupTouched,
+  placeCartwheelClaim,
   placeDestinationAhead,
   placeExplorationSite,
   placeHuntingPack,
@@ -380,6 +385,7 @@ const progress = newProgress;
 const HOLODISK_MOMENT = "holodiskMoment";
 const NAMED_CAPITAL_IDS: Partial<Record<GalaxyNumber, string>> = {
   1: SUNFLOWER_CAPITAL_BOSS.id,
+  2: CARTWHEEL_CLAIM.id,
   3: WHIRLPOOL_CAPITAL_BOSS.id,
   4: NEEDLE_CADENCE.id,
   5: ANDROMEDA_REDACT.id,
@@ -1503,6 +1509,11 @@ export class GameModel {
     if (flight.galaxy === 6) {
       return phantomBossHud({ content: this.content, flight, progress: this.current }, canSalvage);
     }
+    if (flight.galaxy === 2) {
+      return this.current.claim?.phase === "active"
+        ? encounterBossHud(CARTWHEEL_CLAIM, flight, canSalvage)
+        : null;
+    }
     if (flight.galaxy === 5) {
       return this.current.redact?.phase === "active"
         ? encounterBossHud(ANDROMEDA_REDACT, flight, canSalvage)
@@ -1521,6 +1532,64 @@ export class GameModel {
             ? WHIRLPOOL_CAPITAL_BOSS
             : null;
     return identity && encounterBossHud(identity, flight, canSalvage);
+  }
+
+  private prepareCartwheelClaim(flight: FlightState): void {
+    const progress = this.current;
+    if (flight.galaxy !== 2 || progress.stage < 3 || !progress.known.includes(HUB_STATION)) {
+      return;
+    }
+    const claim = progress.claim;
+    const world = flightWorldContext(flight);
+    if (claim?.phase === "away") {
+      const { actor, ...saved } = claim;
+      holdCartwheelClaimField(flight, claim.fieldId);
+      flight.objects.push(actor);
+      progress.claim = { ...saved, phase: "active" };
+      worldSyncFlightRegion(world, this.content, flight);
+      return;
+    }
+    if (claim) {
+      return;
+    }
+    const hub = flight.objects.find(
+      (object) => object.kind === "destination" && object.id === HUB_STATION,
+    );
+    if (!hub) {
+      return;
+    }
+    const grid = periodicWorldGrid(world, this.content.tuning.chunkSize);
+    const cell = worldCellKey(grid, worldCellAt(grid, flight.player));
+    if (this.bossPlacementCells.get(flight) === cell) {
+      return;
+    }
+    this.bossPlacementCells.set(flight, cell);
+    const placement = placeCartwheelClaim(this.content, flight, hub);
+    if (placement) {
+      progress.claim = { ...placement, phase: "active" };
+    }
+  }
+
+  private resolveCartwheelClaim(flight: FlightState, outcome: "defeated" | "salvaged"): void {
+    const claim = this.current.claim;
+    if (claim?.phase === "active") {
+      this.current.claim = { ...claim, outcome, phase: "resolved" };
+      openCartwheelClaimField(this.content, flight, claim);
+      this.cartwheelClaimCues();
+    }
+  }
+
+  private cartwheelClaimCues(): void {
+    const { id } = CARTWHEEL_CLAIM;
+    const claim = this.current.claim;
+    if (claim?.phase === "resolved") {
+      this.talk.authoredCue(`${id}:resolved`, CARTWHEEL_CLAIM_CUES.resolved);
+    } else if (claim?.phase === "active" && this.bossHud()) {
+      this.talk.authoredCue(`${id}:approach`, CARTWHEEL_CLAIM_CUES.approach);
+      if (claim.firstHardpointLost) {
+        this.talk.authoredCue(`${id}:hardpoint`, CARTWHEEL_CLAIM_CUES.hardpoint);
+      }
+    }
   }
 
   private prepareNeedleBoss(context: ChapterContext): void {
@@ -2726,6 +2795,7 @@ export class GameModel {
     } else if (flight.galaxy === 2) {
       populateRequiredChapterFlight(this.content, this.current, flight, () => {
         planRequiredCartwheelRoute(this.content, this.current, flight);
+        this.prepareCartwheelClaim(flight);
       });
     } else if (flight.galaxy === 3) {
       populateRequiredChapterFlight(this.content, this.current, flight, () => {
@@ -2900,6 +2970,13 @@ export class GameModel {
         const actor = capitalBossActor(flight, ANDROMEDA_REDACT.id);
         if (actor) {
           this.current.redact = { ...redact, actor, phase: "away" };
+        }
+      }
+      const claim = this.current.claim;
+      if (flight.galaxy === 2 && claim?.phase === "active") {
+        const actor = capitalBossActor(flight, CARTWHEEL_CLAIM.id);
+        if (actor) {
+          this.current.claim = { ...claim, actor, phase: "away" };
         }
       }
       if (cargo === "keep" && flight.cargo > 0) {
@@ -3156,6 +3233,7 @@ export class GameModel {
     const previousChapterPosition = runtime?.afterStep ? { ...f.player } : undefined;
     this.ensureRequiredApproaches();
     this.prepareSunflowerBoss(f);
+    this.prepareCartwheelClaim(f);
     this.prepareWhirlpoolDisk(f);
     const sounderFighting =
       f.galaxy === 3 &&
@@ -3285,6 +3363,20 @@ export class GameModel {
         )
       ) {
         this.current.redact = { ...boss, firstHardpointLost: true };
+      }
+    }
+    if (f.galaxy === 2 && this.current.claim?.phase === "active") {
+      const claim = this.current.claim;
+      if (
+        events.some((event) => event.type === "enemyDestroyed" && event.id === CARTWHEEL_CLAIM.id)
+      ) {
+        this.resolveCartwheelClaim(f, "defeated");
+      } else if (
+        events.some(
+          (event) => event.type === "enemyFirstHardpointLost" && event.id === CARTWHEEL_CLAIM.id,
+        )
+      ) {
+        this.current.claim = { ...claim, firstHardpointLost: true };
       }
     }
     for (const event of events) {
@@ -3452,6 +3544,9 @@ export class GameModel {
     const approach = this.poiApproach(f, unknownPoi, landmarks);
     this.sunflowerBossCues(f);
     this.sounderCues(f);
+    if (f.galaxy === 2) {
+      this.cartwheelClaimCues();
+    }
     this.talk.step(dt, held, {
       aimed: Math.hypot(input.aim.x, input.aim.y) > 0,
       capitalInSight: heavyInSight("capital", SCREEN, f, NAMED_CAPITAL_IDS[f.galaxy]),
@@ -3472,7 +3567,8 @@ export class GameModel {
           event.id !== WHIRLPOOL_CAPITAL_BOSS.id &&
           event.id !== PHANTOM_FLAGSHIP &&
           event.id !== NEEDLE_CADENCE.id &&
-          event.id !== ANDROMEDA_REDACT.id,
+          event.id !== ANDROMEDA_REDACT.id &&
+          event.id !== CARTWHEEL_CLAIM.id,
       ),
       holodisks: holodisksHeld(this.state.progress),
       inCurrent: inCurrent(f.galaxy, 0, f.player),
@@ -3692,7 +3788,7 @@ export class GameModel {
           : undefined;
     const needle = f.galaxy === 4 ? this.current.capitalBoss : undefined;
     const redact = f.galaxy === 5 ? this.current.redact : undefined;
-    const optionalBossWaypoint =
+    const otherWaypoint =
       redact?.phase === "active"
         ? {
             ...redact.site,
@@ -3710,6 +3806,17 @@ export class GameModel {
               symbol: "destination" as const,
             }
           : sunflowerWaypoint;
+    const claim = f.galaxy === 2 ? this.current.claim : undefined;
+    const optionalBossWaypoint =
+      claim?.phase === "active" || claim?.phase === "resolved"
+        ? {
+            ...(claim.phase === "active" ? claim.site : claim.fieldSite),
+            id: claim.phase === "active" ? CARTWHEEL_CLAIM.id : claim.fieldId,
+            label: claim.phase === "active" ? CARTWHEEL_CLAIM.ship : CARTWHEEL_CLAIM.fieldLabel,
+            objective: false,
+            symbol: "destination" as const,
+          }
+        : otherWaypoint;
     const map = localMap({
       ...flightStationContext(f),
       ...(waypoint
@@ -4024,6 +4131,8 @@ export class GameModel {
     if (flight && target && salvage(this.content, flight)) {
       if (flight.galaxy === 1 && target.id === SUNFLOWER_CAPITAL_BOSS.id) {
         this.resolveSunflowerBoss(flight, "salvaged");
+      } else if (flight.galaxy === 2 && target.id === CARTWHEEL_CLAIM.id) {
+        this.resolveCartwheelClaim(flight, "salvaged");
       } else if (flight.galaxy === 3 && target.id === WHIRLPOOL_CAPITAL_BOSS.id) {
         this.resolveSounder(flight, "disabled");
       } else if (flight.galaxy === 4 && target.id === NEEDLE_CADENCE.id) {
@@ -4174,6 +4283,7 @@ export class GameModel {
         p.deposited >= this.content.tuning.miningMilestones[1]
       ) {
         p.stage = 3;
+        this.prepareCartwheelClaim(f);
         this.exchange("miner");
       } else if (id === "visitors" && p.stage === 3) {
         p.stage = 4;
@@ -5081,6 +5191,10 @@ export class GameModel {
       this.heldFlight = null;
       const { docked, flight } = this.state;
       if (flight) {
+        const claim = this.current.claim;
+        if (flight.galaxy === 2 && claim?.phase === "active") {
+          holdCartwheelClaimField(flight, claim.fieldId);
+        }
         recoverLegacyQuestGuards(questGuardPlacementContext(this.content, flight));
         this.prepareWhirlpoolDisk(flight);
       }

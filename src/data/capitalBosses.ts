@@ -43,6 +43,28 @@ export const ANDROMEDA_REDACT = {
   ship: "Broad Wing",
 } as const;
 
+export const CARTWHEEL_CLAIM = {
+  captain: CAPITAL_CAPTAINS.captainClaim.name,
+  fieldLabel: "Ore field",
+  id: "boss:cartwheel:outrigger-carrier",
+  ship: "Outrigger Carrier",
+} as const;
+
+export const CARTWHEEL_CLAIM_CUES = {
+  approach: {
+    speaker: "captainClaim",
+    text: "This field is under fleet claim. Miners, clear the area.",
+  },
+  hardpoint: {
+    speaker: "ada",
+    text: "The miners warned us about this side. One mount's down.",
+  },
+  resolved: {
+    speaker: "astra",
+    text: "The field is clear. The carrier's salvage can help pay for the disk.",
+  },
+} as const satisfies Record<string, ConversationLine>;
+
 export const NEEDLE_CADENCE = {
   captain: CAPITAL_CAPTAINS.captainCadence.name,
   id: "boss:needle:crossbow",
