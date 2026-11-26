@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import * as art from "../../art/tools/backdrop-field.ts";
-import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
-import { SCREEN } from "../data/screen.ts";
-import { CORE_MANIFEST, GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
 import {
   checkerItems,
   chunkItems,
@@ -13,7 +10,7 @@ import {
   project,
   type Rect,
   type Xy,
-} from "./backdropField.ts";
+} from "../art/backdropField.ts";
 import {
   clusterReach,
   type GalaxyBackdrop,
@@ -33,7 +30,10 @@ import {
   viewPlates,
   viewStars,
   viewStreaks,
-} from "./backdropLayers.ts";
+} from "../art/backdropLayers.ts";
+import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { SCREEN } from "../data/screen.ts";
+import { CORE_MANIFEST, GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
 
 const rulesFile = publicJson(CORE_MANIFEST.backdropLayers as string) as Record<string, unknown>;
 const rules = readBackdropRules(rulesFile)!;

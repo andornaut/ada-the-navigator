@@ -1,6 +1,6 @@
+import { playDepth } from "../art/index.ts";
 import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import type { SpaceObject } from "../model/types.ts";
-import { playDepth } from "./asteroidArt.ts";
 import { selectEnemyFrame } from "./enemyArt.ts";
 import { keylineSprite } from "./sceneHud.ts";
 import { drawOutpost, type ObjectsContext, placeStationFrame } from "./sceneObjects.ts";

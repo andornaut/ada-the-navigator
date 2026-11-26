@@ -4,7 +4,16 @@ import { setTextureFilters } from "@andornaut/game-kit/runtime/view/phaser/textu
 import { MAX_RENDER_SCALE } from "@andornaut/game-kit/runtime/view/renderScale";
 import { GameObjects, Loader, Scenes } from "phaser";
 
-import { BAND_AREA, paintBand, readBackdropBand, readBackdropHaze } from "../art/index.ts";
+import {
+  BAND_AREA,
+  decorationRasterSize,
+  paintBand,
+  type Raster,
+  readBackdropBand,
+  readBackdropHaze,
+  readBackdropRules,
+  readGalaxyBackdrop,
+} from "../art/index.ts";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyAssetKey, hullDesign, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
@@ -19,7 +28,6 @@ import {
   galaxyTowKey,
   readGalaxyManifest,
 } from "./artManifest.ts";
-import { type Raster, readBackdropRules, readGalaxyBackdrop } from "./backdropLayers.ts";
 import {
   craftArt,
   craftFrameSets,
@@ -54,7 +62,6 @@ import { readJobArt } from "./jobArt.ts";
 import { PHANTOM_ALLIES_ART } from "./phantomAllyArt.ts";
 import { sceneFit } from "./playCamera.ts";
 import { readQuantumJump } from "./quantumJump.ts";
-import { decorationRasterSize } from "./rareDecorations.ts";
 import { RockFrames } from "./rockFrames.ts";
 import type { GameScene } from "./scene.ts";
 import type { Asset } from "./sceneShared.ts";

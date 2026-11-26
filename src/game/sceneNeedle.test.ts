@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import MANIFEST from "../../public/art/needle/manifest.json" with { type: "json" };
+import { driftChipsFromBounds } from "../art/asteroidArt.ts";
 import { CONTENT } from "../data/content.ts";
 import { NEEDLE } from "../data/needle.ts";
 import { chapterRuntime } from "../model/chapters.ts";
@@ -13,7 +14,6 @@ import {
   setNeedleActivity,
 } from "../model/needle.ts";
 import type { SpaceObject } from "../model/types.ts";
-import { driftChipsFromBounds } from "./asteroidArt.ts";
 import {
   createNeedleRenderer,
   type NeedleImage,

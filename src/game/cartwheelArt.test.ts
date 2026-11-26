@@ -2,11 +2,11 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { readGalaxyBackdrop } from "../art/backdropLayers.ts";
 import { PROJECTS } from "../data/projects.ts";
 import { STORY_SHIP_CRAFT } from "../data/storyShips.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { ART_MANIFEST, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
-import { readGalaxyBackdrop } from "./backdropLayers.ts";
 import {
   type CartwheelAsset,
   craftArt,

@@ -4,10 +4,10 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
 
+import { drawnRockId, rockArt } from "../art/asteroidArt.ts";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { rockFrame } from "../model/asteroids.ts";
 import type { FlightEvent } from "../model/types.ts";
-import { drawnRockId, rockArt } from "./asteroidArt.ts";
 
 // Execute the production break start without starting Phaser's DOM renderer.
 const source = ts.createSourceFile(

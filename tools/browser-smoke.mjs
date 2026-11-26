@@ -5093,7 +5093,7 @@ try {
   );
   const [{ readAsteroidCatalog }, asteroidArt, { GALAXY_ID, GALAXY_NUMBERS }] = await Promise.all([
     import(new URL("../src/data/asteroidCatalog.ts", import.meta.url)),
-    import(new URL("../src/game/asteroidArt.ts", import.meta.url)),
+    import(new URL("../src/art/asteroidArt.ts", import.meta.url)),
     import(new URL("../src/data/galaxies.ts", import.meta.url)),
   ]);
   const asteroidResponse = await served(page, "http://ada-preview:4173/art/asteroids.json");

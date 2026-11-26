@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
-import type { Vec } from "../model/types.ts";
-import { CORE_MANIFEST, publicJson } from "../testing/publicArt.ts";
 import {
   asteroidFiles,
   asteroidOutline,
@@ -15,8 +12,11 @@ import {
   playDepth,
   rockArt,
   unit,
-} from "./asteroidArt.ts";
-import { readBackdropRules } from "./backdropLayers.ts";
+} from "../art/asteroidArt.ts";
+import { readBackdropRules } from "../art/backdropLayers.ts";
+import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
+import type { Vec } from "../model/types.ts";
+import { CORE_MANIFEST, publicJson } from "../testing/publicArt.ts";
 
 const ART = ASTEROID_ART;
 const RULES = readBackdropRules(publicJson(CORE_MANIFEST.backdropLayers as string))!;

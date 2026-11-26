@@ -4,7 +4,7 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { expect, it, vi } from "vitest";
 
-import { playDepth } from "./asteroidArt.ts";
+import { playDepth } from "../art/asteroidArt.ts";
 import { ADA_LAYERS, adaDepth, boxWith, drawnBox } from "./drawOrder.ts";
 import { jetsInFront } from "./shipJets.ts";
 

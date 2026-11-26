@@ -1,4 +1,5 @@
 import PROJECTS_FILE from "../../public/art/projects.json" with { type: "json" };
+import { playDepth } from "../art/index.ts";
 import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { SCREEN } from "../data/screen.ts";
 import { pointOnCurrent } from "../model/currents.ts";
@@ -10,7 +11,6 @@ import {
 } from "../model/guideBeacons.ts";
 import { type NeedleCourse, needleCourses } from "../model/needle.ts";
 import type { FlightState, Vec } from "../model/types.ts";
-import { playDepth } from "./asteroidArt.ts";
 import {
   boundsOnScreen,
   type PlacedProjectArt,

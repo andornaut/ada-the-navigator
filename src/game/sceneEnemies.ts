@@ -3,6 +3,7 @@
 import { densityTexels } from "@andornaut/game-kit/runtime/view/renderScale";
 import { Math as PhaserMath, type Scene, TintModes } from "phaser";
 
+import { playDepth } from "../art/index.ts";
 import { CONTENT } from "../data/content.ts";
 import { enemyActorLoadout } from "../data/enemyActorDefinition.ts";
 import { MINE_LAYER } from "../data/enemyCatalog.ts";
@@ -12,7 +13,6 @@ import { enemyEquipmentDefinition } from "../model/enemyEquipment.ts";
 import { activeEnemyBeams, activeRingEmissions, type EnemyBeam } from "../model/flight.ts";
 import { hullOffset } from "../model/shipPhysics.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
-import { playDepth } from "./asteroidArt.ts";
 import {
   bannerOffset,
   composeEnemy,

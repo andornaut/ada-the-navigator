@@ -4,13 +4,19 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
+import {
+  drawnRockId,
+  footprintOutline,
+  hexNumber,
+  playDepth,
+  rockArt,
+} from "../art/asteroidArt.ts";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { rockFrame } from "../model/asteroids.ts";
 import { debrisPieceIndex } from "../model/debrisBody.ts";
 import { carriesStardust } from "../model/drops.ts";
 import { orePickupFrameSize } from "../model/pickupBody.ts";
 import type { SpaceObject } from "../model/types.ts";
-import { drawnRockId, footprintOutline, hexNumber, playDepth, rockArt } from "./asteroidArt.ts";
 import { debrisFrame, debrisMarks, debrisPiece, readDebrisArt } from "./debrisArt.ts";
 
 // Execute the production render boundary without starting Phaser's DOM renderer.

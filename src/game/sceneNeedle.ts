@@ -1,3 +1,4 @@
+import { driftChipsFromBounds, playDepth } from "../art/index.ts";
 import { NEEDLE } from "../data/needle.ts";
 import { toScreen } from "../model/convex.ts";
 import {
@@ -10,7 +11,6 @@ import {
   needleSlow,
 } from "../model/needle.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
-import { driftChipsFromBounds, playDepth } from "./asteroidArt.ts";
 
 export interface NeedleStitch {
   readonly from: Vec;

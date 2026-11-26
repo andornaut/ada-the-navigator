@@ -3,22 +3,15 @@
 import { MAX_RENDER_SCALE } from "@andornaut/game-kit/runtime/view/renderScale";
 import { BlendModes, Geom, TintModes } from "phaser";
 
-import type { AsteroidArtCatalog } from "../data/asteroidCatalog.ts";
-import { SCREEN } from "../data/screen.ts";
-import type { GalaxyNumber } from "../data/types.ts";
-import type { FlightState } from "../model/types.ts";
-import { storyBackdropRect } from "../ui/layout/storyPage.ts";
 import {
   type BackdropRock,
   backdropRock,
   type BackdropRockRule,
-  backdropTint,
-  hexNumber,
-} from "./asteroidArt.ts";
-import {
   type BackdropRules,
+  backdropTint,
   clusterReach,
   type GalaxyBackdrop,
+  hexNumber,
   paintCluster,
   paintDisc,
   paintPlanet,
@@ -26,15 +19,20 @@ import {
   planetReach,
   SKY_AREA,
   streakEnds,
+  viewDecorations,
   viewFar,
   viewPlanets,
   viewPlates,
   viewStars,
   viewStreaks,
-} from "./backdropLayers.ts";
+} from "../art/index.ts";
+import type { AsteroidArtCatalog } from "../data/asteroidCatalog.ts";
+import { SCREEN } from "../data/screen.ts";
+import type { GalaxyNumber } from "../data/types.ts";
+import type { FlightState } from "../model/types.ts";
+import { storyBackdropRect } from "../ui/layout/storyPage.ts";
 import { BACKDROP_DEPTH, backdropRockDepth } from "./drawOrder.ts";
 import { canvasSize, sceneFit } from "./playCamera.ts";
-import { viewDecorations } from "./rareDecorations.ts";
 import type { GameScene } from "./scene.ts";
 import { bakeScale, bakeTexture, rockTexture } from "./sceneAssets.ts";
 

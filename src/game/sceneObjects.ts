@@ -3,6 +3,15 @@
 import { densityTexels } from "@andornaut/game-kit/runtime/view/renderScale";
 import { Math as PhaserMath, type Scene } from "phaser";
 
+import {
+  type AsteroidOutline,
+  drawnRockId,
+  driftChips,
+  footprintOutline,
+  hexNumber,
+  playDepth,
+  rockArt,
+} from "../art/index.ts";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { CONTENT } from "../data/content.ts";
 import { destinationDrawn } from "../data/destinations.ts";
@@ -23,15 +32,6 @@ import { hubBay, hubWorn } from "../model/storyShips.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
 import { shipTuning } from "../model/upgrades.ts";
 import { worldDelta } from "../model/worldContacts.ts";
-import {
-  type AsteroidOutline,
-  drawnRockId,
-  driftChips,
-  footprintOutline,
-  hexNumber,
-  playDepth,
-  rockArt,
-} from "./asteroidArt.ts";
 import { hubLayers } from "./cartwheelArt.ts";
 import { debrisFrame, debrisMarks, debrisPiece } from "./debrisArt.ts";
 import { reducedAt, shardFamily, shardPolygons, wreckFlashAt } from "./destructionArt.ts";

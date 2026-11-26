@@ -1,3 +1,4 @@
+import { playDepth } from "../art/index.ts";
 import { enemyActorLoadout } from "../data/enemyActorDefinition.ts";
 import { enemyAssetKey } from "../data/enemyIdentity.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
@@ -5,7 +6,6 @@ import { partsReach, toScreen, worldParts } from "../model/convex.ts";
 import { enemyPhysicalBody } from "../model/enemyBody.ts";
 import { type PhantomSong, phantomSongSpeed } from "../model/phantomAllies.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
-import { playDepth } from "./asteroidArt.ts";
 import type { PhantomAllyArt } from "./phantomAllyArt.ts";
 import type { ObjectsContext } from "./sceneObjects.ts";
 

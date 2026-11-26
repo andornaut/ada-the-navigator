@@ -2,7 +2,14 @@ import { type LoaderWatch, watchLoader } from "@andornaut/game-kit/runtime/load/
 import type { StoreLoadResult } from "@andornaut/game-kit/runtime/save/saveStore";
 import { GameObjects, Loader, Scene, Scenes } from "phaser";
 
-import type { BackdropHaze } from "../art/index.ts";
+import {
+  type BackdropHaze,
+  type BackdropRules,
+  backdropTint,
+  type GalaxyBackdrop,
+  hexNumber,
+  playDepth,
+} from "../art/index.ts";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
@@ -50,8 +57,6 @@ import {
   galaxyManifestPaths,
   readGalaxyManifest,
 } from "./artManifest.ts";
-import { backdropTint, hexNumber, playDepth } from "./asteroidArt.ts";
-import type { BackdropRules, GalaxyBackdrop } from "./backdropLayers.ts";
 import { craftFrameSets, type HubArt } from "./cartwheelArt.ts";
 import type { StreakSpec } from "./currentStreaks.ts";
 import type { DebrisArt } from "./debrisArt.ts";

@@ -2,9 +2,9 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { playDepth } from "../art/asteroidArt.ts";
 import { SCREEN } from "../data/screen.ts";
 import { nosePoint, shipSilhouette } from "../model/nose.ts";
-import { playDepth } from "./asteroidArt.ts";
 import {
   ADA_LAYERS,
   adaDepth,

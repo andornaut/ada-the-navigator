@@ -2,6 +2,7 @@
 // Functions over the scene's WorldContext.
 import { Math as PhaserMath, type Scene } from "phaser";
 
+import { hexNumber, playDepth } from "../art/index.ts";
 import { CURRENTS } from "../data/galaxyFeatures.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
 import { SCREEN } from "../data/screen.ts";
@@ -9,7 +10,6 @@ import { CARTWHEEL_STORY_SHIPS, STORY_SHIP_CRAFT } from "../data/storyShips.ts";
 import { currentsNear, flowFraction } from "../model/currents.ts";
 import { drawnHeading, hubBay, storyShips } from "../model/storyShips.ts";
 import type { FlightState, Vec } from "../model/types.ts";
-import { hexNumber, playDepth } from "./asteroidArt.ts";
 import { streakMarks } from "./currentStreaks.ts";
 import { enemyJetTriangles, selectEnemyFrame } from "./enemyArt.ts";
 import {

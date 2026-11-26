@@ -138,7 +138,7 @@ const [
   import(new URL("../src/testing/launch.ts", import.meta.url)),
   import(new URL("../src/model/save.ts", import.meta.url)),
   import(new URL("../src/data/asteroidCatalog.ts", import.meta.url)),
-  import(new URL("../src/game/asteroidArt.ts", import.meta.url)),
+  import(new URL("../src/art/asteroidArt.ts", import.meta.url)),
   import(new URL("../src/model/asteroids.ts", import.meta.url)),
   import(new URL("../src/model/flight.ts", import.meta.url)),
   import(new URL("../src/data/enemyActors.ts", import.meta.url)),
