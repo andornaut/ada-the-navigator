@@ -1,10 +1,12 @@
 // The crash listener and lightweight progress shell precede every game-module download.
 import "../crash/install.ts";
+import "@andornaut/game-kit/runtime/web/progress/dom/progressBar.css";
 
 import type { LaunchResult } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 
 import { CRASH_SCREEN } from "../crash/crashScreen.ts";
 import { preparePhoneLaunch } from "../pwa/index.ts";
+import { mountLoading } from "../ui/loadingBar.ts";
 import type { RequiredBootResources } from "./bootReveal.ts";
 import { EntryReloadRequired } from "./entryRecovery.ts";
 import { requiredLoading } from "./required.ts";
@@ -72,6 +74,7 @@ async function startSupportedLaunch(app: HTMLElement, launched: Promise<LaunchRe
           prepare: (required, attempt) => game.prepareGame(required, attempt, boot),
         };
       },
+      mountLoading,
       app,
     );
   } catch (error) {

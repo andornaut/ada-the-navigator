@@ -274,7 +274,6 @@ export const KNOWN_VIOLATIONS: readonly string[] = [
   "src/crash/crashScreen.ts (platform) imports src/ui/actionBinding.ts (ui)",
   "src/crash/crashScreen.ts (platform) imports src/ui/holdActionsAdapter.ts (ui)",
   "src/crash/crashScreen.ts (platform) imports src/ui/pressScope.ts (ui)",
-  "src/loading/progress.ts (platform) imports src/ui/loadingBar.ts (ui)",
   "src/loading/requiredFiles.ts (platform) imports src/ui/touchChrome.ts (ui)",
   "src/loading/startup.ts (platform) imports src/ui/actionBinding.ts (ui)",
   "src/loading/startup.ts (platform) imports src/ui/holdActionsAdapter.ts (ui)",

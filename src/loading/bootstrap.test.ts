@@ -4,6 +4,7 @@ const fixture = vi.hoisted(() => ({
   app: {},
   dispose: vi.fn(),
   importGame: vi.fn(),
+  mountLoading: vi.fn(),
   prepare: vi.fn(),
   requireFonts: vi.fn(),
   requireUi: vi.fn(),
@@ -16,6 +17,7 @@ vi.mock("../crash/crashScreen.ts", () => ({
   CRASH_SCREEN: { stopGameOnCrash: fixture.stopOnCrash },
 }));
 vi.mock("../pwa/index.ts", () => ({ preparePhoneLaunch: fixture.prepare }));
+vi.mock("../ui/loadingBar.ts", () => ({ mountLoading: fixture.mountLoading }));
 vi.mock("./required.ts", () => ({ requiredLoading: { subscribe: fixture.subscribe } }));
 vi.mock("./requiredFonts.ts", () => ({ requireBootFonts: fixture.requireFonts }));
 vi.mock("./requiredUi.ts", () => ({ requireBootUi: fixture.requireUi }));
@@ -67,6 +69,7 @@ it("starts the original resource observer and import when the supported launch r
   );
   await import("./bootstrap.ts");
   expect(fixture.startLoading).toHaveBeenCalledOnce();
+  expect(fixture.startLoading.mock.calls[0]!.slice(3)).toEqual([fixture.mountLoading, fixture.app]);
   expect(fixture.subscribe).toHaveBeenCalledOnce();
   expect(fixture.requireFonts).toHaveBeenCalledOnce();
   expect(fixture.requireUi).toHaveBeenCalledOnce();

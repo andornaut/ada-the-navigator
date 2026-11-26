@@ -1,24 +1,16 @@
-import "@andornaut/game-kit/runtime/web/progress/dom/progressBar.css";
-
-import type { ProgressBarStyle } from "@andornaut/game-kit/runtime/progress";
+import type { Timer } from "@andornaut/game-kit/runtime/clock/timer";
 import {
   createLayeredProgress,
   createProgressState,
   type ProgressHandle,
+  type ProgressHold,
+  type ProgressSnapshot,
 } from "@andornaut/game-kit/runtime/progressState";
-import {
-  createDomProgressBar,
-  type DomProgressTiming,
-} from "@andornaut/game-kit/runtime/web/progress/dom/progressBar";
 import type {
   LaunchProgress,
   UpdateState,
 } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 import type { RequiredUpdateState } from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
-
-import { SCREEN } from "../data/screen.ts";
-import { VIEW_SCALE_EVENT } from "../ui/layout/viewScale.ts";
-import { LOADING_BAR } from "../ui/loadingBar.ts";
 
 // The one loading bar along the top edge of the play area (src/ui/loadingBar.ts): the launch's
 // first install and boot in front, then the loads the player waits for, over the background work.
@@ -65,27 +57,6 @@ export const waitedProgress = {
     };
   },
 };
-
-const colour = (hex: string) => Number.parseInt(hex.slice(1), 16);
-/** The kit's bar style: the frame never shows; the track at its alpha under the cream fill. */
-export const BAR_STYLE: ProgressBarStyle = {
-  border: 0,
-  fills: [colour(LOADING_BAR.fill)],
-  frame: colour(LOADING_BAR.track),
-  frameAlpha: 0,
-  track: colour(LOADING_BAR.track),
-  trackAlpha: LOADING_BAR.trackAlpha,
-};
-/** The kit's bar timing: the hold and fade it draws, and the pending segment crossing every
- * 1.5 s, as in Chibi. */
-export const BAR_TIMING: DomProgressTiming = {
-  cycleMs: 1500,
-  fadeMs: LOADING_BAR.fadeMs,
-  fullMs: LOADING_BAR.fullMs,
-  segment: LOADING_BAR.segment,
-};
-// The kit's bar, the fill and track band; the host holds it and the rule below, the whole height.
-const FRAME = { height: LOADING_BAR.height, width: SCREEN.width, x: 0, y: 0 };
 
 let launch: ProgressHandle | undefined;
 
@@ -135,73 +106,24 @@ export function requiredUpdateActivity(state: RequiredUpdateState): void {
   showBackground("required", state === "updating");
 }
 
-/**
- * Mounts the loading bar along the top of parent, the play area: drawn in logical px, stretched to
- * parent's whole width and scaled by its view unit, insets ignored. The kit's bar stays mounted
- * and hides itself while idle. Returns the function that removes it.
- */
-export function mountLoading(parent: HTMLElement): () => void {
-  const document = parent.ownerDocument;
-  const window = document.defaultView;
-  if (!window) {
-    return () => undefined;
-  }
-  const host = document.createElement("div");
-  host.className = "ada-loading";
-  host.style.width = `${FRAME.width}px`;
-  host.style.height = `${LOADING_BAR.height}px`;
-  const fit = () => {
-    const across = parent.clientWidth / FRAME.width;
-    const down = Math.min(across, parent.clientHeight / SCREEN.height);
-    host.style.transform = `scale(${across}, ${down})`;
-  };
-  fit();
-  const boot = parent.querySelector("#boot-progress");
-  if (boot) {
-    boot.replaceWith(host);
-  } else {
-    parent.append(host);
-  }
-  window.addEventListener("resize", fit);
-  window.addEventListener(VIEW_SCALE_EVENT, fit);
-  const bar = createDomProgressBar({ frame: FRAME, style: BAR_STYLE, timing: BAR_TIMING }, host);
-  // The opaque ink rule under the band: inside the kit's bar, so it fades and hides with it.
-  const rule = document.createElement("div");
-  rule.className = "ada-loading-rule";
-  Object.assign(rule.style, {
-    backgroundColor: LOADING_BAR.rule,
-    height: `${LOADING_BAR.ruleHeight}px`,
-    left: "0",
-    position: "absolute",
-    top: `${LOADING_BAR.fillHeight}px`,
-    width: `${FRAME.width}px`,
-  });
-  bar.element.append(rule);
-  // Named for the game, as Chibi's is, with no string of its own.
-  const name = parent.getAttribute("aria-label");
-  if (name) {
-    bar.element.setAttribute("aria-label", name);
-  }
-  const hold = { fadeMs: BAR_TIMING.fadeMs ?? 0, fullMs: BAR_TIMING.fullMs };
-  const waited = createLayeredProgress(window, hold, {
+/** Subscribe to launch over waited loads over updates for one mounted bar. */
+export function subscribeLoadingProgress(
+  timer: Timer,
+  hold: ProgressHold,
+  report: (snapshot: ProgressSnapshot) => void,
+): () => void {
+  const waited = createLayeredProgress(timer, hold, {
     background: installProgress,
     foreground: loadingProgress,
   });
-  const layered = createLayeredProgress(window, hold, {
+  const layered = createLayeredProgress(timer, hold, {
     background: waited,
     foreground: launchProgress,
   });
-  const unsubscribe = layered.subscribe(bar.report);
-  const stop = () => {
+  const unsubscribe = layered.subscribe(report);
+  return () => {
     unsubscribe();
     layered.dispose();
     waited.dispose();
-    bar.remove();
-  };
-  return () => {
-    stop();
-    window.removeEventListener("resize", fit);
-    window.removeEventListener(VIEW_SCALE_EVENT, fit);
-    host.remove();
   };
 }

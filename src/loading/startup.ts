@@ -26,7 +26,7 @@ import { LOADING_LAYER } from "../ui/loadingBar.ts";
 import { TEXT_TOKENS } from "../ui/modal.ts";
 import { rootPressGuard } from "../ui/pressScope.ts";
 import { EntryReloadRequired } from "./entryRecovery.ts";
-import { loadingProgress, mountLoading } from "./progress.ts";
+import { loadingProgress } from "./progress.ts";
 
 export const startupFence = { crashed: false };
 
@@ -109,6 +109,7 @@ export async function startLoading(
   required: RequiredLoading,
   crash: Pick<CrashScreen, "stopGameOnCrash">,
   loadGame: () => Promise<RequiredGame>,
+  mountLoading: (root: HTMLElement) => () => void,
   root: HTMLElement,
 ): Promise<() => void> {
   const stop = mountLoading(root);

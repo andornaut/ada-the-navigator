@@ -42,7 +42,6 @@ const progress = vi.hoisted(() => ({
 }));
 vi.mock("./progress.ts", () => ({
   loadingProgress: { begin: progress.begin },
-  mountLoading: progress.mount,
 }));
 vi.mock("@andornaut/game-kit/runtime/web/progress/dom/loadingFailure", () => ({
   mountLoadingFailure: (context: {
@@ -109,7 +108,13 @@ it("keeps provider preparation failures on the same in-place Retry and construct
     entry = game();
   entry.prepare.mockRejectedValueOnce(new Error("preparation failed")).mockResolvedValue(undefined);
   const load = vi.fn().mockResolvedValue(entry);
-  const stop = await startLoading(required, { stopGameOnCrash: vi.fn() }, load, root());
+  const stop = await startLoading(
+    required,
+    { stopGameOnCrash: vi.fn() },
+    load,
+    progress.mount,
+    root(),
+  );
   expect(required.state.kind).toBe("failed");
   expect(entry.load).not.toHaveBeenCalled();
   await Promise.all([view.retry!(), view.retry!()]);
@@ -137,6 +142,7 @@ it("registers late resources before entry and retains successful preparation acr
     required,
     { stopGameOnCrash: vi.fn() },
     async () => entry,
+    progress.mount,
     root(),
   );
   await settle();
@@ -163,6 +169,7 @@ it("keeps fallible construction inside load and cancels before showing the share
     required,
     { stopGameOnCrash: vi.fn() },
     async () => entry,
+    progress.mount,
     root(),
   );
   await settle();
@@ -190,6 +197,7 @@ it("disposes an active partial game and rejects late completion without committi
     required,
     { stopGameOnCrash: vi.fn() },
     async () => entry,
+    progress.mount,
     root(),
   );
   await settle();
@@ -216,6 +224,7 @@ it("fences a crash during import and never constructs when that same import comp
       new Promise((resolve) => {
         finish = resolve;
       }),
+    progress.mount,
     root(),
   );
   await settle();
@@ -240,6 +249,7 @@ it("keeps real pending progress after scene loading until a late required image 
     required,
     { stopGameOnCrash: vi.fn() },
     async () => entry,
+    progress.mount,
     root(),
   );
   await settle();
@@ -272,6 +282,7 @@ it("shows a failed first install while the game waits and resumes it on Retry", 
       await installed;
       return entry;
     },
+    progress.mount,
     root(),
   );
   await settle();
@@ -311,6 +322,7 @@ it.each([
     required,
     { stopGameOnCrash: vi.fn() },
     async () => entry,
+    progress.mount,
     root(size),
   );
   const unit = Math.min(size.width / 720, size.height / 360);
@@ -338,7 +350,13 @@ it("updates the same pending presenter on scale and removes both resize listener
   const host = root();
   Object.defineProperty(host.ownerDocument, "defaultView", { value: events });
   const load = vi.fn().mockRejectedValue(new Error("import failed"));
-  const stop = await startLoading(required, { stopGameOnCrash: vi.fn() }, load, host);
+  const stop = await startLoading(
+    required,
+    { stopGameOnCrash: vi.fn() },
+    load,
+    progress.mount,
+    host,
+  );
   const retry = view.retry;
   Object.defineProperty(host, "clientWidth", { value: 1440 });
   Object.defineProperty(host, "clientHeight", { value: 720 });
@@ -362,6 +380,7 @@ it("retries a failed first install and a failed required load from one Retry", a
     required,
     { stopGameOnCrash: vi.fn() },
     async () => entry,
+    progress.mount,
     root(),
   );
   await settle();
@@ -402,7 +421,13 @@ it.each(["module-import", "unavailable-retirement"] as const)(
     if (phase === "unavailable-retirement") {
       entry.load.mockRejectedValue(terminal);
     }
-    const stop = await startLoading(required, { stopGameOnCrash: vi.fn() }, load, host);
+    const stop = await startLoading(
+      required,
+      { stopGameOnCrash: vi.fn() },
+      load,
+      progress.mount,
+      host,
+    );
     await settle();
     expect(required.state.kind).toBe("failed");
     expect(reload).not.toHaveBeenCalled();
@@ -429,7 +454,13 @@ it("sizes recovery from the viewport when failed boot CSS leaves the app unlaid 
       removeEventListener: vi.fn(),
     },
   });
-  const stop = await startLoading(required, { stopGameOnCrash: vi.fn() }, async () => game(), host);
+  const stop = await startLoading(
+    required,
+    { stopGameOnCrash: vi.fn() },
+    async () => game(),
+    progress.mount,
+    host,
+  );
   expect(view.presentation).toMatchObject({
     action: { heightPx: 48, paddingXPx: 16, widthPx: "content" },
   });
@@ -448,7 +479,13 @@ it("owns a narrow recovery root and cancels on the same registry without fencing
   });
   const entry = game(),
     host = root();
-  const stop = await startLoading(required, { stopGameOnCrash: vi.fn() }, async () => entry, host);
+  const stop = await startLoading(
+    required,
+    { stopGameOnCrash: vi.fn() },
+    async () => entry,
+    progress.mount,
+    host,
+  );
   expect(required.state.kind).toBe("failed");
   expect(recovery.host).not.toBe(host);
   expect(recovery.host).not.toBe(host.ownerDocument.body);
@@ -471,7 +508,13 @@ it("releases the recovery root and presenter if factory construction audit fails
   });
   const required = createRequiredLoading();
   await expect(
-    startLoading(required, { stopGameOnCrash: vi.fn() }, async () => game(), root()),
+    startLoading(
+      required,
+      { stopGameOnCrash: vi.fn() },
+      async () => game(),
+      progress.mount,
+      root(),
+    ),
   ).rejects.toThrow("factory binding missing");
   expect(recovery.dispose).toHaveBeenCalledOnce();
   expect(view.dispose).toHaveBeenCalledOnce();
