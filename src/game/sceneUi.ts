@@ -1530,7 +1530,6 @@ export function refreshScene(scene: UiContext, covered = false): void {
       PauseState,
       "flightLog"
     > = scene.model;
-  const flightLog = pauseModel.flightLog;
   const entry = navigationEntry({
     background: document.hidden,
     dialogue: Boolean(state.dialogue),
@@ -1545,6 +1544,7 @@ export function refreshScene(scene: UiContext, covered = false): void {
     canMap: pauseModel.pauseMapAvailable === true,
     carrying: scene.model.carrying,
     field: mapField(scene),
+    flightLog: pauseModel.flightLog ?? [],
     ...(state.mode === "space" && state.flight ? { galaxy: state.flight.galaxy } : {}),
     inDanger: scene.model.inDanger,
     job: scene.model.jobObjective,
@@ -1553,7 +1553,6 @@ export function refreshScene(scene: UiContext, covered = false): void {
     navigation: entry,
     place: entry === "pause" ? "flight" : null,
     questEntries: scene.model.quests,
-    ...(flightLog ? { flightLog } : {}),
     ship: state.mode === "space" && state.flight ? shipView(scene) : null,
     towing: scene.model.towing,
   });
