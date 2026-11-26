@@ -1,19 +1,14 @@
 import {
   type ButtonSkin,
-  buttonSkinProperty,
   createButtonSkin,
 } from "@andornaut/game-kit/runtime/web/ui/dom/buttonSkin";
 
-import type { ButtonTag } from "./modal.ts";
+import { BUTTON_SHEETS, type ButtonTag } from "./layout/controls.ts";
 
-export const BUTTON_SHEETS = ["ui-button", "ui-button-primary", "ui-button-tile"] as const;
+export { BUTTON_SHEETS, buttonProperty } from "./layout/controls.ts";
+
 const BUTTON_TAGS: readonly ButtonTag[] = ["normal", "pressed", "disabled"];
 const UI_ROOT = "/art/ui/";
-
-// The custom property a sheet's tag sets.
-export function buttonProperty(sheet: (typeof BUTTON_SHEETS)[number], tag: ButtonTag): string {
-  return buttonSkinProperty(sheet, tag);
-}
 
 // The kit's frame URLs live for the page. Share their fetch/decode/cut work across Ada's roots
 // without retaining the roots or registering input listeners.

@@ -9,6 +9,7 @@ import globals from "globals";
 import ts from "typescript-eslint";
 
 import { plugins, sourceRules, toolingRules } from "./eslint.config.base.mjs";
+import { importLayerConfigs } from "./tools/eslint-import-layers.mjs";
 
 const SOURCE_FILES = ["src/**/*.ts"];
 // The modules that draw with Phaser, under src/: the scene and the modules it delegates to.
@@ -138,6 +139,7 @@ export default defineConfig(
   { files: SOURCE_FILES, plugins, rules: sourceRules },
   ...boundaryConfigs(),
   phaserModuleConfig,
+  ...importLayerConfigs(import.meta.dirname),
   { files: ["*.{ts,js,mjs}", "tools/**/*.{ts,js,mjs}"], plugins, rules: toolingRules },
   // No import cycles: a module in a cycle can run before what it imports has loaded. no-cycle
   // skips `import { type A }`, which verbatimModuleSyntax keeps as a module load, so that form is

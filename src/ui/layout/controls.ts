@@ -1,4 +1,5 @@
 import type { ButtonMetrics } from "@andornaut/game-kit/runtime/ui/buttonLayout";
+import { buttonSkinProperty } from "@andornaut/game-kit/runtime/web/ui/dom/buttonSkin";
 
 import { BUTTON_SLICE, CARD_SLICE, FRAME_LINE, TEXT_BUTTON } from "../../data/layout.ts";
 
@@ -13,6 +14,14 @@ export {
   STORY_BUTTON,
   TEXT_BUTTON,
 } from "../../data/layout.ts";
+
+export type ButtonTag = "disabled" | "normal" | "pressed";
+export const BUTTON_SHEETS = ["ui-button", "ui-button-primary", "ui-button-tile"] as const;
+
+// The custom property a sheet's tag sets.
+export function buttonProperty(sheet: (typeof BUTTON_SHEETS)[number], tag: ButtonTag): string {
+  return buttonSkinProperty(sheet, tag);
+}
 
 // Control geometry (art/layout.md "Controls and targets"), in logical px. Faces, content insets,
 // nine-slice margins and press areas are separate measurements.

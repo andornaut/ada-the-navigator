@@ -1,4 +1,7 @@
-import { uiIconUrl } from "../data/uiIconUrl.ts";
+import type { PausePose } from "./layout/navigationButton.ts";
+
+export { MENU_ART, PAUSE_ART, type PausePose } from "./layout/navigationButton.ts";
+
 // Pause stays available during active flight, with fixed Settings and exit actions on the right.
 
 export type PauseAction =
@@ -103,24 +106,6 @@ export function pauseFrames(
   };
   return { held: tag("held"), press: tag("press"), rest: tag("rest") };
 }
-
-// The pause button's vector art per pose (art/controls.md "Pause"): rest, the press swell, and
-// held, which also shows the press's second frame.
-export const PAUSE_ART = {
-  held: uiIconUrl("pause-held"),
-  press: uiIconUrl("pause-press"),
-  rest: uiIconUrl("pause"),
-} as const;
-
-export type PausePose = keyof typeof PAUSE_ART;
-
-// The Menu button's vector art per pose (art/controls.md "Menu button"): the pause button's frame
-// and poses with three bars.
-export const MENU_ART: Readonly<Record<PausePose, string>> = {
-  held: uiIconUrl("menu-held"),
-  press: uiIconUrl("menu-press"),
-  rest: uiIconUrl("menu"),
-};
 
 // The pose a ui-pause sheet frame shows: frame 0 rest, frame 1 the press swell, frames 2 and 3
 // held.

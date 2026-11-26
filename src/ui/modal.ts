@@ -18,6 +18,7 @@ import {
 } from "./layout/contentCard.ts";
 import {
   BUTTON_SLICE,
+  type ButtonTag,
   CARD_SLICE,
   CHEAT_GRANT_ICON,
   CONTROL_ROW,
@@ -45,11 +46,10 @@ import { PAUSE_ART } from "./pause.ts";
 // offer, the cheats card, Paused and Travel share these styles and builders. Every size is a
 // logical px through src/ui/layout.
 
-export { BUTTON_SLICE } from "./layout/controls.ts";
+export { BUTTON_SLICE, type ButtonTag } from "./layout/controls.ts";
 export { BUTTON_FACE, TEXT_TOKENS, UI_SCOPE } from "./layout/tokens.ts";
 
 export type ButtonRole = "primary" | "secondary";
-export type ButtonTag = "disabled" | "normal" | "pressed";
 
 // The sheet tag a button shows.
 export function buttonTag(disabled: boolean, pressed: boolean): ButtonTag {

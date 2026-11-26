@@ -1,19 +1,14 @@
-import { fileURLToPath } from "node:url";
-
 import { describe, expect, it } from "vitest";
 
 import {
   cycles,
-  importFindings,
-  KNOWN_VIOLATIONS,
   layerFindings,
   layerOf,
   LAYERS,
-  readGraph,
+  runtimeCycleFindings,
   specifiers,
 } from "../../tools/imports-check.ts";
 
-const root = fileURLToPath(new URL("../..", import.meta.url));
 const layer = (name: string) => LAYERS.findIndex((candidate) => candidate.name === name);
 
 describe("specifiers", () => {
@@ -73,7 +68,7 @@ describe("cycles", () => {
       ["src/model/c.ts", [value("src/model/d.ts")]],
       ["src/model/d.ts", [value("src/model/c.ts")]],
     ]);
-    expect(importFindings(graph)).toEqual([
+    expect(runtimeCycleFindings(graph)).toEqual([
       "src/model/c.ts is in a runtime import cycle",
       "src/model/d.ts is in a runtime import cycle",
     ]);
@@ -91,7 +86,7 @@ describe("cycles", () => {
       ["src/model/c.ts", edges('import { d } from "./d.ts";')],
       ["src/model/d.ts", edges('import type { C } from "./c.ts";')],
     ]);
-    expect(importFindings(graph)).toEqual([
+    expect(runtimeCycleFindings(graph)).toEqual([
       "src/model/a.ts is in a runtime import cycle",
       "src/model/b.ts is in a runtime import cycle",
     ]);
@@ -129,18 +124,5 @@ describe("layers", () => {
       "src/data/a.ts (data) imports src/model/b.ts (model)",
       "src/extra.ts is in no layer",
     ]);
-  });
-});
-
-describe("this repository", () => {
-  const findings = importFindings(readGraph(root));
-
-  it("has no finding outside the known violations", () => {
-    expect(findings.filter((finding) => !KNOWN_VIOLATIONS.includes(finding))).toEqual([]);
-  });
-
-  it("lists only violations that still occur, so the table only shrinks", () => {
-    expect(KNOWN_VIOLATIONS.filter((finding) => !findings.includes(finding))).toEqual([]);
-    expect([...new Set(KNOWN_VIOLATIONS)].sort()).toEqual(KNOWN_VIOLATIONS);
   });
 });

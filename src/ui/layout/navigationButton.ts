@@ -1,10 +1,27 @@
 import { HUD_BUTTON } from "../../data/layout.ts";
 import { uiIconUrl } from "../../data/uiIconUrl.ts";
-import { MENU_ART, type PausePose } from "../pause.ts";
 import { COLOURS } from "./colours.ts";
 import { units } from "./css.ts";
 import { PAUSE_BUTTON } from "./playView.ts";
 import { TEXT_TOKENS, UI_SCOPE } from "./tokens.ts";
+
+// The pause button's vector art per pose (art/controls.md "Pause"): rest, the press swell, and
+// held, which also shows the press's second frame.
+export const PAUSE_ART = {
+  held: uiIconUrl("pause-held"),
+  press: uiIconUrl("pause-press"),
+  rest: uiIconUrl("pause"),
+} as const;
+
+export type PausePose = keyof typeof PAUSE_ART;
+
+// The Menu button's vector art per pose (art/controls.md "Menu button"): the pause button's frame
+// and poses with three bars.
+export const MENU_ART: Readonly<Record<PausePose, string>> = {
+  held: uiIconUrl("menu-held"),
+  press: uiIconUrl("menu-press"),
+  rest: uiIconUrl("menu"),
+};
 
 export const EXIT_ART: Readonly<Record<PausePose, string>> = {
   held: uiIconUrl("exit-disc-held"),

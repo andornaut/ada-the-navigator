@@ -2,11 +2,9 @@
 // every module outside the tests importing only its own layer or a lower one, type-only imports
 // included. Reads the sources with the TypeScript parser and follows relative specifiers: static
 // imports, re-exports, dynamic import() and inline import("...") types.
-// src/tests/importsCheck.test.ts runs it in the test category against KNOWN_VIOLATIONS.
-// Usage: node tools/imports-check.ts, which prints every finding.
+// ESLint checks each file's imports and checks the whole runtime graph once per repository lint.
 import { readdirSync, readFileSync } from "node:fs";
-import { dirname, join, posix, resolve, sep } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join, posix, sep } from "node:path";
 
 import ts from "typescript";
 
@@ -157,21 +155,23 @@ function sources(root: string, dir: string): string[] {
     .sort();
 }
 
+/** Normalize and coalesce the relative imports from one source. */
+export function readImports(path: string, source: string): Import[] {
+  const imports = new Map<string, boolean>();
+  for (const { specifier, typeOnly } of specifiers(source)) {
+    const target = posix.normalize(posix.join(posix.dirname(path), specifier));
+    imports.set(target, (imports.get(target) ?? true) && typeOnly);
+  }
+  return [...imports]
+    .map(([target, typeOnly]) => ({ target, typeOnly }))
+    .sort((a, b) => a.target.localeCompare(b.target));
+}
+
 /** The graph of every source under src/ and tools/. */
 export function readGraph(root: string): Graph {
   const graph = new Map<string, Import[]>();
   for (const path of [...sources(root, "src"), ...sources(root, "tools")]) {
-    const imports = new Map<string, boolean>();
-    for (const { specifier, typeOnly } of specifiers(readFileSync(join(root, path), "utf8"))) {
-      const target = posix.normalize(posix.join(posix.dirname(path), specifier));
-      imports.set(target, (imports.get(target) ?? true) && typeOnly);
-    }
-    graph.set(
-      path,
-      [...imports]
-        .map(([target, typeOnly]) => ({ target, typeOnly }))
-        .sort((a, b) => a.target.localeCompare(b.target)),
-    );
+    graph.set(path, readImports(path, readFileSync(join(root, path), "utf8")));
   }
   return graph;
 }
@@ -252,33 +252,9 @@ export function layerFindings(graph: Graph): string[] {
   return findings;
 }
 
-/**
- * One message per finding, sorted: each module in a runtime import cycle, then each layer
- * finding. Type-only imports may form cycles within a layer; across layers one of them points up.
- */
-export function importFindings(graph: Graph): string[] {
-  return [
-    ...cycles(runtimeEdges(graph))
-      .flat()
-      .map((path) => `${path} is in a runtime import cycle`),
-    ...layerFindings(graph),
-  ].sort();
-}
-
-/**
- * CLEANUP (added 2026-11-25): today's findings, listed exactly so the check runs while the
- * restructure lands. An entry is removed when its violation is fixed, and the check fails on an
- * entry that no longer occurs, so the table only shrinks. Once it is empty this check is removed
- * and ESLint guards the layers.
- */
-export const KNOWN_VIOLATIONS: readonly string[] = [
-  "src/ui/layout/navigationButton.ts (layout and input state) imports src/ui/pause.ts (ui)",
-  "src/ui/layout/stationStyle.ts (layout and input state) imports src/ui/uiSkin.ts (ui)",
-];
-
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-  for (const finding of importFindings(readGraph(root))) {
-    console.log(finding);
-  }
+/** Each module that belongs to a runtime import cycle. */
+export function runtimeCycleFindings(graph: Graph): string[] {
+  return cycles(runtimeEdges(graph))
+    .flat()
+    .map((path) => `${path} is in a runtime import cycle`);
 }
