@@ -20,7 +20,10 @@
 - Render 64 player headings from the one model and heading contract, with the
   documented frame, pivot and collision alignment. Enemy craft retain 16 headings.
 - Exhaust is a teardrop plume in three flat tones rooted on the engine mouths:
-  a dark halo round the flame and its core ([Speed jets](#speed-jets)). This
+  a dark halo round the flame and its core ([Speed jets](#speed-jets)). The
+  halo draws only on the 42 px flight sprite, never on the start screen, app
+  icon, jump poses or other large renders, and always under the hull, so it
+  covers no hull, skirt or tail pixel. This
   supersedes the three nested triangles and the rule that dropped the core at
   a display size of 42 px or less: the core draws at every size. Every title, warp, map and flight
   consumer draws the same plume from the same projected roots.
@@ -338,6 +341,13 @@ There are no animated jet frames.
   `anchor + axis * t * length * layer.length +- half * w * layer.width`.
 - `engineLevels` holds three layers per Engine level, drawn in order. Only the
   colours change with level; shape is the same on every paint.
+- The halo carries `underHull: true` and `maxDisplay: 42`. `underHull` draws
+  the layer before the hull and its keyline, forward and reverse, so the whole
+  hull silhouette (skirt and tail included) covers it. `maxDisplay` draws the
+  layer only where the ship frame's larger logical display side is 42 px or
+  less: the flight sprite, not the 280 px start screen ship, the warp poses or
+  the app icon. The outer flame and core carry neither and draw as before.
+  `layersAt` in [ship-plume.ts](tools/ship-plume.ts) applies `maxDisplay`.
 
 | Layer   | `width`, half width | `length` |
 | ------- | ------------------: | -------: |
@@ -379,8 +389,9 @@ There are no animated jet frames.
 - A plume takes its depth on the plane that holds its axis and faces the
   viewer. `occluders` are the outlines, in frame px, of every visible hull
   region in front of that plane inside the plume's widest and longest reach
-  (`plumeReach`: the halo's 5.8 by 33 units). Draw the complete plume above the hull,
-  then the hull again inside the occluders, taken from the loaded hull image.
+  (`plumeReach`: the halo's 5.8 by 33 units). Draw the halo under the hull,
+  then the hull, then the outer flame and core above it, then the hull again
+  inside the occluders, taken from the loaded hull image.
   The nearer plume draws over the tail and the farther one passes behind it.
 - `node art/tools/ship.ts --jets-only` updates only this file.
   [ship-plume.ts](tools/ship-plume.ts) is the pure polygon and colour helper

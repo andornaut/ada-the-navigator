@@ -12,9 +12,11 @@ export const JET_PROFILE = [
   [1, 0],
 ] as const;
 // A dark halo the full mouth wide reaches 1.1 jet lengths and outlines the flame; the outer
-// flame reaches 1 and the core 0.55.
+// flame reaches 1 and the core 0.55. The halo draws under the hull (`underHull`), so it never
+// covers a hull or tail pixel, and only where the ship is drawn at most `maxDisplay` logical px
+// (the 42 px flight sprite), not on the start screen, app icon or jump poses.
 export const JET_SHAPE = {
-  halo: { width: 5.8, length: 1.1 },
+  halo: { width: 5.8, length: 1.1, underHull: true, maxDisplay: 42 },
   outer: { width: 4.2, length: 1 },
   core: { width: 1.6, length: 0.55 },
 } as const;

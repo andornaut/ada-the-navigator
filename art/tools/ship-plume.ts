@@ -15,9 +15,19 @@ export interface PlumeLayer {
   readonly colors: readonly [string, string];
   /** Multiple of the jet length. */
   readonly length: number;
+  /** Largest logical display size of the ship frame at which the layer draws; absent is any. */
+  readonly maxDisplay?: number;
+  /** Draws under the hull, so the hull covers it everywhere; absent draws as the plume does. */
+  readonly underHull?: boolean;
   /** Half width in ship units. */
   readonly width: number;
 }
+
+/** The layers that draw on a ship frame shown `display` logical px wide. */
+export const layersAt = <L extends Pick<PlumeLayer, "maxDisplay">>(
+  layers: readonly L[],
+  display: number,
+): L[] => layers.filter(({ maxDisplay }) => maxDisplay === undefined || display <= maxDisplay);
 
 export interface JetCurve {
   readonly base: number;

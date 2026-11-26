@@ -87,7 +87,9 @@
               "name": "halo",
               "colors": ["#101a2e", "#101a2e"],
               "width": 5.8,
-              "length": 1.1
+              "length": 1.1,
+              "underHull": true,
+              "maxDisplay": 42
             },
             {
               "name": "outer",
@@ -110,7 +112,9 @@
               "name": "halo",
               "colors": ["#583036", "#583036"],
               "width": 5.8,
-              "length": 1.1
+              "length": 1.1,
+              "underHull": true,
+              "maxDisplay": 42
             },
             {
               "name": "outer",
@@ -133,7 +137,9 @@
               "name": "halo",
               "colors": ["#584a37", "#584a37"],
               "width": 5.8,
-              "length": 1.1
+              "length": 1.1,
+              "underHull": true,
+              "maxDisplay": 42
             },
             {
               "name": "outer",

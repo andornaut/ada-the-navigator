@@ -8,6 +8,7 @@ import { filled, type RgbaImage, writePng } from "./paint.ts";
 import { JET_PROFILE, LIGHT_FIELD_JET_LEVELS, jetLayers } from "./ship-jet-layers.ts";
 import {
   jetLength,
+  layersAt,
   plumeColor,
   type PlumeLayer,
   type PlumeMouth,
@@ -173,7 +174,14 @@ class Cell {
 
 type Exhaust = { direction: "forward" | "reverse"; f: number; level: number };
 
-function plumes(jets: Jets, index: number, { f, level }: Exhaust, light: boolean): Fill[] {
+// The layers that draw on the 42 px flight sprite, those under the hull or the rest.
+function plumes(
+  jets: Jets,
+  index: number,
+  { f, level }: Exhaust,
+  light: boolean,
+  underHull: boolean,
+): Fill[] {
   const layers = light
     ? jetLayers(LIGHT_FIELD_JET_LEVELS[level - 1]!).map((layer, i) => ({
         ...jets.engineLevels[level - 1]!.layers[i]!,
@@ -181,16 +189,17 @@ function plumes(jets: Jets, index: number, { f, level }: Exhaust, light: boolean
       }))
     : jets.engineLevels[level - 1]!.layers;
   const length = jetLength(jets.length, f);
+  const drawn = layersAt(layers, 42).filter((layer) => Boolean(layer.underHull) === underHull);
   return jets.headings[index]!.mouths.flatMap((mouth) =>
-    layers.map((layer) => ({
+    drawn.map((layer) => ({
       color: plumeColor(layer.colors, f),
       loops: [plumePolygon(jets.profile ?? JET_PROFILE, mouth, layer, length) as Xy[]],
     })),
   );
 }
 
-// One sprite as the game composes it: reverse plumes under the hull, forward plumes over it
-// with the nearer hull restored, and the keyline round the hull only.
+// One sprite as the game composes it: reverse plumes and every halo under the hull, forward
+// flames over it with the nearer hull restored, and the keyline round the hull only.
 function sprite(
   size: number,
   scale: number,
@@ -206,11 +215,16 @@ function sprite(
     const mask = cell.mask(fill.loops);
     for (let i = 0; i < mask.length; i++) if (mask[i]) union[i] = 1;
   }
-  if (exhaust?.direction === "reverse") cell.fills(plumes(reverse, index, exhaust, field.light));
+  if (exhaust?.direction === "reverse") {
+    for (const under of [true, false])
+      cell.fills(plumes(reverse, index, exhaust, field.light, under));
+  }
+  if (exhaust?.direction === "forward")
+    cell.fills(plumes(forward, index, exhaust, field.light, true));
   cell.paint(field.keyline, cell.grown(union, KEYLINE));
   cell.fills(body);
   if (exhaust?.direction === "forward") {
-    cell.fills(plumes(forward, index, exhaust, field.light));
+    cell.fills(plumes(forward, index, exhaust, field.light, false));
     const nearer = cell.mask(
       forward.headings[index]!.mouths.flatMap((mouth) => mouth.occluders ?? []),
     );

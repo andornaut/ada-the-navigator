@@ -5,7 +5,7 @@ import { filled, fillPolygon, over, resize, rgba, writePng, type Xy } from "./pa
 import { SPACE_BG } from "./palette.ts";
 import { JET_LENGTH, JET_LEVELS, JET_PROFILE, jetLayers, plumeReach } from "./ship-jet-layers.ts";
 import { classic, drawn, forwardJetMouths, FRAME } from "./ship-model.ts";
-import { jetLength, plumeColor, plumePolygon } from "./ship-plume.ts";
+import { jetLength, layersAt, plumeColor, plumePolygon } from "./ship-plume.ts";
 import { paintShip } from "./ship-raster.ts";
 
 const output = fileURLToPath(new URL("../../public/art/app-icon/", import.meta.url));
@@ -20,8 +20,9 @@ const SAFE_ZONE = 0.8;
 const REGULAR_RADIUS = SIZE * 0.48;
 const background = rgba(`#${SPACE_BG}`);
 const hull = drawn(FRAME / 2, classic.paint, { yaw: HEADING });
-// Engine 1 plumes on the dark field, with the hull regions that draw over them.
-const layers = jetLayers(JET_LEVELS[0]);
+// Engine 1 plumes on the dark field, with the hull regions that draw over them. The icon is a
+// large still, so the flight sprite's halo does not draw.
+const layers = layersAt(jetLayers(JET_LEVELS[0]), SIZE);
 const mouths = forwardJetMouths(
   FRAME / 2,
   { yaw: HEADING },

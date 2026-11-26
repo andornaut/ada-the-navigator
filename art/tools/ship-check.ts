@@ -44,7 +44,13 @@ import {
 } from "./ship-model.ts";
 import { svgPaths } from "./ship-paths.ts";
 import { WARP_FRAME, WARP_HEADING, WARP_POSES } from "./ship-poses.ts";
-import { jetLength, plumePolygon, type PlumeMouth } from "./ship-plume.ts";
+import {
+  jetLength,
+  layersAt,
+  plumePolygon,
+  type PlumeLayer,
+  type PlumeMouth,
+} from "./ship-plume.ts";
 import { paintShip } from "./ship-raster.ts";
 
 const assets = new URL("../../public/art/", import.meta.url);
@@ -349,6 +355,26 @@ test("forward plumes root at the mouth centres with three layers and the hull re
   }
   // Head on, the hull hides both plume roots.
   assert(jets.headings[8]!.mouths.every((mouth) => mouth.occluders!.length > 0));
+});
+
+test("only the halo draws under the hull and on the 42 px flight sprite alone", () => {
+  for (const file of ["ship-jets.json", "ship-retro-jets.json"]) {
+    const jets = JSON.parse(readFileSync(new URL(file, assets), "utf8")) as {
+      engineLevels: { layers: (PlumeLayer & { name: string })[] }[];
+    };
+    for (const { layers } of jets.engineLevels) {
+      for (const layer of layers) {
+        const halo = layer.name === "halo";
+        assert.equal(layer.underHull, halo ? true : undefined, `${file} ${layer.name}`);
+        assert.equal(layer.maxDisplay, halo ? DISPLAY : undefined, `${file} ${layer.name}`);
+      }
+      assert.deepEqual(
+        layersAt(layers, 280).map(({ name }) => name),
+        ["outer", "core"],
+      );
+      assert.equal(layersAt(layers, DISPLAY).length, 3);
+    }
+  }
 });
 
 // Whether a point lies in a simple polygon, by crossings to its right.

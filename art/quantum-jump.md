@@ -113,8 +113,8 @@ A step's `ship` names a `pose`, a `scale` and an optional `white`.
 - The jet renderer uses the selected main engine/field layers with the same
   plume profile as forward flight. Complete plumes render above the base hull;
   the hull is redrawn inside each mouth's `occluders`. The static cue's jet
-  length is 16 model units: the halo reaches 17.6, the outer flame 16 and the
-  core 8.8. The projected axis and
+  length is 16 model units: the outer flame reaches 16 and the core 8.8. The
+  halo is a flight-sprite layer and does not draw on the jump poses. The projected axis and
   half vectors already include the pose transform: do not normalize them or
   apply frame conversion or stretch again.
 - The runtime does not use a separate warp palette. Whitening and alpha follow
