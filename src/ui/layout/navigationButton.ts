@@ -1,10 +1,10 @@
 import { HUD_BUTTON } from "../../data/layout.ts";
 import { uiIconUrl } from "../../data/uiIconUrl.ts";
-import { TEXT_TOKENS, UI_SCOPE } from "../modal.ts";
 import { MENU_ART, type PausePose } from "../pause.ts";
 import { COLOURS } from "./colours.ts";
 import { units } from "./css.ts";
 import { PAUSE_BUTTON } from "./playView.ts";
+import { TEXT_TOKENS, UI_SCOPE } from "./tokens.ts";
 
 export const EXIT_ART: Readonly<Record<PausePose, string>> = {
   held: uiIconUrl("exit-disc-held"),

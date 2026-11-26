@@ -1,8 +1,7 @@
-import { BUTTON_FACE, TEXT_TOKENS, UI_SCOPE } from "../modal.ts";
 import { FOCUS_RING } from "./controls.ts";
 import { font, units } from "./css.ts";
 import { SHOP_ROW } from "./shopCard.ts";
-import { SPACING, TYPE } from "./tokens.ts";
+import { BUTTON_FACE, SPACING, TEXT_TOKENS, TYPE, UI_SCOPE } from "./tokens.ts";
 
 /** Ship geometry uses the shared card and text roles, in logical px. */
 export const SHIP_CARD = {

@@ -27,7 +27,15 @@ import {
 } from "./layout/controls.ts";
 import { font, fromHudEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.ts";
 import { PAUSE_BUTTON } from "./layout/playView.ts";
-import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP, TYPE } from "./layout/tokens.ts";
+import {
+  BUTTON_FACE,
+  BUTTON_GAP,
+  SPACING,
+  STACK_BUTTON_GAP,
+  TEXT_TOKENS,
+  TYPE,
+  UI_SCOPE,
+} from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { modalCloseStyle, standardCloseActionStyle } from "./modalClose.ts";
 import { PAUSE_ART } from "./pause.ts";
@@ -37,26 +45,8 @@ import { PAUSE_ART } from "./pause.ts";
 // offer, the cheats card, Paused and Travel share these styles and builders. Every size is a
 // logical px through src/ui/layout.
 
-export const BUTTON_FACE = {
-  disabled: COLOURS.disabledFace,
-  primary: COLOURS.primaryFace,
-  secondary: COLOURS.secondaryFace,
-} as const;
-
-// Text colours on the card face #3b3850.
-export const TEXT_TOKENS = {
-  buttonLabel: COLOURS.ink,
-  disabledLabel: COLOURS.disabledLabel,
-  label: COLOURS.cream,
-  /** Every text of an unaffordable or busy tile row, on its flat #2f2d3d face (5.42:1). */
-  rowDisabled: COLOURS.rowDisabled,
-  /** A tile row's second line and Owned, on its #46425e face (5.11:1). */
-  rowSupporting: COLOURS.rowSupporting,
-  supporting: COLOURS.supporting,
-  title: COLOURS.white,
-} as const;
-
 export { BUTTON_SLICE } from "./layout/controls.ts";
+export { BUTTON_FACE, TEXT_TOKENS, UI_SCOPE } from "./layout/tokens.ts";
 
 export type ButtonRole = "primary" | "secondary";
 export type ButtonTag = "disabled" | "normal" | "pressed";
@@ -112,9 +102,6 @@ export const FOCUS_STYLE = `
 
 // The close X's press area relative to the card's top-right corner.
 const CLOSE_HIT = CARD_CLOSE.hit;
-
-// The shared card and control styles apply in the controls overlay and on the start screen.
-export const UI_SCOPE = ":is(.ada-controls,.ada-start)";
 
 // ui-switch.png's frames by tag, left to right in one row of switch-sized frames.
 export const SWITCH_FRAME = { off: 1, "off-disabled": 3, on: 0, "on-disabled": 2 } as const;

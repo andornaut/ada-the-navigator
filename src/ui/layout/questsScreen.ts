@@ -1,8 +1,7 @@
 import { BUTTON_SLICE, FRAME_LINE, MAP_SCREEN_LAYOUT, TYPE } from "../../data/layout.ts";
-import { TEXT_TOKENS } from "../modal.ts";
 import { COLOURS, UNLISTED_COLOURS } from "./colours.ts";
 import { NARROW_VIEWPORT, pixels, slice, units } from "./css.ts";
-import { BUTTON_GAP, SPACING } from "./tokens.ts";
+import { BUTTON_GAP, SPACING, TEXT_TOKENS } from "./tokens.ts";
 
 /** Approved quest card geometry, in logical pixels. */
 export const QUEST_ROUTE_ARROW = {

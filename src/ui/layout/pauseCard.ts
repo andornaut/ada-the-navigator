@@ -1,7 +1,6 @@
-import { UI_SCOPE } from "../modal.ts";
 import { CARD_CONTENT, SCROLL } from "./contentCard.ts";
 import { COMPACT_VIEWPORT, slice, units } from "./css.ts";
-import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP } from "./tokens.ts";
+import { BUTTON_GAP, SPACING, STACK_BUTTON_GAP, UI_SCOPE } from "./tokens.ts";
 
 // On a compact viewport the Pause grid's capped labels sit this far lower.
 const CAP_LABEL_DROP = 1;

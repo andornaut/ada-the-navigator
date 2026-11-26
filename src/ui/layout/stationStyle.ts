@@ -1,12 +1,11 @@
 import { uiIconUrl } from "../../data/uiIconUrl.ts";
-import { BUTTON_FACE, TEXT_TOKENS } from "../modal.ts";
 import { buttonProperty } from "../uiSkin.ts";
 import { COLOURS, UNLISTED_COLOURS } from "./colours.ts";
 import { CARD_WIDTH_CAPS } from "./contentCard.ts";
 import { BUTTON_SLICE, FOCUS_RING, FRAME_LINE, PILL, TEXT_BUTTON } from "./controls.ts";
 import { font, slice, units } from "./css.ts";
 import { BALANCE, CONFIRM_ITEM, SHOP_ROW } from "./shopCard.ts";
-import { BUTTON_GAP, SPACING, TYPE } from "./tokens.ts";
+import { BUTTON_FACE, BUTTON_GAP, SPACING, TEXT_TOKENS, TYPE } from "./tokens.ts";
 
 const { bottom, left, right, top } = BUTTON_SLICE;
 const TILE_SLICE = `${top} ${right} ${bottom} ${left}`;

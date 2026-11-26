@@ -2,9 +2,8 @@ import controlPresentationCss from "@andornaut/game-kit/runtime/web/ui/dom/contr
 import controlsCss from "@andornaut/game-kit/runtime/web/ui/dom/controls.css?raw";
 
 import { STORY_PANEL } from "../../data/layout.ts";
-import { TEXT_TOKENS } from "../modal.ts";
 import { font, kitUnits, units } from "./css.ts";
-import { SPACING, TYPE } from "./tokens.ts";
+import { SPACING, TEXT_TOKENS, TYPE } from "./tokens.ts";
 
 export const PAGE_DIVIDER_STYLE = {
   colour: Number.parseInt(STORY_PANEL.rule.colour.slice(1), 16),
