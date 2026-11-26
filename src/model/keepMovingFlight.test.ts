@@ -91,31 +91,47 @@ describe("keep moving in flight", () => {
     flight.objects = flight.objects.filter(
       (object) => object.kind !== "rock" && object.kind !== "enemy",
     );
-    // Each ship's patrol lies beyond the other, so both press straight into the contact.
+    // The overlapping pair press toward opposite homes along a diagonal.
+    const towardB = { x: Math.SQRT1_2, y: Math.SQRT1_2 };
+    const towardA = { x: -Math.SQRT1_2, y: -Math.SQRT1_2 };
     const a = addEnemy(model, "fighter", "lock:a", point, {
-      home: { x: point.x + 600, y: point.y },
+      facing: towardB,
+      heading: towardB,
+      home: { x: point.x + 424, y: point.y + 424 },
+      velocity: { x: 60, y: 60 },
     });
     const b = addEnemy(
       model,
       "fighter",
       "lock:b",
-      { x: point.x + 28, y: point.y },
+      { x: point.x + 14, y: point.y + 14 },
       {
-        home: { x: point.x - 572, y: point.y },
+        facing: towardA,
+        heading: towardA,
+        home: { x: point.x - 410, y: point.y - 410 },
+        velocity: { x: -60, y: -60 },
       },
     );
     let stalled = 0;
     let total = 0;
     let samples = 0;
     for (let step = 0; step * dt < 20; step++) {
-      const before = [
-        { x: a.x, y: a.y },
-        { x: b.x, y: b.y },
-      ];
+      const beforeA = { x: a.x, y: a.y };
+      const beforeB = { x: b.x, y: b.y };
       stepModel(model);
+      if (step === 0) {
+        // The first ship moves before the second. Its X move alone closes on the peer,
+        // but the combined tangent step separates them.
+        const separation = Math.hypot(beforeA.x - beforeB.x, beforeA.y - beforeB.y);
+        expect(separation).toBeLessThan(a.radius + b.radius);
+        expect(a.x).toBeGreaterThan(beforeA.x);
+        expect(a.y).toBeLessThan(beforeA.y);
+        expect(Math.hypot(a.x - beforeB.x, beforeA.y - beforeB.y)).toBeLessThan(separation);
+        expect(Math.hypot(a.x - beforeB.x, a.y - beforeB.y)).toBeGreaterThan(separation);
+      }
       const moved = Math.min(
-        Math.hypot(a.x - before[0]!.x, a.y - before[0]!.y),
-        Math.hypot(b.x - before[1]!.x, b.y - before[1]!.y),
+        Math.hypot(a.x - beforeA.x, a.y - beforeA.y),
+        Math.hypot(b.x - beforeB.x, b.y - beforeB.y),
       );
       stalled = moved / dt < 8 ? stalled + dt : 0;
       expect(stalled).toBeLessThan(1);
@@ -129,6 +145,34 @@ describe("keep moving in flight", () => {
     // No other ship or rock joined the contact.
     expect(flight.objects.filter((object) => object.kind === "enemy")).toEqual([a, b]);
     expect(flight.objects.some((object) => object.kind === "rock")).toBe(false);
+  });
+
+  it("steers a powered ship out along the mean of two peer contacts", () => {
+    const point = { x: 30000, y: 5000 };
+    const model = flightModel(1, { x: point.x, y: point.y + 900 });
+    stepModel(model);
+    const flight = model.state.flight!;
+    flight.objects = flight.objects.filter(
+      (object) => object.kind !== "rock" && object.kind !== "enemy",
+    );
+    const heading = { x: 1, y: 0 };
+    const ship = addEnemy(model, "fighter", "wedge:ship", point, {
+      facing: heading,
+      heading,
+      home: { x: point.x + 600, y: point.y },
+      velocity: { x: 80, y: 0 },
+    });
+    const upper = addEnemy(model, "fighter", "wedge:upper", { x: point.x + 16, y: point.y + 12 });
+    const lower = addEnemy(model, "fighter", "wedge:lower", { x: point.x + 16, y: point.y - 12 });
+    for (const peer of [upper, lower]) {
+      expect(Math.hypot(peer.x - point.x, peer.y - point.y)).toBe(ship.radius + peer.radius);
+    }
+
+    stepModel(model);
+
+    // Each contact tangent is oblique. The two outward normals sum straight west.
+    expect(ship.x).toBeLessThan(point.x);
+    expect(ship.y).toBeCloseTo(point.y, 8);
   });
 
   it("turns a blockade ship along its 600 reach instead of holding it at the limit", () => {
