@@ -274,10 +274,9 @@ complete their exchange circuit, the local map charts Hammer as an optional
 detour. Hammer's patrol stays clear of the required circuit, and the outposts'
 holodisk handover remains independent. Ada flies to the detour normally.
 
-While Hammer is engaged, the boss HUD shows Hammer, Captain Tally and
-remaining hull health. It clears on disengagement and restores the current
-hull on re-entry. When the disabled hull is in reach and Use offers Salvage,
-the HUD shows "Disabled". [Tally's approach and Astra's first-hardpoint
+While Hammer is engaged, the hull meter carries the "Captain Tally" badge.
+It clears on disengagement and restores the current hull on re-entry.
+[Tally's approach and Astra's first-hardpoint
 reaction](player-copy.md#captain-tally-and-hammer) are shown once each. If
 the same hit would trigger both a hardpoint and a final resolution cue, the
 resolution takes priority.
@@ -302,11 +301,10 @@ waypoint is visible on the map with no jump action. The physical holodisk
 becomes collectible only after the encounter resolves.
 
 Manta Dreadnought guards the disk site with two fighter escorts and four swarm
-ships. Currents carry Ada and the small ships around the capital. The engaged
-HUD shows Manta Dreadnought, Captain Sounder and its current hull health.
-It clears on disengagement and returns with the current hull on re-entry.
-A disabled hull in Salvage reach shows "Disabled". The approach, first
-hardpoint and resolution use [Sounder's exchange](player-copy.md#captain-sounder-and-manta-dreadnought).
+ships. Currents carry Ada and the small ships around the capital. While
+Manta Dreadnought is engaged, its hull meter carries the "Captain Sounder"
+badge. It clears on disengagement and returns with the current hull on
+re-entry. The approach, first hardpoint and resolution use [Sounder's exchange](player-copy.md#captain-sounder-and-manta-dreadnought).
 
 Disable all of the capital's weapon hardpoints or destroy its hull to release
 the disk. The escorts and swarm are separate threats. Ada can collect the disk after
@@ -329,10 +327,9 @@ the local map labels it "Crossbow" with no jump action. The detour stays
 outside the gate channel and clear of the holodisk pickup route. Elder Loom's
 practice, the Eye, and collection of the disk follow their existing steps.
 
-While Crossbow is engaged, the boss HUD shows Crossbow, Captain Cadence and
-the current hull health. The HUD clears when Ada disengages and restores
-the current hull on re-entry. With a disabled hull in reach and Salvage
-available, it shows "Disabled". The approach, first hardpoint loss while the
+While Crossbow is engaged, its hull meter carries the "Captain Cadence"
+badge. It clears when Ada disengages and restores the current hull on
+re-entry. The approach, first hardpoint loss while the
 ship remains active, and resolution use
 [Cadence's exchange](player-copy.md#captain-cadence-and-crossbow).
 
