@@ -51,3 +51,4 @@ Reference: [checks](../checks.md), [container adoption](../container-adoption.md
 | ada-0351 | Reuse keyline textures across animation frames                            | [ada-0351.md](../work/ada-0351.md) |
 | ada-0391 | Drop the routine alternate-world test run                                 | [ada-0391.md](../work/ada-0391.md) |
 | ada-0393 | Restructure the source into named layers with one entry per area          | [ada-0393.md](../work/ada-0393.md) |
+| ada-0405 | Reduce redundant tests and suite runtime                                  | [ada-0405.md](../work/ada-0405.md) |

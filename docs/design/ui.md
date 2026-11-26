@@ -87,3 +87,4 @@ Reference: [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.
 | ada-0400 | Use the medium crash dialog and standard recovery buttons                       | [ada-0400.md](../work/ada-0400.md) |
 | ada-0401 | Centre scan notices in the top HUD row                                          | [ada-0401.md](../work/ada-0401.md) |
 | ada-0402 | Fix flight slowdown when dialogue appears                                       | [ada-0402.md](../work/ada-0402.md) |
+| ada-0404 | Charge 50 Stardust for local map travel                                         | [ada-0404.md](../work/ada-0404.md) |
