@@ -37,7 +37,7 @@ import { keylineOffsets, LIGHT_FIELD } from "./lightField.ts";
 import type { GameScene } from "./scene.ts";
 import { familyArt, filterTexture } from "./sceneAssets.ts";
 import { drawCraftJets, keylineSilhouette, keylineSprite } from "./sceneHud.ts";
-import { type Asset } from "./sceneShared.ts";
+import type { Asset } from "./sceneShared.ts";
 import { drawTaper, objectSprite } from "./sceneSprites.ts";
 import { acknowledgePrimitiveTarget } from "./sceneTargetMarkers.ts";
 import { type EffectShape, mineSolid } from "./weaponEffects.ts";

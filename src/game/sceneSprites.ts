@@ -3,7 +3,7 @@
 import { GameObjects, TintModes } from "phaser";
 
 import type { GameScene } from "./scene.ts";
-import { type TaperShape } from "./weaponEffects.ts";
+import type { TaperShape } from "./weaponEffects.ts";
 
 /** The scene state and methods this module's functions use. */
 export type SpritesContext = Pick<GameScene, "add" | "enemySprites" | "overlay">;

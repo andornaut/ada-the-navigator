@@ -57,7 +57,7 @@ import {
 import { drawEffect, drawEnemy } from "./sceneEnemies.ts";
 import { keylineEdges, keylineSilhouette, keylineSprite } from "./sceneHud.ts";
 import { sceneryDetail } from "./scenery.ts";
-import { type Asset } from "./sceneShared.ts";
+import type { Asset } from "./sceneShared.ts";
 import { objectSprite } from "./sceneSprites.ts";
 import {
   acknowledgeCachePrimitive,
@@ -82,7 +82,7 @@ import {
   stationLoopFrame,
 } from "./stationArt.ts";
 import { UPGRADE_CHEVRON, upgradeFrame } from "./upgradePickup.ts";
-import { type EffectShape } from "./weaponEffects.ts";
+import type { EffectShape } from "./weaponEffects.ts";
 import { familyMembers, type WhaleKind, whaleLoopFrame, whalePhase } from "./whaleArt.ts";
 import {
   ammoPackFrame,

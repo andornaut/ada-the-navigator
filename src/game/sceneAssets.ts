@@ -58,7 +58,7 @@ import { readQuantumJump } from "./quantumJump.ts";
 import { decorationRasterSize } from "./rareDecorations.ts";
 import { RockFrames } from "./rockFrames.ts";
 import type { GameScene } from "./scene.ts";
-import { type Asset } from "./sceneShared.ts";
+import type { Asset } from "./sceneShared.ts";
 import { readShardPalettePack } from "./shardPalettePack.ts";
 import { paintFrames } from "./shipArt.ts";
 import { readShipJets } from "./shipJets.ts";
@@ -68,7 +68,7 @@ import {
   ShipMaterialSources,
 } from "./shipMaterials.ts";
 import { readGalaxyStationArt } from "./stationArt.ts";
-import { type SvgRequest } from "./svgRasters.ts";
+import type { SvgRequest } from "./svgRasters.ts";
 import { vectorSheetKey, vectorSheetSource } from "./svgSheet.ts";
 import { type TextureFilter, vectorRaster } from "./textures.ts";
 import { readStrandedCraft, readTowLine } from "./towArt.ts";

@@ -192,7 +192,7 @@ import { markerKnowledgeStore } from "./markerBindings.ts";
 import { markerActorTracked } from "./markerKnowledge.ts";
 import { needleCourses, setNeedleActivity, stepNeedleCourse } from "./needle.ts";
 import { clearNeedleEnemies, ensureNeedleDebris } from "./needleFlight.ts";
-import { type PennyMarker, type PennyPoint } from "./pennyMarkers.ts";
+import type { PennyMarker, PennyPoint } from "./pennyMarkers.ts";
 import { type PhantomContext, phantomWaypoint } from "./phantom.ts";
 import { phantomAllyRoster, type PhantomAllySpec } from "./phantomAllies.ts";
 import { HUNT_GLINT } from "./pickupBody.ts";

@@ -16,7 +16,7 @@ import { type WaitedLoad, waitedProgress } from "../loading/progress.ts";
 import { requiredReady } from "../loading/required.ts";
 import { requiredSceneFile } from "../loading/requiredFiles.ts";
 import { heldActivity } from "../model/activities.ts";
-import { type Current } from "../model/currents.ts";
+import type { Current } from "../model/currents.ts";
 import {
   activeBeamFlashes,
   activeWeaponImpacts,
@@ -24,19 +24,19 @@ import {
   shipSpeedFraction,
 } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
-import { type GainSnapshot } from "../model/itemGains.ts";
+import type { GainSnapshot } from "../model/itemGains.ts";
 import { nosePoint, shipHeading, shipSilhouette } from "../model/nose.ts";
 import { projectileOpacity } from "../model/playerProjectiles.ts";
 import { direction } from "../model/shipPhysics.ts";
-import { type StoryNoses } from "../model/storyShips.ts";
+import type { StoryNoses } from "../model/storyShips.ts";
 import type { FlightInput, FlightState, GameSave, Vec } from "../model/types.ts";
 import { shipTuning } from "../model/upgrades.ts";
-import { type ConversationBox } from "../ui/conversation.ts";
+import type { ConversationBox } from "../ui/conversation.ts";
 import { createBannerLayer, type PlacedBanner } from "../ui/disabledBanner.ts";
 import { createFpsCounter } from "../ui/fpsCounter.ts";
 import { createGalaxyMap, type GalaxyMapView } from "../ui/galaxyMap.ts";
 import { createJumpOverlay, type WarpPaint } from "../ui/jumpOverlay.ts";
-import { type BoxOccupant } from "../ui/notice.ts";
+import type { BoxOccupant } from "../ui/notice.ts";
 import { createRestartCard } from "../ui/restartCard.ts";
 import { createStationView } from "../ui/station.ts";
 import { createStorybook } from "../ui/storybook.ts";
@@ -49,11 +49,11 @@ import {
   readGalaxyManifest,
 } from "./artManifest.ts";
 import { backdropTint, hexNumber, playDepth } from "./asteroidArt.ts";
-import { type BackdropHaze } from "./backdropHaze.ts";
-import { type BackdropRules, type GalaxyBackdrop } from "./backdropLayers.ts";
+import type { BackdropHaze } from "./backdropHaze.ts";
+import type { BackdropRules, GalaxyBackdrop } from "./backdropLayers.ts";
 import { craftFrameSets, type HubArt } from "./cartwheelArt.ts";
-import { type StreakSpec } from "./currentStreaks.ts";
-import { type DebrisArt } from "./debrisArt.ts";
+import type { StreakSpec } from "./currentStreaks.ts";
+import type { DebrisArt } from "./debrisArt.ts";
 import {
   type DestructionData,
   readDestruction,
@@ -94,7 +94,7 @@ import {
   hitFlashBands,
   ModelFeedback,
 } from "./feedback.ts";
-import { type JobArt } from "./jobArt.ts";
+import type { JobArt } from "./jobArt.ts";
 import {
   blastEdges,
   foregroundEdge,
@@ -105,7 +105,7 @@ import {
 } from "./lightField.ts";
 import { cameraWorldView, parentFit, sceneFit, viewShift } from "./playCamera.ts";
 import { hasPlayerHeadingPackage } from "./playerHeadingPackage.ts";
-import { type ProjectArtSet } from "./projectArt.ts";
+import type { ProjectArtSet } from "./projectArt.ts";
 import { setRendering } from "./renderLoop.ts";
 import { drawAndromeda } from "./sceneAndromeda.ts";
 import {
@@ -167,14 +167,14 @@ import { Silhouettes } from "./silhouettes.ts";
 import { FALLBACK_SPACE_PALETTE, type SpacePalette } from "./spacePalette.ts";
 import { SPECK_RADIUS, speckField } from "./speckField.ts";
 import { spriteOwner, staleSpriteKeys } from "./spriteKeys.ts";
-import { type StardustArt } from "./stardustArt.ts";
-import { type GalaxyStationArt, type StationArt } from "./stationArt.ts";
+import type { StardustArt } from "./stardustArt.ts";
+import type { GalaxyStationArt, StationArt } from "./stationArt.ts";
 import { aboardGalaxy, storyCoversScene } from "./storyPresentation.ts";
 import { SvgRasters } from "./svgRasters.ts";
 import { fileFilter } from "./textures.ts";
 import { preloadTouchChrome } from "./touchChrome.ts";
-import { type StrandedCraftArt, type TowLine } from "./towArt.ts";
-import { type UpgradePickupArt } from "./upgradePickup.ts";
+import type { StrandedCraftArt, TowLine } from "./towArt.ts";
+import type { UpgradePickupArt } from "./upgradePickup.ts";
 import {
   ADA_MISSILES,
   beam,
@@ -192,9 +192,9 @@ import {
   screenAngle,
   type WeaponSolids,
 } from "./weaponEffects.ts";
-import { type WhaleArt } from "./whaleArt.ts";
-import { type WhirlpoolProjects } from "./whirlpoolProjects.ts";
-import { type BlinkArt, type CacheArt, type LoopArt } from "./worldArt.ts";
+import type { WhaleArt } from "./whaleArt.ts";
+import type { WhirlpoolProjects } from "./whirlpoolProjects.ts";
+import type { BlinkArt, CacheArt, LoopArt } from "./worldArt.ts";
 
 export class GameScene extends Scene {
   // Read from the save once the launch's update check lets the first screen show (build).

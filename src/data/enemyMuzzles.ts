@@ -15,7 +15,7 @@ import cargo from "../../public/art/enemies/fleetRetaliatorCargoHauler-hardpoint
 import mining from "../../public/art/enemies/fleetRetaliatorMiningFreighter-hardpoints.json" with { type: "json" };
 import phantomStation from "../../public/art/enemies/hostileStationCoral-hardpoints.json" with { type: "json" };
 import type { EnemyDefinition, FrontLaserMount, Point } from "./enemyCatalog.ts";
-import { type EnemyGeometryKey } from "./enemyIdentity.ts";
+import type { EnemyGeometryKey } from "./enemyIdentity.ts";
 
 /** One turret's drawn pivot per hull heading and its top design's barrel tips. */
 export interface MuzzleTurret {

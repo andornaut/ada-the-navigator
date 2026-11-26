@@ -2,7 +2,7 @@
 // Functions over the scene's JumpContext.
 import { SCREEN } from "../data/screen.ts";
 import { shipHeading } from "../model/nose.ts";
-import { type JumpScene } from "../ui/jumpOverlay.ts";
+import type { JumpScene } from "../ui/jumpOverlay.ts";
 import { sceneFit, viewShift } from "./playCamera.ts";
 import type { GameScene } from "./scene.ts";
 

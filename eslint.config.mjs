@@ -139,6 +139,9 @@ export default defineConfig(
   ...boundaryConfigs(),
   phaserModuleConfig,
   { files: ["*.{ts,js,mjs}", "tools/**/*.{ts,js,mjs}"], plugins, rules: toolingRules },
+  // No import cycles: a module in a cycle can run before what it imports has loaded. no-cycle
+  // skips `import { type A }`, which verbatimModuleSyntax keeps as a module load, so that form is
+  // written `import type { A }`, which loads nothing.
   {
     files: ["**/*.{ts,js,mjs}"],
     plugins: {
@@ -151,6 +154,7 @@ export default defineConfig(
       "import-x/resolver-next": [createNodeResolver({ extensions: [".ts", ".js"] })],
     },
     rules: {
+      "@typescript-eslint/no-import-type-side-effects": "error",
       "import-x/no-cycle": "error",
       "import-x/extensions": ["error", "ignorePackages", { checkTypeImports: true }],
     },
