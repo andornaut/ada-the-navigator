@@ -274,6 +274,72 @@ describe("paused protection", () => {
     expect(model.useRefusals).toBe(1);
   });
 
+  /**
+   * Ada within Dock's Talk range of Sunflower's station with an engaged frigate pressing her, the
+   * drone warning showing some way into its line.
+   */
+  function dronesWarning(): GameModel {
+    const model = sunflower();
+    const flight = model.state.flight!;
+    model.state.dialogue = null;
+    outlastGrace(model);
+    const site = nearestStation(1);
+    flight.player = { x: site.x + 150, y: site.y };
+    flight.velocity = { x: 0, y: 0 };
+    flight.objects = flight.objects.filter((object) => object.kind !== "enemy");
+    const enemy = frigate(1, "drones-frigate", { x: site.x + 400, y: site.y });
+    enemy.enemy!.engaged = true;
+    flight.objects.push(enemy);
+    for (let step = 0; step < 200 && !model.warningShowing; step++) {
+      model.step(SIMULATION_STEP_SECONDS, idle);
+    }
+    expect(model.warningShowing).toBe(true);
+    expect(model.conversation?.key.startsWith("warning:drones:")).toBe(true);
+    for (let step = 0; step < 10; step++) {
+      model.step(SIMULATION_STEP_SECONDS, idle);
+    }
+    expect(model.inDanger).toBe(true);
+    expect(model.contextAction).toBe("dock");
+    return model;
+  }
+
+  it("shows a refused Dock's notice over the drone warning at once, then resumes the warning", () => {
+    const model = dronesWarning();
+    const warning = model.conversation!;
+    model.interact();
+    expect(model.state.docked).toBeNull();
+    expect(model.state.notice).toBe("Unavailable while you are in danger.");
+    expect(model.conversation).toBeNull();
+    expect(model.warningShowing).toBe(false);
+    // The warning waits under the refusal with its time held, drones still pressing.
+    for (let step = 0; step < 10; step++) {
+      model.step(SIMULATION_STEP_SECONDS, idle);
+      expect(model.state.notice).toBe("Unavailable while you are in danger.");
+      expect(model.conversation).toBeNull();
+    }
+    model.dismissNotice();
+    expect(model.warningShowing).toBe(true);
+    expect(model.conversation?.key).toBe(warning.key);
+    expect(model.conversation?.elapsed).toBeCloseTo(warning.elapsed, 9);
+    model.step(SIMULATION_STEP_SECONDS, idle);
+    expect(model.conversation?.elapsed).toBeCloseTo(warning.elapsed + SIMULATION_STEP_SECONDS, 9);
+  });
+
+  it("drops the drone warning a refusal interrupted once its drones are gone", () => {
+    const model = dronesWarning();
+    const flight = model.state.flight!;
+    model.interact();
+    expect(model.conversation).toBeNull();
+    flight.objects = flight.objects.filter((object) => object.kind !== "enemy");
+    flight.shots = [];
+    model.step(SIMULATION_STEP_SECONDS, idle);
+    expect(model.inDanger).toBe(false);
+    model.dismissNotice();
+    model.step(SIMULATION_STEP_SECONDS, idle);
+    expect(model.warningShowing).toBe(false);
+    expect(model.conversation?.key.startsWith("warning:drones:") ?? false).toBe(false);
+  });
+
   it("lands no shot while docked, and undocking starts the grace before combat resumes", () => {
     const model = sunflower();
     const flight = model.state.flight!;

@@ -1114,11 +1114,37 @@ export function batchCaptures(ctx) {
     await flightPage.locator(".ada-item-notice").first().waitFor({ state: "visible" });
     await flightPage.waitForTimeout(500);
     await ctx.pageShot("controls-paint-notice.png");
-    // The use-refusal view (art/controls.md "Use disc", Refused): an enemy bolt held still in
-    // the battle square beside the station puts Ada in danger, so a tap on Dock plays the Use
-    // disc's refusal cue and shows its notice. No enemy presses Ada, so no drone warning takes
-    // the conversation slot, where the notice would wait under it. On the held clock the cue is
-    // taken 40 ms in, inside its first tinted beat (0 to 80 ms), then 400 ms in, after it ends.
+    // The use-refusal views (art/controls.md "Use disc", Refused): Ada in danger beside the
+    // station, where a tap on Dock plays the Use disc's refusal cue and shows its notice in the
+    // conversation slot at once. On the held clock the cue is taken 40 ms in, inside its first
+    // tinted beat (0 to 80 ms), and 400 ms in, after it ends; each frame must show the notice.
+    const refusedText = CONTENT.labels.travelUnavailable;
+    async function refuseDock(page) {
+      const use = page.locator(".ada-use");
+      await use.waitFor({ state: "visible" });
+      const useBox = await use.boundingBox();
+      assert.ok(useBox, "The Use disc has a frame");
+      const notice = page.locator("#game-status");
+      assert.equal(await notice.textContent(), "", "No notice shows before the tap");
+      await page.touchscreen.tap(useBox.x + useBox.width / 2, useBox.y + useBox.height / 2);
+      // The frame that refuses the tap starts the cue and writes the notice, so the cue's time
+      // counts from the first frame showing the notice's text.
+      async function refused(frames) {
+        assert.ok(frames < 10, "Dock refuses within 10 frames of the tap");
+        await page.clock.runFor(16);
+        if ((await notice.textContent()) !== refusedText) {
+          await refused(frames + 1);
+        }
+      }
+      await refused(0);
+    }
+    async function refusalShot(page, file) {
+      const notice = page.locator("#game-status");
+      assert.equal(await notice.textContent(), refusedText, `${file} shows the refusal notice`);
+      assert.ok(await notice.isVisible(), `${file} shows the refusal notice in the slot`);
+      await ctx.pageShot(file);
+    }
+    // An enemy bolt held still in the battle square puts Ada in danger with no enemy pressing her.
     const refusal = stationModel(1);
     const refusalFlight = refusal.state.flight;
     refusalFlight.shots = [
@@ -1137,33 +1163,49 @@ export function batchCaptures(ctx) {
     refusalFlight.dangerFor = 1;
     await ctx.openFixture(canonical(refusal, "controls-use-refusal"), { frozen: false });
     const refusalPage = ctx.page();
-    const use = refusalPage.locator(".ada-use");
-    await use.waitFor({ state: "visible" });
-    const useBox = await use.boundingBox();
-    assert.ok(useBox, "The Use disc has a frame");
-    const notice = refusalPage.locator("#game-status");
-    const refusedText = CONTENT.labels.travelUnavailable;
-    assert.equal(await notice.textContent(), "", "No notice shows before the tap");
-    await refusalPage.touchscreen.tap(useBox.x + useBox.width / 2, useBox.y + useBox.height / 2);
-    // The frame that refuses the tap starts the cue and writes the notice, so the cue's time
-    // counts from the first frame showing the notice's text.
-    async function refused(frames) {
-      assert.ok(frames < 10, "Dock refuses within 10 frames of the tap");
-      await refusalPage.clock.runFor(16);
-      if ((await notice.textContent()) !== refusedText) {
-        await refused(frames + 1);
+    await refuseDock(refusalPage);
+    await refusalPage.clock.runFor(40);
+    await refusalShot(refusalPage, "controls-use-refusal.png");
+    await refusalPage.clock.runFor(360);
+    await refusalShot(refusalPage, "controls-use-refusal-notice.png");
+    // Drones near: an engaged fighter presses Ada, so the drone warning shows first. The refusal
+    // takes the slot over it at once, and once the notice is tapped away the warning returns
+    // with its own remaining time.
+    const drones = stationModel(1);
+    addEnemy(drones, { archetype: "fighter", screen: { x: 160, y: 40 } });
+    drones.state.flight.dangerFor = 1;
+    await ctx.openFixture(canonical(drones, "controls-use-refusal-drones"), { frozen: false });
+    const dronesPage = ctx.page();
+    const slot = dronesPage.locator("#app");
+    const line = dronesPage.locator(".ada-conversation-line");
+    async function occupied(occupant, frames = 0) {
+      assert.ok(frames < 300, `The conversation slot shows a ${occupant} within 300 frames`);
+      if ((await slot.getAttribute("data-box")) !== occupant) {
+        await dronesPage.clock.runFor(16);
+        await occupied(occupant, frames + 1);
       }
     }
-    await refused(0);
-    async function refusalShot(file) {
-      assert.equal(await notice.textContent(), refusedText, `${file} shows the refusal notice`);
-      assert.ok(await notice.isVisible(), `${file} shows the refusal notice in the slot`);
-      await ctx.pageShot(file);
-    }
-    await refusalPage.clock.runFor(40);
-    await refusalShot("controls-use-refusal.png");
-    await refusalPage.clock.runFor(360);
-    await refusalShot("controls-use-refusal-notice.png");
+    await occupied("line");
+    const warning = await line.textContent();
+    assert.ok(warning, "The drone warning shows a line");
+    await refuseDock(dronesPage);
+    assert.equal(await slot.getAttribute("data-box"), "notice", "The refusal takes the slot");
+    assert.ok(!(await line.isVisible()), "The drone warning waits under the refusal");
+    await dronesPage.clock.runFor(40);
+    await refusalShot(dronesPage, "controls-use-refusal-drones.png");
+    const noticeBox = await dronesPage.locator("#game-status").boundingBox();
+    assert.ok(noticeBox, "The refusal notice has a frame");
+    await dronesPage.touchscreen.tap(
+      noticeBox.x + noticeBox.width / 2,
+      noticeBox.y + noticeBox.height / 2,
+    );
+    await occupied("line");
+    assert.equal(await line.textContent(), warning, "The drone warning returns where it was");
+    assert.ok(await line.isVisible(), "The drone warning shows again");
+    // The box's entrance settles before the frame is taken.
+    await dronesPage.clock.runFor(400);
+    assert.equal(await slot.getAttribute("data-box"), "line", "The drone warning still shows");
+    await ctx.pageShot("controls-use-refusal-drones-resumed.png");
   }
 
   // Art's retuned project placements: the salvage beacons on the salvagers' yard, Whirlpool's

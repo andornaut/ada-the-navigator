@@ -64,7 +64,7 @@ function fixture() {
 describe("Penny's actual presentation acknowledgement", () => {
   it("does not admit scheduled or getter-read notices, then binds the rendered exact ID", () => {
     const { flight, model, talk } = fixture();
-    talk.step(0.05, false, facts);
+    talk.step(0.05, null, facts);
     expect(model.pennyMarkers(GAME_AREA)).toEqual([]);
     const key = model.conversation!.key;
     expect(key).toMatch(/^penny:1:cache:displayed:/);
@@ -94,7 +94,7 @@ describe("Penny's actual presentation acknowledgement", () => {
 
   it("rejects acknowledgement when another notice covers the conversation", () => {
     const { model, talk } = fixture();
-    talk.step(0.05, false, facts);
+    talk.step(0.05, null, facts);
     const key = model.conversation!.key;
     model.state.notice = "covered";
     model.pennyNoticeDisplayed(key);
@@ -115,7 +115,7 @@ describe("Penny's actual presentation acknowledgement", () => {
 
 it("keeps a cache unknown until the actual renderer has lit it, then retains the real item glyph", () => {
   const { flight, model, talk } = fixture();
-  talk.step(0.05, false, facts);
+  talk.step(0.05, null, facts);
   model.pennyNoticeDisplayed(model.conversation!.key);
   flight.player = { x: 1200, y: 0 };
   expect(model.pennyMarkers(GAME_AREA, new Set())).toEqual([]);
@@ -133,7 +133,7 @@ it("replaces an undiscovered station arrow with the exact displayed question mar
   const site = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 })[0]!;
   flight.objects = [{ ...site, hp: 1, kind: "station", radius: ECONOMY.station.radius }];
   flight.player = { x: site.x - 1450, y: site.y };
-  talk.step(0.05, false, { ...facts, pennyPoints: [site.id] });
+  talk.step(0.05, null, { ...facts, pennyPoints: [site.id] });
   expect(model.indicatorTargets).toContainEqual({ ...site, kind: "station" });
   model.pennyNoticeDisplayed(model.conversation!.key);
   expect(model.pennyMarkers(GAME_AREA)).toMatchObject([
@@ -151,7 +151,7 @@ it.each(["growers", "workshop", "salvagers"])(
   (id) => {
     const { flight, model, talk } = fixture();
     flight.objects = [{ hp: 1, id, kind: "destination", radius: 5, x: 1450, y: 0 }];
-    talk.step(0.05, false, { ...facts, pennyPoints: [id] });
+    talk.step(0.05, null, { ...facts, pennyPoints: [id] });
     model.pennyNoticeDisplayed(model.conversation!.key);
     expect(model.pennyMarkers(GAME_AREA)).toMatchObject([
       { category: "station", id, identified: false },

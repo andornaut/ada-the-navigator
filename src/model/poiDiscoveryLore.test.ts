@@ -227,7 +227,7 @@ it("uses the existing conversation shuffle to choose both variants across indepe
     const talk = new ConversationDirector([], [], seededRandom(seed));
     talk.beginFlight(1);
     expect(talk.poiDiscovered({ id: slot.id, kind: "landmark", symbol: slot.kind })).toBe(true);
-    talk.step(0.05, false, facts);
+    talk.step(0.05, null, facts);
     const line = talk.showing?.line.text;
     expect(expected.map(({ text }) => text)).toContain(line);
     picked.add(line!);
@@ -321,11 +321,11 @@ it("distinguishes an actually displayed Penny cue from a silent point passed dur
   const heard: string[] = [];
   const talk = new ConversationDirector([penny], heard);
   talk.beginFlight(1);
-  talk.step(0.05, false, { ...facts, pennyPoints: ["spoken"] });
+  talk.step(0.05, null, { ...facts, pennyPoints: ["spoken"] });
   expect(talk.heardPennyPoint("spoken")).toBe(false);
   expect(talk.showing?.instance).toBe(pennyInstance(1, "spoken"));
   expect(talk.heardPennyPoint("spoken")).toBe(true);
-  talk.step(0.05, false, { ...facts, pennyPoints: ["spoken", "passed"] });
+  talk.step(0.05, null, { ...facts, pennyPoints: ["spoken", "passed"] });
   expect(heard).toContain(pennyInstance(1, "passed"));
   expect(talk.heardPennyPoint("passed")).toBe(false);
 });
@@ -371,7 +371,7 @@ it("distinguishes displayed Scan instruction from fulfilling it before it is hea
   const talk = new ConversationDirector([lesson], heard);
   talk.beginFlight(1);
   talk.requestScanLesson();
-  talk.step(0.05, false, facts);
+  talk.step(0.05, null, facts);
   expect(talk.heardScanLesson).toBe(false);
   expect(talk.showing?.instance).toBe("lesson:scan");
   expect(talk.heardScanLesson).toBe(true);
@@ -380,7 +380,7 @@ it("distinguishes displayed Scan instruction from fulfilling it before it is hea
   completedEarly.beginFlight(1);
   completedEarly.completeScanLesson();
   completedEarly.requestScanLesson();
-  completedEarly.step(0.05, false, facts);
+  completedEarly.step(0.05, null, facts);
   expect(completedEarly.showing).toBeNull();
   expect(completedEarly.heardScanLesson).toBe(false);
 });
@@ -390,7 +390,7 @@ it("prioritizes a receipt over an interrupted approach and discards a context th
   talk.beginFlight(1);
   let closing = true;
   const seen = { instance: "test:exact-target", kind: "unknown" as const, relevant: () => closing };
-  talk.step(0.05, false, { ...facts, poiApproach: seen });
+  talk.step(0.05, null, { ...facts, poiApproach: seen });
   expect(talk.showing?.instance).toBe(seen.instance);
   talk.scanOutcome({
     completions: [],
@@ -402,14 +402,14 @@ it("prioritizes a receipt over an interrupted approach and discards a context th
   expect(talk.showing?.line.text).toBe("Scan complete: Test landmark.");
   closing = false;
   talk.advance();
-  talk.step(0.05, false, facts);
+  talk.step(0.05, null, facts);
   expect(talk.showing).toBeNull();
 });
 
 it("delivers distinct mixed confirmation events in order without starting a new cooldown between them", () => {
   const talk = new ConversationDirector([], []);
   talk.beginFlight(1);
-  talk.step(0.05, false, {
+  talk.step(0.05, null, {
     ...facts,
     poiConfirmations: [
       { cue: { id: "station:1,2", kind: "station" } },
@@ -421,7 +421,7 @@ it("delivers distinct mixed confirmation events in order without starting a new 
   for (let i = 0; i < 3; i++) {
     instances.push(talk.showing?.instance);
     talk.advance();
-    talk.step(0.05, false, facts);
+    talk.step(0.05, null, facts);
   }
   expect(instances).toEqual([
     "poi:1:station:station:1,2",
@@ -439,17 +439,17 @@ it("uses the existing quiet window, and revalidates speculative and known wordin
     return second === undefined ? undefined : poiAmbientLine(1, second);
   };
   talk.beginFlight(1);
-  talk.step(CONVERSATION_TUNING.quietSeconds, false, { ...facts, poiAmbient });
+  talk.step(CONVERSATION_TUNING.quietSeconds, null, { ...facts, poiAmbient });
   expect(talk.showing).toBeNull();
   progress.known.push("growers");
-  talk.step(CONVERSATION_TUNING.quietSeconds - 0.05, false, { ...facts, poiAmbient });
+  talk.step(CONVERSATION_TUNING.quietSeconds - 0.05, null, { ...facts, poiAmbient });
   expect(talk.showing).toBeNull();
-  talk.step(0.05, false, { ...facts, poiAmbient });
+  talk.step(0.05, null, { ...facts, poiAmbient });
   expect(talk.showing?.line).toEqual(poiAmbientLine(1, false).lines[0]);
 
   progress.known.push("workshop");
   expect(talk.showing).toBeNull();
-  talk.step(CONVERSATION_TUNING.quietSeconds, false, { ...facts, poiAmbient });
+  talk.step(CONVERSATION_TUNING.quietSeconds, null, { ...facts, poiAmbient });
   expect(talk.showing?.line).toEqual({
     speaker: "ada",
     text: "The growers and the workshop both have their own way of solving things.",

@@ -5,8 +5,9 @@ import { SAFE_MARGIN } from "./layout/playView.ts";
 
 // Notices: the game's status line (#game-status) and the save status (#save-status). Each shows in
 // the conversation box's slot and style (layout/conversationBox.ts) without a portrait or tab, up
-// to two lines centred a gap inside each side. One box shows at a time: a conversation line (a
-// warning's even over a notice, which waits under it), else the game notice, else the save status.
+// to two lines centred a gap inside each side. One box shows at a time: a conversation line the
+// model ranks over the game notice (a warning or scan receipt over an ordinary notice, which waits
+// under it; no line over a press refusal), else the game notice, else the save status.
 // The game notice's box is its press area: a tap dismisses it. The save status persists, takes no
 // input and is lowest: it yields the slot to any line or notice and returns when they clear.
 
@@ -15,7 +16,11 @@ export const BOX_OCCUPANT = "data-box";
 
 export type BoxOccupant = "line" | "notice" | "save";
 
-/** What the slot shows: a line, else a game notice, else the save status, else nothing. */
+/**
+ * What the slot shows: a line, else a game notice, else the save status, else nothing. A line
+ * is offered here only when it outranks the showing notice (GameModel.conversation), so a press
+ * refusal's notice holds the slot over a warning.
+ */
 export function boxOccupant(showing: {
   readonly line: boolean;
   readonly notice: boolean;
@@ -78,7 +83,7 @@ export const NOTICE_STYLE = `
   z-index:21
 }
 
-/* A warning line shows in the slot while the game notice waits under it. */
+/* A line ranked over the game notice shows in the slot while the notice waits under it. */
 [${BOX_OCCUPANT}="line"] #game-status{
   visibility:hidden
 }

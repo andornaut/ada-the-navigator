@@ -236,10 +236,10 @@ describe("in-flight conversations", () => {
     ]);
   });
 
-  it("rank warnings, notices, lessons, Penny, then lore", () => {
-    expect(BOX_PRIORITIES).toEqual(["warning", "notice", "lesson", "penny", "lore"]);
+  it("rank press refusals, warnings, notices, lessons, Penny, then lore", () => {
+    expect(BOX_PRIORITIES).toEqual(["refusal", "warning", "notice", "lesson", "penny", "lore"]);
     expect(CONVERSATION_PRIORITIES).toEqual(
-      BOX_PRIORITIES.filter((priority) => priority !== "notice"),
+      BOX_PRIORITIES.filter((priority) => priority !== "refusal" && priority !== "notice"),
     );
     expect(
       CONVERSATIONS.filter(({ id }) => id.startsWith("archie:")).map((c) => c.priority),

@@ -27,6 +27,7 @@ import { createEnemy } from "./enemyAi.ts";
 import { GameModel } from "./game.ts";
 import { restoreSave } from "./save.ts";
 import type { SpaceObject } from "./types.ts";
+import { collectWeapon } from "./weapons.ts";
 
 const { cooldownSeconds, pennyIntervalSeconds, pennyRange, quietSeconds } = CONVERSATION_TUNING;
 
@@ -68,7 +69,7 @@ function director(galaxy: GalaxyNumber, seen: string[] = [], done = {}) {
 /** Steps in slices of at most 0.05 s, as the scene does. */
 function run(talk: ConversationDirector, seconds: number, facts: Partial<ConversationFacts> = {}) {
   for (let left = seconds; left > 1e-9; left -= 0.05) {
-    talk.step(Math.min(0.05, left), false, { ...calm, ...facts });
+    talk.step(Math.min(0.05, left), null, { ...calm, ...facts });
     void talk.showing;
   }
 }
@@ -229,7 +230,7 @@ describe("conversation schedule", () => {
     run(talk, lineTime(talk) - 0.55, { capitalInSight: true });
     expect(showing(talk)).toBe("arrival:1:0");
     for (let i = 0; i < 400; i++) {
-      talk.step(0.05, true, calm);
+      talk.step(0.05, "notice", calm);
     }
     expect(showing(talk)).toBe("arrival:1:0");
     run(talk, 0.4);
@@ -242,11 +243,11 @@ describe("conversation schedule", () => {
     const { talk } = director(1, [...lessonsHeard, "arrival:1"]);
     run(talk, 0.05, { inDanger: true });
     tapThrough(talk);
-    talk.step(0.05, true, { ...calm, inDanger: true, shieldFraction: 0.2 });
+    talk.step(0.05, "notice", { ...calm, inDanger: true, shieldFraction: 0.2 });
     expect(showing(talk)).toBe("warning:shieldLow:0");
     expect(talk.warningShowing).toBe(true);
     // A warning showing over a notice keeps its own time, line by line.
-    const step = () => talk.step(0.05, true, { ...calm, inDanger: true, shieldFraction: 0.2 });
+    const step = () => talk.step(0.05, "notice", { ...calm, inDanger: true, shieldFraction: 0.2 });
     for (let i = 0, steps = lineSteps(lineTime(talk)); i < steps; i++) {
       step();
     }
@@ -763,6 +764,9 @@ describe("conversations in the game", () => {
   const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
   // Steps the travel notice shows for.
   const noticeSteps = lineSteps(noticeDuration(CONTENT.labels.travelUnavailable ?? ""));
+  const outOfAmmo = CONTENT.labels.outOfAmmo ?? "";
+  // Steps the out-of-ammo notice shows for.
+  const ammoSteps = lineSteps(noticeDuration(outOfAmmo));
 
   it("show the touch and desktop wording with the speaker's name tab and side", () => {
     const model = flying();
@@ -944,8 +948,11 @@ describe("conversations in the game", () => {
       y: flight.player.y + 300,
     });
     flight.shield = (model.shieldMax * CONVERSATION_TUNING.shieldLowFraction) / 2;
-    model.returnHome();
-    expect(model.state.notice).toBe(CONTENT.labels.travelUnavailable);
+    // Firing the last missile empties the launcher: "Out of ammo.", an ordinary notice.
+    collectWeapon("rapidMissile", flight);
+    flight.ammo.rapidMissile = 1;
+    model.step(0.05, { ...idle, aim: { x: 0, y: -1 } });
+    expect(model.state.notice).toBe(outOfAmmo);
     model.step(0.05, idle);
     expect(model.conversation?.key).toBe("warning:shieldLow:0");
     expect(model.warningShowing).toBe(true);
@@ -956,14 +963,52 @@ describe("conversations in the game", () => {
     model.dismissConversation();
     expect(model.warningShowing).toBe(false);
     expect(model.conversation).toBeNull();
+    // The notice showed for at most the firing step before the warning came over it.
+    for (let i = 0; i < ammoSteps - 3; i++) {
+      model.step(0.05, idle);
+    }
+    expect(model.state.notice).toBe(outOfAmmo);
+    for (let i = 0; i < 3; i++) {
+      model.step(0.05, idle);
+    }
+    expect(model.state.notice).toBe("");
+    expect(model.conversation?.key).toBe("lesson:move:0");
+  });
+
+  it("show a press refusal over a warning, which starts once the refusal clears", () => {
+    const model = flying();
+    model.step(0.05, idle);
+    expect(model.conversation?.key).toBe("lesson:move:0");
+    const flight = model.state.flight!;
+    flight.player.x += CONTENT.tuning.exclusionRadius * 3;
+    flight.dangerFor = 5;
+    // The held shot outlasts the refusal, so the danger and the warning's trigger hold.
+    flight.shots.push({
+      damage: 1,
+      enemy: true,
+      hitIds: [],
+      id: "held",
+      life: 60,
+      piercing: false,
+      velocity: { x: 0, y: 0 },
+      x: flight.player.x,
+      y: flight.player.y + 300,
+    });
+    flight.shield = (model.shieldMax * CONVERSATION_TUNING.shieldLowFraction) / 2;
+    model.returnHome();
+    expect(model.state.notice).toBe(CONTENT.labels.travelUnavailable);
+    // The shield-low warning waits under the refusal, which runs its full time.
     for (let i = 0; i < noticeSteps - 2; i++) {
       model.step(0.05, idle);
+      expect(model.conversation).toBeNull();
+      expect(model.warningShowing).toBe(false);
     }
     expect(model.state.notice).toBe(CONTENT.labels.travelUnavailable);
     model.step(0.05, idle);
     model.step(0.05, idle);
     expect(model.state.notice).toBe("");
-    expect(model.conversation?.key).toBe("lesson:move:0");
+    model.step(0.05, idle);
+    expect(model.conversation?.key).toBe("warning:shieldLow:0");
   });
 
   it("freeze under a story panel and resume with the flight", () => {

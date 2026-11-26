@@ -51,7 +51,7 @@ function fixture(galaxy: GalaxyNumber, ids: readonly string[]) {
   talk.setEligibilityReader(read);
   talk.beginFlight(galaxy);
   const step = (seconds = 0.01, changes: Partial<ConversationFacts> = {}) =>
-    talk.step(seconds, false, { ...calm, holodisks: live.holodisks, ...changes });
+    talk.step(seconds, null, { ...calm, holodisks: live.holodisks, ...changes });
   const quiet = () => step(CONVERSATION_TUNING.quietSeconds + 0.01);
   return { heard, live, quiet, read, step, talk };
 }

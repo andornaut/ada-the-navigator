@@ -19,6 +19,7 @@ import {
   type Lesson,
   lineDuration,
   noticeDuration,
+  type NoticeRank,
   type Speaker,
   SPEAKERS,
 } from "../data/conversations.ts";
@@ -640,11 +641,14 @@ export class ConversationDirector {
   }
 
   /**
-   * One flight step. A notice ranks below warnings and above everything else (BOX_PRIORITIES):
-   * while a game notice shows, requests still queue and a warning or scan receipt may start or keep
-   * showing, but any other line waits where it was and resumes once the notice clears.
+   * One flight step with the game notice showing, if any, at its rank (BOX_PRIORITIES). An
+   * ordinary notice ranks below warnings and above everything else: while it shows, requests
+   * still queue and a warning or scan receipt may start or keep showing, but any other line waits
+   * where it was and resumes once the notice clears. A press refusal outranks every line: the
+   * line showing waits where it was, warnings included, and resumes with its own remaining time
+   * once the refusal clears, unless its trigger lapses meanwhile; no line starts under it.
    */
-  step(dt: number, notice: boolean, facts: ConversationFacts): void {
+  step(dt: number, notice: NoticeRank | null, facts: ConversationFacts): void {
     const galaxy = this.galaxy;
     if (galaxy === null || !Number.isFinite(dt) || dt <= 0) {
       return;
@@ -661,10 +665,14 @@ export class ConversationDirector {
       this.scanLessonAfterPenny = false;
       this.requestScanLesson();
     }
-    if (notice && !this.overNoticeShowing) {
+    if (notice && !this.showsOver(notice)) {
+      // Under a press refusal, a line whose trigger lapses is dropped rather than resumed.
+      if (notice === "refusal" && this.active && !this.valid(facts, this.active)) {
+        this.active = null;
+      }
       this.queue = this.queue.filter((request) => this.valid(facts, request));
       const [over] = this.queue
-        .filter((request) => rank(request) <= BOX_PRIORITIES.indexOf("notice"))
+        .filter((request) => rank(request) <= BOX_PRIORITIES.indexOf(notice))
         .sort((a, b) => rank(a) - rank(b));
       if (over) {
         this.start(over);
@@ -1073,10 +1081,13 @@ export class ConversationDirector {
     return this.active !== null && rank(this.active) === BOX_PRIORITIES.indexOf("warning");
   }
 
-  /** Whether a warning or a scan receipt shows, which a game notice waits under. */
-  get overNoticeShowing(): boolean {
+  /**
+   * Whether a line shows over a game notice of rank `notice`, which then waits under it: a
+   * warning or a scan receipt over an ordinary notice, and no line over a press refusal.
+   */
+  showsOver(notice: NoticeRank): boolean {
     this.revalidate();
-    return this.active !== null && rank(this.active) <= BOX_PRIORITIES.indexOf("notice");
+    return this.active !== null && rank(this.active) <= BOX_PRIORITIES.indexOf(notice);
   }
 
   private markSeen({ conversation, instance }: Request): void {

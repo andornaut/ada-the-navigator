@@ -13,6 +13,7 @@ import {
   type JobMoment,
   type Mood,
   noticeDuration,
+  type NoticeRank,
   SPEAKERS,
 } from "../data/conversations.ts";
 import { deliveryDestination, DESTINATIONS, STATION_SENTENCE } from "../data/destinations.ts";
@@ -499,6 +500,8 @@ export class GameModel {
   private readonly talk: ConversationDirector;
   private pickupFeedback: PickupFeedback[] = [];
   private noticeShownFor = 0;
+  /** The showing game notice's rank: a press refusal's, or an ordinary notice's. */
+  private noticeRank: NoticeRank = "notice";
   /** Held-job moments since the last flight step, for the conversation director. */
   private jobMoments: (JobMoment | "jobComplete")[] = [];
   /** Whether Ada has docked this flight, which marks the dock lesson done. */
@@ -632,7 +635,17 @@ export class GameModel {
    */
   private notify(text: string): void {
     this.state.notice = text;
+    this.noticeRank = "notice";
     this.noticeShownFor = 0;
+  }
+  /**
+   * The notice answering Ada's own refused press (Dock, Travel here, Galaxies or any other
+   * refused action): it takes the slot at once, over a warning too, and the line it interrupts
+   * resumes after it if still relevant (BOX_PRIORITIES).
+   */
+  private refuse(text: string): void {
+    this.notify(text);
+    this.noticeRank = "refusal";
   }
   /** A tap on a game notice dismisses it at once; lines waiting under it resume. */
   dismissNotice(): void {
@@ -641,9 +654,12 @@ export class GameModel {
   private get noticeShowing(): boolean {
     return this.state.notice !== "";
   }
-  /** A warning shows in the box, over any notice. */
+  /** A warning shows in the box, over any notice but a press refusal. */
   get warningShowing(): boolean {
-    return this.state.mode === "space" && this.talk.warningShowing;
+    return this.state.mode === "space" && this.talk.warningShowing && !this.refusalShowing;
+  }
+  private get refusalShowing(): boolean {
+    return this.noticeShowing && this.noticeRank === "refusal";
   }
   /**
    * The line the conversation box shows now, if any: a warning's or scan receipt's, or another
@@ -655,7 +671,7 @@ export class GameModel {
       this.state.dialogue ||
       this.state.docked ||
       this.screen !== "space" ||
-      (this.noticeShowing && !this.talk.overNoticeShowing)
+      (this.noticeShowing && !this.talk.showsOver(this.noticeRank))
     ) {
       return null;
     }
@@ -2076,7 +2092,7 @@ export class GameModel {
   private dock(id: string, f: FlightState): void {
     // Danger blocks Dock as it blocks Travel: Ada must break contact first.
     if (this.inDanger) {
-      this.notify(this.label("travelUnavailable"));
+      this.refuse(this.label("travelUnavailable"));
       this.useRefusalCount++;
       return;
     }
@@ -2195,7 +2211,7 @@ export class GameModel {
     }
     const busy = this.state.tasks[f.galaxy];
     if (busy) {
-      this.notify(this.label(busy.kind === "job" ? "jobBusy" : "activityBusy"));
+      this.refuse(this.label(busy.kind === "job" ? "jobBusy" : "activityBusy"));
       return;
     }
     const terms = this.activityTerms(f, place);
@@ -2407,7 +2423,7 @@ export class GameModel {
   }
   private home(forced: boolean): void {
     if (!forced && this.inDanger) {
-      this.notify(this.label("travelUnavailable"));
+      this.refuse(this.label("travelUnavailable"));
       return;
     }
     this.endFlight(forced ? "lose" : "keep");
@@ -2506,15 +2522,15 @@ export class GameModel {
       return;
     }
     if (this.inDanger) {
-      this.notify(this.label("travelUnavailable"));
+      this.refuse(this.label("travelUnavailable"));
       return;
     }
     if (f.tow) {
-      this.notify(this.label("towTravel"));
+      this.refuse(this.label("towTravel"));
       return;
     }
     if (this.carrying) {
-      this.notify(this.label("carryTravel"));
+      this.refuse(this.label("carryTravel"));
       return;
     }
     if (station) {
@@ -2867,9 +2883,9 @@ export class GameModel {
     this.jobMoments = [];
     const near = (range: number) => (object: { x: number; y: number }) =>
       Math.hypot(object.x - f.player.x, object.y - f.player.y) <= range;
-    const held = this.noticeShowing;
+    const held = this.noticeShowing ? this.noticeRank : null;
     // A game notice's time runs only while it shows, not under a warning or scan receipt.
-    if (this.state.notice && !this.talk.overNoticeShowing) {
+    if (this.state.notice && !this.talk.showsOver(this.noticeRank)) {
       this.noticeShownFor += dt;
       if (this.noticeShownFor >= noticeDuration(this.state.notice) - 1e-9) {
         this.state.notice = "";
@@ -4254,7 +4270,7 @@ export class GameModel {
     if (selected.refused) {
       const busy = this.state.tasks[this.state.selectedGalaxy];
       if (busy && dialogue.context.startsWith("activity:")) {
-        this.notify(this.label(busy.kind === "job" ? "jobBusy" : "activityBusy"));
+        this.refuse(this.label(busy.kind === "job" ? "jobBusy" : "activityBusy"));
       }
       return;
     }
@@ -4542,7 +4558,7 @@ export class GameModel {
       return false;
     }
     if (this.inDanger) {
-      this.notify(this.label("travelUnavailable"));
+      this.refuse(this.label("travelUnavailable"));
       return false;
     }
     this.selection = ROUTE_POSITION[this.state.selectedGalaxy];

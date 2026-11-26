@@ -56,7 +56,7 @@ function director() {
   return { seen, talk };
 }
 function step(talk: ConversationDirector, facts = calm) {
-  talk.step(0.01, false, facts);
+  talk.step(0.01, null, facts);
 }
 
 it("formats exactly one ordinary or remembered intro using safe literal target substitution", () => {
@@ -114,9 +114,9 @@ it("keeps the existing spoken scan receipt duration when ordinary speech is shor
   talk.scanOutcome(outcome());
   const text = talk.showing!.line.text;
   const end = 5 + 0.05 * text.length;
-  talk.step(end - 0.01, false, calm);
+  talk.step(end - 0.01, null, calm);
   expect(talk.showing?.line.text).toBe(text);
-  talk.step(0.01, false, calm);
+  talk.step(0.01, null, calm);
   expect(talk.showing).toBeNull();
 });
 
@@ -152,7 +152,7 @@ it("resumes the existing lesson and Penny requests through the shared event-cue 
   step(talk, facts);
   expect(talk.showing!.instance).toBe(lesson);
   talk.skip();
-  talk.step(CONVERSATION_TUNING.cooldownSeconds + 0.01, false, facts);
+  talk.step(CONVERSATION_TUNING.cooldownSeconds + 0.01, null, facts);
   expect(talk.showing!.conversation.trigger.kind).toBe("penny");
   const penny = talk.showing!.instance;
   talk.scanOutcome(outcome("remembered"));
@@ -183,9 +183,10 @@ it("shows the receipt over a game notice and keeps it showing as the notice wait
   const { talk } = director();
   step(talk);
   talk.scanOutcome(outcome());
-  expect(talk.overNoticeShowing).toBe(true);
+  expect(talk.showsOver("notice")).toBe(true);
+  expect(talk.showsOver("refusal")).toBe(false);
   expect(talk.warningShowing).toBe(false);
-  talk.step(1, true, calm);
+  talk.step(1, "notice", calm);
   expect(talk.showing!.line.text).toBe("Scan complete: Veil $& {quest}.");
   expect(talk.showing!.elapsed).toBeCloseTo(1);
 });
@@ -201,7 +202,7 @@ it("queues the receipt behind a drone warning, never dropped, however long the w
   // Past the rectangle's 1.5 s and every warning line, the receipt still follows.
   const shown: string[] = [];
   for (let t = 0; t < 30 && talk.showing?.instance !== undefined; t += 0.05) {
-    talk.step(0.05, false, drones);
+    talk.step(0.05, null, drones);
     const text = talk.showing?.line.text;
     if (text && shown.at(-1) !== text) {
       shown.push(text);
@@ -215,7 +216,7 @@ it("lets a warning interrupt the receipt, which resumes after it", () => {
   step(talk);
   talk.scanOutcome(outcome());
   const receipt = talk.showing!.instance;
-  talk.step(0.05, false, { ...calm, dronesNear: true, inDanger: true });
+  talk.step(0.05, null, { ...calm, dronesNear: true, inDanger: true });
   expect(talk.warningShowing).toBe(true);
   talk.skip();
   step(talk, { ...calm, dronesNear: true, inDanger: true });

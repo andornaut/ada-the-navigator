@@ -30,13 +30,22 @@ export type Speaker =
 
 /**
  * Highest first: a warning (Archie's broadcasts among them), then a first-flight lesson,
- * then Penny, then lore. Notices rank between warnings and lessons (BOX_PRIORITIES).
+ * then Penny, then lore. Notices rank between warnings and lessons, and press refusals above
+ * warnings (BOX_PRIORITIES).
  */
 export const CONVERSATION_PRIORITIES = ["warning", "lesson", "penny", "lore"] as const;
 export type ConversationPriority = (typeof CONVERSATION_PRIORITIES)[number];
 
-/** What the box shows, highest first; a higher one interrupts a lower one, which resumes after. */
-export const BOX_PRIORITIES = ["warning", "notice", "lesson", "penny", "lore"] as const;
+/**
+ * What the box shows, highest first; a higher one interrupts a lower one, which resumes after if
+ * still relevant. A refusal is the notice that answers Ada's own refused press (Dock, Travel
+ * here, Galaxies or any other refused action): it takes the box above warnings. Every other
+ * notice, a scan receipt included, ranks as a notice.
+ */
+export const BOX_PRIORITIES = ["refusal", "warning", "notice", "lesson", "penny", "lore"] as const;
+export type BoxPriority = (typeof BOX_PRIORITIES)[number];
+/** A game notice's place in the box: a press refusal's, or any other notice's. */
+export type NoticeRank = Extract<BoxPriority, "notice" | "refusal">;
 
 /** The first flight's lessons, each skipped once Ada has already done what it teaches. */
 export type Lesson = "aim" | "dock" | "move" | "scan" | "stardust";
