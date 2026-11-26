@@ -4,7 +4,7 @@
 // (src/main.ts), so the next launch resumes from the last save. src/crash/install.ts imports this
 // module before any other.
 import "@andornaut/game-kit/runtime/web/crash/dom/crash.css";
-import "./reload.css";
+import "virtual:ada-crash.css";
 
 import { BUTTON_GAP } from "@andornaut/game-kit/runtime/ui/spacing";
 import {
@@ -27,16 +27,17 @@ import { createAdaFactoryHoldBinding } from "./actionBinding.ts";
 import { bindAdaRecoveryActionRoot } from "./holdActionsAdapter.ts";
 import { COLOURS } from "./layout/colours.ts";
 import { CARD_WIDTH_CAPS, SCROLL } from "./layout/contentCard.ts";
+import { pixels } from "./layout/css.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { rootPressGuard } from "./pressScope.ts";
 
 // Recovery uses the primary control face, lip and cream text without game resources.
 export const CRASH_COLOURS: CrashColours = {
-  background: "#292734",
-  buttonFace: "#bfa06f",
-  buttonLip: "#8a7148",
-  ink: "#181425",
-  text: "#ead4aa",
+  background: COLOURS.baseField,
+  buttonFace: COLOURS.primaryFace,
+  buttonLip: COLOURS.primaryLip,
+  ink: COLOURS.ink,
+  text: COLOURS.cream,
 };
 
 let recovery:
@@ -112,12 +113,12 @@ function placeCrashActions(host: HTMLElement): void {
     return;
   }
   const { style } = panel;
-  style.setProperty("--ada-crash-panel-width", `${CARD_WIDTH_CAPS.medium}px`);
-  style.setProperty("--ada-crash-action-height", `${TEXT_BUTTON.height}px`);
+  style.setProperty("--ada-crash-panel-width", pixels(CARD_WIDTH_CAPS.medium));
+  style.setProperty("--ada-crash-action-height", pixels(TEXT_BUTTON.height));
   style.setProperty("--ada-crash-action-inset", recoveryLength(TEXT_BUTTON.inset));
-  style.setProperty("--ada-crash-action-label", `${TEXT_BUTTON.label.size}px`);
-  style.setProperty("--ada-crash-action-line", `${TEXT_BUTTON.label.lineHeight}px`);
-  style.setProperty("--ada-crash-action-gap", `${BUTTON_GAP}px`);
+  style.setProperty("--ada-crash-action-label", pixels(TEXT_BUTTON.label.size));
+  style.setProperty("--ada-crash-action-line", pixels(TEXT_BUTTON.label.lineHeight));
+  style.setProperty("--ada-crash-action-gap", pixels(BUTTON_GAP));
   style.setProperty("--ada-crash-secondary-face", COLOURS.secondaryFace);
   style.setProperty("--ada-crash-secondary-lip", COLOURS.secondaryLip);
   const details = panel.querySelector(".crash-details");

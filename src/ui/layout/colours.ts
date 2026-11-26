@@ -82,6 +82,8 @@ export const COLOURS = {
 export const UNLISTED_COLOURS = {
   /** The controls overlay's inherited text colour. */
   controlsText: "#172335",
+  /** The crash recovery button background on hover. */
+  crashButtonHover: "#373737",
   /** The disabled-feature banner's face. */
   disabledBannerFace: "#FF6B6B",
   /** The galaxy map's Earth marker land. */

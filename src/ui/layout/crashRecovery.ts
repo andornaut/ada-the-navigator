@@ -1,10 +1,25 @@
+import { BUTTON_GAP } from "@andornaut/game-kit/runtime/ui/spacing";
+
+import { SPACING, TEXT_BUTTON } from "../../data/layout.ts";
+import { UNLISTED_COLOURS } from "./colours.ts";
+import { pixels } from "./css.ts";
+
+// Fallbacks before the presenter sets the mounted panel's layout properties.
+const CRASH_RECOVERY = {
+  fallbackActionInset: 20,
+  fallbackBodyGap: 24,
+  fallbackPanelWidth: 328,
+  shortViewportHeight: 400,
+} as const;
+
+export const CRASH_RECOVERY_STYLE = `
 .crash > .crash-panel {
-  max-width: var(--ada-crash-panel-width, 328px);
+  max-width: var(--ada-crash-panel-width, ${pixels(CRASH_RECOVERY.fallbackPanelWidth)});
   min-width: 0;
 }
 
 .crash-panel > :is(.crash-body, .crash-details) {
-  margin-bottom: var(--ada-crash-action-gap, 24px);
+  margin-bottom: var(--ada-crash-action-gap, ${pixels(CRASH_RECOVERY.fallbackBodyGap)});
 }
 
 .crash-panel .crash-stack {
@@ -17,13 +32,13 @@
   margin: 0;
 }
 
-@media (max-height: 400px) {
+@media (max-height: ${pixels(CRASH_RECOVERY.shortViewportHeight)}) {
   .crash > .crash-panel {
-    padding-block: 16px;
+    padding-block: ${pixels(SPACING.pageInset)};
   }
 
   .crash-panel > :is(.crash-body, .crash-details) {
-    margin-bottom: 8px;
+    margin-bottom: ${pixels(SPACING.gap)};
   }
 
   .crash-panel .crash-stack {
@@ -36,7 +51,7 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: var(--ada-crash-action-gap, 16px);
+  gap: var(--ada-crash-action-gap, ${pixels(BUTTON_GAP)});
 }
 
 /* Specificity keeps the inline padding through the Kit's pressed padding shorthand. */
@@ -46,10 +61,10 @@
   width: max-content;
   min-width: 0;
   max-width: 100%;
-  min-height: var(--ada-crash-action-height, 48px);
-  padding-inline: var(--ada-crash-action-inset, 20px);
+  min-height: var(--ada-crash-action-height, ${pixels(TEXT_BUTTON.height)});
+  padding-inline: var(--ada-crash-action-inset, ${pixels(CRASH_RECOVERY.fallbackActionInset)});
   font-family: system-ui, sans-serif;
-  font-size: var(--ada-crash-action-label, 18px);
+  font-size: var(--ada-crash-action-label, ${pixels(TEXT_BUTTON.label.size)});
   line-height: var(--ada-crash-action-line, normal);
   white-space: normal;
   overflow-wrap: anywhere;
@@ -92,10 +107,13 @@
 
 /* Crash buttons darken on hover and draw at half opacity while disabled. */
 button:hover:where(.crash-button) {
-  background: #373737;
+  background: ${UNLISTED_COLOURS.crashButtonHover};
 }
 
 button:disabled:where(.crash-button) {
   opacity: 0.5;
   cursor: default;
 }
+`;
+
+export { CRASH_RECOVERY_STYLE as UI_STYLESHEET };
