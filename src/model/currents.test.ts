@@ -95,11 +95,11 @@ describe("space currents", () => {
     }
   });
 
-  it("flow 70 at the centre line, fade to zero at the edges and over each end", () => {
+  it("flow 105 at the centre line, fade to zero at the edges and over each end", () => {
     const current = currents.find((entry) => entry.length > 3500)!;
     const { point, tangent } = middle(current);
     const flow = flowAt(3, point);
-    expect(speed(flow)).toBeCloseTo(CURRENTS.peakFlow, 6);
+    expect(speed(flow)).toBeCloseTo(105, 6);
     expect(flow.x * tangent.x + flow.y * tangent.y).toBeCloseTo(CURRENTS.peakFlow, 6);
     const edge = {
       x: point.x - tangent.y * (current.width / 2 + 1),

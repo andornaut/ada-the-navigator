@@ -77,7 +77,7 @@ export const CURRENTS = {
   /** Gap between a current's path and its cell's edge. */
   margin: 400,
   /** Peak flow at the centre line, world units per second. */
-  peakFlow: 70,
+  peakFlow: 105,
   /** Polyline points along each path. */
   samples: 48,
   /** Inclusive path width range. */

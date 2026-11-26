@@ -66,3 +66,4 @@ and scan feedback.
 | ada-0409 | Fire Scattershot volleys in three rows                                                                     | [ada-0409.md](../work/ada-0409.md) |
 | ada-0411 | Lock Ada's visible Phaser endpoint at fire time                                                            | [ada-0411.md](../work/ada-0411.md) |
 | ada-0417 | Shrink the navigable galaxy to 200,000 units per side                                                      | [ada-0417.md](../work/ada-0417.md) |
+| ada-0423 | Strengthen Whirlpool currents by 50 percent                                                                | [ada-0423.md](../work/ada-0423.md) |
