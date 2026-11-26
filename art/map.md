@@ -533,12 +533,14 @@ box width, innerHeight / box height), minScale, maxScale)`; the box centre at
   far outside the disc), pan the least distance that brings Ada inside the
   inner region.
   Nothing is selected on opening.
-- Pan limit: the inner region's centre stays within the projected bounding box
-  of the charting disc and every discovered place, so a far station stays
-  reachable and the map never drifts into empty space.
+- Pan limit: pan and zoom stay within one wrap period, the canonical
+  240000-unit square that flight wraps into. Panning stops at the seam instead
+  of crossing it, and the view's edge stays inside the square. Zoom-out is
+  capped at the tighter of the charting-disc fit and the square; zooming out
+  near an edge re-centres the view so its edge stays inside the square.
 - Stations exist outside the charting disc in every galaxy (the station
   catalog fills every cell). Once discovered, each is a place, and the opening
-  fit and pan limit reach it.
+  fit reaches it within the square.
 
 | View, CSS px    | Fit region      | Inner region    | `maxScale` | `minScale` | Zoom steps between |
 | --------------- | --------------- | --------------- | ---------- | ---------- | ------------------ |
