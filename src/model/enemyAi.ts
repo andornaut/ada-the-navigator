@@ -43,7 +43,7 @@ import {
   stationGuardPatrol,
   stationGuardPatrolRadius,
 } from "./ai/stationGuardPatrol.ts";
-import { hardpointAnchorOffset, muzzleOffset } from "./muzzles.ts";
+import { fixedMuzzleOffset, hardpointAnchorOffset, muzzleOffset } from "./muzzles.ts";
 import { fanHeading } from "./playerProjectiles.ts";
 import {
   INDUSTRIAL_HOME_RADIUS,
@@ -340,11 +340,13 @@ export function enemyFireLine(
   if (!aim || !magnitude(aim) || part === undefined) {
     return null;
   }
-  const layout = muzzleLayout(
-    definition,
-    muzzleArtForDefinition(definition) ?? MUZZLE_ART[state.archetype],
-  );
-  const tip = muzzleOffset(layout, hardpointId, state.facing, aim, volley);
+  const art = muzzleArtForDefinition(definition) ?? MUZZLE_ART[state.archetype];
+  const layout = muzzleLayout(definition, art);
+  // A fixed front Laser fires from its drawn shot origin; a turret from its barrel tip.
+  const tip =
+    (part?.kind === "weapon" && part.fixed
+      ? fixedMuzzleOffset(art, part.id, state.facing)
+      : undefined) ?? muzzleOffset(layout, hardpointId, state.facing, aim, volley);
   const offset = tip ?? (part ? hardpointOffset(definition, adaWidth, state.facing, part) : null);
   return {
     aim: unit(aim),
@@ -1572,10 +1574,8 @@ export function stepEnemy(
   // A turret whose art defines muzzles fires from the drawn barrel tip of the hull's drawn
   // heading and the top's drawn aim frame, cycling barrels by volley; the shot still flies along
   // the continuous aim. Other weapons fire from the model origin.
-  const layout = muzzleLayout(
-    definition,
-    muzzleArtForDefinition(definition) ?? MUZZLE_ART[state.archetype],
-  );
+  const art = muzzleArtForDefinition(definition) ?? MUZZLE_ART[state.archetype];
+  const layout = muzzleLayout(definition, art);
   const spawn = (origin: Point, turret: string | null, muzzleAim: Point, volley: number) => {
     const offset = muzzleOffset(layout, turret, state.facing, muzzleAim, volley);
     return offset ? { x: state.position.x + offset.x, y: state.position.y + offset.y } : origin;
@@ -1657,8 +1657,11 @@ export function stepEnemy(
   for (const part of definition.hardpoints) {
     const value = next.hardpoints.find((entry) => entry.id === part.id);
     if (part.kind === "weapon" && value && value.hp > 0) {
-      // Muzzles sit on the hull as it faced at the start of the step.
-      const offset = hardpointOffset(definition, context.adaWidth, state.facing, part);
+      // Muzzles sit on the hull as it faced at the start of the step; a fixed front Laser fires
+      // from its drawn shot origin.
+      const offset =
+        (part.fixed ? fixedMuzzleOffset(art, part.id, state.facing) : undefined) ??
+        hardpointOffset(definition, context.adaWidth, state.facing, part);
       const origin = { x: state.position.x + offset.x, y: state.position.y + offset.y };
       // A fixed front weapon aims along the facing and fires while its aim point is in the nose
       // arc; the hull never turns toward it.

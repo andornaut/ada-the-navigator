@@ -196,9 +196,7 @@ describe("enemy frame sets", () => {
   it("finds each archetype's data files in the core sidecars map", () => {
     const sidecars = readSidecars(CORE_MANIFEST.sidecars)!;
     expect(enemyJetsPath(sidecars, "fighter")).toBe("/art/enemies/fleetFighter-jets.json");
-    expect(enemyHardpointsPath(sidecars, "capital")).toBe(
-      "/art/enemies/fleetCapital-hardpoints.json",
-    );
+    expect(enemyHardpointsPath(sidecars, "capital")).toBe("/art/enemies/fleetCapital-prow.json");
     expect(enemyHardpointsPath(sidecars, "fighter")).toBeUndefined();
   });
 });

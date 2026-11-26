@@ -89,7 +89,7 @@ describe("sidecars map", () => {
         [
           "capitalForked",
           {
-            hardpoints: "/art/enemies/fleetCapitalForked-hardpoints.json",
+            hardpoints: "/art/enemies/fleetCapitalForked-prow.json",
             jets: "/art/enemies/fleetCapitalForked-jets.json",
           },
         ],

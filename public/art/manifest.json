@@ -47330,6 +47330,2886 @@
       "spinIndex": 7,
       "blink": true,
       "projectile": "mine"
+    },
+    {
+      "id": "enemy-frigate-prow-intact-0",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-intact-1",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-intact-2",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-intact-3",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-intact-4",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-intact-5",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-intact-6",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-intact-7",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-intact-8",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-intact-9",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-intact-10",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-intact-11",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-intact-12",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-intact-13",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-intact-14",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-intact-15",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-destroyed-0",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-destroyed-1",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-destroyed-2",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-destroyed-3",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-destroyed-4",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-destroyed-5",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-destroyed-6",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-destroyed-7",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-destroyed-8",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-destroyed-9",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-destroyed-10",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-destroyed-11",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-destroyed-12",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-destroyed-13",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-destroyed-14",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigate-prow-destroyed-15",
+      "path": "/art/enemies/fleetFrigate-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-capital-prow-left-intact-0",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-intact-1",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-intact-2",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-intact-3",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-intact-4",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-intact-5",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-intact-6",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-intact-7",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-intact-8",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-intact-9",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-intact-10",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-intact-11",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-intact-12",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-intact-13",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-intact-14",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-intact-15",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-destroyed-0",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-destroyed-1",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-destroyed-2",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-destroyed-3",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-destroyed-4",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-destroyed-5",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-destroyed-6",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-destroyed-7",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-destroyed-8",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-destroyed-9",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-destroyed-10",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-destroyed-11",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-destroyed-12",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-destroyed-13",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-destroyed-14",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-left-destroyed-15",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-intact-0",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-intact-1",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-intact-2",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-intact-3",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-intact-4",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-intact-5",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-intact-6",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-intact-7",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-intact-8",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-intact-9",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-intact-10",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-intact-11",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-intact-12",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-intact-13",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-intact-14",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-intact-15",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-destroyed-0",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-destroyed-1",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-destroyed-2",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-destroyed-3",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-destroyed-4",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-destroyed-5",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-destroyed-6",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-destroyed-7",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-destroyed-8",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-destroyed-9",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-destroyed-10",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-destroyed-11",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-destroyed-12",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-destroyed-13",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-destroyed-14",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capital-prow-right-destroyed-15",
+      "path": "/art/enemies/fleetCapital-prow-48-sheet.svg",
+      "svgSheet": true,
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-archie-prow-left-intact-0",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-intact-1",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-intact-2",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-intact-3",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-intact-4",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-intact-5",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-intact-6",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-intact-7",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-intact-8",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-intact-9",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-intact-10",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-intact-11",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-intact-12",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-intact-13",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-intact-14",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-intact-15",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-destroyed-0",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-destroyed-1",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-destroyed-2",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-destroyed-3",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-destroyed-4",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-destroyed-5",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-destroyed-6",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-destroyed-7",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-destroyed-8",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-destroyed-9",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-destroyed-10",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-destroyed-11",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-destroyed-12",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-destroyed-13",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-destroyed-14",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-left-destroyed-15",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-intact-0",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-intact-1",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-intact-2",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-intact-3",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-intact-4",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-intact-5",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-intact-6",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-intact-7",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-intact-8",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-intact-9",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-intact-10",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-intact-11",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-intact-12",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-intact-13",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-intact-14",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-intact-15",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-destroyed-0",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-destroyed-1",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-destroyed-2",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-destroyed-3",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-destroyed-4",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-destroyed-5",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-destroyed-6",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-destroyed-7",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-destroyed-8",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-destroyed-9",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-destroyed-10",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-destroyed-11",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-destroyed-12",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-destroyed-13",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-destroyed-14",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-archie-prow-right-destroyed-15",
+      "path": "/art/enemies/archie-prow-sheet.svg",
+      "width": 24,
+      "height": 24,
+      "displayWidth": 10.5,
+      "displayHeight": 10.5,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "archie",
+      "svgSheet": true
     }
   ],
   "spacePalette": "/art/space-palette.json",
@@ -47354,11 +50234,11 @@
   "sidecars": {
     "archie": {
       "jets": "/art/enemies/archie-jets.json",
-      "hardpoints": "/art/enemies/archie-hardpoints.json"
+      "hardpoints": "/art/enemies/archie-prow.json"
     },
     "capital": {
       "jets": "/art/enemies/fleetCapital-jets.json",
-      "hardpoints": "/art/enemies/fleetCapital-hardpoints.json"
+      "hardpoints": "/art/enemies/fleetCapital-prow.json"
     },
     "fighter": {
       "jets": "/art/enemies/fleetFighter-jets.json",
@@ -47366,7 +50246,7 @@
     },
     "frigate": {
       "jets": "/art/enemies/fleetFrigate-jets.json",
-      "hardpoints": "/art/enemies/fleetFrigate-hardpoints.json"
+      "hardpoints": "/art/enemies/fleetFrigate-prow.json"
     },
     "hostileStation": {
       "hardpoints": "/art/enemies/hostileStationCoral-hardpoints.json"

@@ -44,19 +44,22 @@ function mixedMechanismDefinition(): EnemyDefinition {
   const base = enemyDefinition(5, "capital", "mechanism:mixed-capital");
   const weapons = ["laser", "multiLaser", "heavyMissile"] as const;
   let index = 0;
+  // Its turrets only: the front Lasers' fixed fire has its own tests.
   return {
     ...base,
-    hardpoints: base.hardpoints.map((part) => {
-      if (part.kind !== "weapon") {
-        return part;
-      }
-      const weapon = weapons[index++ % weapons.length]!;
-      const fire = enemyFire("capital", { level: 1, weapon });
-      return {
-        ...part,
-        fire: { ...fire, interval: fire.interval / enemyFireRate(5, "capital", weapon) },
-      };
-    }),
+    hardpoints: base.hardpoints
+      .flatMap((part) => (part.kind === "weapon" && part.fixed ? [] : [part]))
+      .map((part) => {
+        if (part.kind !== "weapon") {
+          return part;
+        }
+        const weapon = weapons[index++ % weapons.length]!;
+        const fire = enemyFire("capital", { level: 1, weapon });
+        return {
+          ...part,
+          fire: { ...fire, interval: fire.interval / enemyFireRate(5, "capital", weapon) },
+        };
+      }),
   };
 }
 const spawn = (
@@ -677,8 +680,9 @@ describe("enemy rules", () => {
     const definition = enemyCatalog.capital;
     // This existing engagement tests disable and hull routing, not first-entry timing.
     let state: EnemyState = { ...spawn("capital"), firePhasesInitialized: true };
+    // Every turret fires; the front Lasers hold with Ada off the nose.
     const volleys = definition.hardpoints.flatMap((part) =>
-      part.kind === "weapon" ? part.fire.angles : [],
+      part.kind === "weapon" && !part.fixed ? part.fire.angles : [],
     );
     expect(stepEnemy(definition, observation(state), state).fire).toHaveLength(volleys.length);
     for (const part of definition.hardpoints.filter((part) => part.kind === "weapon")) {
@@ -807,9 +811,11 @@ describe("enemy ship physics and hull rotation", () => {
     expect(Object.keys(enemyCatalog)).not.toContain("oversizedCapital");
   });
 
-  it("gives the capital a command part, two engines and four turrets", () => {
+  it("gives the capital a command part, two engines, four turrets and two front Lasers", () => {
     const parts = enemyCatalog.capital.hardpoints;
-    expect(parts.map((part) => part.kind)).toEqual([
+    expect(
+      parts.map((part) => (part.kind === "weapon" && part.fixed ? "front" : part.kind)),
+    ).toEqual([
       "command",
       "engine",
       "engine",
@@ -817,11 +823,16 @@ describe("enemy ship physics and hull rotation", () => {
       "weapon",
       "weapon",
       "weapon",
+      "front",
+      "front",
     ]);
-    // Hit areas of radius shipRadius + 6 (16 units) stay apart on the 100-unit hull.
+    // Hit areas of radius shipRadius + 6 (16 units) stay apart on the 100-unit hull; the front
+    // Lasers sit out on the prow.
     const width = enemyCatalog.capital.sizeRatio * 20;
     for (const [index, part] of parts.entries()) {
-      expect(Math.max(Math.abs(part.offset.x), Math.abs(part.offset.y))).toBeLessThanOrEqual(0.5);
+      if (!(part.kind === "weapon" && part.fixed)) {
+        expect(Math.max(Math.abs(part.offset.x), Math.abs(part.offset.y))).toBeLessThanOrEqual(0.5);
+      }
       for (const other of parts.slice(index + 1)) {
         const gap = Math.hypot(part.offset.x - other.offset.x, part.offset.y - other.offset.y);
         expect(gap * width).toBeGreaterThanOrEqual(32);

@@ -3,7 +3,9 @@ import {
   enemyCatalog,
   type EnemyDefinition,
   type FireProfile,
+  FRONT_LASER_MOUNTS,
 } from "./enemyCatalog.ts";
+import { ENEMY_SIZE_RATIOS } from "./enemyDimensions.ts";
 
 /** One hardpoint in the export Art's generator reads to anchor parts on each heading. */
 export interface ExportedHardpoint {
@@ -43,16 +45,20 @@ export function exportHardpoints(): {
   version: 1;
 } {
   return {
-    archetypes: Object.fromEntries(
-      HARDPOINT_ARCHETYPES.map((archetype) => {
+    archetypes: Object.fromEntries([
+      ...HARDPOINT_ARCHETYPES.map((archetype) => {
         const definition: EnemyDefinition = enemyCatalog[archetype];
-        const hardpoints: ExportedHardpoint[] = definition.hardpoints.map((part, order) => ({
-          ...(part.kind === "weapon" ? { fire: part.fire.projectile } : {}),
-          id: part.id,
-          offset: [part.offset.x, part.offset.y],
-          order,
-          role: part.kind === "weapon" ? "turret" : part.kind,
-        }));
+        // The fleet frigate's and capital's front Lasers come from Art's fleet hardpoints files,
+        // not this export's layouts.
+        const hardpoints: ExportedHardpoint[] = definition.hardpoints
+          .filter((part) => !(part.kind === "weapon" && part.fixed))
+          .map((part, order) => ({
+            ...(part.kind === "weapon" ? { fire: part.fire.projectile } : {}),
+            id: part.id,
+            offset: [part.offset.x, part.offset.y],
+            order,
+            role: part.kind === "weapon" ? "turret" : part.kind,
+          }));
         const unlisted = (definition.mounts?.fill ?? []).filter(
           (id) => !hardpoints.some((part) => part.id === id),
         );
@@ -77,7 +83,21 @@ export function exportHardpoints(): {
         }));
         return [archetype, { hardpoints: [...parts, ...mounts], sizeRatio: definition.sizeRatio }];
       }),
-    ),
+      // Archie's flagship lists only its fixed front Lasers, which Art folds into its layout.
+      [
+        "archie",
+        {
+          hardpoints: (FRONT_LASER_MOUNTS.archie ?? []).map(({ id, offset }, order) => ({
+            fire: "bolt" as const,
+            id,
+            offset: [offset.x, offset.y] as [number, number],
+            order,
+            role: "turret" as const,
+          })),
+          sizeRatio: ENEMY_SIZE_RATIOS.flagship,
+        },
+      ],
+    ]),
     version: 1,
   };
 }

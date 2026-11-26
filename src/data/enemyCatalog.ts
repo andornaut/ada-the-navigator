@@ -6,6 +6,7 @@ import {
   type HeavyHullProfile,
   PHANTOM_FLAGSHIP_ID,
 } from "./enemyIdentity.ts";
+import { FLEET_FRONT_LASER_MOUNTS } from "./enemyMuzzles.ts";
 import { ENEMY_FORWARD_GUNS, type ForwardGuns } from "./enemyNavigation.ts";
 import {
   ENEMY_FIRE_MULTIPLIERS,
@@ -497,6 +498,64 @@ export const SMALL_CRAFT_WEAPONS = {
 
 export const AUTHORED_PURSUIT_HOME_RADIUS = 2000;
 
+/**
+ * Fixed front Lasers each moving heavy carries in addition to its mounts (gameplay/ships.md
+ * "Difficulty"): a frigate one and a capital, the flagship included, two. Platforms and hostile
+ * stations carry none.
+ */
+export const FRONT_LASER_COUNT = { capital: 2, frigate: 1 } as const;
+/** One fixed front Laser's mount on a hull design: Art's prow position. */
+export interface FrontLaserMount {
+  id: string;
+  /** Fraction of hull width in the hull's local frame: `-y` forward, `+x` starboard. */
+  offset: Point;
+}
+/** Front Laser mounts by hull design; each design lists exactly its class's FRONT_LASER_COUNT. */
+export type FrontLaserMounts = Readonly<
+  Partial<Record<EnemyGeometryKey, readonly FrontLaserMount[]>>
+>;
+/**
+ * Art's prow mounts for the Shoulder and Twin hull frigates, the six capital designs and the
+ * flagship: the fleet's read from their hardpoints files, and the flagship's Art layout offsets
+ * (art/heavies.md "Archie"), which its hardpoints file does not carry.
+ */
+export const FRONT_LASER_MOUNTS: FrontLaserMounts = {
+  ...FLEET_FRONT_LASER_MOUNTS,
+  archie: [
+    { id: "prow-left", offset: { x: -0.11238709677419356, y: -0.5187096774193549 } },
+    { id: "prow-right", offset: { x: 0.11238709677419356, y: -0.5187096774193549 } },
+  ],
+};
+
+/**
+ * A moving heavy's fixed front Laser hardpoints on its hull design's mounts, each firing the
+ * shared Laser at `weaponLevel` with `hp`, before the galaxy's fire rate and part HP apply; none
+ * for a design without mounts or a ship that carries none.
+ */
+export function frontLaserHardpoints(
+  frontMounts: FrontLaserMounts,
+  weaponLevel: WeaponLevel,
+  hp: number,
+  archetype: string,
+  assetKey: EnemyGeometryKey,
+): HardpointDefinition[] {
+  const count = Object.hasOwn(FRONT_LASER_COUNT, archetype)
+    ? FRONT_LASER_COUNT[archetype as keyof typeof FRONT_LASER_COUNT]
+    : 0;
+  const mounts = count ? (frontMounts[assetKey] ?? []) : [];
+  if (mounts.length && mounts.length !== count) {
+    throw new RangeError(`${assetKey} needs ${count} front Laser mounts, not ${mounts.length}`);
+  }
+  return mounts.map(({ id, offset }) => ({
+    fire: enemyFire(archetype, { level: weaponLevel, weapon: "laser" }),
+    fixed: true,
+    hp,
+    id,
+    kind: "weapon",
+    offset: { ...offset },
+  }));
+}
+
 /** Shared ship-sized defaults; each archetype states its own physics. */
 const base: Omit<EnemyDefinition, "guns" | "physics"> = {
   aggression: "sight",
@@ -536,6 +595,7 @@ export const enemyCatalog = {
       engine("engine-left", -0.24814814814814815, 0.3970370370370371),
       engine("engine-right", 0.24814814814814815, 0.3970370370370371),
       ...mountedHardpoints("capital", capitalMounts, capitalMounts.tiers[0], 3),
+      ...frontLaserHardpoints(FRONT_LASER_MOUNTS, 1, 3, "capital", "capital"),
     ],
     hp: 18,
     morale: { individualHpRatio: 0, packLossRatio: 1 },
@@ -562,6 +622,7 @@ export const enemyCatalog = {
     hardpoints: [
       engine("engine", 0, 0.3675428571428571),
       ...mountedHardpoints("frigate", frigateMounts, frigateMounts.tiers[0], 3),
+      ...frontLaserHardpoints(FRONT_LASER_MOUNTS, 1, 3, "frigate", "frigate"),
     ],
     hp: 10,
     // A heavy never flees on hull damage.
@@ -922,56 +983,6 @@ export { PHANTOM_FLAGSHIP_ID };
 export const FLAGSHIP_HULL_HP = 320;
 export const FLAGSHIP_PART_HP = 18;
 
-/**
- * Fixed front Lasers each moving heavy carries in addition to its mounts (gameplay/ships.md
- * "Difficulty"): a frigate one and a capital, the flagship included, two. Platforms and hostile
- * stations carry none.
- */
-export const FRONT_LASER_COUNT = { capital: 2, frigate: 1 } as const;
-/** One fixed front Laser's mount on a hull design: Art's prow position. */
-export interface FrontLaserMount {
-  id: string;
-  /** Fraction of hull width in the hull's local frame: `-y` forward, `+x` starboard. */
-  offset: Point;
-}
-/** Front Laser mounts by hull design; each design lists exactly its class's FRONT_LASER_COUNT. */
-export type FrontLaserMounts = Readonly<
-  Partial<Record<EnemyGeometryKey, readonly FrontLaserMount[]>>
->;
-/**
- * Art's prow mounts for the Shoulder and Twin hull frigates, the six capital designs and the
- * flagship. A design without them carries no front Lasers until Art places them.
- */
-export const FRONT_LASER_MOUNTS: FrontLaserMounts = {};
-
-/**
- * A moving heavy's fixed front Laser hardpoints on its hull design's mounts, each firing the
- * shared Laser at `weaponLevel` before the galaxy's fire rate and part HP apply; none for a design
- * without mounts or a ship that carries none.
- */
-export function frontLaserHardpoints(
-  frontMounts: FrontLaserMounts,
-  weaponLevel: WeaponLevel,
-  archetype: EnemyActorKind,
-  assetKey: EnemyGeometryKey,
-): HardpointDefinition[] {
-  const count = Object.hasOwn(FRONT_LASER_COUNT, archetype)
-    ? FRONT_LASER_COUNT[archetype as keyof typeof FRONT_LASER_COUNT]
-    : 0;
-  const mounts = count ? (frontMounts[assetKey] ?? []) : [];
-  if (mounts.length && mounts.length !== count) {
-    throw new RangeError(`${assetKey} needs ${count} front Laser mounts, not ${mounts.length}`);
-  }
-  return mounts.map(({ id, offset }) => ({
-    fire: enemyFire(archetype, { level: weaponLevel, weapon: "laser" }),
-    fixed: true,
-    hp: 0,
-    id,
-    kind: "weapon",
-    offset: { ...offset },
-  }));
-}
-
 /** Shared weapons use the player cadence share; enemy-only weapons retain their galaxy curve. */
 export function enemyFireRate(
   galaxy: GalaxyNumber,
@@ -1073,7 +1084,7 @@ export function mountedEnemyDefinition(
               loadout,
               weaponLevel,
             ),
-            ...frontLaserHardpoints(frontMounts, weaponLevel, archetype, assetKey),
+            ...frontLaserHardpoints(frontMounts, weaponLevel, 0, archetype, assetKey),
           ]
         : entry.hardpoints,
     };

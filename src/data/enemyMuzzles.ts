@@ -1,20 +1,20 @@
 import ring from "../../public/art/andromeda/enemies/hostileStationGarnet-hardpoints.json" with { type: "json" };
 import station from "../../public/art/cartwheel/enemies/hostileStationClaim-hardpoints.json" with { type: "json" };
 import platform from "../../public/art/cartwheel/enemies/platformWheel-hardpoints.json" with { type: "json" };
-import archie from "../../public/art/enemies/archie-hardpoints.json" with { type: "json" };
-import capital from "../../public/art/enemies/fleetCapital-hardpoints.json" with { type: "json" };
-import capitalBroad from "../../public/art/enemies/fleetCapitalBroad-hardpoints.json" with { type: "json" };
-import capitalCrossbow from "../../public/art/enemies/fleetCapitalCrossbow-hardpoints.json" with { type: "json" };
-import capitalForked from "../../public/art/enemies/fleetCapitalForked-hardpoints.json" with { type: "json" };
-import capitalManta from "../../public/art/enemies/fleetCapitalManta-hardpoints.json" with { type: "json" };
-import capitalOutrigger from "../../public/art/enemies/fleetCapitalOutrigger-hardpoints.json" with { type: "json" };
-import frigate from "../../public/art/enemies/fleetFrigate-hardpoints.json" with { type: "json" };
-import frigateTwin from "../../public/art/enemies/fleetFrigateTwin-hardpoints.json" with { type: "json" };
+import archie from "../../public/art/enemies/archie-prow.json" with { type: "json" };
+import capital from "../../public/art/enemies/fleetCapital-prow.json" with { type: "json" };
+import capitalBroad from "../../public/art/enemies/fleetCapitalBroad-prow.json" with { type: "json" };
+import capitalCrossbow from "../../public/art/enemies/fleetCapitalCrossbow-prow.json" with { type: "json" };
+import capitalForked from "../../public/art/enemies/fleetCapitalForked-prow.json" with { type: "json" };
+import capitalManta from "../../public/art/enemies/fleetCapitalManta-prow.json" with { type: "json" };
+import capitalOutrigger from "../../public/art/enemies/fleetCapitalOutrigger-prow.json" with { type: "json" };
+import frigate from "../../public/art/enemies/fleetFrigate-prow.json" with { type: "json" };
+import frigateTwin from "../../public/art/enemies/fleetFrigateTwin-prow.json" with { type: "json" };
 import retaliator from "../../public/art/enemies/fleetRetaliator-hardpoints.json" with { type: "json" };
 import cargo from "../../public/art/enemies/fleetRetaliatorCargoHauler-hardpoints.json" with { type: "json" };
 import mining from "../../public/art/enemies/fleetRetaliatorMiningFreighter-hardpoints.json" with { type: "json" };
 import phantomStation from "../../public/art/enemies/hostileStationCoral-hardpoints.json" with { type: "json" };
-import type { EnemyDefinition, Point } from "./enemyCatalog.ts";
+import type { EnemyDefinition, FrontLaserMount, Point } from "./enemyCatalog.ts";
 import { type EnemyGeometryKey } from "./enemyIdentity.ts";
 
 /** One turret's drawn pivot per hull heading and its top design's barrel tips. */
@@ -46,6 +46,11 @@ interface CarriedTop {
  */
 export interface MuzzleArt {
   anchors: ReadonlyMap<string, readonly Point[]>;
+  /**
+   * Each fixed front Laser's shot origin per hull heading, hull frame px about the hull's centre;
+   * it fires along the facing.
+   */
+  fixed: ReadonlyMap<string, readonly Point[]>;
   frame: number;
   own: ReadonlyMap<string, CarriedTop>;
   pivots: ReadonlyMap<string, readonly Point[]>;
@@ -59,8 +64,14 @@ export const ENEMY_DISPLAY_SCALE = 0.4375;
 interface HardpointsFile {
   fill?: string[];
   frame: number;
-  headings: { hardpoints: { id: string; pivot?: number[]; anchor?: number[] }[]; index: number }[];
-  hardpoints: { id: string; top: string | null }[];
+  headings: {
+    hardpoints: { anchor?: number[]; id: string; muzzles?: number[][]; pivot?: number[] }[];
+    index: number;
+  }[];
+  /** A `facing` hardpoint is a fixed front Laser; `offset` is frame px from the hull pivot. */
+  hardpoints: { aim?: string; id: string; offset?: number[]; top: string | null }[];
+  /** The hull's size in frame px, by which `offset` becomes a fraction of hull width. */
+  hull?: { width: number };
   tops: Record<string, { index: number; muzzles: number[][] }[]>;
   weaponTops?: Record<string, { aim: string; top: string }>;
 }
@@ -106,6 +117,17 @@ export function readMuzzleArt(file: HardpointsFile): MuzzleArt {
     }
     pivots.set(id, placed);
   }
+  const fixed = new Map<string, Point[]>();
+  for (const { id } of file.hardpoints.filter((part) => part.aim === "facing")) {
+    const muzzles: Point[] = [];
+    for (const heading of file.headings) {
+      const muzzle = heading.hardpoints.find((entry) => entry.id === id)?.muzzles?.[0];
+      if (muzzle) {
+        muzzles[heading.index] = { x: muzzle[0]! - half, y: muzzle[1]! - half };
+      }
+    }
+    fixed.set(id, muzzles);
+  }
   const tops = new Map<string, Point[][]>();
   for (const [design, aims] of Object.entries(file.tops)) {
     const tips: Point[][] = [];
@@ -114,8 +136,40 @@ export function readMuzzleArt(file: HardpointsFile): MuzzleArt {
     }
     tops.set(design, tips);
   }
-  return { anchors, frame: file.frame, own, pivots, tops, weaponTops };
+  return { anchors, fixed, frame: file.frame, own, pivots, tops, weaponTops };
 }
+
+/**
+ * A hull design's fixed front Lasers from Art's hardpoints file: each `facing` hardpoint's id and
+ * its offset as a fraction of the hull width. Empty for a file without front Lasers.
+ */
+export function readFrontLaserMounts(file: HardpointsFile): FrontLaserMount[] {
+  const width = file.hull?.width;
+  return file.hardpoints.flatMap(({ aim, id, offset }) => {
+    if (aim !== "facing") {
+      return [];
+    }
+    if (!offset || !width) {
+      throw new RangeError(`Front Laser ${id} needs an offset and the hull width`);
+    }
+    return [{ id, offset: { x: offset[0]! / width, y: offset[1]! / width } }];
+  });
+}
+
+/**
+ * Art's front Laser mounts on the fleet frigates and capitals. Archie's hardpoints file carries
+ * no offsets or hull size, so the catalog states the flagship's.
+ */
+export const FLEET_FRONT_LASER_MOUNTS: Partial<Record<EnemyGeometryKey, FrontLaserMount[]>> = {
+  capital: readFrontLaserMounts(capital),
+  capitalBroad: readFrontLaserMounts(capitalBroad),
+  capitalCrossbow: readFrontLaserMounts(capitalCrossbow),
+  capitalForked: readFrontLaserMounts(capitalForked),
+  capitalManta: readFrontLaserMounts(capitalManta),
+  capitalOutrigger: readFrontLaserMounts(capitalOutrigger),
+  frigate: readFrontLaserMounts(frigate),
+  frigateTwin: readFrontLaserMounts(frigateTwin),
+};
 
 /** Art's drawn mounts for every archetype with a hardpoints file, Archie's capital included. */
 export const MUZZLE_ART: Partial<Record<EnemyGeometryKey, MuzzleArt>> = {

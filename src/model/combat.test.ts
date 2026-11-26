@@ -218,11 +218,24 @@ describe("integrated combat", () => {
     const target = ship("frigate", { x: 400, y: 0 }, definition, id);
     // Its 400 offset lies outside the 720x360 base view, where enemies hold fire.
     const wide = { ...idle, viewportWidth: 2 * SCREEN.width };
-    const ordered = definition.mounts!.fill.flatMap((mount) =>
-      definition.hardpoints.flatMap((part) =>
-        part.kind === "weapon" && part.id === mount ? [part] : [],
+    // The mounts take their phases in fill order, then the front Laser, its nose on Ada.
+    const ordered = [
+      ...definition.mounts!.fill.flatMap((mount) =>
+        definition.hardpoints.flatMap((part) =>
+          part.kind === "weapon" && part.id === mount ? [part] : [],
+        ),
       ),
-    );
+      ...definition.hardpoints.flatMap((part) =>
+        part.kind === "weapon" && part.fixed ? [part] : [],
+      ),
+    ];
+    // Ada lies off its nose, so the front Laser holds its phase while the turrets fire.
+    const phases = ordered.map((part, index) => ({
+      index,
+      part,
+      phase: (index / ordered.length) * part.fire.interval,
+    }));
+    const turrets = phases.filter(({ part }) => !part.fixed);
     const dt = 0.01;
     flight.objects.push(target);
     stepFlight(CONTENT, dt, wide, flight);
@@ -230,19 +243,17 @@ describe("integrated combat", () => {
     expect(flight.shots.map((shot) => shot.projectile)).toEqual(
       ordered[0]!.fire.angles.map(() => ordered[0]!.fire.projectile),
     );
-    ordered.forEach((part, index) => {
-      const initial = (index === 0 ? 1 : index / ordered.length) * part.fire.interval;
-      expect(target.enemy!.hardpoints.find((value) => value.id === part.id)!.cooldown).toBeCloseTo(
-        initial - dt,
+    for (const { index, part, phase } of phases) {
+      const cooldown = target.enemy!.hardpoints.find((value) => value.id === part.id)!.cooldown;
+      expect(cooldown).toBeCloseTo(
+        part.fixed ? phase : (index === 0 ? part.fire.interval : phase) - dt,
         9,
       );
-    });
+    }
     const resumed = JSON.parse(JSON.stringify(flight)) as FlightState;
     expect(resumed.objects[0]!.enemy!.firePhasesInitialized).toBe(true);
     expect(resumed.objects[0]!.enemy!.hardpoints).toEqual(target.enemy!.hardpoints);
-    const lastPhase = Math.max(
-      ...ordered.map((part, index) => (index / ordered.length) * part.fire.interval),
-    );
+    const lastPhase = Math.max(...turrets.map(({ phase }) => phase));
     for (let remaining = lastPhase; remaining > 1e-9;) {
       const slice = Math.min(dt, remaining);
       stepFlight(CONTENT, slice, wide, flight);
@@ -253,8 +264,7 @@ describe("integrated combat", () => {
     // Mixed periods can repeat before another mount's first phase; retain every due volley.
     const kinds = flight.shots.map((shot) => shot.projectile);
     const horizon = lastPhase + dt;
-    const expected = ordered.flatMap((part, index) => {
-      const phase = (index / ordered.length) * part.fire.interval;
+    const expected = turrets.flatMap(({ part, phase }) => {
       let volleys = 0;
       for (let at = phase; at < horizon - 1e-9; at += part.fire.interval) {
         volleys++;
@@ -327,16 +337,29 @@ describe("integrated combat", () => {
     );
     expect(flight.shots.map((shot) => shot.projectile).sort()).toEqual(standing.sort());
     flight.shots = [];
-    // Destroying the last weapons disables it once while hull remains.
-    for (const id of ["weapon-right", "weapon-rear-left", "weapon-rear-right"]) {
+    // Its front Lasers, with Ada astern of the nose, hold fire. Destroying the last weapons, the
+    // front Lasers among them, disables it once while hull remains.
+    for (const id of ["weapon-right", "weapon-rear-left", "weapon-rear-right", "prow-left"]) {
       destroyPart(id);
     }
+    expect(stepFlight(CONTENT, 0.01, wide, flight)).not.toContainEqual({
+      id: "target",
+      type: "enemyDisabled",
+    });
+    destroyPart("prow-right");
     const disabling = stepFlight(CONTENT, 0.01, wide, flight);
     expect(disabling).toContainEqual({ id: "target", type: "enemyDisabled" });
     expect(disabling).not.toContainEqual({ id: target.id, type: "enemyDestroyed" });
     expect(hullHp).toBeGreaterThan(0);
     expect(target.enemy).toMatchObject({ disabled: true, hp: hullHp });
-    for (const id of ["weapon-left", "weapon-right", "weapon-rear-left", "weapon-rear-right"]) {
+    for (const id of [
+      "weapon-left",
+      "weapon-right",
+      "weapon-rear-left",
+      "weapon-rear-right",
+      "prow-left",
+      "prow-right",
+    ]) {
       expect(target.enemy!.hardpoints.find((part) => part.id === id)!.hp).toBe(0);
     }
     expect(flight.objects).toContain(target);
@@ -423,6 +446,12 @@ describe("integrated combat", () => {
     const flight = empty();
     const target = ship("capital", { x: 400, y: 0 });
     target.enemy!.hardpoints.forEach((part) => (part.cooldown = 999));
+    // Its front Lasers' prow ports are already destroyed, so they no longer take hits.
+    const stumps = ["prow-left", "prow-right"];
+    for (const part of target.enemy!.hardpoints.filter(({ id }) => stumps.includes(id))) {
+      part.hp = 0;
+    }
+    const parts = target.enemy!.hardpoints.map((part) => part.hp);
     flight.objects.push(target);
     flight.shots.push({
       damage: CONTENT.tuning.flight.playerShotDamage,
@@ -431,16 +460,15 @@ describe("integrated combat", () => {
       id: "travel",
       life: 5,
       piercing: false,
-      // Down the hull's centreline, clear of the turrets and engines either side.
+      // Down the hull's centreline, past the prow stumps and clear of the turrets and engines
+      // either side.
       velocity: { x: 0, y: 300 },
       x: 400,
       y: -150,
     });
     stepFlight(CONTENT, 0.7, idle, flight);
     expect(target.enemy!.hp).toBe(enemyCatalog.capital.hp - 1);
-    expect(target.enemy!.hardpoints.map((part) => part.hp)).toEqual(
-      enemyCatalog.capital.hardpoints.map((part) => part.hp),
-    );
+    expect(target.enemy!.hardpoints.map((part) => part.hp)).toEqual(parts);
     expect(flight.shots.some((shot) => shot.id === "travel")).toBe(false);
   });
 

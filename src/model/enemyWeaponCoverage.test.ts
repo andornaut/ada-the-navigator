@@ -36,8 +36,13 @@ it("materializes the signature roster and both exclusive capital profiles throug
             )
           : [definition.fire.weapon];
         if (enemy.archetype === "capital") {
+          // Its mounts' signature, and the front Lasers.
           expect(new Set(weapons)).toEqual(
-            new Set(["scattershot", weapons.includes("mineLayer") ? "mineLayer" : "chargedLance"]),
+            new Set([
+              "laser",
+              "scattershot",
+              weapons.includes("mineLayer") ? "mineLayer" : "chargedLance",
+            ]),
           );
           capitalProfiles.add(weapons.includes("mineLayer") ? "mineLayer" : "chargedLance");
         }

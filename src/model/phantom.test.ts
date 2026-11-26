@@ -205,7 +205,7 @@ describe("Phantom chapter", () => {
   it("keeps the flagship alive on lethal hull and final weapon hits without altering normal capitals", () => {
     const definition = enemyDefinition(6, "capital", PHANTOM_FLAGSHIP_ID);
     expect(definition.hp).toBe(320);
-    expect(definition.hardpoints).toHaveLength(11);
+    expect(definition.hardpoints).toHaveLength(13);
     expect(definition.hardpoints.every((part) => part.hp === 18)).toBe(true);
     expect(definition.behaviour).toEqual({ kind: "siege", speedFraction: 0.25 });
     expect(definition.pursuit.homeRadius).toBe(1000);

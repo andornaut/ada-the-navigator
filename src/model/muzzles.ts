@@ -56,3 +56,18 @@ export function hardpointAnchorOffset(
     ? screenToWorld({ x: anchor.x * ENEMY_DISPLAY_SCALE, y: anchor.y * ENEMY_DISPLAY_SCALE })
     : undefined;
 }
+
+/**
+ * World offset from the hull centre to a fixed front Laser's drawn shot origin at the hull's drawn
+ * heading, or undefined when Art draws none for it.
+ */
+export function fixedMuzzleOffset(
+  art: MuzzleArt | undefined,
+  id: string,
+  facing: Point,
+): Point | undefined {
+  const muzzle = art?.fixed.get(id)?.[drawnIndex(facing)];
+  return muzzle
+    ? screenToWorld({ x: muzzle.x * ENEMY_DISPLAY_SCALE, y: muzzle.y * ENEMY_DISPLAY_SCALE })
+    : undefined;
+}

@@ -76,7 +76,8 @@ describe("heavy weapon mounts", () => {
     (archetype) => {
       const { hardpoints } = enemyCatalog[archetype];
       const mounts = HEAVY_MOUNTS[archetype];
-      for (const part of hardpoints.filter((part) => part.kind === "weapon")) {
+      // The front Lasers sit on Art's prow mounts, apart from the turret mounts.
+      for (const part of hardpoints.filter((part) => part.kind === "weapon" && !part.fixed)) {
         expect(part.offset).toEqual(mounts.offsets[part.id]);
       }
     },
@@ -170,7 +171,12 @@ describe("enemy fire profiles", () => {
     const armed = enemyDefinition(6, "capital", "ship:7").hardpoints.flatMap((part) =>
       part.kind === "weapon" ? [[part.id, part.fire.weapon, part.fire.level]] : [],
     );
-    expect(armed).toEqual([...loadout].map(([id, weapon]) => [id, weapon, 1]));
+    // The front Lasers follow the mounts.
+    expect(armed).toEqual([
+      ...[...loadout].map(([id, weapon]) => [id, weapon, 1]),
+      ["prow-left", "laser", 1],
+      ["prow-right", "laser", 1],
+    ]);
     for (const galaxy of [1, 5, 6] as const) {
       expect(
         enemyDefinition(galaxy, "platform").hardpoints.map((part) =>

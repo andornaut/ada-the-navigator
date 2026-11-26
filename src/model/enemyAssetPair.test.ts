@@ -1,10 +1,10 @@
 import { expect, it } from "vitest";
 
 import platformFile from "../../public/art/cartwheel/enemies/platformWheel-hardpoints.json";
-import archieFile from "../../public/art/enemies/archie-hardpoints.json";
-import capitalFile from "../../public/art/enemies/fleetCapital-hardpoints.json";
-import crossbowFile from "../../public/art/enemies/fleetCapitalCrossbow-hardpoints.json";
-import frigateFile from "../../public/art/enemies/fleetFrigate-hardpoints.json";
+import archieFile from "../../public/art/enemies/archie-prow.json";
+import capitalFile from "../../public/art/enemies/fleetCapital-prow.json";
+import crossbowFile from "../../public/art/enemies/fleetCapitalCrossbow-prow.json";
+import frigateFile from "../../public/art/enemies/fleetFrigate-prow.json";
 import { enemyDefinition, PHANTOM_FLAGSHIP_ID } from "../data/enemyCatalog.ts";
 import { enemyAssetKey, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { ENEMY_DISPLAY_SCALE, muzzleArtForDefinition, muzzleLayout } from "../data/enemyMuzzles.ts";

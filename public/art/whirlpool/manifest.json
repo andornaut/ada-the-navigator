@@ -18751,6 +18751,1734 @@
         "y": 0.5
       },
       "svgSheet": true
+    },
+    {
+      "id": "enemy-frigateTwin-prow-intact-0",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-intact-1",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-intact-2",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-intact-3",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-intact-4",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-intact-5",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-intact-6",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-intact-7",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-intact-8",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-intact-9",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-intact-10",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-intact-11",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-intact-12",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-intact-13",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-intact-14",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-intact-15",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "hardpoint": "prow",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-destroyed-0",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-destroyed-1",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-destroyed-2",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-destroyed-3",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-destroyed-4",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-destroyed-5",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-destroyed-6",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-destroyed-7",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-destroyed-8",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-destroyed-9",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-destroyed-10",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-destroyed-11",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-destroyed-12",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-destroyed-13",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-destroyed-14",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-frigateTwin-prow-destroyed-15",
+      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "hardpoint": "prow",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "frigate"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-intact-0",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-intact-1",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-intact-2",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-intact-3",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-intact-4",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-intact-5",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-intact-6",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-intact-7",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-intact-8",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-intact-9",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-intact-10",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-intact-11",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-intact-12",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-intact-13",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-intact-14",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-intact-15",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "hardpoint": "prow-left",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-destroyed-0",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-destroyed-1",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-destroyed-2",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-destroyed-3",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-destroyed-4",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-destroyed-5",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-destroyed-6",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-destroyed-7",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-destroyed-8",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-destroyed-9",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-destroyed-10",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-destroyed-11",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-destroyed-12",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-destroyed-13",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-destroyed-14",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-left-destroyed-15",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "hardpoint": "prow-left",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-intact-0",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-intact-1",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-intact-2",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-intact-3",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-intact-4",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-intact-5",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-intact-6",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-intact-7",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-intact-8",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-intact-9",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-intact-10",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-intact-11",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-intact-12",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-intact-13",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-intact-14",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-intact-15",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "hardpoint": "prow-right",
+      "state": "intact",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-destroyed-0",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-0",
+      "directionIndex": 0,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-destroyed-1",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-1",
+      "directionIndex": 1,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-destroyed-2",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-2",
+      "directionIndex": 2,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-destroyed-3",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-3",
+      "directionIndex": 3,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-destroyed-4",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-4",
+      "directionIndex": 4,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-destroyed-5",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-5",
+      "directionIndex": 5,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-destroyed-6",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-6",
+      "directionIndex": 6,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-destroyed-7",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-7",
+      "directionIndex": 7,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-destroyed-8",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-8",
+      "directionIndex": 8,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-destroyed-9",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-9",
+      "directionIndex": 9,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-destroyed-10",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-10",
+      "directionIndex": 10,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-destroyed-11",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-11",
+      "directionIndex": 11,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-destroyed-12",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-12",
+      "directionIndex": 12,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-destroyed-13",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-13",
+      "directionIndex": 13,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-destroyed-14",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-14",
+      "directionIndex": 14,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalManta-prow-right-destroyed-15",
+      "path": "/art/whirlpool/enemies/fleetCapitalManta-prow-32-sheet.svg",
+      "svgSheet": true,
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-15",
+      "directionIndex": 15,
+      "hardpoint": "prow-right",
+      "state": "destroyed",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
     }
   ],
   "whales": "/art/friendly-whales.json",
@@ -18762,11 +20490,11 @@
   "sidecars": {
     "frigateTwin": {
       "jets": "/art/enemies/fleetFrigateTwin-jets.json",
-      "hardpoints": "/art/enemies/fleetFrigateTwin-hardpoints.json"
+      "hardpoints": "/art/enemies/fleetFrigateTwin-prow.json"
     },
     "capitalManta": {
       "jets": "/art/enemies/fleetCapitalManta-jets.json",
-      "hardpoints": "/art/enemies/fleetCapitalManta-hardpoints.json"
+      "hardpoints": "/art/enemies/fleetCapitalManta-prow.json"
     }
   }
 }

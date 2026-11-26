@@ -21,6 +21,8 @@ function fixture(archetype: "capital" | "frigate" = "frigate", flagship = false)
     { x: 300, y: 0 },
   );
   state.engaged = true;
+  // Its nose on Ada, so the front Lasers' clocks run with the mounts'.
+  state.facing = { x: -1, y: 0 };
   return { definition, state };
 }
 function context(state: EnemyState, dt = 0.01): EnemyContext {
@@ -38,11 +40,17 @@ function context(state: EnemyState, dt = 0.01): EnemyContext {
     visibility: "visible",
   };
 }
+/** The weapons in phase order: the mounts in fill order, then the front Lasers. */
 function mounts(definition: EnemyDefinition) {
-  return definition.mounts!.fill.flatMap((id) => {
-    const part = definition.hardpoints.find((part) => part.id === id);
-    return part?.kind === "weapon" ? [part] : [];
-  });
+  return [
+    ...definition.mounts!.fill.flatMap((id) => {
+      const part = definition.hardpoints.find((part) => part.id === id);
+      return part?.kind === "weapon" ? [part] : [];
+    }),
+    ...definition.hardpoints.flatMap((part) =>
+      part.kind === "weapon" && part.fixed ? [part] : [],
+    ),
+  ];
 }
 
 describe("heavy fire clocks", () => {

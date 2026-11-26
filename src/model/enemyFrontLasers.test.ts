@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
 
+import capital from "../../public/art/enemies/fleetCapital-prow.json" with { type: "json" };
+import capitalBroad from "../../public/art/enemies/fleetCapitalBroad-prow.json" with { type: "json" };
+import capitalCrossbow from "../../public/art/enemies/fleetCapitalCrossbow-prow.json" with { type: "json" };
+import capitalForked from "../../public/art/enemies/fleetCapitalForked-prow.json" with { type: "json" };
+import capitalManta from "../../public/art/enemies/fleetCapitalManta-prow.json" with { type: "json" };
+import capitalOutrigger from "../../public/art/enemies/fleetCapitalOutrigger-prow.json" with { type: "json" };
+import frigateFile from "../../public/art/enemies/fleetFrigate-prow.json" with { type: "json" };
+import frigateTwin from "../../public/art/enemies/fleetFrigateTwin-prow.json" with { type: "json" };
 import {
   ENEMY_AIM,
   ENEMY_SPEED_SHARE,
@@ -14,6 +22,7 @@ import {
   PHANTOM_FLAGSHIP_ID,
 } from "../data/enemyCatalog.ts";
 import { HULL_DESIGN_KEYS, hullDesignClass } from "../data/enemyIdentity.ts";
+import { ENEMY_DISPLAY_SCALE } from "../data/enemyMuzzles.ts";
 import { ENEMY_FORWARD_GUNS } from "../data/enemyNavigation.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { weaponAt, weaponSpeed } from "../data/weaponCatalog.ts";
@@ -26,6 +35,7 @@ import {
   stepEnemy,
   withinNoseArc,
 } from "./enemyAi.ts";
+import { drawnIndex } from "./muzzles.ts";
 
 /** Explicit test mounts on every frigate, capital and flagship design, not Art's positions. */
 const TEST_PROW_PAIR = [
@@ -185,14 +195,94 @@ describe("heavy front Lasers", () => {
     }
   });
 
-  it("ships only mounts that match each class's count and refuses a mismatch", () => {
+  it("ships Art's prow mounts on every frigate, capital and flagship design", () => {
+    const files = {
+      capital,
+      capitalBroad,
+      capitalCrossbow,
+      capitalForked,
+      capitalManta,
+      capitalOutrigger,
+      frigate: frigateFile,
+      frigateTwin,
+    };
+    expect(Object.keys(FRONT_LASER_MOUNTS).sort()).toEqual(
+      ["archie", ...Object.keys(files)].sort(),
+    );
+    for (const [key, file] of Object.entries(files)) {
+      // Each offset is Art's frame px from the hull pivot over the hull width.
+      const lasers = file.hardpoints.flatMap((part) =>
+        "aim" in part && part.aim === "facing" && "offset" in part
+          ? [
+              {
+                id: part.id,
+                offset: {
+                  x: part.offset[0]! / file.hull.width,
+                  y: part.offset[1]! / file.hull.width,
+                },
+              },
+            ]
+          : [],
+      );
+      expect(FRONT_LASER_MOUNTS[key as keyof typeof files]).toEqual(lasers);
+      expect(lasers.map(({ id }) => id)).toEqual(
+        hullDesignClass(key) === "frigate" || key === "frigate"
+          ? ["prow"]
+          : ["prow-left", "prow-right"],
+      );
+    }
+    expect(FRONT_LASER_MOUNTS.archie!.map(({ id }) => id)).toEqual(["prow-left", "prow-right"]);
     for (const [key, mounts] of Object.entries(FRONT_LASER_MOUNTS)) {
       const archetype = key === "archie" ? "capital" : (hullDesignClass(key) ?? key);
       expect(mounts).toHaveLength(FRONT_LASER_COUNT[archetype as "capital" | "frigate"]);
     }
     expect(() =>
-      frontLaserHardpoints({ frigate: TEST_MOUNTS.capital! }, 1, "frigate", "frigate"),
+      frontLaserHardpoints({ frigate: TEST_MOUNTS.capital! }, 1, 10, "frigate", "frigate"),
     ).toThrow(RangeError);
+    // Every shipped heavy that moves carries them, the flagship's at 18 HP.
+    for (const galaxy of [1, 2, 3, 4, 5, 6] as const) {
+      expect(frontParts(enemyDefinition(galaxy, "frigate", "ship"))).toHaveLength(1);
+      expect(frontParts(enemyDefinition(galaxy, "capital", "ship"))).toHaveLength(2);
+    }
+    expect(
+      frontParts(enemyDefinition(6, "capital", PHANTOM_FLAGSHIP_ID)).map(({ hp, id }) => [id, hp]),
+    ).toEqual([
+      ["prow-left", 18],
+      ["prow-right", 18],
+    ]);
+  });
+
+  it("fires a shipped front Laser from Art's drawn shot origin along the facing", () => {
+    const definition = enemyDefinition(1, "frigate", "test-frigate");
+    for (const facing of [
+      { x: 1, y: 0 },
+      { x: 0, y: 1 },
+      { x: -Math.SQRT1_2, y: -Math.SQRT1_2 },
+    ]) {
+      const state = engaged(definition, facing, { x: -300 * facing.x, y: -300 * facing.y });
+      const heading = drawnIndex(facing);
+      const drawn = frigateFile.headings
+        .find(({ index }) => index === heading)!
+        .hardpoints.find(({ id }) => id === "prow")!;
+      const half = frigateFile.frame / 2;
+      const muzzle = (drawn as { muzzles: number[][] }).muzzles[0]!;
+      // Frame px about the hull centre, at the display scale, through the inverse projection.
+      const screen = {
+        x: (muzzle[0]! - half) * ENEMY_DISPLAY_SCALE,
+        y: (muzzle[1]! - half) * ENEMY_DISPLAY_SCALE,
+      };
+      const expected = {
+        x: state.position.x + screen.y + screen.x / 2,
+        y: state.position.y + screen.y - screen.x / 2,
+      };
+      const step = stepEnemy(definition, context(state), state);
+      const shot = step.fire.find(({ hardpointId }) => hardpointId === "prow")!;
+      expect(shot.origin.x).toBeCloseTo(expected.x, 9);
+      expect(shot.origin.y).toBeCloseTo(expected.y, 9);
+      expect(shot.aim.x).toBeCloseTo(step.state.facing.x, 12);
+      expect(shot.aim.y).toBeCloseTo(step.state.facing.y, 12);
+      expect(drawnIndex(step.state.facing)).toBe(heading);
+    }
   });
 
   it("fires only along the facing while the aim point is inside the nose arc", () => {

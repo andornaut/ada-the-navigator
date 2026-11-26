@@ -637,7 +637,10 @@ describe("independent weapon aim", () => {
         };
         const next = stepEnemy(definition, unseen([state]), state).state;
         const decay = Math.exp(-dt / definition.physics.aimTurnSeconds);
-        for (const part of definition.hardpoints.filter((entry) => entry.kind === "weapon")) {
+        // Every turret, not the fixed front Lasers.
+        for (const part of definition.hardpoints.flatMap((entry) =>
+          entry.kind === "weapon" && !entry.fixed ? [entry] : [],
+        )) {
           const offset = hardpointOffset(definition, 20, facing, part);
           const wanted = rotate(
             { x: target.x - offset.x, y: target.y - offset.y },
