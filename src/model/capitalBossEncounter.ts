@@ -16,6 +16,12 @@ export type CapitalBossProgress = { readonly site: Vec } & (
     }
 );
 
+/** Required encounter outcomes are independent of the world's paging and guard records. */
+export type RequiredCapitalBossProgress =
+  | { readonly phase: "hidden" | "revealed" | "active" }
+  | { readonly actors: readonly SpaceObject[]; readonly phase: "away" }
+  | { readonly outcome: "defeated" | "disabled"; readonly phase: "resolved" };
+
 type BossIdentity = Pick<CapitalBossHud, "captain" | "id" | "ship">;
 
 /** Look up the one active or paged encounter actor without forcing its region to load. */

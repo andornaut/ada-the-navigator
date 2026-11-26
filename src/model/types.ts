@@ -8,7 +8,7 @@ import type { JobType } from "../data/jobs.ts";
 import type { StorySceneId } from "../data/storyShips.ts";
 import type { GalaxyNumber, Vec, Weapon } from "../data/types.ts";
 import type { AchievementState } from "./achievements.ts";
-import type { CapitalBossProgress } from "./capitalBossEncounter.ts";
+import type { CapitalBossProgress, RequiredCapitalBossProgress } from "./capitalBossEncounter.ts";
 import type { EnemyState } from "./enemyAi.ts";
 import type { ExplorationSites, ExplorationState } from "./explorationState.ts";
 import type { FlightTopology } from "./flightTopology.ts";
@@ -143,7 +143,7 @@ export interface RequiredEncounterPlan {
 }
 /** G3 authored encounters retain their source ordering and complete individual actor states. */
 export interface WhirlpoolRequiredRoleEncounterPlan {
-  role: "whirlpool-capital" | "whirlpool-holodisk";
+  role: "whirlpool-capital" | "whirlpool-holodisk" | "whirlpool-sounder";
   site: SpaceObject;
   actors: readonly SpaceObject[];
 }
@@ -246,6 +246,7 @@ export interface GalaxyGeography {
 
 export interface GalaxyProgress {
   capitalBoss?: CapitalBossProgress;
+  sounder?: RequiredCapitalBossProgress;
   explorationSites?: ExplorationSites;
   /** Permanent geographic knowledge, independent of current encounter bodies or outcomes. */
   hostileSites?: Record<string, HostileStationSiteState>;

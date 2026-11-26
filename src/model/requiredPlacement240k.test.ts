@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 
+import { WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { CURRENTS } from "../data/galaxyFeatures.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
@@ -29,7 +30,9 @@ it("validates final Whirlpool reservations on the 240k chart without publishing 
       const { x, y } = reservation.site;
       expect(progress.requiredSites?.[id]).toEqual({ x, y });
       expect(worldInCurrent(world, 3, CURRENTS.clearance, reservation.site)).toBe(false);
-      expect(reservation.actors.find((actor) => actor.routeId === id)?.id).toBe(`route:${id}`);
+      expect(reservation.actors.find((actor) => actor.routeId === id)?.id).toBe(
+        id === "holodisk" ? WHIRLPOOL_CAPITAL_BOSS.id : `route:${id}`,
+      );
       return reservation.site;
     });
     for (const [index, site] of sites.entries()) {

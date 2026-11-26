@@ -34,3 +34,25 @@ export const SUNFLOWER_BOSS_CUES = {
     text: "The patrol's clear. I marked a supply cache and a safer route between the outposts.",
   },
 } as const satisfies Record<string, ConversationLine>;
+
+export const WHIRLPOOL_CAPITAL_BOSS = {
+  captain: CAPITAL_CAPTAINS.captainSounder.name,
+  id: "route:holodisk:sounder",
+  ship: "Manta Dreadnought",
+  swarmPack: "route:holodisk:sounder:pack",
+} as const;
+
+export const WHIRLPOOL_BOSS_CUES = {
+  approach: {
+    speaker: "captainSounder",
+    text: "I followed their calls. Stay out of this current.",
+  },
+  hardpoint: {
+    speaker: "astra",
+    text: "One hardpoint down. Ride the current around the escorts.",
+  },
+  resolved: {
+    speaker: "astra",
+    text: "Sounder's out of the way. The disk is where the family said it would be.",
+  },
+} as const satisfies Record<string, ConversationLine>;

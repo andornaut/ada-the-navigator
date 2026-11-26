@@ -1,18 +1,22 @@
 import { expect, it } from "vitest";
 
+import { WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import {
   createUnpopulatedFlight,
   ensureDestination,
+  ensureDestinationAt,
   ensureRouteEncounter,
   populateRequiredChapterFlight,
 } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
-import { worldRecordObjectRemoval } from "./geography.ts";
+import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
+import { storeRequiredRolePlan } from "./requiredRolePlans.ts";
+import { restoreSave } from "./save.ts";
 
 function launch(reunited: boolean) {
   const model = new GameModel(CONTENT);
@@ -70,7 +74,7 @@ it("preserves eligible reentry roles, knowledge and strict Continue including a 
   const flight = model.state.flight!;
   const actors = stationPopulationObjects(flight);
   const leader = actors.find((actor) => actor.routeId === "holodisk")!;
-  expect(leader.enemy!.archetype).toBe(HOLODISKS.guard.leader);
+  expect(leader.enemy!.archetype).toBe("capital");
   expect(actors.some((actor) => actor.routeId === "whale" || actor.routeId === "family")).toBe(
     false,
   );
@@ -81,7 +85,9 @@ it("preserves eligible reentry roles, knowledge and strict Continue including a 
   void model.quests;
   void model.contextQuestDetails;
   expect(model.state).toEqual(beforeQueries);
-  const casualty = actors.find((actor) => actor.enemy?.packId === "route:holodisk:pack")!;
+  const casualty = actors.find(
+    (actor) => actor.enemy?.packId === WHIRLPOOL_CAPITAL_BOSS.swarmPack,
+  )!;
   worldRecordObjectRemoval(flightWorldContext(flight), CONTENT, casualty, flight);
   flight.objects = flight.objects.filter(({ id }) => id !== casualty.id);
   const resumed = new GameModel(CONTENT, model.save());
@@ -91,3 +97,91 @@ it("preserves eligible reentry roles, knowledge and strict Continue including a 
     false,
   );
 });
+
+it.each(["pending", "active", "dormant", "defeated", "unplanned"] as const)(
+  "starts Sounder from a legacy %s disk encounter without releasing the disk",
+  (legacy) => {
+    const model = launch(false);
+    const before = model.state.flight!;
+    const progress = model.state.progress[3];
+    const savedSite = structuredClone(progress.requiredSites!.holodisk!);
+    const flight = createUnpopulatedFlight(CONTENT, 3, before.seed, model.state.economy, 301);
+    flight.topology = before.topology!;
+    Object.assign(progress, {
+      introduced: true,
+      known: ["whale", "family"],
+      questComplete: true,
+      stage: 5,
+    });
+    populateRequiredChapterFlight(CONTENT, progress, flight, () => {
+      for (const id of progress.known) {
+        ensureDestinationAt(CONTENT, id, progress.requiredSites![id]!, flight);
+      }
+      if (legacy === "unplanned") {
+        delete progress.requiredSites!.holodisk;
+        return;
+      }
+      const site = ensureDestinationAt(CONTENT, "holodisk", savedSite, flight);
+      const leader = ensureRouteEncounter(CONTENT, site.id, flight)!;
+      expect(leader.enemy?.archetype).toBe(HOLODISKS.guard.leader);
+      if (legacy === "defeated") {
+        worldRecordObjectRemoval(flightWorldContext(flight), CONTENT, leader, flight);
+        flight.objects = flight.objects.filter((object) => object !== leader);
+      }
+      if (legacy === "pending") {
+        const actors = [
+          leader,
+          ...flight.objects.filter(
+            (object) =>
+              object.enemy?.escortOf === leader.id ||
+              object.enemy?.packId === "route:holodisk:pack",
+          ),
+        ];
+        flight.objects = flight.objects.filter(
+          (object) => object !== site && !actors.includes(object),
+        );
+        delete flight.combat;
+        storeRequiredRolePlan(progress, flight, { actors, role: "whirlpool-holodisk", site });
+      }
+      if (legacy === "active") {
+        flight.player = { x: leader.x + 300, y: leader.y };
+      }
+    });
+    model.state.flight = flight;
+    if (legacy === "dormant") {
+      expect(flight.world.notables["route:holodisk"]?.enemy?.archetype).toBe(
+        HOLODISKS.guard.leader,
+      );
+    }
+    expect(restoreSave(model.save())).not.toBeNull();
+    const resumed = new GameModel(CONTENT, model.save());
+    resumed.continueGame();
+    const active = resumed.state.flight!;
+    const replacement = stationPopulationObjects(active).find(
+      (actor) => actor.routeId === "holodisk",
+    );
+    expect(replacement).toMatchObject({
+      enemy: { archetype: "capital" },
+      id: WHIRLPOOL_CAPITAL_BOSS.id,
+    });
+    expect(resumed.state.progress[3].sounder).toEqual({ phase: "active" });
+    const live = stationPopulationObjects(active);
+    expect(live.filter((actor) => actor.enemy?.escortOf === replacement!.id)).toHaveLength(2);
+    expect(
+      live.filter((actor) => actor.enemy?.packId === WHIRLPOOL_CAPITAL_BOSS.swarmPack),
+    ).toHaveLength(4);
+    expect(live.some((actor) => actor.id === "route:holodisk" || actor.id === "holodisk")).toBe(
+      false,
+    );
+    const diskSite = resumed.state.progress[3].requiredSites!.holodisk!;
+    if (legacy !== "unplanned") {
+      expect(diskSite).toEqual(savedSite);
+    }
+    expect(resumed.map?.places.find((place) => place.id === "holodisk")).toMatchObject(diskSite);
+    active.player = { ...diskSite };
+    worldSyncFlightRegion(flightWorldContext(active), CONTENT, active);
+    resumed.step(0.01, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
+    expect(resumed.state.progress[3].holodisk).toBe(false);
+    expect(resumed.state.progress[3].sounder).toEqual({ phase: "active" });
+  },
+);

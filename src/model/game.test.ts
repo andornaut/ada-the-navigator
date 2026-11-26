@@ -705,7 +705,8 @@ it("finishes the mounted chapters in route order and resumes each terminal state
   expect(model.state.progress[3].questComplete).toBe(true);
   expect(model.state.mode).toBe("space");
   expect(relaunch(CONTENT, model.save()).state).toEqual(model.state);
-  // Whirlpool's guarded holodisk, recovered as holodisk.test.ts plays it.
+  // Whirlpool's guarded pickup is played through in holodisk.test.ts.
+  model.state.progress[3].sounder = { outcome: "defeated", phase: "resolved" };
   model.state.progress[3].holodisk = true;
   finishHome(model);
   // Each mounted chapter must finish before the next route position unlocks.

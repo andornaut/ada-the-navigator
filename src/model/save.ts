@@ -1,6 +1,6 @@
 import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { CRYSTAL_FLAGS, type CrystalFlag } from "../data/asteroidCatalog.ts";
-import { SUNFLOWER_CAPITAL_BOSS } from "../data/capitalBosses.ts";
+import { SUNFLOWER_CAPITAL_BOSS, WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { deliveryDestination } from "../data/destinations.ts";
 import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
@@ -486,6 +486,92 @@ function bossFlightConsistent(boss: GalaxyProgress["capitalBoss"], flight: Fligh
   return !boss && actor === undefined && cache === undefined;
 }
 
+function sounderActor(value: SpaceObject): boolean {
+  const enemy = value.enemy;
+  const { id, swarmPack } = WHIRLPOOL_CAPITAL_BOSS;
+  return (
+    value.kind === "enemy" &&
+    value.persistent === true &&
+    enemy !== undefined &&
+    (value.id === id
+      ? value.routeId === "holodisk" &&
+        enemy.archetype === "capital" &&
+        enemy.packId === null &&
+        enemy.escortOf === null
+      : value.routeId === undefined &&
+        ((enemy.archetype === "fighter" && enemy.escortOf === id) ||
+          (enemy.archetype === "swarm" && enemy.packId === swarmPack && enemy.escortOf === null)))
+  );
+}
+
+function validSounderProgress(galaxy: GalaxyNumber, progress: Record<string, unknown>): boolean {
+  const boss = progress.sounder;
+  if (boss === undefined) {
+    return true;
+  }
+  if (galaxy !== 3 || !record(boss) || progress.questComplete !== true || progress.stage !== 5) {
+    return false;
+  }
+  if (boss.phase === "resolved") {
+    return (
+      Object.keys(boss).length === 2 &&
+      (boss.outcome === "defeated" || boss.outcome === "disabled") &&
+      record(progress.requiredSites) &&
+      vector(progress.requiredSites.holodisk)
+    );
+  }
+  if (progress.holodisk === true) {
+    return false;
+  }
+  if (boss.phase === "away") {
+    return (
+      Object.keys(boss).length === 2 &&
+      Array.isArray(boss.actors) &&
+      boss.actors.length <= 7 &&
+      boss.actors.every(
+        (actor) => spaceObject(3, ["holodisk"], actor) && sounderActor(actor) && liveEnemy(actor),
+      ) &&
+      new Set(boss.actors.map((actor) => actor.id)).size === boss.actors.length &&
+      boss.actors.some((actor) => actor.id === WHIRLPOOL_CAPITAL_BOSS.id) &&
+      record(progress.requiredSites) &&
+      vector(progress.requiredSites.holodisk)
+    );
+  }
+  return (
+    Object.keys(boss).length === 1 &&
+    (boss.phase === "hidden" || boss.phase === "revealed" || boss.phase === "active")
+  );
+}
+
+function sounderFlightConsistent(progress: GalaxyProgress, flight: FlightState): boolean {
+  if (flight.galaxy !== 3) {
+    return true;
+  }
+  const boss = progress.sounder;
+  const { id } = WHIRLPOOL_CAPITAL_BOSS;
+  const actor = flight.objects.find((object) => object.id === id) ?? flight.world.notables[id];
+  const disk = flight.objects.some(
+    (object) => object.kind === "destination" && object.id === "holodisk",
+  );
+  if (boss?.phase === "active") {
+    return (
+      !disk &&
+      actor != null &&
+      sounderActor(actor) &&
+      liveEnemy(actor) &&
+      progress.requiredSites?.holodisk !== undefined
+    );
+  }
+  if (boss?.phase === "resolved") {
+    return (
+      (!actor ||
+        (boss.outcome === "disabled" && sounderActor(actor) && actor.enemy?.disabled === true)) &&
+      (!progress.holodisk || !disk)
+    );
+  }
+  return !actor && boss?.phase !== "away" && (!boss || !disk);
+}
+
 function persistentWorld(
   galaxy: GalaxyNumber,
   routes: readonly string[],
@@ -823,6 +909,7 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
       if (
         !record(p) ||
         !validBossProgress(id, p) ||
+        !validSounderProgress(id, p) ||
         (p.geography !== undefined && !validGalaxyGeography(p.geography)) ||
         (p.explorationSites !== undefined &&
           (!record(p.geography) ||
@@ -910,6 +997,13 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
     if (
       sunflowerBoss?.phase === "active" &&
       (value.selectedGalaxy !== 1 || value.flight === null)
+    ) {
+      return null;
+    }
+    const whirlpool = (value.progress as unknown as GameState["progress"])[3];
+    if (
+      whirlpool.sounder?.phase === "active" &&
+      (value.selectedGalaxy !== 3 || value.flight === null)
     ) {
       return null;
     }
@@ -1049,7 +1143,10 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
       ) {
         return null;
       }
-      if (!bossFlightConsistent(sunflowerBoss, f as unknown as FlightState)) {
+      if (
+        !bossFlightConsistent(sunflowerBoss, f as unknown as FlightState) ||
+        !sounderFlightConsistent(whirlpool, f as unknown as FlightState)
+      ) {
         return null;
       }
       if (

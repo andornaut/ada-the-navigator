@@ -1,3 +1,4 @@
+import { WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { FRIGATE_ESCORT_COUNT } from "../data/enemyCatalog.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { FRIGATE_ESCORT_ROLE, requiredFrigateEscortId } from "./frigateEscorts.ts";
@@ -36,9 +37,11 @@ export function requiredRolePlanConsistent(
     return false;
   }
   const [leader] = plan.actors;
+  const sounder = plan.role === "whirlpool-sounder";
+  const leaderId = sounder ? WHIRLPOOL_CAPITAL_BOSS.id : `route:${plan.site.id}`;
   if (
     !leader?.enemy ||
-    leader.id !== `route:${plan.site.id}` ||
+    leader.id !== leaderId ||
     leader.routeId !== plan.site.id ||
     leader.enemy.escortOf !== null ||
     leader.enemy.packId !== null ||
@@ -65,9 +68,9 @@ export function requiredRolePlanConsistent(
     );
   }
   if (
-    plan.role !== "whirlpool-holodisk" ||
+    (!sounder && plan.role !== "whirlpool-holodisk") ||
     plan.site.id !== "holodisk" ||
-    leader.enemy.archetype !== HOLODISKS.guard.leader ||
+    leader.enemy.archetype !== (sounder ? "capital" : HOLODISKS.guard.leader) ||
     plan.actors.length !== 1 + FRIGATE_ESCORT_COUNT + HOLODISKS.guard.packSize
   ) {
     return false;
@@ -87,7 +90,7 @@ export function requiredRolePlanConsistent(
       return false;
     }
   }
-  const pack = "route:holodisk:pack";
+  const pack = sounder ? WHIRLPOOL_CAPITAL_BOSS.swarmPack : "route:holodisk:pack";
   for (let index = 0; index < HOLODISKS.guard.packSize; index++) {
     const actor = peers.get(`${pack}:${index}`);
     if (

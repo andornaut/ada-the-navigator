@@ -2,7 +2,7 @@ import { randomStream } from "@andornaut/game-kit/runtime/random";
 
 import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import { ASTEROID_LOOT, CRYSTAL_MINIMUM_ORE } from "../data/asteroidLoot.ts";
-import { SUNFLOWER_CAPITAL_BOSS } from "../data/capitalBosses.ts";
+import { SUNFLOWER_CAPITAL_BOSS, WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
 import { SCENERY_IMPACT_SECONDS, sceneryImpactDamage } from "../data/collisionDamage.ts";
 import { CONTENT } from "../data/content.ts";
@@ -147,6 +147,7 @@ import {
 } from "./questGuardPlacement.ts";
 import {
   readRequiredPlan,
+  rememberRequiredSite,
   requiredPlanActors,
   storeRequiredPlan,
   takeRequiredPlan,
@@ -386,6 +387,7 @@ function requiredOccupants(content: GameContent, flight: FlightState): RequiredW
     sites: [
       ...authored.filter((object) => object.kind === "destination"),
       ...cartwheelSiteGeometry(flight),
+      ...(whirlpoolProtectedDisks.get(flight) ?? []),
     ],
   };
 }
@@ -2648,9 +2650,14 @@ export function routeBlocked(id: string, flight: FlightState): boolean {
  * The holodisk leader's pack. Its members persist so the fight cannot reroll, but only the
  * leader blocks the route, so a fleeing member never strands the holodisk.
  */
-function guardPack(content: GameContent, leader: Vec, flight: FlightState): void {
+function guardPack(
+  content: GameContent,
+  leader: Vec,
+  flight: FlightState,
+  packId = "route:holodisk:pack",
+  spread = 90,
+): void {
   const { pack, packSize } = HOLODISKS.guard;
-  const packId = "route:holodisk:pack";
   for (let i = 0; i < packSize; i++) {
     const angle = (i * Math.PI * 2) / packSize;
     const member = spawnEnemy(
@@ -2658,7 +2665,7 @@ function guardPack(content: GameContent, leader: Vec, flight: FlightState): void
       flight,
       pack,
       `${packId}:${i}`,
-      { x: leader.x + Math.cos(angle) * 90, y: leader.y + Math.sin(angle) * 90 },
+      { x: leader.x + Math.cos(angle) * spread, y: leader.y + Math.sin(angle) * spread },
       packId,
       angle,
     );
@@ -3137,6 +3144,7 @@ function placeWhirlpoolFormation(
   projection: FlightState,
   site: SpaceObject,
   actors: readonly SpaceObject[],
+  fixed = false,
 ): { site: SpaceObject; actors: readonly SpaceObject[] } | null {
   const world = flightWorldContext(projection);
   const reach = questGuardFormationReach(questGuardPlacementContext(content, projection), actors);
@@ -3158,11 +3166,12 @@ function placeWhirlpoolFormation(
     objects: occupants,
     world: { ...projection.world, notables: {} },
   };
-  for (const point of destinationCandidates(preferred)) {
+  for (const point of fixed ? [site] : destinationCandidates(preferred)) {
     const retry = worldDelta(world, preferred, point);
     if (
-      retry.x * heading.x + retry.y * heading.y < 0 ||
-      !destinationClear(content, placement, point)
+      !fixed &&
+      (retry.x * heading.x + retry.y * heading.y < 0 ||
+        !destinationClear(content, placement, point))
     ) {
       continue;
     }
@@ -3199,6 +3208,129 @@ function placeWhirlpoolFormation(
   return null;
 }
 
+const whirlpoolProtectedDisks = new WeakMap<FlightState, readonly SpaceObject[]>();
+
+/** Keep the site reserved while the family waypoint exists without a physical pickup. */
+export function reserveWhirlpoolDiskSite(flight: FlightState, at: Vec): void {
+  if (!whirlpoolProtectedDisks.has(flight)) {
+    whirlpoolProtectedDisks.set(flight, [
+      { ...at, hp: 1, id: "holodisk", kind: "destination", radius: 30, role: "holodisk" },
+    ]);
+  }
+}
+
+function planSounderFormation(
+  content: GameContent,
+  projection: FlightState,
+  site: SpaceObject,
+  fixed: boolean,
+): RequiredRoleEncounterPlan | null {
+  const world = flightWorldContext(projection);
+  const { id, swarmPack } = WHIRLPOOL_CAPITAL_BOSS;
+  const heading = worldDelta(world, site, FLIGHT_START);
+  const bearing = Math.atan2(heading.y, heading.x);
+  for (let slot = 0; slot < 8; slot++) {
+    const angle = bearing + (slot * Math.PI) / 4;
+    const leader = spawnEnemy(content, projection, "capital", id, site);
+    const offset = content.tuning.exclusionRadius + actorFootprint(projection, leader) + 240;
+    leader.x += Math.cos(angle) * offset;
+    leader.y += Math.sin(angle) * offset;
+    leader.enemy!.home = { x: leader.x, y: leader.y };
+    leader.enemy!.position = { x: leader.x, y: leader.y };
+    leader.routeId = site.id;
+    leader.persistent = true;
+    const escorts = createFrigateEscorts(
+      {
+        encounterSeed: flightEncounterSeed(projection),
+        galaxy: projection.galaxy,
+        id: (index) => requiredFrigateEscortId(id, index),
+        packId: escortPackId(id),
+        persistent: true,
+        shipRadius: content.tuning.flight.shipRadius,
+      },
+      leader,
+    );
+    const draft: FlightState = {
+      ...projection,
+      combat: { initialPackSizes: {}, routeEncounters: [] },
+      objects: [],
+    };
+    // Use the existing swarm with enough space for the larger hull and its two escorts.
+    const spread = Math.max(...escorts.map((escort) => worldDistance(world, leader, escort))) + 90;
+    guardPack(content, leader, draft, swarmPack, spread);
+    const placed = placeWhirlpoolFormation(
+      content,
+      projection,
+      site,
+      [leader, ...escorts, ...draft.objects],
+      fixed,
+    );
+    if (placed) {
+      return { ...placed, role: "whirlpool-sounder" };
+    }
+  }
+  return null;
+}
+
+/** Removes the superseded guard only, including dormant actors, without a combat reward. */
+export function retireLegacyWhirlpoolDiskGuard(
+  content: GameContent,
+  progress: GalaxyProgress,
+  flight: FlightState,
+): void {
+  const plan = readRequiredRolePlan(flight, "holodisk");
+  if (plan?.role === "whirlpool-holodisk") {
+    delete flight.requiredPlans!.holodisk;
+  }
+  const disk = flight.objects.find((object) => object.id === "holodisk");
+  if (disk && !progress.requiredSites?.holodisk) {
+    rememberRequiredSite(progress, "holodisk", disk);
+  }
+  const legacyId = "route:holodisk";
+  const legacy = (object: SpaceObject) =>
+    object.id === legacyId ||
+    object.id === wreckId(legacyId) ||
+    object.enemy?.escortOf === legacyId ||
+    object.enemy?.packId === "route:holodisk:pack";
+  const world = flightWorldContext(flight);
+  for (const object of stationPopulationObjects(flight)) {
+    if (legacy(object)) {
+      worldRecordObjectRemoval(world, content, object, flight);
+    }
+  }
+  if (disk || flight.objects.some(legacy)) {
+    flight.objects = flight.objects.filter((object) => object !== disk && !legacy(object));
+  }
+  const state = flight.combat;
+  if (state) {
+    state.routeEncounters = state.routeEncounters.filter((id) => id !== "holodisk");
+    worldPrunePackState(world, flight);
+  }
+}
+
+export function whirlpoolSounderActor(object: SpaceObject): boolean {
+  const { id, swarmPack } = WHIRLPOOL_CAPITAL_BOSS;
+  return object.id === id || object.enemy?.escortOf === id || object.enemy?.packId === swarmPack;
+}
+
+export function restoreWhirlpoolSounder(
+  content: GameContent,
+  actors: readonly SpaceObject[],
+  flight: FlightState,
+): void {
+  flight.objects.push(...actors);
+  const state = combat(flight);
+  if (!state.routeEncounters.includes("holodisk")) {
+    state.routeEncounters.push("holodisk");
+  }
+  Object.assign(state.initialPackSizes, {
+    [escortPackId(WHIRLPOOL_CAPITAL_BOSS.id)]: FRIGATE_ESCORT_COUNT,
+    [WHIRLPOOL_CAPITAL_BOSS.swarmPack]: HOLODISKS.guard.packSize,
+  });
+  worldSyncFlightRegion(flightWorldContext(flight), content, flight);
+  worldPrunePackState(flightWorldContext(flight), flight);
+}
+
 /** Reserve the existing G3 route roles on a detached world before optional population. */
 export function planRequiredWhirlpoolRoutes(
   content: GameContent,
@@ -3210,7 +3342,7 @@ export function planRequiredWhirlpoolRoutes(
   planningRequiredWorld.add(projection);
   try {
     const sites = siteIds
-      .filter((id) => !readRequiredRolePlan(flight, id))
+      .filter((id) => id !== "holodisk" && !readRequiredRolePlan(flight, id))
       .map((id) => {
         const point = progress.requiredSites?.[id];
         return point
@@ -3220,24 +3352,11 @@ export function planRequiredWhirlpoolRoutes(
     for (const site of sites) {
       ensureRouteEncounter(content, site.id, projection);
     }
-    placeGuards(
-      content,
-      projection.objects.filter((actor) => actor.enemy?.packId === "route:holodisk:pack"),
-      projection,
-    );
     const population = stationPopulationObjects(projection);
     const plans: RequiredRoleEncounterPlan[] = [];
     for (const site of sites) {
       const leader = population.find((actor) => actor.id === `route:${site.id}`)!;
-      const actors = [
-        leader,
-        ...population.filter(
-          (actor) =>
-            actor.id !== leader.id &&
-            (actor.enemy?.escortOf === leader.id ||
-              (site.id === "holodisk" && actor.enemy?.packId === "route:holodisk:pack")),
-        ),
-      ];
+      const actors = [leader];
       const placed = progress.requiredSites?.[site.id]
         ? { actors, site }
         : placeWhirlpoolFormation(content, projection, site, actors);
@@ -3250,9 +3369,19 @@ export function planRequiredWhirlpoolRoutes(
       }
       plans.push({
         actors,
-        role: site.id === "holodisk" ? "whirlpool-holodisk" : "whirlpool-capital",
+        role: "whirlpool-capital",
         site,
       });
+    }
+    if (siteIds.includes("holodisk") && !readRequiredRolePlan(flight, "holodisk")) {
+      const saved = progress.requiredSites?.holodisk;
+      const site = saved
+        ? ensureDestinationAt(content, "holodisk", saved, projection)
+        : ensureDestination(content, "holodisk", projection);
+      const sounder = planSounderFormation(content, projection, site, saved !== undefined);
+      if (sounder) {
+        plans.push(sounder);
+      }
     }
     for (const plan of plans) {
       storeRequiredRolePlan(progress, flight, plan);
@@ -3354,6 +3483,11 @@ export function activateRequiredWhirlpoolRoute(
   const transferred = takeRequiredRolePlan(progress, flight, id);
   if (!transferred) {
     return false;
+  }
+  if (transferred.role === "whirlpool-sounder") {
+    reserveWhirlpoolDiskSite(flight, transferred.site);
+    restoreWhirlpoolSounder(content, transferred.actors, flight);
+    return true;
   }
   for (const actor of [transferred.site, ...transferred.actors]) {
     canonicalObject(flight, actor);

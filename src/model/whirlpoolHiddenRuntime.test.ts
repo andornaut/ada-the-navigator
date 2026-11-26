@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 
+import { WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
@@ -27,11 +28,13 @@ it("reserves authored G3 capitals and holodisk fullstates before optional popula
   const disk = readRequiredRolePlan(flight, "holodisk")!;
   expect(whale.actors.map((actor) => actor.enemy!.archetype)).toEqual(["capital"]);
   expect(family.actors.map((actor) => actor.enemy!.archetype)).toEqual(["capital"]);
-  expect(disk.actors[0]!.enemy!.archetype).toBe(HOLODISKS.guard.leader);
-  expect(disk.actors.filter((actor) => actor.enemy?.packId === "route:holodisk:pack")).toHaveLength(
-    HOLODISKS.guard.packSize,
-  );
-  expect(disk.actors.filter((actor) => actor.enemy?.escortOf === "route:holodisk")).toHaveLength(2);
+  expect(disk.actors[0]!.enemy!.archetype).toBe("capital");
+  expect(
+    disk.actors.filter((actor) => actor.enemy?.packId === WHIRLPOOL_CAPITAL_BOSS.swarmPack),
+  ).toHaveLength(HOLODISKS.guard.packSize);
+  expect(
+    disk.actors.filter((actor) => actor.enemy?.escortOf === WHIRLPOOL_CAPITAL_BOSS.id),
+  ).toHaveLength(2);
   expect(
     stationPopulationObjects(flight).some(
       (actor) => ["whale", "family", "holodisk"].includes(actor.id) || actor.routeId,

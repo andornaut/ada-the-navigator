@@ -8,6 +8,8 @@ import {
   type CapitalBossHud,
   SUNFLOWER_BOSS_CUES,
   SUNFLOWER_CAPITAL_BOSS,
+  WHIRLPOOL_BOSS_CUES,
+  WHIRLPOOL_CAPITAL_BOSS,
 } from "../data/capitalBosses.ts";
 import {
   ARCHIE_NAMED,
@@ -139,6 +141,9 @@ import {
   populateRequiredChapterFlight,
   populateRequiredFlight,
   questGuardPlacementContext,
+  reserveWhirlpoolDiskSite,
+  restoreWhirlpoolSounder,
+  retireLegacyWhirlpoolDiskGuard,
   routeBlocked,
   salvage,
   salvageTarget,
@@ -148,6 +153,7 @@ import {
   syncFlightRegion,
   teleport as teleportFlight,
   undockFlight,
+  whirlpoolSounderActor,
 } from "./flight.ts";
 import {
   CURRENT_FLIGHT_TOPOLOGY,
@@ -239,6 +245,7 @@ import {
   questsForObject,
   taskMarkerCategory,
 } from "./questObjectLinks.ts";
+import { readRequiredRolePlan } from "./requiredRolePlans.ts";
 import { canReplayEarthChapter, restoreGameSave, restoreSave, SAVE_VERSION } from "./save.ts";
 import { immutableScanOutcome, type ScanCompletion, type ScanOutcome } from "./scanOutcomes.ts";
 import { canRechargeShield } from "./shieldRecharge.ts";
@@ -923,7 +930,12 @@ export class GameModel {
       : worldStationById(flightStationContext(f), ECONOMY, f.galaxy, id);
     const held = this.held;
     const hunt = held?.type === "hunt" && `job:${held.id}` === id ? held.spot : null;
-    const point = object ?? station ?? landmark ?? hunt;
+    const point =
+      object ??
+      station ??
+      landmark ??
+      hunt ??
+      (id === "holodisk" ? this.whirlpoolDiskWaypoint(f) : null);
     if (!point || (object && object.hp <= 0)) {
       return null;
     }
@@ -1438,20 +1450,109 @@ export class GameModel {
 
   bossHud(): CapitalBossHud | null {
     const flight = this.state.flight;
-    if (
-      this.screen !== "space" ||
-      this.state.docked ||
-      flight?.galaxy !== 1 ||
-      this.current.capitalBoss?.phase !== "active"
-    ) {
+    if (this.screen !== "space" || this.state.docked || !flight) {
       return null;
     }
-    return encounterBossHud(
-      SUNFLOWER_CAPITAL_BOSS,
-      flight,
-      (object) =>
-        this.contextAction === "salvage" && salvageTarget(this.content, flight) === object,
+    const sounder = this.current.sounder;
+    const identity =
+      flight.galaxy === 1 && this.current.capitalBoss?.phase === "active"
+        ? SUNFLOWER_CAPITAL_BOSS
+        : flight.galaxy === 3 &&
+            (sounder?.phase === "active" ||
+              (sounder?.phase === "resolved" && sounder.outcome === "disabled"))
+          ? WHIRLPOOL_CAPITAL_BOSS
+          : null;
+    return (
+      identity &&
+      encounterBossHud(
+        identity,
+        flight,
+        (object) =>
+          this.contextAction === "salvage" && salvageTarget(this.content, flight) === object,
+      )
     );
+  }
+
+  private prepareWhirlpoolDisk(flight: FlightState): void {
+    const progress = this.current;
+    if (
+      flight.galaxy !== 3 ||
+      progress.holodisk ||
+      !progress.questComplete ||
+      progress.stage !== 5
+    ) {
+      return;
+    }
+    if (!progress.sounder) {
+      // Legacy saves had no reveal flag. Preserve any still-unread lead sequence, including
+      // a temporarily dismissed panel, and treat an already finished sequence as revealed.
+      const pending =
+        this.suspendedInteraction?.galaxy === 3
+          ? this.suspendedInteraction.dialogue.context
+          : undefined;
+      const panel = this.state.dialogue?.context ?? pending;
+      const hidden =
+        panel === "reunion" || panel === "reunionDeparture" || panel === "holodiskLead";
+      retireLegacyWhirlpoolDiskGuard(this.content, progress, flight);
+      progress.sounder = { phase: hidden ? "hidden" : "revealed" };
+    }
+    const site = progress.requiredSites?.holodisk;
+    if (site) {
+      reserveWhirlpoolDiskSite(flight, site);
+    }
+    if (progress.sounder.phase === "resolved") {
+      if (site) {
+        ensureDestinationAt(this.content, "holodisk", site, flight);
+      }
+      return;
+    }
+    if (progress.sounder.phase === "away") {
+      restoreWhirlpoolSounder(this.content, progress.sounder.actors, flight);
+      progress.sounder = { phase: "active" };
+      return;
+    }
+    if (progress.sounder.phase !== "revealed") {
+      return;
+    }
+    if (!readRequiredRolePlan(flight, "holodisk")) {
+      const grid = periodicWorldGrid(flightWorldContext(flight), this.content.tuning.chunkSize);
+      const cell = worldCellKey(grid, worldCellAt(grid, flight.player));
+      if (this.bossPlacementCells.get(flight) === cell) {
+        return;
+      }
+      this.bossPlacementCells.set(flight, cell);
+      planRequiredWhirlpoolRoutes(this.content, progress, flight, ["holodisk"]);
+    }
+    if (
+      readRequiredRolePlan(flight, "holodisk")?.role === "whirlpool-sounder" &&
+      activateRequiredWhirlpoolRoute(this.content, progress, flight, "holodisk")
+    ) {
+      progress.sounder = { phase: "active" };
+    }
+  }
+
+  private resolveSounder(flight: FlightState, outcome: "defeated" | "disabled"): void {
+    if (flight.galaxy !== 3 || this.current.sounder?.phase !== "active") {
+      return;
+    }
+    this.current.sounder = { outcome, phase: "resolved" };
+    this.prepareWhirlpoolDisk(flight);
+    this.sounderCues(flight);
+  }
+
+  private sounderCues(flight: FlightState): void {
+    const { id } = WHIRLPOOL_CAPITAL_BOSS;
+    if (flight.galaxy !== 3) {
+      return;
+    }
+    if (this.current.sounder?.phase === "resolved") {
+      this.talk.authoredCue(`${id}:resolved`, WHIRLPOOL_BOSS_CUES.resolved);
+    } else if (this.current.sounder?.phase === "active" && this.bossHud()) {
+      this.talk.authoredCue(`${id}:approach`, WHIRLPOOL_BOSS_CUES.approach);
+      if (capitalBossActor(flight, id)?.enemy?.hardpoints.some(({ hp }) => hp <= 0)) {
+        this.talk.authoredCue(`${id}:hardpoint`, WHIRLPOOL_BOSS_CUES.hardpoint);
+      }
+    }
   }
 
   private prepareSunflowerBoss(flight: FlightState): void {
@@ -2382,6 +2483,15 @@ export class GameModel {
       return;
     }
     this.panel(key, entry.text, entry.speaker);
+    const flight = this.state.flight;
+    if (
+      flight?.galaxy === 3 &&
+      key === "holodiskLeadSong" &&
+      this.current.sounder?.phase === "hidden"
+    ) {
+      this.current.sounder = { phase: "revealed" };
+      this.prepareWhirlpoolDisk(flight);
+    }
     if (entry.optional && this.label("askMore")) {
       this.state.dialogue?.choices.unshift({ id: "optional", label: this.label("askMore") });
     }
@@ -2424,26 +2534,20 @@ export class GameModel {
     } else if (flight.galaxy === 3) {
       populateRequiredChapterFlight(this.content, this.current, flight, () => {
         for (const id of this.current.known) {
-          ensureDestination(this.content, id, flight);
+          if (id !== "holodisk") {
+            ensureDestination(this.content, id, flight);
+          }
         }
+        const pending = this.current.sounder?.phase;
         planRequiredWhirlpoolRoutes(this.content, this.current, flight, [
           ...(this.current.questComplete
             ? []
             : galaxyRoute(3).filter((id) => !this.current.known.includes(id))),
-          ...(!this.current.holodisk && !this.current.known.includes("holodisk")
+          ...(!this.current.holodisk && pending !== "away" && pending !== "resolved"
             ? ["holodisk"]
             : []),
         ]);
-        if (
-          this.current.questComplete &&
-          !this.current.holodisk &&
-          activateRequiredWhirlpoolRoute(this.content, this.current, flight, "holodisk")
-        ) {
-          ensureDestination(this.content, "holodisk", flight);
-          if (!this.current.known.includes("holodisk")) {
-            ensureRouteEncounter(this.content, "holodisk", flight);
-          }
-        }
+        this.prepareWhirlpoolDisk(flight);
       });
     } else if (flight.galaxy === 4 || flight.galaxy === 5 || flight.galaxy === 6) {
       populateRequiredChapterFlight(this.content, this.current, flight, () => {
@@ -2464,7 +2568,9 @@ export class GameModel {
     this.state.docked = null;
     rerollBoards(this.state.selectedGalaxy, this.state);
     for (const id of this.current.known) {
-      ensureDestination(this.content, id, this.state.flight);
+      if (flight.galaxy !== 3 || id !== "holodisk") {
+        ensureDestination(this.content, id, this.state.flight);
+      }
     }
     this.prepareSunflowerBoss(flight);
     this.explore(this.state.flight);
@@ -2581,6 +2687,14 @@ export class GameModel {
         if (actor) {
           this.current.capitalBoss = { actor, phase: "away", site: boss.site };
         }
+      }
+      if (flight.galaxy === 3 && this.current.sounder?.phase === "active") {
+        const actors = stationPopulationObjects(flight).filter(
+          (actor) => whirlpoolSounderActor(actor) && liveEnemy(actor),
+        );
+        this.current.sounder = actors.some(({ id }) => id === WHIRLPOOL_CAPITAL_BOSS.id)
+          ? { actors, phase: "away" }
+          : { phase: "revealed" };
       }
       if (cargo === "keep" && flight.cargo > 0) {
         this.state.economy.cargo = flight.cargo;
@@ -2832,6 +2946,12 @@ export class GameModel {
     const previousChapterPosition = runtime?.afterStep ? { ...f.player } : undefined;
     this.ensureRequiredApproaches();
     this.prepareSunflowerBoss(f);
+    this.prepareWhirlpoolDisk(f);
+    const sounderFighting =
+      f.galaxy === 3 &&
+      this.current.sounder?.phase === "active" &&
+      capitalBossActor(f, WHIRLPOOL_CAPITAL_BOSS.id)?.enemy?.archetype === "capital";
+
     // Before the step, so a sensed cache collected this step still counts as reached.
     reachSensed(PENNY_FIND_RANGE, f.galaxy, f.objects, f.player, this.state.achievements);
     const previousFreshDistance = f.freshDistance;
@@ -2900,6 +3020,17 @@ export class GameModel {
       cue: { id, kind: "storyPlace" },
     }));
     // Apply durable outcomes from the entire physics step before a depletion can end the flight.
+    if (sounderFighting) {
+      if (
+        events.some(
+          (event) => event.type === "enemyDestroyed" && event.id === WHIRLPOOL_CAPITAL_BOSS.id,
+        )
+      ) {
+        this.resolveSounder(f, "defeated");
+      } else if (capitalBossActor(f, WHIRLPOOL_CAPITAL_BOSS.id)?.enemy?.disabled) {
+        this.resolveSounder(f, "disabled");
+      }
+    }
     if (f.galaxy === 1 && this.current.capitalBoss) {
       if (
         events.some(
@@ -3068,9 +3199,15 @@ export class GameModel {
     );
     const approach = this.poiApproach(f, unknownPoi, landmarks);
     this.sunflowerBossCues(f);
+    this.sounderCues(f);
     this.talk.step(dt, held, {
       aimed: Math.hypot(input.aim.x, input.aim.y) > 0,
-      capitalInSight: heavyInSight("capital", SCREEN, f, SUNFLOWER_CAPITAL_BOSS.id),
+      capitalInSight: heavyInSight(
+        "capital",
+        SCREEN,
+        f,
+        f.galaxy === 3 ? WHIRLPOOL_CAPITAL_BOSS.id : SUNFLOWER_CAPITAL_BOSS.id,
+      ),
       collectedStardust: events.some((event) => event.type === "stardust"),
       docked: this.dockedThisFlight,
       dronesNear: dronesNear(f),
@@ -3082,7 +3219,10 @@ export class GameModel {
           : [],
       ),
       heavyDisabled: events.some(
-        (event) => event.type === "enemyDisabled" && event.id !== SUNFLOWER_CAPITAL_BOSS.id,
+        (event) =>
+          event.type === "enemyDisabled" &&
+          event.id !== SUNFLOWER_CAPITAL_BOSS.id &&
+          event.id !== WHIRLPOOL_CAPITAL_BOSS.id,
       ),
       holodisks: holodisksHeld(this.state.progress),
       inCurrent: inCurrent(f.galaxy, 0, f.player),
@@ -3179,16 +3319,7 @@ export class GameModel {
         }
       }
     }
-    if (
-      this.holodiskWaypoint &&
-      activateRequiredWhirlpoolRoute(this.content, this.current, f, "holodisk")
-    ) {
-      ensureDestination(this.content, "holodisk", f);
-    }
     this.ensureRequiredApproaches();
-    if (this.holodiskWaypoint) {
-      syncFlightRegion(this.content, f);
-    }
     ensureHuntingPacks(this.content, f);
     this.ensureWhaleDebris();
     // A scene cut short by an earlier flight's end replays once Ada reaches the hub.
@@ -3262,6 +3393,10 @@ export class GameModel {
       progress: p,
       questItem: questItemDestination(p),
     });
+    const whirlpoolDisk = this.whirlpoolDiskWaypoint(f);
+    if (whirlpoolDisk && !marked.some((target) => target.id === "holodisk")) {
+      marked.unshift({ ...whirlpoolDisk, id: "holodisk", kind: "holodisk" });
+    }
     if (waypoint && !p.holodisk) {
       const existing = marked.findIndex((target) => target.id === PHANTOM_FLAGSHIP);
       if (existing !== -1) {
@@ -3327,9 +3462,7 @@ export class GameModel {
       destinations: galaxyRoute(f.galaxy),
       explored: this.current.explored,
       flight: f,
-      holodisk: this.holodiskWaypoint
-        ? (f.objects.find((o) => o.kind === "destination" && o.id === "holodisk") ?? null)
-        : null,
+      holodisk: this.whirlpoolDiskWaypoint(f),
       job: this.jobMapTarget(f),
       knownHostileStationPlaces: hostileStationMapPlaces(f, this.current),
       label: (id, kind) =>
@@ -3436,13 +3569,26 @@ export class GameModel {
     }
     return cues;
   }
-  /** After the reunion, the whale's family gives Ada a waypoint to galaxy three's holodisk. */
   private get holodiskWaypoint(): boolean {
-    return this.state.flight?.galaxy === 3 && this.current.questComplete && !this.current.holodisk;
+    const phase = this.current.sounder?.phase;
+    return (
+      this.state.flight?.galaxy === 3 &&
+      phase !== undefined &&
+      phase !== "hidden" &&
+      !this.current.holodisk
+    );
   }
-  /** The floating holodisk while it is a pickup, the waypoint the family gives. */
+
+  private whirlpoolDiskWaypoint(flight: FlightState): Vec | null {
+    if (flight.galaxy !== 3 || !this.holodiskWaypoint) {
+      return null;
+    }
+    return this.floatingHolodisk(flight) ?? this.current.requiredSites?.holodisk ?? null;
+  }
+
+  /** The family can mark the site while the physical pickup remains held by Sounder. */
   private floatingHolodisk(f: FlightState): SpaceObject | undefined {
-    return this.holodiskWaypoint
+    return this.holodiskWaypoint && this.current.sounder?.phase === "resolved"
       ? f.objects.find((o) => o.kind === "destination" && o.id === "holodisk")
       : undefined;
   }
@@ -3475,7 +3621,11 @@ export class GameModel {
       return;
     }
     for (const object of [...f.objects]) {
-      if (object.kind === "destination" && !this.current.known.includes(object.id)) {
+      if (
+        object.kind === "destination" &&
+        !(f.galaxy === 3 && object.id === "holodisk") &&
+        !this.current.known.includes(object.id)
+      ) {
         ensureRouteEncounter(this.content, object.id, f);
       }
     }
@@ -3604,6 +3754,8 @@ export class GameModel {
     if (flight && target && salvage(this.content, flight)) {
       if (flight.galaxy === 1 && target.id === SUNFLOWER_CAPITAL_BOSS.id) {
         this.resolveSunflowerBoss(flight, "salvaged");
+      } else if (flight.galaxy === 3 && target.id === WHIRLPOOL_CAPITAL_BOSS.id) {
+        this.resolveSounder(flight, "disabled");
       } else {
         this.panel("salvage", INTERACTION_COPY.salvage!.lines[0]!.text, "Astra");
       }
@@ -3765,6 +3917,7 @@ export class GameModel {
       this.exchange("family");
     } else if (id === "whale" && p.stage === 4) {
       p.stage = 5;
+      p.sounder = { phase: "hidden" };
       this.complete();
       this.exchange("reunion");
     } else {
@@ -4655,6 +4808,7 @@ export class GameModel {
       const { docked, flight } = this.state;
       if (flight) {
         recoverLegacyQuestGuards(questGuardPlacementContext(this.content, flight));
+        this.prepareWhirlpoolDisk(flight);
       }
       if (docked && flight && !this.greeting) {
         const visits = this.state.progress[flight.galaxy].greetings[docked] ?? 0;

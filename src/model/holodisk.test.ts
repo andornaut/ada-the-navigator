@@ -1,21 +1,22 @@
 import { describe, expect, it } from "vitest";
 
+import { WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { BUILT } from "../data/galaxies.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
+import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, readStory, relaunch } from "../testing/launch.ts";
 import {
   activateRequiredRoute,
   ensureDestination,
   routeBlocked,
   routeGuardPlanResult,
-  syncFlightRegion,
 } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
-import { worldRecordObjectRemoval } from "./geography.ts";
+import { worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import { restoreSave } from "./save.ts";
 import { shipTouches } from "./shipBody.ts";
@@ -38,12 +39,31 @@ function disableStoryGuard(content: GameContent, flight: FlightState, id: string
   guard.enemy.disabled = true;
 }
 
-/** Test support: defeat the real holodisk leader in the active or retained world. */
-function defeatHolodiskGuard(flight: FlightState): void {
-  const leader = stationPopulationObjects(flight).find((actor) => actor.routeId === "holodisk");
-  expect(leader?.enemy?.archetype).toBe(HOLODISKS.guard.leader);
-  worldRecordObjectRemoval(flightWorldContext(flight), CONTENT, leader!, flight);
-  flight.objects = flight.objects.filter((actor) => actor.id !== leader!.id);
+/** Resolve the actual capital via a lethal hull shot through the production event path. */
+function defeatHolodiskGuard(model: GameModel): void {
+  const flight = model.state.flight!;
+  const leader = stationPopulationObjects(flight).find(
+    ({ id }) => id === WHIRLPOOL_CAPITAL_BOSS.id,
+  )!;
+  expect(leader.enemy?.archetype).toBe("capital");
+  flight.player = { x: leader.x + 300, y: leader.y };
+  flight.velocity = { x: 0, y: 0 };
+  worldSyncFlightRegion(flightWorldContext(flight), CONTENT, flight);
+  endArrivalGrace(flight);
+  flight.shots.push({
+    damage: 1000,
+    enemy: false,
+    hitIds: [],
+    id: "sounder-hull-shot",
+    life: 1,
+    piercing: false,
+    velocity: { x: 0, y: 0 },
+    x: leader.x,
+    y: leader.y,
+  });
+  model.step(0.01, idle);
+  expect(model.flightEvents).toContainEqual({ id: leader.id, type: "enemyDestroyed" });
+  expect(model.state.progress[3].sounder).toEqual({ outcome: "defeated", phase: "resolved" });
 }
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -282,7 +302,7 @@ describe("new galaxy announcement", () => {
       playOpening(model);
       model.step(0.01, idle);
       const f = model.state.flight!;
-      defeatHolodiskGuard(f);
+      defeatHolodiskGuard(model);
       const disk = f.objects.find((o) => o.id === "holodisk")!;
       f.player = { x: disk.x, y: disk.y };
       model.step(0.01, idle);
@@ -412,37 +432,47 @@ describe("galaxy two's holodisk", () => {
 });
 
 describe("galaxy three's holodisk", () => {
-  it("waits behind a frigate and its pack after the reunion", () => {
+  it("waits behind Sounder and the formation after the family reveals the waypoint", () => {
     // Whirlpool's holodisk is the second on the route, after Sunflower's.
     const model = questDone(3, ["whale", "family"], [1]);
     expect(model.objective).toBe("Fight your way to the holodisk.");
     model.step(0.01, idle);
     const f = model.state.flight!;
-    const disk = f.objects.find((o) => o.kind === "destination" && o.id === "holodisk")!;
-    expect(disk).toBeDefined();
+    const site = model.state.progress[3].requiredSites!.holodisk!;
+    expect(f.objects.some((object) => object.id === "holodisk")).toBe(false);
+    expect(model.map?.places.find((place) => place.id === "holodisk")).toMatchObject(site);
     const population = stationPopulationObjects(f);
     const leader = population.find((o) => o.routeId === "holodisk")!;
     expect(leader).toBeDefined();
-    expect(leader.enemy?.archetype).toBe(HOLODISKS.guard.leader);
-    const pack = population.filter((o) => o.enemy?.packId === "route:holodisk:pack");
+    expect(leader.enemy?.archetype).toBe("capital");
+    const pack = population.filter((o) => o.enemy?.packId === WHIRLPOOL_CAPITAL_BOSS.swarmPack);
     expect(pack.map((o) => o.enemy?.archetype)).toEqual(
       Array(HOLODISKS.guard.packSize).fill(HOLODISKS.guard.pack),
     );
     expect(pack.every((o) => o.persistent)).toBe(true);
-    expect(f.combat?.initialPackSizes["route:holodisk:pack"]).toBe(HOLODISKS.guard.packSize);
+    expect(f.combat?.initialPackSizes[WHIRLPOOL_CAPITAL_BOSS.swarmPack]).toBe(
+      HOLODISKS.guard.packSize,
+    );
     expect(routeBlocked("holodisk", f)).toBe(true);
     expect(relaunch(CONTENT, model.save()).state).toEqual(model.state);
     // A guarded holodisk is never a travel destination and cannot be reached early.
     expect(model.destinations().map(({ id }) => id)).not.toContain("holodisk");
-    f.player = { x: disk.x, y: disk.y };
-    syncFlightRegion(CONTENT, f);
+    f.player = { ...site };
+    worldSyncFlightRegion(flightWorldContext(f), CONTENT, f);
     expect(f.objects).toContain(leader);
     expect(pack.every((member) => f.objects.includes(member))).toBe(true);
     model.step(0.01, idle);
     expect(model.state.progress[3].holodisk).toBe(false);
     // Winning the fight against the leader opens the way.
-    defeatHolodiskGuard(f);
-    f.player = { x: disk.x, y: disk.y };
+    defeatHolodiskGuard(model);
+    expect(f.objects.find((object) => object.id === "holodisk")).toMatchObject(site);
+    const resumed = relaunch(CONTENT, model.save());
+    expect(resumed.state.progress[3].sounder).toEqual({ outcome: "defeated", phase: "resolved" });
+    expect(resumed.state.flight?.objects.find((object) => object.id === "holodisk")).toMatchObject(
+      site,
+    );
+
+    f.player = { ...site };
     f.dangerFor = 0;
     model.step(0.01, idle);
     expect(insertion(model)).toEqual([
@@ -462,7 +492,7 @@ describe("galaxy three's holodisk", () => {
     const model = questDone(3, ["whale", "family"]);
     model.step(0.01, idle);
     const f = model.state.flight!;
-    defeatHolodiskGuard(f);
+    defeatHolodiskGuard(model);
     f.dangerFor = 0;
     const disk = f.objects.find((o) => o.id === "holodisk")!;
     const at = { x: disk.x, y: disk.y };
@@ -505,7 +535,7 @@ describe("galaxy three's holodisk", () => {
       const model = questDone(3, ["whale", "family"]);
       model.step(0.01, idle);
       const f = model.state.flight!;
-      defeatHolodiskGuard(f);
+      defeatHolodiskGuard(model);
       f.dangerFor = 0;
       f.levels = { ...noLevels(), tractor: level };
       const disk = f.objects.find((o) => o.id === "holodisk")!;
