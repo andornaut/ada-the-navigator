@@ -689,6 +689,18 @@ Objectives, in order:
 7. Take the holodisk from Pip.
 8. Go home to Earth when ready.
 
+### Captain Redact and Broad Wing
+
+These [Andromeda boss cues](rules.md#captain-redact) appear in the small
+conversation box. The relay entry and local map label are both "Hidden relay".
+
+- Approach, Captain Redact: "That beacon's lit again. All patrols, move away
+  from the light."
+- First hardpoint lost, Astra: "One mount's down. I'm recording where the
+  patrols are heading."
+- Resolved, Astra: "Their flight log points to a hidden relay. I've added it to
+  the map."
+
 ## Chapter five: the mining hub
 
 Panel title: The Mining Hub.

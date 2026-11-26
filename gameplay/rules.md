@@ -441,6 +441,28 @@ settlements: a lit guide beacon stands every 2000 world units along the
 straight line between two settlements, alternating its two looks, and the dark
 beacon is one of them, dented until Ada and Pip relight it.
 
+#### Captain Redact
+
+Completing the beacon repair exchange makes Captain Redact, an uncrewed
+drone commander, eligible for an optional encounter. Broad Wing and the relay
+require a clear pair of sites off Pip's routes. If a safe pair is unavailable,
+the encounter stays unplaced. Pip's confession, repair and disk handover
+follow their existing steps regardless of the detour.
+
+Once placed, Broad Wing appears on the local map with no jump action. In
+combat the boss HUD shows Broad Wing, Captain Redact and current hull health.
+It clears on disengagement and restores the current hull on re-entry. With
+the disabled ship in reach and Salvage available, the HUD shows "Disabled".
+[Redact's exchange](player-copy.md#captain-redact-and-broad-wing) covers the
+approach, first hardpoint loss while the ship remains active, and resolution.
+
+Destroy the hull or disable and Salvage Broad Wing to reveal one "Hidden
+relay" waypoint on the local map and add one matching flight log entry. The
+relay uses the usual map jump rules. The standard heavy Stardust payout and
+relay discovery each occur once. Continue preserves encounter and damage
+state. Returning to Andromeda preserves the encounter's progress and the
+relay stays discovered once revealed.
+
 ### Galaxy five, Cartwheel: mining hub
 
 Ada notices another child, Sam, being bullied at school. No reason is needed to explain
