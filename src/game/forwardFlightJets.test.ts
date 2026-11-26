@@ -111,4 +111,31 @@ describe("forward flight sidecar", () => {
       }
     }
   });
+
+  it("uses the baked projected outer width once while preserving core proportion and reach", () => {
+    const index = 24;
+    const data = fixture();
+    const row = data.headings[index]!;
+    data.headings[index] = {
+      ...row,
+      mouths: row.mouths.map(({ anchor, half }) => ({
+        anchor,
+        half: half.map((component) => component * 4.3),
+      })),
+    };
+    const headings = readForwardFlightJets(data)!;
+    const display = { displayHeight: 42, displayWidth: 42, pivot: { x: 0.5, y: 0.5 } };
+    const jets = travelJets(readEngineJets(normal), undefined, undefined, 1, "forward")!;
+    for (const [speed, length] of [
+      [0.6, 14.64],
+      [1, 30],
+    ] as const) {
+      const plumes = forwardFlightPlumes(jets, headings[index]!, index, display, speed)!;
+      const span = (values: readonly number[]) => Math.max(...values) - Math.min(...values);
+      const outerWidth = (2 * 5.2675 * 42) / 96;
+      expect(span(plumes[0]!.points.map(({ y }) => y))).toBeCloseTo(outerWidth, 10);
+      expect(span(plumes[1]!.points.map(({ y }) => y))).toBeCloseTo((outerWidth * 1.6) / 4.2, 10);
+      expect(span(plumes[0]!.points.map(({ x }) => x))).toBeCloseTo((length * 1.225 * 42) / 96, 10);
+    }
+  });
 });

@@ -170,9 +170,12 @@ export function forwardFlightPlumes(
   speed: number,
 ): ForwardPlume[] | undefined {
   const axes = jets.headings[index];
-  if (jets.frame !== FRAME || axes?.length !== 2 || !(speed > 0)) {
+  const outer = jets.layers.find(({ name }) => name === "outer");
+  if (jets.frame !== FRAME || axes?.length !== 2 || !(speed > 0) || !outer || !(outer.width > 0)) {
     return undefined;
   }
+  // The sidecar already projects the full outer half-width. Keep the other layers proportional.
+  const layers = jets.layers.map((layer) => ({ ...layer, width: layer.width / outer.width }));
   const fraction = Math.min(1, speed);
   const length = jetLength(jets, fraction);
   const plumes: ForwardPlume[] = [];
@@ -186,12 +189,12 @@ export function forwardFlightPlumes(
     const unit = { x: axis.x / magnitude, y: axis.y / magnitude };
     for (const { layerIndex, points } of jetShapePolygons(
       { ...data, axis },
-      jets.layers,
+      layers,
       length,
       fraction,
       jets.profile,
     )) {
-      const layer = jets.layers[layerIndex]!;
+      const layer = layers[layerIndex]!;
       if (
         layer.underHull ||
         Math.max(display.displayWidth, display.displayHeight) > (layer.maxDisplay ?? Infinity)
