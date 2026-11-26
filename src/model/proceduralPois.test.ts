@@ -7,7 +7,12 @@ import { PROCEDURAL_POIS as T } from "../data/proceduralPois.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { CHARTING_RADIUS } from "./map.ts";
-import { chartedProceduralPois, proceduralPoiById, proceduralPoisNear } from "./proceduralPois.ts";
+import {
+  chartedProceduralPois,
+  proceduralPoiById,
+  proceduralPoisNear,
+  spawnSalvagePoisNear,
+} from "./proceduralPois.ts";
 import { retainedLandmarkSites as landmarkSites } from "./retainedLandmarks.ts";
 import { nearestImage, wrappedDistance } from "./worldGeometry.ts";
 
@@ -108,6 +113,45 @@ describe("additional procedural POIs", () => {
     expect(clearances.length).toBeGreaterThan(0);
     expect(clearances.every((value) => value === LANDMARK_TUNING.placeClearance)).toBe(true);
   });
+  it("clips and orders overlapping salvage queries exactly across seams and geography changes", () => {
+    const queries = [
+      { at: corner, galaxy: 6, range: 25000, seed: 187, worldSide: GALAXY_SIDE },
+      { at: corner, galaxy: 6, range: 12000, seed: 187, worldSide: GALAXY_SIDE },
+      {
+        at: { x: corner.x - 4000 - GALAXY_SIDE, y: corner.y + GALAXY_SIDE },
+        galaxy: 6,
+        range: 25000,
+        seed: 187,
+        worldSide: GALAXY_SIDE,
+      },
+      { at: corner, galaxy: 6, range: 25000, seed: 188, worldSide: GALAXY_SIDE },
+      { at: corner, galaxy: 5, range: 25000, seed: 188, worldSide: GALAXY_SIDE },
+      { at: corner, galaxy: 5, range: 25000, seed: 188, worldSide: 2 * GALAXY_SIDE },
+    ] as const;
+    for (const { at, galaxy, range, seed, worldSide } of [...queries, queries[0]]) {
+      const query = { worldSide };
+      const expected = proceduralPoisNear(query, galaxy, seed, range, at)
+        .filter((site) => site.opportunity.kind === "salvage")
+        .map(({ x, y }) => ({ x, y }));
+      expect(spawnSalvagePoisNear(query, galaxy, seed, range, at)).toEqual(expected);
+    }
+  });
+
+  it("rechecks caller protection against a warm ambient salvage query", () => {
+    const initial = spawnSalvagePoisNear(context, 6, 187, 25000, corner);
+    expect(initial.length).toBeGreaterThan(0);
+    const protectedPlaces = [initial[0]!];
+    expect(
+      spawnSalvagePoisNear({ ...context, protectedPlaces }, 6, 187, 25000, corner),
+    ).not.toContainEqual(initial[0]);
+    let blocked = true;
+    const live = { ...context, isProtected: () => blocked };
+    expect(spawnSalvagePoisNear(live, 6, 187, 25000, corner)).toEqual([]);
+    blocked = false;
+    expect(spawnSalvagePoisNear(live, 6, 187, 25000, corner)).toEqual(initial);
+    expect(spawnSalvagePoisNear(context, 6, 187, 25000, corner)).toEqual(initial);
+  });
+
   it("retains all twelve authored identities and positions without cloning them", () => {
     for (const galaxy of [1, 2, 3, 4, 5, 6] as GalaxyNumber[]) {
       const before = structuredClone(landmarkSites(galaxy));

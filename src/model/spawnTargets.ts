@@ -36,7 +36,7 @@ import { ambientPackId, packMemberId } from "./geography.ts";
 import { hostileStationSites } from "./hostileStationSites.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { ORE_FIELD_CLEAR_RADIUS, worldOreFieldsNear } from "./oreFields.ts";
-import { proceduralPoisNear } from "./proceduralPois.ts";
+import { spawnSalvagePoisNear } from "./proceduralPois.ts";
 import { SPAWN_GAP, worldFitsEncounter } from "./spawner.ts";
 import {
   enemyGroupReach,
@@ -315,19 +315,17 @@ export function worldSpawnExclusions(
     ...worldOreFieldsNear(context, galaxy, radius + ORE_FIELD_CLEAR_RADIUS, point).map((field) =>
       disc("ore-field", ["rock", "moving"], field, ORE_FIELD_CLEAR_RADIUS),
     ),
-    ...proceduralPoisNear(
-      { ...context, opportunityEligibility: { jobTemplates: [] } },
+    ...spawnSalvagePoisNear(
+      context,
       galaxy,
       seed,
       Math.min(PROCEDURAL_POIS.maxQueryRadius, radius + neighbourhood),
       point,
-    )
-      .filter((site) => site.opportunity.kind === "salvage")
-      .flatMap((site) => [
-        // Rocks keep the spawn gap from the wreck's footprint.
-        disc("salvage", ["rock", "moving"], site, wreck + SPAWN_GAP),
-        disc("salvage", ["enemy"], site, neighbourhood),
-      ]),
+    ).flatMap((site) => [
+      // Rocks keep the spawn gap from the wreck's footprint.
+      disc("salvage", ["rock", "moving"], site, wreck + SPAWN_GAP),
+      disc("salvage", ["enemy"], site, neighbourhood),
+    ]),
     ...hostileStationSites(
       { ...context, galaxy, geographySeed: seed },
       {

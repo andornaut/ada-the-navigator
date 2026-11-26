@@ -141,6 +141,35 @@ function candidate(
   return { ...point, id, kind, name: PROCEDURAL_POI_NAMES[kind], opportunity: intent };
 }
 
+function queryCenter(worldSide: number, range: number, point: Vec): Vec {
+  if (!Number.isFinite(range) || range < 0 || range > T.maxQueryRadius) {
+    throw new RangeError("POI query exceeds the local radius budget");
+  }
+  return wrapPoint(worldSide, point);
+}
+
+function sitesNear(
+  worldSide: number,
+  grid: WorldGrid,
+  center: Vec,
+  range: number,
+  read: (cell: Vec) => ProceduralPoi | undefined,
+): readonly ProceduralPoi[] {
+  const sites = new Map<string, ProceduralPoi>();
+  // Cover entire cell footprints even when the shared grid query samples only their origins.
+  for (const cell of worldCellsNear(grid, range + grid.pitch * Math.SQRT2, center)) {
+    const site = read(cell);
+    if (site && wrappedDistanceSquared(worldSide, center, site) <= range ** 2) {
+      sites.set(site.id, site);
+    }
+  }
+  return [...sites.values()].sort(
+    (a, b) =>
+      wrappedDistanceSquared(worldSide, center, a) - wrappedDistanceSquared(worldSide, center, b) ||
+      a.id.localeCompare(b.id),
+  );
+}
+
 /**
  * A bounded local query with canonical identities and coordinates. The seed is the stable galaxy
  * seed; a flight seed, query image, visit count or wrap count must not replace it.
@@ -152,28 +181,79 @@ export function proceduralPoisNear(
   range: number,
   point: Vec,
 ): readonly ProceduralPoi[] {
-  if (context.worldSide === undefined) {
+  const worldSide = context.worldSide;
+  if (worldSide === undefined) {
     return [];
   }
   inputs(galaxy, seed);
-  if (!Number.isFinite(range) || range < 0 || range > T.maxQueryRadius) {
-    throw new RangeError("POI query exceeds the local radius budget");
-  }
-  const center = wrapPoint(context.worldSide, point);
+  const center = queryCenter(worldSide, range, point);
   const grid = worldGrid(context, T.cellSize);
-  const sites = new Map<string, ProceduralPoi>();
-  // Cover entire cell footprints even when the shared grid query samples only their origins.
-  for (const cell of worldCellsNear(grid, range + grid.pitch * Math.SQRT2, center)) {
-    const site = candidate(context, galaxy, seed, grid, cell);
-    if (site && wrappedDistanceSquared(context.worldSide, center, site) <= range ** 2) {
-      sites.set(site.id, site);
-    }
-  }
-  return [...sites.values()].sort(
-    (a, b) =>
-      wrappedDistanceSquared(context.worldSide!, center, a) -
-        wrappedDistanceSquared(context.worldSide!, center, b) || a.id.localeCompare(b.id),
+  return sitesNear(worldSide, grid, center, range, (cell) =>
+    candidate(context, galaxy, seed, grid, cell),
   );
+}
+
+// Keep enough recent cells for the overlapping windows used by ambient chunk planning. Discard
+// the cache when geography changes and evict the oldest entry when it reaches this bound.
+const SPAWN_CANDIDATE_LIMIT = 256;
+let spawnSalvage:
+  | {
+      readonly candidates: Map<string, ProceduralPoi | null>;
+      readonly galaxy: GalaxyNumber;
+      readonly grid: WorldGrid;
+      readonly seed: number;
+      readonly worldSide: number;
+    }
+  | undefined;
+
+/** Reuse ambient candidates only when no caller-owned protection participates. */
+export function spawnSalvagePoisNear(
+  context: ProceduralPoiContext,
+  galaxy: GalaxyNumber,
+  seed: number,
+  range: number,
+  point: Vec,
+): readonly Vec[] {
+  const query = { ...context, opportunityEligibility: { jobTemplates: [] } };
+  const { worldSide } = query;
+  if (worldSide === undefined) {
+    return [];
+  }
+  if (query.isProtected || query.protectedPlaces) {
+    return proceduralPoisNear(query, galaxy, seed, range, point)
+      .filter((site) => site.opportunity.kind === "salvage")
+      .map(({ x, y }) => ({ x, y }));
+  }
+  inputs(galaxy, seed);
+  const center = queryCenter(worldSide, range, point);
+  if (
+    spawnSalvage?.worldSide !== worldSide ||
+    spawnSalvage.galaxy !== galaxy ||
+    spawnSalvage.seed !== seed
+  ) {
+    spawnSalvage = {
+      candidates: new Map(),
+      galaxy,
+      grid: worldGrid({ worldSide }, T.cellSize),
+      seed,
+      worldSide,
+    };
+  }
+  const { candidates, grid } = spawnSalvage;
+  return sitesNear(worldSide, grid, center, range, (cell) => {
+    // worldCellsNear yields canonical cells. Null also memoizes empty and non-salvage cells.
+    const key = `${cell.x},${cell.y}`;
+    let site = candidates.get(key);
+    if (site === undefined) {
+      const found = candidate(query, galaxy, seed, grid, cell);
+      site = found?.opportunity.kind === "salvage" ? found : null;
+      if (candidates.size >= SPAWN_CANDIDATE_LIMIT) {
+        candidates.delete(candidates.keys().next().value!);
+      }
+      candidates.set(key, site);
+    }
+    return site ?? undefined;
+  }).map(({ x, y }) => ({ x, y }));
 }
 
 /** A direct identity lookup never scans or materializes the galaxy's population. */
