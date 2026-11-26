@@ -31,6 +31,7 @@ import { startupFence } from "./loading/startup.ts";
 import { launchPhoneApp, requireNewerVersion, setupPhoneApp } from "./pwa/index.ts";
 import { CRASH_SCREEN } from "./ui/crashScreen.ts";
 import { bindAdaActionRoot } from "./ui/holdActionsAdapter.ts";
+import { loadingFailureChrome } from "./ui/loadingFailure.ts";
 import { rootPressGuard } from "./ui/pressScope.ts";
 import { FRAME_TURN } from "./view/frameTurn.ts";
 
@@ -90,7 +91,7 @@ export async function prepareGame(
   if (!attempt.isCurrent() || crashed) {
     return;
   }
-  launched ??= launchPhoneApp();
+  launched ??= launchPhoneApp(loadingFailureChrome);
   if ((await launched) !== "play" || !attempt.isCurrent() || crashed) {
     return;
   }
@@ -147,7 +148,7 @@ async function enterGame(attempt: LoadingAttempt): Promise<void> {
   if (!attempt.isCurrent() || crashed) {
     return;
   }
-  launched ??= launchPhoneApp();
+  launched ??= launchPhoneApp(loadingFailureChrome);
   if ((await launched) !== "play" || !attempt.isCurrent() || crashed) {
     return;
   }

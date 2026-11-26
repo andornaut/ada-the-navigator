@@ -7,6 +7,7 @@ import type { LaunchResult } from "@andornaut/game-kit/runtime/web/pwa/buildCont
 import { preparePhoneLaunch } from "../pwa/index.ts";
 import { CRASH_SCREEN } from "../ui/crashScreen.ts";
 import { mountLoading } from "../ui/loadingBar.ts";
+import { loadingFailureChrome, mountStartupFailure } from "../ui/loadingFailure.ts";
 import type { RequiredBootResources } from "./bootReveal.ts";
 import { EntryReloadRequired } from "./entryRecovery.ts";
 import { requiredLoading } from "./required.ts";
@@ -20,7 +21,7 @@ if (!app) {
 }
 // The launch installs the complete build before the game downloads, under the one loading bar,
 // or activates a staged build; the game module loads from the installed build afterwards.
-const launch = preparePhoneLaunch(app);
+const launch = preparePhoneLaunch(loadingFailureChrome, app);
 let stop: () => void;
 if (launch.kind === "unsupported") {
   stop = launch.dispose;
@@ -74,7 +75,7 @@ async function startSupportedLaunch(app: HTMLElement, launched: Promise<LaunchRe
           prepare: (required, attempt) => game.prepareGame(required, attempt, boot),
         };
       },
-      mountLoading,
+      { mountFailure: mountStartupFailure, mountLoading },
       app,
     );
   } catch (error) {

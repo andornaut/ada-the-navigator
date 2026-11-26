@@ -187,7 +187,8 @@ it("keeps launch before storage and passes the complete save result to the scene
   const { attempt } = await entry();
   const pending = attempt.start();
   await settle();
-  expect(boot.launch).toHaveBeenCalledOnce();
+  const { loadingFailureChrome } = await import("./ui/loadingFailure.ts");
+  expect(boot.launch).toHaveBeenCalledExactlyOnceWith(loadingFailureChrome);
   expect(boot.load).toHaveBeenCalledOnce();
   expect(boot.game).not.toHaveBeenCalled();
   expect(boot.launch.mock.invocationCallOrder[0]).toBeLessThan(

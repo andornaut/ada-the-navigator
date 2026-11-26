@@ -272,10 +272,6 @@ export function importFindings(graph: Graph): string[] {
  * and ESLint guards the layers.
  */
 export const KNOWN_VIOLATIONS: readonly string[] = [
-  "src/loading/startup.ts (platform) imports src/ui/actionBinding.ts (ui)",
-  "src/loading/startup.ts (platform) imports src/ui/holdActionsAdapter.ts (ui)",
-  "src/loading/startup.ts (platform) imports src/ui/modal.ts (ui)",
-  "src/loading/startup.ts (platform) imports src/ui/pressScope.ts (ui)",
   "src/ui/layout/controlPresentation.ts (layout and input state) imports src/ui/modal.ts (ui)",
   "src/ui/layout/navigationButton.ts (layout and input state) imports src/ui/modal.ts (ui)",
   "src/ui/layout/navigationButton.ts (layout and input state) imports src/ui/pause.ts (ui)",

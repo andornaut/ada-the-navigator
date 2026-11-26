@@ -64,8 +64,10 @@ import {
   observeInstallation,
   presentInstallationFailure,
 } from "../pwa/installationPresentation.ts";
+import { mountStartupFailure } from "../ui/loadingFailure.ts";
 import { type EntryRecoveryPhase, EntryReloadRequired } from "./entryRecovery.ts";
 import { type RequiredGame, startLoading, startupFence } from "./startup.ts";
+const presentation = { mountFailure: mountStartupFailure, mountLoading: progress.mount };
 const root = (size = { height: 360, width: 720 }) =>
   ({
     clientHeight: size.height,
@@ -112,7 +114,7 @@ it("keeps provider preparation failures on the same in-place Retry and construct
     required,
     { stopGameOnCrash: vi.fn() },
     load,
-    progress.mount,
+    presentation,
     root(),
   );
   expect(required.state.kind).toBe("failed");
@@ -142,7 +144,7 @@ it("registers late resources before entry and retains successful preparation acr
     required,
     { stopGameOnCrash: vi.fn() },
     async () => entry,
-    progress.mount,
+    presentation,
     root(),
   );
   await settle();
@@ -169,7 +171,7 @@ it("keeps fallible construction inside load and cancels before showing the share
     required,
     { stopGameOnCrash: vi.fn() },
     async () => entry,
-    progress.mount,
+    presentation,
     root(),
   );
   await settle();
@@ -197,7 +199,7 @@ it("disposes an active partial game and rejects late completion without committi
     required,
     { stopGameOnCrash: vi.fn() },
     async () => entry,
-    progress.mount,
+    presentation,
     root(),
   );
   await settle();
@@ -224,7 +226,7 @@ it("fences a crash during import and never constructs when that same import comp
       new Promise((resolve) => {
         finish = resolve;
       }),
-    progress.mount,
+    presentation,
     root(),
   );
   await settle();
@@ -249,7 +251,7 @@ it("keeps real pending progress after scene loading until a late required image 
     required,
     { stopGameOnCrash: vi.fn() },
     async () => entry,
-    progress.mount,
+    presentation,
     root(),
   );
   await settle();
@@ -282,7 +284,7 @@ it("shows a failed first install while the game waits and resumes it on Retry", 
       await installed;
       return entry;
     },
-    progress.mount,
+    presentation,
     root(),
   );
   await settle();
@@ -322,14 +324,43 @@ it.each([
     required,
     { stopGameOnCrash: vi.fn() },
     async () => entry,
-    progress.mount,
+    presentation,
     root(size),
   );
   const unit = Math.min(size.width / 720, size.height / 360);
-  expect(view.presentation).toMatchObject({
-    action: { heightPx: 48 * unit, paddingXPx: 16 * unit, widthPx: "content" },
-    palette: { action: "#bfa06f", actionText: "#181425", panel: "#3b3850", text: "#ead4aa" },
-    panel: { bodyActionGapPx: 24, maxWidthPx: 328, safeInsetPx: 16, titleBodyGapPx: 16 },
+  expect(view.presentation).toEqual({
+    action: {
+      borderWidthPx: unit,
+      heightPx: 48 * unit,
+      highlightHeightPx: unit,
+      paddingBottomPx: 4 * unit,
+      paddingXPx: 16 * unit,
+      shadeHeightPx: 4 * unit,
+      widthPx: "content",
+    },
+    palette: {
+      action: "#bfa06f",
+      actionText: "#181425",
+      border: "#181425",
+      highlight: "#d2b886",
+      lip: "#2f2d3d",
+      panel: "#3b3850",
+      shade: "#8a7148",
+      shadow: "#181425",
+      text: "#ead4aa",
+    },
+    panel: {
+      bodyActionGapPx: 24,
+      borderWidthPx: 1,
+      lipHeightPx: 4,
+      maxWidthPx: 328,
+      paddingBottomPx: 16,
+      paddingTopPx: 24,
+      paddingXPx: 16,
+      safeInsetPx: 16,
+      shadowOffsetPx: 4,
+      titleBodyGapPx: 16,
+    },
     text: {
       action: { lineHeight: 1.2, sizePx: 18, synthesis: "weight", weight: 900 },
       body: { lineHeight: 1.45, sizePx: 18, weight: 400 },
@@ -350,13 +381,7 @@ it("updates the same pending presenter on scale and removes both resize listener
   const host = root();
   Object.defineProperty(host.ownerDocument, "defaultView", { value: events });
   const load = vi.fn().mockRejectedValue(new Error("import failed"));
-  const stop = await startLoading(
-    required,
-    { stopGameOnCrash: vi.fn() },
-    load,
-    progress.mount,
-    host,
-  );
+  const stop = await startLoading(required, { stopGameOnCrash: vi.fn() }, load, presentation, host);
   const retry = view.retry;
   Object.defineProperty(host, "clientWidth", { value: 1440 });
   Object.defineProperty(host, "clientHeight", { value: 720 });
@@ -380,7 +405,7 @@ it("retries a failed first install and a failed required load from one Retry", a
     required,
     { stopGameOnCrash: vi.fn() },
     async () => entry,
-    progress.mount,
+    presentation,
     root(),
   );
   await settle();
@@ -425,7 +450,7 @@ it.each(["module-import", "unavailable-retirement"] as const)(
       required,
       { stopGameOnCrash: vi.fn() },
       load,
-      progress.mount,
+      presentation,
       host,
     );
     await settle();
@@ -458,7 +483,7 @@ it("sizes recovery from the viewport when failed boot CSS leaves the app unlaid 
     required,
     { stopGameOnCrash: vi.fn() },
     async () => game(),
-    progress.mount,
+    presentation,
     host,
   );
   expect(view.presentation).toMatchObject({
@@ -483,7 +508,7 @@ it("owns a narrow recovery root and cancels on the same registry without fencing
     required,
     { stopGameOnCrash: vi.fn() },
     async () => entry,
-    progress.mount,
+    presentation,
     host,
   );
   expect(required.state.kind).toBe("failed");
@@ -501,6 +526,14 @@ it("owns a narrow recovery root and cancels on the same registry without fencing
   stop();
   stop();
   expect(recovery.dispose).toHaveBeenCalledOnce();
+  expect(entry.dispose).toHaveBeenCalledOnce();
+  expect(view.dispose).toHaveBeenCalledOnce();
+  expect(recovery.dispose.mock.invocationCallOrder[0]!).toBeLessThan(
+    entry.dispose.mock.invocationCallOrder[0]!,
+  );
+  expect(entry.dispose.mock.invocationCallOrder[0]!).toBeLessThan(
+    view.dispose.mock.invocationCallOrder[0]!,
+  );
 });
 it("releases the recovery root and presenter if factory construction audit fails", async () => {
   recovery.assertBindings.mockImplementationOnce(() => {
@@ -508,13 +541,7 @@ it("releases the recovery root and presenter if factory construction audit fails
   });
   const required = createRequiredLoading();
   await expect(
-    startLoading(
-      required,
-      { stopGameOnCrash: vi.fn() },
-      async () => game(),
-      progress.mount,
-      root(),
-    ),
+    startLoading(required, { stopGameOnCrash: vi.fn() }, async () => game(), presentation, root()),
   ).rejects.toThrow("factory binding missing");
   expect(recovery.dispose).toHaveBeenCalledOnce();
   expect(view.dispose).toHaveBeenCalledOnce();

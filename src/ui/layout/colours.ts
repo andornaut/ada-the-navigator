@@ -51,6 +51,8 @@ export const COLOURS = {
   pressedFace: "#3a4466",
   primaryFace: "#bfa06f",
   primaryLip: "#8a7148",
+  /** The primary action's top highlight. */
+  primaryRim: "#d2b886",
   /** The refusal cue's red, also the low shield. */
   refusalRed: "#e4574e",
   /** Every text of an unaffordable or busy tile row. */

@@ -862,8 +862,8 @@ const recoveryRegistry = {
   text: readFileSync(new URL("../ui/actionRegistry.ts", import.meta.url), "utf8"),
 };
 const recoveryStartup = {
-  path: "src/loading/startup.ts",
-  text: readFileSync(new URL("../loading/startup.ts", import.meta.url), "utf8"),
+  path: "src/ui/loadingFailure.ts",
+  text: readFileSync(new URL("../ui/loadingFailure.ts", import.meta.url), "utf8"),
 };
 
 const recoveryCrash = {

@@ -46,7 +46,8 @@ afterEach(() => vi.unstubAllGlobals());
 it("takes the unsupported branch before observing required resources or importing the game", async () => {
   fixture.prepare.mockReturnValue({ dispose: fixture.dispose, kind: "unsupported" });
   await import("./bootstrap.ts");
-  expect(fixture.prepare).toHaveBeenCalledExactlyOnceWith(fixture.app);
+  const { loadingFailureChrome } = await import("../ui/loadingFailure.ts");
+  expect(fixture.prepare).toHaveBeenCalledExactlyOnceWith(loadingFailureChrome, fixture.app);
   expect(fixture.startLoading).not.toHaveBeenCalled();
   expect(fixture.subscribe).not.toHaveBeenCalled();
   expect(fixture.requireFonts).not.toHaveBeenCalled();
@@ -69,7 +70,11 @@ it("starts the original resource observer and import when the supported launch r
   );
   await import("./bootstrap.ts");
   expect(fixture.startLoading).toHaveBeenCalledOnce();
-  expect(fixture.startLoading.mock.calls[0]!.slice(3)).toEqual([fixture.mountLoading, fixture.app]);
+  const { mountStartupFailure } = await import("../ui/loadingFailure.ts");
+  expect(fixture.startLoading.mock.calls[0]!.slice(3)).toEqual([
+    { mountFailure: mountStartupFailure, mountLoading: fixture.mountLoading },
+    fixture.app,
+  ]);
   expect(fixture.subscribe).toHaveBeenCalledOnce();
   expect(fixture.requireFonts).toHaveBeenCalledOnce();
   expect(fixture.requireUi).toHaveBeenCalledOnce();

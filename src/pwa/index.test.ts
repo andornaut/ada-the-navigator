@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { loadingFailureChrome } from "../ui/loadingFailure.ts";
+
 const kit = vi.hoisted(() => {
   const launch = {
     bootProgress: vi.fn(),
@@ -173,8 +175,8 @@ describe("launch", () => {
   it("creates one launch with the game's policy and router, shared by every call", async () => {
     stubDevice({});
     const pwa = await import("./index.ts");
-    const first = pwa.launchPhoneApp();
-    expect(pwa.launchPhoneApp()).toBe(first);
+    const first = pwa.launchPhoneApp(loadingFailureChrome);
+    expect(pwa.launchPhoneApp(loadingFailureChrome)).toBe(first);
     expect(await first).toBe("play");
     expect(kit.create).toHaveBeenCalledOnce();
     expect(kit.launch.run).toHaveBeenCalledOnce();
@@ -204,7 +206,7 @@ describe("launch", () => {
     expect(kit.create).not.toHaveBeenCalled();
     expect(kit.launch.requestUpdateCheck).not.toHaveBeenCalled();
 
-    await pwa.launchPhoneApp();
+    await pwa.launchPhoneApp(loadingFailureChrome);
     expect(kit.launch.requestUpdateCheck).not.toHaveBeenCalled();
     pwa.requestUpdateCheck();
     expect(kit.launch.requestUpdateCheck).toHaveBeenCalledOnce();
@@ -215,14 +217,14 @@ describe("launch", () => {
     stubDevice({});
     kit.launch.run.mockResolvedValue("reloading");
     const pwa = await import("./index.ts");
-    expect(await pwa.launchPhoneApp()).toBe("reloading");
+    expect(await pwa.launchPhoneApp(loadingFailureChrome)).toBe("reloading");
   });
 
   it("plays from the network in development without preparing a production launch", async () => {
     vi.stubEnv("PROD", false);
     stubDevice({});
     const pwa = await import("./index.ts");
-    expect(await pwa.launchPhoneApp()).toBe("play");
+    expect(await pwa.launchPhoneApp(loadingFailureChrome)).toBe("play");
     pwa.requestUpdateCheck();
     expect(kit.create).not.toHaveBeenCalled();
     expect(kit.launch.requestUpdateCheck).not.toHaveBeenCalled();
@@ -237,10 +239,10 @@ describe("launch", () => {
     const pwa = await import("./index.ts");
     const parent = document.getElementById("app")!;
     const progress = parent.querySelector("#boot-progress")!;
-    const prepared = pwa.preparePhoneLaunch(parent);
+    const prepared = pwa.preparePhoneLaunch(loadingFailureChrome, parent);
     expect(prepared.kind).toBe("unsupported");
-    expect(pwa.preparePhoneLaunch(parent)).toBe(prepared);
-    expect(await pwa.launchPhoneApp()).toBe("unsupported");
+    expect(pwa.preparePhoneLaunch(loadingFailureChrome, parent)).toBe(prepared);
+    expect(await pwa.launchPhoneApp(loadingFailureChrome)).toBe("unsupported");
     expect(progress.remove).toHaveBeenCalledOnce();
     expect(document.body.append).toHaveBeenCalledOnce();
     expect(kit.create).not.toHaveBeenCalled();
@@ -262,7 +264,7 @@ describe("launch", () => {
     stubDevice({});
     const pwa = await import("./index.ts");
     const { waitedProgress } = await import("../loading/progress.ts");
-    await pwa.launchPhoneApp();
+    await pwa.launchPhoneApp(loadingFailureChrome);
     const handle = waitedProgress.begin();
     handle.progress(0.25);
     handle.progress(1);
@@ -276,7 +278,7 @@ describe("launch", () => {
     stubDevice({});
     const pwa = await import("./index.ts");
     const { observeInstallation } = await import("./installationPresentation.ts");
-    void pwa.launchPhoneApp();
+    void pwa.launchPhoneApp(loadingFailureChrome);
     const views: { kind: string }[] = [];
     let latest: { retry: () => Promise<void> } | undefined;
     observeInstallation((view) => {
@@ -296,7 +298,7 @@ describe("launch", () => {
     async (reason) => {
       stubDevice({});
       const pwa = await import("./index.ts");
-      void pwa.launchPhoneApp();
+      void pwa.launchPhoneApp(loadingFailureChrome);
       options().onNetworkPlay({ reason });
       const early = vi.fn();
       pwa.networkPlayNotice(early);
@@ -312,7 +314,7 @@ describe("launch", () => {
     stubDevice({});
     const pwa = await import("./index.ts");
     const { installProgress } = await import("../loading/progress.ts");
-    void pwa.launchPhoneApp();
+    void pwa.launchPhoneApp(loadingFailureChrome);
     const visible: boolean[] = [];
     pwa.updateOffer.subscribe((shown) => visible.push(shown));
     const save = vi.fn();
@@ -344,7 +346,7 @@ describe("launch", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const pwa = await import("./index.ts");
     const { installProgress } = await import("../loading/progress.ts");
-    void pwa.launchPhoneApp();
+    void pwa.launchPhoneApp(loadingFailureChrome);
     let active = true;
     const stop = installProgress.subscribe((state) => {
       active = state.active;
@@ -358,7 +360,7 @@ describe("launch", () => {
   it("dismisses once, keeping the active build until the next launch", async () => {
     stubDevice({});
     const pwa = await import("./index.ts");
-    void pwa.launchPhoneApp();
+    void pwa.launchPhoneApp(loadingFailureChrome);
     const update = staged();
     options().onUpdateReady(update);
     pwa.updateOffer.defer();
@@ -371,7 +373,7 @@ describe("launch", () => {
   it("requires the newer version for a newer save and reports its state as it changes", async () => {
     stubDevice({});
     const pwa = await import("./index.ts");
-    void pwa.launchPhoneApp();
+    void pwa.launchPhoneApp(loadingFailureChrome);
     const states: string[] = [];
     pwa.requireNewerVersion((state) => states.push(state));
     expect(kit.launch.requireNewer).toHaveBeenCalledOnce();

@@ -7,6 +7,7 @@
 // from the cache. A complete staged update activates silently at the next launch, before game
 // construction or save access; during a session the staged version is offered through Update now
 // on any screen. A newer save is the automatic exception (requireNewerVersion).
+import type { LoadingFailurePresentation } from "@andornaut/game-kit/runtime/web/progress/dom/loadingFailure";
 import {
   appCannotClose,
   canExitApp,
@@ -56,7 +57,6 @@ import {
   updateActivationActivity,
   updateStateActivity,
 } from "../loading/progress.ts";
-import { loadingFailurePresentation, styleLoadingFailureFrame } from "../loading/startup.ts";
 import { CACHE_POLICY } from "./cachePolicy.ts";
 import { dispatchPhoneBack } from "./events.ts";
 import { presentInstallationFailure } from "./installationPresentation.ts";
@@ -284,8 +284,16 @@ export function requireNewerVersion(onState: (state: RequiredUpdateState) => voi
   }
 }
 
+interface LoadingFailureChrome {
+  readonly presentation: (root: HTMLElement) => LoadingFailurePresentation<"content">;
+  readonly styleFrame: (frame: HTMLDivElement) => void;
+}
+
 /** Resolve production capability and share one installation attempt across the boot and game. */
-export function preparePhoneLaunch(parent?: HTMLElement): PhoneLaunch {
+export function preparePhoneLaunch(
+  chrome: LoadingFailureChrome,
+  parent?: HTMLElement,
+): PhoneLaunch {
   if (preparedLaunch !== undefined) {
     return preparedLaunch;
   }
@@ -298,10 +306,10 @@ export function preparePhoneLaunch(parent?: HTMLElement): PhoneLaunch {
     throw new Error("Missing application mount");
   }
   const frame = app.ownerDocument.createElement("div");
-  styleLoadingFailureFrame(frame);
+  chrome.styleFrame(frame);
   const prepared = prepareBrowserLaunch(
     {
-      failure: { presentation: loadingFailurePresentation(app) },
+      failure: { presentation: chrome.presentation(app) },
       onUnsupported: () => {
         app.querySelector("#boot-progress")?.remove();
         app.ownerDocument.body.append(frame);
@@ -325,8 +333,10 @@ export function preparePhoneLaunch(parent?: HTMLElement): PhoneLaunch {
 }
 
 /** Fallback callers share the boot result and stop before touching the save unless it is play. */
-export function launchPhoneApp(): Promise<LaunchResult | "unsupported"> {
-  return preparePhoneLaunch().result;
+export function launchPhoneApp(
+  chrome: LoadingFailureChrome,
+): Promise<LaunchResult | "unsupported"> {
+  return preparePhoneLaunch(chrome).result;
 }
 
 /** Check for an update in the current document, using the launch lifecycle's normal guards. */
