@@ -72,7 +72,7 @@ it("rewinds the campaign while keeping persisted equipment, ore, geography and e
     stage: 0,
   });
   expect(rewind.achievements).not.toBe(save.achievements);
-  const next = openRewoundCampaign(CONTENT, save, cryptoEntropy);
+  const next = openRewoundCampaign(CONTENT, cryptoEntropy, save);
   expect(next.state.achievements.unlocked).toEqual(save.achievements.unlocked);
   expect(inspectAdaSave(next.save()).status).toBe("valid");
   expect(save.flight!.cargo).toBe(67);
@@ -84,7 +84,7 @@ it("persists the new Sunflower Earth opening and reloads it through Continue", (
   old.startGalaxy(1);
   const source = old.saveDocument();
   source.prologueSeen = true;
-  const next = openRewoundCampaign(CONTENT, source, cryptoEntropy);
+  const next = openRewoundCampaign(CONTENT, cryptoEntropy, source);
   expect(next.screen).toBe("story");
   expect(next.state.flight).toBeNull();
   expect(next.state.prologueSeen).toBe(true);

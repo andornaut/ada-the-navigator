@@ -466,7 +466,7 @@ export class GameScene extends Scene {
   readonly entropy: Entropy;
   bootUiManifest?: unknown;
 
-  constructor(initialSave: StoreLoadResult<GameSave>, entropy: Entropy) {
+  constructor(entropy: Entropy, initialSave: StoreLoadResult<GameSave>) {
     super("game");
     this.initialSave = initialSave;
     this.entropy = entropy;

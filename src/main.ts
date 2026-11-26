@@ -159,7 +159,7 @@ async function enterGame(attempt: LoadingAttempt): Promise<void> {
   if (!attempt.isCurrent() || crashed) {
     return;
   }
-  const scene = new GameScene(initialSave, browserEntropy);
+  const scene = new GameScene(browserEntropy, initialSave);
   scene.bootUiManifest = boot?.uiManifest;
   let owned: Game | undefined;
   let constructScene: (() => void) | undefined;

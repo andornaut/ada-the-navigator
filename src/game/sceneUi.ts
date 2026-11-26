@@ -1695,7 +1695,7 @@ async function commitCampaignRewind(
   writingCampaignRewinds.add(scene);
   let committed = false;
   try {
-    const next = openRewoundCampaign(CONTENT, source.save, scene.entropy);
+    const next = openRewoundCampaign(CONTENT, scene.entropy, source.save);
     const adoptGeneration = await saves.commitCampaign(source, next.saveDocument(), authorized);
     if (!adoptGeneration) {
       return null;

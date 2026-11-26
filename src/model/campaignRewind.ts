@@ -55,8 +55,8 @@ export function rewindCampaign(saved: GameSave): GameSave {
 /** Use the ordinary Earth opening and persist its new cursor for Continue. */
 export function openRewoundCampaign(
   content: GameContent,
-  saved: GameSave,
   entropy: Entropy,
+  saved: GameSave,
 ): GameModel {
   const model = new GameModel(content, rewindCampaign(saved), entropy);
   if (model.canContinue) {
