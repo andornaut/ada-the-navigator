@@ -1171,8 +1171,9 @@ export function batchCaptures(ctx) {
     // Drones near: an engaged fighter presses Ada, so the drone warning shows first. The refusal
     // takes the slot over it at once, and once the notice is tapped away the warning returns
     // with its own remaining time.
+    // The fighter starts above and right of the Use disc, clear of it and the slot.
     const drones = stationModel(1);
-    addEnemy(drones, { archetype: "fighter", screen: { x: 160, y: 40 } });
+    addEnemy(drones, { archetype: "fighter", screen: { x: 240, y: -60 } });
     drones.state.flight.dangerFor = 1;
     await ctx.openFixture(canonical(drones, "controls-use-refusal-drones"), { frozen: false });
     const dronesPage = ctx.page();
