@@ -156,7 +156,7 @@ community garden lot in the rain and closes in Ada's room at night with the rock
 glowing; the prologue moves from the park to Ada's room. Narration
 pages show no name tab; dialogue pages show the speaker's. Back on a storybook
 page acts as Previous. An optional-question page returns to its question list
-until Continue, so Ada can ask every question. Continue shows Astra's boarding line,
+until Next, so Ada can ask every question. Next shows Astra's boarding line,
 then the galaxy map. Back to title and Continue, or closing and reopening the
 game, retain the exact story page, unanswered choice, questions already asked,
 cross-scene Previous trail and elapsed sleep time. Resume does not select an
@@ -271,8 +271,10 @@ Story and quest interactions in space (Talk, Deliver, Tow, Salvage and Deposit)
 open the conversation card: the storybook's story panel over the
 paused, dimmed space view. Each line shows its actual speaker's name tab and
 portrait. An interaction with no person to address uses Astra. The card offers
-Continue, choices, Ask more and Skip where available, with X as its only Close
-control. Skip advances to the outcome and still asks for a pending choice.
+Next for generic dialog advancement, along with choices, Ask more and Skip
+where available. Choice, spoken-response and named-action buttons use their
+authored labels. X is the only Close control. Skip advances to the outcome and
+still asks for a pending choice.
 Normal Dock opens the Station welcome with the keeper paragraph and available
 services. [Stations](economy.md#stations) describes the welcome and services.
 Conversations use brief essential exchanges with optional

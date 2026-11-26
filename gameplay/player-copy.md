@@ -12,7 +12,7 @@ and stops for an unresolved choice.
 Every space Use interaction, Dock included, opens the conversation card. The conversation's PARTY heading names the person or group Ada is
 addressing. Each line has its own speaker name and portrait, including Ada,
 Astra and Penny when they speak. A PARTY heading never attributes every line to
-that party. Narration remains unattributed. Continue advances essential lines;
+that party. Narration remains unattributed. Next advances essential lines;
 Ask more offers the listed optional topics and returns to the same conversation.
 Optional topics never gate progress. Skip dialogue reaches the existing outcome
 once, preserving any pending choice for the player to answer.
@@ -152,7 +152,7 @@ Aboard, standing:
 - Astra: "In space. I'll fly where you steer. You choose where we go, and tell me
   what you see."
 
-Optional questions, each returning to the list until Continue:
+Optional questions, each returning to the list until Next:
 
 - "What's a holodisk?" Astra: "A disk that holds part of my memory. Each one you
   find helps me remember, maybe even how I came to Earth, and shows me new
@@ -1313,8 +1313,9 @@ or replay rewards.
 - Use actions, each the disc's accessible name and drawn as a symbol: Talk,
   Deliver, Deposit, Tow, Salvage, Dock, Scan, Quest details, and Use for any other
   interaction. Available real actions, including repeatable Dock, take priority.
-- Conversation buttons: Continue on every page that advances, Dock's greeting
-  pages and topic lists included; Ask more.
+- Dialog buttons: Next for an action that only advances the dialog, including
+  greeting pages and optional-topic lists. Use the authored label for a choice,
+  spoken response or named action. Ask more opens optional topics.
 - Shop ammunition lock reason: key `requiresWeapon`, exact text
   "Requires {weapon}". Substitute the canonical current weapon display name for
   `ShopRow.requiresWeapon`, without an inferred level or alternate nickname.
