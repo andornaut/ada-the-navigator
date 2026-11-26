@@ -601,4 +601,68 @@ describe("the square bound", () => {
     // The place draws at its canonical point, a square's width from Ada on the map.
     expect(toScreen(inner, view, across).x).toBeLessThan(ada.x);
   });
+
+  it("keeps Ada on screen after the opening fit beside every tip and seam", () => {
+    const half = SIDE / 2;
+    const steps = 24;
+    const wrap = (point: Point) => mapImage({ worldSide: SIDE }, point);
+    const failures: string[] = [];
+    let outsideInner = 0;
+    // Ada at each depth inside each of the square's four edges, swept along it; the ends of each
+    // sweep are the corner, which projects to the diamond's tips.
+    const positions: { readonly ada: Point; readonly depth: number; readonly out: Point }[] = [];
+    for (const depth of [1, 300, 3000]) {
+      for (let step = 0; step <= steps; step++) {
+        const along = -half + depth + ((SIDE - 2 * depth) * step) / steps;
+        positions.push(
+          { ada: { x: half - depth, y: along }, depth, out: { x: 1, y: 0 } },
+          { ada: { x: -half + depth, y: along }, depth, out: { x: -1, y: 0 } },
+          { ada: { x: along, y: half - depth }, depth, out: { x: 0, y: 1 } },
+          { ada: { x: along, y: -half + depth }, depth, out: { x: 0, y: -1 } },
+        );
+      }
+    }
+    for (const frame of [{ field, fit, inner }, wide]) {
+      const { min } = scaleLimits(frame.inner, frame.field, SIDE);
+      for (const { ada, depth, out } of positions) {
+        // Places 1500 past the nearest seam and past both nearest seams, which draw at the
+        // square's far edges, and one beside Ada.
+        const jump = depth + 1500;
+        const across = wrap({ x: ada.x + out.x * jump, y: ada.y + out.y * jump });
+        const past = (value: number) => Math.sign(value) * (half - Math.abs(value) + 1500);
+        const corner = wrap({ x: ada.x + past(ada.x), y: ada.y + past(ada.y) });
+        const beside = { x: ada.x - out.x * 400, y: ada.y - out.y * 400 };
+        for (const [kind, places] of [
+          ["across", [across, corner]],
+          ["beside", [beside]],
+          ["alone", []],
+        ] as const) {
+          const view = openingView(frame.inner, frame.field, SIDE, places, ada);
+          expectInside(frame, view);
+          const at = toScreen(frame.inner, view, ada);
+          const shown =
+            at.x >= frame.field.x - tolerance &&
+            at.x <= frame.field.x + frame.field.width + tolerance &&
+            at.y >= frame.field.y - tolerance &&
+            at.y <= frame.field.y + frame.field.height + tolerance;
+          if (!shown) {
+            failures.push(`${frame.field.width}x${frame.field.height} ${kind} ${ada.x},${ada.y}`);
+          }
+          const inInner =
+            at.x >= frame.inner.x - tolerance &&
+            at.x <= frame.inner.x + frame.inner.width + tolerance &&
+            at.y >= frame.inner.y - tolerance &&
+            at.y <= frame.inner.y + frame.inner.height + tolerance;
+          outsideInner += inInner ? 0 : 1;
+          if (kind === "across") {
+            // The seam spreads the box across the square, so the opening is at minScale.
+            expect(view.scale).toBeCloseTo(min, 12);
+          }
+        }
+      }
+    }
+    expect(failures).toEqual([]);
+    // Near a tip the clamp moves Ada out of the inner region, and she still shows.
+    expect(outsideInner).toBeGreaterThan(0);
+  });
 });
