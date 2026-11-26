@@ -11,9 +11,13 @@ import {
   fitRegion,
   innerRegion,
   MAP_SCREEN,
+  mapImage,
+  mapProjection,
+  mapSurveyEllipse,
   type MapView,
   openingView,
   panView,
+  type Point,
   recentreView,
   scaleLimits,
   toScreen,
@@ -61,6 +65,32 @@ function expectInSquare(view: MapView) {
   );
 }
 
+function expectInField(view: MapView, point: Point) {
+  const at = toScreen(INNER, view, point);
+  expect(at.x).toBeGreaterThanOrEqual(-TOLERANCE);
+  expect(at.x).toBeLessThanOrEqual(FIELD.width + TOLERANCE);
+  expect(at.y).toBeGreaterThanOrEqual(-TOLERANCE);
+  expect(at.y).toBeLessThanOrEqual(FIELD.height + TOLERANCE);
+}
+
+function surveyDistances(view: MapView) {
+  const { rx, ry, x, y } = mapSurveyEllipse(INNER, view);
+  return {
+    farthest: Math.hypot(Math.max(x, FIELD.width - x) / rx, Math.max(y, FIELD.height - y) / ry),
+    nearest: Math.hypot(
+      Math.max(0, -x, x - FIELD.width) / rx,
+      Math.max(0, -y, y - FIELD.height) / ry,
+    ),
+  };
+}
+
+function expectSurveyArc(view: MapView) {
+  // Distances in ellipse space must straddle the outline. Bounding-box overlap is insufficient.
+  const { farthest, nearest } = surveyDistances(view);
+  expect(nearest).toBeLessThan(1);
+  expect(farthest).toBeGreaterThan(1);
+}
+
 describe.each(GALAXIES)("galaxy %i's local map", (galaxy) => {
   const map = cornerMap(galaxy);
   const side = map.worldSide!;
@@ -90,22 +120,43 @@ describe.each(GALAXIES)("galaxy %i's local map", (galaxy) => {
         expectInSquare(view);
       }
       expect(view.scale).toBeCloseTo(scaleLimits(INNER, FIELD, side).min, 9);
+      expectSurveyArc(view);
     }
   });
 
-  it("keeps Ada and every discovered place reachable by panning at each zoom limit", () => {
+  it("keeps all targets reachable at closer zooms and keeps the survey oval at minimum zoom", () => {
     const { max, min } = scaleLimits(INNER, FIELD, side);
-    for (const scale of [min, max]) {
-      for (const point of [map.player, ...map.places]) {
+    const firstCloser = min * MAP_SCREEN.zoomStep;
+    expect(firstCloser).toBeGreaterThan(min);
+    expect(firstCloser).toBeLessThan(max);
+    const points = [map.player, ...map.places];
+    for (const scale of [firstCloser, max]) {
+      for (const point of points) {
         const start = { centre: { x: 0, y: 0 }, scale, worldSide: side };
         const view = recentreView(INNER, FIELD, point, start);
         expectInSquare(view);
-        const at = toScreen(INNER, view, point);
-        expect(at.x).toBeGreaterThanOrEqual(-TOLERANCE);
-        expect(at.x).toBeLessThanOrEqual(FIELD.width + TOLERANCE);
-        expect(at.y).toBeGreaterThanOrEqual(-TOLERANCE);
-        expect(at.y).toBeLessThanOrEqual(FIELD.height + TOLERANCE);
+        expectInField(view, point);
       }
     }
+
+    const start = { centre: { x: 0, y: 0 }, scale: min, worldSide: side };
+    const centredOn = (point: Point): MapView => ({
+      ...start,
+      centre: mapProjection(mapImage(start, point)),
+    });
+    expect(surveyDistances(centredOn(map.player)).nearest).toBeGreaterThan(1);
+    let compatible = 0;
+    for (const point of points) {
+      const view = recentreView(INNER, FIELD, point, start);
+      expectInSquare(view);
+      expectSurveyArc(view);
+      // A centred target and an intersecting oval provide a straightforward reach witness.
+      const { farthest, nearest } = surveyDistances(centredOn(point));
+      if (nearest < 1 && farthest > 1) {
+        expectInField(view, point);
+        compatible++;
+      }
+    }
+    expect(compatible).toBeGreaterThan(0);
   });
 });
