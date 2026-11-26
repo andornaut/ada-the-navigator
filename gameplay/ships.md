@@ -289,8 +289,8 @@ Heavies:
 - Every heavy hardpoint (weapon, engine, command and platform turret) has the
   position's hardpoint HP: 10, 10, 12, 12, 14 and 14 along the route. The
   flagship's parts have 18 HP. A `platform` hull has half the frigate hull.
-- Heavy share multiplies the roster's `frigate` and `capital` weights; the weights
-  then renormalize. Placed platforms are not weighted.
+- Heavy share multiplies the ambient roster's `frigate` weights before
+  normalization. Placed platforms have no weight.
 
 ### Enemy aim
 
@@ -477,15 +477,15 @@ by this contract.
 
 ## Ambient admission
 
+The ambient roster uses frigates and smaller ships in every galaxy. Capital
+bosses, required capital guards and Phantom's flagship use authored encounters.
+
 Spawn admission counts only the group being placed, in its own lattice cell; the
 lattice spacing keeps groups apart ([Spawn targets](rules.md#spawn-targets)). The
 whole group, including every escort and hull, must fit the local budget and
-archetype limit, with at most one capital. Fighter groups target four and use the
-largest size that fits the budget. Swarms target their configured maximum and fit
-the budget down to two, never a singleton. A capital supplies one nonstacking
-allowance of two slots to its own formation; frigates do not supply it, and all
-escorts still consume budget slots. Encounter weights, HP and rewards are
-unchanged.
+archetype limit. Fighter groups target four and use the largest size that fits the
+budget. Swarms target their configured maximum and fit the budget down to two,
+never a singleton. Escorts consume budget slots.
 
 First-sight admission uses a 900-world-unit local radius. It conservatively counts
 live neighbouring hulls whose footprints could share that neighbourhood, including
@@ -611,14 +611,13 @@ archetype: currents change how the existing ones fight.
 
 Needle's drones gather at the mouths of its narrow channels and fly fast passes.
 
-| Archetype      | Encounter | Group | Weight | Behaviours                                   |
-| -------------- | --------- | ----: | -----: | -------------------------------------------- |
-| `swarm`        | Pack      |   2–8 |   0.20 | `swarm`; packs `flee` after losses           |
-| `fighter`      | Patrol    |     4 |   0.25 | `chase`; a group shares pack morale          |
-| `interceptor`  | Pair      |     2 |   0.25 | `strafe`                                     |
-| `retaliator`   | Solo      |     1 |   0.08 | `retaliate`, then `chase`; three-bolt spread |
-| `frigate`      | Solo      |     1 |   0.15 | `siege`; size 5 Ada widths                   |
-| Capital battle | Group     |     1 |   0.07 | A `capital` with 5 `escort` fighters         |
+| Archetype     | Encounter | Group | Weight | Behaviours                                   |
+| ------------- | --------- | ----: | -----: | -------------------------------------------- |
+| `swarm`       | Pack      |   2–8 |   0.20 | `swarm`; packs `flee` after losses           |
+| `fighter`     | Patrol    |     4 |   0.25 | `chase`; a group shares pack morale          |
+| `interceptor` | Pair      |     2 |   0.25 | `strafe`                                     |
+| `retaliator`  | Solo      |     1 |   0.08 | `retaliate`, then `chase`; three-bolt spread |
+| `frigate`     | Solo      |     1 |   0.15 | `siege`; size 5 Ada widths                   |
 
 No encounter is placed
 inside a gate run's channel; a pack waits at the Eye's exit.
@@ -627,14 +626,13 @@ inside a gate run's channel; a pack waits at the Eye's exit.
 
 Andromeda's drones hunt in the open, in larger patrols with more frigates.
 
-| Archetype      | Encounter    | Group | Weight | Behaviours                                   |
-| -------------- | ------------ | ----: | -----: | -------------------------------------------- |
-| `swarm`        | Pack         |   2–8 |   0.20 | `swarm`; packs `flee` after losses           |
-| `fighter`      | Patrol       |     4 |   0.30 | `hitAndRun`; a group shares pack morale      |
-| `interceptor`  | Pair         |     2 |   0.15 | `strafe`                                     |
-| `retaliator`   | Solo         |     1 |   0.10 | `retaliate`, then `chase`; three-bolt spread |
-| `frigate`      | Solo or pair |   1–2 |   0.18 | `siege`; size 5 Ada widths                   |
-| Capital battle | Group        |     1 |   0.07 | A `capital` with 4 `escort` fighters         |
+| Archetype     | Encounter    | Group | Weight | Behaviours                                   |
+| ------------- | ------------ | ----: | -----: | -------------------------------------------- |
+| `swarm`       | Pack         |   2–8 |   0.20 | `swarm`; packs `flee` after losses           |
+| `fighter`     | Patrol       |     4 |   0.30 | `hitAndRun`; a group shares pack morale      |
+| `interceptor` | Pair         |     2 |   0.15 | `strafe`                                     |
+| `retaliator`  | Solo         |     1 |   0.10 | `retaliate`, then `chase`; three-bolt spread |
+| `frigate`     | Solo or pair |   1–2 |   0.18 | `siege`; size 5 Ada widths                   |
 
 Drones never target
 the courier Pip or the settlers' ships.
@@ -644,15 +642,14 @@ the courier Pip or the settlers' ships.
 Cartwheel's drones are claim jumpers: they gather at ore fields and hit and run
 any miner who comes near, Ada included. Fixed turret platforms guard ore fields.
 
-| Archetype      | Encounter       | Group | Weight | Behaviours                                                     |
-| -------------- | --------------- | ----: | -----: | -------------------------------------------------------------- |
-| `swarm`        | Pack            |   2–7 |   0.25 | `swarm`; packs `flee` after losses                             |
-| `fighter`      | Claim jumpers   |     4 |   0.40 | `hitAndRun`; a group shares pack morale                        |
-| `interceptor`  | Solo or pair    |   1–2 |   0.12 | `hitAndRun`                                                    |
-| `retaliator`   | Solo            |     1 |   0.10 | `retaliate`, then `chase`; three-bolt spread                   |
-| `frigate`      | Solo            |     1 |   0.10 | `siege`; size 5 Ada widths                                     |
-| Capital battle | Group           |     1 |   0.03 | A `capital` with 4 `escort` fighters                           |
-| `platform`     | Ore-field guard |     1 |      – | `siege` at speed 0: two required turrets; placed, not weighted |
+| Archetype     | Encounter       | Group | Weight | Behaviours                                                     |
+| ------------- | --------------- | ----: | -----: | -------------------------------------------------------------- |
+| `swarm`       | Pack            |   2–7 |   0.25 | `swarm`; packs `flee` after losses                             |
+| `fighter`     | Claim jumpers   |     4 |   0.40 | `hitAndRun`; a group shares pack morale                        |
+| `interceptor` | Solo or pair    |   1–2 |   0.12 | `hitAndRun`                                                    |
+| `retaliator`  | Solo            |     1 |   0.10 | `retaliate`, then `chase`; three-bolt spread                   |
+| `frigate`     | Solo            |     1 |   0.10 | `siege`; size 5 Ada widths                                     |
+| `platform`    | Ore-field guard |     1 |      – | `siege` at speed 0: two required turrets; placed, not weighted |
 
 An ore field is a seeded cluster of 6 to 10 ordinary rocks about 900 world units
 across, placed like stations: at least 3000 world units apart and 1500 from the
@@ -690,14 +687,13 @@ turrets fire while it advances, with no speed to advance.
 
 Phantom's drones are Archie's home guard: heavier, and they chase.
 
-| Archetype      | Encounter    | Group | Weight | Behaviours                                   |
-| -------------- | ------------ | ----: | -----: | -------------------------------------------- |
-| `swarm`        | Pack         |   2–8 |   0.18 | `swarm`; packs `flee` after losses           |
-| `fighter`      | Home guard   |     4 |   0.25 | `chase`; a group shares pack morale          |
-| `interceptor`  | Pair         |     2 |   0.15 | `strafe`                                     |
-| `retaliator`   | Solo         |     1 |   0.07 | `retaliate`, then `chase`; three-bolt spread |
-| `frigate`      | Solo or pair |   1–2 |   0.25 | `siege`; size 5 Ada widths                   |
-| Capital battle | Group        |     1 |   0.10 | A `capital` with 6 `escort` fighters         |
+| Archetype     | Encounter    | Group | Weight | Behaviours                                   |
+| ------------- | ------------ | ----: | -----: | -------------------------------------------- |
+| `swarm`       | Pack         |   2–8 |   0.18 | `swarm`; packs `flee` after losses           |
+| `fighter`     | Home guard   |     4 |   0.25 | `chase`; a group shares pack morale          |
+| `interceptor` | Pair         |     2 |   0.15 | `strafe`                                     |
+| `retaliator`  | Solo         |     1 |   0.07 | `retaliate`, then `chase`; three-bolt spread |
+| `frigate`     | Solo or pair |   1–2 |   0.25 | `siege`; size 5 Ada widths                   |
 
 Blockades and the finale's waves draw from this roster (see
 [the version one rules](rules.md#galaxy-six-phantom-the-finale)). Once the

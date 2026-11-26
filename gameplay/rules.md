@@ -716,7 +716,7 @@ space story runs in three acts:
 2. **Fleet battle.** When Ada comes within 1500 world units of the waypoint, the
    battle begins: her allies jump in beside her (see
    [Ships](ships.md#finale-allies)), and three waves of drones come, each two
-   encounters drawn from the roster without the capital battle. The next wave
+   encounters drawn from the ambient roster. The next wave
    arrives when the last is destroyed, disabled or fled. The flagship and its
    escorts hold back until the third wave is gone.
 3. **The flagship.** Archie's own capital ([Ships](ships.md#archies-flagship))
@@ -1703,13 +1703,13 @@ Densities are mean counts per open 3x3-chunk area, one ninth per chunk. Each
 kind's request in a chunk shrinks by the share of the chunk covered by the
 exclusion zones that apply to that kind, measured on an 8x8 grid of sample
 points, and an area's request is the sum of its nine chunks. Flight lanes are not
-exclusion zones and do not count as covered. Enemy columns count groups;
-`frigate` and `capital` groups include their escorts.
-Each galaxy's enemy densities derive from its encounter lattice: its cell
-occupancy in groups per lattice cell (0.5625 cells per area times the encounter
-rate), split by roster composition weight after the heavy share
-multiplies the `frigate` and `capital` weights ([Ships](ships.md#difficulty)). Regions are the
-[geographic regions](ships.md#ambient-admission) by distance from the galactic
+exclusion zones and do not count as covered. Enemy columns count groups.
+Frigate groups include their escorts. Capital encounters use authored
+placements and have zero ambient density in every region.
+The table sets the per-kind enemy requests. Lattice spacing and occupancy
+remain set by [ambient admission](ships.md#ambient-admission), with roster
+weights and the frigate heavy share described in [Ships](ships.md#difficulty).
+Regions are the [geographic regions](ships.md#ambient-admission) by distance from the galactic
 center: inner below 10000 world units, middle from 10000 to below 25000 and
 outer from 25000 (planner bands 0, 1 and 2). Every density blends linearly
 between the two regions' values across 9000–11000 and 24000–26000, and
@@ -1727,18 +1727,18 @@ radii.
 | Whirlpool | inner  |      44.76 |     1.95 |            7 |   0.105 |     0.126 |         0.063 |        0.042 |     0.063 |         0 |
 |           | middle |      44.76 |     1.80 |            7 |   0.105 |     0.126 |         0.063 |        0.042 |     0.063 |         0 |
 |           | outer  |      44.76 |     1.65 |            7 |   0.105 |     0.126 |         0.063 |        0.042 |     0.063 |         0 |
-| Needle    | inner  |      44.76 |     1.95 |            8 |   0.084 |     0.105 |         0.105 |        0.033 |     0.075 |     0.035 |
-|           | middle |      44.76 |     2.10 |            8 |   0.084 |     0.105 |         0.105 |        0.033 |     0.075 |     0.035 |
-|           | outer  |      44.76 |     2.10 |            8 |   0.084 |     0.105 |         0.105 |        0.033 |     0.075 |     0.035 |
-| Andromeda | inner  |      44.76 |     2.10 |            9 |   0.092 |     0.137 |         0.069 |        0.046 |     0.107 |     0.042 |
-|           | middle |      44.76 |     2.25 |            9 |   0.092 |     0.137 |         0.069 |        0.046 |     0.107 |     0.042 |
-|           | outer  |      44.76 |     2.10 |            9 |   0.092 |     0.137 |         0.069 |        0.046 |     0.107 |     0.042 |
-| Cartwheel | inner  |      44.76 |     2.10 |            6 |   0.131 |     0.209 |         0.063 |        0.052 |     0.073 |     0.022 |
-|           | middle |      44.76 |     2.10 |            6 |   0.131 |     0.209 |         0.063 |        0.052 |     0.073 |     0.022 |
-|           | outer  |      44.76 |     1.95 |            6 |   0.131 |     0.209 |         0.063 |        0.052 |     0.073 |     0.022 |
-| Phantom   | inner  |      44.76 |     2.10 |           10 |   0.129 |     0.179 |         0.107 |        0.050 |     0.268 |     0.107 |
-|           | middle |      44.76 |     2.10 |           10 |   0.129 |     0.179 |         0.107 |        0.050 |     0.268 |     0.107 |
-|           | outer  |      44.76 |     1.95 |           10 |   0.129 |     0.179 |         0.107 |        0.050 |     0.268 |     0.107 |
+| Needle    | inner  |      44.76 |     1.95 |            8 |   0.084 |     0.105 |         0.105 |        0.033 |     0.075 |         0 |
+|           | middle |      44.76 |     2.10 |            8 |   0.084 |     0.105 |         0.105 |        0.033 |     0.075 |         0 |
+|           | outer  |      44.76 |     2.10 |            8 |   0.084 |     0.105 |         0.105 |        0.033 |     0.075 |         0 |
+| Andromeda | inner  |      44.76 |     2.10 |            9 |   0.092 |     0.137 |         0.069 |        0.046 |     0.107 |         0 |
+|           | middle |      44.76 |     2.25 |            9 |   0.092 |     0.137 |         0.069 |        0.046 |     0.107 |         0 |
+|           | outer  |      44.76 |     2.10 |            9 |   0.092 |     0.137 |         0.069 |        0.046 |     0.107 |         0 |
+| Cartwheel | inner  |      44.76 |     2.10 |            6 |   0.131 |     0.209 |         0.063 |        0.052 |     0.073 |         0 |
+|           | middle |      44.76 |     2.10 |            6 |   0.131 |     0.209 |         0.063 |        0.052 |     0.073 |         0 |
+|           | outer  |      44.76 |     1.95 |            6 |   0.131 |     0.209 |         0.063 |        0.052 |     0.073 |         0 |
+| Phantom   | inner  |      44.76 |     2.10 |           10 |   0.129 |     0.179 |         0.107 |        0.050 |     0.268 |         0 |
+|           | middle |      44.76 |     2.10 |           10 |   0.129 |     0.179 |         0.107 |        0.050 |     0.268 |         0 |
+|           | outer  |      44.76 |     1.95 |           10 |   0.129 |     0.179 |         0.107 |        0.050 |     0.268 |         0 |
 
 A target passes when at least 90% of sampled 3x3-chunk areas, over fixed seeds
 in every galaxy and region, deliver at least 90% of their requested count. A
