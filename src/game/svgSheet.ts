@@ -1,5 +1,58 @@
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
+const XMLNS_NAMESPACE = "http://www.w3.org/2000/xmlns/";
+const PLACEMENT_ATTRIBUTES = ["id", "x", "y"];
+
+/** Remove only plain placement attributes from XMLSerializer's opening tag. */
+function stripPlacement(xml: string): string | undefined {
+  if (!xml.startsWith("<svg")) {
+    return undefined;
+  }
+  // A sticky token accounts for each root attribute, including quoted delimiters in its value.
+  const attribute = / ([A-Za-z_][A-Za-z0-9_.-]*)="[^"<]*"/y;
+  let cursor = 4;
+  let kept = 0;
+  let result = "";
+  while (xml[cursor] === " ") {
+    attribute.lastIndex = cursor;
+    const token = attribute.exec(xml);
+    if (!token) {
+      return undefined;
+    }
+    if (PLACEMENT_ATTRIBUTES.includes(token[1]!)) {
+      result += xml.slice(kept, cursor);
+      kept = attribute.lastIndex;
+    }
+    cursor = attribute.lastIndex;
+  }
+  return xml[cursor] === ">" || xml.startsWith("/>", cursor) ? result + xml.slice(kept) : undefined;
+}
+
+function standaloneSvg(frame: Element): string {
+  const serializer = new XMLSerializer();
+  if (
+    frame.prefix === null &&
+    Array.from(frame.attributes).every(
+      (attr) =>
+        (attr.namespaceURI === null && attr.name !== "xmlns") ||
+        (attr.namespaceURI === XMLNS_NAMESPACE &&
+          attr.name === "xmlns" &&
+          attr.value === SVG_NAMESPACE),
+    )
+  ) {
+    // Namespace-qualified roots and attributes use the original clone path.
+    const stripped = stripPlacement(serializer.serializeToString(frame));
+    if (stripped !== undefined) {
+      return stripped;
+    }
+  }
+  const standalone = frame.cloneNode(true) as Element;
+  for (const attribute of PLACEMENT_ATTRIBUTES) {
+    standalone.removeAttribute(attribute);
+  }
+  return serializer.serializeToString(standalone);
+}
+
 export function vectorSheetKey(path: string): string {
   return `vector-sheet:${path}`;
 }
@@ -61,10 +114,6 @@ export function vectorSheetSource(
   ) {
     throw new Error(`Invalid frame ${id} in vector sheet: ${path}`);
   }
-  const standalone = frame.cloneNode(true) as Element;
-  for (const attribute of ["id", "x", "y"]) {
-    standalone.removeAttribute(attribute);
-  }
-  const encoded = btoa(new XMLSerializer().serializeToString(standalone));
+  const encoded = btoa(standaloneSvg(frame));
   return `data:image/svg+xml;base64,${encoded}`;
 }
