@@ -198,6 +198,7 @@ export type UiContext = Partial<Pick<GameScene, "edgeInk" | "fieldLight">> &
     | "hubArt"
     | "indicatorInk"
     | "ink"
+    | "jetHalo"
     | "jetKeyline"
     | "jets"
     | "jobArt"
@@ -343,6 +344,7 @@ export function buildScene(scene: UiContext): void {
   };
   scene.events.on(Scenes.Events.PRE_RENDER, holdHitFlash);
   partial.push(() => scene.events.off(Scenes.Events.PRE_RENDER, holdHitFlash));
+  scene.jetHalo = scene.add.graphics();
   scene.jetKeyline = scene.add.graphics();
   scene.jets = scene.add.graphics().setDepth(9);
   scene.ship = scene.add.image(0, 0, "ship").setDepth(10);

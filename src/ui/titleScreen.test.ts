@@ -47,10 +47,13 @@ describe("title screen art", () => {
     expect(art.jets.every(({ alpha }) => alpha === 1)).toBe(true);
     const scale = START_SCREEN.ship.size / jets.frame;
     const polygons = jetPolygons(art);
-    expect(polygons).toHaveLength(jets.headings[52]!.length * jets.layers.length);
+    // The 280 px ship is past the halo's maxDisplay: only the outer flame and core draw.
+    const shown = jets.layers.filter(({ underHull }) => !underHull);
+    expect(shown.map(({ name }) => name)).toEqual(["outer", "core"]);
+    expect(polygons).toHaveLength(jets.headings[52]!.length * shown.length);
     polygons.forEach((polygon, index) => {
-      const mouth = jets.headings[52]![Math.floor(index / jets.layers.length)]!;
-      const layer = jets.layers[index % jets.layers.length]!;
+      const mouth = jets.headings[52]![Math.floor(index / shown.length)]!;
+      const layer = shown[index % shown.length]!;
       expect(polygon.fill).toBe(`#${layerColor(layer, 0.8).toString(16).padStart(6, "0")}`);
       const expected = plumePolygon(
         jets.profile!,
@@ -66,6 +69,20 @@ describe("title screen art", () => {
       expect(actual).toHaveLength(expected.length);
       actual.forEach((value, at) => expect(value).toBeCloseTo(expected[at]!, 10));
     });
+  });
+
+  it("draws no halo on the start screen ship and marks an under-hull layer it does draw", () => {
+    expect(START_SCREEN.ship.size).toBeGreaterThan(jets.layers[0]!.maxDisplay!);
+    expect(jetPolygons(art).some(({ underHull }) => underHull)).toBe(false);
+    const ungated = {
+      ...jets,
+      layers: jets.layers.map((layer) => ({ ...layer, maxDisplay: Infinity })),
+    };
+    const polygons = jetPolygons(readTitleScreen(manifest.assets, ungated, data)!);
+    expect(polygons.map(({ underHull }) => underHull === true)).toEqual([
+      ...[true, false, false],
+      ...[true, false, false],
+    ]);
   });
 
   it("translates every plume with its mouth root", () => {

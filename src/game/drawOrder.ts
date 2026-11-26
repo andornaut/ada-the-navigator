@@ -32,13 +32,15 @@ export interface PassableDraw {
 
 /**
  * Ada's layers below her hull, by depth offset: her own shots still over her hull, her jets, the
- * jets' and hull's keylines, then her tow line. A lift clears the lowest of them.
+ * jets' and hull's keylines, her under-hull jet layers (the halo), then her tow line. A lift
+ * clears the lowest of them.
  */
 export const ADA_LAYERS = {
   jetKeyline: -2e-6,
   jets: -1e-6,
   launch: -0.5e-6,
   towLine: -3e-6,
+  underHull: -2.5e-6,
 } as const;
 
 // Above an overlapped object and its parts (1e-7 apart) with Ada's lowest layer still above it.

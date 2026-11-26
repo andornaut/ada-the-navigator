@@ -29,7 +29,10 @@ export interface TitleScreenArt {
     readonly url: string;
     readonly width: number;
   };
-  /** Plumes and optional nearer-surface masks in logical px from the ship's pivot. */
+  /**
+   * Plumes and optional nearer-surface masks in logical px from the ship's pivot, without layers
+   * whose maxDisplay is below the ship's size; `underHull` plumes draw before the hull.
+   */
   readonly jets: readonly JetPlume[];
   /** The plumes draw above the hull, which is redrawn inside their occluders. */
   readonly frontJets?: true;
@@ -138,15 +141,18 @@ export function jetPolygons(art: TitleScreenArt): {
   readonly occluders?: readonly string[];
   readonly opacity: number;
   readonly points: string;
+  /** Draws before the hull frame, whatever the plume's order about the hull. */
+  readonly underHull?: true;
 }[] {
   const size = START_SCREEN.ship.size;
   const origin = { x: art.pivot.x * size, y: art.pivot.y * size };
   const onFrame = (points: readonly Vec[]) =>
     points.map(({ x, y }) => `${origin.x + x},${origin.y + y}`).join(" ");
-  return art.jets.map(({ alpha, color, occluders, points }) => ({
+  return art.jets.map(({ alpha, color, occluders, points, underHull }) => ({
     fill: `#${color.toString(16).padStart(6, "0")}`,
     ...(occluders === undefined ? {} : { occluders: occluders.map(onFrame) }),
     opacity: alpha,
     points: onFrame(points),
+    ...(underHull ? { underHull } : {}),
   }));
 }

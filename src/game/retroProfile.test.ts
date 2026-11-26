@@ -11,18 +11,23 @@ import { jetLength as artJetLength, plumePolygon } from "../../art/tools/ship-pl
 import mainArt from "../../public/art/ship-jets.json";
 import reverseArt from "../../public/art/ship-retro-jets.json";
 import { LIGHT_FIELD } from "./lightField.ts";
-import { jetPlumes, layerColor, readEngineJets, travelJets } from "./shipJets.ts";
+import { jetPlumes, layerColor, readEngineJets, type ShipJets, travelJets } from "./shipJets.ts";
 
 const main = readEngineJets(mainArt)!;
 const reverse = readEngineJets(reverseArt)!;
 const framePixels = { displayHeight: 96, displayWidth: 96, pivot: { x: 0, y: 0 } };
+// Shape checks map frame pixels 1:1 (96 px), past the halo's maxDisplay, so they lift the gate.
+const ungated = (source: ShipJets): ShipJets => ({
+  ...source,
+  layers: source.layers.map((layer) => ({ ...layer, maxDisplay: Infinity })),
+});
 const color = (value: string) => Number.parseInt(value.slice(1), 16);
 
 describe("reverse plume profile", () => {
   it("draws Art's full teardrop at the reverse widths, with no clip, at every heading", () => {
     const shapes = jetLayers(JET_LEVELS[0], RETRO_JET.width);
     for (const f of [0.2, 1]) {
-      const jets = travelJets(main, reverse, undefined, 1, "reverse")!;
+      const jets = ungated(travelJets(main, reverse, undefined, 1, "reverse")!);
       const length = artJetLength(reverseArt.length, f);
       reverseArt.headings.forEach(({ index, mouths }) => {
         const plumes = jetPlumes(jets, framePixels, index, f);

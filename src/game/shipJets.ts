@@ -35,6 +35,10 @@ export interface JetLayer {
   colors: readonly [number, number];
   /** Multiple of the jet length. */
   length: number;
+  /** Largest logical display side of the ship frame at which the layer draws; absent is any. */
+  maxDisplay?: number;
+  /** Draws before the hull and its keyline, so no hull, skirt or tail pixel is covered. */
+  underHull?: boolean;
   /** Multiple of the `half` vector. */
   width: number;
 }
@@ -79,6 +83,8 @@ export interface JetTriangle {
   /** Authored nearer surfaces in the same pivot-relative display coordinates as the triangle. */
   occluders?: readonly (readonly Vec[])[];
   points: readonly [Vec, Vec, Vec];
+  /** The layer draws before the hull and its keyline. */
+  underHull?: true;
 }
 
 type Fields = Record<string, unknown>;
@@ -107,7 +113,9 @@ function readLayer(value: unknown): JetLayer | undefined {
     !layer ||
     !finite(layer.width) ||
     !finite(layer.length) ||
-    (layer.name !== undefined && typeof layer.name !== "string")
+    (layer.name !== undefined && typeof layer.name !== "string") ||
+    (layer.underHull !== undefined && typeof layer.underHull !== "boolean") ||
+    (layer.maxDisplay !== undefined && !(finite(layer.maxDisplay) && layer.maxDisplay > 0))
   ) {
     return undefined;
   }
@@ -123,6 +131,8 @@ function readLayer(value: unknown): JetLayer | undefined {
     length: layer.length,
     width: layer.width,
     ...(typeof layer.name === "string" ? { name: layer.name } : {}),
+    ...(finite(layer.maxDisplay) ? { maxDisplay: layer.maxDisplay } : {}),
+    ...(typeof layer.underHull === "boolean" ? { underHull: layer.underHull } : {}),
   };
   if (layer.alpha !== undefined) {
     const alpha = fields(layer.alpha);
@@ -405,6 +415,25 @@ function displayMapping(frame: number, display: JetDisplay): (x: number, y: numb
   return (x, y) => ({ x: (x - ox) * sx, y: (y - oy) * sy });
 }
 
+/**
+ * The jets with only the layers that draw under the hull (`underHull` true) or only the rest, for
+ * views that draw the two passes on either side of the hull and its keyline.
+ */
+export function jetLayerPass(underHull: boolean, jets: ShipJets): ShipJets {
+  return {
+    ...jets,
+    layers: jets.layers.filter((layer) => (layer.underHull === true) === underHull),
+  };
+}
+
+/** Whether a layer draws on a ship frame shown at `display`: its larger side within maxDisplay. */
+function layerShown(display: JetDisplay, layer: JetLayer): boolean {
+  return (
+    layer.maxDisplay === undefined ||
+    Math.max(display.displayWidth, display.displayHeight) <= layer.maxDisplay
+  );
+}
+
 /** Jet length in ship units at speed fraction f. */
 export function jetLength(jets: JetGeometry, f: number): number {
   return jets.length.base + jets.length.scale * f ** jets.length.exponent;
@@ -428,13 +457,15 @@ export interface JetPlume {
   color: number;
   /** Authored nearer surfaces in the same pivot-relative display coordinates as the plume. */
   occluders?: readonly (readonly Vec[])[];
+  /** The layer draws before the hull and its keyline. */
+  underHull?: true;
   /** The outline, for vector and canvas consumers that fill one path per plume. */
   points: readonly Vec[];
   /** The outline as triangles, for consumers that fill triangles. */
   triangles: readonly (readonly [Vec, Vec, Vec])[];
 }
 
-/** Plumes per mouth in layer order; empty at f = 0. */
+/** Plumes per mouth in layer order, without layers too small for `display`; empty at f = 0. */
 export function jetPlumes(
   jets: ShipJets,
   display: JetDisplay,
@@ -462,10 +493,14 @@ export function jetPlumes(
       jets.profile,
     )) {
       const layer = jets.layers[layerIndex]!;
+      if (!layerShown(display, layer)) {
+        continue;
+      }
       plumes.push({
         alpha: layerAlpha(layer, fraction),
         color: layerColor(layer, fraction),
         ...(occluders === undefined ? {} : { occluders }),
+        ...(layer.underHull ? { underHull: true as const } : {}),
         points: points.map(map),
         triangles: triangles.map(([a, b, c]) => [map(a), map(b), map(c)] as const),
       });
@@ -474,19 +509,21 @@ export function jetPlumes(
   return plumes;
 }
 
-/** Filled triangles per mouth in layer order; empty at f = 0. */
+/** Filled triangles per mouth in layer order, as jetPlumes; empty at f = 0. */
 export function jetTriangles(
   jets: ShipJets,
   display: JetDisplay,
   direction: number,
   f: number,
 ): JetTriangle[] {
-  return jetPlumes(jets, display, direction, f).flatMap(({ alpha, color, occluders, triangles }) =>
-    triangles.map((points) => ({
-      alpha,
-      color,
-      ...(occluders === undefined ? {} : { occluders }),
-      points,
-    })),
+  return jetPlumes(jets, display, direction, f).flatMap(
+    ({ alpha, color, occluders, triangles, underHull }) =>
+      triangles.map((points) => ({
+        alpha,
+        color,
+        ...(occluders === undefined ? {} : { occluders }),
+        points,
+        ...(underHull ? { underHull } : {}),
+      })),
   );
 }

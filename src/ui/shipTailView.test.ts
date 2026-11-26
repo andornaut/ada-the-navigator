@@ -5,7 +5,7 @@ import { titleShipView } from "./titleShipView.ts";
 
 afterEach(() => vi.unstubAllGlobals());
 
-it("orders the painted hull above front Title plumes and masks plumes that are not in front", () => {
+it("orders the painted hull above front Title plumes, masks the rest and keeps the halo under it", () => {
   class Node {
     readonly attrs = new Map<string, string>();
     children: Node[] = [];
@@ -57,6 +57,31 @@ it("orders the painted hull above front Title plumes and masks plumes that are n
           ],
         ],
       },
+      // An under-hull halo draws behind the hull frame, never in front or masked.
+      {
+        alpha: 1,
+        color: 2,
+        occluders: [
+          [
+            { x: 0, y: 0 },
+            { x: 1, y: 0 },
+            { x: 1, y: 1 },
+          ],
+        ],
+        points: [
+          { x: 5, y: 5 },
+          { x: 6, y: 6 },
+          { x: 7, y: 5 },
+        ],
+        triangles: [
+          [
+            { x: 5, y: 5 },
+            { x: 6, y: 6 },
+            { x: 7, y: 5 },
+          ],
+        ],
+        underHull: true,
+      },
     ],
     pivot: { x: 0.5, y: 0.5 },
     ships: new Map([
@@ -71,6 +96,14 @@ it("orders the painted hull above front Title plumes and masks plumes that are n
     const front = nodes[2]!;
     const triangle = front.children.find((n) => n.tag === "polygon")!;
     expect(triangle.attrs.get("points")).toBe(jetPolygons(art)[0]!.points);
+    const halo = jetPolygons(art)[1]!;
+    expect(halo.underHull).toBe(true);
+    // The jets SVG behind, then the hull frame.
+    expect(nodes[1]!.tag).toBe("img");
+    const back = nodes[0]!.children.filter((n) => n.tag === "polygon");
+    expect(back.map((n) => n.attrs.get("points"))).toEqual([halo.points]);
+    expect(back[0]!.attrs.has("mask")).toBe(false);
+    expect(front.children.some((n) => n.attrs.get("points") === halo.points)).toBe(false);
     if (inFront) {
       expect(triangle.attrs.has("mask")).toBe(false);
       const tail = nodes[3]!;

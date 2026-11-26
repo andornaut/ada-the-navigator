@@ -12,11 +12,13 @@ import { forwardJetMouths, FRAME } from "../../art/tools/ship-model.ts";
 import { jetLength as artJetLength, plumePolygon } from "../../art/tools/ship-plume.ts";
 import manifest from "../../public/art/manifest.json";
 import art from "../../public/art/ship-jets.json";
+import retroArt from "../../public/art/ship-retro-jets.json";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import { hasShipHeadings } from "./shipArt.ts";
 import {
   engineJets,
   type JetDisplay,
+  jetLayerPass,
   jetLength,
   jetPlumes,
   jetsInFront,
@@ -34,13 +36,18 @@ const ada = readEngineJets(art)!;
 // Engine level 1, the base style the shape tests check.
 const jets = engineJets(ada, 1);
 const [halo, outer, core] = jets.layers;
+// Shape checks map frame pixels 1:1 (96 px), past the halo's maxDisplay, so they lift the gate.
+const ungated = (source: ShipJets): ShipJets => ({
+  ...source,
+  layers: source.layers.map((layer) => ({ ...layer, maxDisplay: Infinity })),
+});
 // Layer shapes in draw order.
 const SHAPES = [JET_SHAPE.halo, JET_SHAPE.outer, JET_SHAPE.core];
 // Identity mapping keeps plume coordinates in heading-frame pixels.
 const framePixels: JetDisplay = { displayHeight: 96, displayWidth: 96, pivot: { x: 0, y: 0 } };
 const shipDisplay: JetDisplay = { displayHeight: 42, displayWidth: 42, pivot: { x: 0.5, y: 0.5 } };
 const single: ShipJets = {
-  ...jets,
+  ...ungated(jets),
   headings: Array.from({ length: SHIP_HEADINGS }, () => [
     { anchor: { x: 50, y: 60 }, axis: { x: 0, y: 1 }, half: { x: 1, y: 0 } },
   ]),
@@ -112,6 +119,10 @@ describe("ship jet metadata", () => {
     ],
     ["a heading without mouths", withHeading({ index: 0, mouths: [] })],
     ["a malformed colour", withOuter({ colors: ["blue", "#ffffff"] })],
+    ["a non-boolean underHull", withOuter({ underHull: "yes" })],
+    ["a zero maxDisplay", withOuter({ maxDisplay: 0 })],
+    ["a negative maxDisplay", withOuter({ maxDisplay: -42 })],
+    ["a non-numeric maxDisplay", withOuter({ maxDisplay: "42" })],
     ["an empty alpha ramp", withOuter({ alpha: { from: 1, max: 1, to: 1 } })],
     ["a missing length curve", { ...art, length: undefined }],
     ["no engine levels", { ...art, engineLevels: undefined }],
@@ -131,6 +142,74 @@ describe("ship jet metadata", () => {
     expect(readShipJets(craft)?.layers).toEqual(engineJets(ada, 2).layers);
     expect(readShipJets(art)).toBeUndefined();
     expect("layers" in art).toBe(false);
+  });
+});
+
+describe("under-hull halo", () => {
+  const retro = readEngineJets(retroArt)!;
+  const size = (side: number): JetDisplay => ({
+    displayHeight: side,
+    displayWidth: side,
+    pivot: { x: 0.5, y: 0.5 },
+  });
+
+  it("keeps underHull and maxDisplay on every level's halo, forward and retro", () => {
+    for (const file of [ada, retro]) {
+      for (const layers of file.engineLevels) {
+        const [first, ...rest] = layers;
+        expect(first).toMatchObject({ maxDisplay: 42, name: "halo", underHull: true });
+        for (const layer of rest) {
+          expect(layer).not.toHaveProperty("underHull");
+          expect(layer).not.toHaveProperty("maxDisplay");
+        }
+      }
+    }
+    const craft = { ...art, engineLevels: undefined, layers: art.engineLevels[0]!.layers };
+    expect(readShipJets(craft)!.layers[0]).toMatchObject({ maxDisplay: 42, underHull: true });
+    const drawnOver = { ...art.engineLevels[0]!.layers[0]!, underHull: false };
+    expect(readLevelLayers([{ layers: [drawnOver], level: 1 }])![0]![0]!.underHull).toBe(false);
+  });
+
+  it("draws the halo at the 42 px flight size and not on larger frames", () => {
+    for (const source of [jets, engineJets(retro, 3)]) {
+      const at42 = jetPlumes(source, size(42), 17, 1);
+      expect(at42.filter(({ underHull }) => underHull)).toHaveLength(2);
+      expect(at42).toHaveLength(2 * source.layers.length);
+      for (const side of [43, 112, 280]) {
+        const plumes = jetPlumes(source, size(side), 17, 1);
+        expect(plumes.some(({ underHull }) => underHull)).toBe(false);
+        expect(plumes).toHaveLength(2 * (source.layers.length - 1));
+      }
+      // The larger of the two display sides decides.
+      const tall = { ...size(42), displayHeight: 50 };
+      expect(jetPlumes(source, tall, 17, 1).some(({ underHull }) => underHull)).toBe(false);
+      expect(jetTriangles(source, size(42), 17, 1).some(({ underHull }) => underHull)).toBe(true);
+      expect(jetTriangles(source, size(280), 17, 1).some(({ underHull }) => underHull)).toBe(false);
+    }
+  });
+
+  it("splits the layers into the under-hull pass and the rest, geometry unchanged", () => {
+    const under = jetLayerPass(true, jets);
+    const rest = jetLayerPass(false, jets);
+    expect(under.layers).toEqual([halo]);
+    expect(rest.layers).toEqual([outer, core]);
+    expect({ ...under, layers: [] }).toEqual({ ...jets, layers: [] });
+    expect(jetPlumes(rest, size(42), 5, 1)).toEqual(
+      jetPlumes(jets, size(42), 5, 1).filter(({ underHull }) => !underHull),
+    );
+  });
+
+  it("keeps the non-halo layers' front or behind order at every heading", () => {
+    for (const file of [ada, retro]) {
+      const selected = engineJets(file, 1);
+      const rest = jetLayerPass(false, selected);
+      for (let heading = 0; heading < SHIP_HEADINGS; heading++) {
+        expect(jetsInFront(rest, heading)).toBe(jetsInFront(selected, heading));
+      }
+    }
+    expect(Array.from({ length: SHIP_HEADINGS }, (_, h) => jetsInFront(jets, h))).toEqual(
+      Array.from({ length: SHIP_HEADINGS }, () => true),
+    );
   });
 });
 
@@ -310,7 +389,7 @@ describe("teardrop plumes", () => {
   });
 
   it("orders halo, outer then core per mouth, in their interpolated colours", () => {
-    const plumes = jetPlumes(jets, framePixels, 3, 1);
+    const plumes = jetPlumes(ungated(jets), framePixels, 3, 1);
     const one = [
       [color(JET_LEVELS[0].halo[1]), 1],
       [color(JET_LEVELS[0].outer[1]), 1],
@@ -323,7 +402,7 @@ describe("teardrop plumes", () => {
     for (const f of [0.3, 1]) {
       const length = artJetLength(art.length, f);
       jets.headings.forEach((mouths, heading) => {
-        const plumes = jetPlumes(jets, framePixels, heading, f);
+        const plumes = jetPlumes(ungated(jets), framePixels, heading, f);
         expect(plumes).toHaveLength(mouths.length * SHAPES.length);
         mouths.forEach((_, index) => {
           const { anchor, axis, half } = art.headings[heading]!.mouths[index]!;

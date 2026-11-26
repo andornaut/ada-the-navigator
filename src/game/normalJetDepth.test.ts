@@ -8,7 +8,7 @@ import { playDepth } from "./asteroidArt.ts";
 import { ADA_LAYERS, adaDepth, boxWith, drawnBox } from "./drawOrder.ts";
 import { jetsInFront } from "./shipJets.ts";
 
-it("places only forward plumes with occluders above the player hull, with keyline below their fill", () => {
+it("places forward occluded plumes above the hull and the halo below every jet and hull layer", () => {
   const source = ts.createSourceFile(
     "scene.ts",
     readFileSync(new URL("./scene.ts", import.meta.url), "utf8"),
@@ -57,6 +57,7 @@ it("places only forward plumes with occluders above the player hull, with keylin
       }) as boolean;
       expect(front).toBe(occluded && travel === "forward");
       const fixture = {
+        jetHalo: { setDepth: vi.fn() },
         jetKeyline: { setDepth: vi.fn() },
         jets: { setDepth: vi.fn() },
         passable: [],
@@ -76,7 +77,14 @@ it("places only forward plumes with occluders above the player hull, with keylin
       const depth = fixture.ship.setDepth.mock.calls[0]![0] as number;
       const fill = fixture.jets.setDepth.mock.calls[0]![0] as number;
       const ink = fixture.jetKeyline.setDepth.mock.calls[0]![0] as number;
+      const halo = fixture.jetHalo.setDepth.mock.calls[0]![0] as number;
       expect(ink).toBeLessThan(fill);
+      // The under-hull layers sit below the hull, its keyline (drawKeylines' depth - 2e-6) and
+      // every plume layer, front or behind, and above the tow line.
+      expect(halo).toBe(depth + ADA_LAYERS.underHull);
+      expect(halo).toBeLessThan(depth - 2e-6);
+      expect(halo).toBeLessThan(Math.min(ink, fill));
+      expect(halo).toBeGreaterThan(depth + ADA_LAYERS.towLine);
       if (front) {
         expect(ink).toBeGreaterThan(depth);
       } else {

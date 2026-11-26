@@ -22,7 +22,10 @@ export const TITLE_SHIP_STYLE = `
 }
 `;
 
-/** The homepage ship and its plumes, with the hull redrawn inside the occluders of front plumes. */
+/**
+ * The homepage ship and its plumes, with the hull redrawn inside the occluders of front plumes.
+ * Under-hull plumes draw with the plumes behind the hull, never in front or masked.
+ */
 export function titleShipView(art: TitleScreenArt, paint: string | null): readonly Element[] {
   const jetSvg = () => {
     const node = document.createElementNS(SVG, "svg");
@@ -43,12 +46,14 @@ export function titleShipView(art: TitleScreenArt, paint: string | null): readon
   );
   const xs = coordinates.map(([x]) => x!);
   const ys = coordinates.map(([, y]) => y!);
-  for (const { fill, occluders, opacity, points } of polygons) {
+  for (const { fill, occluders, opacity, points, underHull } of polygons) {
     const polygon = document.createElementNS(SVG, "polygon");
     polygon.setAttribute("points", points);
     polygon.setAttribute("fill", fill);
     polygon.setAttribute("fill-opacity", String(opacity));
-    if (art.frontJets && front) {
+    if (underHull) {
+      jets.append(polygon);
+    } else if (art.frontJets && front) {
       front.append(polygon);
     } else if (occluders !== undefined && front) {
       const signature = JSON.stringify(occluders);

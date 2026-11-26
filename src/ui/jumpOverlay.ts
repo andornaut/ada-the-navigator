@@ -16,7 +16,7 @@ import {
   tunnelScale,
   warpPoseSize,
 } from "../game/quantumJump.ts";
-import { jetsInFront, type ShipJets } from "../game/shipJets.ts";
+import { jetLayerPass, jetsInFront, type ShipJets } from "../game/shipJets.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import type { Vec } from "../model/types.ts";
 import { COLOURS } from "./layout/colours.ts";
@@ -243,11 +243,12 @@ export function createJumpOverlay(
           }
         : undefined;
     const front = jetsInFront(jets, 0);
-    const drawJets = () => {
+    // Under-hull layers draw first; the rest keep the plume's order about the hull.
+    const drawJets = (underHull: boolean) => {
       if (jets) {
         drawShipJets(
           context,
-          jets,
+          jetLayerPass(underHull, jets),
           { displayHeight: size, displayWidth: size, pivot: { x: 0.5, y: 0.5 } },
           0,
           options.centre,
@@ -256,8 +257,9 @@ export function createJumpOverlay(
         );
       }
     };
+    drawJets(true);
     if (!front) {
-      drawJets();
+      drawJets(false);
     }
     const drawHull = () => {
       context.globalAlpha = options.alpha;
@@ -269,7 +271,7 @@ export function createJumpOverlay(
     };
     drawHull();
     if (front && jets) {
-      drawJets();
+      drawJets(false);
       drawShipTail(
         context,
         jets,

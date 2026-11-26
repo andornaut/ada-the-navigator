@@ -4,7 +4,7 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { GALAXY_COUNT, type RoutePosition } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
-import { jetOccluderRegions, jetsInFront, type ShipJets } from "../game/shipJets.ts";
+import { jetLayerPass, jetOccluderRegions, jetsInFront, type ShipJets } from "../game/shipJets.ts";
 import type { RouteFlight } from "../model/game.ts";
 import {
   assertAdaActionBindings,
@@ -610,14 +610,22 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   });
   const shipSprite = document.createElement("div");
   shipSprite.className = "ada-route-ship";
-  const jetCanvas = document.createElement("canvas");
-  jetCanvas.setAttribute("aria-hidden", "true");
-  Object.assign(jetCanvas.style, {
-    height: "100%",
-    inset: "0",
-    position: "absolute",
-    width: "100%",
-  });
+  // The under-hull layers' canvas stays below the hull; the plume canvas rises above it when its
+  // jets draw in front.
+  const shipCanvas = () => {
+    const canvas = document.createElement("canvas");
+    canvas.setAttribute("aria-hidden", "true");
+    Object.assign(canvas.style, {
+      height: "100%",
+      inset: "0",
+      position: "absolute",
+      width: "100%",
+    });
+    return canvas;
+  };
+  const haloCanvas = shipCanvas();
+  const jetCanvas = shipCanvas();
+  const jetCanvases = [haloCanvas, jetCanvas];
   const shipHull = document.createElement("div");
   Object.assign(shipHull.style, {
     background: "center / 100% 100% no-repeat",
@@ -633,7 +641,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     width: "100%",
     zIndex: "2",
   });
-  shipSprite.append(jetCanvas, shipHull, tail.root);
+  shipSprite.append(haloCanvas, jetCanvas, shipHull, tail.root);
   let shipFrameUrl = "";
   const pulse = document.createElement("div");
   pulse.className = "ada-route-pulse";
@@ -762,32 +770,39 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
         region.map(({ x, y }) => `${SHIP.size / 2 + x},${SHIP.size / 2 + y}`).join(" "),
       ),
     );
-    jetCanvas.hidden = !jets;
     jetCanvas.style.zIndex = jetsInFront(jets, heading) ? "1" : "";
+    for (const canvas of jetCanvases) {
+      canvas.hidden = !jets;
+    }
     if (jets) {
       const side = Math.max(
         1,
         Math.ceil(SHIP.size * readViewUnit(root) * (window.devicePixelRatio || 1)),
       );
-      if (jetCanvas.width !== side || jetCanvas.height !== side) {
-        jetCanvas.width = side;
-        jetCanvas.height = side;
-      }
-      const context = jetCanvas.getContext("2d");
-      if (context) {
-        context.setTransform(side / SHIP.size, 0, 0, side / SHIP.size, 0, 0);
-        context.clearRect(0, 0, SHIP.size, SHIP.size);
-        drawShipJets(
-          context,
-          jets,
-          {
-            displayHeight: SHIP.size,
-            displayWidth: SHIP.size,
-            pivot: { x: 0.5, y: 0.5 },
-          },
-          heading,
-          { x: SHIP.size / 2, y: SHIP.size / 2 },
-        );
+      for (const [canvas, underHull] of [
+        [haloCanvas, true],
+        [jetCanvas, false],
+      ] as const) {
+        if (canvas.width !== side || canvas.height !== side) {
+          canvas.width = side;
+          canvas.height = side;
+        }
+        const context = canvas.getContext("2d");
+        if (context) {
+          context.setTransform(side / SHIP.size, 0, 0, side / SHIP.size, 0, 0);
+          context.clearRect(0, 0, SHIP.size, SHIP.size);
+          drawShipJets(
+            context,
+            jetLayerPass(underHull, jets),
+            {
+              displayHeight: SHIP.size,
+              displayWidth: SHIP.size,
+              pivot: { x: 0.5, y: 0.5 },
+            },
+            heading,
+            { x: SHIP.size / 2, y: SHIP.size / 2 },
+          );
+        }
       }
     }
   }

@@ -307,6 +307,9 @@ Ada's canopy, tail and plume roots. `ship-fixes` takes the start screen and the
 warp's settle-24, settle-16 and settle-10 poses. `ship-fixes-l`, `ship-fixes-m`
 and `ship-fixes-s` take her plumes at 1, 0.6 and 0.25 of her top speed, forward
 and in reverse, at headings 0, 16, 32 and 48 of 64: eight fixtures per set.
+`jet-halo` takes her forward plumes at those headings at each of the three
+speeds, where the 42 px flight sprite draws the halo under her hull, then the
+start screen and the warp's settle-24 pose, which draw none.
 
 `placements` takes the salvage beacons, Whirlpool's nursery beacon and
 Andromeda's spare beacon after their reveal, and `hostile-tops` each family's

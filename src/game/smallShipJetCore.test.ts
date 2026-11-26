@@ -23,13 +23,17 @@ describe("player jet cores at every display size", () => {
       for (const field of [undefined, LIGHT_FIELD.jets.shipLevels]) {
         for (const level of [1, 2, 3]) {
           const jets = travelJets(main, reverse, field, level, direction)!;
+          // The halo draws only up to its maxDisplay; the outer and core draw at every size.
+          const plumeLayers = jets.layers.filter(({ underHull }) => !underHull);
           for (const fraction of [0.3, 1]) {
             const large = jetPlumes(jets, display(84), 56, fraction);
             expect(large.map(({ color }) => color)).toEqual(
-              [0, 1].flatMap(() => jets.layers.map((layer) => layerColor(layer, fraction))),
+              [0, 1].flatMap(() => plumeLayers.map((layer) => layerColor(layer, fraction))),
             );
             for (const size of [16, 24, 42]) {
-              const small = jetPlumes(jets, display(size), 56, fraction);
+              const all = jetPlumes(jets, display(size), 56, fraction);
+              expect(all.filter(({ underHull }) => underHull)).toHaveLength(2);
+              const small = all.filter(({ underHull }) => !underHull);
               expect(small.map(({ color }) => color)).toEqual(large.map(({ color }) => color));
               small.forEach((plume, index) => {
                 plume.points.forEach((point, corner) => {
@@ -66,10 +70,13 @@ describe("player jet cores at every display size", () => {
         x: 0,
         y: 0,
       });
-      // One path per plume: outer and core at each of the two mouths.
-      expect(fills).toEqual(
-        [0, 1].flatMap(() => jets.layers.map((layer) => hex(layerColor(layer, 1)))),
+      // One path per plume at each of the two mouths: the halo up to its maxDisplay, then the
+      // outer and core.
+      const drawn = jets.layers.filter(
+        ({ maxDisplay }) => maxDisplay === undefined || size <= maxDisplay,
       );
+      expect(drawn.length).toBe(size <= 42 ? 3 : 2);
+      expect(fills).toEqual([0, 1].flatMap(() => drawn.map((layer) => hex(layerColor(layer, 1)))));
     }
   });
 });

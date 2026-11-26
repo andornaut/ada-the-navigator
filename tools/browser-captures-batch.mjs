@@ -836,6 +836,37 @@ export function batchCaptures(ctx) {
       },
     );
 
+  // Ada's jet halo at 2 device px per CSS px: under way forward at headings 0, 16, 32 and 48 of
+  // 64 at each plume size, where the 42 px flight sprite draws the halo under her hull, then the
+  // 280 px start screen ship and the warp's settle-24 pose, which draw none. Each view adds a
+  // close-up of her tail and plume roots.
+  async function jetHalo() {
+    await inTurn(
+      Object.keys(PLUME_SIZES).flatMap((size) => FIX_HEADINGS.map((heading) => [size, heading])),
+      async ([size, heading]) => {
+        const name = `jet-halo-${size}-${heading}`;
+        await open(canonical(underWay(PLUME_SIZES[size], false, heading), name), FIX_SCALE);
+        await ctx.frames(name);
+        await ctx.closeUp(`art-${name}-close.png`, { side: 160 });
+      },
+    );
+    const title = canonical(painted(flightModel(1), "classic"), "jet-halo-title");
+    const home = await ctx.openHome(title, FIX_SCALE);
+    await home.locator(".ada-start-actions > button").first().waitFor();
+    await home.waitForFunction(() => document.querySelector(".ada-start-ship")?.complete);
+    await home.waitForTimeout(500);
+    await ctx.pageShot("jet-halo-title.png");
+    await ctx.closeUp("jet-halo-title-close.png", { selector: ".ada-start-ship" });
+    const page = await galaxyMap("jet-halo-jump", FIX_SCALE);
+    await selectWhirlpool(page);
+    await pauseClock(page);
+    await page.locator('[data-action="galaxy-jump"]').click();
+    // settle-24 holds 50 ms from 600 ms of the jump; one shot at its midpoint.
+    await page.clock.runFor(625);
+    await ctx.pageShot("jet-halo-settle-24.png");
+    await ctx.closeUp("jet-halo-settle-24-close.png", { side: 320 });
+  }
+
   /** A save with Ada's ship in the paint scheme `paint`. */
   function painted(model, paint) {
     model.state.economy.paints = [...new Set(["classic", paint])];
@@ -1765,6 +1796,7 @@ export function batchCaptures(ctx) {
     "fleet-craft": fleetCraft,
     "fleet-tops": fleetTops,
     "holodisk-icon": holodiskIcon,
+    "jet-halo": jetHalo,
     hostile,
     "hostile-tops": hostileTops,
     "keep-moving": keepMoving,

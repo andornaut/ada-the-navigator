@@ -61,6 +61,22 @@ describe("canvas jet adapter", () => {
     expect(context.globalAlpha).toBe(0.7);
   });
 
+  it("paints a layer only where the frame's larger side is within its maxDisplay", () => {
+    const halo = { colors: [0x101a2e, 0x101a2e] as const, length: 1.1, maxDisplay: 42, width: 2 };
+    const gated: ShipJets = { ...jets, layers: [{ ...halo, underHull: true }, ...jets.layers] };
+    for (const [width, height, colours] of [
+      [42, 42, ["#101a2e", "#ff1100"]],
+      [24, 24, ["#101a2e", "#ff1100"]],
+      [42, 43, ["#ff1100"]],
+      [280, 280, ["#ff1100"]],
+    ] as const) {
+      const { context, fills } = canvas();
+      const display = { displayHeight: height, displayWidth: width, pivot: { x: 0.5, y: 0.5 } };
+      drawShipJets(context, gated, display, 0, { x: 0, y: 0 });
+      expect(fills.map(({ color }) => color)).toEqual(colours);
+    }
+  });
+
   it("does not paint a missing heading or invent a material", () => {
     const { context, fills } = canvas();
     const display = { displayHeight: 256, displayWidth: 256, pivot: { x: 0.5, y: 0.5 } };

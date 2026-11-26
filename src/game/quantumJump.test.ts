@@ -22,7 +22,7 @@ import {
   tunnelScale,
   warpPoseSize,
 } from "./quantumJump.ts";
-import { jetsInFront } from "./shipJets.ts";
+import { engineJets, jetPlumes, jetsInFront, readEngineJets } from "./shipJets.ts";
 
 const jump = readQuantumJump(data)!;
 const sheet = (id: string): SheetArt => {
@@ -114,6 +114,34 @@ describe("quantum jump data", () => {
     expect(settle.headings[0]!.some(({ occluders }) => occluders?.length === 0)).toBe(true);
     expect(jump.warp.poses.find(({ id }) => id === "bank-8")?.jets).toBeUndefined();
     expect(jump.warp.poses.find(({ id }) => id === "settle-5")?.jets).toBeUndefined();
+  });
+
+  it("draws no halo on any warp pose at any step's scale", () => {
+    const material = engineJets(readEngineJets(jetData)!, 1);
+    expect(material.layers.some(({ underHull }) => underHull)).toBe(true);
+    const drawn = jump.frames.flatMap(({ steps }) =>
+      steps.flatMap(({ ship }) => {
+        const pose = jump.warp.poses.find(({ id }) => id === ship?.pose);
+        return pose?.jets ? [{ jets: pose.jets, scale: ship!.scale }] : [];
+      }),
+    );
+    expect(drawn.length).toBeGreaterThan(0);
+    for (const { jets, scale } of drawn) {
+      const size = warpPoseSize(jump.warp, scale);
+      expect(size).toBeGreaterThan(42);
+      const plumes = jetPlumes(
+        {
+          ...jets,
+          layers: material.layers,
+          ...(material.profile ? { profile: material.profile } : {}),
+        },
+        { displayHeight: size, displayWidth: size, pivot: { x: 0.5, y: 0.5 } },
+        0,
+        1,
+      );
+      expect(plumes.length).toBeGreaterThan(0);
+      expect(plumes.some(({ underHull }) => underHull)).toBe(false);
+    }
   });
 
   it("rejects malformed, wrong-frame and multi-heading optional pose jets but supports absent geometry", () => {

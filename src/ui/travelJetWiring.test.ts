@@ -18,7 +18,12 @@ import { drawShipJets, drawShipTail } from "./shipJetCanvas.ts";
 
 const events = vi.hoisted(() => [] as string[]);
 vi.mock("./shipJetCanvas.ts", () => ({
-  drawShipJets: vi.fn(() => events.push("jets")),
+  // The under-hull pass (the halo) logs apart from the plume pass.
+  drawShipJets: vi.fn((_context: unknown, jets: { layers: { underHull?: boolean }[] }) =>
+    events.push(
+      jets.layers.length > 0 && jets.layers.every(({ underHull }) => underHull) ? "under" : "jets",
+    ),
+  ),
   drawShipTail: vi.fn(() => events.push("tail")),
 }));
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({ focusTarget: vi.fn() }));
@@ -314,6 +319,15 @@ function behindGeometry(geometry: JetGeometry): JetGeometry {
   };
 }
 
+/** The layers of the last under-hull and plume passes drawn, in that order. */
+function lastPasses() {
+  const calls = vi.mocked(drawShipJets).mock.calls;
+  const [under, plume] = calls.slice(-2).map(([, jets]) => jets.layers);
+  expect(under!.every(({ underHull }) => underHull)).toBe(true);
+  expect(plume!.some(({ underHull }) => underHull)).toBe(false);
+  return [...under!, ...plume!];
+}
+
 // Level `level`'s layers in the light field's colours.
 const fieldLayers = (level: number) =>
   main.engineLevels[level - 1]!.map((layer) => ({
@@ -365,33 +379,36 @@ describe("warp material wiring", () => {
     const running = play();
     overlay.play(running);
     fixture.tick(10);
-    expect(vi.mocked(drawShipJets).mock.calls[0]![1].layers).toEqual(main.engineLevels[0]);
-    expect(vi.mocked(drawShipJets).mock.calls[0]![1].frame).toBe(256);
-    expect(vi.mocked(drawShipJets).mock.calls[0]![1].profile).toBe(main.profile);
+    const [under, plume] = vi.mocked(drawShipJets).mock.calls;
+    expect(under![1].layers).toEqual(main.engineLevels[0]!.filter(({ underHull }) => underHull));
+    expect(plume![1].layers).toEqual(main.engineLevels[0]!.filter(({ underHull }) => !underHull));
+    expect(plume![1].frame).toBe(256);
+    expect(plume![1].profile).toBe(main.profile);
+    expect(events.indexOf("under")).toBeLessThan(events.indexOf("jets"));
     expect(events.indexOf("jets")).toBeLessThan(events.indexOf("image"));
     level = 3;
     fixture.tick(20);
-    expect(vi.mocked(drawShipJets).mock.lastCall![1].layers).toEqual(main.engineLevels[2]);
+    expect(lastPasses()).toEqual(main.engineLevels[2]);
     overlay.setPaint({
       jets: () => staticShipJets(main, LIGHT_FIELD.jets.shipLevels, 2),
       scheme: "classic",
       sprites,
     });
     fixture.tick(30);
-    expect(vi.mocked(drawShipJets).mock.lastCall![1].layers).toEqual(fieldLayers(2));
+    expect(lastPasses()).toEqual(fieldLayers(2));
     overlay.setPaint({
       jets: () => staticShipJets(main, undefined, 2),
       scheme: "classic",
       sprites,
     });
     fixture.tick(50);
-    expect(vi.mocked(drawShipJets).mock.lastCall![1].layers).toEqual(main.engineLevels[1]);
+    expect(lastPasses()).toEqual(main.engineLevels[1]);
     expect(running.onCover).toHaveBeenCalledTimes(1);
     overlay.dispose();
     expect(fixture.callbacks.size).toBe(0);
   });
 
-  it("draws Art's occluded warp plumes after the hull, then the hull inside the occluders", () => {
+  it("draws the halo pass, the hull, Art's occluded warp plumes, then the hull in the occluders", () => {
     const fixture = dom();
     const jump = effect();
     const overlay = createJumpOverlay(() => performance.now(), fixture.host, {
@@ -410,6 +427,7 @@ describe("warp material wiring", () => {
     fixture.tick(10);
     expect(drawShipJets).toHaveBeenCalled();
     expect(events.lastIndexOf("jets")).toBeGreaterThan(events.lastIndexOf("image"));
+    expect(events.lastIndexOf("under")).toBeLessThan(events.lastIndexOf("image"));
     expect(drawShipTail).toHaveBeenCalled();
     expect(events.lastIndexOf("tail")).toBeGreaterThan(events.lastIndexOf("jets"));
     overlay.dispose();
@@ -687,22 +705,28 @@ it("draws route thrust below the painted hull and hides it under reduced motion"
   map.show(mapView({ from: 1, opened: [2], to: 2 }));
   fixture.tick(500);
   expect(drawShipJets).toHaveBeenCalled();
-  expect(vi.mocked(drawShipJets).mock.lastCall![1].layers).toEqual(fieldLayers(3));
+  expect(lastPasses()).toEqual(fieldLayers(3));
+  // The under-hull canvas, the plume canvas, then the hull.
   const ship = fixture.nodes.find(({ className }) => className === "ada-route-ship")!;
-  expect(ship.children[0]!.tag).toBe("canvas");
-  expect(ship.children[1]!.style.backgroundImage).toContain("cobalt-");
-  expect(ship.children[0]!.style.zIndex).toBe("");
+  const [halo, plume, hull] = ship.children;
+  expect(halo!.tag).toBe("canvas");
+  expect(plume!.tag).toBe("canvas");
+  expect(hull!.style.backgroundImage).toContain("cobalt-");
+  expect(halo!.style.zIndex).toBe("");
+  expect(plume!.style.zIndex).toBe("");
   front = true;
   fixture.tick(550);
-  expect(ship.children[0]!.style.zIndex).toBe("1");
+  expect(plume!.style.zIndex).toBe("1");
+  expect(halo!.style.zIndex).toBe("");
   front = false;
   fixture.tick(575);
-  expect(ship.children[0]!.style.zIndex).toBe("");
+  expect(plume!.style.zIndex).toBe("");
   const calls = vi.mocked(drawShipJets).mock.calls.length;
   reduced = true;
   fixture.tick(600);
   expect(vi.mocked(drawShipJets).mock.calls).toHaveLength(calls);
-  expect(ship.children[0]!.hidden).toBe(true);
+  expect(halo!.hidden).toBe(true);
+  expect(plume!.hidden).toBe(true);
   map.dispose();
   expect(fixture.callbacks.size).toBe(0);
 });

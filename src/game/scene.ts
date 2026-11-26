@@ -158,6 +158,7 @@ import {
   type EngineJets,
   jetOccluderRegions,
   jetsInFront,
+  type JetTriangle,
   jetTriangles,
   shipJetDirection,
   travelJets,
@@ -206,6 +207,8 @@ export class GameScene extends Scene {
   // What Ada held last frame in this flight, for the item notices' gains.
   held: { readonly flight: object; readonly snapshot: GainSnapshot } | undefined;
   jets!: GameObjects.Graphics;
+  /** Ada's under-hull jet layers and their keyline, below her hull and its keyline. */
+  jetHalo!: GameObjects.Graphics;
   private occludedHull: { image: GameObjects.Image; shape: GameObjects.Graphics } | undefined;
   shipJets: EngineJets | undefined;
   shipRetroJets: EngineJets | undefined;
@@ -1058,6 +1061,7 @@ export class GameScene extends Scene {
     clearPhantomSong(this);
     clearPhantomJump(this);
     this.jets.clear();
+    this.jetHalo.clear();
     this.occludedHull?.image.setVisible(false);
     this.occludedHull?.shape.clear();
     this.overlay.clear();
@@ -1262,6 +1266,7 @@ export class GameScene extends Scene {
     let tailRegions: readonly (readonly Vec[])[] = [];
     if (activeJets && ship?.directionIndex !== undefined) {
       this.jets.setPosition(this.ship.x, this.ship.y);
+      this.jetHalo.setPosition(this.ship.x, this.ship.y);
       this.jetKeyline.setPosition(this.ship.x, this.ship.y);
       const display = {
         displayHeight: ship.displayHeight ?? 42,
@@ -1273,12 +1278,16 @@ export class GameScene extends Scene {
       }
       // Ada's plumes take a keyline only when the light field joins her jets to her silhouette.
       const keyline = this.light && joinsJets(LIGHT_FIELD, "ship");
-      for (const { alpha, color, points } of jetTriangles(
-        activeJets,
-        display,
-        ship.directionIndex,
-        speed,
-      )) {
+      const under: JetTriangle[] = [];
+      for (const triangle of jetTriangles(activeJets, display, ship.directionIndex, speed)) {
+        const { alpha, color, points } = triangle;
+        for (const corner of points) {
+          flames.push({ x: this.ship.x + corner.x, y: this.ship.y + corner.y });
+        }
+        if (triangle.underHull) {
+          under.push(triangle);
+          continue;
+        }
         if (keyline) {
           this.jetKeyline.fillStyle(this.edgeInk, alpha);
           this.jetKeyline.lineStyle(2 * LIGHT_FIELD.keyline, this.edgeInk, alpha);
@@ -1308,10 +1317,8 @@ export class GameScene extends Scene {
           points[2].x,
           points[2].y,
         );
-        for (const corner of points) {
-          flames.push({ x: this.ship.x + corner.x, y: this.ship.y + corner.y });
-        }
       }
+      this.drawUnderHullJets(under, keyline);
     }
     this.placeAda(
       flames,
@@ -1357,6 +1364,28 @@ export class GameScene extends Scene {
   /** Records a drawn fly-through object, which Ada draws above while she overlaps it. */
   passes(sprite: Placed & { readonly depth: number }): void {
     this.passable.push({ box: drawnBox(sprite), depth: sprite.depth });
+  }
+
+  /**
+   * Ada's under-hull jet layers on their own graphics below the hull and its keyline: their
+   * keyline ink first, where the light field joins her jets to her silhouette, then their fills.
+   */
+  private drawUnderHullJets(triangles: readonly JetTriangle[], keyline: boolean): void {
+    const ink = this.jetHalo;
+    if (keyline) {
+      for (const { alpha, points } of triangles) {
+        const [a, b, c] = points;
+        ink.fillStyle(this.edgeInk, alpha);
+        ink.lineStyle(2 * LIGHT_FIELD.keyline, this.edgeInk, alpha);
+        ink.fillTriangle(a.x, a.y, b.x, b.y, c.x, c.y);
+        ink.strokeTriangle(a.x, a.y, b.x, b.y, c.x, c.y);
+      }
+    }
+    for (const { alpha, color, points } of triangles) {
+      const [a, b, c] = points;
+      ink.fillStyle(color, alpha);
+      ink.fillTriangle(a.x, a.y, b.x, b.y, c.x, c.y);
+    }
   }
 
   /** Redraws the loaded hull image inside the plume occluders, over the plumes drawn in front. */
@@ -1406,6 +1435,7 @@ export class GameScene extends Scene {
     const pivot = playDepth(this.ship.y);
     const depth = adaDepth(this.passable, boxWith(drawnBox(this.ship), flames), pivot);
     this.ship.setDepth(depth);
+    this.jetHalo.setDepth(depth + ADA_LAYERS.underHull);
     this.jets.setDepth(depth + (normalFront ? -ADA_LAYERS.jetKeyline : ADA_LAYERS.jets));
     this.jetKeyline.setDepth(depth + (normalFront ? -ADA_LAYERS.jets : ADA_LAYERS.jetKeyline));
     if (this.towDepth !== undefined) {
