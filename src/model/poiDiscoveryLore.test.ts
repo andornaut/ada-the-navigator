@@ -144,12 +144,21 @@ function clearFixtureThreats(model: GameModel) {
   flight.dangerFor = 0;
 }
 
+/**
+ * Steps idle play for `seconds`, collecting each line. Each step first clears the threats and
+ * the rocks and debris the previous step generated: no line depends on scenery, and each step
+ * would otherwise resolve Ada and every moving piece against all of it.
+ */
 function hear(model: GameModel, seconds = CONVERSATION_TUNING.cooldownSeconds + 1) {
   settleUnrelatedCues(model);
   const played = [];
   const steps = Math.ceil(seconds / 0.05);
   for (let index = 0; index < steps; index++) {
     clearFixtureThreats(model);
+    const flight = model.state.flight!;
+    flight.objects = flight.objects.filter(
+      (object) => object.kind !== "rock" && object.kind !== "debris",
+    );
     model.step(0.05, idle);
     if (model.conversation) {
       played.push(model.conversation.text);
