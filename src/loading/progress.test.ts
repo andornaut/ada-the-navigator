@@ -9,8 +9,7 @@ import {
   reportBoot,
   requiredUpdateActivity,
   subscribeLoadingProgress,
-  updateActivationActivity,
-  updateStateActivity,
+  updateProgressActivity,
   waitedProgress,
 } from "./progress.ts";
 
@@ -25,16 +24,32 @@ const record = (source: {
 describe("the launch's progress", () => {
   it("fills one determinate value over the first install and boot, then ends at ready", () => {
     const bar = record(launchProgress);
+    const snapshots: ProgressSnapshot[] = [];
+    const stop = subscribeLoadingProgress(
+      { clearTimeout: vi.fn(), setTimeout: vi.fn(() => 0) },
+      { fadeMs: 150, fullMs: 250 },
+      (snapshot) => snapshots.push(snapshot),
+    );
+    updateProgressActivity({ phase: "booting", version: "b" });
+    expect(snapshots.at(-1)).toEqual({ active: true, value: undefined });
     const report = (phase: "installing" | "booting" | "ready", value: number) =>
       launchProgressReport({ phase, receivedBytes: 0, totalBytes: 100, value });
     report("installing", 0.25);
     expect(bar.last()).toEqual({ active: true, value: 0.25 });
     report("booting", 0.9);
+    updateProgressActivity({ counts: { done: 9, total: 10 }, phase: "booting", version: "b" });
+    expect(snapshots.at(-1)).toEqual({ active: true, value: 0.9 });
     expect(bar.last()).toEqual({ active: true, value: 0.9 });
     report("ready", 1);
     expect(bar.snapshots.at(-2)).toEqual({ active: true, value: 1 });
     expect(bar.last()).toEqual({ active: false, value: undefined });
+    updateProgressActivity({ phase: "applied", version: "b" });
+    expect(snapshots.at(-1)).toEqual({ active: false, value: undefined });
+    const background = record(installProgress);
+    expect(background.last().active).toBe(false);
+    background.stop();
     bar.stop();
+    stop();
   });
 
   it("tells the boot listener each settled share of the waited loads", () => {
@@ -55,19 +70,20 @@ describe("the launch's progress", () => {
 });
 
 describe("the loading bar's background layer", () => {
-  it("measures a staging update and hides once it is ready, failed or idle", () => {
+  it("shows preparation and verification as pending and measures only transferred bytes", () => {
     const bar = record(installProgress);
-    updateStateActivity({ phase: "staging", value: 0.2, version: "b" });
+    const pending = { active: true, value: undefined };
+    const version = "b";
+    updateProgressActivity({ phase: "preparing", version });
+    expect(bar.last()).toEqual(pending);
+    updateProgressActivity({ phase: "transferring", receivedBytes: 20, totalBytes: 100, version });
     expect(bar.last()).toEqual({ active: true, value: 0.2 });
-    updateStateActivity({ phase: "staging", value: 0.6, version: "b" });
+    updateProgressActivity({ phase: "transferring", receivedBytes: 60, totalBytes: 100, version });
     expect(bar.last()).toEqual({ active: true, value: 0.6 });
-    updateStateActivity({ phase: "ready", version: "b" });
-    expect(bar.last().active).toBe(false);
-    updateStateActivity({ phase: "staging", value: 0.1, version: "c" });
-    updateStateActivity({ phase: "failed", version: "c" });
-    expect(bar.last().active).toBe(false);
-    updateStateActivity({ phase: "idle" });
-    expect(bar.last().active).toBe(false);
+    updateProgressActivity({ phase: "verifying", version });
+    expect(bar.last()).toEqual(pending);
+    updateProgressActivity({ phase: "ready", version });
+    expect(bar.last()).toEqual({ active: false, value: undefined });
     bar.stop();
   });
 
@@ -80,9 +96,14 @@ describe("the loading bar's background layer", () => {
         snapshots.push(snapshot),
       );
       try {
-        updateStateActivity({ phase: "staging", value: 0.45, version: "b" });
+        updateProgressActivity({
+          phase: "transferring",
+          receivedBytes: 45,
+          totalBytes: 100,
+          version: "b",
+        });
         expect(snapshots.at(-1)).toEqual({ active: true, value: 0.45 });
-        updateStateActivity(terminal);
+        updateProgressActivity(terminal);
         expect(snapshots.slice(-2)).toEqual([
           { active: true, value: undefined },
           { active: false, value: undefined },
@@ -94,31 +115,63 @@ describe("the loading bar's background layer", () => {
     },
   );
 
-  it("travels while Update now switches or a forced update runs, until every one ends", () => {
+  it("keeps staging, apply, and the required-save wait independent", () => {
     const bar = record(installProgress);
-    updateStateActivity({ phase: "staging", value: 0.5, version: "b" });
+    const pending = { active: true, value: undefined };
+    updateProgressActivity({
+      phase: "transferring",
+      receivedBytes: 50,
+      totalBytes: 100,
+      version: "b",
+    });
     requiredUpdateActivity("updating");
-    // Two kinds of work at once have no single measure.
-    expect(bar.last()).toEqual({ active: true, value: undefined });
-    updateStateActivity({ phase: "ready", version: "b" });
-    expect(bar.last().active).toBe(true);
-    updateActivationActivity(true);
+    expect(bar.last()).toEqual(pending);
+    updateProgressActivity({ phase: "ready", version: "b" });
+    expect(bar.last()).toEqual(pending);
+    updateProgressActivity({ phase: "applying", step: "save", version: "b" });
     requiredUpdateActivity("unavailable");
-    expect(bar.last()).toEqual({ active: true, value: undefined });
-    updateActivationActivity(false);
+    updateProgressActivity({ phase: "preparing", version: "c" });
+    updateProgressActivity({ phase: "failed", version: "c" });
+    expect(bar.last()).toEqual(pending);
+    requiredUpdateActivity("updating");
+    updateProgressActivity({ phase: "applyFailed", version: "b" });
+    expect(bar.last()).toEqual(pending);
+    requiredUpdateActivity("unavailable");
     expect(bar.last().active).toBe(false);
     bar.stop();
   });
 
-  it("leaves measured foreground loading intact while an update stages", () => {
-    const loads = record(loadingProgress);
+  it("preempts background staging with a waited load and resumes its latest measurement", () => {
+    const timer = { clearTimeout: vi.fn(), setTimeout: vi.fn(() => 0) };
+    const snapshots: ProgressSnapshot[] = [];
+    const stop = subscribeLoadingProgress(timer, { fadeMs: 0, fullMs: 0 }, (snapshot) =>
+      snapshots.push(snapshot),
+    );
+    updateProgressActivity({
+      phase: "transferring",
+      receivedBytes: 50,
+      totalBytes: 100,
+      version: "b",
+    });
+    expect(snapshots.at(-1)).toEqual({ active: true, value: 0.5 });
     const load = loadingProgress.begin();
-    load.progress(0.4);
-    updateStateActivity({ phase: "staging", value: 0.9, version: "b" });
-    expect(loads.last()).toEqual({ active: true, value: 0.4 });
-    updateStateActivity({ phase: "idle" });
-    expect(loads.last()).toEqual({ active: true, value: 0.4 });
-    load.finish();
-    loads.stop();
+    try {
+      updateProgressActivity({
+        phase: "transferring",
+        receivedBytes: 90,
+        totalBytes: 100,
+        version: "b",
+      });
+      expect(snapshots.at(-1)).toEqual({ active: true, value: undefined });
+      load.progress(0.4);
+      expect(snapshots.at(-1)).toEqual({ active: true, value: 0.4 });
+      load.progress(undefined);
+      load.finish();
+      expect(snapshots.at(-1)).toEqual({ active: true, value: 0.9 });
+    } finally {
+      load.finish();
+      updateProgressActivity({ phase: "idle" });
+      stop();
+    }
   });
 });

@@ -1,3 +1,4 @@
+import type { UpdateProgress } from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { loadingFailureChrome } from "../ui/loadingFailure.ts";
@@ -22,6 +23,7 @@ const kit = vi.hoisted(() => {
           onNetworkPlay: (notice: { reason: "quota" | "unsupported" }) => void;
           onProgress: (progress: unknown) => void;
           onRequireNewer: (state: "unavailable" | "updating") => void;
+          onUpdateProgress: (progress: UpdateProgress) => void;
           onUpdateReady: (offer: {
             dismiss: () => void;
             updateNow: (save: () => void | PromiseLike<void>) => Promise<void>;
@@ -189,6 +191,7 @@ describe("launch", () => {
       "onNetworkPlay",
       "onProgress",
       "onRequireNewer",
+      "onUpdateProgress",
       "onUpdateReady",
       "onUpdateState",
       "serviceWorkerUrl",
@@ -325,9 +328,19 @@ describe("launch", () => {
     });
     const update = staged(
       vi.fn(async (before: () => void | PromiseLike<void>) => {
+        expect(active).toBe(false);
+        options().onUpdateProgress({ phase: "applying", step: "save", version: "next" });
+        expect(active).toBe(true);
         await before();
       }),
     );
+    options().onUpdateState({ phase: "staging", value: 0.4, version: "next" });
+    expect(active).toBe(false);
+    options().onUpdateProgress({ phase: "verifying", version: "next" });
+    expect(active).toBe(true);
+    options().onUpdateProgress({ phase: "ready", version: "next" });
+    expect(active).toBe(false);
+    expect(visible).toEqual([false]);
     options().onUpdateReady(update);
     expect(visible).toEqual([false, true]);
     pwa.updateOffer.accept();
@@ -351,9 +364,20 @@ describe("launch", () => {
     const stop = installProgress.subscribe((state) => {
       active = state.active;
     });
-    options().onUpdateReady(staged(vi.fn(async () => Promise.reject(new Error("gone")))));
+    options().onUpdateReady(
+      staged(
+        vi.fn(async () => {
+          options().onUpdateProgress({ phase: "applying", step: "verify", version: "next" });
+          throw new Error("gone");
+        }),
+      ),
+    );
     pwa.updateOffer.accept();
-    await vi.waitFor(() => expect(active).toBe(false));
+    expect(active).toBe(true);
+    await vi.waitFor(() => expect(console.warn).toHaveBeenCalledOnce());
+    expect(active).toBe(true);
+    options().onUpdateProgress({ phase: "applyFailed", version: "next" });
+    expect(active).toBe(false);
     stop();
   });
 

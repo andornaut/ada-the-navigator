@@ -54,8 +54,7 @@ import {
   launchProgressReport,
   reportBoot,
   requiredUpdateActivity,
-  updateActivationActivity,
-  updateStateActivity,
+  updateProgressActivity,
 } from "../loading/progress.ts";
 import { CACHE_POLICY } from "./cachePolicy.ts";
 import { dispatchPhoneBack } from "./events.ts";
@@ -99,7 +98,6 @@ let saveGame: () => void | PromiseLike<void> = () => undefined;
 // build; a defer keeps the active build until the next launch applies the update silently.
 export const updateOffer = createUpdateOffer({
   save: () => saveGame(),
-  switching: updateActivationActivity,
 });
 
 // The page's install flow, created on first use. setupPhoneApp uses it as the page loads, since
@@ -127,8 +125,9 @@ function createPhoneLaunch(context: LaunchContext): ReturnType<typeof createLaun
     },
     onProgress: launchProgressReport,
     onRequireNewer: requiredUpdate,
+    onUpdateProgress: updateProgressActivity,
     onUpdateReady: updateOffer.offer,
-    onUpdateState: updateStateActivity,
+    onUpdateState: () => {},
     serviceWorkerUrl: SERVICE_WORKER_URL,
     // Ada makes its sounds at runtime and ships no sound files, so the build's sounds map is
     // empty; undefined is the kit's value for a game without sounds.

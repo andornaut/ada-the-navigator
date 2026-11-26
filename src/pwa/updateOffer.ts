@@ -21,7 +21,7 @@ export interface UpdateOfferContext {
   // The game's save, awaited before the switch.
   readonly save: () => void | PromiseLike<void>;
   // True while Update now switches builds, false if the switch fails and play continues.
-  readonly switching: (active: boolean) => void;
+  readonly switching?: (active: boolean) => void;
 }
 
 export function createUpdateOffer(context: UpdateOfferContext): UpdateOffer {
@@ -53,12 +53,12 @@ export function createUpdateOffer(context: UpdateOfferContext): UpdateOffer {
         return;
       }
       switching = true;
-      context.switching(true);
+      context.switching?.(true);
       void update.updateNow(context.save).then(
         () => close(update, false),
         (error: unknown) => {
           switching = false;
-          context.switching(false);
+          context.switching?.(false);
           if (error instanceof ObsoleteUpdateOfferError) {
             if (error.version === update.version) {
               close(update, true);

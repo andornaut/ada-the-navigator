@@ -6,11 +6,11 @@ import {
   type ProgressHold,
   type ProgressSnapshot,
 } from "@andornaut/game-kit/runtime/progressState";
+import type { LaunchProgress } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 import type {
-  LaunchProgress,
-  UpdateState,
-} from "@andornaut/game-kit/runtime/web/pwa/buildContract";
-import type { RequiredUpdateState } from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
+  RequiredUpdateState,
+  UpdateProgress,
+} from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
 
 // The one loading bar along the top edge of the play area (src/ui/loadingBar.ts): the launch's
 // first install and boot in front, then the loads the player waits for, over the background work.
@@ -90,19 +90,40 @@ function showBackground(reason: "activation" | "required" | "update", shown: boo
   }
 }
 
-/** A background update (the kit's onUpdateState) fills the background bar while it stages. */
-export function updateStateActivity(state: UpdateState): void {
-  if (state.phase === "failed" || state.phase === "idle") {
-    // A partial transfer that ends without a ready build must skip the full-bar hold.
-    install?.progress(undefined);
+/** Kit owns update timing across staging, the switch, and the next document's boot. */
+export function updateProgressActivity(progress: UpdateProgress): void {
+  switch (progress.phase) {
+    case "preparing":
+    case "verifying":
+      staging = undefined;
+      showBackground("update", true);
+      break;
+    case "transferring":
+      staging =
+        Number.isFinite(progress.totalBytes) && progress.totalBytes > 0
+          ? progress.receivedBytes / progress.totalBytes
+          : undefined;
+      showBackground("update", true);
+      break;
+    case "idle":
+    case "failed":
+    case "ready":
+      // An interrupted transfer must clear its measurement before finish can hold a full bar.
+      if (progress.phase !== "ready" && background.has("update")) {
+        install?.progress(undefined);
+      }
+      staging = undefined;
+      showBackground("update", false);
+      break;
+    case "applying":
+    case "booting":
+      showBackground("activation", true);
+      break;
+    case "applied":
+    case "applyFailed":
+      showBackground("activation", false);
+      break;
   }
-  staging = state.phase === "staging" ? state.value : undefined;
-  showBackground("update", state.phase === "staging");
-}
-
-/** Explicit Update now keeps the bar visible through the switch, independently of staging. */
-export function updateActivationActivity(active: boolean): void {
-  showBackground("activation", active);
 }
 
 /** A forced update for a newer save: the bar travels while it downloads ("updating"). */
