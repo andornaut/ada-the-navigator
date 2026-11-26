@@ -29,7 +29,8 @@ uniform vec4 tailEdge;
 uniform float split;
 uniform float edge;
 uniform float rearRestore;
-uniform float exteriorInk;
+uniform float plumeInk;
+uniform float texel;
 
 vec2 logicalPoint(vec2 uv) {
   return vec2(uv.x - 0.5, 0.5 - uv.y) * ${SIDE}.0;
@@ -54,7 +55,7 @@ float lineCoverage(vec2 point) {
   if (along < 0.0 || along > dot(axis, axis)) return 0.0;
   return step(abs(axis.x * fromStart.y - axis.y * fromStart.x), ${GROW} * length(axis));
 }
-vec4 compose(vec2 uv, bool drawEdge) {
+vec4 compose(vec2 uv) {
   vec2 point = logicalPoint(uv);
   vec4 body = texture2D(hull, uv);
   vec4 far = texture2D(farPlume, uv);
@@ -64,29 +65,38 @@ vec4 compose(vec2 uv, bool drawEdge) {
     return over(body * max(masks.y, rearRestore), composed);
   }
   composed = over(body * masks.x, composed);
-  if (drawEdge && edge > 0.5) {
+  if (edge > 0.5) {
     float coverage = lineCoverage(point) * far.a * (1.0 - body.a);
     composed.rgb = mix(composed.rgb, vec3(24.0, 20.0, 37.0) / 255.0 * composed.a, coverage);
   }
   composed = over(texture2D(nearPlume, uv), composed);
   return over(body * (1.0 - masks.x), composed);
 }
-void main() {
-  vec4 fill = compose(outTexCoord, true);
-  if (exteriorInk < 0.5) {
-    gl_FragColor = fill;
-    return;
-  }
-  float exterior = fill.a;
+float plumeAlpha(vec2 uv) {
+  float far = texture2D(farPlume, uv).a;
+  return split < 0.5 ? far : max(far, texture2D(nearPlume, uv).a);
+}
+float plumeBorder(vec2 uv) {
+  // A quarter logical pixel may fall inside one texel. Sample adjacent texels and paint only
+  // the fraction of their edges or corners that the logical-width ink would cover.
+  float grow = min(1.0, ${GROW} / (${SIDE}.0 * texel));
+  float coverage = 0.0;
   for (int x = -1; x <= 1; x++) {
     for (int y = -1; y <= 1; y++) {
-      exterior = max(exterior, compose(
-        outTexCoord + vec2(float(x), float(y)) * (${GROW} / ${SIDE}.0), false
-      ).a);
+      if (x == 0 && y == 0) continue;
+      float weight = x == 0 || y == 0 ? grow : grow * grow;
+      coverage = max(coverage, weight * step(0.5, plumeAlpha(uv + texel * vec2(float(x), float(y)))));
     }
   }
-  vec4 ink = vec4(vec3(24.0, 20.0, 37.0) / 255.0, 1.0) * step(0.5, exterior);
-  gl_FragColor = over(fill, ink);
+  return coverage;
+}
+void main() {
+  vec4 fill = compose(outTexCoord);
+  if (plumeInk > 0.5) {
+    vec4 ink = vec4(vec3(24.0, 20.0, 37.0) / 255.0, 1.0) * plumeBorder(outTexCoord);
+    fill = over(fill, ink);
+  }
+  gl_FragColor = fill;
 }
 `;
 
@@ -119,7 +129,7 @@ export class ForwardJetComposition {
   private drawnPlumes: readonly ForwardPlume[] | undefined;
   private drawnHeading: ForwardHeading | undefined;
   private drawnRestore: number | undefined;
-  private drawnExteriorInk: boolean | undefined;
+  private drawnPlumeInk: boolean | undefined;
   private hull:
     | {
         frame: Textures.Frame;
@@ -265,7 +275,7 @@ export class ForwardJetComposition {
     plumes: readonly ForwardPlume[],
     scale: number,
     rearRestore: number,
-    exteriorInk: boolean,
+    plumeInk: boolean,
   ): boolean {
     if (
       !ship.visible ||
@@ -307,7 +317,7 @@ export class ForwardJetComposition {
       plumeChanged ||
       maskChanged ||
       this.drawnRestore !== rearRestore ||
-      this.drawnExteriorInk !== exteriorInk
+      this.drawnPlumeInk !== plumeInk
     ) {
       this.compose(
         ship,
@@ -316,7 +326,7 @@ export class ForwardJetComposition {
         plumes,
         size,
         rearRestore,
-        exteriorInk,
+        plumeInk,
         hullChanged,
         plumeChanged,
       );
@@ -332,7 +342,7 @@ export class ForwardJetComposition {
     plumes: readonly ForwardPlume[],
     size: number,
     rearRestore: number,
-    exteriorInk: boolean,
+    plumeInk: boolean,
     hullChanged: boolean,
     plumeChanged: boolean,
   ): void {
@@ -378,12 +388,13 @@ export class ForwardJetComposition {
       }
     }
     this.drawnRestore = rearRestore;
-    this.drawnExteriorInk = exteriorInk;
+    this.drawnPlumeInk = plumeInk;
     this.shader
       .setUniform("split", Number(heading.farMouth !== undefined))
       .setUniform("edge", Number(heading.tailEdge !== undefined))
       .setUniform("rearRestore", rearRestore)
-      .setUniform("exteriorInk", Number(exteriorInk))
+      .setUniform("plumeInk", Number(plumeInk))
+      .setUniform("texel", 1 / size)
       .setUniform("displaySize", [display.displayWidth, display.displayHeight])
       .setUniform("pivot", [display.pivot.x, display.pivot.y]);
     if (heading.tailEdge) {

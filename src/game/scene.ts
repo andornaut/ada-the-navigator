@@ -1505,7 +1505,7 @@ export class GameScene extends Scene {
         plumes,
         this.rasters.scale,
         rearRestore,
-        this.light && joinsJets(LIGHT_FIELD, "ship"),
+        this.fieldLight && heading.tailEdge === undefined,
       )
     ) {
       return false;
