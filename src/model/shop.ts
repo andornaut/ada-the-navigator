@@ -6,6 +6,15 @@ import {
 } from "../data/economy.ts";
 import type { RoutePosition } from "../data/galaxies.ts";
 import type { Weapon } from "../data/types.ts";
+import {
+  readStationStockEntry,
+  setStationStockEntry,
+  STATION_RESTOCK_SECONDS,
+  type StationOffer,
+  type StationRestockVisit,
+  type StationStockEntry,
+  type StationStockSlot,
+} from "./stationRestock.ts";
 import { stationShopSeed, type StationStockCategory } from "./stationServices.ts";
 import type { EconomyState } from "./types.ts";
 import { addPacks, addWeaponGrant, UPGRADE_WEAPONS } from "./weapons.ts";
@@ -32,6 +41,8 @@ export interface ShopRow {
   inUse: boolean;
   /** The next purchase's price, or null when not for sale. */
   price: number | null;
+  /** The item and offered level frozen by a purchase at this station. */
+  purchased?: true;
   /** Current level (from 1) and level count for leveled items; null otherwise. */
   level: { current: number; max: number } | null;
 }
@@ -96,7 +107,7 @@ export function shopRow(catalog: EconomyCatalog, economy: EconomyState, item: Sh
     };
   }
   if (item.kind === "ammo") {
-    // Packs never sell out; only an owned weapon's ammunition is for sale.
+    // Only an owned weapon's ammunition is for sale.
     const owned = economy.ownedWeapons.includes(item.weapon);
     return {
       inUse: false,
@@ -130,6 +141,9 @@ export type ShopRowState = "forSale" | "unaffordable" | "selectable" | "owned" |
  * item for sale opens the confirm, and one Ada cannot afford refuses.
  */
 export function shopRowState(stardust: number, row: ShopRow): ShopRowState {
+  if (row.purchased) {
+    return "owned";
+  }
   if (row.requiresWeapon) {
     return "unaffordable";
   }
@@ -210,15 +224,13 @@ export function stationStock(
   stationId: string,
 ): StationStock {
   const eligible = unlockedWeapons(position);
-  const equipment: Extract<ShopItem, { kind: "track" | "paint" }>[] = [
-    ...SHIP_TRACKS.map((track): Extract<ShopItem, { kind: "track" }> => ({ kind: "track", track })),
-    ...catalog.paintOrder
-      .filter((scheme) => scheme !== catalog.defaultPaint)
-      .map((scheme): Extract<ShopItem, { kind: "paint" }> => ({ kind: "paint", scheme })),
-  ];
   return {
     ammo: stockSlice(eligible, position, stationShopSeed(`${stationId}:ammo`)),
-    equipment: stockSlice(equipment, position, stationShopSeed(`${stationId}:equipment`)),
+    equipment: stockSlice(
+      equipmentOffers(catalog),
+      position,
+      stationShopSeed(`${stationId}:equipment`),
+    ),
     weapons: stockSlice<Weapon>(
       ["laser", ...eligible],
       position,
@@ -227,50 +239,161 @@ export function stationStock(
   };
 }
 
-/** Stock identity never changes when ownership, money, ammunition or upgrade levels change. */
+function equipmentOffers(catalog: EconomyCatalog): StationStock["equipment"] {
+  return [
+    ...SHIP_TRACKS.map((track) => ({ kind: "track", track }) as const),
+    ...catalog.paintOrder
+      .filter((scheme) => scheme !== catalog.defaultPaint)
+      .map((scheme) => ({ kind: "paint", scheme }) as const),
+  ];
+}
+
+function weaponOffer(weapon: Weapon): StationOffer {
+  return weapon === "laser" ? { kind: "weaponUpgrade", weapon } : { kind: "weapon", weapon };
+}
+
+function currentOffer(economy: EconomyState, item: StationOffer): StationOffer {
+  return item.kind === "weapon" && weaponOwned(economy, item.weapon)
+    ? { kind: "weaponUpgrade", weapon: item.weapon }
+    : item;
+}
+
+function stockOffers(stock: StationStock, category: StationStockCategory): readonly StationOffer[] {
+  switch (category) {
+    case "ammo":
+      return stock.ammo.map((weapon) => ({ kind: "ammo", weapon }));
+    case "equipment":
+      return stock.equipment;
+    default:
+      return stock.weapons.map(weaponOffer);
+  }
+}
+
+function offerIdentity(item: StationOffer): string {
+  switch (item.kind) {
+    case "weapon":
+    case "weaponUpgrade":
+      return `weapon:${item.weapon}`;
+    case "ammo":
+      return `ammo:${item.weapon}`;
+    case "track":
+      return `track:${item.track}`;
+    default:
+      return `paint:${item.scheme}`;
+  }
+}
+
+function stockEntries(
+  stock: StationStock,
+  category: StationStockCategory,
+  visit?: StationRestockVisit,
+) {
+  return stockOffers(stock, category).map((item, index) => {
+    const slot: StationStockSlot = `${category}:${index}`;
+    const entry: StationStockEntry = (visit && readStationStockEntry(visit, slot)) ?? { item };
+    return { entry, slot };
+  });
+}
+
 export function stationShopRows(
   catalog: EconomyCatalog,
   economy: EconomyState,
   stock: StationStock,
   category: StationStockCategory,
+  visit?: StationRestockVisit,
 ): ShopRow[] {
-  if (category === "equipment") {
-    return stock.equipment.map((item) => shopRow(catalog, economy, item));
+  return stockEntries(stock, category, visit).map(({ entry: { item, purchased } }) => {
+    if (purchased) {
+      return {
+        inUse: false,
+        item,
+        level: purchased.level,
+        owned: true,
+        price: null,
+        purchased: true,
+      };
+    }
+    const row = shopRow(catalog, economy, currentOffer(economy, item));
+    return item.kind === "ammo" && !weaponOwned(economy, item.weapon)
+      ? { ...row, requiresWeapon: item.weapon }
+      : row;
+  });
+}
+
+const STOCK_CATEGORIES = ["ammo", "equipment", "weapons"] as const;
+
+/** Rotate only on docking, in stable slot and catalogue order. */
+export function restockStationShop(
+  catalog: EconomyCatalog,
+  economy: EconomyState,
+  position: RoutePosition,
+  stock: StationStock,
+  visit: StationRestockVisit,
+): void {
+  const weapons = unlockedWeapons(position);
+  const candidates = {
+    ammo: weapons.map((weapon): StationOffer => ({ kind: "ammo", weapon })),
+    equipment: equipmentOffers(catalog),
+    weapons: (["laser", ...weapons] as const).map(weaponOffer),
+  };
+  for (const category of STOCK_CATEGORIES) {
+    const entries = stockEntries(stock, category, visit);
+    const displayed = new Set(entries.map(({ entry }) => offerIdentity(entry.item)));
+    for (const { entry, slot } of entries) {
+      if (!entry.purchased || entry.purchased.availableAfter > visit.state.flightSeconds) {
+        continue;
+      }
+      const replacement = candidates[category].find(
+        (item) =>
+          !displayed.has(offerIdentity(item)) &&
+          shopRow(catalog, economy, currentOffer(economy, item)).price !== null,
+      );
+      if (replacement) {
+        displayed.delete(offerIdentity(entry.item));
+        displayed.add(offerIdentity(replacement));
+        setStationStockEntry(visit, slot, { item: replacement });
+      }
+    }
   }
-  if (category === "ammo") {
-    return stock.ammo.map((weapon): ShopRow => ({
-      ...shopRow(catalog, economy, { kind: "ammo", weapon }),
-      ...(!weaponOwned(economy, weapon) ? { requiresWeapon: weapon } : {}),
-    }));
+}
+
+export function stationStocks(
+  stock: StationStock,
+  item: ShopItem,
+  visit?: StationRestockVisit,
+): boolean {
+  if (item.kind === "holodisk") {
+    return false;
   }
-  return stock.weapons.map((weapon) =>
-    shopRow(
-      catalog,
-      economy,
-      weaponOwned(economy, weapon)
-        ? { kind: "weaponUpgrade", weapon }
-        : { kind: "weapon", weapon: weapon as UpgradeWeapon },
-    ),
+  return findStockSlot(stock, item, visit) !== undefined;
+}
+
+function findStockSlot(stock: StationStock, item: StationOffer, visit?: StationRestockVisit) {
+  const category =
+    item.kind === "ammo"
+      ? "ammo"
+      : item.kind === "track" || item.kind === "paint"
+        ? "equipment"
+        : "weapons";
+  return stockEntries(stock, category, visit).find(
+    ({ entry }) => offerIdentity(entry.item) === offerIdentity(item),
   );
 }
-export function stationStocks(stock: StationStock, item: ShopItem): boolean {
-  switch (item.kind) {
-    case "ammo":
-      return stock.ammo.includes(item.weapon);
-    case "weapon":
-    case "weaponUpgrade":
-      return stock.weapons.includes(item.weapon);
-    case "track":
-      return stock.equipment.some(
-        (candidate) => candidate.kind === "track" && candidate.track === item.track,
-      );
-    case "paint":
-      return stock.equipment.some(
-        (candidate) => candidate.kind === "paint" && candidate.scheme === item.scheme,
-      );
-    default:
-      return false;
+
+export interface StationShopVisit extends StationRestockVisit {
+  stock: StationStock;
+}
+
+function purchaseSlot(economy: EconomyState, item: ShopItem, visit: StationShopVisit) {
+  if (item.kind === "holodisk") {
+    return undefined;
   }
+  const stocked = findStockSlot(visit.stock, item, visit);
+  return stocked &&
+    !stocked.entry.purchased &&
+    currentOffer(economy, stocked.entry.item).kind === item.kind
+    ? stocked.slot
+    : undefined;
 }
 
 /** A confirm with the balance left after, or a refusal; a refusal never opens a confirm. */
@@ -278,7 +401,11 @@ export function requestPurchase(
   catalog: EconomyCatalog,
   economy: EconomyState,
   item: ShopItem,
+  visit?: StationShopVisit,
 ): PurchaseRequest {
+  if (visit && purchaseSlot(economy, item, visit) === undefined) {
+    return { kind: "refused", reason: "notForSale" };
+  }
   if (item.kind === "ammo" && economy.ammo[item.weapon] >= catalog.ammo.capacity) {
     return { kind: "refused", reason: "notForSale" };
   }
@@ -297,11 +424,13 @@ export function buy(
   catalog: EconomyCatalog,
   item: ShopItem,
   economy: EconomyState,
+  visit?: StationShopVisit,
 ): PurchaseResult {
-  const request = requestPurchase(catalog, economy, item);
+  const request = requestPurchase(catalog, economy, item, visit);
   if (request.kind === "refused") {
     return request;
   }
+  const slot = visit && purchaseSlot(economy, item, visit);
   economy.stardust -= request.price;
   switch (item.kind) {
     case "weapon":
@@ -322,6 +451,15 @@ export function buy(
       economy.paints.push(item.scheme);
       economy.paint = item.scheme;
       break;
+  }
+  if (visit && slot !== undefined && item.kind !== "holodisk") {
+    setStationStockEntry(visit, slot, {
+      item,
+      purchased: {
+        availableAfter: visit.state.flightSeconds + STATION_RESTOCK_SECONDS,
+        level: shopRow(catalog, economy, item).level,
+      },
+    });
   }
   return { kind: "bought", price: request.price };
 }
