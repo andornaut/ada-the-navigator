@@ -26996,7 +26996,7 @@
     },
     {
       "id": "enemy-garnet-frigate-prow-intact-0",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27011,12 +27011,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-intact-0"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-intact-1",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27031,12 +27030,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-intact-1"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-intact-2",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27051,12 +27049,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-intact-2"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-intact-3",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27071,12 +27068,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-intact-3"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-intact-4",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27091,12 +27087,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-intact-4"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-intact-5",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27111,12 +27106,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-intact-5"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-intact-6",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27131,12 +27125,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-intact-6"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-intact-7",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27151,12 +27144,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-intact-7"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-intact-8",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27171,12 +27163,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-intact-8"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-intact-9",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27191,12 +27182,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-intact-9"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-intact-10",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27211,12 +27201,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-intact-10"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-intact-11",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27231,12 +27220,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-intact-11"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-intact-12",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27251,12 +27239,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-intact-12"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-intact-13",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27271,12 +27258,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-intact-13"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-intact-14",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27291,12 +27277,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-intact-14"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-intact-15",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27311,12 +27296,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-intact-15"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-destroyed-0",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27331,12 +27315,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-destroyed-0"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-destroyed-1",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27351,12 +27334,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-destroyed-1"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-destroyed-2",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27371,12 +27353,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-destroyed-2"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-destroyed-3",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27391,12 +27372,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-destroyed-3"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-destroyed-4",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27411,12 +27391,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-destroyed-4"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-destroyed-5",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27431,12 +27410,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-destroyed-5"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-destroyed-6",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27451,12 +27429,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-destroyed-6"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-destroyed-7",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27471,12 +27448,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-destroyed-7"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-destroyed-8",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27491,12 +27467,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-destroyed-8"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-destroyed-9",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27511,12 +27486,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-destroyed-9"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-destroyed-10",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27531,12 +27505,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-destroyed-10"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-destroyed-11",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27551,12 +27524,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-destroyed-11"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-destroyed-12",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27571,12 +27543,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-destroyed-12"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-destroyed-13",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27591,12 +27562,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-destroyed-13"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-destroyed-14",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27611,12 +27581,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-destroyed-14"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-frigate-prow-destroyed-15",
-      "path": "/art/whirlpool/enemies/fleetFrigateTwin-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetFrigateTwin-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27631,12 +27600,11 @@
       },
       "archetype": "frigate",
       "family": "garnet",
-      "svgSheet": true,
-      "svgSheetMember": "enemy-frigateTwin-prow-destroyed-15"
+      "svgSheet": true
     },
     {
       "id": "enemy-garnet-capital-prow-left-intact-0",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27655,7 +27623,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-intact-1",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27674,7 +27642,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-intact-2",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27693,7 +27661,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-intact-3",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27712,7 +27680,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-intact-4",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27731,7 +27699,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-intact-5",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27750,7 +27718,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-intact-6",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27769,7 +27737,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-intact-7",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27788,7 +27756,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-intact-8",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27807,7 +27775,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-intact-9",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27826,7 +27794,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-intact-10",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27845,7 +27813,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-intact-11",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27864,7 +27832,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-intact-12",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27883,7 +27851,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-intact-13",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27902,7 +27870,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-intact-14",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27921,7 +27889,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-intact-15",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27940,7 +27908,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-destroyed-0",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27959,7 +27927,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-destroyed-1",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27978,7 +27946,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-destroyed-2",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -27997,7 +27965,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-destroyed-3",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28016,7 +27984,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-destroyed-4",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28035,7 +28003,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-destroyed-5",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28054,7 +28022,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-destroyed-6",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28073,7 +28041,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-destroyed-7",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28092,7 +28060,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-destroyed-8",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28111,7 +28079,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-destroyed-9",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28130,7 +28098,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-destroyed-10",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28149,7 +28117,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-destroyed-11",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28168,7 +28136,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-destroyed-12",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28187,7 +28155,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-destroyed-13",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28206,7 +28174,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-destroyed-14",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28225,7 +28193,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-left-destroyed-15",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28244,7 +28212,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-intact-0",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28263,7 +28231,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-intact-1",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28282,7 +28250,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-intact-2",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28301,7 +28269,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-intact-3",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28320,7 +28288,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-intact-4",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28339,7 +28307,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-intact-5",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28358,7 +28326,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-intact-6",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28377,7 +28345,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-intact-7",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28396,7 +28364,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-intact-8",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28415,7 +28383,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-intact-9",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28434,7 +28402,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-intact-10",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28453,7 +28421,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-intact-11",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28472,7 +28440,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-intact-12",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28491,7 +28459,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-intact-13",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28510,7 +28478,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-intact-14",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28529,7 +28497,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-intact-15",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28548,7 +28516,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-destroyed-0",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28567,7 +28535,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-destroyed-1",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28586,7 +28554,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-destroyed-2",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28605,7 +28573,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-destroyed-3",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28624,7 +28592,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-destroyed-4",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28643,7 +28611,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-destroyed-5",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28662,7 +28630,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-destroyed-6",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28681,7 +28649,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-destroyed-7",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28700,7 +28668,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-destroyed-8",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28719,7 +28687,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-destroyed-9",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28738,7 +28706,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-destroyed-10",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28757,7 +28725,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-destroyed-11",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28776,7 +28744,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-destroyed-12",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28795,7 +28763,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-destroyed-13",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28814,7 +28782,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-destroyed-14",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,
@@ -28833,7 +28801,7 @@
     },
     {
       "id": "enemy-garnet-capital-prow-right-destroyed-15",
-      "path": "/art/andromeda/enemies/fleetCapitalBroad-prow-32-sheet.svg",
+      "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-32-sheet.svg",
       "width": 32,
       "height": 32,
       "displayWidth": 14,

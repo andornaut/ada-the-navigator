@@ -150,7 +150,7 @@ export type Scaled = FleetCraft & {
   top?: FleetTop & { frame: number };
   // A frigate's hardpoint layers and the tops its mounts carry, by top design.
   layers?: Layer[];
-  // A frigate's or capital's fixed front Lasers, staged apart from the shipped layers.
+  // A frigate's or capital's fixed front Lasers: weapon hardpoints outside the mount fill.
   lasers?: Layer[];
   // `aims` is the top's mesh per aim, each lit for that aim.
   tops?: Record<string, ScaledTop>;
@@ -771,15 +771,10 @@ const moved = (frames: readonly Frame[], index: number, dx: number, dy: number) 
 
 // The version 1 hardpoints file of a frigate or capital, in the shipped class's schema, with
 // `hull` and each hardpoint's `offset` from the hull pivot in frame px, x to starboard and y aft.
-// With `lasers`, the fixed front Lasers follow the shipped hardpoints: each has `aim` `facing`
-// and, per heading, `muzzles`, its shot origin in hull frame px, which fires along the heading.
-function heavyHardpoints(
-  craft: Scaled,
-  hull: readonly Frame[],
-  drawn: HeavyFrames,
-  lasers = false,
-): string {
-  const layers = [...craft.layers!, ...(lasers ? craft.lasers! : [])];
+// The fixed front Lasers follow the mounts: each has `aim` `facing` and, per heading, `muzzles`,
+// its shot origin in hull frame px, which fires along the heading.
+function heavyHardpoints(craft: Scaled, hull: readonly Frame[], drawn: HeavyFrames): string {
+  const layers = [...craft.layers!, ...(craft.lasers ?? [])];
   const { fill, tiers, weaponTops } = HEAVY_LAYOUTS[craft.archetype as keyof typeof HEAVY_TOPS];
   const mounts = craft.layers!.filter(({ role }) => role === "turret").map(({ id }) => id);
   if (mounts.join() !== fill.join()) throw new Error(`${craft.key}: mounts are not in fill order`);
@@ -1013,9 +1008,6 @@ export const recolour = (family: FleetFamily, text: string): string => {
 
 // The switch rows, by manifest: the producer leaves the manifests to the switch.
 const ROWS = fileURLToPath(new URL("../fleet-rows.json", import.meta.url));
-// The fixed front Lasers' switch: their base rows and the sidecars that name the hardpoints
-// files with them.
-const PROW_ROWS = fileURLToPath(new URL("../fleet-prow-rows.json", import.meta.url));
 // Every standalone top's shot origins and collision per aim, relative to its pivot.
 const TOPS = fileURLToPath(new URL("../fleet-tops.json", import.meta.url));
 const MANIFESTS: Readonly<Record<FleetFamily, ManifestFile>> = {
@@ -1039,14 +1031,13 @@ function home(craft: Scaled, family: FleetFamily) {
 
 // Sixteen frames as the producer stages them: their sheet file, frame size, row ids and the
 // fields their rows add to the common ones. Sets that name one file share that sheet, one row
-// of sixteen each. `prow` sets are the fixed front Lasers' bases, whose rows stage apart.
+// of sixteen each.
 type Sheet = {
   file: string;
   size: number;
   ids: string[];
   frames: Frame[];
   fields: (index: number) => Record<string, unknown>;
-  prow?: true;
 };
 
 // Several sets of sixteen frames of one size as one sheet of nested roots, a set to a row.
@@ -1154,12 +1145,11 @@ function sheets(craft: Scaled, family: FleetFamily, drawn: Drawn): Sheet[] {
           })),
           ...(craft.lasers ?? []).flatMap((layer) =>
             Object.keys(layer.states).map((state): Sheet => ({
-              file: `${craft.key}-prow-${layer.frame}-sheet.svg`,
+              file: parts(layer.frame),
               size: layer.frame,
               ids: ids(`-${layer.id}-${state}`),
               frames: tint(drawn.heavy!.bases.get(baseKey(layer.id, state))!),
               fields: (directionIndex) => ({ directionIndex, hardpoint: layer.id, state }),
-              prow: true,
             })),
           ),
         ]
@@ -1195,7 +1185,6 @@ async function main() {
   // file and nested roots.
   const shipped = new Map<string, { path: string; ids: string[] }>();
   const rows: Record<string, { assets: unknown[]; sidecars: Sidecars }> = {};
-  const prowRows: Record<string, { assets: unknown[]; sidecars: Sidecars }> = {};
   for (const family of FLEET_FAMILIES) {
     const files = new Map<string, Map<string, string>>();
     const put = (directory: string, file: string, text: string) => {
@@ -1255,13 +1244,6 @@ async function main() {
           `${craft.key}-hardpoints.json`,
           heavyHardpoints(craft, frames.hull, frames.heavy),
         );
-        if (craft.lasers?.length) {
-          put(
-            "/art/enemies/",
-            `${craft.key}-prow.json`,
-            heavyHardpoints(craft, frames.hull, frames.heavy, true),
-          );
-        }
         continue;
       }
       const core = shards(craft);
@@ -1281,9 +1263,16 @@ async function main() {
         if (!file.endsWith("-sheet.svg")) shared.set(file, path);
       }
     }
+    // CLEANUP (added 2026-11-25): src/data/enemyMuzzles.ts and the manifests' sidecars read this
+    // copy of each hardpoints file with fixed front Lasers; remove it once they name
+    // {key}-hardpoints.json.
+    for (const craft of flown.filter(({ lasers }) => lasers?.length)) {
+      const text = files.get("/art/enemies/")?.get(`${craft.key}-hardpoints.json`);
+      if (text !== undefined) writeFileSync(`${art}enemies/${craft.key}-prow.json`, text);
+    }
     for (const { craft, first, sheet: set } of staged) {
       const { directory, manifest } = home(craft, family);
-      const target = ((set.prow ? prowRows : rows)[manifest] ??= { assets: [], sidecars: {} });
+      const target = (rows[manifest] ??= { assets: [], sidecars: {} });
       target.assets.push(
         ...entries(
           craft,
@@ -1305,21 +1294,10 @@ async function main() {
           : {}),
         ...(craft.layers ? {} : { shards: shared.get(`${craft.key}-shards-packed.json`)! }),
       };
-      if (craft.lasers?.length) {
-        (prowRows[manifest] ??= { assets: [], sidecars: {} }).sidecars[stem] = {
-          jets: shared.get(`${craft.key}-jets.json`)!,
-          hardpoints: shared.get(`${craft.key}-prow.json`)!,
-        };
-      }
     }
   }
-  for (const [path, staged] of [
-    [ROWS, rows],
-    [PROW_ROWS, prowRows],
-  ] as const) {
-    const text = json(staged);
-    if (!existsSync(path) || readFileSync(path, "utf8") !== text) writeFileSync(path, text);
-  }
+  const text = json(rows);
+  if (!existsSync(ROWS) || readFileSync(ROWS, "utf8") !== text) writeFileSync(ROWS, text);
   // The tops no fleet hull carries. A carried design's sheet is written in each family that
   // draws it, for the hostile station and the platform. Every design's shot origins and
   // collision are staged as data.

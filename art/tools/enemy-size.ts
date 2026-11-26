@@ -215,7 +215,6 @@ export function normalizeHeavy(source: HeavyCraft): HeavyCraft {
   const result: HeavyCraft = {
     ...source,
     hardpoints: source.hardpoints.map(scaleHardpoint),
-    ...(source.lasers ? { lasers: source.lasers.map(scaleHardpoint) } : {}),
     hull: source.hull.map((part) => scalePart(factor, part)),
     hullTop: source.hullTop * factor,
     sizeRatio: ratio,

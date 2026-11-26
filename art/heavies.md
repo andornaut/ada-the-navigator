@@ -392,12 +392,12 @@ tiers and tops on a more threatening hull, in the coral family palette.
   each prong behind its tip at `[∓0.13, -0.6]` (`[∓0.1124, -0.5187]` once
   normalized): a bright amber emitter panel in a dark rim on the deck, firing
   along the facing. Destroyed: a scorched stump with a breach and one ember, as
-  a destroyed mount. They stage apart from the shipped layout:
-  `archie-prow.json` is `archie-hardpoints.json` with the Lasers
-  added, each with `aim` `facing` and per heading `muzzles`, its shot origin in
-  hull frame px. `archie-prow-sheet.svg` holds their base frames, a set of 16
-  to a row, and [archie-prow-rows.json](archie-prow-rows.json) their rows and
-  the sidecar entry that names the new file.
+  a destroyed mount. They follow the mounts in `archie-hardpoints.json`, each
+  with `aim` `facing` and per heading `muzzles`, its shot origin in hull frame
+  px, and their base frames are part rows of `archie-parts-batch-24-1.svg`.
+  `archie-prow.json` is a byte copy of `archie-hardpoints.json`, which the core
+  manifest's sidecar and `src/data/enemyMuzzles.ts` name until they name
+  `archie-hardpoints.json`.
 
 Mouth width and height are model units.
 

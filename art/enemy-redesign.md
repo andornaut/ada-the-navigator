@@ -313,20 +313,17 @@ One port sits on the centreline (`prow`); a pair sits either side of it
 | Crossbow          | `prow-left`, `-right` | `[∓4.8, -166.8]`    |         32 |
 | Forked fortress   | `prow-left`, `-right` | `[∓35.42, -185.08]` |         40 |
 
-- The Lasers stage apart from the shipped layout, so the shipped files are
-  unchanged. `{key}-prow.json`, staged outside the `*-hardpoints.json` names the
-  game reads, is the shipped hardpoints file with
-  the Lasers after the shipped hardpoints and in each heading's layer order.
-  Each Laser has `role` `turret`, `top` null, `aim` `facing`, states `intact`
+- `{key}-hardpoints.json` lists the Lasers after the mounts and in each
+  heading's layer order. Each Laser has `role` `turret`, `top` null, `aim` `facing`, states `intact`
   and `destroyed`, and its `offset`. Per heading it has `anchor`, collision by
   state, `hidden` by the mounts' rule, and `muzzles`: one shot origin in hull
   frame px on the emitter's face, which fires along heading k. A hidden Laser
   still fires.
-- `{key}-prow-{size}-sheet.svg` holds the Lasers' base frames in each family's
-  folder, rows `enemy-{stem}-{h}-{state}-{k}`. An identical family sheet ships
-  once, as the coral, garnet and needle Twin hull share Whirlpool's.
-- [fleet-prow-rows.json](fleet-prow-rows.json): per manifest, the base rows and
-  the `sidecars` entries that name the `-prow.json` files.
+- The Lasers' base frames are rows of the part sheet of their frame size, ids
+  `enemy-{stem}-{h}-{state}-{k}`.
+- `{key}-prow.json` is a byte copy of `{key}-hardpoints.json`, which
+  `src/data/enemyMuzzles.ts` and the manifests' sidecars name until they name
+  `{key}-hardpoints.json`.
 
 ### Weapon tops
 
@@ -362,8 +359,7 @@ is 10.51 frame px (4.6 display px) and the collar is 2.74 frame px high.
 
 A sheet whose frames equal one already written ships once: its rows name that
 file and its nested roots with `svgSheetMember`. The Mining Freighter's top is
-the Manta gunship's, and the Manta dreadnought's and Forked fortress's `hopper`
-tops are the Hammer's.
+the Manta gunship's, and the Manta dreadnought's `hopper` top is the Hammer's.
 
 - `/art/enemies/{key}-sheet.svg`, `{key}-jets.json`, `{key}-shards-packed.json`
   and `{key}-hardpoints.json`: the coral sheet and the data every family
@@ -463,19 +459,10 @@ station in the core, Cartwheel and Andromeda manifests and the platform's
 [fleet-tops.json](fleet-tops.json): two for `pod`, eight for `dome`, one for
 `gun`.
 
-For the fixed front Lasers, from [fleet-prow-rows.json](fleet-prow-rows.json)
-and [archie-prow-rows.json](archie-prow-rows.json):
-
-- Add the base rows to the core, Whirlpool, Phantom, Cartwheel, Andromeda and
-  Needle manifests, and replace each heavy's sidecar entry, whose `hardpoints`
-  names its `-prow.json`. `src/data/enemyMuzzles.ts` imports those
-  files.
-- The catalog gains each heavy's Lasers as weapon hardpoints with the design's
-  offsets, firing the shared Laser along the facing within the nose arc, from
-  `headings[k].hardpoints[i].muzzles` of the drawn heading. They draw no top.
-- Art then folds each `-prow.json` into `{key}-hardpoints.json`,
-  draws the Lasers' bases into the shipped part sheets and removes both rows
-  files.
+For the fixed front Lasers, `src/data/enemyMuzzles.ts` and each heavy's
+manifest sidecar name `{key}-hardpoints.json` and `archie-hardpoints.json` in
+place of the `-prow.json` copies, which Art then removes with the producers'
+copy steps.
 
 The fleet producer keeps the craft. Art then renames the files to the
 `{archetype}-` stems and removes `fleet-rows.json` and the replaced sheets and

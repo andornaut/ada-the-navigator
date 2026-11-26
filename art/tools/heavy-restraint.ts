@@ -62,7 +62,8 @@ function archieMounts(craft: HeavyCraft): HeavyCraft["hardpoints"] {
   const quiet = (parts: HeavyPart[]) => parts.map((part) => armour(part, "#746879", "#655966"));
   return craft.hardpoints.map((hardpoint) => {
     const model = hardpoint.model;
-    if (model.role !== "turret") return hardpoint;
+    // A fixed front Laser's port keeps its emitter and rim.
+    if (model.role !== "turret" || model.muzzle) return hardpoint;
     return {
       ...hardpoint,
       model: {

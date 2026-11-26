@@ -204,8 +204,7 @@ type Row = { silhouette: string; body: string }[];
 // Lasers' review rows. Its hull keyline strokes every hull polygon under the drawn hull.
 function archieProw(): { frame: number; rows: Row[] } {
   const styled = restrainHeavyHull(archie);
-  const armed = { ...styled, hardpoints: [...styled.hardpoints, ...styled.lasers!] };
-  const { files } = build(armed, place({ version: 1, archetypes: {} }, armed));
+  const { files } = build(styled, place({ version: 1, archetypes: {} }, styled));
   const layout = JSON.parse(files.get("archie-hardpoints.json")!) as {
     headings: {
       order: string[];
@@ -217,7 +216,7 @@ function archieProw(): { frame: number; rows: Row[] } {
       }[];
     }[];
   };
-  const lasers = new Set(styled.lasers!.map(({ id }) => id));
+  const lasers = new Set(styled.hardpoints.filter(({ model }) => model.muzzle).map(({ id }) => id));
   const fill = new Set(styled.mounts!.fill);
   const frameOf = (svg: string) => Number(/viewBox="0 0 (\d+)/u.exec(svg)![1]);
   const nested = (file: string, [x, y]: readonly [number, number]) => {
