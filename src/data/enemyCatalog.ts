@@ -36,6 +36,7 @@ export interface Point {
 export interface FireProfile {
   /** The weapon's fan at its level, in degrees in the projected aim plane, as Ada fires it. */
   angles: readonly number[];
+  pelletDelays?: readonly number[];
   /** Bolts per volley fired `gap` seconds apart; a volley starts every `interval`. */
   burst?: { count: number; gap: number };
   interval: number;
@@ -262,6 +263,7 @@ export function enemyFire(archetype: string, mounted: MountedWeapon): FireProfil
     ...cadence,
     ...(burst ? { burst } : {}),
     angles: shared?.anglesDegrees ?? [0],
+    ...(shared?.pelletDelays ? { pelletDelays: shared.pelletDelays } : {}),
     level,
     projectile: shared?.projectileKind ?? ENEMY_ONLY_PROJECTILE[weapon as EnemyOnlyWeapon],
     projectileSpeed: enemyOnly(weapon)

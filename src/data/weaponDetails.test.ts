@@ -37,14 +37,15 @@ describe("approved concise detail fixtures", () => {
       "Explodes on impact or after a short distance.",
       "Each level fires faster.",
     ]);
-    for (const level of [1, 2, 3]) {
+    for (const [index, count] of [11, 14, 18].entries()) {
+      const level = index + 1;
       expect(weaponDetailLines("multiLaser", level)).toEqual([
         `Fires a fan of ${weaponAt("multiLaser", level).anglesDegrees.length} laser bolts.`,
         "Each level adds a bolt.",
       ]);
       expect(weaponDetailLines("scattershot", level)).toEqual([
-        `Fires a wide spread of ${weaponAt("scattershot", level).anglesDegrees.length} short-range shots.`,
-        "Each level adds shots that hit harder.",
+        `Fires ${count} short-range pellets in three rows.`,
+        "Each level adds pellets that hit harder.",
       ]);
     }
   });

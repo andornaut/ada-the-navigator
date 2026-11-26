@@ -104,6 +104,11 @@ export interface SpaceObject extends Vec {
   wreck?: WreckState;
   release?: PickupRelease;
 }
+export interface PendingPellet {
+  /** Flight seconds remaining before launch. */
+  delay: number;
+  shot: Shot;
+}
 export interface Shot extends Vec {
   /** Optional visual provenance retained when the selected weapon changes. */
   effectFamily?: import("./weaponImpacts.ts").ImpactFamily;
@@ -238,6 +243,7 @@ export interface FlightState {
   mines: Mine[];
   objects: SpaceObject[];
   shots: Shot[];
+  pendingPellets?: PendingPellet[];
   chunks: string[];
   freshChunk: string | null;
   freshDistance: number;

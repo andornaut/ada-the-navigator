@@ -8,6 +8,8 @@ export interface WeaponDefinition {
   projectileKind: "bolt" | "missile" | "dot" | "beam";
   /** Visible angular offsets in the projected aim plane, before unprojection. */
   anglesDegrees: readonly number[];
+  /** When present, each pellet's launch offset in seconds, in angle order. */
+  pelletDelays?: readonly number[];
   /** Weapon-relative world range before expiry; null for the base lifetime. */
   rangeWorld: number | null;
   fadeStartFraction: number | null;
@@ -65,7 +67,16 @@ const fan = (count: number, spread: number) =>
 
 // Each baseline holds one weapon's values shared by its levels.
 const MULTI_LASER_SPREAD = 8;
-const SCATTER_SPREAD = 30;
+const SCATTER_ROW_SECONDS = 0.06;
+
+function scatterRows(first: number, middle: number, last: number) {
+  const rows = [fan(first, 30), fan(middle, 15), last === 1 ? [0] : fan(last, 4)];
+  return {
+    anglesDegrees: rows.flat(),
+    pelletDelays: rows.flatMap((row, index) => row.map(() => index * SCATTER_ROW_SECONDS)),
+  };
+}
+
 const heavyMissileBase = {
   ...projectile,
   anglesDegrees: [0],
@@ -205,21 +216,21 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       speedRatio: flies(700),
     },
   ],
-  // One volley per second, with 7, 9 and 11 pellets at 0.8, 1 and 1.2 damage each.
+  // One three-row volley per second, at 0.8, 1 and 1.2 damage per pellet.
   scattershot: [
     {
       ...scattershotBase,
-      anglesDegrees: fan(7, SCATTER_SPREAD),
+      ...scatterRows(7, 3, 1),
       damageRatio: SCATTER_PELLET_DAMAGE,
     },
     {
       ...scattershotBase,
-      anglesDegrees: fan(9, SCATTER_SPREAD),
+      ...scatterRows(9, 4, 1),
       damageRatio: SCATTER_PELLET_DAMAGE * 1.25,
     },
     {
       ...scattershotBase,
-      anglesDegrees: fan(11, SCATTER_SPREAD),
+      ...scatterRows(11, 5, 2),
       damageRatio: (SCATTER_PELLET_DAMAGE * 3) / 2,
     },
   ],

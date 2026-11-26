@@ -106,8 +106,7 @@ describe("enemy weapon damage", () => {
     expect(levels.map((level) => fireDamageRatio({ level, weapon: "phaser" }))).toEqual([4, 6, 8]);
     expect(fireDamageRatio({ level: 1, weapon: "rapidMissile" })).toBe(1.5);
     expect(fireDamageRatio({ level: 1, weapon: "multiLaser" })).toBe(0.7);
-    // A Scattershot volley has seven pellets at 0.8 damage each.
-    expect(fireDamageRatio({ level: 1, weapon: "scattershot" }) * 7).toBeCloseTo(5.6, 9);
+    expect(fireDamageRatio({ level: 1, weapon: "scattershot" })).toBeCloseTo(0.8, 9);
   });
 });
 
@@ -130,6 +129,7 @@ describe("enemy fire profiles", () => {
       const definition = weaponAt(profile.weapon as Weapon, profile.level);
       expect(profile.projectile, profile.weapon).toBe(definition.projectileKind);
       expect(profile.angles, profile.weapon).toEqual(definition.anglesDegrees);
+      expect(profile.pelletDelays, profile.weapon).toEqual(definition.pelletDelays);
     }
   });
 

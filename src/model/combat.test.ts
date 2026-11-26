@@ -13,6 +13,7 @@ import {
   enemyDefinition,
   enemyFire,
   enemyFireRate,
+  fireDamageRatio,
   galaxyEncounters,
   heavyLoadout,
 } from "../data/enemyCatalog.ts";
@@ -333,8 +334,10 @@ describe("integrated combat", () => {
     const standing = ["weapon-right", "weapon-rear-left", "weapon-rear-right"].flatMap((mount) =>
       volley(loadout.get(mount)),
     );
-    expect(flight.shots.map((shot) => shot.projectile).sort()).toEqual(standing.sort());
+    const committed = [...flight.shots, ...(flight.pendingPellets ?? []).map(({ shot }) => shot)];
+    expect(committed.map((shot) => shot.projectile).sort()).toEqual(standing.sort());
     flight.shots = [];
+    delete flight.pendingPellets;
     // Its front Lasers, with Ada astern of the nose, hold fire. Destroying the last weapons, the
     // front Lasers among them, disables it once while hull remains.
     for (const id of ["weapon-right", "weapon-rear-left", "weapon-rear-right", "prow-left"]) {
@@ -716,6 +719,50 @@ describe("integrated combat", () => {
     expect(beam).toMatchObject({ fired: true, stopped: true });
     expect(beam!.end.x).toBeGreaterThan(80);
     expect(flight.shield).toBe(CONTENT.tuning.shieldMax);
+  });
+
+  it("releases a capital mount's three Scattershot rows at its shared weapon level", () => {
+    const flight = emptyIn(6);
+    const { mount, target } = armedWith("capital", 6, "scattershot", { x: 260, y: 0 });
+    const definition = enemyEquipmentDefinition(6, target.enemy!);
+    const part = definition.hardpoints.find((part) => part.id === mount);
+    if (part?.kind !== "weapon") {
+      throw new Error("Missing capital Scattershot mount");
+    }
+    const profile = part.fire;
+    const [first, second, last] = (
+      [
+        [7, 3, 1],
+        [9, 4, 1],
+        [11, 5, 2],
+      ] as const
+    )[profile.level - 1]!;
+    target.enemy!.facing = { x: -1, y: 0 };
+    flight.objects.push(target);
+    stepFlight(CONTENT, 0.01, idle, flight);
+    expect(flight.shots).toHaveLength(first);
+    const queued = flight.pendingPellets!;
+    expect(queued).toHaveLength(second + last);
+    expect(queued[0]!.delay).toBeCloseTo(0.05, 12);
+    expect(queued.at(-1)!.delay).toBeCloseTo(0.11, 12);
+    for (const { shot } of queued) {
+      expect(shot.enemy).toBe(true);
+      expect(shot.effectFamily).toBe("pellet");
+      expect(shot.damage).toBeCloseTo(
+        CONTENT.tuning.flight.playerShotDamage * fireDamageRatio(profile),
+      );
+      expect(shot.life * profile.projectileSpeed).toBeCloseTo(100, 12);
+      expect(shot.fade?.fadeStartFraction).toBe(0.65);
+    }
+    const middle = queued.slice(0, second).map(({ shot }) => shot.id);
+    const final = queued.slice(second).map(({ shot }) => shot.id);
+    stepFlight(CONTENT, 0.049, idle, flight);
+    expect(flight.shots).toHaveLength(first);
+    stepFlight(CONTENT, 0.001, idle, flight);
+    expect(flight.shots.slice(first).map(({ id }) => id)).toEqual(middle);
+    stepFlight(CONTENT, 0.06, idle, flight);
+    expect(flight.shots.slice(first + second).map(({ id }) => id)).toEqual(final);
+    expect(flight.pendingPellets).toBeUndefined();
   });
 
   it("fires a ring burst's eight bolts outward from the hull's edge, evenly around it", () => {

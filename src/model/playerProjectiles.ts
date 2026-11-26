@@ -27,6 +27,7 @@ export interface BoltFan {
 export interface PlayerProjectile extends Vec {
   readonly blast?: number;
   readonly damage: number;
+  readonly delay?: number;
   readonly fade?: ProjectileFade;
   /** Presentation only: the fan a bolt belongs to, which draws as one wedge while it is close. */
   readonly fan?: BoltFan;
@@ -93,6 +94,10 @@ export function planPlayerVolley(
     (definition.blastRadius !== null && !positive(definition.blastRadius)) ||
     !definition.anglesDegrees.length ||
     !definition.anglesDegrees.every(Number.isFinite) ||
+    (definition.pelletDelays !== undefined &&
+      (definition.projectileKind !== "dot" ||
+        definition.pelletDelays.length !== definition.anglesDegrees.length ||
+        !definition.pelletDelays.every((delay) => Number.isFinite(delay) && delay >= 0))) ||
     (definition.rangeWorld !== null && !positive(definition.rangeWorld)) ||
     (definition.fadeStartFraction !== null &&
       (!Number.isFinite(definition.fadeStartFraction) ||
@@ -114,11 +119,13 @@ export function planPlayerVolley(
     definition.projectileKind === "bolt" && count > 1
       ? { fan: { count, origin: { x: context.origin.x, y: context.origin.y } } }
       : {};
-  const projectiles = definition.anglesDegrees.map((degrees): PlayerProjectile => {
+  const projectiles = definition.anglesDegrees.map((degrees, index): PlayerProjectile => {
     const heading = fanHeading(context.aim, degrees);
+    const delay = definition.pelletDelays?.[index];
     return {
       ...(definition.blastRadius === null ? {} : { blast: definition.blastRadius }),
       damage,
+      ...(delay ? { delay } : {}),
       ...projectileReach(
         context.coverage && definition.projectileKind === "bolt"
           ? {

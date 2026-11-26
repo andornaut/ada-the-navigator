@@ -36,6 +36,9 @@ function launched(weapon: Weapon) {
   flight.velocity = { x: 0, y: 0 };
   flight.ownedWeapons = ["rapidMissile", "multiLaser", "scattershot"];
   flight.weapon = weapon;
+  if (weapon === "scattershot") {
+    flight.ammo.scattershot = 2;
+  }
   return { flight, model };
 }
 
@@ -379,6 +382,7 @@ describe("integrated weapon projectiles", () => {
     const center = flight.shots.find((shot) => Math.abs(shot.velocity.y) < 0.000001)!;
     expect(center.projectile).toBe("dot");
     flight.shots = [center];
+    delete flight.pendingPellets;
     flight.fireCooldown = 100;
     flight.objects = [{ hp: 3, id: "target", kind: "rock", radius: 4, x: 30, y: 0 }];
     stepFlight(CONTENT, 0.1, idle, flight);
@@ -391,8 +395,8 @@ describe("integrated weapon projectiles", () => {
     stepFlight(CONTENT, 0.001, { ...idle, aim: { x: 1, y: 1 }, viewportWidth: 960 }, flight);
     // The pellets left the nose of the facing they fired along.
     const start = nosePoint(flight.facing, flight.player);
-    const pellets = [...flight.shots];
-    expect(pellets).toHaveLength(7);
+    const pellets = [...flight.shots, ...flight.pendingPellets!.map(({ shot }) => shot)];
+    expect(pellets).toHaveLength(11);
     flight.fireCooldown = 100;
     stepFlight(CONTENT, 2, idle, flight);
     expect(flight.shots).toHaveLength(0);
@@ -403,6 +407,48 @@ describe("integrated weapon projectiles", () => {
       expect(shot.life).toBe(0);
       expect(projectileOpacity(shot.fade!, shot.life)).toBe(0);
     }
+  });
+
+  it("finishes a last-shell level-three volley on the flight clock after Continue", () => {
+    const { flight, model } = launched("scattershot");
+    flight.ammo.scattershot = 1;
+    flight.levels.weapons.scattershot = 3;
+    stepFlight(CONTENT, 0.01, { ...idle, aim: { x: 0, y: -1 } }, flight);
+    expect(flight.weapon).toBe("laser");
+    expect(flight.ammo.scattershot).toBe(0);
+    expect(flight.fireCooldown).toBeCloseTo(1, 12);
+    expect(flight.shots).toHaveLength(11);
+    const saved = model.save();
+    const restored = relaunch(CONTENT, saved);
+    const resumed = restored.state.flight!;
+    const queued = resumed.pendingPellets!;
+    expect(queued).toEqual(flight.pendingPellets);
+    expect(queued).toHaveLength(7);
+    const middle = queued.slice(0, 5).map(({ shot }) => shot);
+    const final = queued.slice(5).map(({ shot }) => shot);
+
+    for (const [dt, count] of [
+      [0.049, 11],
+      [0.001, 16],
+      [0.059, 16],
+      [0.001, 18],
+    ] as const) {
+      stepFlight(CONTENT, dt, idle, flight);
+      stepFlight(CONTENT, dt, idle, resumed);
+      expect(resumed.shots).toHaveLength(count);
+      expect(restored.save()).toBe(model.save());
+      if (count === 16 && dt === 0.001) {
+        expect(resumed.shots.slice(11)).toEqual(middle);
+        expect(middle.every((shot) => shot.life === shot.fade?.initialLife)).toBe(true);
+      }
+    }
+    expect(resumed.shots.slice(16)).toEqual(final);
+    expect(final.every((shot) => shot.life === shot.fade?.initialLife)).toBe(true);
+    expect(resumed.shots.every((shot) => shot.effectFamily === "pellet")).toBe(true);
+    expect(resumed.pendingPellets).toBeUndefined();
+    const invalid = JSON.parse(saved);
+    invalid.flight.pendingPellets[0].delay = -1;
+    expect(restoreSave(invalid)).toBeNull();
   });
 
   it("restores active fading shots exactly and preserves their future after the viewport changes", () => {

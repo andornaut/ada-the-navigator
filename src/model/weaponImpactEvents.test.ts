@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { activeWeaponImpacts, stepFlight } from "./flight.ts";
@@ -32,7 +31,8 @@ describe("weapon contact provenance", () => {
     flight.fireCooldown = 0;
     stepFlight(CONTENT, 0.01, { ...idle, fire: true }, flight);
     expect(flight.weapon).toBe("laser");
-    expect(flight.shots).toHaveLength(WEAPON_CATALOG.scattershot[0].anglesDegrees.length);
+    expect(flight.shots).toHaveLength(7);
+    expect(flight.pendingPellets).toHaveLength(4);
     expect(flight.shots.every((shot) => shot.effectFamily === "pellet")).toBe(true);
   });
 

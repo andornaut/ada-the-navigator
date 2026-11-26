@@ -1633,8 +1633,13 @@ export function stepEnemy(
           fire.push({ ...shot, aim, origin });
         }
       } else {
-        for (const degrees of profile.angles) {
-          fire.push({ ...shot, aim: fanHeading(muzzleAim, degrees), origin: { ...from } });
+        for (const [index, degrees] of profile.angles.entries()) {
+          fire.push({
+            ...shot,
+            aim: fanHeading(muzzleAim, degrees),
+            delay: delay + (profile.pelletDelays?.[index] ?? 0),
+            origin: { ...from },
+          });
         }
       }
       bolt++;

@@ -21,8 +21,8 @@ export const WEAPON_DETAIL_LINES = {
     "Each level fires faster.",
   ],
   scattershot: [
-    "Fires a wide spread of {count} short-range shots.",
-    "Each level adds shots that hit harder.",
+    "Fires {count} short-range pellets in three rows.",
+    "Each level adds pellets that hit harder.",
   ],
 } as const satisfies Readonly<Record<Weapon, readonly string[]>>;
 

@@ -156,6 +156,18 @@ describe("flight boundaries", () => {
     expect(flight.weapon).toBe("multiLaser");
   });
 
+  it("refuses a Scattershot volley on an empty shell count", () => {
+    const flight = empty();
+    flight.weapon = "scattershot";
+    flight.ammo.scattershot = 0;
+    expect(stepFlight(CONTENT, 0.01, { ...idle, aim: { x: 0, y: -1 } }, flight)).toContainEqual({
+      type: "outOfAmmo",
+    });
+    expect(flight.weapon).toBe("laser");
+    expect(flight.shots).toEqual([]);
+    expect(flight.pendingPellets).toBeUndefined();
+  });
+
   it("still spends one shell for a full Scattershot volley", () => {
     const flight = empty();
     flight.player = { x: 100, y: 100 };
@@ -163,6 +175,11 @@ describe("flight boundaries", () => {
     flight.ammo.scattershot = 2;
     stepFlight(CONTENT, 0.01, { ...idle, aim: { x: 0, y: -1 } }, flight);
     expect(flight.shots).toHaveLength(7);
+    expect(flight.pendingPellets).toHaveLength(4);
+    flight.weapon = "laser";
+    stepFlight(CONTENT, 0.11, idle, flight);
+    expect(flight.shots).toHaveLength(11);
+    expect(flight.pendingPellets).toBeUndefined();
     expect(flight.ammo.scattershot).toBe(1);
   });
 

@@ -1463,9 +1463,27 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
       ) {
         return null;
       }
+      const pendingPellets = f.pendingPellets;
+      if (
+        pendingPellets !== undefined &&
+        (!Array.isArray(pendingPellets) ||
+          !Array.from(pendingPellets).every(
+            (entry) =>
+              record(entry) &&
+              finite(entry.delay) &&
+              entry.delay > 0 &&
+              record(entry.shot) &&
+              entry.shot.projectile === "dot" &&
+              finite(entry.shot.life) &&
+              entry.shot.life > 0 &&
+              entry.shot.fade !== undefined,
+          ))
+      ) {
+        return null;
+      }
       if (
         !Array.isArray(f.shots) ||
-        !Array.from(f.shots).every(
+        ![...f.shots, ...(pendingPellets ?? []).map(({ shot }) => shot)].every(
           (s) =>
             record(s) &&
             vector(s) &&

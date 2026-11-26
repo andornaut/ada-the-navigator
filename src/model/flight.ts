@@ -3881,13 +3881,13 @@ function fire(
   const weapon = flight.weapon;
   let definition = weaponAt(weapon, flight.levels.weapons[weapon]);
   const family = impactFamily(weapon);
+  if ((weapon === "multiLaser" || weapon === "scattershot") && flight.ammo[weapon] === 0) {
+    spendAmmo(flight, 0);
+    events.push({ type: "outOfAmmo" });
+    return;
+  }
   if (weapon === "multiLaser") {
     const ammo = flight.ammo.multiLaser;
-    if (ammo === 0) {
-      spendAmmo(flight, 0);
-      events.push({ type: "outOfAmmo" });
-      return;
-    }
     if (ammo < definition.anglesDegrees.length) {
       // Preserve authored order for equal offsets (including roundoff in even fans).
       const anglesDegrees = [...definition.anglesDegrees].sort((left, right) => {
@@ -3948,7 +3948,7 @@ function releaseFriendlyVolley(
     origin,
     viewportWidth,
   });
-  for (const projectile of volley.projectiles) {
+  for (const { delay, ...projectile } of volley.projectiles) {
     const shot: Shot = {
       ...projectile,
       effectFamily: family,
@@ -3957,9 +3957,13 @@ function releaseFriendlyVolley(
       id: `shot:${flight.nextId++}`,
       piercing: false,
     };
-    flight.shots.push(shot);
-    // A shot that starts inside an obstacle Ada is touching strikes it at once.
-    strike(content, shot, flight, events);
+    if (delay) {
+      (flight.pendingPellets ??= []).push({ delay, shot });
+    } else {
+      flight.shots.push(shot);
+      // A shot that starts inside an obstacle Ada is touching strikes it at once.
+      strike(content, shot, flight, events);
+    }
   }
   return volley;
 }
@@ -4160,6 +4164,9 @@ function enemies(
   const standDown = flight.galaxy === 6 && flight.phantom?.phase === "salvaged";
   if (standDown) {
     flight.shots = flight.shots.filter((shot) => !shot.enemy);
+    if (flight.pendingPellets) {
+      flight.pendingPellets = flight.pendingPellets.filter(({ shot }) => !shot.enemy);
+    }
     flight.mines = [];
     for (const object of flight.objects) {
       if (object.enemy) {
@@ -4506,7 +4513,6 @@ function enemies(
         rings.set(fire.delay, [...(rings.get(fire.delay) ?? []), fire.origin]);
       }
       const id = `shot:${flight.nextId++}`;
-      shotDelays.set(id, fire.delay);
       // A shared weapon keeps its range, fade and blast whoever fires it.
       const lifetime = content.tuning.flight.enemyProjectileLifetime;
       const launch = planEnemyProjectile(
@@ -4518,7 +4524,7 @@ function enemies(
         },
         fire,
       );
-      flight.shots.push({
+      const shot: Shot = {
         ...fire.origin,
         ...launch,
         damage: amount,
@@ -4532,7 +4538,13 @@ function enemies(
         id,
         piercing: false,
         projectile: fire.projectile,
-      });
+      };
+      if (fire.weapon === "scattershot" && fire.delay >= dt) {
+        (flight.pendingPellets ??= []).push({ delay: fire.delay, shot });
+      } else {
+        shotDelays.set(id, fire.delay);
+        flight.shots.push(shot);
+      }
     }
     for (const [delay, origins] of rings) {
       const emissions = ringEmissions.get(flight) ?? [];
@@ -4821,6 +4833,36 @@ function settleRock(dt: number, object: SpaceObject): { position: Vec } {
     object.settle = left - step;
   }
   return { position };
+}
+
+/** Release committed Scattershot rows on the flight clock, with the rest of their slice to fly. */
+function releasePendingPellets(
+  content: GameContent,
+  dt: number,
+  flight: FlightState,
+  events: FlightEvent[],
+  shotDelays: Map<string, number>,
+): void {
+  if (!flight.pendingPellets) {
+    return;
+  }
+  const waiting = [];
+  for (const { delay, shot } of flight.pendingPellets) {
+    if (delay - dt > 1e-9) {
+      waiting.push({ delay: delay - dt, shot });
+      continue;
+    }
+    flight.shots.push(shot);
+    shotDelays.set(shot.id, Math.min(delay, dt));
+    if (!shot.enemy) {
+      strike(content, shot, flight, events);
+    }
+  }
+  if (waiting.length) {
+    flight.pendingPellets = waiting;
+  } else {
+    delete flight.pendingPellets;
+  }
 }
 
 function shots(
@@ -5798,6 +5840,7 @@ export function stepFlight(
         );
       }
     }
+    releasePendingPellets(content, slice, flight, events, shotDelays);
     shots(content, slice, flight, events, shotDelays);
     stepMines(slice, flight);
     stepWrecks(content, slice, input.reducedMotion ?? false, flight);

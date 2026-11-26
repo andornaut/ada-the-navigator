@@ -60,24 +60,45 @@ describe("pure player projectile volleys", () => {
   });
 
   it.each([
-    [1, [-8, 0, 8], [-30, -20, -10, 0, 10, 20, 30]],
-    [2, [-8, -8 / 3, 8 / 3, 8], [-30, -22.5, -15, -7.5, 0, 7.5, 15, 22.5, 30]],
-    [3, [-8, -4, 0, 4, 8], [-30, -24, -18, -12, -6, 0, 6, 12, 18, 24, 30]],
-  ])("fans level %i Multi-Laser bolts and Scattershot dots evenly", (level, bolts, dots) => {
-    const multi = WEAPON_CATALOG.multiLaser[level - 1]!;
-    const scatter = WEAPON_CATALOG.scattershot[level - 1]!;
-    expect(multi.anglesDegrees).toHaveLength(bolts.length);
-    multi.anglesDegrees.forEach((angle, index) => expect(angle).toBeCloseTo(bolts[index]!, 9));
-    expect(scatter.anglesDegrees).toHaveLength(dots.length);
-    scatter.anglesDegrees.forEach((angle, index) => expect(angle).toBeCloseTo(dots[index]!, 9));
-    // Every level reaches the same 100 world units; levels add only dots.
-    expect(scatter.rangeWorld).toBe(100);
-  });
+    [1, [-8, 0, 8], [[-30, -20, -10, 0, 10, 20, 30], [-15, 0, 15], [0]]],
+    [
+      2,
+      [-8, -8 / 3, 8 / 3, 8],
+      [[-30, -22.5, -15, -7.5, 0, 7.5, 15, 22.5, 30], [-15, -5, 5, 15], [0]],
+    ],
+    [
+      3,
+      [-8, -4, 0, 4, 8],
+      [
+        [-30, -24, -18, -12, -6, 0, 6, 12, 18, 24, 30],
+        [-15, -7.5, 0, 7.5, 15],
+        [-4, 4],
+      ],
+    ],
+  ])(
+    "fans level %i Multi-Laser bolts and staggers three even Scattershot rows",
+    (level, bolts, rows) => {
+      const multi = WEAPON_CATALOG.multiLaser[level - 1]!;
+      const scatter = WEAPON_CATALOG.scattershot[level - 1]!;
+      expect(multi.anglesDegrees).toHaveLength(bolts.length);
+      multi.anglesDegrees.forEach((angle, index) => expect(angle).toBeCloseTo(bolts[index]!, 9));
+      expect(scatter.anglesDegrees).toEqual(rows.flat());
+      const volley = planPlayerVolley(scatter, context);
+      expect(volley.projectiles.map((shot) => shot.delay ?? 0)).toEqual(
+        rows.flatMap((row, index) => row.map(() => [0, 0.06, 0.12][index])),
+      );
+      // Every level reaches the same 100 world units; levels add only dots.
+      expect(scatter.rangeWorld).toBe(100);
+    },
+  );
 
   it("keeps laser and scatter fans at their visible offsets for cardinal and diagonal world headings", () => {
     const cases = [
       { definition: WEAPON_CATALOG.multiLaser[0], degrees: [-8, 0, 8] },
-      { definition: WEAPON_CATALOG.scattershot[0], degrees: [-30, -20, -10, 0, 10, 20, 30] },
+      {
+        definition: WEAPON_CATALOG.scattershot[0],
+        degrees: [-30, -20, -10, 0, 10, 20, 30, -15, 0, 15, 0],
+      },
     ];
     for (const { definition, degrees } of cases) {
       for (const aim of [
@@ -124,7 +145,7 @@ describe("pure player projectile volleys", () => {
           aim,
           viewportWidth,
         });
-        expect(volley.projectiles).toHaveLength(7);
+        expect(volley.projectiles).toHaveLength(11);
         for (const shot of volley.projectiles) {
           const dx = shot.velocity.x * shot.life;
           const dy = shot.velocity.y * shot.life;
