@@ -256,14 +256,16 @@ describe("escort", () => {
     return [capital, escort];
   }
 
-  it("holds its station beside the capital while Ada stays clear of it", () => {
+  it("circles its station ring around the capital while Ada stays clear of it", () => {
     const ships = battle();
     const far = { x: station + 590, y: 0 };
     expect(far.x).toBeGreaterThan(escortTuning.interceptRadius + hull);
     run(ships, 180, { context: (peers) => context(peers, far) });
     const escort = ships[1]!;
     expect(escort.engaged).toBe(true);
-    expect(Math.hypot(escort.position.x - station, escort.position.y)).toBeLessThan(15);
+    // The ring turns (gameplay/ships.md "Keep moving"), so the escort keeps its radius, not its point.
+    expect(Math.abs(Math.hypot(escort.position.x, escort.position.y) - station)).toBeLessThan(15);
+    expect(Math.hypot(escort.position.x - station, escort.position.y)).toBeGreaterThan(15);
   });
 
   it("intercepts Ada when she comes close to its capital, holding its band from her", () => {
@@ -271,7 +273,9 @@ describe("escort", () => {
     const near = { x: 600, y: 0 };
     expect(near.x).toBeLessThanOrEqual(escortTuning.interceptRadius + hull);
     run(ships, 180, { context: (peers) => context(peers, near) });
-    expect(ships[1]!.position.x).toBeGreaterThan(station + 120);
+    // It leaves its ring toward Ada, then strafes along its band from her.
+    expect(Math.hypot(ships[1]!.position.x, ships[1]!.position.y)).toBeGreaterThan(station + 100);
+    expect(ships[1]!.position.x).toBeGreaterThan(station + 100);
     expect(range(ships[1]!, near)).toBeGreaterThan(enemyCatalog.fighter.standoff.near - 60);
   });
 
