@@ -676,6 +676,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   });
   let weaponIds: readonly Weapon[] = [];
   let statusView: StatusView | undefined;
+  let creatingUpdate = true;
   const update = options.update
     ? createUpdateDialog(
         settings.root,
@@ -683,9 +684,21 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
         options.update.labels,
         options.update.offer,
         options.update.restoreFocus,
-        () => syncModal(),
+        () => {
+          if (!creatingUpdate) {
+            syncModal();
+          } else {
+            // An already-visible offer replays during construction, before the scene owns Controls.
+            queueMicrotask(() => {
+              if (!disposed && update?.isOpen()) {
+                syncModal();
+              }
+            });
+          }
+        },
       )
     : undefined;
+  creatingUpdate = false;
   const stick = (kind: "aim" | "move") => ({
     knob: createTouchChrome(scene, options.rasterScale, "knob")?.setDepth(STICK_DEPTHS.knob),
     line: createSpeedLine(scene, options.rasterScale).setDepth(STICK_DEPTHS.line),

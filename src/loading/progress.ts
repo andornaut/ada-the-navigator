@@ -99,8 +99,11 @@ export function updateProgressActivity(progress: UpdateProgress): void {
       showBackground("update", true);
       break;
     case "transferring":
+      // The final byte can arrive before the kit verifies and stages the build.
       staging =
-        Number.isFinite(progress.totalBytes) && progress.totalBytes > 0
+        Number.isFinite(progress.totalBytes) &&
+        progress.totalBytes > 0 &&
+        progress.receivedBytes < progress.totalBytes
           ? progress.receivedBytes / progress.totalBytes
           : undefined;
       showBackground("update", true);

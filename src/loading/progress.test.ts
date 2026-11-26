@@ -87,6 +87,36 @@ describe("the loading bar's background layer", () => {
     bar.stop();
   });
 
+  it("keeps the shared bar pending between the final byte and verified readiness", () => {
+    const timer = { clearTimeout: vi.fn(), setTimeout: vi.fn(() => 0) };
+    const snapshots: ProgressSnapshot[] = [];
+    const stop = subscribeLoadingProgress(timer, { fadeMs: 150, fullMs: 250 }, (snapshot) =>
+      snapshots.push(snapshot),
+    );
+    const version = "b";
+    const transfer = (receivedBytes: number) =>
+      updateProgressActivity({ phase: "transferring", receivedBytes, totalBytes: 100, version });
+    const pending = { active: true, value: undefined };
+    try {
+      transfer(99);
+      expect(snapshots.at(-1)).toEqual({ active: true, value: 0.99 });
+      transfer(100);
+      expect(snapshots.at(-1)).toEqual(pending);
+      transfer(101);
+      expect(snapshots.at(-1)).toEqual(pending);
+      updateProgressActivity({ phase: "verifying", version });
+      expect(snapshots.at(-1)).toEqual(pending);
+      expect(snapshots).not.toContainEqual({ active: true, value: 1 });
+      expect(timer.setTimeout).not.toHaveBeenCalled();
+      updateProgressActivity({ phase: "ready", version });
+      expect(snapshots.at(-1)).toEqual({ active: false, value: undefined });
+      expect(timer.setTimeout).not.toHaveBeenCalled();
+    } finally {
+      updateProgressActivity({ phase: "idle" });
+      stop();
+    }
+  });
+
   it.each([{ phase: "failed", version: "b" }, { phase: "idle" }] as const)(
     "clears a partial transfer on $phase without showing completion",
     (terminal) => {
