@@ -672,9 +672,15 @@ space story runs in three acts:
    arrives when the last is destroyed, disabled or fled. The flagship and its
    escorts hold back until the third wave is gone.
 3. **The flagship.** Archie's own capital ([Ships](ships.md#archies-flagship))
-   then attacks. It can be beaten only by disabling it: its hull never drops below
-   1 HP. Disabled, it shows the red "Disabled" banner, and Ada salvages the last
-   holodisk from it. Archie surrenders the disk, Astra's memory is complete, and
+   then attacks. While engaged, the boss HUD shows "Archie's flagship",
+   "Admiral Archie" and its current hull health. It clears on disengagement and
+   returns with the current hull on re-entry. Astra reacts once when the first
+   hardpoint is destroyed and the flagship stays active. Continue retains the
+   cue until its first display. If the first hardpoint loss also disables the
+   flagship on that hit, the fight goes straight to surrender.
+   The flagship can be beaten only by disabling it. Its hull never drops below
+   1 HP. The boss HUD shows "Disabled" when Use offers Salvage, and Ada salvages
+   the last holodisk. Archie surrenders the disk, Astra's memory is complete, and
    at Ada's request Astra shows him her whole map: galaxies past galaxies, without
    end. He relents and stays in Phantom to help the Blurbs mend the docks his
    blockades broke.

@@ -847,6 +847,7 @@ Battle chatter stays in the small box:
 - With allies: Astra: "That's his flagship. And Ada, look." Ada: "Everyone came!" (happy)
 - Without allies: Astra: "That's his flagship. It's just us." Ada: "Just us is enough."
 - Admiral Archie, as the flagship attacks: "Astra. Come home, and bring my disks. No one needs to get hurt." Astra: "No one will. But I'm not yours."
+- Astra, first hardpoint lost while the flagship stays active: "One hardpoint down. Keep aiming for the glowing parts."
 - Admiral Archie, flagship disabled: "Enough! Take it. Take the last disk."
 
 Salvage the last holodisk uses Astra's short brief below and the existing
