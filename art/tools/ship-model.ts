@@ -555,7 +555,9 @@ export function forwardJetMouths(
 /**
  * Plumes that start on the bottom edge of each lit engine mouth, for the start screen: aimed
  * straight back as in flight, each root on the midpoint of its mouth's bottom edge and its start
- * line along that edge, `half` the projected edge direction per ship unit, pointing outboard.
+ * line along that edge. `half` runs along the projected edge, pointing outboard, at the length
+ * that keeps the flight plume's width across the axis, so the start line may pass the edge's
+ * ends.
  */
 export function mouthEdgeJetMouths(
   pivot: number,
@@ -573,7 +575,14 @@ export function mouthEdgeJetMouths(
     const root: Point = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
     let along = unit(minus(b, a));
     if (sign * along[0] < 0) along = [-along[0], -along[1], -along[2]];
-    const half = projected(0, along);
+    const line = projectAt(0, 0, minus(place(pose, along), place(pose, [0, 0, 0])));
+    const axis = projectAt(0, 0, minus(place(pose, [0, 1, 0]), place(pose, [0, 0, 0])));
+    const flight = plumeSide(pose, [0, 1, 0], [sign, 0, 0]);
+    // The edge's share across the axis, so its component across matches the flight half.
+    const across =
+      Math.abs(line[0] * axis[1] - line[1] * axis[0]) / Math.hypot(...line) / Math.hypot(...axis);
+    const scale = Math.hypot(...flight) / across / Math.hypot(...line);
+    const half = [round(line[0] * scale), round(line[1] * scale)] as [number, number];
     return {
       anchor: projected(pivot, root),
       axis: projected(0, [0, 1, 0]),

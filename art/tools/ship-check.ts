@@ -372,10 +372,14 @@ test("the start screen's plumes run 1.3 times as long from the bottom of each li
       plumeReach((JET_LENGTH.base + JET_LENGTH.scale) * 1.3),
     ),
   );
-  // The flight's angle; only the start line moves.
-  title.ship.jetMouths.forEach((mouth, index) =>
-    assert.deepEqual(mouth.axis, flight.headings[title.ship.frame]!.mouths[index]!.axis),
-  );
+  // The flight's angle and on-screen width; only the start line moves.
+  title.ship.jetMouths.forEach((mouth, index) => {
+    const own = flight.headings[title.ship.frame]!.mouths[index]!;
+    assert.deepEqual(mouth.axis, own.axis);
+    const [ax, ay] = mouth.axis as [number, number];
+    const across = Math.abs(mouth.half[0]! * ay - mouth.half[1]! * ax) / Math.hypot(ax, ay);
+    assert(Math.abs(across - Math.hypot(own.half[0]!, own.half[1]!)) < 0.002);
+  });
 });
 
 test("only the halo draws under the hull and on the 42 px flight sprite alone", () => {

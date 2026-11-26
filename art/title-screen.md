@@ -50,16 +50,17 @@ The title ship is the in-game ship art, not a separate drawing.
   `occluders` form (`mouthEdgeJetMouths` in
   [ship-model.ts](tools/ship-model.ts)). Each plume keeps the flight's axis,
   straight back, and starts on the bottom edge of its lit engine mouth: the
-  root is the edge's midpoint and `half` the projected edge direction per
-  ship unit, so the start line runs along the edge. The layer widths are the
-  flight's; on screen the plumes are as wide as the mouth edge projects.
+  root is the edge's midpoint and `half` runs along the projected edge, so the
+  start line lies on it. `half` is as long as keeps the flight plume's width
+  across the axis, so the plumes are as wide on screen as in flight and the
+  start line may run past the edge's ends.
 - The outer flame and core draw at the frame's scale (280 / 96), composed with
   the hull as in flight. The halo is a flight-sprite layer and does not draw
-  here. The lower plume runs clear below the tail with no hull in front of
-  it; the upper one passes behind the tail.
+  here. The lower plume draws over the tail's lower edge; the upper one passes
+  behind the tail.
 - Held still: no bob, flicker or jet change (`ship.animated` is false).
 - Ink extents at the [layout](layout.md#start-screen) position: hull 281 to
-  484 by 42 to 141 in play-view px, jets reaching 211.2 (y 64.4 to 138.7).
+  484 by 42 to 141 in play-view px, jets reaching 211.2 (y 60.3 to 138.8).
 
 ## Field
 
