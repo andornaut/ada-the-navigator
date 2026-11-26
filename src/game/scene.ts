@@ -1505,7 +1505,6 @@ export class GameScene extends Scene {
         plumes,
         this.rasters.scale,
         rearRestore,
-        this.fieldLight && heading.tailEdge === undefined,
       )
     ) {
       return false;

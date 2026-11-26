@@ -29,7 +29,6 @@ uniform vec4 tailEdge;
 uniform float split;
 uniform float edge;
 uniform float rearRestore;
-uniform float plumeInk;
 uniform float texel;
 
 vec2 logicalPoint(vec2 uv) {
@@ -91,12 +90,10 @@ float plumeBorder(vec2 uv) {
   return coverage;
 }
 void main() {
+  // The scene already inks the hull. Grow only the plumes, below the composed fill.
   vec4 fill = compose(outTexCoord);
-  if (plumeInk > 0.5) {
-    vec4 ink = vec4(vec3(24.0, 20.0, 37.0) / 255.0, 1.0) * plumeBorder(outTexCoord);
-    fill = over(fill, ink);
-  }
-  gl_FragColor = fill;
+  vec4 ink = vec4(vec3(24.0, 20.0, 37.0) / 255.0, 1.0) * plumeBorder(outTexCoord);
+  gl_FragColor = over(fill, ink);
 }
 `;
 
@@ -129,7 +126,6 @@ export class ForwardJetComposition {
   private drawnPlumes: readonly ForwardPlume[] | undefined;
   private drawnHeading: ForwardHeading | undefined;
   private drawnRestore: number | undefined;
-  private drawnPlumeInk: boolean | undefined;
   private hull:
     | {
         frame: Textures.Frame;
@@ -275,7 +271,6 @@ export class ForwardJetComposition {
     plumes: readonly ForwardPlume[],
     scale: number,
     rearRestore: number,
-    plumeInk: boolean,
   ): boolean {
     if (
       !ship.visible ||
@@ -312,24 +307,8 @@ export class ForwardJetComposition {
       previousHull.alpha !== ship.alpha ||
       !sameDisplay(previousHull.display, display);
     const plumeChanged = resized || this.drawnPlumes !== plumes || this.drawnHeading !== heading;
-    if (
-      hullChanged ||
-      plumeChanged ||
-      maskChanged ||
-      this.drawnRestore !== rearRestore ||
-      this.drawnPlumeInk !== plumeInk
-    ) {
-      this.compose(
-        ship,
-        display,
-        heading,
-        plumes,
-        size,
-        rearRestore,
-        plumeInk,
-        hullChanged,
-        plumeChanged,
-      );
+    if (hullChanged || plumeChanged || maskChanged || this.drawnRestore !== rearRestore) {
+      this.compose(ship, display, heading, plumes, size, rearRestore, hullChanged, plumeChanged);
     }
     this.output.setPosition(ship.x, ship.y).setVisible(true);
     return true;
@@ -342,7 +321,6 @@ export class ForwardJetComposition {
     plumes: readonly ForwardPlume[],
     size: number,
     rearRestore: number,
-    plumeInk: boolean,
     hullChanged: boolean,
     plumeChanged: boolean,
   ): void {
@@ -388,12 +366,10 @@ export class ForwardJetComposition {
       }
     }
     this.drawnRestore = rearRestore;
-    this.drawnPlumeInk = plumeInk;
     this.shader
       .setUniform("split", Number(heading.farMouth !== undefined))
       .setUniform("edge", Number(heading.tailEdge !== undefined))
       .setUniform("rearRestore", rearRestore)
-      .setUniform("plumeInk", Number(plumeInk))
       .setUniform("texel", 1 / size)
       .setUniform("displaySize", [display.displayWidth, display.displayHeight])
       .setUniform("pivot", [display.pivot.x, display.pivot.y]);
