@@ -8,7 +8,10 @@
 // profile fully armed and aimed ahead, its mine profile aimed off the bow with the hopper held aft,
 // route positions 1 to 2 (the claw and stern pairs capped), then every hardpoint destroyed.
 // `<dir>/fleet-weapon-tops.svg` shows every weapon top on a mount collar at its 16 aims, at 1x, 2x
-// and 4x.
+// and 4x. `<dir>/fleet-prow-lasers-{key}.svg` shows each frigate and capital at the even headings,
+// fully armed and aimed ahead, then with its fixed front Lasers destroyed, then armed with a debug
+// overlay: each Laser's shot origin as a ring (dashed where the hull hides the port) and the facing
+// it fires along as a line.
 import { mkdirSync, writeFileSync } from "node:fs";
 
 import { DISPLAY_SCALE } from "./crafts.ts";
@@ -28,7 +31,9 @@ import {
   weaponTops,
 } from "./fleet.ts";
 import { type FleetFamily, HEAVY_TOPS, WEAPON_TOPS } from "./fleet-models.ts";
-import { ENEMY_HEADINGS } from "./projection.ts";
+import { archie, build, place } from "./heavies.ts";
+import { restrainHeavyHull } from "./heavy-restraint.ts";
+import { ENEMY_HEADINGS, vector } from "./projection.ts";
 
 type Field = { name: string; field: string; edge: string; family: FleetFamily };
 const SUNFLOWER: Field = {
@@ -76,7 +81,7 @@ const OFF_BOW = 5;
 const inner = (svg: string) => svg.replace(/^<svg[^>]*>|<title>.*?<\/title>|<\/svg>$/gu, "");
 
 // One row of a craft: per heading, the keyline's silhouette and the composed frame content.
-function rows(craft: Scaled): { silhouette: string; body: string }[][] {
+function rows(craft: Scaled): Row[] {
   const headings = Array.from({ length: ENEMY_HEADINGS }, (_, index) => index);
   const hulls = headings.map((yaw) => frame(craft, yaw));
   const nested = (size: number, [x, y]: readonly [number, number], svg: string) =>
@@ -152,8 +157,117 @@ function rows(craft: Scaled): { silhouette: string; body: string }[][] {
   );
 }
 
-function sheet(crafts: readonly Scaled[], fields: readonly Field[] = FIELDS): string {
-  const drawn = crafts.flatMap((craft) => rows(craft).map((row) => ({ craft, row })));
+// The prow Lasers' review rows of a frigate or capital at the even headings: armed and aimed
+// ahead, with the Lasers destroyed, and armed with the shot origins and facings marked.
+function prowRows(craft: Scaled): Row[] {
+  const headings = Array.from({ length: ENEMY_HEADINGS / 2 }, (_, index) => index * 2);
+  const hulls = headings.map((yaw) => frame(craft, yaw));
+  const drawn = heavyFrames(craft);
+  const layers = [...craft.layers!, ...craft.lasers!];
+  const lasers = new Set(craft.lasers!.map(({ id }) => id));
+  const { fill } = HEAVY_LAYOUTS[craft.archetype as keyof typeof HEAVY_LAYOUTS];
+  const capital = craft.archetype === "capital";
+  const special = capital ? "weapon-left" : "port";
+  const armed = (id: string) =>
+    id === special ? (capital ? "lance" : "rail") : capital ? "spread" : "gun";
+  const nested = (size: number, [x, y]: readonly [number, number], svg: string) =>
+    `<svg x="${x - size / 2}" y="${y - size / 2}" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${inner(svg)}</svg>`;
+  const compose = (destroyed: boolean, marked: boolean) =>
+    headings.map((yaw, index) => {
+      const body = layerOrder(craft, yaw, layers).map((id) => {
+        if (id === "hull") return inner(hulls[index]!.svg);
+        const layer = layers.find((entry) => entry.id === id)!;
+        const { anchor, pivot } = layerPlacement(craft, layer, yaw);
+        const state = destroyed && lasers.has(id) ? "destroyed" : "intact";
+        const base = nested(layer.frame, anchor, drawn.bases.get(`${id}-${state}`)![yaw]!.svg);
+        if (!pivot || !fill.includes(id) || hidden(drawn, layer, yaw)) return base;
+        const top = craft.tops![armed(id)]!;
+        return base + nested(top.frame, pivot, drawn.tops.get(armed(id))![yaw]!.svg);
+      });
+      const [fx, fy] = vector(ENEMY_HEADINGS, yaw, [0, -1, 0]);
+      const reach = 80 / Math.hypot(fx, fy);
+      const marks = marked
+        ? craft.lasers!.map((layer) => {
+            const [x, y] = layerPlacement(craft, layer, yaw).muzzle!;
+            const dash = hidden(drawn, layer, yaw) ? ' stroke-dasharray="3 2"' : "";
+            return `<line x1="${x}" y1="${y}" x2="${x + fx * reach}" y2="${y + fy * reach}" stroke="#00c853" stroke-width="3"/><circle cx="${x}" cy="${y}" r="7" fill="none" stroke="#ff1744" stroke-width="3"${dash}/>`;
+          })
+        : [];
+      return { silhouette: hulls[index]!.silhouette, body: body.join("") + marks.join("") };
+    });
+  return [compose(false, false), compose(true, false), compose(false, true)];
+}
+
+type Row = { silhouette: string; body: string }[];
+
+// Admiral Archie's flagship from art/tools/heavies.ts with its fixed front Lasers, in the prow
+// Lasers' review rows. Its hull keyline strokes every hull polygon under the drawn hull.
+function archieProw(): { frame: number; rows: Row[] } {
+  const styled = restrainHeavyHull(archie);
+  const armed = { ...styled, hardpoints: [...styled.hardpoints, ...styled.lasers!] };
+  const { files } = build(armed, place({ version: 1, archetypes: {} }, armed));
+  const layout = JSON.parse(files.get("archie-hardpoints.json")!) as {
+    headings: {
+      order: string[];
+      hardpoints: {
+        id: string;
+        anchor: [number, number];
+        pivot?: [number, number];
+        muzzles?: [number, number][];
+      }[];
+    }[];
+  };
+  const lasers = new Set(styled.lasers!.map(({ id }) => id));
+  const fill = new Set(styled.mounts!.fill);
+  const frameOf = (svg: string) => Number(/viewBox="0 0 (\d+)/u.exec(svg)![1]);
+  const nested = (file: string, [x, y]: readonly [number, number]) => {
+    const svg = files.get(file)!;
+    const size = frameOf(svg);
+    return `<svg x="${x - size / 2}" y="${y - size / 2}" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${inner(svg.replace(/<svg[^>]*>/u, "").replace("</svg>", ""))}</svg>`;
+  };
+  const headings = Array.from({ length: ENEMY_HEADINGS / 2 }, (_, index) => index * 2);
+  const compose = (destroyed: boolean, marked: boolean): Row =>
+    headings.map((yaw) => {
+      const heading = layout.headings[yaw]!;
+      const hull = files
+        .get(`archie-${yaw}.svg`)!
+        .replace(/<svg[^>]*>|<title>.*?<\/title>|<\/svg>/gu, "");
+      const body = heading.order.map((id) => {
+        if (id === "hull") return hull;
+        const placed = heading.hardpoints.find((part) => part.id === id)!;
+        const state = destroyed && lasers.has(id) ? "destroyed" : "intact";
+        const base = nested(`archie-${id}-${state}-${yaw}.svg`, placed.anchor);
+        if (!placed.pivot || !fill.has(id)) return base;
+        const top = id === "weapon-left" ? "lance" : "spread";
+        return base + nested(`archie-${top}-top-${yaw}.svg`, placed.pivot);
+      });
+      const [fx, fy] = vector(ENEMY_HEADINGS, yaw, [0, -1, 0]);
+      const reach = 80 / Math.hypot(fx, fy);
+      const marks = marked
+        ? heading.hardpoints
+            .filter(({ id }) => lasers.has(id))
+            .map(({ muzzles }) => {
+              const [x, y] = muzzles![0]!;
+              return `<line x1="${x}" y1="${y}" x2="${x + fx * reach}" y2="${y + fy * reach}" stroke="#00c853" stroke-width="3"/><circle cx="${x}" cy="${y}" r="7" fill="none" stroke="#ff1744" stroke-width="3"/>`;
+            })
+        : [];
+      const silhouette = [...hull.matchAll(/points="([^"]+)"/gu)]
+        .map(([, points]) => `M${points!.trim().split(/\s+/u).join("L")}Z`)
+        .join("");
+      return { silhouette, body: body.join("") + marks.join("") };
+    });
+  return {
+    frame: styled.frame,
+    rows: [compose(false, false), compose(true, false), compose(false, true)],
+  };
+}
+function sheet<T extends { frame: number }>(
+  crafts: readonly T[],
+  fields: readonly Field[],
+  rowsOf: (craft: T) => Row[],
+  label = "headings 0 to 15",
+): string {
+  const drawn = crafts.flatMap((craft) => rowsOf(craft).map((row) => ({ craft, row })));
   const parts: string[] = [];
   let y = GAP;
   let width = 0;
@@ -178,7 +292,7 @@ function sheet(crafts: readonly Scaled[], fields: readonly Field[] = FIELDS): st
       }
       parts.push(
         `<rect x="0" y="${top}" width="100%" height="${y - top}" fill="${field}"/>`,
-        `<text x="${GAP}" y="${top + 12}" font-family="DejaVu Sans" font-size="11" fill="${edge}">${name}, ${scale}x, headings 0 to 15</text>`,
+        `<text x="${GAP}" y="${top + 12}" font-family="DejaVu Sans" font-size="11" fill="${edge}">${name}, ${scale}x, ${label}</text>`,
         ...cells,
       );
       y += GAP;
@@ -264,7 +378,29 @@ function main() {
   mkdirSync(out, { recursive: true });
   for (const [name, drawn, fields] of sheets) {
     if (only && !name.includes(only)) continue;
-    writeFileSync(`${out}/fleet-${name}.svg`, sheet(drawn, fields));
+    writeFileSync(`${out}/fleet-${name}.svg`, sheet(drawn, fields, rows));
+  }
+  if (!only || "prow-lasers".includes(only)) {
+    const heavies: readonly (readonly [string, readonly Field[]])[] = [
+      ["fleetFrigate", [SUNFLOWER, CARTWHEEL, PHANTOM]],
+      ["fleetFrigateTwin", [WHIRLPOOL, ANDROMEDA, NEEDLE]],
+      ["fleetCapital", [SUNFLOWER]],
+      ["fleetCapitalManta", [WHIRLPOOL]],
+      ["fleetCapitalOutrigger", [CARTWHEEL]],
+      ["fleetCapitalBroad", [ANDROMEDA]],
+      ["fleetCapitalCrossbow", [NEEDLE]],
+      ["fleetCapitalForked", [PHANTOM]],
+    ];
+    for (const [key, fields] of heavies) {
+      writeFileSync(
+        `${out}/fleet-prow-lasers-${key}.svg`,
+        sheet(keyed(key), fields, prowRows, "even headings 0 to 14"),
+      );
+    }
+    writeFileSync(
+      `${out}/fleet-prow-lasers-archie.svg`,
+      sheet([archieProw()], [PHANTOM], ({ rows: drawn }) => drawn, "even headings 0 to 14"),
+    );
   }
   if (!only || "weapon-tops".includes(only)) {
     writeFileSync(`${out}/fleet-weapon-tops.svg`, topSheet());

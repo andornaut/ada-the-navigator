@@ -292,6 +292,42 @@ dreadnought and the Forked fortress are the new frame keys `capitalManta` and
 `capitalForked`, each in its own galaxy's manifest. The `capitalNarrow` and
 `capitalCompact` rows and sidecars have no replacement.
 
+### Fixed front Lasers
+
+Each frigate carries one fixed front Laser and each capital two
+([gameplay/ships.md](../gameplay/ships.md)). Each is a weapon hardpoint at the
+prow that fires along the facing only: a flush port, a bright emitter panel in a
+thin dark rim let into the prow deck and following its slope, with no barrel.
+Destroyed, the rim is a low cut-back stump with a dark breach and no emitter.
+One port sits on the centreline (`prow`); a pair sits either side of it
+(`prow-left` at negative x, `prow-right`).
+
+| Craft             | Hardpoints            | Offset              | Base frame |
+| ----------------- | --------------------- | ------------------- | ---------: |
+| Shoulder frigate  | `prow`                | `[0, -130.29]`      |         32 |
+| Twin hull         | `prow`                | `[0, -72]`          |         32 |
+| Hammer            | `prow-left`, `-right` | `[∓38.84, -185.08]` |         48 |
+| Manta dreadnought | `prow-left`, `-right` | `[∓5.94, -130.24]`  |         32 |
+| Outrigger carrier | `prow-left`, `-right` | `[∓9.6, -189.65]`   |         40 |
+| Broad wing        | `prow-left`, `-right` | `[∓5.03, -157.66]`  |         32 |
+| Crossbow          | `prow-left`, `-right` | `[∓4.8, -166.8]`    |         32 |
+| Forked fortress   | `prow-left`, `-right` | `[∓35.42, -185.08]` |         40 |
+
+- The Lasers stage apart from the shipped layout, so the shipped files are
+  unchanged. `{key}-prow.json`, staged outside the `*-hardpoints.json` names the
+  game reads, is the shipped hardpoints file with
+  the Lasers after the shipped hardpoints and in each heading's layer order.
+  Each Laser has `role` `turret`, `top` null, `aim` `facing`, states `intact`
+  and `destroyed`, and its `offset`. Per heading it has `anchor`, collision by
+  state, `hidden` by the mounts' rule, and `muzzles`: one shot origin in hull
+  frame px on the emitter's face, which fires along heading k. A hidden Laser
+  still fires.
+- `{key}-prow-{size}-sheet.svg` holds the Lasers' base frames in each family's
+  folder, rows `enemy-{stem}-{h}-{state}-{k}`. An identical family sheet ships
+  once, as the coral, garnet and needle Twin hull share Whirlpool's.
+- [fleet-prow-rows.json](fleet-prow-rows.json): per manifest, the base rows and
+  the `sidecars` entries that name the `-prow.json` files.
+
 ### Weapon tops
 
 Every top is a separate solid that pivots about its mount's collar centre, at
@@ -350,7 +386,10 @@ name has `name`. Retaliators are composed with their collar and top at two
 aims. A frigate shows armed, at route positions 1 to 2 and with every hardpoint
 destroyed; a capital shows its lance profile, its mine profile, route positions
 1 to 2 and every hardpoint destroyed. `fleet-weapon-tops.svg` shows the nine
-tops on a collar at 16 aims, at 1x, 2x and 4x.
+tops on a collar at 16 aims, at 1x, 2x and 4x. `fleet-prow-lasers-{key}.svg`
+shows each frigate and capital, and Archie's flagship, at the even headings
+armed, with its fixed front Lasers destroyed, and armed with each Laser's shot
+origin and facing marked.
 
 ## Switch
 
@@ -423,6 +462,20 @@ station in the core, Cartwheel and Andromeda manifests and the platform's
 40 px, with the shot origins and collision of
 [fleet-tops.json](fleet-tops.json): two for `pod`, eight for `dome`, one for
 `gun`.
+
+For the fixed front Lasers, from [fleet-prow-rows.json](fleet-prow-rows.json)
+and [archie-prow-rows.json](archie-prow-rows.json):
+
+- Add the base rows to the core, Whirlpool, Phantom, Cartwheel, Andromeda and
+  Needle manifests, and replace each heavy's sidecar entry, whose `hardpoints`
+  names its `-prow.json`. `src/data/enemyMuzzles.ts` imports those
+  files.
+- The catalog gains each heavy's Lasers as weapon hardpoints with the design's
+  offsets, firing the shared Laser along the facing within the nose arc, from
+  `headings[k].hardpoints[i].muzzles` of the drawn heading. They draw no top.
+- Art then folds each `-prow.json` into `{key}-hardpoints.json`,
+  draws the Lasers' bases into the shipped part sheets and removes both rows
+  files.
 
 The fleet producer keeps the craft. Art then renames the files to the
 `{archetype}-` stems and removes `fleet-rows.json` and the replaced sheets and
