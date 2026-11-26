@@ -427,20 +427,23 @@ Quests closes back to the paused map through its existing navigation.
 | Cargo segment | A divider and `icon-cargo-20` or `icon-tow-20`. `statusEndPadding` is 6 less the icon's right bearing, leaving 4 to the cargo box (bearing 2) or 1 to the tow box (bearing 5) and targeting 6 to the drawn edge.                                         |
 | Width         | `statusPillWidth`: 36 plus the Stardust slot (6 + 20 + 4, the slot, 6); add 37 plus the ore slot when shown (13 + 20 + 4), then 31 for cargo or 28 for tow (13 + 20 less the right bearing). The left edge stays put.                                    |
 
-| State  | Trigger                      | Draw                                                                                                           | Timing                                                                                                                                                                            |
-| ------ | ---------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Pickup | The Stardust count increases | The count shows the new total at once and bumps; a `+N` label in `TYPE.label` with a 1 px ink outline under it | Bump: scale 1 to 1.12 to 1, 200 ms ease-out, origin left centre, at most once per 200 ms. Label: holds 300 ms, then rises 4 and fades out over 300 ms ease-out; removed at 600 ms |
-| Ore    | The ore count increases      | As Pickup, for the ore count and an ore `+N` label in the ore tick colour                                      | As Pickup                                                                                                                                                                         |
+| State  | Trigger                      | Draw                                                                                                           | Timing                                                                                    |
+| ------ | ---------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Pickup | The Stardust count increases | The count shows the new total at once and bumps; a `+N` label in `TYPE.label` with a 1 px ink outline under it | Bump: scale 1 to 1.12 to 1, 200 ms ease-out, origin left centre, at most once per 200 ms. |
+| Ore    | The ore count increases      | As Pickup, for the ore count and an ore `+N` label in the ore tick colour                                      | As Pickup                                                                                 |
 
+- Gain and debit labels both last 900 ms. They hold for 600 ms, then rise 4 px
+  and fade out over 300 ms ease-out. With reduced motion they hold for 750 ms
+  and fade out in place over 150 ms.
 - Each `+N` label sits under its own count: its 20 line box top
   `STATUS_PILL.tick.top` 27 below the count's line box top, which is
   `(PILL.height + TYPE.label.lineHeight) / 2 + STATUS_PILL.tick.gap` with the
   gap 3 below the pill's bottom edge: HUD rect top + 33.5 (45.5), and centred
   across on its count's slot as it is in that frame: pill left + 30 +
   half the Stardust slot, and pill left + 67 + the Stardust slot + half the ore
-  slot. It holds, rises 4 and fades as above, and follows its slot's centre
-  when the slot changes. The two labels' centres are at least 45.90 apart (37
-  plus half of each slot, both at the one-digit minimum). A label is never
+  slot. It follows its slot's centre when the slot changes. The two labels'
+  centres are at least 45.90 apart (37 plus half of each slot, both at the
+  one-digit minimum). A label is never
   wider than "+" and its own count with the outline (11.34 plus the slot, as N
   is at most the count), so the two stay at least 25.66 apart. The bump is a
   transform: it never reflows the pill.
