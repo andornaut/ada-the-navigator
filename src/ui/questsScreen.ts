@@ -159,20 +159,22 @@ export function createQuestsScreen(
   const renderedBindings: { dispose(): void }[] = [];
   let bodyLayout: ReturnType<typeof mountLayout<QuestsBodySchema>> | undefined;
   let footerLayout: ReturnType<typeof mountLayout<QuestsFooterSchema>> | undefined;
-  const register = (element: HTMLButtonElement, run: () => void) => {
-    renderedBindings.push(
-      bindAdaAction(
-        {
-          click: {
-            availability: () => (element.disabled ? { kind: "omitted" } : { kind: "available" }),
-            run,
-          },
-          current: () => !disposed && !modal.hidden && inCurrentView(root, element),
-          slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
+  const createLocateButton = (run: () => void) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    const binding = bindAdaAction(
+      {
+        click: {
+          availability: () => (button.disabled ? { kind: "omitted" } : { kind: "available" }),
+          run: () => run(),
         },
-        element,
-      ),
+        current: () => !disposed && !modal.hidden && inCurrentView(root, button),
+        slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
+      },
+      button,
     );
+    renderedBindings.push({ dispose: () => binding.dispose() });
+    return button;
   };
   let entries: readonly QuestEntry[] = [];
   let flightLog: readonly QuestFlightLogEntry[] = [];
@@ -513,8 +515,16 @@ export function createQuestsScreen(
                       })
                     : undefined;
                 const button: HTMLButtonElement =
-                  refusal?.element ?? document.createElement("button");
-                button.type = "button";
+                  refusal?.element ??
+                  createLocateButton(() => {
+                    if (disabled || placeId === undefined) {
+                      return;
+                    }
+                    suspended = { kind: endpoint.kind, placeId };
+                    release();
+                    modal.hidden = true;
+                    options.onLocate(placeId);
+                  });
                 button.className = "ada-quest-endpoint";
                 button.disabled = disabled && !refusal;
                 if (refusal) {
@@ -550,17 +560,6 @@ export function createQuestsScreen(
                   focus.endpoint.placeId === placeId
                 ) {
                   questFocus = button;
-                }
-                if (!refusal) {
-                  register(button, () => {
-                    if (disabled || placeId === undefined) {
-                      return;
-                    }
-                    suspended = { kind: endpoint.kind, placeId };
-                    release();
-                    modal.hidden = true;
-                    options.onLocate(placeId);
-                  });
                 }
                 route.append(button);
               }
@@ -602,16 +601,20 @@ export function createQuestsScreen(
       ...(pager === undefined ? {} : { pager }),
     };
     footerActions.set("dismiss", back);
+    const footerRun = (action: QuestFooterAction) => {
+      const run = footerActions.get(action);
+      if (!run) {
+        throw new Error("Unregistered Quest footer action");
+      }
+      return run;
+    };
     let close!: HTMLButtonElement;
     footerLayout = mountLayout<QuestsFooterSchema>(
       {
         components: {
           button: {
-            create(initial) {
-              const run = footerActions.get(initial.action);
-              if (!run) {
-                throw new Error("Unregistered Quest footer action");
-              }
+            create: (initial) => {
+              const run = footerRun(initial.action);
               let props = initial;
               const paginates = initial.action === "previous" || initial.action === "next";
               let stopRefusal: (() => void) | undefined;
@@ -640,6 +643,9 @@ export function createQuestsScreen(
                 run,
               });
               const button = action.element;
+              if (initial.actionId !== undefined) {
+                button.dataset.action = initial.actionId;
+              }
               if (initial.action === "dismiss") {
                 close = button;
               }
@@ -653,9 +659,6 @@ export function createQuestsScreen(
                 props = data;
                 button.classList.toggle("ada-primary", data.role === "primary");
                 setButtonRole(data.role, button);
-                if (data.actionId !== undefined) {
-                  button.dataset.action = data.actionId;
-                }
                 action.refresh();
               };
               update(initial);
