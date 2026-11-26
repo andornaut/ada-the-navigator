@@ -5,6 +5,7 @@ import { enemyCatalog, enemyDefinition, PHASER_AIM_SECONDS } from "../data/enemy
 import { BUILT, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { NEEDLE } from "../data/needle.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { placementRadius } from "./asteroids.ts";
 import { fromScreen } from "./convex.ts";
@@ -21,7 +22,6 @@ import { GameModel } from "./game.ts";
 import { MINE_PARTS, MINE_REACH } from "./mineShape.ts";
 import { activeNeedleCourses, inNeedleChannel, needleCourses, needleDebris } from "./needle.ts";
 import { newProgress } from "./progress.ts";
-import { restoreSave } from "./save.ts";
 import { direction } from "./shipPhysics.ts";
 import type { FlightInput, SpaceObject, Vec } from "./types.ts";
 
@@ -357,7 +357,7 @@ describe("mounted Needle flight physics", () => {
     const present = built.has(4);
     built.add(4);
     try {
-      const model = new GameModel(CONTENT, supportEntropy);
+      const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
       Object.assign(model.state, {
         prologueSeen: true,
         started: true,

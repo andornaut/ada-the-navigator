@@ -3,6 +3,7 @@ import { expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { encounterTable } from "../data/enemyCatalog.ts";
 import { NEEDLE } from "../data/needle.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { createUnpopulatedFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
@@ -45,7 +46,7 @@ it("keeps authored swarm identities and ring geometry invariant under an anchor 
 });
 
 it("materializes the existing G4 swarm role once without adding a route leader or rerolling on init", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.unlocked = [1, 3, 4];
   model.state.prologueSeen = true;
   model.state.progress[4].opened = true;
@@ -75,7 +76,7 @@ it("materializes the existing G4 swarm role once without adding a route leader o
 });
 
 it("admits the detour only after the last Eye gate and retries the other side when blocked", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   const progress = model.state.progress[4];
   const flight = createUnpopulatedFlight(CONTENT, 4, 173, model.state.economy, 173);
   const context = { content: CONTENT, flight, progress };

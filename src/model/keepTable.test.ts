@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { readStory, supportEntropy } from "../testing/launch.ts";
 import { GameModel } from "./game.ts";
@@ -9,7 +10,7 @@ const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
 /** Sunflower's flight carrying the food, a delivery item, ore and a tow line. */
 function loaded(): GameModel {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   Object.assign(model.state, { prologueSeen: true, started: true });
   model.state.progress[1].opened = true;
   model.startGalaxy(1);

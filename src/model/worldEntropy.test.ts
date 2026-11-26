@@ -1,16 +1,16 @@
 import { expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GameModel, newGameState } from "./game.ts";
-import { restoreSave } from "./save.ts";
 
 it("constructs and restores an unvisited home save without drawing geography or launch entropy", () => {
   const random = vi.spyOn(crypto, "getRandomValues");
   random.mockClear();
   try {
     const state = newGameState();
-    const game = new GameModel(CONTENT, supportEntropy);
+    const game = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     expect(newGameState()).toEqual(state);
     expect(restoreSave(game.save())).toEqual(game.state);
     expect(
@@ -23,7 +23,7 @@ it("constructs and restores an unvisited home save without drawing geography or 
 });
 
 it("draws separate geography and enemy identities only on first entry and retains geography on reentry", () => {
-  const game = new GameModel(CONTENT, supportEntropy);
+  const game = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   const random = vi.spyOn(crypto, "getRandomValues");
   random.mockClear();
   try {
@@ -44,7 +44,7 @@ it("draws separate geography and enemy identities only on first entry and retain
 });
 
 it("rejects active geography seed mismatches instead of substituting a seed on Continue", () => {
-  const game = new GameModel(CONTENT, supportEntropy);
+  const game = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   game.startGalaxy(1);
   const saved = game.saveDocument();
   const flight = structuredClone(saved.flight);

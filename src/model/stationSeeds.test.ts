@@ -4,17 +4,17 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { JOB_POOL } from "../data/jobs.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
 import { stationSpecialty } from "./stationServices.ts";
 import type { DialogueState } from "./types.ts";
 
 /** A flight docked at the nearest seeded station offering jobs. */
 function dockedIn(galaxy: GalaxyNumber): GameModel {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   Object.assign(model.state, { prologueSeen: true, started: true, unlocked: [1, 2, 3, 4, 5, 6] });
   model.startGalaxy(galaxy);
   playOpening(model);

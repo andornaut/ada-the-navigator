@@ -5,6 +5,7 @@ import { ASTEROID_FIELDS } from "../data/chunkCatalog.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, relaunch, seedLaunches, supportEntropy } from "../testing/launch.ts";
 import {
@@ -29,7 +30,6 @@ import {
 } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { SHIP_HEADINGS } from "./nose.ts";
-import { restoreSave } from "./save.ts";
 import { shipBody } from "./shipBody.ts";
 import { stationsNear } from "./stations.ts";
 import type { GalaxyProgress, SpaceObject, Vec } from "./types.ts";
@@ -419,7 +419,7 @@ describe("asteroids in flight", () => {
   const LAUNCH_SEED = 173;
   function launched() {
     seedLaunches(LAUNCH_SEED);
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.startGalaxy(1);
     playOpening(model);
     const flight = model.state.flight!;

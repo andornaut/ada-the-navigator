@@ -11,6 +11,7 @@ import { requiredReady } from "../loading/required.ts";
 import { GameModel } from "../model/game.ts";
 import { shipHeading } from "../model/nose.ts";
 import { direction } from "../model/shipPhysics.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import type { JumpPlay } from "../ui/jumpOverlay.ts";
@@ -47,7 +48,7 @@ const jumpSource = {
   specks: [{ x: 11, y: 22 }],
 };
 function setup(quantum = true) {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.prologueSeen = true;
   model.startGalaxy(1);
   const flight = model.state.flight!;

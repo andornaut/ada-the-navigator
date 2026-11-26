@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
 import { stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { restoreSave } from "./save.ts";
 import { canRechargeShield, rechargeShield } from "./shieldRecharge.ts";
 import type { FlightState } from "./types.ts";
 import { noLevels, shipTuning } from "./upgrades.ts";
@@ -31,7 +31,7 @@ function calm(flight: FlightState): void {
   flight.dangerFor = 0;
 }
 function launched() {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.startGalaxy(1);
   playOpening(model);
   calm(model.state.flight!);

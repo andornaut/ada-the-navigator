@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import { GameModel } from "./game.ts";
 
@@ -10,7 +11,7 @@ import { GameModel } from "./game.ts";
 
 /** A quiet Sunflower flight with Whirlpool open too, out of danger, no conversation showing. */
 function flying() {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.unlocked = [1, 3];
   model.state.prologueSeen = true;
   model.startGalaxy(1);
@@ -118,7 +119,7 @@ describe("the galaxy map in flight", () => {
 describe("the galaxy map at boarding", () => {
   /** Ada home from a Sunflower flight with Whirlpool open, read through the rock to the map. */
   const boarded = () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.state.unlocked = [1, 3];
     model.state.prologueSeen = true;
     model.startGalaxy(1);

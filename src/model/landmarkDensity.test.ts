@@ -7,6 +7,7 @@ import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { LANDMARK_TUNING } from "../data/jobs.ts";
 import { STATION_NAME_WORDS } from "../data/stationCopy.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
+import { restoreSave, SAVE_RESTORE, SAVE_VERSION } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { ACHIEVEMENT_TOTALS } from "./achievements.ts";
 import { createFlight } from "./flight.ts";
@@ -22,7 +23,6 @@ import {
 import { settlementsNear } from "./legacySettlements.ts";
 import { worldOreFieldsNear } from "./oreFields.ts";
 import { retainedLandmarkSites } from "./retainedLandmarks.ts";
-import { restoreSave, SAVE_VERSION } from "./save.ts";
 import { stationById, stationsNear } from "./stations.ts";
 import type { SpaceObject } from "./types.ts";
 
@@ -120,7 +120,7 @@ describe("expanded landmark placement", () => {
   it.each([1, 2, 3, 4, 5, 6] as const)(
     "keeps every canonical goal site reachable in a fresh galaxy %i flight",
     (galaxy) => {
-      const model = new GameModel(CONTENT, supportEntropy);
+      const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
       // Prior-route unlock and opening acknowledgement fixture, with no target discoveries or rewards.
       model.state.unlocked = [...GALAXY_NUMBERS];
       model.state.prologueSeen = true;
@@ -194,7 +194,7 @@ describe("expanded landmark placement", () => {
   });
 
   it("round-trips canonical new chart IDs without adding reward or save fields", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.startGalaxy(1);
     const sites = landmarkSites(1);
     const money = model.state.economy.stardust;

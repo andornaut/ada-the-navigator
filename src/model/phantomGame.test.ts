@@ -4,11 +4,11 @@ import { CONTENT } from "../data/content.ts";
 import { BUILT, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { GameModel } from "./game.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
 import { validPhantomFlight, validPhantomProgress } from "./phantom.ts";
-import { restoreSave } from "./save.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
 
 const productionRoster = [...BUILT];
@@ -20,7 +20,7 @@ function withPhantom(check: (model: GameModel) => void): void {
   const admitted = built.has(6);
   built.add(6);
   try {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.state.started = true;
     model.state.prologueSeen = true;
     model.state.unlocked = [...GALAXY_NUMBERS];

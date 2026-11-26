@@ -3,6 +3,7 @@ import { expect, it } from "vitest";
 import { WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import type { Vec } from "../data/types.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
 import { damageEnemy } from "./enemyAi.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
@@ -63,7 +64,7 @@ function clearWhaleDebris(model: GameModel): void {
 
 it("keeps the family's disk blocked by Sounder and collectible once after resolution and return", () => {
   const seeds = [173, 301];
-  let model = new GameModel(CONTENT, () => seeds.shift()!);
+  let model = new GameModel(CONTENT, () => seeds.shift()!, SAVE_RESTORE);
   model.state.unlocked = [1, 3];
   model.state.prologueSeen = true;
   model.state.progress[1].holodisk = true;
@@ -139,7 +140,7 @@ it("keeps the family's disk blocked by Sounder and collectible once after resolu
   flight.dangerFor = 0;
   model.returnHome();
   expect(model.state.flight).toBeNull();
-  model = new GameModel(CONTENT, () => 503, model.save());
+  model = new GameModel(CONTENT, () => 503, SAVE_RESTORE, model.save());
   model.startGalaxy(3);
   expect(flightOf(model)).toMatchObject({ encounterSeed: 503, seed: 173 });
   expect(progressOf(model).sounder).toEqual({ outcome: "disabled", phase: "resolved" });

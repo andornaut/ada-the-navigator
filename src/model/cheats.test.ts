@@ -3,17 +3,18 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, readStory, supportEntropy } from "../testing/launch.ts";
 import { CHEAT_AMOUNT, CHEAT_IDS } from "./cheats.ts";
 import { GameModel } from "./game.ts";
 import { UPGRADE_WEAPONS } from "./weapons.ts";
 
 function home(): GameModel {
-  return new GameModel(CONTENT, supportEntropy);
+  return new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
 }
 
 function launched(): GameModel {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.startGalaxy(1);
   playOpening(model);
   model.state.flight!.objects = [];

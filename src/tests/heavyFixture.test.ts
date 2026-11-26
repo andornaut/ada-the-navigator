@@ -19,8 +19,8 @@ import type { GalaxyNumber, WeaponLevel } from "../data/types.ts";
 import { createEnemy, type EnemyState, stepEnemy } from "../model/enemyAi.ts";
 import { enemyEquipmentDefinition } from "../model/enemyEquipment.ts";
 import { GameModel } from "../model/game.ts";
-import { restoreSave } from "../model/save.ts";
 import type { Vec } from "../model/types.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 
 interface Heavy {
@@ -73,6 +73,7 @@ function fixtureFactory() {
       "CONTENT",
       "playOpening",
       "supportEntropy",
+      "SAVE_RESTORE",
       "restoreSave",
       "enemyActorDefinition",
       "enemyActorAvailable",
@@ -87,6 +88,7 @@ function fixtureFactory() {
       CONTENT,
       playOpening,
       supportEntropy,
+      SAVE_RESTORE,
       restoreSave,
       enemyActorDefinition,
       enemyActorAvailable,

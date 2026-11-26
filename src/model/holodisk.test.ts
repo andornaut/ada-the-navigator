@@ -6,6 +6,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { BUILT } from "../data/galaxies.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import {
@@ -18,7 +19,6 @@ import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
-import { restoreSave } from "./save.ts";
 import { shipTouches } from "./shipBody.ts";
 import type { FlightState, GalaxyProgress } from "./types.ts";
 import { noLevels, shipTuning } from "./upgrades.ts";
@@ -87,7 +87,7 @@ function questDone(
   known: string[],
   recovered: readonly GalaxyNumber[] = [],
 ): GameModel {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.prologueSeen = true;
   model.state.unlocked = [1, 2, 3].filter((id) => id <= galaxy) as GalaxyNumber[];
   for (const held of recovered) {
@@ -563,7 +563,7 @@ describe("galaxy three's holodisk", () => {
 
 describe("holodisk save", () => {
   it("round-trips the recovered flags", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.state.progress[2].holodisk = true;
     const restored = restoreSave(model.save())!;
     expect([1, 2, 3].map((id) => restored.progress[id as GalaxyNumber].holodisk)).toEqual([
@@ -574,7 +574,7 @@ describe("holodisk save", () => {
   });
 
   it("rejects a malformed flag", () => {
-    const state = JSON.parse(new GameModel(CONTENT, supportEntropy).save()) as Record<
+    const state = JSON.parse(new GameModel(CONTENT, supportEntropy, SAVE_RESTORE).save()) as Record<
       string,
       unknown
     >;
@@ -583,10 +583,9 @@ describe("holodisk save", () => {
   });
 
   it("rejects a malformed announcement flag", () => {
-    const malformed = JSON.parse(new GameModel(CONTENT, supportEntropy).save()) as Record<
-      string,
-      unknown
-    >;
+    const malformed = JSON.parse(
+      new GameModel(CONTENT, supportEntropy, SAVE_RESTORE).save(),
+    ) as Record<string, unknown>;
     malformed.announceGalaxy = 1;
     expect(restoreSave(malformed)).toBeNull();
   });

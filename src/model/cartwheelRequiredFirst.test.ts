@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
 import {
@@ -16,7 +17,7 @@ import { readRequiredRolePlan } from "./requiredRolePlans.ts";
 import { worldDistance } from "./worldContacts.ts";
 
 it("reserves the hub capital and held buoy geometry before optional chunks without exposing future actors", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   const progress = model.state.progress[2];
   const flight = createUnpopulatedFlight(CONTENT, 2, 173, model.state.economy, 301);
   populateRequiredChapterFlight(CONTENT, progress, flight, () => {
@@ -46,7 +47,7 @@ it("reserves the hub capital and held buoy geometry before optional chunks witho
 });
 
 it("keeps actual Cartwheel launch reads hidden and Continue exact, then transfers the same capital once", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.unlocked = [1, 3, 4, 5, 2];
   model.state.prologueSeen = true;
   model.state.progress[2].opened = true;
@@ -58,7 +59,7 @@ it("keeps actual Cartwheel launch reads hidden and Continue exact, then transfer
   void model.quests;
   void model.contextQuestDetails;
   expect(model.state).toEqual(before);
-  const resumed = new GameModel(CONTENT, supportEntropy, model.save());
+  const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, model.save());
   resumed.continueGame();
   expect(resumed.state.flight).toEqual(flight);
   const plan = readRequiredRolePlan(flight, "hub")!;
@@ -76,7 +77,7 @@ it("keeps actual Cartwheel launch reads hidden and Continue exact, then transfer
 });
 
 it("activates the reserved hub through the actual intro-distance caller without revealing its buoy regulars", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.unlocked = [1, 3, 4, 5, 2];
   model.state.prologueSeen = true;
   model.state.progress[2].opened = true;
@@ -90,7 +91,7 @@ it("activates the reserved hub through the actual intro-distance caller without 
   expect(stationPopulationObjects(flight).some(({ id }) => id === "route:hub")).toBe(true);
   expect(flight.objects.some(({ id }) => id === "miner" || id === "visitors")).toBe(false);
   expect(model.state.progress[2].known).toEqual([]);
-  const resumed = new GameModel(CONTENT, supportEntropy, model.save());
+  const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, model.save());
   resumed.continueGame();
   expect(resumed.state.flight).toEqual(flight);
 });

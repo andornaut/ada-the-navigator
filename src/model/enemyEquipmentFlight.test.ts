@@ -8,13 +8,13 @@ import {
   PHANTOM_FLAGSHIP_ID,
 } from "../data/enemyCatalog.ts";
 import { PHANTOM_TUNING } from "../data/phantom.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import * as enemyAi from "./enemyAi.ts";
 import { enemyEquipmentDefinition, rollEnemyWeaponLevel } from "./enemyEquipment.ts";
 import { createFlight, spawnChapterEnemy, stepFlight, syncFlightRegion } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { newProgress } from "./progress.ts";
-import { restoreSave } from "./save.ts";
 
 const enter = (encounterSeed: number) =>
   createFlight(CONTENT, 6, 77, newProgress(), undefined, encounterSeed);
@@ -72,7 +72,7 @@ it("rerolls fresh-entry equipment independently of unchanged geography", () => {
 });
 
 it("preserves spawned equipment and exact combat clocks through save and actual Continue", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.unlocked = [1, 6];
   model.startGalaxy(6);
   const flight = model.state.flight!;
@@ -97,7 +97,7 @@ it("preserves spawned equipment and exact combat clocks through save and actual 
   const random = vi.spyOn(crypto, "getRandomValues");
   random.mockClear();
   try {
-    const resumed = new GameModel(CONTENT, supportEntropy, saved);
+    const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, saved);
     resumed.continueGame();
     expect(resumed.state.flight).toEqual(expected);
     expect(random).not.toHaveBeenCalled();
@@ -113,7 +113,7 @@ it("preserves spawned equipment and exact combat clocks through save and actual 
 });
 
 it("passes authored role limits and wrapped travel into the real flight step", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.unlocked = [1, 6];
   model.startGalaxy(6);
   const flight = model.state.flight!;

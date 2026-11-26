@@ -3,6 +3,7 @@ import { expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { ensureRouteEncounter, routeBlocked, routeGuardPlanResult } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
@@ -13,7 +14,7 @@ import type { Vec } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function fixture(point?: Vec) {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.prologueSeen = true;
   model.state.progress[1].opened = true;
   model.state.seenConversations.push(...CONVERSATIONS.map(({ id }) => id));

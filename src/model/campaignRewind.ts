@@ -4,6 +4,7 @@ import { PROJECT_THANKS } from "../data/projects.ts";
 import type { GameContent } from "../data/types.ts";
 import { type Entropy, GameModel, newGameState } from "./game.ts";
 import { newProgress } from "./progress.ts";
+import type { SaveRestore } from "./saveSchema.ts";
 import type { GalaxyProgress, GameSave } from "./types.ts";
 
 const reopenedConversations = new Set(
@@ -56,9 +57,10 @@ export function rewindCampaign(saved: GameSave): GameSave {
 export function openRewoundCampaign(
   content: GameContent,
   entropy: Entropy,
+  saveRestore: SaveRestore,
   saved: GameSave,
 ): GameModel {
-  const model = new GameModel(content, entropy, rewindCampaign(saved));
+  const model = new GameModel(content, entropy, saveRestore, rewindCampaign(saved));
   if (model.canContinue) {
     model.continueGame();
   } else {

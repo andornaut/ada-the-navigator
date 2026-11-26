@@ -3,6 +3,7 @@ import { expect, it } from "vitest";
 import { WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { ensureDestination, routeBlocked } from "./flight.ts";
@@ -12,7 +13,7 @@ import { readRequiredRolePlan } from "./requiredRolePlans.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function launch() {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.unlocked = [1, 3];
   model.state.prologueSeen = true;
   model.state.progress[3].opened = true;
@@ -52,7 +53,7 @@ it("reserves authored G3 capitals and holodisk fullstates before optional popula
   void model.contextQuestDetails;
   expect(ensureDestination(CONTENT, "family", flight)).toBe(family.site);
   expect(model.state).toEqual(before);
-  const resumed = new GameModel(CONTENT, supportEntropy, model.save());
+  const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, model.save());
   resumed.continueGame();
   expect(resumed.state.flight).toEqual(flight);
 });
@@ -75,7 +76,7 @@ it("activates the saved capital only at the authored distance gate with stable s
   const beforeQueries = structuredClone(flight);
   void model.map;
   expect(flight).toEqual(beforeQueries);
-  const resumed = new GameModel(CONTENT, supportEntropy, model.save());
+  const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, model.save());
   resumed.continueGame();
   expect(resumed.state.flight).toEqual(flight);
 });
@@ -108,7 +109,7 @@ it("preserves hidden sites on fresh entry while resetting encounter identity and
   const actor = readRequiredRolePlan(old, "family")!.actors[0]!;
   actor.enemy!.age = 5;
   actor.enemy!.hardpoints[0]!.cooldown = 0.25;
-  const resumed = new GameModel(CONTENT, supportEntropy, model.save());
+  const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, model.save());
   resumed.continueGame();
   expect(resumed.state.flight).toEqual(old);
   model.returnHome();

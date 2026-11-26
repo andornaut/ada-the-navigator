@@ -4,12 +4,12 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY, type UpgradeWeapon } from "../data/economy.ts";
 import { GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
 import { bedroomBackground } from "../ui/bedroom.ts";
 import { stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { restoreSave } from "./save.ts";
 import { stationStock } from "./shop.ts";
 import { stationsNear } from "./stations.ts";
 import { type StationService, stationSpecialty } from "./stationServices.ts";
@@ -22,7 +22,7 @@ const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: fals
 const anyStation = () => stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 })[0]!;
 
 function launched(): GameModel {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.startGalaxy(1);
   playOpening(model);
   model.state.flight!.objects = [];
@@ -448,7 +448,7 @@ describe("quantum jump home", () => {
     // The save keeps the flight, as closing the app does.
     const saved = JSON.parse(model.save()) as { flight: { seed: number }; mode: string };
     expect(saved).toMatchObject({ flight: { seed: flight.seed }, mode: "space" });
-    const reloaded = new GameModel(CONTENT, supportEntropy, model.save());
+    const reloaded = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, model.save());
     expect(reloaded.screen).toBe("start");
     expect(reloaded.state.economy.stardust).toBe(123);
     expect(reloaded.state.progress[1].known).toEqual(["growers"]);
@@ -486,7 +486,7 @@ describe("quantum jump home", () => {
     resolving.backToTitle();
     expect(resolving.screen).toBe("start");
     expect(resolving.state.progress[1].resolved).toBe(false);
-    const loaded = new GameModel(CONTENT, supportEntropy, resolving.save());
+    const loaded = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, resolving.save());
     loaded.continueGame();
     expect(loaded.storyView?.page).toEqual(before?.page);
     expect(loaded.storyView?.choices).toEqual(before?.choices);
@@ -558,7 +558,7 @@ describe("shop through the model", () => {
 
   it("applies an owned paint scheme at once and saves it with purchases", () => {
     const galaxy = 1;
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.state.unlocked = [...GALAXY_NUMBERS];
     model.startGalaxy(galaxy);
     playOpening(model);

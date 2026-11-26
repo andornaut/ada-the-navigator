@@ -39,7 +39,7 @@ import {
   stepsKind,
   updateOffer,
 } from "../pwa/index.ts";
-import { type CampaignSave, saves } from "../saving/index.ts";
+import { type CampaignSave, SAVE_RESTORE, saves } from "../saving/index.ts";
 import { backReleased } from "../ui/backStack.ts";
 import { createBossHud } from "../ui/bossHud.ts";
 import { createConversationBox, createInteractionCard } from "../ui/conversation.ts";
@@ -278,7 +278,7 @@ export function buildScene(scene: UiContext): void {
   const clock = () => performance.now();
   const newer = saved.status === "newer";
   scene.savingUnavailable = newer || saved.status === "unavailable";
-  scene.model = new GameModel(CONTENT, scene.entropy, newer ? undefined : saved.save);
+  scene.model = new GameModel(CONTENT, scene.entropy, SAVE_RESTORE, newer ? undefined : saved.save);
   scene.basePalette =
     readSpacePalette(scene.cache.json.get("space-palette")) ?? FALLBACK_SPACE_PALETTE;
   scene.palette = scene.basePalette;
@@ -1695,7 +1695,7 @@ async function commitCampaignRewind(
   writingCampaignRewinds.add(scene);
   let committed = false;
   try {
-    const next = openRewoundCampaign(CONTENT, scene.entropy, source.save);
+    const next = openRewoundCampaign(CONTENT, scene.entropy, SAVE_RESTORE, source.save);
     const adoptGeneration = await saves.commitCampaign(source, next.saveDocument(), authorized);
     if (!adoptGeneration) {
       return null;

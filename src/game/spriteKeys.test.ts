@@ -4,6 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import { GameModel } from "../model/game.ts";
 import { storyShips } from "../model/storyShips.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { activateCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import {
@@ -17,7 +18,7 @@ import {
 
 describe("object sprite keys", () => {
   it("keeps the hub's bay, buoys and story craft through the update's cleanup", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.state.unlocked = [1, 2];
     model.startGalaxy(2);
     const flight = model.state.flight!;

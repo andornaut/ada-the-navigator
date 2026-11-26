@@ -3,6 +3,7 @@ import { expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { GameModel } from "./game.ts";
@@ -10,7 +11,7 @@ import { type LegacyGuardHomePorts, legacyGuardHomeUpdates } from "./legacyGuard
 import type { SpaceObject } from "./types.ts";
 
 function fixture() {
-  const game = new GameModel(CONTENT, supportEntropy);
+  const game = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   game.startGalaxy(1);
   playOpening(game);
   const saved = structuredClone(game.saveDocument());

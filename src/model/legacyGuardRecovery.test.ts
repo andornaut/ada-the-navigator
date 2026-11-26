@@ -1,6 +1,7 @@
 import { expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import { questGuardPlacementContext, spawnChapterEnemy, stepFlight } from "./flight.ts";
@@ -14,13 +15,12 @@ import {
 } from "./geography.ts";
 import { recoverLegacyQuestGuards } from "./legacyGuardRecovery.ts";
 import { questGuardHomePorts } from "./questGuardPlacement.ts";
-import { restoreSave } from "./save.ts";
 import type { SpaceObject } from "./types.ts";
 import { worldDistance } from "./worldContacts.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function fixture(retained = false) {
-  const game = new GameModel(CONTENT, supportEntropy);
+  const game = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   game.startGalaxy(1);
   playOpening(game);
   const flight = game.state.flight!;
@@ -84,7 +84,7 @@ it.each([false, true])(
     const random = vi.spyOn(crypto, "getRandomValues");
     random.mockClear();
     try {
-      const resumed = new GameModel(CONTENT, supportEntropy, saved);
+      const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, saved);
       resumed.continueGame();
       const continued = resumed.state.flight!;
       const leader = continued.objects.find((actor) => actor.id === guard.id)!;
@@ -120,7 +120,7 @@ it.each([false, true])(
 
 it("allows a recovered remote guard to move physically toward its canonical home through real frame steps", () => {
   const { casualty, game, guard, site, survivor } = fixture(true);
-  const resumed = new GameModel(CONTENT, supportEntropy, game.saveDocument());
+  const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, game.saveDocument());
   resumed.continueGame();
   const flight = resumed.state.flight!;
   const leader = flight.objects.find((actor) => actor.id === guard.id)!;
@@ -145,10 +145,10 @@ it("allows a recovered remote guard to move physically toward its canonical home
 
 it("reconstructs recovery activity after another Continue and uses ordinary paging outside the site region", () => {
   const { casualty, game, guard, site, survivor } = fixture(true);
-  const first = new GameModel(CONTENT, supportEntropy, game.saveDocument());
+  const first = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, game.saveDocument());
   first.continueGame();
   const before = structuredClone(first.state.flight);
-  const second = new GameModel(CONTENT, supportEntropy, first.saveDocument());
+  const second = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, first.saveDocument());
   second.continueGame();
   const flight = second.state.flight!;
   expect(flight).toEqual(before);

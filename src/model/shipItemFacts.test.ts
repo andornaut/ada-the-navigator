@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { SUPPLY_ITEMS } from "../data/activities.ts";
 import { CONTENT } from "../data/content.ts";
 import { carriedItemName } from "../data/itemNames.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { createUnpopulatedFlight } from "./flight.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
@@ -10,7 +11,7 @@ import { GameModel } from "./game.ts";
 import type { HeldJob } from "./types.ts";
 
 function model() {
-  const game = new GameModel(CONTENT, supportEntropy);
+  const game = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   game.state.started = true;
   game.state.mode = "space";
   game.state.selectedGalaxy = 1;

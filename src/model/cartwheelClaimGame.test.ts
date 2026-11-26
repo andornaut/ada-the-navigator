@@ -6,6 +6,7 @@ import type { ConversationLine } from "../data/conversations.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { visitCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
@@ -19,7 +20,6 @@ import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { ORE_FIELD_ROLE, worldOreFieldsNear } from "./oreFields.ts";
-import { restoreSave } from "./save.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -34,7 +34,7 @@ function flyTo(model: GameModel, { x, y }: Vec): void {
 
 function beginClaim(): GameModel {
   const seeds = [173, 301];
-  const model = new GameModel(CONTENT, () => seeds.shift() ?? 503);
+  const model = new GameModel(CONTENT, () => seeds.shift() ?? 503, SAVE_RESTORE);
   model.state.prologueSeen = true;
   model.state.unlocked = [1, 3, 4, 5, 2];
   model.state.progress[2].opened = true;
@@ -147,7 +147,7 @@ it.each(["defeated", "salvaged"] as const)(
     model.state.flight!.dangerFor = 0;
     model.returnHome();
     expect(model.state.progress[2].claim?.phase).toBe("away");
-    model = new GameModel(CONTENT, () => 503, model.save());
+    model = new GameModel(CONTENT, () => 503, SAVE_RESTORE, model.save());
     model.startGalaxy(2);
     expect(model.state.progress[2].claim).toEqual(claim);
     expect(capitalBossActor(model.state.flight!, id)).toEqual(beforeReturn);
@@ -266,7 +266,7 @@ it.each(["defeated", "salvaged"] as const)(
 
     flight.dangerFor = 0;
     model.returnHome();
-    model = new GameModel(CONTENT, () => 907, model.save());
+    model = new GameModel(CONTENT, () => 907, SAVE_RESTORE, model.save());
     model.startGalaxy(2);
     expect(capitalBossActor(model.state.flight!, id)).toBeUndefined();
     expect(model.state.progress[2].claim).toEqual({

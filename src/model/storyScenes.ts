@@ -14,6 +14,15 @@ import {
   type StoryLabels,
 } from "./storybook.ts";
 import { isStoryRoomBackground, type StorySceneReference } from "./storyCursor.ts";
+import type { GameState } from "./types.ts";
+
+export function canReplayEarthChapter(
+  content: GameContent,
+  state: GameState,
+  galaxy: GalaxyNumber,
+): boolean {
+  return state.prologueSeen && Boolean(content.chapters[galaxy]) && state.progress[galaxy].resolved;
+}
 
 export interface StorySceneContext {
   readonly content: GameContent;

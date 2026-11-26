@@ -13,7 +13,7 @@ const [
   { CONTENT },
   { ECONOMY },
   { playOpening, supportEntropy },
-  { restoreSave },
+  { SAVE_RESTORE, restoreSave },
   { enemyActorDefinition },
   { createEnemy },
   { retaliatorVariant },
@@ -49,7 +49,7 @@ const [
   import(new URL("../src/data/content.ts", import.meta.url)),
   import(new URL("../src/data/economy.ts", import.meta.url)),
   import(new URL("../src/testing/launch.ts", import.meta.url)),
-  import(new URL("../src/model/save.ts", import.meta.url)),
+  import(new URL("../src/saving/index.ts", import.meta.url)),
   import(new URL("../src/data/enemyActorDefinition.ts", import.meta.url)),
   import(new URL("../src/model/enemyAi.ts", import.meta.url)),
   import(new URL("../src/data/enemyIdentity.ts", import.meta.url)),
@@ -110,7 +110,7 @@ function located(model, id) {
 }
 /** A flight in `galaxy` with its opening played, no dialogue and no shots, held at rest. */
 function flightModel(galaxy, { unlocked = ALL } = {}) {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.unlocked = unlocked;
   // The highest shield outlasts every capture's hits on Ada.
   model.state.economy.levels.shield = 3;
@@ -363,7 +363,7 @@ export function batchCaptures(ctx) {
   }
   /** Cartwheel's hub with its story resolved, Ada below it, with the projects funded. */
   function hubModel(projects) {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.state.unlocked = [1, 2];
     Object.assign(model.state.progress[2], {
       introduced: true,
@@ -677,7 +677,7 @@ export function batchCaptures(ctx) {
       await settle();
       await ctx.frames(`craft-whirlpool-${id}`, { every: 250, shots: 3 });
     });
-    const story = new GameModel(CONTENT, supportEntropy);
+    const story = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     story.state.unlocked = [1, 2];
     story.startGalaxy(2);
     playOpening(story);

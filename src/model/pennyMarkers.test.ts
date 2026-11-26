@@ -5,6 +5,7 @@ import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { createEnemy } from "./enemyAi.ts";
@@ -14,7 +15,7 @@ import { markerKnowledgeStore } from "./markerBindings.ts";
 import type { SpaceObject } from "./types.ts";
 
 function fixture() {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   const flight = createFlight(CONTENT, 1, 7, { known: [] });
   flight.player = { x: 0, y: 0 };
   const cache: SpaceObject = {

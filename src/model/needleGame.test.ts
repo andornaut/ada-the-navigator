@@ -6,6 +6,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { BUILT, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { NEEDLE } from "../data/needle.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
@@ -18,7 +19,6 @@ import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { needleCourses } from "./needle.ts";
 import { NEEDLE_CADENCE } from "./needleRuntime.ts";
-import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
 
 const built = BUILT as Set<GalaxyNumber>;
@@ -31,7 +31,11 @@ afterAll(() => {
 });
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function launch(seed?: number): GameModel {
-  const model = new GameModel(CONTENT, seed === undefined ? supportEntropy : () => seed);
+  const model = new GameModel(
+    CONTENT,
+    seed === undefined ? supportEntropy : () => seed,
+    SAVE_RESTORE,
+  );
   Object.assign(model.state, { prologueSeen: true, started: true, unlocked: [...GALAXY_NUMBERS] });
   for (const progress of Object.values(model.state.progress)) {
     progress.opened = true;
@@ -164,7 +168,7 @@ describe("Captain Cadence admission and outcome", () => {
     model.returnHome();
     expect(model.state.progress[4].capitalBoss?.phase).toBe("away");
     const parked = model.state.progress[4].capitalBoss;
-    model = new GameModel(CONTENT, () => 301, model.save());
+    model = new GameModel(CONTENT, () => 301, SAVE_RESTORE, model.save());
     expect(model.state.progress[4].capitalBoss).toEqual(parked);
     model.startGalaxy(4);
     expect(model.state.progress[4].capitalBoss?.phase).toBe("active");

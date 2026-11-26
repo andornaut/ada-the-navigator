@@ -10,6 +10,7 @@ import {
 import { type EnemyArchetype, enemyCatalog } from "../data/enemyCatalog.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import {
@@ -25,7 +26,6 @@ import {
 import { createEnemy } from "./enemyAi.ts";
 import { GameModel } from "./game.ts";
 import type { PhantomChatter } from "./phantom.ts";
-import { restoreSave } from "./save.ts";
 import type { SpaceObject } from "./types.ts";
 import { collectWeapon } from "./weapons.ts";
 
@@ -709,7 +709,7 @@ describe("drone engagements in flight", () => {
     count: number,
     recovered: readonly GalaxyNumber[] = [],
   ): GameModel {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.state.prologueSeen = true;
     model.state.unlocked = [1, 2, 3];
     for (const held of recovered) {
@@ -805,7 +805,7 @@ describe("conversations in the game", () => {
    */
   // A first flight, with the heard conversations already heard.
   function flying(heard: readonly string[] = []): GameModel {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     // As after a real first launch: the prologue and its achievement are behind Ada.
     model.state.prologueSeen = true;
     model.state.achievements.unlocked.push("newNavigator");
@@ -1152,13 +1152,13 @@ describe("conversations in the game", () => {
     model.dismissConversation();
     const saved = model.save();
     expect(restoreSave(saved)?.seenConversations).toContain("lesson:move");
-    const resumed = new GameModel(CONTENT, supportEntropy, saved);
+    const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, saved);
     resumed.step(0.05, idle);
     expect(resumed.conversation?.key).not.toBe("lesson:move:0");
   });
 
   it("rejects a malformed seen-conversations list", () => {
-    const fresh = JSON.parse(new GameModel(CONTENT, supportEntropy).save()) as Record<
+    const fresh = JSON.parse(new GameModel(CONTENT, supportEntropy, SAVE_RESTORE).save()) as Record<
       string,
       unknown
     >;
@@ -1495,7 +1495,7 @@ describe("Use conversation paging", () => {
       ),
     );
     for (const [galaxy, context] of contexts) {
-      const model = new GameModel(CONTENT, supportEntropy);
+      const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
       model.state.unlocked = [galaxy];
       model.startGalaxy(galaxy);
       if (context === "holodiskHandover") {

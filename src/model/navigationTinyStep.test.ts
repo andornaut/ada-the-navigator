@@ -3,6 +3,7 @@ import { expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { readStory, supportEntropy } from "../testing/launch.ts";
 import { ensureDestination } from "./flight.ts";
 import { GameModel, newGameState } from "./game.ts";
@@ -21,7 +22,7 @@ it("steps a Phantom objective approach with the existing tiny travel delta", () 
       resolved: true,
     });
   }
-  const model = new GameModel(CONTENT, supportEntropy, initial);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, initial);
   model.continueGame();
   readStory(model);
   model.startGalaxy(6);

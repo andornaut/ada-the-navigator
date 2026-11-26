@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { questReward } from "../data/questRewards.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import type { ExchangePreview, ExchangeQuote } from "./exchange.ts";
 import { ensureDestination, ensureStation } from "./flight.ts";
@@ -17,7 +18,7 @@ function quote(preview: ExchangePreview): ExchangeQuote {
   return preview;
 }
 function docked() {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.prologueSeen = true;
   model.startGalaxy(1);
   const flight = model.state.flight!;
@@ -87,7 +88,7 @@ describe("confirmed station ore Exchange", () => {
   });
 
   it("applies the existing mining deposit rules to ore bought at the hub", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.state.prologueSeen = true;
     model.state.unlocked = [1, 2];
     Object.assign(model.state.progress[2], {

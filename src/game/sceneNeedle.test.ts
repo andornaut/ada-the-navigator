@@ -14,6 +14,7 @@ import {
   setNeedleActivity,
 } from "../model/needle.ts";
 import type { SpaceObject } from "../model/types.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import {
   createNeedleRenderer,
@@ -32,7 +33,7 @@ describe("production Needle frame", () => {
     topSpeed: 100,
   };
   const flight = () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.state.unlocked.push(4);
     model.startGalaxy(4);
     return model.state.flight!;

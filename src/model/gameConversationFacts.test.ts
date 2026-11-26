@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { ConversationDirector } from "./conversations.ts";
 import { GameModel } from "./game.ts";
@@ -10,7 +11,7 @@ afterEach(() => vi.restoreAllMocks());
 describe("Game conversation eligibility facts", () => {
   it("reads live flight identity and progress through title, Continue and restart", () => {
     const attachment = vi.spyOn(ConversationDirector.prototype, "setEligibilityReader");
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     expect(attachment).toHaveBeenCalledTimes(1);
     const read = attachment.mock.calls[0]![0];
     expect(read()).toEqual({ galaxy: null, holodisks: 0, questComplete: false, resolved: false });
@@ -32,7 +33,7 @@ describe("Game conversation eligibility facts", () => {
   });
 
   it("never exposes a lower-priority line hidden by a notice or the title screen", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.startGalaxy(1);
     model.step(0.001, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
     const exposure = vi.spyOn(ConversationDirector.prototype, "showing", "get");

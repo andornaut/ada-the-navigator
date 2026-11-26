@@ -1,9 +1,9 @@
 import packageInfo from "../../package.json" with { type: "json" };
-import { galaxyRoute } from "./game.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
-import { routeGuardEvidence } from "./routeGuardEvidence.ts";
-import { restoreSave } from "./save.ts";
-import type { GameState } from "./types.ts";
+import { galaxyRoute } from "../model/game.ts";
+import { stationPopulationObjects } from "../model/hostileStations.ts";
+import { routeGuardEvidence } from "../model/routeGuardEvidence.ts";
+import type { GameState } from "../model/types.ts";
+import { restoreSave } from "./codec.ts";
 
 export type AdaSaveInspection =
   | { status: "new" }

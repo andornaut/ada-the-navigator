@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { GameModel } from "./game.ts";
-import { restoreSave } from "./save.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
@@ -12,7 +12,7 @@ describe("Shield depletion ore loss", () => {
   it.each([0, 1, 2, 3, 10, 11])(
     "clears %i carried ore once through saves and later flights",
     (ore) => {
-      const active = new GameModel(CONTENT, supportEntropy);
+      const active = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
       active.startGalaxy(1);
       active.state.flight!.cargo = ore;
       active.state.economy.cargo = 19;
@@ -35,7 +35,7 @@ describe("Shield depletion ore loss", () => {
       expect(restored.progress[1].deposited).toBe(4);
       model.step(1, idle);
       expect(model.state.economy.cargo).toBeUndefined();
-      const loaded = new GameModel(CONTENT, supportEntropy, saved);
+      const loaded = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, saved);
       loaded.continueGame();
       const lossLine = CONTENT.labels.jumpHomeOreLost!;
       const expectedPage =

@@ -2,6 +2,7 @@ import { ROUTE_POSITION } from "../data/galaxies.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { GameModel } from "../model/game.ts";
 import type { StoryPage } from "../model/storybook.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "./launchSeeds.ts";
 
 /**
@@ -9,7 +10,7 @@ import { supportEntropy } from "./launchSeeds.ts";
  * save was made mid-flight, so the flight resumes as it was saved.
  */
 export function relaunch(content: GameContent, saved: unknown): GameModel {
-  const model = new GameModel(content, supportEntropy, saved);
+  const model = new GameModel(content, supportEntropy, SAVE_RESTORE, saved);
   let value = saved;
   if (typeof saved === "string") {
     try {

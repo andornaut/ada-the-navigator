@@ -4,14 +4,14 @@ import { CONTENT } from "../data/content.ts";
 import * as enemyActorModule from "../data/enemyActorDefinition.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import type { WeaponLevel } from "../data/types.ts";
+import { restoreSave, SAVE_RESTORE, SAVE_VERSION } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { GameModel } from "./game.ts";
-import { restoreSave, SAVE_VERSION } from "./save.ts";
 import type { SpaceObject } from "./types.ts";
 
 function snapshot(retained = false, weaponLevel?: WeaponLevel) {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.startGalaxy(1);
   playOpening(model);
   const saved = model.saveDocument();

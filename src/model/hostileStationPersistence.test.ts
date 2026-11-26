@@ -6,6 +6,7 @@ import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
 import { HOSTILE_STATION_POLICY, hostileStationReward } from "../data/hostileStationPolicy.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createUnpopulatedFlight } from "./flight.ts";
@@ -25,12 +26,11 @@ import {
   validHostileStationSites,
 } from "./hostileStationPersistence.ts";
 import { hostileStationPack } from "./hostileStations.ts";
-import { restoreSave } from "./save.ts";
 import type { SpaceObject } from "./types.ts";
 import { wrapPoint } from "./worldGeometry.ts";
 
 function fixture(galaxy: GalaxyNumber = 2) {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.selectedGalaxy = galaxy;
   model.state.unlocked = [1, galaxy];
   model.state.started = true;

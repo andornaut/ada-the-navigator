@@ -6,10 +6,10 @@ import {
   enemyDefinition,
   PHANTOM_FLAGSHIP_ID,
 } from "../data/enemyCatalog.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./enemyAi.ts";
 import { GameModel } from "./game.ts";
-import { restoreSave } from "./save.ts";
 
 function fixture(archetype: "capital" | "frigate" = "frigate", flagship = false) {
   const galaxy = flagship ? 6 : 1;
@@ -188,7 +188,7 @@ describe("heavy fire clocks", () => {
       burst: 1,
       cooldown: 0.04,
     });
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.startGalaxy(1);
     playOpening(model);
     model.state.flight!.objects = [

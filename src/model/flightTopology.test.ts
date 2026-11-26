@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
+import { restoreSave, SAVE_RESTORE, SAVE_VERSION } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { flightWorldContext, validFlightTopology } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
-import { restoreSave, SAVE_VERSION } from "./save.ts";
 import type { FlightState } from "./types.ts";
 
 describe("explicit flight geometry context", () => {
@@ -39,7 +39,7 @@ describe("explicit flight geometry context", () => {
 });
 
 it("starts and resumes only the new canonical flight chart", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.startGalaxy(1);
   const current = model.saveDocument();
   expect(current.flight?.topology).toEqual({ kind: "torus", side: 240000, version: 1 });

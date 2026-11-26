@@ -1,11 +1,12 @@
 import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { readStory, supportEntropy } from "../testing/launch.ts";
 import { GameModel } from "./game.ts";
 
 function boarded() {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.started = true;
   model.state.prologueSeen = true;
   model.state.progress[1].opened = true;

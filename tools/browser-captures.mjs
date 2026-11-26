@@ -44,7 +44,7 @@ const [
   { GameModel },
   { CONTENT },
   { playOpening, supportEntropy },
-  { restoreSave },
+  { SAVE_RESTORE, restoreSave },
   { enemyActorDefinition },
   { enemyActorAvailable },
   { createEnemy },
@@ -57,7 +57,7 @@ const [
   import(new URL("../src/model/game.ts", import.meta.url)),
   import(new URL("../src/data/content.ts", import.meta.url)),
   import(new URL("../src/testing/launch.ts", import.meta.url)),
-  import(new URL("../src/model/save.ts", import.meta.url)),
+  import(new URL("../src/saving/index.ts", import.meta.url)),
   import(new URL("../src/data/enemyActorDefinition.ts", import.meta.url)),
   import(new URL("../src/data/enemyActors.ts", import.meta.url)),
   import(new URL("../src/model/enemyAi.ts", import.meta.url)),
@@ -233,7 +233,7 @@ function fixtureFile(name, scope, serialized) {
  * its hardpoints are listed, and an upgrade pickup at each of `pickups`' screen offsets.
  */
 function heavyFixture(galaxy, heavies, pickups = []) {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.unlocked = [1, 2, 3, 4, 5, 6];
   // The highest shield outlasts every capture's hits on Ada.
   model.state.economy.levels.shield = 3;

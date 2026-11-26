@@ -268,7 +268,7 @@ import {
   taskMarkerCategory,
 } from "./questObjectLinks.ts";
 import { readRequiredRolePlan } from "./requiredRolePlans.ts";
-import { canReplayEarthChapter, restoreGameSave, restoreSave, SAVE_VERSION } from "./save.ts";
+import { SAVE_VERSION, type SaveRestore } from "./saveSchema.ts";
 import { immutableScanOutcome, type ScanCompletion, type ScanOutcome } from "./scanOutcomes.ts";
 import { canRechargeShield } from "./shieldRecharge.ts";
 import { SHIP_REACH } from "./shipBody.ts";
@@ -331,7 +331,7 @@ import {
   type StoryStep,
 } from "./storybook.ts";
 import { readStoryCursor, storyCursor, type StorySceneReference } from "./storyCursor.ts";
-import { referenceStoryScene, resolveStoryScene } from "./storyScenes.ts";
+import { canReplayEarthChapter, referenceStoryScene, resolveStoryScene } from "./storyScenes.ts";
 import {
   resolveTargetObject,
   type TargetContribution,
@@ -556,6 +556,7 @@ export class GameModel {
   flightEvents: FlightEvent[] = [];
   private readonly bossPlacementCells = new WeakMap<FlightState, string>();
   private readonly content: GameContent;
+  private readonly saveRestore: SaveRestore;
   private readonly entropy: Entropy;
   private readonly talk: ConversationDirector;
   private pickupFeedback: PickupFeedback[] = [];
@@ -608,10 +609,11 @@ export class GameModel {
   // The last unlock, flown on the route map at the next boarding: from the galaxy completed to
   // the farthest it opened, the opened positions still showing locked until then.
   private unlockFlight: RouteFlight | null = null;
-  constructor(content: GameContent, entropy: Entropy, saved?: unknown) {
+  constructor(content: GameContent, entropy: Entropy, saveRestore: SaveRestore, saved?: unknown) {
     this.content = content;
     this.entropy = entropy;
-    const restored = restoreGameSave(content, saved);
+    this.saveRestore = saveRestore;
+    const restored = saveRestore.restoreGameSave(content, saved);
     this.state = restored ?? newGameState();
     const navigation = restored as
       | (GameState & {
@@ -643,7 +645,7 @@ export class GameModel {
       pending?.galaxy &&
       GALAXY_NUMBERS.includes(pending.galaxy) &&
       pending.dialogue &&
-      restoreSave({ ...this.state, dialogue: pending.dialogue })
+      this.saveRestore.restoreSave({ ...this.state, dialogue: pending.dialogue })
     ) {
       this.suspendedInteraction = { dialogue: pending.dialogue, galaxy: pending.galaxy };
     }
@@ -5516,7 +5518,12 @@ export class GameModel {
     if (scene.replayGalaxy !== undefined) {
       return [scene];
     }
-    const copy = new GameModel(this.content, this.entropy, JSON.stringify(this.state));
+    const copy = new GameModel(
+      this.content,
+      this.entropy,
+      this.saveRestore,
+      JSON.stringify(this.state),
+    );
     copy.simulating = true;
     copy.depletionContinuation = this.depletionContinuation;
     copy.startShown = false;

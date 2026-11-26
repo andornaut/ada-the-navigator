@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { CONVERSATION_TUNING, CONVERSATIONS } from "../data/conversations.ts";
 import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
+import { restoreSave } from "../saving/index.ts";
 import { ConversationDirector, type ConversationFacts } from "./conversations.ts";
 import { newGameState } from "./game.ts";
-import { restoreSave } from "./save.ts";
 
 const scanExposure = "poi:heard:scan-lesson";
 

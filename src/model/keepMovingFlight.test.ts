@@ -9,6 +9,7 @@ import { ENEMY_KEEP_MOVING } from "../data/enemyNavigation.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_TUNING } from "../data/phantom.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { createEnemy, type EnemyState } from "./enemyAi.ts";
@@ -20,7 +21,7 @@ const dt = SIMULATION_STEP_SECONDS;
 
 /** A flight in `galaxy` with its opening played and no enemies, Ada at `player`. */
 function flightModel(galaxy: GalaxyNumber, player: Vec): GameModel {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.unlocked = [1, 2, 3, 4, 5, 6];
   model.state.prologueSeen = true;
   model.state.progress[galaxy].opened = true;

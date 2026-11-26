@@ -5,6 +5,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { BUILT, GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../data/phantom.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { clearPhantomTraffic } from "../testing/phantomTraffic.ts";
 import { outlinesContact } from "./convex.ts";
@@ -16,7 +17,6 @@ import { GameModel } from "./game.ts";
 import { ACTIVE_CHUNK_RADIUS, worldActivateFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import * as pendingPlans from "./phantomRequiredPlans.ts";
-import { restoreSave } from "./save.ts";
 import { shipTuning } from "./upgrades.ts";
 import { periodicWorldGrid } from "./worldCells.ts";
 import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
@@ -31,7 +31,7 @@ afterEach(() => {
 
 function launched(withAlly = false) {
   (BUILT as Set<GalaxyNumber>).add(6);
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   Object.assign(model.state, { prologueSeen: true, started: true, unlocked: [...GALAXY_NUMBERS] });
   if (withAlly) {
     model.state.progress[1].activityCompleted = true;

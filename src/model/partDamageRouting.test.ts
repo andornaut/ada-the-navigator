@@ -4,13 +4,13 @@ import { CONTENT } from "../data/content.ts";
 import { enemyDefinition, PHANTOM_FLAGSHIP_ID } from "../data/enemyCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
 import { worldParts } from "./convex.ts";
 import { createEnemy, damageEnemy, enemyEffects } from "./enemyAi.ts";
 import { enemyPartOutline } from "./enemyBody.ts";
 import { activeBlastFlashes, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { restoreSave } from "./save.ts";
 
 function heavy(galaxy: GalaxyNumber = 1, id = "routing:heavy") {
   const definition = enemyDefinition(galaxy, "capital", id);
@@ -94,7 +94,7 @@ describe("single-target heavy damage routing", () => {
   });
 
   it("keeps one missile hit on one part, excludes the primary target from blast damage, and resumes exactly", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.startGalaxy(1);
     playOpening(model);
     const flight = model.state.flight!;

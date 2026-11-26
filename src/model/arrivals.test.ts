@@ -4,11 +4,11 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createFlight, ensureDestination, ensureStation, stepFlight, teleport } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
 import type { FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
 
@@ -52,7 +52,7 @@ describe("calm launches", () => {
   );
 
   it("starts every galaxy jump calm, since a jump begins a new flight at its start", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.startGalaxy(1);
     playOpening(model);
     const flight = model.state.flight!;
@@ -126,7 +126,7 @@ describe("calm Travel arrivals", () => {
   });
 
   it("saves Travel arrivals and rejects malformed ones", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.startGalaxy(1);
     playOpening(model);
     const flight = model.state.flight!;

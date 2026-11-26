@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { lineDuration, noticeDuration } from "../data/conversations.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, seedLaunches, supportEntropy } from "../testing/launch.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { BUMP_DAMAGE, createFlight, inDanger, stepFlight } from "./flight.ts";
@@ -59,7 +60,7 @@ describe("reviewed rules", () => {
     "deals bump damage from generated play rocks of kind %s, 1 a bump, at most every 0.5 s",
     (expectedKind) => {
       seedLaunches(173);
-      const model = new GameModel(CONTENT, supportEntropy);
+      const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
       model.startGalaxy(1);
       playOpening(model);
       const flight = model.state.flight!;

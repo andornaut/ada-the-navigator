@@ -19,6 +19,7 @@ import { questReward } from "../data/questRewards.ts";
 import { galaxyCard } from "../data/storybook.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { ensureStation, stepFlight, towing } from "./flight.ts";
 import { GameModel, newGameState } from "./game.ts";
@@ -37,7 +38,6 @@ import {
 import { chartLandmarks, landmarkSites } from "./landmarks.ts";
 import { markerKnowledgeStore } from "./markerBindings.ts";
 import { retainedLandmarkSites } from "./retainedLandmarks.ts";
-import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
 import type { FlightState, HeldJob, Vec } from "./types.ts";
 import { noLevels, shipTuning } from "./upgrades.ts";
@@ -102,7 +102,7 @@ function docked(): {
   flight: FlightState;
   station: ReturnType<typeof firstStation>;
 } {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   // Every lesson and lore line but the jobs' is already heard, so only job lines and Penny talk.
   model.state.seenConversations.push(
     ...CONVERSATIONS.filter(
@@ -214,7 +214,7 @@ describe("landmarks", () => {
     }
     // Two flights with different seeds chart the same landmark under the same name.
     const names = [11, 22].map((seed) => {
-      const model = new GameModel(CONTENT, supportEntropy);
+      const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
       model.startGalaxy(1);
       const flight = model.state.flight!;
       flight.seed = seed;
@@ -713,7 +713,7 @@ describe("jobs in play", () => {
     expect(model.inDanger).toBe(true);
     model.state.notice = "Unavailable while towing.";
     const saved = model.save();
-    const launched = new GameModel(CONTENT, supportEntropy, saved);
+    const launched = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, saved);
     expect(launched.screen).toBe("start");
     // The flight's notice waits with it.
     expect(launched.state.notice).toBe("");
@@ -731,7 +731,7 @@ describe("jobs in play", () => {
     expect(launched.inDanger).toBe(true);
     expect(launched.state.notice).toBe("Unavailable while towing.");
     // Restart from that start screen clears the held flight with the rest of the story.
-    const restarted = new GameModel(CONTENT, supportEntropy, saved);
+    const restarted = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, saved);
     restarted.restart();
     expect(restarted.screen).toBe("start");
     expect(JSON.parse(restarted.save())).toMatchObject({

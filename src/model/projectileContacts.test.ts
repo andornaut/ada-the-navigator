@@ -4,6 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { BEAM, MISSILE_HIT_RADIUS, WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import { ModelFeedback } from "../game/feedback.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { ASTEROID_SHAPES, worldSceneryContact } from "./asteroids.ts";
 import { worldParts } from "./convex.ts";
@@ -15,7 +16,7 @@ import type { Shot, SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, fire: false, move: { x: 0, y: 0 }, use: false };
 function fixture() {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.startGalaxy(1);
   playOpening(model);
   const flight = model.state.flight!;

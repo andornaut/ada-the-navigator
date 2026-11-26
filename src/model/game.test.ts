@@ -8,6 +8,7 @@ import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import { nearestSettlerStation } from "./andromedaPlaces.ts";
@@ -62,7 +63,7 @@ it("talks and salvages within the 160 Talk range, whatever the exclusion radius"
   expect(CONTENT.tuning.talkRange).toBe(160);
   // A smaller exclusion radius leaves the interaction range alone.
   const content = { ...CONTENT, tuning: { ...CONTENT.tuning, exclusionRadius: 40 } };
-  const model = new GameModel(content, supportEntropy);
+  const model = new GameModel(content, supportEntropy, SAVE_RESTORE);
   Object.assign(model.state, { prologueSeen: true, started: true });
   model.startGalaxy(1);
   readStory(model);
@@ -88,7 +89,7 @@ it("talks and salvages within the 160 Talk range, whatever the exclusion radius"
 });
 
 it("offers Salvage beside a disabled heavy and salvages it on Use", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.startGalaxy(1);
   playOpening(model);
   const flight = model.state.flight!;
@@ -326,7 +327,7 @@ describe("Captain Tally in Sunflower", () => {
   }
 
   function traded(): GameModel {
-    const model = new GameModel(CONTENT, () => 173);
+    const model = new GameModel(CONTENT, () => 173, SAVE_RESTORE);
     launch(model);
     introduce(model, "growers");
     talk(model, "workshop");
@@ -525,7 +526,7 @@ describe("Captain Tally in Sunflower", () => {
 
 describe("story and persistence", () => {
   it("preserves exact interrupted flight but regenerates after leaving, without repeating introductions", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     launch(model);
     introduce(model, "growers");
     model.state.flight!.cargo = 3;
@@ -569,7 +570,7 @@ describe("story and persistence", () => {
   });
   it("completes the delivery chain at the workshop and converges both responses at home", () => {
     for (const choice of [0, 1]) {
-      const model = new GameModel(CONTENT, supportEntropy);
+      const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
       model.startGalaxy(1);
       introduce(model, "growers");
       talk(model, "workshop");
@@ -586,7 +587,7 @@ describe("story and persistence", () => {
     }
   });
   it("counts partial deposits and requires miner, visitors and a joint approach", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.state.unlocked.push(2);
     launch(model, 2);
     introduce(model, "hub");
@@ -608,7 +609,7 @@ describe("story and persistence", () => {
     expect(relaunch(CONTENT, model.save()).state).toEqual(model.state);
   });
   it("offers Use as Dock at the hub and Deposit with ore", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.state.unlocked.push(2);
     launch(model, 2);
     introduce(model, "hub");
@@ -621,7 +622,7 @@ describe("story and persistence", () => {
     expect(model.contextLabel).toBeUndefined();
   });
   it("reports a carried story item by its display name, and nothing outside flight", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     launch(model);
     expect(model.aboard).toBeNull();
     for (const [id, name] of [
@@ -636,7 +637,7 @@ describe("story and persistence", () => {
     expect(model.aboard).toBeNull();
   });
   it("pauses flight during dialogue and does not advance exploration while standing still", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     launch(model);
     const distance = model.state.flight!.freshDistance;
     for (let i = 0; i < 100; i++) {
@@ -651,7 +652,7 @@ describe("story and persistence", () => {
     expect(model.save()).toBe(snapshot);
   });
   it("blocks voluntary home travel in danger, retaining the exact flight", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     launch(model);
     model.state.flight!.dangerFor = 3;
     const flight = model.state.flight;
@@ -663,7 +664,7 @@ describe("story and persistence", () => {
 });
 
 it("finishes the mounted chapters in route order and resumes each terminal state", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   launch(model);
   introduce(model, "growers");
   talk(model, "workshop");
@@ -743,7 +744,7 @@ it("finishes the mounted chapters in route order and resumes each terminal state
 });
 
 it("plays each Cartwheel story scene first, then its line, at the held story destinations", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.unlocked.push(2);
   launch(model, 2);
   introduce(model, "hub");
@@ -785,7 +786,7 @@ it("plays each Cartwheel story scene first, then its line, at the held story des
 });
 
 it("replays a story scene cut short by the flight's end at the hub after a reload", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.unlocked.push(2);
   launch(model, 2);
   introduce(model, "hub");
@@ -829,7 +830,7 @@ it("replays a story scene cut short by the flight's end at the hub after a reloa
 });
 
 it("places whale debris offscreen and preserves pre-introduction clearing", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.unlocked.push(2, 3);
   launch(model, 3);
   const f = model.state.flight!;
@@ -888,7 +889,7 @@ it("places whale debris offscreen and preserves pre-introduction clearing", () =
 });
 
 it("keeps remaining whale debris aligned at its fixed required site as Ada explores", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.unlocked.push(2, 3);
   launch(model, 3);
   const f = model.state.flight!;
@@ -916,7 +917,7 @@ it("discovers a cleared required approach at its fixed canonical site", () => {
   const content = structuredClone(CONTENT);
   content.tuning.introFreshDistance = 8;
   content.tuning.flight.objectsPerChunk = 0;
-  const model = new GameModel(content, supportEntropy);
+  const model = new GameModel(content, supportEntropy, SAVE_RESTORE);
   launch(model);
   const flight = model.state.flight!;
   const pending = ensureDestination(content, "growers", flight);
@@ -950,7 +951,7 @@ it("retains the full inactive formation at its canonical site through Continue a
   const content = structuredClone(CONTENT);
   content.tuning.introFreshDistance = 0;
   content.tuning.flight.objectsPerChunk = 0;
-  const model = new GameModel(content, supportEntropy);
+  const model = new GameModel(content, supportEntropy, SAVE_RESTORE);
   const point = { x: content.tuning.chunkSize * 20, y: 0 };
   rememberRequiredSite(model.state.progress[1], "growers", point);
   launch(model);
@@ -991,7 +992,7 @@ it("retains the full inactive formation at its canonical site through Continue a
 });
 
 it("marks an interacted destination persistent before ordinary eviction", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   launch(model);
   arrive(model, "growers");
   model.interact();
@@ -1009,7 +1010,7 @@ describe("Use at an outpost", () => {
 
   // Sunflower's first flight with Ada 100 world units from the growers, inside Talk range.
   function besideGrowers() {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     Object.assign(model.state, { prologueSeen: true, started: true });
     model.startGalaxy(1);
     readStory(model);

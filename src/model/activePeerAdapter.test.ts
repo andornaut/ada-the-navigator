@@ -3,6 +3,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import * as enemyAi from "./enemyAi.ts";
 import { stepFlight } from "./flight.ts";
@@ -15,7 +16,7 @@ const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 afterEach(() => vi.restoreAllMocks());
 
 function fixture() {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.prologueSeen = true;
   model.state.progress[1].opened = true;
   model.startGalaxy(1);
@@ -79,7 +80,7 @@ it("excludes a disabled hull from active observations while preserving morale an
 it("retains disabled survivors on Continue and counts an authoritative removal as a pack loss", () => {
   const { active, disabled, flight, model } = fixture();
   stepFlight(CONTENT, SIMULATION_STEP_SECONDS, idle, flight);
-  const resumed = new GameModel(CONTENT, supportEntropy, model.save());
+  const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, model.save());
   resumed.continueGame();
   expect(resumed.state.flight).toEqual(flight);
   worldRecordObjectRemoval(flightWorldContext(flight), CONTENT, disabled, flight);

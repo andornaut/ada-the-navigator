@@ -6,6 +6,7 @@ import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
 import { type IndustrialBodyKey, retaliatorVariant } from "../data/enemyIdentity.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { partsReach, worldParts } from "./convex.ts";
@@ -139,7 +140,7 @@ it.each(["retaliatorCargoHauler", "retaliatorMiningFreighter"] as const)(
   "preserves actual %s caller identity and clocks through save and paging",
   (variant) => {
     const value = fixture(variant);
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.state.prologueSeen = true;
     model.state.progress[1].opened = true;
     model.state.seenConversations.push(...CONVERSATIONS.map((c) => c.id));

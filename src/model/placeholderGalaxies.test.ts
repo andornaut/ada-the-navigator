@@ -5,6 +5,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { galaxyEncounters } from "../data/enemyCatalog.ts";
 import { BUILT, byPosition, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { readStory, supportEntropy } from "../testing/launch.ts";
 import { currentInCell } from "./currents.ts";
 import { createFlight, stepFlight } from "./flight.ts";
@@ -51,7 +52,7 @@ function readToUnlock(model: GameModel): void {
 
 // A galaxy's quest done and its holodisk in, flown, so returning home plays its resolution.
 function questDone(galaxy: GalaxyNumber, unlocked: GalaxyNumber[]): GameModel {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   Object.assign(model.state, { prologueSeen: true, started: true, unlocked });
   for (const id of GALAXY_NUMBERS) {
     model.state.progress[id].opened = true;
@@ -125,7 +126,7 @@ describe("placeholder galaxies under an explicit incomplete-roster fixture", () 
   );
 
   it.each(PLACEHOLDERS)("galaxy %i has no story, holodisk or objective", (galaxy) => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     Object.assign(model.state, {
       prologueSeen: true,
       started: true,

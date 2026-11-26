@@ -4,18 +4,18 @@ import { ACTIVITIES } from "../data/activities.ts";
 import { CONTENT } from "../data/content.ts";
 import { questReward } from "../data/questRewards.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { visitCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { ensureDestination } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { restoreSave } from "./save.ts";
 import { HUB_STATION } from "./stations.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
 /** Cartwheel's flight with Ada at rest beside the introduced hub, no enemies about. */
 function atHub(resolved = false): GameModel {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   Object.assign(model.state, { prologueSeen: true, started: true, unlocked: [1, 2] });
   const progress = model.state.progress[2];
   if (resolved) {

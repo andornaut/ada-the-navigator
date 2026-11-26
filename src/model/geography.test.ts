@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import {
@@ -89,7 +90,7 @@ describe("regenerating ordinary chunks and persistent notables", () => {
   ] as const)(
     "regenerates untouched %s after save/Continue (previous archive=%s)",
     (id, archived) => {
-      const model = new GameModel(CONTENT, supportEntropy);
+      const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
       model.state.prologueSeen = true;
       model.startGalaxy(1);
       model.state.dialogue = null;

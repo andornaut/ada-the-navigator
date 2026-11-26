@@ -3,6 +3,7 @@ import { expect, it } from "vitest";
 import { WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import {
@@ -17,10 +18,9 @@ import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import { storeRequiredRolePlan } from "./requiredRolePlans.ts";
-import { restoreSave } from "./save.ts";
 
 function launch(reunited: boolean) {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.unlocked = [1, 3];
   model.state.prologueSeen = true;
   model.state.progress[3].opened = true;
@@ -54,7 +54,7 @@ it("does not activate distance-gated whale, family or holodisk on an unfinished 
 });
 
 it("materializes the authored eligible holodisk frigate, swarm and support before optional chunks", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   const flight = createUnpopulatedFlight(CONTENT, 3, 173, model.state.economy, 301);
   populateRequiredChapterFlight(CONTENT, model.state.progress[3], flight, () => {
     ensureDestination(CONTENT, "holodisk", flight);
@@ -91,7 +91,7 @@ it("preserves eligible reentry roles, knowledge and strict Continue including a 
   )!;
   worldRecordObjectRemoval(flightWorldContext(flight), CONTENT, casualty, flight);
   flight.objects = flight.objects.filter(({ id }) => id !== casualty.id);
-  const resumed = new GameModel(CONTENT, supportEntropy, model.save());
+  const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, model.save());
   resumed.continueGame();
   expect(resumed.state.flight).toEqual(flight);
   expect(stationPopulationObjects(resumed.state.flight!).some(({ id }) => id === casualty.id)).toBe(
@@ -155,7 +155,7 @@ it.each(["pending", "active", "dormant", "defeated", "unplanned"] as const)(
       );
     }
     expect(restoreSave(model.save())).not.toBeNull();
-    const resumed = new GameModel(CONTENT, supportEntropy, model.save());
+    const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, model.save());
     resumed.continueGame();
     const active = resumed.state.flight!;
     const replacement = stationPopulationObjects(active).find(

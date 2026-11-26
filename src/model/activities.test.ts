@@ -14,6 +14,7 @@ import { JOB_TUNING } from "../data/jobs.ts";
 import { questReward } from "../data/questRewards.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
 import {
   acceptActivity,
@@ -27,7 +28,6 @@ import {
 import { calfRouteMidpoint, calfStart, crossesCurrent } from "./calf.ts";
 import { activateRequiredRoute, ensureDestination, ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { restoreSave } from "./save.ts";
 import { stationsNear } from "./stations.ts";
 import type { FlightState, GameState, HeldActivity, Vec } from "./types.ts";
 
@@ -74,7 +74,7 @@ function takeContract(model: GameModel): void {
 }
 
 function atPlace(galaxy: GalaxyNumber, place: string, resolved = true) {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.unlocked = [1, 2, 3];
   if (galaxy === 1) {
     model.startGalaxy(galaxy);
@@ -424,6 +424,7 @@ describe("repeatable activities", () => {
         },
       },
       supportEntropy,
+      SAVE_RESTORE,
     );
     model.state.selectedGalaxy = 2;
     model.state.tasks[2] = {

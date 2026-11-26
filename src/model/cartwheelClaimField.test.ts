@@ -5,6 +5,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { selectCartwheelClaimField } from "./cartwheelClaimField.ts";
 import { GameModel } from "./game.ts";
 import { ORE_FIELD_ROLE, worldOreFieldsNear } from "./oreFields.ts";
@@ -14,7 +15,7 @@ import { worldDistance } from "./worldContacts.ts";
 
 function launchCartwheel() {
   const seeds = [173, 301];
-  const model = new GameModel(CONTENT, () => seeds.shift()!);
+  const model = new GameModel(CONTENT, () => seeds.shift()!, SAVE_RESTORE);
   model.state.unlocked = [1, 3, 4, 5, 2];
   model.state.prologueSeen = true;
   model.state.progress[2].opened = true;

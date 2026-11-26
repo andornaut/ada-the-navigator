@@ -11,11 +11,11 @@ import {
 import { MUZZLE_ART, muzzleArtForDefinition } from "../data/enemyMuzzles.ts";
 import { GALAXY_ID, ROUTE_POSITION } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { restoreGameSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { enemyHull, enemyPhysicalBody } from "./enemyBody.ts";
 import { GameModel } from "./game.ts";
-import { restoreGameSave } from "./save.ts";
 
 const home = { x: 5000, y: -5000 };
 
@@ -38,7 +38,7 @@ it.each([
 });
 
 it("restores explicit actors and wrecks in v14 while absent profiles keep stock identity", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.startGalaxy(1);
   const saved = model.saveDocument();
   expect(saved.version).toBe(14);
@@ -81,7 +81,7 @@ it("restores explicit actors and wrecks in v14 while absent profiles keep stock 
 });
 
 it("rejects a profile ledger for aliased, unrepresented or nonordinary pack IDs", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.startGalaxy(1);
   const saved = model.saveDocument();
   const flight = saved.flight!;

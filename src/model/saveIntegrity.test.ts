@@ -1,13 +1,19 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { createAdaSaves, SAVE_KEYS } from "../saving/index.ts";
+import {
+  createAdaSaves,
+  inspectAdaSave,
+  preV1SaveResetAllowed,
+  restoreSave,
+  SAVE_KEYS,
+  SAVE_RESTORE,
+  SAVE_VERSION,
+} from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { routeBlocked, routeGuardPlanResult } from "./flight.ts";
 import { GameModel, newGameState } from "./game.ts";
 import { readRequiredPlan } from "./requiredEncounterPlans.ts";
-import { restoreSave, SAVE_VERSION } from "./save.ts";
-import { inspectAdaSave, preV1SaveResetAllowed } from "./saveIntegrity.ts";
 
 describe("Ada save integrity policy", () => {
   it("limits reset permission to explicit pre-v1 application versions", () => {
@@ -36,7 +42,7 @@ describe("Ada save integrity policy", () => {
 });
 
 function legacyOpener() {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.startGalaxy(1);
   const flight = model.state.flight!,
     progress = model.state.progress[1];

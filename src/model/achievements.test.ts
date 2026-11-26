@@ -7,6 +7,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { PROJECTS } from "../data/projects.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { boardAndJump, playOpening, readStory, supportEntropy } from "../testing/launch.ts";
 import {
   ACHIEVEMENT_TOTALS,
@@ -20,7 +21,6 @@ import {
 } from "./achievements.ts";
 import { GameModel, newGameState } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
-import { restoreSave } from "./save.ts";
 import type { FlightInput } from "./types.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -60,7 +60,7 @@ const view = (model: GameModel, name: string) =>
   model.achievements.find((entry) => entry.name === name)!;
 /** A model in galaxy one's first flight, the prologue read. */
 function launched(): GameModel {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.start();
   boardAndJump(model, 1);
   expect(model.state.mode).toBe("space");
@@ -102,7 +102,7 @@ describe("story achievements", () => {
   });
 
   it("unlocks The Garden Begins when the Sunflower chapter completes", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.startGalaxy(1);
     playOpening(model);
     Object.assign(model.state.progress[1], {
@@ -225,7 +225,7 @@ describe("collections and helping", () => {
   });
 
   it("counts paints owned with Classic and unlocks Full Palette once every paint is owned", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     expect(view(model, "Full Palette").progress).toEqual({
       have: 1,
       need: Object.keys(ECONOMY.paints).length,
@@ -237,7 +237,7 @@ describe("collections and helping", () => {
   });
 
   it("unlocks Helping Hand at the first job and Good Neighbor at 25 jobs or activities", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     expect(view(model, "Good Neighbor").progress).toEqual({ have: 0, need: 25 });
     model.recordAchievement({ kind: "jobCompleted" });
     expect(unlocked(model)).toEqual([id("Helping Hand")]);
@@ -250,7 +250,7 @@ describe("collections and helping", () => {
   });
 
   it("unlocks Blockade Breaker when Phantom's blockade breaks", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.recordAchievement({ kind: "blockadeBroken" });
     expect(unlocked(model)).toEqual([id("Blockade Breaker")]);
   });
@@ -264,7 +264,7 @@ describe("collections and helping", () => {
       paints: Object.keys(ECONOMY.paints).length,
       projects: Object.values(PROJECTS).flat().length,
     });
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     for (const site of landmarkSites(2).slice(0, 3)) {
       model.recordAchievement({ galaxy: 2, id: site.id, kind: "landmarkCharted" });
     }
@@ -285,7 +285,7 @@ describe("collections and helping", () => {
   });
 
   it("counts Astra's Atlas over all six galaxies, and keeps allies uncounted until they exist", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.recordAchievement({ id: "growers", kind: "allyMade" });
     for (const galaxy of [1, 2, 3] as const) {
       for (const site of landmarkSites(galaxy)) {
@@ -351,7 +351,7 @@ describe("notices and persistence", () => {
   });
 
   it("keeps achievements, counts and paints ever owned on Restart, starting a new world's finds", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.state.started = true;
     model.recordAchievement({ kind: "jobCompleted" });
     model.recordAchievement({ galaxy: 1, id: "nebula", kind: "landmarkCharted" });
@@ -382,7 +382,7 @@ describe("notices and persistence", () => {
   });
 
   it("saves and restores achievements, rejecting a malformed record", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.recordAchievement({ kind: "jobCompleted" });
     const saved = JSON.parse(model.save());
     expect(restoreSave(saved)?.achievements).toEqual(model.state.achievements);

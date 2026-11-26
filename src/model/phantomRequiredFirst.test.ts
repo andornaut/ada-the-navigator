@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP } from "../data/phantom.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { createUnpopulatedFlight, populateRequiredChapterFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
@@ -11,7 +12,7 @@ import { phantomRequiredActors } from "./phantomRequiredOccupants.ts";
 import { readPendingPhantomEncounter } from "./phantomRequiredPlans.ts";
 
 it("activates initial Phantom blockades and reserves the next hidden wave before optional chunks", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   const progress = model.state.progress[6];
   const flight = createUnpopulatedFlight(CONTENT, 6, 173, model.state.economy, 301);
   let ids: string[] = [];
@@ -47,7 +48,7 @@ it("activates initial Phantom blockades and reserves the next hidden wave before
 });
 
 it("keeps disabled initial members in required population and respects explicit removal", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   const progress = model.state.progress[6];
   const flight = createUnpopulatedFlight(CONTENT, 6, 173, model.state.economy, 301);
   initPhantom({ content: CONTENT, flight, progress });
@@ -59,7 +60,7 @@ it("keeps disabled initial members in required population and respects explicit 
 });
 
 it("reserves completed hulk geometry while represented and respects canonical paging removal", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   const progress = model.state.progress[6];
   progress.questComplete = true;
   const flight = createUnpopulatedFlight(CONTENT, 6, 173, model.state.economy, 301);

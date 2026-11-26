@@ -4,6 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import type { Weapon } from "../data/types.ts";
 import { BEAM, WEAPON_CATALOG } from "../data/weaponCatalog.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
 import { outlineContact, worldParts } from "./convex.ts";
@@ -20,12 +21,11 @@ import { GameModel } from "./game.ts";
 import { noseOffset, nosePoint } from "./nose.ts";
 import { projectileOpacity } from "./playerProjectiles.ts";
 import { playerWeaponCoverage } from "./playerWeaponCoverage.ts";
-import { restoreSave } from "./save.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function launched(weapon: Weapon) {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.startGalaxy(1);
   playOpening(model);
   const flight = model.state.flight!;

@@ -3,6 +3,7 @@ import { expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { activateRequiredRoute, ensureDestination } from "./flight.ts";
 import { GameModel } from "./game.ts";
@@ -10,7 +11,7 @@ import { landmarkSites } from "./landmarks.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 it("shares one actual immutable scan receipt with the UI drain and preserves it under an authored modal", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.prologueSeen = true;
   model.state.progress[1].opened = true;
   model.state.seenConversations.push(...CONVERSATIONS.map(({ id }) => id));

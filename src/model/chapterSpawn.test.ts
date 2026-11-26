@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { ensureDestinationAt, spawnChapterEnemy, syncFlightRegion } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { recordObjectRemoval } from "./geography.ts";
 
 function launched() {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.prologueSeen = true;
   model.state.unlocked = [1, 6];
   model.startGalaxy(6);

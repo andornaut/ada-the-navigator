@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import {
   activateCartwheelHubFixture,
   visitCartwheelHubFixture,
@@ -12,7 +13,7 @@ import { stationPopulationObjects } from "./hostileStations.ts";
 import { readRequiredRolePlan } from "./requiredRolePlans.ts";
 
 function launched() {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   Object.assign(model.state, { prologueSeen: true, started: true, unlocked: [1, 2] });
   model.state.progress[2].opened = true;
   model.startGalaxy(2);
@@ -58,7 +59,7 @@ it("classifies direct ensureDestination after launch as a detached plan read, no
 });
 
 it("resolved board fixtures configured before launch have a loaded hub without a new guard", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   Object.assign(model.state, { prologueSeen: true, started: true, unlocked: [1, 2] });
   Object.assign(model.state.progress[2], {
     introduced: true,

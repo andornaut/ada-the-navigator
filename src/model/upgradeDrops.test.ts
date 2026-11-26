@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY, worldAmmoPack } from "../data/economy.ts";
 import type { Weapon } from "../data/types.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { dropRandom, rollAmmoDrop, rollRockAmmoDrop } from "./drops.ts";
 import { GameModel } from "./game.ts";
@@ -255,7 +256,7 @@ describe("ammo pack drops", () => {
   });
 
   it("gives its pack as Ada collects it, an item notice's ammo gain", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.startGalaxy(1);
     playOpening(model);
     const flight = model.state.flight!;
@@ -287,7 +288,7 @@ describe("collecting an upgrade pickup", () => {
     gains: readonly ItemGain[];
     model: GameModel;
   } {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.startGalaxy(1);
     playOpening(model);
     const flight = model.state.flight!;

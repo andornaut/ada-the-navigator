@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { createFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
@@ -23,7 +24,7 @@ function job(target: string, station = "issuer"): HeldJob {
   };
 }
 function game() {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.mode = "space";
   model.state.selectedGalaxy = 1;
   model.state.flight = createFlight(CONTENT, 1, 123, { known: [] });

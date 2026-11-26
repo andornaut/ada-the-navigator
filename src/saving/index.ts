@@ -4,9 +4,14 @@ import { encodeSave, type SaveFormat } from "@andornaut/game-kit/runtime/save/ve
 import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/localSaveStorage";
 
 import { newGameState } from "../model/game.ts";
-import { restoreSave, SAVE_VERSION } from "../model/save.ts";
-import { inspectAdaSave, preV1SaveResetAllowed } from "../model/saveIntegrity.ts";
+import { SAVE_VERSION } from "../model/saveSchema.ts";
 import type { GameSave } from "../model/types.ts";
+import { restoreSave } from "./codec.ts";
+import { inspectAdaSave, preV1SaveResetAllowed } from "./integrity.ts";
+
+export { SAVE_VERSION } from "../model/saveSchema.ts";
+export { restoreGameSave, restoreSave, SAVE_RESTORE } from "./codec.ts";
+export { type AdaSaveInspection, inspectAdaSave, preV1SaveResetAllowed } from "./integrity.ts";
 
 export const SAVE_KEYS = {
   backup: "ada-the-navigator.save.backup",

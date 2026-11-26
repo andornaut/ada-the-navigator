@@ -4,6 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { BUILT, GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { settlementsNear } from "./andromedaPlaces.ts";
 import { fromScreen } from "./convex.ts";
@@ -31,7 +32,7 @@ const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
 function atCandidate() {
   (BUILT as Set<GalaxyNumber>).add(5);
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   Object.assign(model.state, { prologueSeen: true, started: true, unlocked: [...GALAXY_NUMBERS] });
   model.state.progress[5].opened = true;
   model.startGalaxy(5);
@@ -159,7 +160,7 @@ it("leaves world generation and station scheduling paused under an existing card
 });
 
 it("does not claim Phantom space before its required chapter state is initialized", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   const progress = model.state.progress[6];
   progress.geography = freshGalaxyGeography(173);
   const flight = createUnpopulatedFlight(CONTENT, 6, 173, model.state.economy, 197);

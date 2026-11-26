@@ -3,6 +3,7 @@ import { expect, it } from "vitest";
 import { ANDROMEDA_REDACT, CARTWHEEL_CLAIM } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import type { EnemyWeapon, GalaxyNumber } from "../data/types.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { visitCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
@@ -66,7 +67,7 @@ it("materializes the signature roster and both exclusive capital profiles throug
   expect(observe(5, redact!)).toEqual(new Set(["laser", "scattershot", "chargedLance"]));
 
   const seeds = [173, 301];
-  const cartwheelModel = new GameModel(CONTENT, () => seeds.shift() ?? 503);
+  const cartwheelModel = new GameModel(CONTENT, () => seeds.shift() ?? 503, SAVE_RESTORE);
   cartwheelModel.state.prologueSeen = true;
   cartwheelModel.state.unlocked.push(2);
   cartwheelModel.state.progress[2].opened = true;

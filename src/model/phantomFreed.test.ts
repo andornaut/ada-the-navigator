@@ -5,6 +5,7 @@ import { INTERACTION_COPY } from "../data/conversations.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import { PHANTOM_COPY, PHANTOM_DESTINATIONS } from "../data/phantom.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import { clearPhantomTraffic } from "../testing/phantomTraffic.ts";
 import { interactionCopy } from "./conversations.ts";
@@ -14,7 +15,6 @@ import { enemyPartOutline } from "./enemyBody.ts";
 import { ensureDestination } from "./flight.ts";
 import { GameModel, newGameState } from "./game.ts";
 import { activateFlightRegion } from "./geography.ts";
-import { restoreSave } from "./save.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -107,7 +107,7 @@ function launch(): GameModel {
     });
   }
   expect(restoreSave(initial)).not.toBeNull();
-  const model = new GameModel(CONTENT, supportEntropy, initial);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, initial);
   model.continueGame();
   readStory(model);
   model.startGalaxy(6);

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createUnpopulatedFlight } from "./flight.ts";
@@ -18,12 +19,11 @@ import {
   storeRequiredRolePlan,
   takeRequiredRolePlan,
 } from "./requiredRolePlans.ts";
-import { restoreSave } from "./save.ts";
 import type { RequiredRoleEncounterPlan, SpaceObject } from "./types.ts";
 
 function fixture(id: "whale" | "family" | "holodisk" | "hub") {
   const galaxy = id === "hub" ? 2 : 3;
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.selectedGalaxy = galaxy;
   model.state.unlocked = [1, galaxy];
   model.state.started = true;
@@ -196,7 +196,7 @@ describe("G3 hidden authored encounter storage", () => {
     flight.world.notables[plan.actors[0]!.id] = null;
     expect(() => takeRequiredRolePlan(progress, flight, "holodisk")).toThrow("already owned");
     expect(readRequiredRolePlan(flight, "holodisk")).not.toBeNull();
-    const reset = new GameModel(CONTENT, supportEntropy, removed);
+    const reset = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, removed);
     expect(reset.state.flight).toBeNull();
     expect(reset.state.mode).toBe("home");
   });

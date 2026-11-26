@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ROUTE } from "../data/galaxies.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { storyPageView } from "../ui/storybook.ts";
 import { GameModel } from "./game.ts";
-import { restoreSave } from "./save.ts";
 
 function returnedToRoom(): GameModel {
-  const saved = new GameModel(CONTENT, supportEntropy).saveDocument();
+  const saved = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE).saveDocument();
   saved.started = true;
   saved.prologueSeen = true;
   Object.assign(saved.progress[1], {
@@ -17,7 +17,7 @@ function returnedToRoom(): GameModel {
     questComplete: true,
     resolved: true,
   });
-  const model = new GameModel(CONTENT, supportEntropy, saved);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, saved);
   model.continueGame();
   expect(model.roomPage).toBe(true);
   return model;
@@ -58,7 +58,7 @@ describe("optional Earth chapter replay", () => {
     model.storyNext();
     expect(model.storyView?.page.id).toBe("resolution");
     model.storyChoose(0);
-    const loaded = new GameModel(CONTENT, supportEntropy, model.save());
+    const loaded = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, model.save());
     loaded.continueGame();
     expect(loaded.storyView?.page.text).toBe(CONTENT.chapters[1]!.resolutionBranches[0]);
     loaded.storyPrevious();
@@ -146,7 +146,7 @@ describe("optional Earth chapter replay", () => {
   });
 
   it("records the initial choice without a replay entry during mandatory story", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.start();
     CONTENT.premise.gardenArrival.forEach(() => model.storyNext());
     expect(model.storyView?.choices).toEqual(model.storyView?.page.choices);

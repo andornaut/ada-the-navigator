@@ -7,6 +7,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { seedLaunches } from "../testing/launchSeeds.ts";
 import { createEnemy } from "./enemyAi.ts";
@@ -51,7 +52,7 @@ function incoming(flight: FlightState): void {
 }
 
 function sunflower(seen = true): GameModel {
-  const model = new GameModel(content, supportEntropy);
+  const model = new GameModel(content, supportEntropy, SAVE_RESTORE);
   model.state.prologueSeen = true;
   model.state.progress[1].opened = true;
   if (seen) {
@@ -444,7 +445,7 @@ describe("guards fire back wherever Ada attacks from", () => {
   });
 
   it("answers within three seconds when Ada fires on Sounder's Manta Dreadnought from beside its site", () => {
-    const model = new GameModel(content, () => 173);
+    const model = new GameModel(content, () => 173, SAVE_RESTORE);
     model.state.unlocked = [1, 3];
     model.state.prologueSeen = true;
     model.state.progress[1].holodisk = true;

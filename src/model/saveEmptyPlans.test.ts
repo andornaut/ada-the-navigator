@@ -1,13 +1,13 @@
 import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { ensureDestination, ensureRouteEncounter } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { restoreSave } from "./save.ts";
 
 it("rejects obsolete nonempty route journals while preserving valid active saves", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.startGalaxy(1);
   const flight = model.state.flight!;
   ensureDestination(CONTENT, "growers", flight);
@@ -25,7 +25,7 @@ it("rejects obsolete nonempty route journals while preserving valid active saves
   const invalid = structuredClone(saved);
   invalid.flight!.combat!.emptyRoutePlans = ["workshop"];
   expect(restoreSave(invalid)).toBeNull();
-  const reset = new GameModel(CONTENT, supportEntropy, invalid);
+  const reset = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, invalid);
   expect(reset.state.flight).toBeNull();
   expect(reset.state.mode).toBe("home");
 

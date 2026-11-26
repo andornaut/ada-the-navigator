@@ -19,6 +19,7 @@ import { stardustPickupFrameSize, stardustPickupReach } from "../model/pickupBod
 import { hullOffset } from "../model/shipPhysics.ts";
 import { discoveryCacheGroup } from "../model/stardustPlacement.ts";
 import type { SpaceObject, Vec } from "../model/types.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import {
   acknowledgeCachePrimitive,
@@ -48,7 +49,7 @@ function production(file: string, names: readonly string[], globals: object) {
   return context;
 }
 function fixture() {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.prologueSeen = true;
   model.startGalaxy(1);
   model.state.dialogue = null;

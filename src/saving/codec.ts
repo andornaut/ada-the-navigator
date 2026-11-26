@@ -26,33 +26,43 @@ import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber, GameContent, Vec, Weapon, WeaponLevel } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
-import { validActivity } from "./activities.ts";
-import { validAndromedaProgress } from "./andromeda.ts";
-import { settlementById } from "./andromedaPlaces.ts";
-import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { holodisksHeld } from "./conversations.ts";
-import { enemyDefeated } from "./enemyAi.ts";
-import { validExplorationSites, validExplorationState } from "./explorationState.ts";
-import { flightWorldContext, validFlightTopology } from "./flightTopology.ts";
-import { validGalaxyGeography } from "./galaxyGeography.ts";
-import { ACTIVE_CHUNK_RADIUS, encounterOf, liveEnemy, persistentObject } from "./geography.ts";
+import { validActivity } from "../model/activities.ts";
+import { validAndromedaProgress } from "../model/andromeda.ts";
+import { settlementById } from "../model/andromedaPlaces.ts";
+import { ASTEROID_SHAPES } from "../model/asteroids.ts";
+import { holodisksHeld } from "../model/conversations.ts";
+import { enemyDefeated } from "../model/enemyAi.ts";
+import { validExplorationSites, validExplorationState } from "../model/explorationState.ts";
+import { flightWorldContext, validFlightTopology } from "../model/flightTopology.ts";
+import { validGalaxyGeography } from "../model/galaxyGeography.ts";
+import {
+  ACTIVE_CHUNK_RADIUS,
+  encounterOf,
+  liveEnemy,
+  persistentObject,
+} from "../model/geography.ts";
 import {
   validHostileStationEncounters,
   validHostileStationSites,
-} from "./hostileStationPersistence.ts";
-import { isLandmark } from "./landmarks.ts";
-import { validExplored } from "./map.ts";
-import { markerObjectTracked, validMarkerActors, validTargetKnowledge } from "./markerKnowledge.ts";
-import { readNeedleChapterProgress, validNeedleFlight } from "./needleRuntime.ts";
-import { worldOreFieldsNear } from "./oreFields.ts";
-import { validPhantomFlight, validPhantomProgress } from "./phantom.ts";
-import { pendingPhantomEncounterUnshared } from "./phantomRequiredPlans.ts";
-import { requiredPlanConsistent, requiredPlanObjects } from "./requiredEncounterPlans.ts";
-import { requiredRolePlanConsistent } from "./requiredRolePlans.ts";
-import { namesStation, stationById } from "./stations.ts";
-import { currentPage, openingScene, resolutionScene } from "./storybook.ts";
-import { readStoryCursor } from "./storyCursor.ts";
-import { resolveStoryScene } from "./storyScenes.ts";
+} from "../model/hostileStationPersistence.ts";
+import { isLandmark } from "../model/landmarks.ts";
+import { validExplored } from "../model/map.ts";
+import {
+  markerObjectTracked,
+  validMarkerActors,
+  validTargetKnowledge,
+} from "../model/markerKnowledge.ts";
+import { readNeedleChapterProgress, validNeedleFlight } from "../model/needleRuntime.ts";
+import { worldOreFieldsNear } from "../model/oreFields.ts";
+import { validPhantomFlight, validPhantomProgress } from "../model/phantom.ts";
+import { pendingPhantomEncounterUnshared } from "../model/phantomRequiredPlans.ts";
+import { requiredPlanConsistent, requiredPlanObjects } from "../model/requiredEncounterPlans.ts";
+import { requiredRolePlanConsistent } from "../model/requiredRolePlans.ts";
+import { SAVE_VERSION, type SaveRestore } from "../model/saveSchema.ts";
+import { namesStation, stationById } from "../model/stations.ts";
+import { currentPage, openingScene, resolutionScene } from "../model/storybook.ts";
+import { readStoryCursor } from "../model/storyCursor.ts";
+import { canReplayEarthChapter, resolveStoryScene } from "../model/storyScenes.ts";
 import type {
   AmmoCounts,
   AnyRequiredEncounterPlan,
@@ -65,19 +75,11 @@ import type {
   RequiredRoleEncounterPlan,
   SpaceObject,
   UpgradeLevels,
-} from "./types.ts";
-import { shipTuning } from "./upgrades.ts";
-import { chunkCoordinates, validVisitedPages } from "./visited.ts";
-import { clampAmmo, UPGRADE_WEAPONS } from "./weapons.ts";
-import { periodicWorldGrid, worldCellKey } from "./worldCells.ts";
-
-export function canReplayEarthChapter(
-  content: GameContent,
-  state: GameState,
-  galaxy: GalaxyNumber,
-): boolean {
-  return state.prologueSeen && Boolean(content.chapters[galaxy]) && state.progress[galaxy].resolved;
-}
+} from "../model/types.ts";
+import { shipTuning } from "../model/upgrades.ts";
+import { chunkCoordinates, validVisitedPages } from "../model/visited.ts";
+import { clampAmmo, UPGRADE_WEAPONS } from "../model/weapons.ts";
+import { periodicWorldGrid, worldCellKey } from "../model/worldCells.ts";
 
 function validEarthChoices(content: GameContent, galaxy: GalaxyNumber, value: unknown): boolean {
   if (value === undefined) {
@@ -101,9 +103,6 @@ function validEarthChoices(content: GameContent, galaxy: GalaxyNumber, value: un
     );
   });
 }
-
-/** The save format this build writes and reads. */
-export const SAVE_VERSION: GameState["version"] = 14;
 
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -1575,3 +1574,5 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
     return null;
   }
 }
+
+export const SAVE_RESTORE: SaveRestore = { restoreGameSave, restoreSave };

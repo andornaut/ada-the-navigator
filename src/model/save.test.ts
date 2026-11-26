@@ -4,17 +4,17 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
+import { restoreSave, SAVE_RESTORE, SAVE_VERSION } from "../saving/index.ts";
 import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { createEnemy, stepDebris, stepEnemy } from "./enemyAi.ts";
 import { GameModel } from "./game.ts";
-import { restoreSave, SAVE_VERSION } from "./save.ts";
 import { stationsNear } from "./stations.ts";
 import type { FlightState, GameState, PickupRelease, SpaceObject } from "./types.ts";
 
 describe("save boundary", () => {
   it("roundtrips real initial and launched states without sharing mutable references", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     expect(restoreSave(model.save())).toEqual(model.state);
     model.startGalaxy(1);
     playOpening(model);
@@ -23,7 +23,7 @@ describe("save boundary", () => {
     expect(restored?.flight).not.toBe(model.state.flight);
   });
   it("roundtrips the canonical periodic chart and rejects a different side length", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.startGalaxy(1);
     playOpening(model);
     const original = model.saveDocument();
@@ -34,7 +34,7 @@ describe("save boundary", () => {
     expect(restoreSave(original)).toBeNull();
   });
   it("rejects truncated, corrupt and unsupported data without throwing", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.startGalaxy(1);
     playOpening(model);
     for (const change of [
@@ -74,7 +74,7 @@ describe("save boundary", () => {
       ...["levels", "ammo", "weaponSwitchFor"].map((key) => ["flight", key]),
     ].map((path) => [path.join("."), path] as const),
   )("rejects a save without %s", (_, path) => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.startGalaxy(1);
     playOpening(model);
     const saved = JSON.parse(model.save()) as Record<string, unknown>;
@@ -86,7 +86,7 @@ describe("save boundary", () => {
     expect(restoreSave(saved)).toBeNull();
   });
   it("rejects a flight's single ammunition count", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.startGalaxy(1);
     playOpening(model);
     const saved = JSON.parse(model.save()) as { flight: Record<string, unknown> };
@@ -96,7 +96,7 @@ describe("save boundary", () => {
 });
 
 function combatSnapshot() {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.startGalaxy(1);
   playOpening(model);
   if (!model.state.flight) {
@@ -564,7 +564,7 @@ describe("enemy orientation save boundary", () => {
 
 describe("asteroid save boundary", () => {
   it("keeps an Art rock and rejects a rock shape outside Art's catalog", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.startGalaxy(1);
     playOpening(model);
     const saved = JSON.parse(model.save()) as GameState;
@@ -587,7 +587,7 @@ describe("asteroid save boundary", () => {
   });
 
   it("keeps whale debris stone shapes and ore field rocks, rejecting misplaced ones", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.startGalaxy(1);
     playOpening(model);
     const saved = JSON.parse(model.save()) as GameState;
@@ -625,7 +625,7 @@ describe("asteroid save boundary", () => {
   });
 
   it("keeps a story scene and a replay scene, rejecting unknown ones", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.startGalaxy(1);
     playOpening(model);
     const saved = JSON.parse(model.save()) as GameState;
@@ -780,7 +780,7 @@ describe("current generation save boundary", () => {
 
 describe("delivery save boundary", () => {
   it("rejects a held delivery or board offer to a story place that takes none", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.state.unlocked = [1, 2, 3];
     model.startGalaxy(3);
     playOpening(model);

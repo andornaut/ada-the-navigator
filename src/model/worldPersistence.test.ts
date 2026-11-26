@@ -3,17 +3,17 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { restoreSave, SAVE_RESTORE, SAVE_VERSION } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { flightEncounterSeed } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
-import { restoreSave, SAVE_VERSION } from "./save.ts";
 import type { SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function model() {
-  const game = new GameModel(CONTENT, supportEntropy);
+  const game = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   game.state.prologueSeen = true;
   game.state.progress[1].opened = true;
   game.state.progress[1].introduced = true;
@@ -129,7 +129,7 @@ describe("persistent geography fresh entry", () => {
     expect(second.seed).not.toBe(first.seed);
     expect(second.seed).toBe(game.state.progress[3].geography!.seed);
     game.returnHome();
-    const resumed = new GameModel(CONTENT, supportEntropy, game.save());
+    const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, game.save());
     resumed.startGalaxy(1);
     expect(resumed.state.flight!.seed).toBe(first.seed);
     expect(resumed.state.progress[1]).toEqual(chart);

@@ -8,9 +8,10 @@ import { freshGalaxyGeography } from "../model/galaxyGeography.ts";
 import { GameModel } from "../model/game.ts";
 import { stationsNear } from "../model/stations.ts";
 import { type StationService, stationSpecialty } from "../model/stationServices.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "./launchSeeds.ts";
 export function dockedStock(galaxy: GalaxyNumber = 1, specialty: StationService = "weaponsAmmo") {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.selectedGalaxy = galaxy;
   model.state.unlocked = [1, galaxy];
   model.state.started = true;

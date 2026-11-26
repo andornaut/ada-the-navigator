@@ -5,6 +5,7 @@ import * as profiles from "../data/enemyActorDefinition.ts";
 import { ROUTE } from "../data/galaxies.ts";
 import { SWARM_GROUP_MINIMUM } from "../data/spawnerCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { GameModel } from "./game.ts";
@@ -14,11 +15,10 @@ import {
   worldRetainedPackMembers,
   worldSyncFlightRegion,
 } from "./geography.ts";
-import { restoreSave } from "./save.ts";
 import type { SpaceObject } from "./types.ts";
 
 function fixture(galaxy: GalaxyNumber = 2) {
-  const game = new GameModel(CONTENT, supportEntropy);
+  const game = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   game.state.unlocked = [...ROUTE];
   game.startGalaxy(galaxy);
   playOpening(game);
@@ -89,7 +89,7 @@ it.each([2, 5, 6] as const)(
     const random = vi.spyOn(crypto, "getRandomValues");
     random.mockClear();
     try {
-      const resumed = new GameModel(CONTENT, supportEntropy, saved);
+      const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, saved);
       resumed.continueGame();
       const continued = resumed.state.flight!;
       if (galaxy === 2) {
@@ -132,7 +132,7 @@ it("keeps defender casualty tombstones and role denominators through paging and 
   worldRecordObjectRemoval({}, CONTENT, casualty, flight);
   flight.objects = actors.filter((object) => object !== casualty);
   worldSyncFlightRegion({}, CONTENT, flight);
-  const resumed = new GameModel(CONTENT, supportEntropy, saved);
+  const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, saved);
   resumed.continueGame();
   const continued = resumed.state.flight!;
   expect(continued.world.notables[casualty.id]).toBeNull();

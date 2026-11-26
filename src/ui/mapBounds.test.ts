@@ -5,6 +5,7 @@ import type { GalaxyNumber } from "../data/types.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
 import { GameModel } from "../model/game.ts";
 import { landmarkSites } from "../model/landmarks.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import {
   fitRegion,
@@ -29,7 +30,7 @@ const TOLERANCE = 1e-3;
 
 /** Galaxy `galaxy`'s Map with Ada beside the square's corner and every landmark charted. */
 function cornerMap(galaxy: GalaxyNumber) {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.unlocked = [...GALAXIES];
   model.startGalaxy(galaxy);
   playOpening(model);

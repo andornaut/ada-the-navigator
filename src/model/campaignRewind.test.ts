@@ -1,14 +1,14 @@
 import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { inspectAdaSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { openRewoundCampaign, rewindCampaign } from "./campaignRewind.ts";
 import { GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
-import { inspectAdaSave } from "./saveIntegrity.ts";
 
 it("rewinds the campaign while keeping persisted equipment, ore, geography and earned credits", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.startGalaxy(1);
   const save = model.saveDocument();
   save.unlocked = [1, 2, 3, 4, 5, 6];
@@ -73,7 +73,7 @@ it("rewinds the campaign while keeping persisted equipment, ore, geography and e
     stage: 0,
   });
   expect(rewind.achievements).not.toBe(save.achievements);
-  const next = openRewoundCampaign(CONTENT, supportEntropy, save);
+  const next = openRewoundCampaign(CONTENT, supportEntropy, SAVE_RESTORE, save);
   expect(next.state.achievements.unlocked).toEqual(save.achievements.unlocked);
   expect(inspectAdaSave(next.save()).status).toBe("valid");
   expect(save.flight!.cargo).toBe(67);
@@ -81,18 +81,18 @@ it("rewinds the campaign while keeping persisted equipment, ore, geography and e
 });
 
 it("persists the new Sunflower Earth opening and reloads it through Continue", () => {
-  const old = new GameModel(CONTENT, supportEntropy);
+  const old = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   old.startGalaxy(1);
   const source = old.saveDocument();
   source.prologueSeen = true;
-  const next = openRewoundCampaign(CONTENT, supportEntropy, source);
+  const next = openRewoundCampaign(CONTENT, supportEntropy, SAVE_RESTORE, source);
   expect(next.screen).toBe("story");
   expect(next.state.flight).toBeNull();
   expect(next.state.prologueSeen).toBe(true);
   expect(next.storyView?.page).toBeDefined();
   const checks = inspectAdaSave(next.save());
   expect(checks.status).toBe("valid");
-  const resumed = new GameModel(CONTENT, supportEntropy, next.save());
+  const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, next.save());
   expect(resumed.canContinue).toBe(true);
   resumed.continueGame();
   expect(resumed.storyView?.page).toEqual(next.storyView?.page);

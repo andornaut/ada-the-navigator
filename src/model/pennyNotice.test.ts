@@ -4,6 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { ConversationDirector, type ConversationFacts, pennyPoints } from "./conversations.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
@@ -37,7 +38,7 @@ const facts: ConversationFacts = {
 };
 
 function fixture() {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   const flight = createFlight(CONTENT, 1, 7, { known: [] });
   flight.objects = [
     {

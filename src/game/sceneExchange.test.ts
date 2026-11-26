@@ -8,6 +8,7 @@ import { CONTENT } from "../data/content.ts";
 import type { ImmediateExchangeOrder } from "../model/exchange.ts";
 import { GameModel } from "../model/game.ts";
 import { gainSnapshot } from "../model/itemGains.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { ModelFeedback } from "./feedback.ts";
 
@@ -25,7 +26,7 @@ const code = ts.transpileModule(`(${declaration.getText(source).replace(/^export
 }).outputText;
 
 function bridge() {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.prologueSeen = true;
   model.startGalaxy(1);
   model.state.docked = "hub";

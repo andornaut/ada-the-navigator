@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY, worldAmmoPack } from "../data/economy.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { rollAmmoDrop, rollRockAmmoDrop } from "./drops.ts";
 import { createFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { restoreSave } from "./save.ts";
 import { buy, itemAbout, onSale, packCount, shopRow } from "./shop.ts";
 import { applyUpgrade } from "./upgradeDrops.ts";
 import { newEconomy } from "./upgrades.ts";
@@ -29,7 +29,7 @@ const PACKS = [
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
 function launched() {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.startGalaxy(1);
   playOpening(model);
   model.state.flight!.objects = [];

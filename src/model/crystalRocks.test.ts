@@ -5,13 +5,13 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { ASTEROID_SHAPES, galaxyCrystals, placedRockCrystals } from "./asteroids.ts";
 import { createFlight, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { ORE_FIELD_ROLE, oreFieldInCell } from "./oreFields.ts";
 import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
-import { restoreSave } from "./save.ts";
 import { planRegion, type SpawnPlacement } from "./spawnPlanner.ts";
 import { chunkSpawnRegion, spawnRules } from "./spawnTargets.ts";
 import { stationsNear } from "./stations.ts";
@@ -190,7 +190,7 @@ describe("crystal rock selection", () => {
 
 describe("crystal rocks across Continue", () => {
   it("keeps every rock's flag in the save and on the same seed's regenerated chunks", () => {
-    const game = new GameModel(CONTENT, supportEntropy);
+    const game = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     game.state.prologueSeen = true;
     game.state.progress[1].opened = true;
     game.state.progress[1].introduced = true;
@@ -225,7 +225,7 @@ describe("crystal rocks across Continue", () => {
   });
 
   it("rejects a saved rock with an unknown crystals flag", () => {
-    const game = new GameModel(CONTENT, supportEntropy);
+    const game = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     game.state.prologueSeen = true;
     game.state.progress[1].opened = true;
     game.startGalaxy(1);

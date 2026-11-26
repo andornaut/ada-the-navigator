@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { ensureDestination } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { restoreSave } from "./save.ts";
 
 function atHub() {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.prologueSeen = true;
   model.state.unlocked = [1, 2];
   Object.assign(model.state.progress[2], {
@@ -65,7 +65,7 @@ describe("activity completion eligibility and run lifecycle", () => {
   });
 
   it("keeps a courier's exact run on Continue and resets it only when its flight ends", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.state.prologueSeen = true;
     model.state.unlocked = [1, 5];
     model.startGalaxy(5);

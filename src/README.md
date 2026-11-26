@@ -104,8 +104,8 @@ unavailable, play continues with a nonblocking save warning. The warning clears
 after a successful write; failed writes preserve the last persisted snapshot.
 
 The flight snapshot is stored in `localStorage` under one key
-([`src/saving/index.ts`](saving/index.ts)), validated and migrated by
-[`src/model/save.ts`](model/save.ts). Device settings (move stick, aim stick,
+([`src/saving/index.ts`](saving/index.ts)), validated by the Saving codec. Device
+settings (move stick, aim stick,
 sound, FPS counter and reduced motion) are stored under their own keys
 ([`src/ui/deviceSettings.ts`](ui/deviceSettings.ts)), outside the save.
 

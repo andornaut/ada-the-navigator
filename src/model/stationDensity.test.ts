@@ -3,12 +3,12 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { settlementsNear } from "./andromedaPlaces.ts";
 import { ensureDestination, ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { worldSettlementsNear } from "./legacySettlements.ts";
-import { restoreSave } from "./save.ts";
 import {
   flightStationContext,
   stationById,
@@ -102,7 +102,7 @@ describe("additive station density", () => {
   });
 
   it("round-trips a genuinely docked infill station without growing the save schema", () => {
-    const model = new GameModel(CONTENT, supportEntropy);
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.state.prologueSeen = true;
     model.startGalaxy(1);
     model.state.dialogue = null;
@@ -123,7 +123,7 @@ describe("additive station density", () => {
   it.each([false, true])(
     "suppresses infill beside a retained destination (resident=%s) consistently",
     (resident) => {
-      const model = new GameModel(CONTENT, supportEntropy);
+      const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
       model.state.prologueSeen = true;
       model.startGalaxy(1);
       model.state.dialogue = null;

@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { createUnpopulatedFlight, populateRequiredChapterFlight } from "./flight.ts";
@@ -11,7 +12,7 @@ import { planNeedleExit } from "./needleExitPlan.ts";
 import { initNeedle } from "./needleRuntime.ts";
 
 it("initializes authored G4 sites and swarm before any optional chunks without changing known sites", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   const progress = model.state.progress[4];
   const flight = createUnpopulatedFlight(CONTENT, 4, 173, model.state.economy, 301);
   let ids: string[] = [];
@@ -43,7 +44,7 @@ it("initializes authored G4 sites and swarm before any optional chunks without c
 });
 
 it("keeps actual G4 launch knowledge queries read-only and retains exact chapter actors on Continue", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.unlocked = [1, 3, 4];
   model.state.prologueSeen = true;
   model.state.progress[4].opened = true;
@@ -63,14 +64,14 @@ it("keeps actual G4 launch knowledge queries read-only and retains exact chapter
   void model.quests;
   void model.contextQuestDetails;
   expect(model.state).toEqual(before);
-  const resumed = new GameModel(CONTENT, supportEntropy, model.save());
+  const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, model.save());
   resumed.continueGame();
   expect(resumed.state.flight).toEqual(flight);
   expect(resumed.state.progress[4].known).toEqual(known);
 });
 
 it("excludes a real seeded optional footprint at an authored swarm's current hull across population", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   const progress = model.state.progress[4];
   const baseline = createUnpopulatedFlight(CONTENT, 4, 173, model.state.economy, 301);
   populateRequiredChapterFlight(CONTENT, progress, baseline, () => {
@@ -102,7 +103,7 @@ it("excludes a real seeded optional footprint at an authored swarm's current hul
 });
 
 it("does not recreate the authored exit encounter on a completed-holodisk fresh entry", () => {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.unlocked = [1, 3, 4];
   model.state.prologueSeen = true;
   model.state.progress[4].opened = true;

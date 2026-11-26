@@ -4,6 +4,7 @@ import { SUPPLY_ITEMS } from "../data/activities.ts";
 import { CONTENT } from "../data/content.ts";
 import { carriedItemName } from "../data/itemNames.ts";
 import { questReward } from "../data/questRewards.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { questRoute } from "../ui/questsScreen.ts";
 import { ensureDestination } from "./flight.ts";
@@ -12,7 +13,7 @@ import { fill } from "./shop.ts";
 import type { HeldJob } from "./types.ts";
 
 function modelAt(galaxy: 1 | 2) {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.unlocked = [1, 2, 3];
   model.startGalaxy(galaxy);
   const progress = model.state.progress[galaxy];

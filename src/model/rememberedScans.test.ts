@@ -4,6 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { questReward } from "../data/questRewards.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
@@ -11,7 +12,7 @@ import { landmarkById, landmarkLabel, landmarkSites } from "./landmarks.ts";
 import { stationsNear } from "./stations.ts";
 
 function fixture() {
-  const model = new GameModel(CONTENT, supportEntropy);
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.seenConversations.push(...CONVERSATIONS.map(({ id }) => id));
   model.startGalaxy(1);
   const flight = model.state.flight!;
