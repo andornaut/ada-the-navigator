@@ -67,13 +67,11 @@ export const STATUS_TIMING = {
   // One hit flash, at most one start per flashEveryMs.
   flashEveryMs: 334,
   flashMs: 100,
-  // Keep gains visible longer before the existing fade. Ore debits retain their cadence.
-  gainExtraHoldMs: 300,
   // The low pulse's cycle.
   pulseMs: 1000,
-  // The +N tick: hold, then rise and fade; reduced motion holds longer and only fades.
-  tick: { fadeMs: 300, holdMs: 300 },
-  tickReduced: { fadeMs: 150, holdMs: 450 },
+  // Resource ticks hold, then rise and fade. Reduced motion holds longer and fades in place.
+  tick: { fadeMs: 300, holdMs: 600 },
+  tickReduced: { fadeMs: 150, holdMs: 750 },
 } as const;
 
 export interface ShieldInput {
@@ -600,9 +598,8 @@ function createCounter(
     node.setAttribute("aria-hidden", "true");
     node.textContent = `${total < 0 ? "-" : "+"}${pillCount(Math.abs(total))}`;
     slot.append(node);
-    const timing = reduced ? STATUS_TIMING.tickReduced : STATUS_TIMING.tick;
-    const holdMs = timing.holdMs + (amount > 0 ? STATUS_TIMING.gainExtraHoldMs : 0);
-    const duration = holdMs + timing.fadeMs;
+    const { fadeMs, holdMs } = reduced ? STATUS_TIMING.tickReduced : STATUS_TIMING.tick;
+    const duration = holdMs + fadeMs;
     const hold = holdMs / duration;
     const rise = reduced ? "0px" : units(-STATUS_PILL.tick.rise);
     const animation = node.animate(

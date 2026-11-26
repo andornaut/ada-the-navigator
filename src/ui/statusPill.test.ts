@@ -848,11 +848,12 @@ describe("status pill count", () => {
       expect(count("ore").animations).toHaveLength(0);
       const animation = tick()!.animations[0]!;
       expect(animation.options).toEqual({
-        duration: 600,
+        duration: 900,
         fill: "forwards",
       });
       expect(animation.frames).toEqual(
         expect.arrayContaining([
+          expect.objectContaining({ offset: (reduced ? 750 : 600) / 900, opacity: 1 }),
           expect.objectContaining({
             offset: 1,
             translate: reduced ? "0 0px" : `0 ${units(-STATUS_PILL.tick.rise)}`,
