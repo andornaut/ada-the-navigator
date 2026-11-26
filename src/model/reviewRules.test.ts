@@ -49,14 +49,15 @@ describe("reviewed rules", () => {
     expect(flight.shield).toBe(shield - 1);
   });
 
-  it("deals bump damage from generated play rocks of every kind, 1 a bump, at most every 0.5 s", () => {
-    // The nearest generated small, medium and large rock and moving rock of one launch.
-    const kindOf = (object: SpaceObject) =>
-      object.velocity
-        ? "drifting"
-        : `${object.kind}:${object.asteroid ? ASTEROID_SHAPES.get(object.asteroid)?.size : ""}`;
-    const kinds = new Set<string>();
-    for (const expectedKind of ["rock:small", "rock:medium", "rock:large", "drifting"]) {
+  // The nearest generated small, medium and large rock and moving rock of one launch, each kind
+  // in its own test.
+  const kindOf = (object: SpaceObject) =>
+    object.velocity
+      ? "drifting"
+      : `${object.kind}:${object.asteroid ? ASTEROID_SHAPES.get(object.asteroid)?.size : ""}`;
+  it.each(["rock:small", "rock:medium", "rock:large", "drifting"])(
+    "deals bump damage from generated play rocks of kind %s, 1 a bump, at most every 0.5 s",
+    (expectedKind) => {
       seedLaunches(173);
       const model = new GameModel(CONTENT);
       model.startGalaxy(1);
@@ -76,11 +77,18 @@ describe("reviewed rules", () => {
         )[0]!;
       expect(target, expectedKind).toBeDefined();
       expect(target.hp).toBeGreaterThan(0);
-      const kind = kindOf(target);
+      expect(kindOf(target)).toBe(expectedKind);
       if (expectedKind === "drifting") {
         expect(Math.hypot(target.velocity!.x, target.velocity!.y)).toBeGreaterThan(0);
       }
-      kinds.add(kind);
+      // The first step generated the region. Its other rocks, ships and debris are cleared, the
+      // debris recorded as removed so it does not refill, and Ada flies into the target alone.
+      for (const object of flight.objects.filter(({ kind }) => kind === "debris")) {
+        flight.world.notables[object.id] = null;
+      }
+      flight.objects = flight.objects.filter(
+        (object) => object === target || !["debris", "enemy", "rock"].includes(object.kind),
+      );
       const drops: number[] = [];
       for (let frame = 0; frame < 600 && model.state.mode === "space"; frame++) {
         const dx = target.x - flight.player.x;
@@ -99,9 +107,8 @@ describe("reviewed rules", () => {
           BUMP_DAMAGE.seconds - 1e-9,
         );
       }
-    }
-    expect(kinds).toEqual(new Set(["drifting", "rock:large", "rock:medium", "rock:small"]));
-  });
+    },
+  );
 
   it("uses a shorter base time for ordinary speech while preserving notice time", () => {
     expect(lineDuration("")).toBe(3);
