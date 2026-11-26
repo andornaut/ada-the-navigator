@@ -190,6 +190,9 @@ export function normalizeHeavy(source: HeavyCraft): HeavyCraft {
       : {}),
     ...(model.capped ? { capped: model.capped.map((part) => scalePart(factor, part)) } : {}),
     ...(model.top ? { top: scaleTop(model.top) } : {}),
+    ...(model.muzzle
+      ? { muzzle: [model.muzzle[0] * factor, model.muzzle[1] * factor, model.muzzle[2] * factor] }
+      : {}),
     ...(model.jets
       ? {
           jets: {
@@ -201,16 +204,18 @@ export function normalizeHeavy(source: HeavyCraft): HeavyCraft {
       : {}),
   });
   const ratio = enemySizeRatio(source.name);
+  const scaleHardpoint = ({ id, model, offset }: HeavyCraft["hardpoints"][number]) => ({
+    id,
+    model: scaleModel(model),
+    offset: [
+      (offset[0] * source.sizeRatio * factor) / ratio,
+      (offset[1] * source.sizeRatio * factor) / ratio,
+    ] as [number, number],
+  });
   const result: HeavyCraft = {
     ...source,
-    hardpoints: source.hardpoints.map(({ id, model, offset }) => ({
-      id,
-      model: scaleModel(model),
-      offset: [
-        (offset[0] * source.sizeRatio * factor) / ratio,
-        (offset[1] * source.sizeRatio * factor) / ratio,
-      ],
-    })),
+    hardpoints: source.hardpoints.map(scaleHardpoint),
+    ...(source.lasers ? { lasers: source.lasers.map(scaleHardpoint) } : {}),
     hull: source.hull.map((part) => scalePart(factor, part)),
     hullTop: source.hullTop * factor,
     sizeRatio: ratio,

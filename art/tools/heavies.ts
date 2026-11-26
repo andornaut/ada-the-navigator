@@ -4,7 +4,7 @@
 // export, tools/enemy-hardpoints.json, must agree wherever it lists one. Each hardpoint model is
 // drawn around its own origin. Contract: art/heavies.md.
 // Usage: node art/tools/heavies.ts [--offsets <file.json>] [--out <dir>]
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 
@@ -126,6 +126,9 @@ export type Model = {
   capped?: HeavyPart[];
   // Engine jet mouths around the origin.
   jets?: { mouths: [number, number][]; width: number; z: number };
+  // A fixed front Laser's shot origin around the origin, with its absolute height. It fires
+  // along the hull heading only.
+  muzzle?: Point;
 };
 
 export type HeavyCraft = {
@@ -142,6 +145,8 @@ export type HeavyCraft = {
   // Art's hardpoint layout, in output order. `offset` is [x, y] in fractions of hull width in
   // the hull's local frame (-y forward, +x starboard).
   hardpoints: { id: string; offset: [number, number]; model: Model }[];
+  // Fixed front Lasers at the prow, in the same shape, staged apart from the shipped layout.
+  lasers?: { id: string; offset: [number, number]; model: Model }[];
   // The hull never turns: frame 0 is the hull layer for every heading.
   fixed?: true;
   // Weapon mounts filled by position tier: the fill order, the tiers, and each weapon a mount
@@ -1217,6 +1222,48 @@ const archieCommand: Model = (() => {
   };
 })();
 
+// A fixed front Laser's flush port on a prong: a bright emitter panel in a thin dark rim on the
+// deck, its forward face the emitter. Destroyed: a scorched stump with a breach and one ember, as
+// a destroyed mount.
+const archiePort: Model = (() => {
+  const rim = { key: "port", z: ARCHIE_Z + 1.2 };
+  const stump = { key: "stump", z: ARCHIE_Z + 0.5 };
+  return {
+    role: "turret",
+    z: ARCHIE_Z,
+    intact: [
+      {
+        plan: box(-5, -6, 5, 6),
+        z0: ARCHIE_Z,
+        z1: rim.z,
+        top: visor,
+        side: visorSide,
+        key: rim.key,
+      },
+      {
+        plan: box(-3.6, -6.4, 3.6, 4.6),
+        z0: ARCHIE_Z + 0.3,
+        z1: ARCHIE_Z + 1.4,
+        top: amber,
+        side: amberSide,
+        on: rim.key,
+      },
+    ],
+    destroyed: [
+      {
+        plan: box(-5, -6, 5, 4),
+        z0: ARCHIE_Z,
+        z1: stump.z,
+        top: scorch,
+        side: scorchSide,
+        key: stump.key,
+      },
+      ...wreck(0, -1, 4.5, ARCHIE_Z, stump, true),
+    ],
+    muzzle: [0, -6.4, ARCHIE_Z + 0.85],
+  };
+})();
+
 export const archie: HeavyCraft = normalizeHeavy({
   name: "archie",
   title: "Archie",
@@ -1293,6 +1340,11 @@ export const archie: HeavyCraft = normalizeHeavy({
     tiers: CAPITAL_TIERS,
     weapons: weapons(ARCHIE_Z, CAPITAL_POOL),
   },
+  // One port on each prong, behind its tip.
+  lasers: [
+    { id: "prow-left", offset: [-0.13, -0.6], model: archiePort },
+    { id: "prow-right", offset: [0.13, -0.6], model: archiePort },
+  ],
 });
 
 // Retaliator: its gun is the hull weapon's aim mount, not a hardpoint. Held out of the export
@@ -1560,8 +1612,10 @@ const yaws = Array.from({ length: ENEMY_HEADINGS }, (_, yaw) => yaw);
 
 // Douglas-Peucker tolerances for the drawn silhouettes, in frame px: each sprite takes the first
 // that passes the checks. Only the destroyed deck turret stump at heading 7, whose ragged scorch
-// paint the cell grid quantizes, needs 0.3.
+// paint the cell grid quantizes, needs 0.3. The small prow Laser ports take the fleet's part
+// tolerances.
 const SILHOUETTE_TOLERANCES = [0.4, 0.3];
+const PORT_TOLERANCES = [0.4, 0.3, 0.2, 0.1];
 
 // One sprite drawn and traced: the SVG and its drawn silhouette in sprite frame px.
 function sprite(
@@ -1569,9 +1623,10 @@ function sprite(
   size: number,
   pivotZ: number,
   list: readonly Face[],
+  tolerances: readonly number[] = SILHOUETTE_TOLERANCES,
 ): { svg: string; collision: V2[][] } {
   const drawn = fills(size, pivotZ, list);
-  const { collision, tips } = traceEnemyFills(id, drawn, [size, size], SILHOUETTE_TOLERANCES);
+  const { collision, tips } = traceEnemyFills(id, drawn, [size, size], tolerances);
   return { collision, svg: svg(size, id, drawn, tips) };
 }
 
@@ -1662,7 +1717,13 @@ export function build(
       bases[state] = [];
       for (const yaw of yaws) {
         const file = `${name}-${id}-${state}-${yaw}`;
-        const base = sprite(`${title} ${id} ${state} ${yaw}`, size, 0, byYaw[yaw]!);
+        const base = sprite(
+          `${title} ${id} ${state} ${yaw}`,
+          size,
+          0,
+          byYaw[yaw]!,
+          model.muzzle ? PORT_TOLERANCES : SILHOUETTE_TOLERANCES,
+        );
         files.set(`${file}.svg`, base.svg);
         // The sprite centre sits on the anchor in the hull frame.
         const [ax, ay] = hardpointAnchor(frame, yaw, origin, model.z);
@@ -1831,6 +1892,7 @@ export function hardpointsFile(
       role: model.role,
       states: states(model),
       top: fixedTop(model),
+      ...(model.muzzle ? { aim: "facing" } : {}),
       ...(craft.mounts ? { capped: model.capped !== undefined } : {}),
     })),
     ...(craft.mounts
@@ -1860,6 +1922,18 @@ export function hardpointsFile(
           id,
           anchor: hardpointAnchor(craft.frame, yaw, origin, model.z),
           ...(z === undefined ? {} : { pivot: hardpointAnchor(craft.frame, yaw, origin, z) }),
+          ...(model.muzzle
+            ? {
+                muzzles: [
+                  hardpointAnchor(
+                    craft.frame,
+                    yaw,
+                    [origin[0] + model.muzzle[0], origin[1] + model.muzzle[1]],
+                    model.muzzle[2],
+                  ),
+                ],
+              }
+            : {}),
           ...(bases
             ? {
                 collision: Object.fromEntries(
@@ -2192,6 +2266,53 @@ function packInstalledHeavyParts(files: Map<string, string>, entries: readonly E
   return applyHeavySheets(files, applyHeavySheets(files, entries, parts), hull);
 }
 
+// Archie's fixed front Lasers, staged apart from the shipped layout: the base frames of every
+// `lasers` hardpoint packed in one sheet of nested roots, a set of 16 to a row, the hardpoints
+// file with them after the shipped hardpoints, and the switch rows and sidecar in
+// art/archie-prow-rows.json.
+const PROW_ROWS = fileURLToPath(new URL("../archie-prow-rows.json", import.meta.url));
+
+function prowFiles(craft: HeavyCraft): { files: Map<string, string>; rows: string } {
+  const lasers = craft.lasers ?? [];
+  const ids = new Set(lasers.map(({ id }) => id));
+  if (craft.hardpoints.some(({ id }) => ids.has(id)))
+    throw new Error(`${craft.name}: lasers twice`);
+  // The shipped placement already checked the catalog's hardpoints; the Lasers are not in it yet.
+  const armed = { ...craft, hardpoints: [...craft.hardpoints, ...lasers] };
+  const built = build(armed, place({ version: 1, archetypes: {} }, armed));
+  const sets = built.entries.filter((entry) => ids.has(entry.hardpoint as string));
+  const sheet = `${craft.name}-prow-sheet.svg`;
+  const path = `/art/enemies/${sheet}`;
+  const size = sets[0]!.width as number;
+  const roots = sets.map((row, index) => {
+    if (row.width !== size) throw new Error(`${row.id}: prow frames differ in size`);
+    const file = `${row.id.slice("enemy-".length)}.svg`;
+    const standalone = svgText(built.files.get(file)!).trimEnd();
+    const [x, y] = [(index % ENEMY_HEADINGS) * size, Math.floor(index / ENEMY_HEADINGS) * size];
+    return `<svg id="${row.id}" x="${x}" y="${y}" ${standalone.slice("<svg ".length)}`;
+  });
+  const [width, height] = [size * ENEMY_HEADINGS, size * (sets.length / ENEMY_HEADINGS)];
+  const files = new Map([
+    [
+      sheet,
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${roots.join("")}</svg>\n`,
+    ],
+    [`${craft.name}-prow.json`, built.files.get(`${craft.name}-hardpoints.json`)!],
+  ]);
+  const rows = json({
+    core: {
+      assets: sets.map((row) => ({ ...row, path, svgSheet: true })),
+      sidecars: {
+        [craft.name]: {
+          jets: `/art/enemies/${craft.name}-jets.json`,
+          hardpoints: `/art/enemies/${craft.name}-prow.json`,
+        },
+      },
+    },
+  });
+  return { files, rows };
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const flag = (name: string) => {
@@ -2204,10 +2325,8 @@ async function main() {
   const offsets = readOffsets(JSON.parse(readFileSync(offsetsPath, "utf8")));
   const dir = out === undefined ? `${root}public/art/enemies/` : `${out}/`;
   // Every craft is placed before anything is written, so a mismatch writes nothing.
-  const results = drawn.map((craft) => {
-    const styled = restrainHeavyHull(craft);
-    return build(styled, place(offsets, styled));
-  });
+  const styledCrafts = drawn.map((craft) => restrainHeavyHull(craft));
+  const results = styledCrafts.map((styled) => build(styled, place(offsets, styled)));
   mkdirSync(dir, { recursive: true });
   const files = new Map<string, string>();
   const entries: Entry[] = [];
@@ -2234,6 +2353,23 @@ async function main() {
       outputEntries.map((entry) => storedAt(paths, entry)),
     );
     mergeSidecars("core", ownsSidecar, sidecarsIn(paths));
+    for (const craft of styledCrafts.filter(({ lasers }) => lasers?.length)) {
+      const staged = prowFiles(craft);
+      const written = new Map<string, string>();
+      for (const [file, content] of staged.files) {
+        const path = `${dir}${file}`;
+        written.set(
+          file,
+          file.endsWith(".json")
+            ? await format(content, { ...(await resolveConfig(path)), filepath: path })
+            : content,
+        );
+      }
+      writeOnce("/art/enemies/", new Map(), written);
+      if (!existsSync(PROW_ROWS) || readFileSync(PROW_ROWS, "utf8") !== staged.rows) {
+        writeFileSync(PROW_ROWS, staged.rows);
+      }
+    }
   } else {
     for (const [file, text] of files) {
       writeFileSync(`${dir}${file}`, text);
