@@ -210,7 +210,8 @@ export function engineJets(jets: EngineJets, level: number): ShipJets {
 
 /**
  * Travel selects the forward or reverse geometry and its layers; a light field recolours each layer
- * with its same-named field layer and keeps the geometry's widths and lengths.
+ * with its same-named field layer and keeps the geometry's widths and lengths. Callers may
+ * replace the selected outer and core colors.
  */
 export function travelJets(
   main: EngineJets | undefined,
@@ -218,6 +219,7 @@ export function travelJets(
   fieldLevels: readonly (readonly JetLayer[])[] | undefined,
   level: number,
   direction: "forward" | "reverse" | undefined,
+  colorsByRole?: Readonly<Partial<Record<"core" | "outer", JetLayer["colors"]>>>,
 ): ShipJets | undefined {
   const geometry = direction === "reverse" ? reverse : main;
   if (!geometry) {
@@ -231,7 +233,11 @@ export function travelJets(
     if (!colors) {
       return undefined;
     }
-    layers.push({ ...layer, colors });
+    const override =
+      colorsByRole && (layer.name === "core" || layer.name === "outer")
+        ? colorsByRole[layer.name]
+        : undefined;
+    layers.push({ ...layer, colors: override ?? colors });
   }
   return { ...engineJets(geometry, level), layers };
 }

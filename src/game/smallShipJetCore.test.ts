@@ -48,6 +48,50 @@ describe("player jet cores at every display size", () => {
     },
   );
 
+  it.each(["forward", "reverse"] as const)(
+    "recolors only the selected %s outer and core without changing the generated plumes",
+    (direction) => {
+      const colors = {
+        core: [0x64caff, 0x64caff],
+        outer: [0x2585d0, 0x2585d0],
+      } as const;
+      for (const field of [undefined, LIGHT_FIELD.jets.shipLevels]) {
+        const control = travelJets(main, reverse, field, 1, direction)!;
+        const flight = travelJets(main, reverse, field, 1, direction, colors)!;
+        expect(flight).toEqual({
+          ...control,
+          layers: control.layers.map((layer) =>
+            layer.name === "core" || layer.name === "outer"
+              ? { ...layer, colors: colors[layer.name] }
+              : layer,
+          ),
+        });
+        for (const size of [24, 42, 84]) {
+          const frame = { ...display(size), includeOccluders: true };
+          for (const fraction of [0.3, 1]) {
+            const shown = flight.layers.filter(
+              ({ maxDisplay }) => maxDisplay === undefined || size <= maxDisplay,
+            );
+            const expected = [0, 1].flatMap(() =>
+              shown.map((layer) => layerColor(layer, fraction)),
+            );
+            const plumes = jetPlumes(flight, frame, 56, fraction);
+            expect(plumes).toEqual(
+              jetPlumes(control, frame, 56, fraction).map((plume, index) => ({
+                ...plume,
+                color: expected[index],
+              })),
+            );
+          }
+        }
+      }
+      const missingCore = LIGHT_FIELD.jets.shipLevels.map((layers) =>
+        layers.filter(({ name }) => name !== "core"),
+      );
+      expect(travelJets(main, reverse, missingCore, 1, direction, colors)).toBeUndefined();
+    },
+  );
+
   it("fills the core through static cues and Canvas at the map's small size", () => {
     const jets = staticShipJets(main, LIGHT_FIELD.jets.shipLevels, 1)!;
     const fills: string[] = [];

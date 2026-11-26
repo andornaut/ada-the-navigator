@@ -202,6 +202,11 @@ import { preloadTouchChrome } from "./touchChrome.ts";
 import type { StrandedCraftArt, TowLine } from "./towArt.ts";
 import type { UpgradePickupArt } from "./upgradePickup.ts";
 
+const ENGINE_ONE_FLIGHT_JET_COLORS = {
+  core: [0x64caff, 0x64caff],
+  outer: [0x2585d0, 0x2585d0],
+} as const;
+
 export class GameScene extends Scene {
   // Read from the save once the launch's update check lets the first screen show (build).
   model!: GameModel;
@@ -1258,6 +1263,7 @@ export class GameScene extends Scene {
       this.light ? LIGHT_FIELD.jets.shipLevels : undefined,
       flight.levels.engine,
       travel,
+      flight.levels.engine === 1 ? ENGINE_ONE_FLIGHT_JET_COLORS : undefined,
     );
     const speed = travel ? shipSpeedFraction(CONTENT, flight) : 0;
     const ship = selectPaintedShipAsset(this.shipAssets, paintInUse(this), flight.facing);
