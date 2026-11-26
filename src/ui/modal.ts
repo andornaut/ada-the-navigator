@@ -458,6 +458,16 @@ ${UI_SCOPE} :is(.ada-cheats-card,.ada-map-navigation) .ada-button.ui-standard-bu
   --ui-button-focus-fill:${BUTTON_FACE.secondary}
 }
 
+/* The Kit's default focus face uses Ada's press colours while the action is held. */
+@media (forced-colors:none){
+  ${UI_SCOPE} .ui-standard-button:focus-visible${ENABLED_TEXT_CONTROL}:where(
+    .ada-button:is(:active,[data-ui-pressed]):not([data-ui-selected],[aria-pressed=true],[aria-current=page])
+  ) > .ui-button-face{
+    --ui-button-focus-fill:${TEXT_TOKENS.buttonLabel};
+    --ui-button-focus-text:${TEXT_TOKENS.label}
+  }
+}
+
 /* Keep the cue on the native painted face when the control has a separate face element. */
 ${STANDARD_TEXT_FOCUS} > .ui-button-face{
   background-color:transparent;
