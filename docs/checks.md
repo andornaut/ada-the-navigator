@@ -288,9 +288,9 @@ station and an unidentified contact on Cartwheel's light field and Phantom's dar
 field, with Phantom's flagship as the story's target there. `crystal-rocks`
 lays plain rocks beside small-crystal variants of the same shapes at game scale
 in each galaxy outside Cartwheel, every variant in one of them, and Cartwheel's
-first ore field, each rock full of crystals. `approach-ring` draws Sunflower's
-station as its placeholder hull and approach ring, Art's station frames withheld,
-with Ada 150 and 170 world units from its centre, inside and outside Talk range.
+first ore field, each rock full of crystals. `approach-ring` takes Ada 150 and
+170 world units from the centre of Sunflower's station, inside and outside Talk
+range, where Use offers Dock.
 `asteroid-density` takes the generated rocks around two open points in Sunflower
 and in Andromeda. The nose sets
 (`nose-laser`, `nose-scattershot`, `nose-multi-laser`, `nose-rapid-missile`,

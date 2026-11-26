@@ -1279,6 +1279,9 @@ export function batchCaptures(ctx) {
             { x: -40, y: 0 },
             { x: -90, y: 30 },
           ];
+          // A saved pack member needs its pack's size on the combat record.
+          const { combat } = model.state.flight;
+          combat.initialPackSizes = { ...combat.initialPackSizes, "browser-art:pack": 3 };
           for (const [index, screen] of screens.entries()) {
             addEnemy(model, {
               archetype: "retaliator",
@@ -1564,10 +1567,9 @@ export function batchCaptures(ctx) {
     await still("crystal-rocks-cartwheel-ore-field", model);
   }
 
-  // The station approach ring at Talk range, where Use offers Dock: Sunflower's nearest station
-  // drawn as its placeholder hull and ring, Art's station frames withheld, with Ada to its left
-  // 150 world units from its centre, inside Talk range with the Use disc showing, then 170,
-  // outside it. Each is the whole page, Use disc included.
+  // Talk range at Sunflower's nearest station, where Use offers Dock and the placeholder station
+  // draws its approach ring: Ada to its left 150 world units from its centre, inside Talk range
+  // with the Use disc showing, then 170, outside it. Each is the whole page, Use disc included.
   async function approachRing() {
     const left = toWorld({ x: -1, y: 0 });
     const unit = Math.hypot(left.x, left.y);
@@ -1585,7 +1587,7 @@ export function batchCaptures(ctx) {
         y: station.y + (left.y / unit) * distance,
       };
       const name = `approach-ring-${distance}`;
-      await ctx.openFixture(canonical(model, name), { frozen: false, withoutStationArt: true });
+      await ctx.openFixture(canonical(model, name), { frozen: false });
       await ctx.awaitGalaxyArt();
       const page = ctx.page();
       if (distance <= CONTENT.tuning.talkRange) {
