@@ -493,11 +493,14 @@ Keep offer filtering separate from reconciliation of accepted quest progress.
 
 ### Completion presentation
 
-The rectangle originates at the scanned object, moves continuously straight up
-toward the top and fades. Its vertical path is chosen once, clear of the HUD,
-and stops below any HUD element above it. Astra's dialogue draws over the
-rectangle; the rectangle never hops, dodges or moves sideways around dialogue.
-With reduced motion it stays at its starting position.
+Center the scan notice at the top of the playable area, using the same top
+inset as the resource pill. When a boss health bar or a crowded top row would
+overlap the notice, place it below those elements and keep it horizontally
+centered. The notice stays fixed relative to the screen as the camera moves.
+Astra's dialogue draws over the notice.
+
+Hold at full opacity for two seconds, then fade over 500 ms. Both motion
+settings use the same placement and timing.
 
 ### Quest details through contextual Use
 
@@ -530,9 +533,10 @@ contract does not redesign station flows.
 
 ### Scan and Use acceptance
 
-Review ordinary scan, task and quest receipts, invalidation while Scan guidance
-is showing, and motion at the start, mid-rise and end relative to HUD and
-dialogue. Check both motion settings. For remembered credit, exercise scan
+Review ordinary scan, task and quest receipts and invalidation while Scan
+guidance is showing. Check the fixed top-center position while flying, the
+offset below a boss bar or crowded top row, layering behind Astra's dialogue,
+and hold and fade timing in both motion settings. For remembered credit, exercise scan
 before acceptance, partial and full completion, offer filtering, Continue and
 repeated reconciliation without duplicate rewards or notices.
 
