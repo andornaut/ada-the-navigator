@@ -1,10 +1,12 @@
 import { CONVERSATION_BOX } from "../data/layout.ts";
 import { visualNoticeTiming } from "../data/noticeTiming.ts";
+import type { Weapon } from "../data/types.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
+import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import type { ScanOutcome } from "../model/scanOutcomes.ts";
 import { createCompletionIndicator } from "./completionIndicator.ts";
 import { font, fromHudEdge, pixels, units, VIEW_PROPERTIES } from "./layout/css.ts";
-import { frameRect, turnOf } from "./layout/frameBox.ts";
+import { measureFrame } from "./layout/frameBox.ts";
 import { ITEM_NOTICE } from "./layout/itemNotice.ts";
 import { scanFeedbackTop } from "./layout/scanFeedback.ts";
 import { SPACING, TYPE } from "./layout/tokens.ts";
@@ -54,6 +56,21 @@ function createShortFlightPanel(parent: HTMLElement, className: string) {
 export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElement) {
   const panel = createShortFlightPanel(parent, "ada-scan-feedback");
   const equip = createShortFlightPanel(parent, "ada-weapon-equip-notice");
+  const icon = () => {
+    const node = parent.ownerDocument.createElement("span");
+    node.setAttribute("aria-hidden", "true");
+    Object.assign(node.style, {
+      background: "currentColor",
+      flex: "none",
+      height: units(ITEM_NOTICE.icon),
+      width: units(ITEM_NOTICE.icon),
+    });
+    return node;
+  };
+  const equipIcon = icon();
+  const equipLabel = parent.ownerDocument.createElement("span");
+  equipLabel.style.minWidth = "0";
+  equip.append(equipIcon, equipLabel);
   equip.style.overflowWrap = "anywhere";
   let equipped: { elapsed: number; shownAt?: number } | undefined;
   let lineKey: string | undefined;
@@ -74,7 +91,7 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
     }
     lineKey = undefined;
     hide(equip);
-    equip.textContent = "";
+    equipLabel.textContent = "";
   };
   const queue = new ScanFeedbackQueue();
   let current: ScanFeedbackContent | undefined;
@@ -97,17 +114,10 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
         text.style.minWidth = "0";
         panel.append(text);
       } else if (part.glyph) {
-        const icon = parent.ownerDocument.createElement("span");
-        icon.dataset.part = part.kind;
-        icon.setAttribute("aria-hidden", "true");
-        Object.assign(icon.style, {
-          background: "currentColor",
-          flex: "none",
-          height: units(ITEM_NOTICE.icon),
-          mask: `url('${uiIconUrl(part.glyph)}') center / contain no-repeat`,
-          width: units(ITEM_NOTICE.icon),
-        });
-        panel.append(icon);
+        const glyph = icon();
+        glyph.dataset.part = part.kind;
+        glyph.style.mask = `url('${uiIconUrl(part.glyph)}') center / contain no-repeat`;
+        panel.append(glyph);
       }
     }
   };
@@ -122,9 +132,7 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
     const unit = readViewUnit(parent);
     const hudGap = SPACING.rowGap * unit;
     const stackGap = SPACING.gap * unit;
-    const host = parent.getBoundingClientRect();
-    const turn = turnOf(parent);
-    const box = (node: Element) => frameRect(turn, host, node.getBoundingClientRect());
+    const { box, size: host } = measureFrame(parent);
     const weaponParts = new Set(
       weapons?.querySelectorAll<HTMLElement>(".ada-disc,.ada-ammo,.ada-pips"),
     );
@@ -146,7 +154,7 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
       .sort((a, b) => a.y - b.y);
     const style = getComputedStyle(parent);
     const inset = (property: string) => parseFloat(style.getPropertyValue(property)) || 0;
-    const center = (turn ? host.height : host.width) / 2;
+    const center = host.width / 2;
     let minimum = Math.max(
       inset(VIEW_PROPERTIES.areaTop) + hudGap,
       inset(VIEW_PROPERTIES.safe("top")),
@@ -187,7 +195,7 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
           if (line.height > 0 && top < bottom && top + size.height > line.y) {
             top = scanFeedbackTop(occupied, hudGap, center, size, bottom + stackGap);
             const limit =
-              (turn ? host.width : host.height) -
+              host.height -
               Math.max(inset(VIEW_PROPERTIES.areaBottom), inset(VIEW_PROPERTIES.safe("bottom")));
             obscured = top + size.height > limit;
           }
@@ -222,10 +230,11 @@ export function createScanFeedbackView(parent: HTMLElement, controls: HTMLElemen
     enqueue(outcomes: readonly ScanOutcome[]): void {
       queue.enqueue(outcomes);
     },
-    equip(name: string): void {
+    equip(weapon: Weapon, name: string): void {
       equipped = { elapsed: 0 };
       equipNeedsFit = true;
-      equip.textContent = name;
+      equipIcon.style.mask = `url('${weaponGlyphPath(weapon)}') center / contain no-repeat`;
+      equipLabel.textContent = name;
     },
     render(context: ScanFeedbackContext, milliseconds: number): void {
       const frame = queue.frame(context, milliseconds);

@@ -1415,7 +1415,7 @@ export function observeWeaponEquip(
     flight.weapon !== previous
   ) {
     scan.equipFlight = flight;
-    scan.view.equip(weaponName(CONTENT.labels, flight.weapon));
+    scan.view.equip(flight.weapon, weaponName(CONTENT.labels, flight.weapon));
   }
 }
 

@@ -60,21 +60,6 @@ export const BOSS_HUD_STYLE = `
   height:100%;
   background:${STATUS_COLOURS.low}
 }
-.ada-controls .ada-boss-hud-caption{
-  display:flex;
-  justify-content:space-between;
-  gap:${units(SPACING.markGap)};
-  padding:0 ${units(bar.inset)};
-  background:${STATUS_COLOURS.panel};
-  color:${STATUS_COLOURS.count};
-  font:${font(TYPE.count)}
-}
-.ada-controls .ada-boss-hud-captain{
-  min-width:0;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis
-}
 @media (forced-colors:active){
   .ada-controls .ada-boss-hud-meter{
     forced-color-adjust:none;
@@ -102,16 +87,8 @@ export function createBossHud(parent: HTMLElement): {
   root.className = "ada-boss-hud";
   root.hidden = true;
 
-  const ship = document.createElement("span");
-  ship.className = "ada-boss-hud-badge";
-  const caption = document.createElement("div");
-  caption.className = "ada-boss-hud-caption";
-  const captain = document.createElement("span");
-  captain.className = "ada-boss-hud-captain";
-  const disabled = document.createElement("span");
-  disabled.textContent = CONTENT.labels.disabledBanner ?? "";
-  disabled.hidden = true;
-  caption.append(captain, disabled);
+  const badge = document.createElement("span");
+  badge.className = "ada-boss-hud-badge";
 
   const meter = document.createElement("div");
   meter.className = "ada-status-bar ada-boss-hud-meter";
@@ -125,7 +102,7 @@ export function createBossHud(parent: HTMLElement): {
   track.className = "ada-boss-hud-track";
   track.append(fill);
   meter.append(track);
-  root.append(ship, meter, caption);
+  root.append(badge, meter);
   parent.append(root);
 
   const left = Array.from(parent.querySelectorAll<HTMLElement>(".ada-pause,.ada-status"));
@@ -181,14 +158,14 @@ export function createBossHud(parent: HTMLElement): {
       const value = Number.isFinite(view.hull) ? Math.max(0, Math.min(max, view.hull)) : 0;
       const ratio = value / max;
       setAttribute(root, "data-boss-id", view.id);
-      if (ship.textContent !== view.ship) {
-        ship.textContent = view.ship;
+      const label = view.captain || view.ship;
+      if (badge.textContent !== label) {
+        badge.textContent = label;
       }
-      if (captain.textContent !== view.captain) {
-        captain.textContent = view.captain;
-      }
-      if (disabled.hidden === view.disabled) {
-        disabled.hidden = !view.disabled;
+      if (view.disabled && CONTENT.labels.disabledBanner) {
+        setAttribute(meter, "aria-valuetext", CONTENT.labels.disabledBanner);
+      } else if (meter.hasAttribute("aria-valuetext")) {
+        meter.removeAttribute("aria-valuetext");
       }
       setAttribute(meter, "aria-valuemax", String(max));
       setAttribute(meter, "aria-valuenow", String(value));

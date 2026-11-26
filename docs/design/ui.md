@@ -92,3 +92,4 @@ Reference: [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.
 | ada-0407 | Shade space outside the playable Local Map                                      | [ada-0407.md](../work/ada-0407.md) |
 | ada-0410 | Show the equipped weapon in a short flight notice                               | [ada-0410.md](../work/ada-0410.md) |
 | ada-0412 | Raise short flight notices clear of the weapon HUD                              | [ada-0412.md](../work/ada-0412.md) |
+| ada-0414 | Use one name badge above each boss bar                                          | [ada-0414.md](../work/ada-0414.md) |

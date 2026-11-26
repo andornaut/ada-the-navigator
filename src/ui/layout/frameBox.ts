@@ -82,6 +82,16 @@ export function frameBoxIn(host: Element, element: Element): Rect {
   return frameRect(turnOf(host), host.getBoundingClientRect(), element.getBoundingClientRect());
 }
 
+/** Measures several children in one snapshot of their host's frame. */
+export function measureFrame(host: Element) {
+  const turn = turnOf(host);
+  const origin = host.getBoundingClientRect();
+  return {
+    box: (element: Element) => frameRect(turn, origin, element.getBoundingClientRect()),
+    size: frameRect(turn, origin, origin),
+  };
+}
+
 /** A client point, measured on the page, in host's frame CSS px from host's top-left corner. */
 export function framePoint(turn: FrameTurn, host: PageBox, client: Point): Point {
   if (turn === 90) {

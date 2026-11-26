@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CONVERSATION_BOX } from "../data/layout.ts";
 import { visualNoticeTiming } from "../data/noticeTiming.ts";
+import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { immutableScanOutcome, type ScanOutcome } from "../model/scanOutcomes.ts";
 import { CONVERSATION_STYLE } from "./conversation.ts";
 import { fromHudEdge, units, VIEW_PROPERTIES } from "./layout/css.ts";
@@ -29,8 +30,8 @@ class Node {
   setAttribute(name: string, value: string) {
     this.attributes.set(name, value);
   }
-  append(node: Node) {
-    this.children.push(node);
+  append(...nodes: Node[]) {
+    this.children.push(...nodes);
   }
   replaceChildren() {
     this.children.length = 0;
@@ -257,9 +258,12 @@ describe("equipped weapon notice", () => {
       const { boss, equip, panel, parent, resize, view } = setup();
       parent.clientWidth = width;
       expect(equip.hidden).toBe(true);
-      view.equip("Heavy Missile");
+      view.equip("heavyMissile", "Heavy Missile");
       view.renderEquip(false, 0);
-      expect(equip.textContent).toBe("Heavy Missile");
+      const [glyph, label] = equip.children;
+      expect(glyph?.attributes.get("aria-hidden")).toBe("true");
+      expect(glyph?.style.mask).toContain(weaponGlyphPath("heavyMissile"));
+      expect(label?.textContent).toBe("Heavy Missile");
       expect(equip.style.top).toBe(row);
       expect(equip.style.left).toBe("50%");
       expect(equip.style.maxWidth).toBe(
@@ -300,7 +304,7 @@ describe("equipped weapon notice", () => {
     Object.defineProperty(dialogue, "offsetTop", { get: readDialogueTop });
     parent.selectors.set(".ada-conversation", dialogue);
 
-    view.equip("Rapid Missile");
+    view.equip("rapidMissile", "Rapid Missile");
     view.renderEquip(false, 0, "speaker:first");
     expect(equip.style.top).toBe("66px");
     expect(observed).toHaveBeenCalledWith(dialogue);
@@ -343,7 +347,7 @@ describe("equipped weapon notice", () => {
     dialogue.offsetTop = 66;
     dialogue.offsetHeight = 60;
 
-    view.equip("Laser");
+    view.equip("laser", "Laser");
     view.renderEquip(false, 0);
     view.renderEquip(false, 1000);
     view.renderEquip(false, 1000, "captain");
@@ -382,15 +386,16 @@ describe("equipped weapon notice", () => {
 
   it("holds two seconds, fades over 500ms, and replaces the previous name and timing", () => {
     const { equip, view } = setup();
-    view.equip("Multi-Laser");
+    view.equip("multiLaser", "Multi-Laser");
     view.renderEquip(false, 0);
     view.renderEquip(false, 2000);
     expect(equip.style.opacity).toBe("1");
     view.renderEquip(false, 2250);
     expect(equip.style.opacity).toBe("0.5");
-    view.equip("Phaser");
+    view.equip("phaser", "Phaser");
     view.renderEquip(false, 2250);
-    expect(equip.textContent).toBe("Phaser");
+    expect(equip.children[0]?.style.mask).toContain(weaponGlyphPath("phaser"));
+    expect(equip.children[1]?.textContent).toBe("Phaser");
     expect(equip.style.opacity).toBe("1");
     view.renderEquip(true, 2250);
     expect(equip.hidden).toBe(true);
@@ -399,7 +404,7 @@ describe("equipped weapon notice", () => {
     expect(equip.style.opacity).toBe("0.5");
     view.renderEquip(false, 12500);
     expect(equip.hidden).toBe(true);
-    expect(equip.textContent).toBe("");
+    expect(equip.children[1]?.textContent).toBe("");
     view.dispose();
     expect(equip.removed).toBe(true);
   });
