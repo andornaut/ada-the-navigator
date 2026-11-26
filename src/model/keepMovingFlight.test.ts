@@ -84,6 +84,13 @@ describe("keep moving in flight", () => {
   it("slides two idle ships that meet head on past each other instead of locking", () => {
     const point = { x: 30000, y: 5000 };
     const model = flightModel(1, { x: point.x, y: point.y + 900 });
+    // One step generates the region around Ada first; its rocks and ships are cleared, so the
+    // pair meet only each other.
+    stepModel(model);
+    const flight = model.state.flight!;
+    flight.objects = flight.objects.filter(
+      (object) => object.kind !== "rock" && object.kind !== "enemy",
+    );
     // Each ship's patrol lies beyond the other, so both press straight into the contact.
     const a = addEnemy(model, "fighter", "lock:a", point, {
       home: { x: point.x + 600, y: point.y },
@@ -119,10 +126,20 @@ describe("keep moving in flight", () => {
     }
     // They keep their pace; only a turn back on their patrols dips briefly.
     expect(total / samples).toBeGreaterThan(160 * ENEMY_KEEP_MOVING.minimumShare);
+    // No other ship or rock joined the contact.
+    expect(flight.objects.filter((object) => object.kind === "enemy")).toEqual([a, b]);
+    expect(flight.objects.some((object) => object.kind === "rock")).toBe(false);
   });
 
   it("turns a blockade ship along its 600 reach instead of holding it at the limit", () => {
     const model = flightModel(6, { x: 0, y: 3000 });
+    // One step generates the region around Ada first; its rocks and ships are cleared, so the
+    // blockade ship turns at its reach alone.
+    stepModel(model);
+    const flight = model.state.flight!;
+    flight.objects = flight.objects.filter(
+      (object) => object.kind !== "rock" && object.kind !== "enemy",
+    );
     const home = { x: 0, y: 0 };
     const ship = addEnemy(
       model,
