@@ -1379,7 +1379,10 @@ Conversations come from data, each with a trigger and a priority: warnings
 Penny, then lore. A higher priority interrupts a lower one, which resumes after it
 if still relevant. A queued conversation re-checks its trigger when its turn
 comes and is dropped if the trigger no longer holds, such as Penny's lost-item
-line once Ada has left the item's range.
+line once Ada has left the item's range. A refusal notice that answers
+Ada's own press (the shared refusal feedback for Dock, Travel here, Galaxies or
+any other refused action) takes the box at once, above every priority including
+warnings; the interrupted conversation resumes after it if still relevant.
 
 Quiet lines and broadcasts must also pass data-defined chronology eligibility
 using the current recovered-disk count and chapter completion state. Recheck
