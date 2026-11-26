@@ -2402,7 +2402,7 @@ try {
 
   const dangerInput = relaunch(CONTENT, safeSerialized);
   dangerInput.state.flight.dangerFor = 5;
-  dangerInput.state.flight.player.x += CONTENT.tuning.safeRadius * 3;
+  dangerInput.state.flight.player.x += CONTENT.tuning.exclusionRadius * 3;
   dangerInput.state.flight.objects = [];
   // An enemy shot held still inside the battle square keeps Ada in danger while she flies or
   // waits paused; it lasts the whole check.
@@ -4049,8 +4049,8 @@ try {
 
   const damaged = relaunch(CONTENT, equipmentSave);
   assert.ok(damaged.selectWeapon("rapidMissile"));
-  // Damage is meaningful only outside the friendly destination's protected region.
-  damaged.state.flight.player.x += CONTENT.tuning.safeRadius * 2;
+  // Ada flies clear of the friendly destination's exclusion zone.
+  damaged.state.flight.player.x += CONTENT.tuning.exclusionRadius * 2;
   assert.ok(
     damaged.state.flight.objects
       .filter((object) => object.kind === "destination")
@@ -4059,9 +4059,9 @@ try {
           Math.hypot(
             destination.x - damaged.state.flight.player.x,
             destination.y - damaged.state.flight.player.y,
-          ) > CONTENT.tuning.safeRadius,
+          ) > CONTENT.tuning.exclusionRadius,
       ),
-    "Projectile fixture must be outside every active protected destination",
+    "Projectile fixture must be outside every destination's exclusion zone",
   );
   damaged.state.flight.shield = CONTENT.tuning.hazardDamage;
   damaged.state.flight.shots.push({
