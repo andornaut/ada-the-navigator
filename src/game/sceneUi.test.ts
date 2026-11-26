@@ -236,7 +236,10 @@ describe("in-flight weapon selection", () => {
     model.state.dialogue = { choices: [], context: "test", text: "Panel", title: "Weapon detail" };
     select("laser");
     expect(current.weapon).toBe("multiLaser");
-    expect(equip.mock.calls).toEqual([["Rapid Missile"], ["Multi-Laser"]]);
+    expect(equip.mock.calls).toEqual([
+      ["rapidMissile", "Rapid Missile"],
+      ["multiLaser", "Multi-Laser"],
+    ]);
   });
 
   it("uses the real flight step to report Laser on the last shot and ignores unchanged or restored weapons", () => {
@@ -292,11 +295,11 @@ describe("in-flight weapon selection", () => {
     expect(current.weapon).toBe("laser");
     expect(state.notice).toBe("Out of ammo.");
     dispatch.call(scene, current, 10, input);
-    expect(equip.mock.calls).toEqual([["Laser"]]);
+    expect(equip.mock.calls).toEqual([["laser", "Laser"]]);
 
     // A detached flight cannot announce a weapon on behalf of this scene.
     context.observeWeaponEquip(scene, { ...current }, "rapidMissile");
-    expect(equip.mock.calls).toEqual([["Laser"]]);
+    expect(equip.mock.calls).toEqual([["laser", "Laser"]]);
   });
 });
 
