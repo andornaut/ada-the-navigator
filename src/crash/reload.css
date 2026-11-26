@@ -27,6 +27,7 @@
   }
 
   .crash-panel .crash-stack {
+    box-sizing: content-box;
     max-height: 2lh;
   }
 }
