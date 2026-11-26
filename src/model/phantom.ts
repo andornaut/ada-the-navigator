@@ -1,4 +1,6 @@
 import jumpData from "../../public/art/quantum-jump.json" with { type: "json" };
+import type { CapitalBossHud } from "../data/capitalBosses.ts";
+import { ARCHIE_NAMED } from "../data/conversations.ts";
 import { encounterTable, type EnemyArchetype } from "../data/enemyCatalog.ts";
 import {
   PHANTOM_COPY,
@@ -6,6 +8,7 @@ import {
   PHANTOM_FLAGSHIP,
   PHANTOM_TUNING as T,
 } from "../data/phantom.ts";
+import { encounterBossHud } from "./capitalBossEncounter.ts";
 import type { ChapterContext, ChapterResult } from "./chapterProtocol.ts";
 import { dropRandom } from "./drops.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
@@ -32,14 +35,34 @@ import {
 } from "./phantomRequiredPlans.ts";
 import { phantomSettlementCopy } from "./phantomSettlementCopy.ts";
 import { stationFormationClear } from "./stationPlacement.ts";
-import type { DialogueState, FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
+import type {
+  DialogueState,
+  FlightEvent,
+  FlightState,
+  GalaxyProgress,
+  SpaceObject,
+  Vec,
+} from "./types.ts";
 export interface PhantomProgress {
   broken: string[];
   freed: string[];
   flagshipKnown: boolean;
   aftermathComplete?: true;
 }
-export type PhantomChatter = "battleAllies" | "battleAlone" | "flagshipAttack" | "flagshipDisabled";
+const PHANTOM_CHATTER = [
+  "battleAllies",
+  "battleAlone",
+  "flagshipAttack",
+  "flagshipHardpoint",
+  "flagshipDisabled",
+] as const;
+export type PhantomChatter = (typeof PHANTOM_CHATTER)[number];
+
+/** Emitted by the hit owner only on the first hardpoint loss, unless that hit resolves the fight. */
+export interface PhantomHardpointEvent {
+  readonly id: string;
+  readonly type: "enemyFirstHardpointLost";
+}
 export interface PhantomDeparture extends Vec {
   id: string;
   age: number;
@@ -76,6 +99,35 @@ const progressOf = (context: ChapterContext): PhantomProgress =>
     freed: [],
   });
 const stateOf = (context: ChapterContext) => (context.flight as ChapterFlight).phantom;
+
+function hasActiveFlagship(context: ChapterContext): boolean {
+  const state = stateOf(context);
+  return (
+    context.flight.galaxy === 6 &&
+    !context.progress.questComplete &&
+    state?.phase === "flagship" &&
+    state.enemyIds.includes(PHANTOM_FLAGSHIP)
+  );
+}
+
+/** Project the live flagship into the shared HUD without changing the chapter state. */
+export function phantomBossHud(
+  context: ChapterContext,
+  canSalvage: (object: SpaceObject) => boolean,
+): CapitalBossHud | null {
+  if (!hasActiveFlagship(context)) {
+    return null;
+  }
+  return encounterBossHud(
+    {
+      captain: ARCHIE_NAMED.name,
+      id: PHANTOM_FLAGSHIP,
+      ship: context.content.labels[PHANTOM_FLAGSHIP] ?? "",
+    },
+    context.flight,
+    canSalvage,
+  );
+}
 /** A far-side waypoint clears every settlement, including their whole placement spread. */
 export function phantomFlagshipPoint(seed: number, settlements: readonly Vec[]): Vec {
   const center = settlements.reduce(
@@ -419,10 +471,25 @@ export function beforeStepPhantom(context: PhantomContext, seconds = 0): void {
     }
   }
 }
-export function afterStepPhantom(context: PhantomContext): ChapterResult | undefined {
+export function afterStepPhantom(
+  context: PhantomContext,
+  _seconds?: number,
+  _previous?: Vec,
+  events: readonly (FlightEvent | PhantomHardpointEvent)[] = [],
+): ChapterResult | undefined {
   const state = stateOf(context);
   if (!state || context.progress.questComplete) {
     return undefined;
+  }
+  // A separate final hit in this update still leaves the first loss ahead of surrender.
+  if (
+    hasActiveFlagship(context) &&
+    events.some(
+      (event) => event.type === "enemyFirstHardpointLost" && event.id === PHANTOM_FLAGSHIP,
+    ) &&
+    !state.chatter.includes("flagshipHardpoint")
+  ) {
+    state.chatter.push("flagshipHardpoint");
   }
   const progress = progressOf(context);
   for (const [id, ids] of Object.entries(state.blockades)) {
@@ -662,9 +729,7 @@ export function validPhantomFlight(value: unknown): value is PhantomFlight {
     typeof state.disabledCued === "boolean" &&
     Array.isArray(state.chatter) &&
     state.chatter.length <= 4 &&
-    state.chatter.every((key) =>
-      ["battleAllies", "battleAlone", "flagshipAttack", "flagshipDisabled"].includes(key),
-    ) &&
+    state.chatter.every((key) => PHANTOM_CHATTER.includes(key)) &&
     Array.isArray(state.allies) &&
     state.allies.length <= T.allies &&
     new Set(state.allies.map((ally) => ally.id)).size === state.allies.length &&

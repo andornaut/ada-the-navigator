@@ -2,10 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { encounterTable, enemyDefinition, PHANTOM_FLAGSHIP_ID } from "../data/enemyCatalog.ts";
-import { PHANTOM_DESTINATIONS, PHANTOM_TUNING } from "../data/phantom.ts";
+import { PHANTOM_COPY, PHANTOM_DESTINATIONS, PHANTOM_TUNING } from "../data/phantom.ts";
 import { carriesStardust } from "./drops.ts";
 import * as enemyAi from "./enemyAi.ts";
 import { createEnemy, damageEnemy } from "./enemyAi.ts";
+import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import {
   activateRouteEncounter,
   createFlight,
@@ -20,8 +21,10 @@ import {
   beforeStepPhantom,
   choosePhantom,
   initPhantom,
+  phantomBossHud,
   type PhantomContext,
   type PhantomFlight,
+  type PhantomHardpointEvent,
   phantomObjective,
   phantomObjectiveIndex,
   type PhantomProgress,
@@ -272,12 +275,19 @@ describe("Phantom chapter", () => {
   });
   it("requires freed settlements, three complete waves, then disabling and actual salvage", () => {
     const context = fixture();
+    const firstLoss: PhantomHardpointEvent = {
+      id: PHANTOM_FLAGSHIP_ID,
+      type: "enemyFirstHardpointLost",
+    };
+    const canSalvage = () => true;
     expect(usePhantom(context, PHANTOM_DESTINATIONS[0])).toEqual({});
     freeSettlements(context);
     expect(progress(context).flagshipKnown).toBe(true);
     expect(phantomObjective(context)).toBe(PHANTOM_FLAGSHIP_ID);
     context.flight.player = { ...state(context).waypoint };
     beforeStepPhantom(context);
+    expect(phantomBossHud(context, canSalvage)).toBeNull();
+    afterStepPhantom(context, undefined, undefined, [firstLoss]);
     expect(state(context).chatter).toEqual(["battleAlone"]);
     for (let wave = 1; wave <= 3; wave++) {
       expect(state(context).wave).toBe(wave);
@@ -294,10 +304,58 @@ describe("Phantom chapter", () => {
     expect(state(context).enemyIds).toHaveLength(9);
     const flagship = object(context, PHANTOM_FLAGSHIP_ID)!;
     expect(usePhantom(context, PHANTOM_FLAGSHIP_ID)).toBeUndefined();
-    flagship.enemy!.disabled = true;
     context.flight.player = { x: flagship.x, y: flagship.y };
     syncFlightRegion(CONTENT, context.flight);
+    expect(phantomBossHud(context, canSalvage)).toBeNull();
+    flagship.enemy!.engaged = true;
+    const definition = enemyEquipmentDefinition(6, flagship.enemy!);
+    flagship.enemy = damageEnemy(
+      definition,
+      { amount: definition.hp, hardpointId: null },
+      flagship.enemy!,
+    );
+    flagship.hp = flagship.enemy.hp;
+    expect(phantomBossHud(context, canSalvage)).toEqual({
+      captain: "Admiral Archie",
+      disabled: false,
+      hull: 1,
+      id: PHANTOM_FLAGSHIP_ID,
+      maxHull: definition.hp,
+      ship: "Archie's flagship",
+    });
+    flagship.enemy.returning = true;
+    expect(phantomBossHud(context, canSalvage)).toBeNull();
+    flagship.enemy.returning = false;
+    expect(phantomBossHud(context, canSalvage)?.hull).toBe(1);
+    afterStepPhantom(context, undefined, undefined, [{ ...firstLoss, id: "escort" }]);
+    expect(state(context).chatter).toEqual(["battleAlone", "flagshipAttack"]);
+
+    for (const part of definition.hardpoints.filter(({ kind }) => kind === "weapon")) {
+      flagship.enemy = damageEnemy(
+        definition,
+        { amount: part.hp, hardpointId: part.id },
+        flagship.enemy,
+      );
+    }
+    expect(flagship.enemy.disabled).toBe(true);
+    // Separate hits can lose the first and last mounts within one flight update.
+    afterStepPhantom(context, undefined, undefined, [
+      firstLoss,
+      { id: PHANTOM_FLAGSHIP_ID, type: "enemyDisabled" },
+    ]);
     afterStepPhantom(context);
+    expect(state(context).chatter).toEqual([
+      "battleAlone",
+      "flagshipAttack",
+      "flagshipHardpoint",
+      "flagshipDisabled",
+    ]);
+    expect(PHANTOM_COPY.flagshipHardpoint?.lines).toEqual([
+      { speaker: "astra", text: "One hardpoint down. Keep aiming for the glowing parts." },
+    ]);
+    expect(validPhantomFlight(JSON.parse(JSON.stringify(state(context))))).toBe(true);
+    expect(phantomBossHud(context, () => false)).toBeNull();
+    expect(phantomBossHud(context, canSalvage)).toMatchObject({ disabled: true, hull: 1 });
     const panel = usePhantom(context, PHANTOM_FLAGSHIP_ID)!.dialogue!;
     expect(choosePhantom(context, panel, "invalid")).toEqual({});
     expect(flagship.enemy!.salvaged).toBe(false);
@@ -310,6 +368,7 @@ describe("Phantom chapter", () => {
     expect(released.reduce((sum, object) => sum + object.amount!, 0)).toBe(44);
     expect(state(context).allies).toEqual([]);
     expect(state(context).phase).toBe("salvaged");
+    expect(phantomBossHud(context, canSalvage)).toBeNull();
   });
   it.each([false, true])(
     "keeps repeated settlement talks from restarting the fleet or salvage, restored=%s",

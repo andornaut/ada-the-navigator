@@ -128,6 +128,9 @@ export const PHANTOM_COPY: Readonly<Record<string, PhantomCopy>> = {
     ],
   },
   flagshipDisabled: { lines: [line("archie", "Enough! Take it. Take the last disk.")] },
+  flagshipHardpoint: {
+    lines: [line("astra", "One hardpoint down. Keep aiming for the glowing parts.")],
+  },
   flagshipSalvage: {
     lines: [
       line("astra", "The last holodisk is here. I can bring it aboard."),
