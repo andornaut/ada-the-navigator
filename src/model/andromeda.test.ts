@@ -89,7 +89,7 @@ describe("Andromeda chapter runtime", () => {
     const panel = useAndromeda(context, "pip")!.dialogue!;
     expect(panel.context).toBe("andromeda:confession");
     expect(panel.title).toBe("Pip");
-    expect(panel.choices).toEqual([{ id: "continue", label: CONTENT.labels.continue }]);
+    expect(panel.choices).toEqual([{ id: "continue", label: CONTENT.labels.next }]);
     const before = JSON.stringify(context.progress);
     expect(andromedaConversation(context.progress, "confession").questions).toEqual(
       ANDROMEDA_CONVERSATIONS.confession.questions,
@@ -199,7 +199,7 @@ describe("Andromeda chapter runtime", () => {
     expect(pickup.text).toBe(
       [carriedItemName("beacon parts"), ANDROMEDA_CHAPTER.objectives[5]].join("\n\n"),
     );
-    expect(pickup.choices).toEqual([{ id: "continue", label: CONTENT.labels.continue }]);
+    expect(pickup.choices).toEqual([{ id: "continue", label: CONTENT.labels.next }]);
     expect(JSON.stringify(context.progress)).toBe(before);
     expect(useAndromeda(context, target)?.dialogue).toEqual(pickup);
     expect(chooseAndromeda(context, pickup, "close")).toBeUndefined();

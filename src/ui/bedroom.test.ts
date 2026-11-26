@@ -56,7 +56,7 @@ describe("shared bedroom", () => {
     expect(bedroomBackground(night, "adaRoom")).toBe("adaRoomNight");
     const room = roomScene(
       CONTENT,
-      { continue: "Continue", pickUpRock: "Pick up the rock." },
+      { next: "Next", pickUpRock: "Pick up the rock." },
       true,
       roomBackground(run),
     );

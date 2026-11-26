@@ -516,9 +516,10 @@ export function createInteractionCard(
       for (const [index, topic] of state.topics.entries()) {
         add(topic.label, () => state.topic(index), true);
       }
+      const next = CONTENT.labels.next ?? "";
       if (!state.atOutcome) {
         add(
-          CONTENT.labels.continue ?? "",
+          next,
           () => {
             const action = state.advance();
             if (action) {
@@ -530,8 +531,12 @@ export function createInteractionCard(
         );
       } else {
         for (const choice of state.choices) {
+          const label =
+            choice.id === "continue" && choice.label === CONTENT.labels.continue
+              ? next
+              : choice.label;
           add(
-            choice.label,
+            label,
             choice.refused ? null : () => options.choose(choice.id),
             choice.id !== "continue",
             state.choices.length === 1,

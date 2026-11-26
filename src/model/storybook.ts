@@ -81,7 +81,7 @@ export interface StoryPosition extends StoryStep {
 }
 
 export interface StoryLabels {
-  readonly continue: string;
+  readonly next: string;
   readonly pickUpRock: string;
 }
 
@@ -367,7 +367,7 @@ export function replayChapterScene(content: GameContent, galaxy: GalaxyNumber): 
 
 /**
  * The prologue: the park where Ada finds the rock, her room as she polishes it and as it glows,
- * then aboard, where Astra's optional questions return to their list until Continue.
+ * then aboard, where Astra's optional questions return to their list until Next.
  */
 export function prologueScene(content: GameContent, labels: StoryLabels): Scene {
   const { prologue } = content.premise;
@@ -382,7 +382,7 @@ export function prologueScene(content: GameContent, labels: StoryLabels): Scene 
     if (step.questions) {
       pages.push({
         ...line,
-        action: labels.continue,
+        action: labels.next,
         id,
         ...(following ? { next: following } : {}),
         questions: step.questions.map(({ question }, choice) => ({

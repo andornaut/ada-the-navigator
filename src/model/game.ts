@@ -5250,7 +5250,7 @@ export class GameModel {
       : prologueScene(this.content, this.storyLabels);
   }
   private get storyLabels(): StoryLabels {
-    return { continue: this.label("continue"), pickUpRock: this.label("pickUpRock") };
+    return { next: this.label("next"), pickUpRock: this.label("pickUpRock") };
   }
   /**
    * A home visit: waiting scenes, then Ada's room; an empty visit adds Penny's line. `trail`

@@ -43,7 +43,7 @@ const backgrounds = storyBackgrounds(assets);
 const transitions = readStoryTransitions(assets, transitionData);
 const asset = (id: string) => assets.find((entry) => entry.id === id);
 
-const LABELS = { continue: "Continue", pickUpRock: "Pick up the rock." };
+const LABELS = { next: "Next", pickUpRock: "Pick up the rock." };
 
 // Every background drawn from Art's assets.
 const KEYS = Object.keys(BACKGROUND_ART) as ArtBackground[];

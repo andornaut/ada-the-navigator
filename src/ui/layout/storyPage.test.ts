@@ -108,7 +108,7 @@ function panelFor(page: StoryPage, screen: Screen) {
 }
 
 const labels = {
-  continue: CONTENT.labels.continue ?? "",
+  next: CONTENT.labels.next ?? "",
   pickUpRock: CONTENT.labels.pickUpRock ?? "",
 };
 const galaxies = [1, 2, 3] as const;

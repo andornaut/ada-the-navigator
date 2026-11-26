@@ -121,7 +121,7 @@ export function ensureAndromedaWorld(context: ChapterContext): void {
 function dialogue(context: ChapterContext, id: AndromedaConversationId): DialogueState {
   const entry = andromedaConversation(context.progress, id);
   return {
-    choices: [{ id: "continue", label: context.content.labels.continue ?? "" }],
+    choices: [{ id: "continue", label: context.content.labels.next ?? "" }],
     context: `andromeda:${id}`,
     text: entry.lines
       .map((line) => (line.speaker ? `${line.speaker}: ${line.text}` : line.text))

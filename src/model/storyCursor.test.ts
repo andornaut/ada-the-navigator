@@ -17,7 +17,7 @@ import {
 } from "./storybook.ts";
 import { readStoryCursor, storyCursor, type StorySceneReference } from "./storyCursor.ts";
 
-const labels = { continue: CONTENT.labels.continue!, pickUpRock: CONTENT.labels.pickUpRock! };
+const labels = { next: CONTENT.labels.next!, pickUpRock: CONTENT.labels.pickUpRock! };
 const key = (ref: StorySceneReference) =>
   JSON.stringify([ref.id, ref.variant ?? null, ref.background ?? null]);
 function fixture() {

@@ -181,7 +181,7 @@ describe("prologue", () => {
         "aboard",
         "Astra",
         "In space. I'll fly where you steer. You choose where we go, and tell me what you see.",
-        "Continue",
+        "Next",
         questions,
       ],
       ["aboard", "", "Ada sits in the pilot's chair and buckles Penny in beside her.", "Next"],
@@ -233,7 +233,7 @@ describe("prologue", () => {
     ]);
   });
 
-  it("returns each answer to the question list without that question, until Continue", () => {
+  it("returns each answer to the question list without that question, until Next", () => {
     const model = started();
     while (!model.storyView?.page.questions) {
       model.storyNext();

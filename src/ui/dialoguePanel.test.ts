@@ -543,7 +543,7 @@ describe("shared Earth and space dialogue presentation", () => {
     const choices = parent.all().find((node) => node.className === "ada-story-choices")!;
     expect(choices.children.length).toBeGreaterThan(0);
     expect(choices.children.every((node) => !node.className.includes("ada-primary"))).toBe(true);
-    expect(navigation.children.map((node) => node.textContent)).toEqual([CONTENT.labels.continue]);
+    expect(navigation.children.map((node) => node.textContent)).toEqual([CONTENT.labels.next]);
     const skip = buttons().find((node) => node.textContent === CONTENT.labels.skip)!;
     expect(skip.className).toContain("ui-standard-button");
     expect(skip.className).toContain("ada-compact");
@@ -583,7 +583,7 @@ describe("shared Earth and space dialogue presentation", () => {
     // Ask more, secondary, shares the row on the left; the primary is rightmost.
     expect(navigation.children.map((node) => node.textContent)).toEqual([
       "Ask more",
-      CONTENT.labels.continue,
+      CONTENT.labels.next,
     ]);
     const primary = navigation.children.at(-1)!;
     expect(primary.className.split(" ")).toContain("ada-primary");
@@ -620,7 +620,7 @@ describe("shared Earth and space dialogue presentation", () => {
     expect(
       parent
         .all()
-        .filter((node) => node.tag === "button" && node.textContent === CONTENT.labels.continue),
+        .filter((node) => node.tag === "button" && node.textContent === CONTENT.labels.next),
     ).toHaveLength(0);
     parent
       .all()
@@ -658,13 +658,13 @@ describe("shared Earth and space dialogue presentation", () => {
     expect(paragraph()).not.toBe(initial);
     parent
       .all()
-      .find((node) => node.tag === "button" && node.textContent === CONTENT.labels.continue)!
+      .find((node) => node.tag === "button" && node.textContent === CONTENT.labels.next)!
       .click();
     expect(paragraph()).toBe(initial);
     expect(topics.children).toHaveLength(0);
     parent
       .all()
-      .find((node) => node.tag === "button" && node.textContent === CONTENT.labels.continue)!
+      .find((node) => node.tag === "button" && node.textContent === CONTENT.labels.next)!
       .click();
     expect(paragraph()).not.toBe(initial);
     interaction.dispose();

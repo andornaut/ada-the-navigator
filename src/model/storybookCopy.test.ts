@@ -27,7 +27,7 @@ const COPY = read("player-copy.md");
 const CONTRACT = read("rules.md");
 
 const labels = {
-  continue: CONTENT.labels.continue ?? "",
+  next: CONTENT.labels.next ?? "",
   pickUpRock: CONTENT.labels.pickUpRock ?? "",
 };
 const galaxies = [1, 2, 3] as const;
@@ -144,7 +144,7 @@ describe("storybook text", () => {
         for (const { label } of [...(choices ?? []), ...(questions ?? [])]) {
           expect(COPY).toContain(`"${label}"`);
         }
-        if (action && action !== labels.continue && action !== labels.pickUpRock) {
+        if (action && action !== labels.next && action !== labels.pickUpRock) {
           expect(COPY).toContain(`Action: "${action}"`);
         }
       }

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { boardingScene, openingScene, roomBackground, roomScene } from "./storybook.ts";
 
-const labels = { continue: "Continue", pickUpRock: "Pick up rock" };
+const labels = { next: "Next", pickUpRock: "Pick up rock" };
 
 describe("Needle recorder room context", () => {
   it("keeps the recorder from the actual opening through room and boarding narration", () => {

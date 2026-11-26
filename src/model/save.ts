@@ -1385,7 +1385,7 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
                 content,
                 holodisks: holodisksHeld(state.progress),
                 labels: {
-                  continue: content.labels.continue ?? "continue",
+                  next: content.labels.next ?? "next",
                   pickUpRock: content.labels.pickUpRock ?? "pickUpRock",
                 },
               },
