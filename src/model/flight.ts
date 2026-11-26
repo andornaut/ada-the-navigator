@@ -108,6 +108,7 @@ import { settlementsNear } from "./andromedaPlaces.ts";
 import { selectCartwheelClaimField } from "./cartwheelClaimField.ts";
 import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
+import { inBattle, inDanger } from "./flight/danger.ts";
 import { flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
 import {
   createFrigateEscorts,
@@ -300,6 +301,8 @@ import type {
 import { leveledValue, noLevels, type ShipTuning, shipTuning } from "./upgrades.ts";
 import { markVisited, visitedChunk } from "./visited.ts";
 import { clampAmmo, ensureOwnedWeapons, grantedAmmo, shotsLeft, spendAmmo } from "./weapons.ts";
+
+export { inBattle, inDanger };
 
 const length = (v: Vec) => Math.hypot(v.x, v.y);
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -3958,52 +3961,6 @@ function releaseFriendlyVolley(
   return volley;
 }
 
-/**
- * Whether Ada is in battle: an enemy chasing or attacking her is inside the battle square,
- * centred on her and reaching half the game area's width plus the battle margin along each axis.
- * Idle enemies, retaliators not yet hit, fleeing or returning enemies and disabled heavies do not
- * count.
- */
-export function inBattle(
-  content: GameContent,
-  viewportWidth: number,
-  flight: Pick<FlightState, "objects" | "player" | "topology">,
-): boolean {
-  const reach = viewportWidth / 2 + content.tuning.battleMargin;
-  return flight.objects.some((object) => {
-    const enemy = object.enemy;
-    const offset = worldDelta(flightWorldContext(flight), flight.player, object);
-    return (
-      object.kind === "enemy" &&
-      object.hp > 0 &&
-      enemy !== undefined &&
-      enemy.engaged &&
-      !enemy.returning &&
-      !enemy.fleeing &&
-      !enemy.disabled &&
-      Math.abs(offset.x) <= reach &&
-      Math.abs(offset.y) <= reach
-    );
-  });
-}
-/**
- * Whether Ada is in danger (rules.md): in battle, or with an enemy shot in flight inside the
- * battle square. Danger has no release time.
- */
-export function inDanger(
-  content: GameContent,
-  viewportWidth: number,
-  flight: Pick<FlightState, "objects" | "player" | "shots" | "topology">,
-): boolean {
-  const reach = viewportWidth / 2 + content.tuning.battleMargin;
-  return (
-    inBattle(content, viewportWidth, flight) ||
-    flight.shots.some((shot) => {
-      const offset = worldDelta(flightWorldContext(flight), flight.player, shot);
-      return shot.enemy && Math.abs(offset.x) <= reach && Math.abs(offset.y) <= reach;
-    })
-  );
-}
 /** Removes `amount` HP from Ada's shield unless she is protected (adaProtected). */
 function damage(amount: number, flight: FlightState): void {
   if (adaProtected(flight)) {
