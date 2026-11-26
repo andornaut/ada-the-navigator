@@ -250,6 +250,7 @@ afterEach(() => {
   for (const stop of rootReleases.splice(0).reverse()) {
     stop();
   }
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.clearAllMocks();
   fixture.card.body.replaceChildren();
@@ -319,6 +320,34 @@ function setup(onPublish?: (modal: InstanceType<typeof fixture.Node>) => void) {
   });
   menus.push(menu);
   return {
+    dispatchPointer(
+      type: "pointerdown" | "pointerup" | "click",
+      target: InstanceType<typeof fixture.Node>,
+    ) {
+      const event = new Event(type, { cancelable: true });
+      Object.defineProperties(event, {
+        button: { value: 0 },
+        clientX: { value: 0 },
+        clientY: { value: 0 },
+        detail: { value: type === "click" ? 1 : 0 },
+        isPrimary: { value: true },
+        pointerId: { value: 1 },
+        target: { value: target },
+      });
+      doc.hitTarget = target;
+      if (type === "click") {
+        root.dispatchEvent(event);
+        if (!event.defaultPrevented) {
+          target.dispatchEvent(event);
+        }
+      } else {
+        doc.dispatchEvent(event);
+        if (type === "pointerdown") {
+          root.dispatchEvent(event);
+        }
+      }
+      return event;
+    },
     doc,
     menu,
     onAction,
@@ -551,6 +580,63 @@ it("routes a held Menu action through the original caller and unregisters rebuil
   expect(resolveAdaHoldAction(root as unknown as HTMLElement, current)).toBeNull();
 });
 
+it.each(["achievements", "settings"] as const)(
+  "opens Menu %s at the hold threshold and consumes the native release click",
+  (action) => {
+    vi.useFakeTimers();
+    const { dispatchPointer, menu, onAction, root } = setup();
+    menu.open();
+    const button = root.querySelector(`[data-action="menu-${action}"]`)!;
+    dispatchPointer("pointerdown", button);
+    vi.advanceTimersByTime(499);
+    expect(onAction).not.toHaveBeenCalled();
+    expect(menu.isOpen()).toBe(true);
+    vi.advanceTimersByTime(1);
+    expect(onAction).toHaveBeenCalledExactlyOnceWith(action, expect.any(Function));
+    expect(menu.isOpen()).toBe(false);
+    dispatchPointer("pointerup", button);
+    expect(dispatchPointer("click", button).defaultPrevented).toBe(true);
+    expect(onAction).toHaveBeenCalledOnce();
+  },
+);
+
+it("refuses Menu Achievements when disabled and cancels a pending hold on readiness or foreground loss", () => {
+  vi.useFakeTimers();
+  const { dispatchPointer, menu, onAction, root, setReady } = setup();
+  menu.open();
+  const button = root.querySelector('[data-action="menu-achievements"]')!;
+  const release = () => {
+    vi.advanceTimersByTime(500);
+    expect(onAction).not.toHaveBeenCalled();
+    dispatchPointer("pointerup", button);
+    expect(onAction).not.toHaveBeenCalled();
+  };
+  const expectCanceledRelease = () => {
+    release();
+    expect(dispatchPointer("click", button).defaultPrevented).toBe(true);
+    expect(onAction).not.toHaveBeenCalled();
+    expect(menu.isOpen()).toBe(true);
+  };
+
+  button.disabled = true;
+  dispatchPointer("pointerdown", button);
+  release();
+  expect(menu.isOpen()).toBe(true);
+  button.disabled = false;
+
+  dispatchPointer("pointerdown", button);
+  setReady(false);
+  setReady(true);
+  expectCanceledRelease();
+
+  const cover = new fixture.Node();
+  root.append(cover);
+  dispatchPointer("pointerdown", button);
+  const leave = enterPressView(root as unknown as HTMLElement, cover as unknown as HTMLElement);
+  leave();
+  expectCanceledRelease();
+});
+
 it("invokes Back to title once and keeps Close as the primary dismissal", () => {
   const { menu, onAction, rows } = setup();
   menu.setContext("nonplay");
@@ -632,48 +718,24 @@ it("forwards the actual controls callback and clears the old Menu return before 
 it.each(["start", "nonplay"] as const)(
   "dismisses the actual %s Menu backdrop once and restores its opener",
   (context) => {
-    const { doc, menu, onOpenChange, root } = setup();
+    const { dispatchPointer, menu, onOpenChange, root } = setup();
     const origin = new fixture.Node();
     menu.setContext(context);
     menu.open(origin as unknown as HTMLElement);
     const modal = root.children[0]!;
-    const event = (type: string, target = modal) => {
-      const event = new Event(type, { cancelable: true });
-      Object.defineProperties(event, {
-        button: { value: 0 },
-        clientX: { value: 0 },
-        clientY: { value: 0 },
-        detail: { value: type === "click" ? 1 : 0 },
-        isPrimary: { value: true },
-        pointerId: { value: 1 },
-        target: { value: target },
-      });
-      doc.hitTarget = target;
-      if (type === "pointerdown") {
-        doc.dispatchEvent(event);
-        root.dispatchEvent(event);
-      } else if (type === "click") {
-        root.dispatchEvent(event);
-        if (!event.defaultPrevented) {
-          modal.dispatchEvent(event);
-        }
-      } else {
-        doc.dispatchEvent(event);
-      }
-    };
-    event("pointerdown", fixture.card.body);
-    event("pointerup");
-    event("click");
+    dispatchPointer("pointerdown", fixture.card.body);
+    dispatchPointer("pointerup", modal);
+    dispatchPointer("click", modal);
     expect(menu.isOpen()).toBe(true);
-    event("pointerdown");
-    event("pointerup");
-    event("click");
+    dispatchPointer("pointerdown", modal);
+    dispatchPointer("pointerup", modal);
+    dispatchPointer("click", modal);
     expect(menu.isOpen()).toBe(false);
     expect(onOpenChange.mock.calls).toEqual([[true], [false]]);
     expect(origin.focus).toHaveBeenCalledOnce();
-    event("pointerdown");
-    event("pointerup");
-    event("click");
+    dispatchPointer("pointerdown", modal);
+    dispatchPointer("pointerup", modal);
+    dispatchPointer("click", modal);
     expect(onOpenChange.mock.calls).toEqual([[true], [false]]);
   },
 );
