@@ -32,9 +32,9 @@ what it clears and keeps.
 ## Cheats
 
 - **Unlock all weapons** makes Ada own Multi-Laser, Rapid Missile, Heavy
-  Missile, Scattershot and Phaser, each with the three ammo packs a purchase
-  includes. Levels, selection and Stardust are unchanged. Disabled once Ada owns
-  every weapon.
+  Missile, Scattershot and Phaser and refills each weapon with a finite ammo
+  supply to capacity. Levels, selection and Stardust are unchanged. Disabled
+  when Ada owns every weapon and every ammo supply is full.
 - **Unlock all equipment** sets Shield, Engine tuning and Tractor beam to level
   3 and makes Ada own every ship paint; the selected paint stays. Disabled once
   all are at level 3 and every paint is owned.
