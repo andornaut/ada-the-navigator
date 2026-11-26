@@ -705,7 +705,7 @@ describe("jobs in play", () => {
     expect(model.map?.places.find(({ job }) => job)).toMatchObject({
       kind: "job",
       label: title,
-      travel: false,
+      travel: true,
       x: site.x,
       y: site.y,
     });
@@ -713,7 +713,7 @@ describe("jobs in play", () => {
     flyTo(model, site);
     model.interact();
     const charted = model.map!.places.find(({ id }) => id === site.id)!;
-    expect(charted).toMatchObject({ job: false, kind: "landmark", travel: false });
+    expect(charted).toMatchObject({ job: false, kind: "landmark", travel: true });
     expect(charted.label).toBe(landmarkLabel((key) => label(key) ?? "", site));
     expect(model.map!.places.some(({ job }) => job)).toBe(false);
     expect(model.map!.mapped).toBeGreaterThanOrEqual(before);

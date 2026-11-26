@@ -109,7 +109,7 @@ it("queries generated cells, retains encounters on Continue and credits a real h
   expect(model.map!.places.find(({ id }) => id === site.id)).toMatchObject({
     hostileStationStatus: "present",
     label: "Hostile station",
-    travel: false,
+    travel: true,
   });
   const saved = relaunch(CONTENT, model.save());
   expect(saved.state.flight).toEqual(flight);

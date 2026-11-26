@@ -455,10 +455,12 @@ describe("galaxy three's holodisk", () => {
     );
     expect(routeBlocked("holodisk", f)).toBe(true);
     expect(relaunch(CONTENT, model.save()).state).toEqual(model.state);
-    // A guarded holodisk is never a travel destination and cannot be reached early.
+    // Travelling to the visible waypoint leaves the disk and its guarded encounter gated.
     expect(model.destinations().map(({ id }) => id)).not.toContain("holodisk");
-    f.player = { ...site };
-    worldSyncFlightRegion(flightWorldContext(f), CONTENT, f);
+    model.state.economy.stardust = 50;
+    expect(model.teleport("holodisk")).toBe(true);
+    expect(f.player).toEqual(site);
+    expect(model.state.economy.stardust).toBe(0);
     expect(f.objects).toContain(leader);
     expect(pack.every((member) => f.objects.includes(member))).toBe(true);
     model.step(0.01, idle);

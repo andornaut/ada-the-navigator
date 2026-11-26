@@ -105,7 +105,7 @@ it("keeps the family's disk blocked by Sounder and collectible once after resolu
     context: "holodiskLeadSong",
     title: "Whale family",
   });
-  expect(waypoint(model)).toMatchObject({ ...diskSite, travel: false });
+  expect(waypoint(model)).toMatchObject({ ...diskSite, travel: true });
   expect(progressOf(model).sounder).toEqual({ phase: "active" });
   model.choose("continue");
 
@@ -144,7 +144,7 @@ it("keeps the family's disk blocked by Sounder and collectible once after resolu
   model.startGalaxy(3);
   expect(flightOf(model)).toMatchObject({ encounterSeed: 503, seed: 173 });
   expect(progressOf(model).sounder).toEqual({ outcome: "disabled", phase: "resolved" });
-  expect(waypoint(model)).toMatchObject({ ...diskSite, travel: false });
+  expect(waypoint(model)).toMatchObject({ ...diskSite, travel: true });
   expect(stationPopulationObjects(flightOf(model)).some(({ id }) => id === boss.id)).toBe(false);
 
   flyTo(model, waypoint(model)!);

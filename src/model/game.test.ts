@@ -340,7 +340,7 @@ describe("Captain Tally in Sunflower", () => {
     expect(model.map?.places.find((place) => place.id === id)).toMatchObject({
       label: "Hammer",
       objective: false,
-      travel: false,
+      travel: true,
     });
     endArrivalGrace(flightOf(model));
     return model;
@@ -443,7 +443,7 @@ describe("Captain Tally in Sunflower", () => {
     );
     model = relaunch(CONTENT, model.save());
     const waypoint = model.map!.places.find((place) => place.id === routeId)!;
-    expect(waypoint).toMatchObject({ label: "Safer route and supply cache", travel: false });
+    expect(waypoint).toMatchObject({ label: "Safer route and supply cache", travel: true });
     expect(model.map?.places.some((place) => place.id === id)).toBe(false);
 
     const home = flightOf(model).objects.find(({ id }) => id === "growers")!;
