@@ -58,12 +58,14 @@ const fields = read("galaxies.json") as {
 };
 const tints = (read("asteroids.json") as { tints: Record<string, Record<string, string>> }).tints;
 const palette = (read("space-palette.json") as { colors: Record<string, string> }).colors;
-// Needle's edge-on band, the fixed part of its L2 (art/needle.md, Space look).
+// Needle's edge-on band, the fixed part of its L2 (art/needle.md, Space look): flat strips of
+// `alpha` within `halfWidth` px either side of its line. Its point stars are dropped by the
+// check's opening.
 const band = read("needle/band.json") as {
   color: string;
   through: Xy;
   angle: number;
-  profile: { alpha: number; sigma: number }[];
+  profile: { alpha: number; halfWidth: number }[];
 };
 // Andromeda's backdrop haze, the fixed part of its L2 (art/galaxies.md, Backdrop haze).
 const HAZE = { path: "andromeda/haze.png", texel: 2 } as const;
@@ -1148,7 +1150,7 @@ function renderArea(
       }
     }
   }
-  // L2 fixed: the band's summed Gaussian profile across its line through `through`.
+  // L2 fixed: the band's strips summed across its line through `through`.
   if (data.fixed.includes("needleBand")) {
     const a = (band.angle * Math.PI) / 180;
     const [px, py] = [band.through[0] * W, band.through[1] * H];
@@ -1157,7 +1159,7 @@ function renderArea(
       for (let x = 0; x < W; x++) {
         const d = -(x + 0.5 - px) * Math.sin(a) + (y + 0.5 - py) * Math.cos(a);
         const alpha = band.profile.reduce(
-          (sum, { alpha: k, sigma }) => sum + k * Math.exp(-((d / sigma) ** 2)),
+          (sum, { alpha: k, halfWidth }) => (Math.abs(d) <= halfWidth ? sum + k : sum),
           0,
         );
         put(y * W + x, colour, alpha);
