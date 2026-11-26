@@ -534,18 +534,21 @@ discovered place for the reveal, so a hunt's search area is never fogged.
   at least `minBox`; `scale = clamp(min(innerWidth / box width, innerHeight /
 box height), minScale, maxScale)`; the box centre at the inner region's
   centre. Near the seam the box widens, often to `minScale`. When `minScale`
-  clamps it, pan the least distance that brings Ada inside the inner region;
-  the view is then clamped to the pan limit, which near a tip can leave Ada
-  outside the inner region but still in view. Nothing is selected on opening.
+  clamps it, pan the least distance to bring Ada into the inner region, then
+  apply the pan limits below. Nothing is selected on opening.
 - Pan limit: pan and zoom stay within one wrap period, the canonical
   240000-unit square that flight wraps into, which the map projects as a 2:1
   diamond. The inner region's centre stays inside the diamond (`|x| / 2 + |y|
 <= side / 2`), and the whole map field's edge stays inside the diamond's
   bounding box (x within +-240000, y within +-120000), so up to half the view
-  can show past a diagonal seam and every point, the tips included, stays
-  reachable. A pan beyond the limits moves to the nearest allowed centre.
-  Every zoom and pan path applies the limit, so zooming out near an edge
-  re-centres. Every position draws at its canonical point in the square, so a
+  can show past a diagonal seam. A pan beyond the one-wrap bounds moves to
+  the nearest centre within them. At maximum zoom-out only (`minScale`),
+  the actual projected charting oval must overlap the map field inset by
+  1 logical px on each side. Near an extreme seam, keeping that overlap can
+  take priority over keeping Ada visible. At closer scales the one-wrap
+  bounds keep every point reachable, including the tips. Every zoom and pan
+  path applies these limits, so zooming out near an edge may re-centre the
+  view. Every position draws at its canonical point in the square, so a
   place just across the seam from Ada draws at the far edge.
 - Stations exist outside the charting disc in every galaxy (the station
   catalog fills every cell). Once discovered, each is a place, and the opening
