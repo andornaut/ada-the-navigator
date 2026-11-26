@@ -25,6 +25,7 @@ import {
 } from "./conversations.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { GameModel } from "./game.ts";
+import type { PhantomChatter } from "./phantom.ts";
 import { restoreSave } from "./save.ts";
 import type { SpaceObject } from "./types.ts";
 import { collectWeapon } from "./weapons.ts";
@@ -93,6 +94,74 @@ const lessonsHeard = ["lesson:move", "lesson:aim", "lesson:stardust", "lesson:do
 const drones = { dronesNear: true, inDanger: true };
 // Galaxy one's quiet pool, heard, so a quiet minute brings no line.
 const quietHeard = ["quiet:1:lonely", "quiet:1:tail", "quiet:1:name"];
+
+describe("Phantom flight chatter", () => {
+  it("keeps a blocked or unshown hardpoint cue pending across Continue and retires it on display", () => {
+    const pending: PhantomChatter[] = ["flagshipHardpoint"];
+    const id = "chapter:phantom:flagshipHardpoint";
+    const initial = director(6);
+    initial.talk.queuePhantomChatter(pending);
+    initial.talk.step(0.01, "refusal", calm);
+    expect(initial.talk.showing).toBeNull();
+    expect(pending).toEqual(["flagshipHardpoint"]);
+    initial.talk.step(0.01, null, calm);
+    expect(initial.talk.pending(id)).toBe(true);
+    expect(pending).toEqual(["flagshipHardpoint"]);
+
+    const continued = director(6, initial.heard);
+    const restored: PhantomChatter[] = JSON.parse(JSON.stringify(pending));
+    continued.talk.queuePhantomChatter(restored);
+    continued.talk.queuePhantomChatter(restored);
+    continued.talk.step(0.01, null, calm);
+    expect(restored).toEqual(["flagshipHardpoint"]);
+    expect(continued.talk.showing).toMatchObject({
+      instance: id,
+      line: { speaker: "astra", text: "One hardpoint down. Keep aiming for the glowing parts." },
+    });
+    expect(restored).toEqual([]);
+    expect(continued.heard).not.toContain(id);
+
+    const afterDisplay = director(6, continued.heard);
+    afterDisplay.talk.queuePhantomChatter(structuredClone(restored));
+    afterDisplay.talk.step(0.01, null, calm);
+    expect(afterDisplay.talk.pending(id)).toBe(false);
+
+    // A new battle may generate the same cue after the canonical flight reset.
+    afterDisplay.talk.beginFlight(6);
+    afterDisplay.talk.queuePhantomChatter(["flagshipHardpoint"]);
+    afterDisplay.talk.step(0.01, null, calm);
+    expect(afterDisplay.talk.showing?.instance).toBe(id);
+  });
+
+  it.each(["battleAllies", "battleAlone"] as const)(
+    "keeps %s, attack, hardpoint, and surrender in their original warning order",
+    (approach) => {
+      const pending: PhantomChatter[] = [
+        approach,
+        "flagshipAttack",
+        "flagshipHardpoint",
+        "flagshipDisabled",
+      ];
+      const { talk } = director(6);
+      for (const cue of [...pending]) {
+        talk.queuePhantomChatter(pending);
+        talk.step(0.01, null, calm);
+        expect(talk.showing?.conversation).toMatchObject({
+          id: `chapter:phantom:${cue}`,
+          priority: "warning",
+          repeat: "flight",
+        });
+        expect(pending).not.toContain(cue);
+        if (cue === approach || cue === "flagshipAttack") {
+          talk.advance();
+          expect(talk.showing?.lineIndex).toBe(1);
+        }
+        talk.skip();
+      }
+      expect(pending).toEqual([]);
+    },
+  );
+});
 
 describe("conversation schedule", () => {
   it("dwells and fades a one-line discovery on the same flight clock", () => {

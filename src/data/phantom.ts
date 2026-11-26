@@ -1,4 +1,4 @@
-import type { Mood } from "./conversations.ts";
+import type { ConversationLine, Mood } from "./conversations.ts";
 import type { ChapterContent, PremiseLine } from "./types.ts";
 export const PHANTOM_DESTINATIONS = [
   "phantomSettlement1",
@@ -89,6 +89,11 @@ const line = (speaker: string, text: string, mood?: Mood): PhantomLine => ({
   text,
   ...(mood ? { mood } : {}),
 });
+export const PHANTOM_FIRST_HARDPOINT_LINE = {
+  speaker: "astra",
+  text: "One hardpoint down. Keep aiming for the glowing parts.",
+} as const satisfies ConversationLine;
+
 export const PHANTOM_COPY: Readonly<Record<string, PhantomCopy>> = {
   aftermath: {
     lines: [
@@ -128,9 +133,7 @@ export const PHANTOM_COPY: Readonly<Record<string, PhantomCopy>> = {
     ],
   },
   flagshipDisabled: { lines: [line("archie", "Enough! Take it. Take the last disk.")] },
-  flagshipHardpoint: {
-    lines: [line("astra", "One hardpoint down. Keep aiming for the glowing parts.")],
-  },
+  flagshipHardpoint: { lines: [PHANTOM_FIRST_HARDPOINT_LINE] },
   flagshipSalvage: {
     lines: [
       line("astra", "The last holodisk is here. I can bring it aboard."),

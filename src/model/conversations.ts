@@ -25,6 +25,7 @@ import {
 } from "../data/conversations.ts";
 import { BUILT } from "../data/galaxies.ts";
 import { NOTICE_TIMING } from "../data/noticeTiming.ts";
+import { PHANTOM_FIRST_HARDPOINT_LINE } from "../data/phantom.ts";
 import {
   type PoiApproachKind,
   poiApproachPool,
@@ -32,6 +33,7 @@ import {
   type PoiLoreCue,
 } from "../data/poiDiscoveryLore.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import type { PhantomChatter } from "./phantom.ts";
 import { phantomSettlementCopy } from "./phantomSettlementCopy.ts";
 import type { ScanOutcome } from "./scanOutcomes.ts";
 import { scanOutcomeLines } from "./scanOutcomeSpeech.ts";
@@ -151,6 +153,7 @@ interface Request {
   /** Its trigger, re-checked whenever it could show; a request whose trigger lapsed is dropped. */
   readonly holds: Holds;
   readonly instance: string;
+  readonly onFirstShowing?: () => void;
   /** Penny's point of interest; one waits at a time. */
   readonly point?: string;
   readonly optional?: "reaction" | "approach" | "ambient";
@@ -181,6 +184,14 @@ const dronesPress: Holds = (facts) => facts.inDanger && facts.dronesNear;
 
 // Timers sum many frame slices, so a deadline counts as reached within float error.
 const EPSILON = 1e-9;
+
+const PHANTOM_HARDPOINT_CUE: Conversation = {
+  id: "chapter:phantom:flagshipHardpoint",
+  lines: [PHANTOM_FIRST_HARDPOINT_LINE],
+  priority: "warning",
+  repeat: "flight",
+  trigger: { galaxy: 6, id: "flagshipHardpoint", kind: "chapter" },
+};
 
 /** Penny's instance for one point of interest. */
 export function pennyInstance(galaxy: GalaxyNumber, point: string): string {
@@ -407,6 +418,7 @@ export class ConversationDirector {
     if (active && line && !active.exposed) {
       active.exposed = true;
       this.markSeen(active);
+      active.onFirstShowing?.();
       if (
         active.conversation.trigger.kind === "lesson" &&
         active.conversation.trigger.lesson === "scan" &&
@@ -540,6 +552,33 @@ export class ConversationDirector {
   /** A chapter event requests its authored small-box chatter once through the normal director. */
   chapter(id: string): void {
     this.request((trigger) => trigger.kind === "chapter" && trigger.id === id);
+  }
+
+  /** Offer pending cues from the live Phantom flight until the box first shows each one. */
+  queuePhantomChatter(chatter: PhantomChatter[]): void {
+    if (this.galaxy !== 6) {
+      return;
+    }
+    for (const key of chatter) {
+      const conversation =
+        key === "flagshipHardpoint"
+          ? PHANTOM_HARDPOINT_CUE
+          : this.conversations.find(
+              ({ trigger }) =>
+                trigger.kind === "chapter" && trigger.galaxy === 6 && trigger.id === key,
+            );
+      if (conversation) {
+        this.enqueue({
+          conversation,
+          holds: always,
+          instance: conversation.id,
+          onFirstShowing: () => {
+            const remaining = chatter.filter((pending) => pending !== key);
+            chatter.splice(0, chatter.length, ...remaining);
+          },
+        });
+      }
+    }
   }
 
   /** Event feedback is transient and deduplicated while its exact authored line is pending. */
