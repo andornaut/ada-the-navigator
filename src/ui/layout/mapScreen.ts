@@ -11,7 +11,7 @@ import {
 } from "../../data/layout.ts";
 import { TASK_COLORS } from "../../data/taskCategories.ts";
 import { CHARTING_RADIUS, type MapSymbol } from "../../model/map.ts";
-import { nearestImage, wrapPoint } from "../../model/worldGeometry.ts";
+import { wrapPoint } from "../../model/worldGeometry.ts";
 import { CARD_CLOSE } from "./cardFrame.ts";
 import { COLOURS, UNLISTED_COLOURS } from "./colours.ts";
 import { hudRect, type Insets, safeRect, type Size, STATUS_PILL } from "./playView.ts";
@@ -120,9 +120,12 @@ export interface Point {
   readonly y: number;
 }
 
-/** A map view: logical px per projected unit, and the projected point at the inner centre. */
+/**
+ * A map view: logical px per projected unit, the projected point at the inner centre, and the
+ * side of the square flight wraps positions into, which bounds it.
+ */
 export interface MapView {
-  readonly worldSide?: number;
+  readonly worldSide: number;
   readonly centre: Point;
   readonly scale: number;
 }
@@ -252,14 +255,30 @@ export function innerRegion(fit: MapRegion): MapRegion {
   };
 }
 
-/** The zoom range: minScale fits the charting disc, maxScale the minimum box. */
-export function scaleLimits(inner: MapRegion): { readonly max: number; readonly min: number } {
+/** The square's projection: a diamond 2 side across and side down, centred on the origin. */
+function squareExtent(side: number): Size {
+  return { height: side, width: 2 * side };
+}
+
+/**
+ * The zoom range: maxScale fits the minimum box; minScale is the tighter of the charting-disc fit
+ * and the scale at which the field spans the square's projected extent on its limiting axis.
+ */
+export function scaleLimits(
+  inner: MapRegion,
+  field: Size,
+  side: number,
+): { readonly max: number; readonly min: number } {
   const { chartRadius, minBox } = MAP_SCREEN;
+  const square = squareExtent(side);
   return {
     max: Math.min(inner.width / minBox.width, (inner.zoomHeight ?? inner.height) / minBox.height),
-    min: Math.min(
-      inner.width / (2 * Math.SQRT2 * chartRadius),
-      inner.height / (Math.SQRT2 * chartRadius),
+    min: Math.max(
+      Math.min(
+        inner.width / (2 * Math.SQRT2 * chartRadius),
+        inner.height / (Math.SQRT2 * chartRadius),
+      ),
+      Math.max(field.width / square.width, field.height / square.height),
     ),
   };
 }
@@ -269,15 +288,9 @@ const centreOf = (rect: Rect): Point => ({
   y: rect.y + rect.height / 2,
 });
 
-/** The nearest periodic image to the current view, or the unchanged legacy point. */
-export function mapImage(view: MapView, world: Point): Point {
-  return view.worldSide === undefined
-    ? world
-    : nearestImage(view.worldSide, mapWorld(view.centre), world).point;
-}
-
-function mapWorld(projected: Point): Point {
-  return { x: projected.y + projected.x / 2, y: projected.y - projected.x / 2 };
+/** The position the map draws: the canonical point inside the square flight wraps into. */
+export function mapImage(view: Pick<MapView, "worldSide">, world: Point): Point {
+  return wrapPoint(view.worldSide, world);
 }
 
 /** A world position's place on screen, in logical px. */
@@ -299,36 +312,121 @@ function bounds(points: readonly Point[]): Rect {
   return { height: Math.max(...ys) - y, width: Math.max(...xs) - x, x, y };
 }
 
-/**
- * The pan limit: the projected bounding box of the charting disc and every place, which the
- * inner centre stays inside, so a far station stays reachable and the map never drifts away.
- */
-export function panLimit(places: readonly Point[]): Rect {
-  const r = MAP_SCREEN.chartRadius;
-  const disc = [
-    { x: -r * Math.SQRT2, y: -(r * Math.SQRT2) / 2 },
-    { x: r * Math.SQRT2, y: (r * Math.SQRT2) / 2 },
-  ];
-  return bounds([...disc, ...places.map(mapProjection)]);
+/** a x + b y <= c. */
+type HalfPlane = readonly [a: number, b: number, c: number];
+
+/** A convex polygon cut by a half-plane (Sutherland-Hodgman). */
+function cut(polygon: readonly Point[], [a, b, c]: HalfPlane): Point[] {
+  const kept: Point[] = [];
+  polygon.forEach((p, index) => {
+    const q = polygon[(index + 1) % polygon.length]!;
+    const fp = a * p.x + b * p.y - c;
+    const fq = a * q.x + b * q.y - c;
+    if (fp <= 0) {
+      kept.push(p);
+    }
+    if ((fp < 0 && fq > 0) || (fp > 0 && fq < 0)) {
+      const t = fp / (fp - fq);
+      kept.push({ x: p.x + t * (q.x - p.x), y: p.y + t * (q.y - p.y) });
+    }
+  });
+  return kept;
 }
 
-/** A view with its centre clamped to the pan limit and its scale to the zoom range. */
-export function clampView(inner: Rect, limit: Rect, view: MapView): MapView {
-  if (view.worldSide !== undefined) {
-    const { max, min } = scaleLimits(inner);
-    return {
-      ...view,
-      centre: mapProjection(wrapPoint(view.worldSide, mapWorld(view.centre))),
-      scale: clamp(min, max, view.scale),
-    };
+/** The point of segment a-b nearest to point. */
+function nearestOnSegment(a: Point, b: Point, point: Point): Point {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const length = dx * dx + dy * dy;
+  const t = length === 0 ? 0 : clamp(0, 1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / length);
+  return { x: a.x + t * dx, y: a.y + t * dy };
+}
+
+/** The seams' half-planes: the diamond |x| / 2 + |y| <= side / 2. */
+const seams = (side: number): HalfPlane[] => [
+  [1, 2, side],
+  [1, -2, side],
+  [-1, 2, side],
+  [-1, -2, side],
+];
+
+/** A view's allowed centres: a box of centres cut by the seams' half-planes. */
+interface CentreRegion {
+  readonly box: {
+    readonly x0: number;
+    readonly x1: number;
+    readonly y0: number;
+    readonly y1: number;
+  };
+  readonly seams: readonly HalfPlane[];
+}
+
+/**
+ * The centres a view may take at its scale: the view's edge stays inside the square's projected
+ * extent, so it stops at each of the diamond's tips, and its centre stays inside the diamond, so
+ * it stops at each seam. Every point of the square stays reachable by panning.
+ */
+function centreRegion(inner: Rect, field: Rect, side: number, scale: number): CentreRegion {
+  const middle = centreOf(inner);
+  const { height, width } = squareExtent(side);
+  // Within rounding at minScale the field spans the extent exactly: hold the axis' midpoint.
+  const span = (low: number, high: number): [number, number] =>
+    low <= high ? [low, high] : [(low + high) / 2, (low + high) / 2];
+  const [x0, x1] = span(
+    -width / 2 + (middle.x - field.x) / scale,
+    width / 2 - (field.x + field.width - middle.x) / scale,
+  );
+  const [y0, y1] = span(
+    -height / 2 + (middle.y - field.y) / scale,
+    height / 2 - (field.y + field.height - middle.y) / scale,
+  );
+  return { box: { x0, x1, y0, y1 }, seams: seams(side) };
+}
+
+/** The nearest allowed centre to `point`: itself when it is allowed. */
+function nearestInside({ box, seams: planes }: CentreRegion, point: Point): Point {
+  if (
+    point.x >= box.x0 &&
+    point.x <= box.x1 &&
+    point.y >= box.y0 &&
+    point.y <= box.y1 &&
+    planes.every(([a, b, c]) => a * point.x + b * point.y <= c)
+  ) {
+    return point;
   }
-  const { max, min } = scaleLimits(inner);
+  const polygon = planes.reduce(cut, [
+    { x: box.x0, y: box.y0 },
+    { x: box.x1, y: box.y0 },
+    { x: box.x1, y: box.y1 },
+    { x: box.x0, y: box.y1 },
+  ]);
+  // At a minScale where the field spans both axes, the held midpoints can miss the diamond.
+  const region =
+    polygon.length > 0 ? polygon : [{ x: (box.x0 + box.x1) / 2, y: (box.y0 + box.y1) / 2 }];
+  let best = region[0]!;
+  let gap = Infinity;
+  region.forEach((a, index) => {
+    const candidate = nearestOnSegment(a, region[(index + 1) % region.length]!, point);
+    const distance = Math.hypot(candidate.x - point.x, candidate.y - point.y);
+    if (distance < gap) {
+      best = candidate;
+      gap = distance;
+    }
+  });
+  return best;
+}
+
+/**
+ * A view with its scale clamped to the zoom range and its centre to the least pan that keeps it
+ * inside the square (centreRegion). `field` is the screen rect the map draws on.
+ */
+export function clampView(inner: MapRegion, field: Rect, view: MapView): MapView {
+  const { max, min } = scaleLimits(inner, field, view.worldSide);
+  const scale = clamp(min, max, view.scale);
   return {
-    centre: {
-      x: clamp(limit.x, limit.x + limit.width, view.centre.x),
-      y: clamp(limit.y, limit.y + limit.height, view.centre.y),
-    },
-    scale: clamp(min, max, view.scale),
+    ...view,
+    centre: nearestInside(centreRegion(inner, field, view.worldSide, scale), view.centre),
+    scale,
   };
 }
 
@@ -344,34 +442,41 @@ function panInside(rect: Rect, point: Point, view: MapView): MapView {
 }
 
 /**
- * The opening fit: the bounding box of Ada and every place, grown about its centre to at least
- * minBox, at the scale that fits it, clamped to the zoom range, its centre at the inner centre.
- * When minScale clamps it, the least pan that brings Ada inside the inner region.
+ * The opening fit: the bounding box of Ada and every place at their positions in the square,
+ * grown about its centre to at least minBox, at the scale that fits it, clamped to the zoom range,
+ * its centre at the inner centre. When minScale clamps it (a discovered station far outside the
+ * disc), pan the least distance that brings Ada inside the inner region; then clamp to the square.
  */
-export function openingView(inner: Rect, places: readonly Point[], player: Point): MapView {
-  const box = bounds([player, ...places].map(mapProjection));
+export function openingView(
+  inner: MapRegion,
+  field: Rect,
+  side: number,
+  places: readonly Point[],
+  player: Point,
+): MapView {
+  const box = bounds([player, ...places].map((point) => mapProjection(wrapPoint(side, point))));
   const width = Math.max(box.width, MAP_SCREEN.minBox.width);
   const height = Math.max(box.height, MAP_SCREEN.minBox.height);
-  const { max, min } = scaleLimits(inner);
+  const { max, min } = scaleLimits(inner, field, side);
   const fitted = Math.min(inner.width / width, inner.height / height);
   const scale = clamp(min, max, fitted);
-  const view = { centre: centreOf(box), scale };
+  const view = { centre: centreOf(box), scale, worldSide: side };
   const opened = fitted < min ? panInside(inner, toScreen(inner, view, player), view) : view;
-  return clampView(inner, panLimit(places), opened);
+  return clampView(inner, field, opened);
 }
 
 /**
- * Zooms by factor about a screen point, clamped to the zoom range. Refused when the scale is
- * already at the limit the zoom heads for.
+ * Zooms by factor about a screen point, clamped to the zoom range and the square. Refused when
+ * the scale is already at the limit the zoom heads for.
  */
 export function zoomView(
-  inner: Rect,
-  limit: Rect,
+  inner: MapRegion,
+  field: Rect,
   factor: number,
   anchor: Point,
   view: MapView,
 ): { readonly refused: boolean; readonly view: MapView } {
-  const { max, min } = scaleLimits(inner);
+  const { max, min } = scaleLimits(inner, field, view.worldSide);
   const at = (factor > 1 ? max : min) * (1 + (factor > 1 ? -1e-9 : 1e-9));
   if (factor > 1 ? view.scale >= at : view.scale <= at) {
     return { refused: true, view };
@@ -384,7 +489,7 @@ export function zoomView(
   };
   return {
     refused: false,
-    view: clampView(inner, limit, {
+    view: clampView(inner, field, {
       ...view,
       centre: {
         x: projected.x - (anchor.x - middle.x) / scale,
@@ -395,27 +500,29 @@ export function zoomView(
   };
 }
 
-/** Pans by a screen delta: the map follows the pointer. */
-export function panView(inner: Rect, limit: Rect, delta: Point, view: MapView): MapView {
-  return clampView(inner, limit, {
+/** Pans by a screen delta: the map follows the pointer, inside the square. */
+export function panView(inner: MapRegion, field: Rect, delta: Point, view: MapView): MapView {
+  return clampView(inner, field, {
     ...view,
     centre: { x: view.centre.x - delta.x / view.scale, y: view.centre.y - delta.y / view.scale },
     scale: view.scale,
   });
 }
 
-/** Pans so Ada sits at the inner centre, at the same scale. */
-export function recentreView(inner: Rect, limit: Rect, player: Point, view: MapView): MapView {
-  return clampView(inner, limit, { ...view, centre: mapProjection(player) });
+/** Pans so Ada sits at the inner centre, at the same scale, as far as the square allows. */
+export function recentreView(inner: MapRegion, field: Rect, player: Point, view: MapView): MapView {
+  return clampView(inner, field, { ...view, centre: mapProjection(mapImage(view, player)) });
 }
 
 /**
  * Keep clear: the least pan that puts a selected chip and its ring inside the fit region and at
- * least SPACING.gap above the panel's top (or the fit region's bottom without a panel).
+ * least SPACING.gap above the panel's top (or the fit region's bottom without a panel), as far as
+ * the square allows.
  */
 export function keepClear(
   fit: Rect,
-  inner: Rect,
+  inner: MapRegion,
+  field: Rect,
   panelTop: number | null,
   place: Point,
   view: MapView,
@@ -431,7 +538,7 @@ export function keepClear(
     x: fit.x + reach,
     y: fit.y + reach,
   };
-  return panInside(clear, toScreen(inner, view, place), view);
+  return clampView(inner, field, panInside(clear, toScreen(inner, view, place), view));
 }
 
 /** Places in reading order: drawn centre top to bottom, then left to right. */

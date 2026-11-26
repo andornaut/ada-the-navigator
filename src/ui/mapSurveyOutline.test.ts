@@ -4,11 +4,13 @@ import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
+import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
 import { CHARTING_ORIGIN, CHARTING_RADIUS, withinChartingRadius } from "../model/map.ts";
 import { MAP_COLORS, type MapView, toScreen } from "./layout/mapScreen.ts";
 import { drawMapSurveyOutline } from "./mapSurveyOutline.ts";
 
 const INNER = { height: 240, width: 600, x: 30, y: 80 };
+const SIDE = CURRENT_FLIGHT_TOPOLOGY.side;
 function canvas() {
   const commands: { args: unknown[]; name: string }[] = [];
   const context = {
@@ -39,7 +41,7 @@ describe("central survey outline", () => {
     { centre: { x: -50000, y: 30000 }, px: 1.5, scale: 0.04 },
   ])("uses the progress circle through projection, pan and zoom: %j", ({ centre, px, scale }) => {
     const { commands, context } = canvas();
-    const view = { centre, scale };
+    const view = { centre, scale, worldSide: SIDE };
     drawMapSurveyOutline(context as unknown as CanvasRenderingContext2D, INNER, view, px);
     const at = toScreen(INNER, view, CHARTING_ORIGIN);
     const ellipses = commands.filter(({ name }) => name === "ellipse");
@@ -75,7 +77,7 @@ describe("central survey outline", () => {
     drawMapSurveyOutline(
       context as unknown as CanvasRenderingContext2D,
       INNER,
-      { centre: { x: 0, y }, scale: 0.01 },
+      { centre: { x: 0, y }, scale: 0.01, worldSide: SIDE },
       1,
     );
     expect(commands.find(({ name }) => name === "rect")?.args).toEqual([0, 0, 720, 360]);
@@ -84,7 +86,7 @@ describe("central survey outline", () => {
     expect(ellipse[3]).toBeCloseTo(ellipse[2]! / 2);
   });
 
-  it("uses the same periodic origin image as map places", () => {
+  it("centres on the origin's canonical point, as map places draw", () => {
     const { commands, context } = canvas();
     const view: MapView = { centre: { x: 1151900, y: 0 }, scale: 0.01, worldSide: 1152000 };
     drawMapSurveyOutline(context as unknown as CanvasRenderingContext2D, INNER, view, 1);
@@ -140,7 +142,7 @@ it("draws the survey outline after fog and before search markers, including an u
       () => calls.push("survey"),
       () => calls.push("search"),
     ) as (inner: Rect, unit: number, view: MapView) => void;
-    draw(INNER, 1, { centre: { x: 0, y: 0 }, scale: 0.01 });
+    draw(INNER, 1, { centre: { x: 0, y: 0 }, scale: 0.01, worldSide: SIDE });
     expect(calls).toEqual(
       explored.length ? ["clear", "fog", "survey", "search"] : ["clear", "survey", "search"],
     );

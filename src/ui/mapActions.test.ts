@@ -5,10 +5,21 @@ import { HIT_RULE, hitAround, pressedArea } from "@andornaut/game-kit/runtime/ui
 import ts from "typescript";
 import { afterEach, expect, it, vi } from "vitest";
 
+import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
 import { bindAdaAction, resolveAdaHoldAction } from "./actionBinding.ts";
 import { bindAdaActionRoot, bindAdaHoldActions } from "./holdActionsAdapter.ts";
 import { framePoint, turnOf } from "./layout/frameBox.ts";
-import { chipRect, MAP_SCREEN, panView, toScreen, zoomView } from "./layout/mapScreen.ts";
+import {
+  chipRect,
+  clampView,
+  keepClear,
+  MAP_SCREEN,
+  type MapView,
+  panView,
+  recentreView,
+  toScreen,
+  zoomView,
+} from "./layout/mapScreen.ts";
 import { VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import {
   enterPressView,
@@ -50,7 +61,7 @@ function actual(name: string): string {
       found = node;
     }
     if (
-      ["pointerdown", "pointermove"].includes(name) &&
+      ["pointerdown", "pointermove", "wheel"].includes(name) &&
       ts.isCallExpression(node) &&
       node.expression.getText(source) === "screen.addEventListener" &&
       node.arguments[0]?.getText(source) === JSON.stringify(name)
@@ -452,6 +463,9 @@ it("rejects closed, disabled and covered Map controls without changing their bus
   expect(run).toHaveBeenCalledOnce();
 });
 
+const SIDE = CURRENT_FLIGHT_TOPOLOGY.side;
+// The fixture screen: 200 CSS px at 2 CSS px per logical px.
+const FIELD = { height: 100, width: 100, x: 0, y: 0 };
 function spatialFixture(places = [{ id: "a", x: 0, y: 0 }]) {
   const f = fixture(true);
   const select = vi.fn();
@@ -470,8 +484,7 @@ function spatialFixture(places = [{ id: "a", x: 0, y: 0 }]) {
     framePoint,
     hitAround,
     invalidatePressScope,
-    layout: () => ({ inner: { height: 100, width: 100, x: 0, y: 0 } }),
-    limit: () => ({ height: 10000, width: 10000, x: -5000, y: -5000 }),
+    layout: () => ({ field: FIELD, fit: FIELD, inner: FIELD }),
     panView,
     panelLayout: { dispose: vi.fn() },
     pinch: null,
@@ -487,7 +500,7 @@ function spatialFixture(places = [{ id: "a", x: 0, y: 0 }]) {
     shipMarker: { dispose: vi.fn() },
     toScreen,
     turnOf,
-    view: { centre: { x: 0, y: 0 }, scale: 0.1 },
+    view: { centre: { x: 0, y: 0 }, scale: 0.1, worldSide: SIDE },
     window: f.document.defaultView,
     zoomView,
   });
@@ -529,7 +542,7 @@ it("takes the topmost expanded hit at pointerdown and holds it across a new proj
   ]);
   f.down();
   expect(f.context.fieldAction.id).toBe("b");
-  f.context.view = { centre: { x: 1000, y: 0 }, scale: 0.1 };
+  f.context.view = { centre: { x: 1000, y: 0 }, scale: 0.1, worldSide: SIDE };
   vi.advanceTimersByTime(499);
   expect(f.select).not.toHaveBeenCalled();
   vi.advanceTimersByTime(1);
@@ -606,7 +619,7 @@ it.each([
   }
   uncover?.();
   f.screen.hidden = false;
-  f.context.view = { centre: { x: 0, y: 0 }, scale: 0.1 };
+  f.context.view = { centre: { x: 0, y: 0 }, scale: 0.1, worldSide: SIDE };
   f.down();
   f.up();
   expect(f.select).toHaveBeenCalledExactlyOnceWith("a");
@@ -622,4 +635,148 @@ it("disposes the field and chip bindings while a gesture is armed", () => {
   f.up();
   f.click(1, f.screen);
   expect(f.select).not.toHaveBeenCalled();
+});
+
+/** The view's edge inside the square's projected extent and its centre inside the diamond. */
+function expectInSquare(view: MapView) {
+  const tolerance = 1e-3;
+  const middle = { x: FIELD.x + FIELD.width / 2, y: FIELD.y + FIELD.height / 2 };
+  const reach = { x: FIELD.width / 2 / view.scale, y: FIELD.height / 2 / view.scale };
+  expect(view.worldSide).toBe(SIDE);
+  expect(middle).toEqual({ x: 50, y: 50 });
+  expect(view.centre.x - reach.x).toBeGreaterThanOrEqual(-SIDE - tolerance);
+  expect(view.centre.x + reach.x).toBeLessThanOrEqual(SIDE + tolerance);
+  expect(view.centre.y - reach.y).toBeGreaterThanOrEqual(-SIDE / 2 - tolerance);
+  expect(view.centre.y + reach.y).toBeLessThanOrEqual(SIDE / 2 + tolerance);
+  expect(Math.abs(view.centre.x) / 2 + Math.abs(view.centre.y)).toBeLessThanOrEqual(
+    SIDE / 2 + tolerance,
+  );
+}
+
+/** The spatial fixture with the actual zoom, wheel, select, goTo and refit wired in. */
+function boundFixture() {
+  const f = spatialFixture([
+    { id: "a", x: 0, y: 0 },
+    { id: "corner", x: SIDE / 2 - 1, y: SIDE / 2 - 1 },
+  ]);
+  Object.assign(f.context, {
+    clampView,
+    dressPanel: () => {},
+    focusTarget: () => {},
+    keepClear,
+    options: { reducedMotion: () => false },
+    panelTop: () => 80,
+    presentation: { clear: () => {} },
+    recentreView,
+    refuse: vi.fn(),
+    render: () => {},
+    selectedPlace: () =>
+      [
+        { id: "a", x: 0, y: 0 },
+        { id: "corner", x: SIDE / 2 - 1, y: SIDE / 2 - 1 },
+      ].find(({ id }) => id === f.context.selected) ?? null,
+  });
+  for (const name of ["zoom", "select", "goTo", "refit"]) {
+    f.execute(`var ${name} = ${actual(name)};`);
+  }
+  f.execute(actual("wheel"));
+  return f;
+}
+const DIRECTIONS = [
+  { x: 1, y: 0 },
+  { x: -1, y: 0 },
+  { x: 0, y: 1 },
+  { x: 0, y: -1 },
+  { x: 2, y: 1 },
+  { x: -2, y: -1 },
+];
+
+it.each(DIRECTIONS)("keeps a hard drag toward %j inside the square", (direction) => {
+  const f = boundFixture();
+  f.down({ clientX: 100, clientY: 100 });
+  for (let step = 1; step <= 50; step++) {
+    // The map follows the pointer, so the view moves against the drag.
+    f.send("pointermove", {
+      clientX: 100 - direction.x * step * 1e5,
+      clientY: 100 - direction.y * step * 1e5,
+    });
+    expectInSquare(f.context.view);
+  }
+  const stopped = f.context.view;
+  f.send("pointermove", { clientX: 100 - direction.x * 9e6, clientY: 100 - direction.y * 9e6 });
+  expect(f.context.view.centre.x).toBeCloseTo(stopped.centre.x, 3);
+  expect(f.context.view.centre.y).toBeCloseTo(stopped.centre.y, 3);
+});
+
+it("keeps a two-pointer pinch out and pan inside the square", () => {
+  const f = boundFixture();
+  f.down({ clientX: 90, clientY: 100 });
+  f.down({ clientX: 110, clientY: 100, isPrimary: false, pointerId: 6, pointerType: "touch" });
+  for (let step = 1; step <= 40; step++) {
+    // The pointers close in, zooming out, while their midpoint travels right.
+    const mid = 100 + step * 1e4;
+    const half = Math.max(0.5, 10 - step / 4);
+    f.send("pointermove", { clientX: mid - half, clientY: 100 });
+    f.send("pointermove", { clientX: mid + half, clientY: 100, pointerId: 6 });
+    expectInSquare(f.context.view);
+  }
+  expect(f.context.view.scale).toBeLessThan(0.1);
+});
+
+it.each([
+  { deltaMode: 0, deltaY: 400 },
+  { deltaMode: 1, deltaY: 12 },
+])("keeps wheel zoom-out near each edge inside the square: %j", (wheel) => {
+  for (const direction of DIRECTIONS) {
+    const f = boundFixture();
+    f.context.view = panView(
+      FIELD,
+      FIELD,
+      { x: -direction.x * 1e7, y: -direction.y * 1e7 },
+      {
+        centre: { x: 0, y: 0 },
+        scale: 0.1,
+        worldSide: SIDE,
+      },
+    );
+    for (let step = 0; step < 12; step++) {
+      f.send("wheel", { clientX: 10 + 30 * step, clientY: 190, ...wheel });
+      expectInSquare(f.context.view);
+    }
+  }
+});
+
+it("keeps the zoom tools inside the square near an edge and refuses at the cap", () => {
+  const f = boundFixture();
+  f.context.view = panView(
+    FIELD,
+    FIELD,
+    { x: -1e7, y: 0 },
+    {
+      centre: { x: 0, y: 0 },
+      scale: 0.1,
+      worldSide: SIDE,
+    },
+  );
+  // A press or Enter on Zoom out runs the same action: one step about the fit centre.
+  for (let step = 0; step < 12; step++) {
+    f.execute("zoom(1 / MAP_SCREEN.zoomStep, { x: 50, y: 50 }, {})");
+    expectInSquare(f.context.view);
+  }
+  expect(f.context.refuse).toHaveBeenCalled();
+  f.context.refuse.mockClear();
+  f.execute("zoom(1 / MAP_SCREEN.zoomStep, { x: 50, y: 50 }, {})");
+  expect(f.context.refuse).toHaveBeenCalledOnce();
+});
+
+it("keeps recentre on a corner place, its selection and a refit inside the square", () => {
+  const f = boundFixture();
+  f.execute(`goTo({ id: "corner", x: ${SIDE / 2 - 1}, y: ${SIDE / 2 - 1} })`);
+  expectInSquare(f.context.view);
+  const at = toScreen(FIELD, f.context.view, { x: SIDE / 2 - 1, y: SIDE / 2 - 1 });
+  expect(at.y).toBeGreaterThanOrEqual(FIELD.y);
+  expect(at.y).toBeLessThanOrEqual(FIELD.y + FIELD.height);
+  f.context.view = { centre: { x: 4e6, y: -4e6 }, scale: 1, worldSide: SIDE };
+  f.execute("refit()");
+  expectInSquare(f.context.view);
 });

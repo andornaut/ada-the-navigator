@@ -15,9 +15,11 @@ import { HUD_BUTTON } from "../data/layout.ts";
 import { TASK_COLORS } from "../data/taskCategories.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { readMapArea } from "../game/jobArt.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
 import { type LocalMap, type MapPlace, type MapPlaceType, placeType } from "../model/map.ts";
 import { shipHeading } from "../model/nose.ts";
 import type { Vec } from "../model/types.ts";
+import { nearestImage } from "../model/worldGeometry.ts";
 import {
   type AdaActionOptions,
   assertAdaActionBindings,
@@ -56,13 +58,10 @@ import {
   mapGlyphSize,
   mapHeaderGeometry,
   mapHeaderLeft,
-  mapImage,
-  mapProjection,
   type MapTool,
   type MapView,
   openingView,
   panelMaxWidth,
-  panLimit,
   panView,
   type Point,
   readingOrder,
@@ -1236,20 +1235,20 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       width: screen.clientWidth / unit,
     };
     const fit = fitRegion(insets, size);
-    return { fit, inner: innerRegion(fit), insets, size, unit };
+    // The field draws on the whole screen, so the view's edge is the screen's.
+    const field = { height: size.height, width: size.width, x: 0, y: 0 };
+    return { field, fit, inner: innerRegion(fit), insets, size, unit };
   };
+  // The square flight wraps the galaxy into, which bounds the view.
+  const worldSide = () => state?.map.worldSide ?? CURRENT_FLIGHT_TOPOLOGY.side;
   const detailLines = (place: MapPlace) => {
     if (!state) {
       return [];
     }
-    const geometry = {
-      centre: mapProjection(state.map.player),
-      scale: 1,
-      ...(state.map.worldSide === undefined ? {} : { worldSide: state.map.worldSide }),
-    };
+    // Distances run the short way, across the seam where it is nearer.
     return placeLines(labels, state.map.player, state.job, {
       ...place,
-      ...mapImage(geometry, place),
+      ...nearestImage(worldSide(), state.map.player, place).point,
     });
   };
   // The panel shows for a selected place, with nothing mapped, or for a reason alone.
@@ -1333,9 +1332,9 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
         chip.addEventListener("focus", () => {
           if (view && state) {
             const target = places().find((entry) => entry.id === id);
-            const { fit: region, inner: room, insets, size, unit } = layout();
+            const { field, fit: region, inner: room, insets, size, unit } = layout();
             if (target) {
-              view = keepClear(region, room, panelTop(size, insets, unit), target, view);
+              view = keepClear(region, room, field, panelTop(size, insets, unit), target, view);
               render();
             }
           }
@@ -1366,21 +1365,9 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     if (!state || screen.hidden) {
       return;
     }
-    const { inner, insets, size, unit } = layout();
+    const { field, inner, insets, size, unit } = layout();
     if (!view) {
-      const geometry = {
-        centre: mapProjection(state.map.player),
-        scale: 1,
-        ...(state.map.worldSide === undefined ? {} : { worldSide: state.map.worldSide }),
-      };
-      view = {
-        ...openingView(
-          inner,
-          places().map((place) => mapImage(geometry, place)),
-          state.map.player,
-        ),
-        ...(state.map.worldSide === undefined ? {} : { worldSide: state.map.worldSide }),
-      };
+      view = openingView(inner, field, worldSide(), places(), state.map.player);
     }
     const current = view;
     screen.style.setProperty("--map-field", state.field?.background ?? "");
@@ -1552,20 +1539,19 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     if (place && view) {
       // The panel takes the new place's text first, so the pan clears its rendered height.
       dressPanel();
-      const { fit, inner, insets, size, unit } = layout();
-      view = keepClear(fit, inner, panelTop(size, insets, unit), place, view);
+      const { field, fit, inner, insets, size, unit } = layout();
+      view = keepClear(fit, inner, field, panelTop(size, insets, unit), place, view);
     }
     render();
   };
 
-  const limit = () => panLimit(places());
   const zoom = (factor: number, anchor: Point, button?: HTMLButtonElement) => {
     cancelFieldAction();
     if (!view) {
       return;
     }
-    const { inner } = layout();
-    const zoomed = zoomView(inner, limit(), factor, anchor, view);
+    const { field, inner } = layout();
+    const zoomed = zoomView(inner, field, factor, anchor, view);
     if (zoomed.refused) {
       if (button) {
         refuse(button, options.reducedMotion());
@@ -1592,7 +1578,8 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       run: () => {
         if (view && state) {
           cancelFieldAction();
-          view = recentreView(layout().inner, limit(), state.map.player, view);
+          const { field, inner } = layout();
+          view = recentreView(inner, field, state.map.player, view);
           render();
         }
       },
@@ -1602,7 +1589,8 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   const goTo = (place: MapPlace) => {
     cancelFieldAction();
     if (view) {
-      view = recentreView(layout().inner, limit(), place, view);
+      const { field, inner } = layout();
+      view = recentreView(inner, field, place, view);
     }
     select(place.id);
     const chip = chips.get(place.id);
@@ -1711,14 +1699,14 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     }
     const at = local(event);
     pointers.set(event.pointerId, at);
-    const { inner } = layout();
+    const { field, inner } = layout();
     if (pointers.size >= 2) {
       const next = pinchOf();
       if (pinch && next && pinch.distance > 0) {
-        const zoomed = zoomView(inner, limit(), next.distance / pinch.distance, next.mid, view);
+        const zoomed = zoomView(inner, field, next.distance / pinch.distance, next.mid, view);
         view = panView(
           inner,
-          limit(),
+          field,
           { x: next.mid.x - pinch.mid.x, y: next.mid.y - pinch.mid.y },
           zoomed.view,
         );
@@ -1736,7 +1724,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       cancelFieldAction();
     }
     if (press?.moved) {
-      view = panView(inner, limit(), { x: at.x - before.x, y: at.y - before.y }, view);
+      view = panView(inner, field, { x: at.x - before.x, y: at.y - before.y }, view);
       renderQueue.schedule();
     }
   });
@@ -1800,8 +1788,8 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     cancelFieldAction();
     presentation.clear();
     if (!screen.hidden && view) {
-      const { inner } = layout();
-      view = clampView(inner, limit(), view);
+      const { field, inner } = layout();
+      view = clampView(inner, field, view);
       render();
     }
   };

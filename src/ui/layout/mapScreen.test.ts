@@ -1,15 +1,18 @@
 import { readFileSync } from "node:fs";
 
+import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import { HIT_RULE, hitAround, pressedArea } from "@andornaut/game-kit/runtime/ui/hitAreas";
 import { describe, expect, it } from "vitest";
 
 import type { GalaxyNumber } from "../../data/types.ts";
 import { uiIconUrl } from "../../data/uiIconUrl.ts";
 import { FALLBACK_SPACE_PALETTE, readGalaxyFields } from "../../game/spacePalette.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "../../model/flightTopology.ts";
 import { CARD_CLOSE } from "./cardFrame.ts";
 import {
   adaAngle,
   chipRect,
+  clampView,
   filledPips,
   fitRegion,
   fogColor,
@@ -30,10 +33,11 @@ import {
   mapImage,
   mapProjection,
   mapQuestsRect,
+  type MapView,
   openingView,
   panelMaxWidth,
-  panLimit,
   panView,
+  type Point,
   readingOrder,
   recentreView,
   scaleLimits,
@@ -45,11 +49,12 @@ import { logicalView, NO_INSETS, safeInsets, safeRect, viewScale } from "./playV
 import { SPACING } from "./tokens.ts";
 
 const BASE = { height: 360, width: 720 };
+const SIDE = CURRENT_FLIGHT_TOPOLOGY.side;
 const regionsAt = (css: { height: number; width: number }, cssInsets = NO_INSETS) => {
   const view = logicalView(css);
   const insets = safeInsets(cssInsets, viewScale(css));
   const fit = fitRegion(insets, view);
-  return { fit, inner: innerRegion(fit) };
+  return { field: { ...view, x: 0, y: 0 }, fit, inner: innerRegion(fit) };
 };
 const round = (value: number, digits: number) => Number(value.toFixed(digits));
 
@@ -118,13 +123,13 @@ describe("map projection and fit", () => {
     const base = regionsAt(BASE);
     expect([base.fit.width, base.fit.height]).toEqual([688, 200]);
     expect([base.inner.width, base.inner.height]).toEqual([644, 156]);
-    const limits = scaleLimits(base.inner);
+    const limits = scaleLimits(base.inner, base.field, SIDE);
     expect(round(limits.max, 5)).toBe(0.04733);
     expect(round(limits.min, 5)).toBe(0.00441);
     expect(round(Math.log(limits.max / limits.min) / Math.log(MAP_SCREEN.zoomStep), 2)).toBe(5.85);
     const wide = regionsAt({ height: 720, width: 1280 });
     expect([wide.fit.width, round(wide.fit.height, 2)]).toEqual([688, 245]);
-    expect(round(scaleLimits(wide.inner).max, 5)).toBe(0.05367);
+    expect(round(scaleLimits(wide.inner, wide.field, SIDE).max, 5)).toBe(0.05367);
   });
 
   it("anchors Quests, Galaxies and the sole primary Close at the bottom right", () => {
@@ -211,10 +216,10 @@ describe("map projection and fit", () => {
   });
 
   it("opens on the box of Ada and every place, clamped between the disc and the minimum box", () => {
-    const { inner } = regionsAt(BASE);
-    const { max, min } = scaleLimits(inner);
+    const { field, inner } = regionsAt(BASE);
+    const { max, min } = scaleLimits(inner, field, SIDE);
     // The opening fits the minimum box inside reserved chrome; further zoom remains available.
-    const close = openingView(inner, [{ x: 500, y: 0 }], { x: 0, y: 0 });
+    const close = openingView(inner, field, SIDE, [{ x: 500, y: 0 }], { x: 0, y: 0 });
     expect(close.scale).toBeCloseTo(0.026);
     expect(close.scale).toBeLessThan(max);
     // A spread galaxy fits between the limits.
@@ -222,7 +227,7 @@ describe("map projection and fit", () => {
       { x: 12000, y: -12000 },
       { x: -12000, y: 12000 },
     ];
-    const fitted = openingView(inner, spread, { x: 0, y: 0 });
+    const fitted = openingView(inner, field, SIDE, spread, { x: 0, y: 0 });
     expect(fitted.scale).toBeGreaterThan(min);
     expect(fitted.scale).toBeLessThan(max);
     for (const place of spread) {
@@ -231,7 +236,7 @@ describe("map projection and fit", () => {
       expect(at.x).toBeLessThanOrEqual(inner.x + inner.width + 1e-6);
     }
     // A far station: minScale clamps it, and the least pan keeps Ada inside the inner region.
-    const far = openingView(inner, [{ x: 200_000, y: -200_000 }], { x: 0, y: 0 });
+    const far = openingView(inner, field, SIDE, [{ x: 100_000, y: -100_000 }], { x: 0, y: 0 });
     expect(far.scale).toBeCloseTo(min);
     const ada = toScreen(inner, far, { x: 0, y: 0 });
     expect(ada.x).toBeGreaterThanOrEqual(inner.x - 1e-6);
@@ -241,25 +246,24 @@ describe("map projection and fit", () => {
   });
 
   it("zooms by one step about an anchor and refuses at each limit", () => {
-    const { inner } = regionsAt(BASE);
-    const limit = panLimit([]);
-    const { max, min } = scaleLimits(inner);
+    const { field, inner } = regionsAt(BASE);
+    const { max, min } = scaleLimits(inner, field, SIDE);
     const centre = { x: inner.x + inner.width / 2, y: inner.y + inner.height / 2 };
-    const start = { centre: { x: 0, y: 0 }, scale: min };
-    expect(zoomView(inner, limit, 1 / MAP_SCREEN.zoomStep, centre, start).refused).toBe(true);
-    const step = zoomView(inner, limit, MAP_SCREEN.zoomStep, centre, start);
+    const start = { centre: { x: 0, y: 0 }, scale: min, worldSide: SIDE };
+    expect(zoomView(inner, field, 1 / MAP_SCREEN.zoomStep, centre, start).refused).toBe(true);
+    const step = zoomView(inner, field, MAP_SCREEN.zoomStep, centre, start);
     expect(step.refused).toBe(false);
     expect(step.view.scale).toBeCloseTo(min * 1.5);
     let view = step.view;
     for (let index = 0; index < 10; index++) {
-      view = zoomView(inner, limit, MAP_SCREEN.zoomStep, centre, view).view;
+      view = zoomView(inner, field, MAP_SCREEN.zoomStep, centre, view).view;
     }
     expect(view.scale).toBeCloseTo(max);
-    expect(zoomView(inner, limit, MAP_SCREEN.zoomStep, centre, view).refused).toBe(true);
+    expect(zoomView(inner, field, MAP_SCREEN.zoomStep, centre, view).refused).toBe(true);
     // The anchor's world point stays under it.
     const anchor = { x: inner.x + 30, y: inner.y + 40 };
-    const before = { centre: { x: 1000, y: 500 }, scale: min * 2 };
-    const after = zoomView(inner, limit, 1.5, anchor, before).view;
+    const before = { centre: { x: 1000, y: 500 }, scale: min * 2, worldSide: SIDE };
+    const after = zoomView(inner, field, 1.5, anchor, before).view;
     const world = (view: typeof before) => ({
       x: view.centre.x + (anchor.x - centre.x) / view.scale,
       y: view.centre.y + (anchor.y - centre.y) / view.scale,
@@ -268,26 +272,11 @@ describe("map projection and fit", () => {
     expect(world(after).y).toBeCloseTo(world(before).y);
   });
 
-  it("recentres on Ada and keeps the inner centre inside the disc and the places", () => {
-    const { inner } = regionsAt(BASE);
-    const station = { x: 60_000, y: -60_000 };
-    const limit = panLimit([station]);
-    const away = recentreView(
-      inner,
-      limit,
-      { x: 5000, y: 0 },
-      { centre: { x: 0, y: 0 }, scale: 0.01 },
-    );
-    expect(away.centre).toEqual(mapProjection({ x: 5000, y: 0 }));
-    const projected = mapProjection(station);
-    expect(limit.x + limit.width).toBeGreaterThanOrEqual(projected.x);
-    const lost = recentreView(
-      inner,
-      limit,
-      { x: 1e7, y: 1e7 },
-      { centre: { x: 0, y: 0 }, scale: 0.01 },
-    );
-    expect(lost.centre.y).toBeLessThanOrEqual(limit.y + limit.height);
+  it("recentres on Ada at the same scale", () => {
+    const { field, inner } = regionsAt(BASE);
+    const view = { centre: { x: 0, y: 0 }, scale: 0.01, worldSide: SIDE };
+    const away = recentreView(inner, field, { x: 5000, y: 0 }, view);
+    expect(away).toEqual({ ...view, centre: mapProjection({ x: 5000, y: 0 }) });
   });
 });
 
@@ -308,9 +297,9 @@ describe("close places", () => {
       { height: 390, width: 844 },
       { bottom: 21, left: 47, right: 47, top: 0 },
     );
-    const { max } = scaleLimits(inner);
+    const { max } = scaleLimits(inner, { height: 390, width: 844 }, SIDE);
     expect(max).toBeGreaterThanOrEqual(0.039);
-    const view = { centre: { x: 0, y: 0 }, scale: max };
+    const view = { centre: { x: 0, y: 0 }, scale: max, worldSide: SIDE };
     for (let degrees = 0; degrees < 360; degrees += 5) {
       const angle = (degrees * Math.PI) / 180;
       const a = toScreen(inner, view, { x: 0, y: 0 });
@@ -322,14 +311,14 @@ describe("close places", () => {
   });
 
   it("pans a selected chip clear of the panel at once, and orders places for reading", () => {
-    const { fit, inner } = regionsAt(BASE);
-    const view = { centre: { x: 0, y: 0 }, scale: 0.02 };
+    const { field, fit, inner } = regionsAt(BASE);
+    const view = { centre: { x: 0, y: 0 }, scale: 0.02, worldSide: SIDE };
     const panelTop = 250;
     const low = { x: 3000, y: 3000 };
-    const cleared = keepClear(fit, inner, panelTop, low, view);
+    const cleared = keepClear(fit, inner, field, panelTop, low, view);
     const at = toScreen(inner, cleared, low);
     expect(at.y + 19).toBeLessThanOrEqual(panelTop - 8 + 1e-6);
-    expect(keepClear(fit, inner, null, { x: 0, y: 0 }, view)).toEqual(view);
+    expect(keepClear(fit, inner, field, null, { x: 0, y: 0 }, view)).toEqual(view);
     expect(
       readingOrder([
         { x: 5, y: 2 },
@@ -373,32 +362,243 @@ describe("fog and Ada", () => {
   });
 });
 
-describe("explicit periodic map views", () => {
-  const side = 1_152_000;
-  const player = { x: side / 2 - 100, y: side / 2 - 80 };
-  const place = { x: -side / 2 + 60, y: -side / 2 + 40 };
-  const inner = { height: 300, width: 600, x: 0, y: 0 };
-  const limit = panLimit([]);
-  const view = { centre: mapProjection(player), scale: 0.02, worldSide: side };
+describe("the square bound", () => {
+  const { field, fit, inner } = regionsAt(BASE);
+  const wide = regionsAt({ height: 720, width: 1280 });
+  const tolerance = 1e-3;
+  /** The view's projected extent across the whole field. */
+  const extent = (frame: { field: Rect; inner: Rect }, view: MapView) => {
+    const mid = {
+      x: frame.inner.x + frame.inner.width / 2,
+      y: frame.inner.y + frame.inner.height / 2,
+    };
+    return {
+      bottom: view.centre.y + (frame.field.y + frame.field.height - mid.y) / view.scale,
+      left: view.centre.x + (frame.field.x - mid.x) / view.scale,
+      right: view.centre.x + (frame.field.x + frame.field.width - mid.x) / view.scale,
+      top: view.centre.y + (frame.field.y - mid.y) / view.scale,
+    };
+  };
+  /** The view's edge inside the square's projected extent, and its centre inside the diamond. */
+  const expectInside = (frame: { field: Rect; inner: Rect }, view: MapView) => {
+    const side = view.worldSide;
+    const at = extent(frame, view);
+    expect(at.left).toBeGreaterThanOrEqual(-side - tolerance);
+    expect(at.right).toBeLessThanOrEqual(side + tolerance);
+    expect(at.top).toBeGreaterThanOrEqual(-side / 2 - tolerance);
+    expect(at.bottom).toBeLessThanOrEqual(side / 2 + tolerance);
+    expect(Math.abs(view.centre.x) / 2 + Math.abs(view.centre.y)).toBeLessThanOrEqual(
+      side / 2 + tolerance,
+    );
+  };
+  /** Every zoom step from minScale to maxScale, and maxScale. */
+  const zoomLevels = (frame: { field: Rect; inner: Rect }, side = SIDE) => {
+    const { max, min } = scaleLimits(frame.inner, frame.field, side);
+    const levels: number[] = [];
+    for (let scale = min; scale < max; scale *= MAP_SCREEN.zoomStep) {
+      levels.push(scale);
+    }
+    return [...levels, max];
+  };
+  // A view movement: the map follows the pointer, so the drag runs the other way.
+  const directions = {
+    down: { x: 0, y: 1 },
+    downLeft: { x: -2, y: 1 },
+    downRight: { x: 2, y: 1 },
+    left: { x: -1, y: 0 },
+    right: { x: 1, y: 0 },
+    up: { x: 0, y: -1 },
+    upLeft: { x: -2, y: -1 },
+    upRight: { x: 2, y: -1 },
+  } as const;
+  const hard = (direction: Point) => ({ x: -direction.x * 1e7, y: -direction.y * 1e7 });
 
-  it("projects one nearest image across both seams without changing the canonical point", () => {
-    expect(mapImage(view, place)).toEqual({ x: place.x + side, y: place.y + side });
-    expect(toScreen(inner, view, place)).toEqual({ x: 300.8, y: 152.8 });
-    const legacy = { centre: view.centre, scale: view.scale };
-    expect(mapImage(legacy, place)).toBe(place);
-    expect(toScreen(inner, legacy, place).y).toBeLessThan(-20_000);
-    expect(place).toEqual({ x: -side / 2 + 60, y: -side / 2 + 40 });
+  it("draws every position at its canonical point in the square", () => {
+    const view = { centre: { x: 0, y: 0 }, scale: 0.01, worldSide: SIDE };
+    const across = { x: SIDE / 2 + 100, y: -SIDE / 2 - 40 };
+    expect(mapImage(view, across)).toEqual({ x: -SIDE / 2 + 100, y: SIDE / 2 - 40 });
+    expect(toScreen(inner, view, across)).toEqual(
+      toScreen(inner, view, { x: -SIDE / 2 + 100, y: SIDE / 2 - 40 }),
+    );
   });
 
-  it("preserves explicit topology through zoom pan recenter and panel clearance", () => {
-    const zoomed = zoomView(inner, limit, 1.5, { x: 300, y: 150 }, view).view;
-    const panned = panView(inner, limit, { x: -50, y: 40 }, zoomed);
-    const centred = recentreView(inner, limit, player, panned);
-    const clear = keepClear(inner, inner, 200, place, centred);
-    for (const current of [zoomed, panned, centred, clear]) {
-      expect(current.worldSide).toBe(side);
+  it.each(Object.entries(directions))(
+    "stops a hard pan %s at the square at every zoom level",
+    (name, direction) => {
+      for (const frame of [{ field, inner }, wide]) {
+        for (const scale of zoomLevels(frame)) {
+          const start = { centre: { x: 0, y: 0 }, scale, worldSide: SIDE };
+          const panned = panView(frame.inner, frame.field, hard(direction), start);
+          expectInside(frame, panned);
+          expect(panned.scale).toBe(scale);
+          // Panning on in the same direction moves it no further.
+          const further = panView(frame.inner, frame.field, hard(direction), panned);
+          expect(further.centre.x).toBeCloseTo(panned.centre.x, 3);
+          expect(further.centre.y).toBeCloseTo(panned.centre.y, 3);
+          const at = extent(frame, panned);
+          // Straight pans stop with the view's edge on the diamond's tip.
+          if (name === "right") {
+            expect(at.right).toBeCloseTo(SIDE, 3);
+          }
+          if (name === "left") {
+            expect(at.left).toBeCloseTo(-SIDE, 3);
+          }
+          if (name === "up") {
+            expect(at.top).toBeCloseTo(-SIDE / 2, 3);
+          }
+          if (name === "down") {
+            expect(at.bottom).toBeCloseTo(SIDE / 2, 3);
+          }
+          // Diagonal pans stop with the centre on the seam or the edge on the extent.
+          if (direction.x !== 0 && direction.y !== 0) {
+            const onSeam =
+              Math.abs(Math.abs(panned.centre.x) / 2 + Math.abs(panned.centre.y) - SIDE / 2) < 1;
+            const onExtent =
+              Math.abs(Math.abs(direction.x > 0 ? at.right : at.left) - SIDE) < 1 ||
+              Math.abs(Math.abs(direction.y > 0 ? at.bottom : at.top) - SIDE / 2) < 1;
+            expect(onSeam || onExtent, `${name} at ${scale}`).toBe(true);
+          }
+        }
+      }
+    },
+  );
+
+  it("clamps recentre, keep clear and a direct clamp to the square", () => {
+    const view = { centre: { x: 0, y: 0 }, scale: 0.02, worldSide: SIDE };
+    const corner = { x: SIDE / 2 - 1, y: SIDE / 2 - 1 };
+    expectInside({ field, inner }, recentreView(inner, field, corner, view));
+    expectInside({ field, inner }, keepClear(fit, inner, field, 250, corner, view));
+    expectInside(
+      { field, inner },
+      clampView(inner, field, { ...view, centre: { x: 1e9, y: -1e9 } }),
+    );
+  });
+
+  it("keeps Ada and every place reachable by panning, the square's corners included", () => {
+    const half = SIDE / 2 - 1;
+    const points = [
+      { x: 0, y: 0 },
+      { x: half, y: half },
+      { x: -half, y: -half },
+      { x: half, y: -half },
+      { x: -half, y: half },
+      { x: half, y: 0 },
+      { x: 0, y: -half },
+      { x: 60_000, y: -110_000 },
+    ];
+    for (const frame of [{ field, inner }, wide]) {
+      for (const scale of zoomLevels(frame)) {
+        for (const point of points) {
+          const view = { centre: { x: 0, y: 0 }, scale, worldSide: SIDE };
+          const centred = recentreView(frame.inner, frame.field, point, view);
+          expectInside(frame, centred);
+          const at = toScreen(frame.inner, centred, point);
+          const label = `${point.x},${point.y} at ${scale}`;
+          expect(at.x, label).toBeGreaterThanOrEqual(frame.field.x - tolerance);
+          expect(at.x, label).toBeLessThanOrEqual(frame.field.x + frame.field.width + tolerance);
+          expect(at.y, label).toBeGreaterThanOrEqual(frame.field.y - tolerance);
+          expect(at.y, label).toBeLessThanOrEqual(frame.field.y + frame.field.height + tolerance);
+        }
+      }
     }
-    expect(toScreen(inner, centred, player)).toEqual({ x: 300, y: 150 });
-    expect(Math.abs(toScreen(inner, clear, place).x - 300)).toBeLessThan(50);
+  });
+
+  it.each([
+    ["the tools, about the fit centre", { x: fit.x + fit.width / 2, y: fit.y + fit.height / 2 }],
+    ["the wheel, about a pointer at the left", { x: 20, y: 100 }],
+    ["the wheel, about a pointer at the bottom right", { x: 700, y: 340 }],
+  ])("re-centres zooming out near each edge with %s", (_input, anchor) => {
+    const { max, min } = scaleLimits(inner, field, SIDE);
+    for (const direction of Object.values(directions)) {
+      const start = { centre: { x: 0, y: 0 }, scale: max, worldSide: SIDE };
+      let view = panView(inner, field, hard(direction), start);
+      for (let step = 0; step < 20; step++) {
+        const zoomed = zoomView(inner, field, 1 / MAP_SCREEN.zoomStep, anchor, view);
+        if (zoomed.refused) {
+          break;
+        }
+        view = zoomed.view;
+        expectInside({ field, inner }, view);
+      }
+      expect(view.scale).toBeCloseTo(min, 9);
+      expect(zoomView(inner, field, 1 / MAP_SCREEN.zoomStep, anchor, view).refused).toBe(true);
+    }
+  });
+
+  it("pinches out near an edge inside the square", () => {
+    const { max, min } = scaleLimits(inner, field, SIDE);
+    const start = { centre: { x: 0, y: 0 }, scale: max, worldSide: SIDE };
+    let view = panView(inner, field, hard(directions.upLeft), start);
+    for (let step = 0; step < 40; step++) {
+      const zoomed = zoomView(inner, field, 0.8, { x: 100, y: 60 }, view).view;
+      view = panView(inner, field, { x: 15, y: 9 }, zoomed);
+      expectInside({ field, inner }, view);
+    }
+    expect(view.scale).toBeCloseTo(min, 9);
+  });
+
+  it("caps zoom-out at the charting disc while the square is larger than the view", () => {
+    for (const frame of [{ field, inner }, wide]) {
+      const { min } = scaleLimits(frame.inner, frame.field, SIDE);
+      const disc = Math.min(
+        frame.inner.width / (2 * Math.SQRT2 * MAP_SCREEN.chartRadius),
+        frame.inner.height / (Math.SQRT2 * MAP_SCREEN.chartRadius),
+      );
+      expect(min).toBe(disc);
+      const capped = clampView(frame.inner, frame.field, {
+        centre: { x: 0, y: 0 },
+        scale: 0,
+        worldSide: SIDE,
+      });
+      expect(capped.scale).toBe(disc);
+    }
+  });
+
+  it("fills the view with the square on its limiting axis when the square is smaller", () => {
+    const side = 20_000;
+    for (const frame of [{ field, inner }, wide]) {
+      const { min } = scaleLimits(frame.inner, frame.field, side);
+      const limiting = Math.max(frame.field.width / (2 * side), frame.field.height / side);
+      expect(min).toBeCloseTo(limiting, 12);
+      for (const direction of Object.values(directions)) {
+        const start = { centre: { x: 0, y: 0 }, scale: min, worldSide: side };
+        const view = panView(frame.inner, frame.field, hard(direction), start);
+        expectInside(frame, view);
+        const at = extent(frame, view);
+        const across = (at.right - at.left) / (2 * side);
+        const down = (at.bottom - at.top) / side;
+        expect(Math.max(across, down)).toBeCloseTo(1, 6);
+      }
+      const out = zoomView(
+        frame.inner,
+        frame.field,
+        1 / MAP_SCREEN.zoomStep,
+        { x: 10, y: 10 },
+        { centre: { x: 0, y: 0 }, scale: min * 1.2, worldSide: side },
+      ).view;
+      expect(out.scale).toBeCloseTo(min, 12);
+      expectInside(frame, out);
+    }
+    // The base field is 2:1 like the square, so the square fills it on both axes.
+    const base = clampView(inner, field, { centre: { x: 0, y: 0 }, scale: 0, worldSide: side });
+    const at = extent({ field, inner }, base);
+    expect([at.right - at.left, at.bottom - at.top].map((value) => round(value, 6))).toEqual([
+      2 * side,
+      side,
+    ]);
+  });
+
+  it("opens with Ada in view beside the seam and places across it at the far edge", () => {
+    const player = { x: SIDE / 2 - 500, y: 0 };
+    const across = { x: -SIDE / 2 + 500, y: 0 };
+    const view = openingView(inner, field, SIDE, [across], player);
+    expectInside({ field, inner }, view);
+    const ada = toScreen(inner, view, player);
+    expect(ada.x).toBeGreaterThanOrEqual(inner.x - tolerance);
+    expect(ada.x).toBeLessThanOrEqual(inner.x + inner.width + tolerance);
+    expect(ada.y).toBeGreaterThanOrEqual(inner.y - tolerance);
+    expect(ada.y).toBeLessThanOrEqual(inner.y + inner.height + tolerance);
+    // The place draws at its canonical point, a square's width from Ada on the map.
+    expect(toScreen(inner, view, across).x).toBeLessThan(ada.x);
   });
 });

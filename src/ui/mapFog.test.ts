@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 
+import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
 import { fogReveal, mapProjection, toScreen } from "./layout/mapScreen.ts";
 import { drawMapFog } from "./mapFog.ts";
 
 const INNER = { height: 300, width: 600, x: 20, y: 40 };
-const VIEW = { centre: { x: 0, y: 0 }, scale: 0.02 };
+const SIDE = CURRENT_FLIGHT_TOPOLOGY.side;
+const VIEW = { centre: { x: 0, y: 0 }, scale: 0.02, worldSide: SIDE };
 const player = { x: 0, y: 0 };
 
 function canvas() {
@@ -56,7 +58,7 @@ it("culls distant reveals but keeps a reveal whose feather can reach the viewpor
 describe.each([1, 1.5, 2.6, 3])("fog at device scale %s", (px) => {
   it.each([0.00677, 0.02, 0.04742])("keeps exact ellipse geometry at zoom %s", (scale) => {
     const { commands, context } = canvas();
-    const current = { centre: { x: 13.3, y: -20.7 }, scale };
+    const current = { centre: { x: 13.3, y: -20.7 }, scale, worldSide: SIDE };
     const point = { x: 17.7, y: -23.1 };
     drawMapFog(
       context,
@@ -104,7 +106,7 @@ describe.each([1, 1.5, 2.6, 3])("fog at device scale %s", (px) => {
   });
 });
 
-it("reveals a known seam image near the view without revealing its far canonical position", () => {
+it("reveals a place across the seam at its canonical point, not beside Ada", () => {
   const side = 1_152_000;
   const player = { x: side / 2 - 100, y: 0 };
   const place = {
@@ -131,8 +133,9 @@ it("reveals a known seam image near the view without revealing its far canonical
     360,
   );
   const ellipses = commands.filter(({ name }) => name === "ellipse");
-  expect(ellipses).toHaveLength(2);
-  expect(ellipses[0]!.args.slice(0, 2)).toEqual(Object.values(toScreen(INNER, periodic, place)));
+  // The place reveals at the square's far edge, off this view: only Ada's reveal draws.
+  expect(ellipses).toHaveLength(1);
+  expect(ellipses[0]!.args.slice(0, 2)).toEqual(Object.values(toScreen(INNER, periodic, player)));
   expect(place.x).toBe(-side / 2 + 100);
 });
 

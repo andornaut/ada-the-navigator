@@ -10,6 +10,7 @@ import { pathToFileURL } from "node:url";
 
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
+import { CURRENT_FLIGHT_TOPOLOGY } from "../src/model/flightTopology.ts";
 import * as cardFrame from "../src/ui/layout/cardFrame.ts";
 import * as contentCard from "../src/ui/layout/contentCard.ts";
 import * as controls from "../src/ui/layout/controls.ts";
@@ -390,6 +391,7 @@ function cssCases(call: ReturnType<typeof recorder>): void {
   for (const percent of [0, 9, 10, 55, 99, 100]) {
     call("mapScreen.ts", "filledPips", mapScreen.filledPips, percent);
   }
+  const side = CURRENT_FLIGHT_TOPOLOGY.side;
   for (const [view, insets] of [
     [{ height: 360, width: 720 }, playView.NO_INSETS],
     [{ height: 405, width: 720 }, playView.NO_INSETS],
@@ -400,7 +402,8 @@ function cssCases(call: ReturnType<typeof recorder>): void {
   ] as const) {
     const fit = call("mapScreen.ts", "fitRegion", mapScreen.fitRegion, insets, view) as Rect;
     const inner = call("mapScreen.ts", "innerRegion", mapScreen.innerRegion, fit) as Rect;
-    call("mapScreen.ts", "scaleLimits", mapScreen.scaleLimits, inner);
+    const field = { ...view, x: 0, y: 0 };
+    call("mapScreen.ts", "scaleLimits", mapScreen.scaleLimits, inner, view, side);
     call("mapScreen.ts", "toolColumnLeft", mapScreen.toolColumnLeft, insets, view);
     call("mapScreen.ts", "mapRowTop", mapScreen.mapRowTop, insets, view);
     call("mapScreen.ts", "panelMaxWidth", mapScreen.panelMaxWidth, insets, view);
@@ -416,7 +419,10 @@ function cssCases(call: ReturnType<typeof recorder>): void {
       ],
       [{ x: 200000, y: -200000 }],
     ]) {
-      call("mapScreen.ts", "openingView", mapScreen.openingView, inner, places, { x: 0, y: 0 });
+      call("mapScreen.ts", "openingView", mapScreen.openingView, inner, field, side, places, {
+        x: 0,
+        y: 0,
+      });
     }
   }
   {
@@ -426,12 +432,13 @@ function cssCases(call: ReturnType<typeof recorder>): void {
       { x: 2000, y: 300 },
       { x: 400, y: -800 },
     ];
-    const limit = call("mapScreen.ts", "panLimit", mapScreen.panLimit, places);
-    const view = { centre: { x: 0, y: 0 }, scale: 0.02 };
+    const field = { height: 360, width: 720, x: 0, y: 0 };
+    const view = { centre: { x: 0, y: 0 }, scale: 0.02, worldSide: side };
     call("mapScreen.ts", "toScreen", mapScreen.toScreen, inner, view, places[0]!);
-    call("mapScreen.ts", "clampView", mapScreen.clampView, inner, limit, {
+    call("mapScreen.ts", "clampView", mapScreen.clampView, inner, field, {
       centre: { x: 1e6, y: -1e6 },
       scale: 1,
+      worldSide: side,
     });
     for (const factor of [1.5, 1 / 1.5]) {
       call(
@@ -439,19 +446,19 @@ function cssCases(call: ReturnType<typeof recorder>): void {
         "zoomView",
         mapScreen.zoomView,
         inner,
-        limit,
+        field,
         factor,
         { x: 300, y: 180 },
         view,
       );
     }
-    call("mapScreen.ts", "panView", mapScreen.panView, inner, limit, { x: 40, y: -20 }, view);
+    call("mapScreen.ts", "panView", mapScreen.panView, inner, field, { x: 40, y: -20 }, view);
     call(
       "mapScreen.ts",
       "recentreView",
       mapScreen.recentreView,
       inner,
-      limit,
+      field,
       { x: 500, y: 500 },
       view,
     );
@@ -462,6 +469,7 @@ function cssCases(call: ReturnType<typeof recorder>): void {
         mapScreen.keepClear,
         fit,
         inner,
+        field,
         panelTop,
         { x: 4000, y: 4000 },
         view,
