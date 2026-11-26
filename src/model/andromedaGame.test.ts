@@ -6,6 +6,7 @@ import { BUILT, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
 import { nearestSettlerStation } from "./andromedaPlaces.ts";
+import { andromedaRedactEligible } from "./andromedaRedact.ts";
 import { interactionCopy } from "./conversations.ts";
 import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
@@ -120,7 +121,15 @@ describe("mounted Andromeda chapter", () => {
     visit(model, "darkBeacon");
     expect(model.contextAction).toBe("deliver");
     model.interact();
+    const redactEligible = () =>
+      andromedaRedactEligible({
+        content: CONTENT,
+        flight: model.state.flight!,
+        progress: model.state.progress[5],
+      });
+    expect(redactEligible()).toBe(false);
     continuePanel(model, "andromeda:repaired");
+    expect(redactEligible()).toBe(true);
     expect(model.state.progress[5]).toMatchObject({
       questComplete: true,
       questItem: null,
@@ -130,6 +139,7 @@ describe("mounted Andromeda chapter", () => {
     model.interact();
     continuePanel(model, "andromeda:holodisk");
     expect(model.state.progress[5].holodisk).toBe(true);
+    expect(redactEligible()).toBe(true);
     expect(restoreSave(model.save())).not.toBeNull();
     expect(model.state.dialogue?.context).toBe("holodiskMoment");
     readStory(model);
