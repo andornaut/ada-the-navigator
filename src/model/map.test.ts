@@ -81,7 +81,38 @@ describe("priced local Map teleport", () => {
     },
   );
 
-  it("keeps position and balance when the destination is undiscovered, missing or unsafe", () => {
+  it("rehydrates a known absent authored destination before charging for arrival", () => {
+    const model = flying();
+    const flight = model.state.flight!;
+    const { id } = ensureDestination(CONTENT, "growers", flight);
+    const progress = model.state.progress[1];
+    progress.known.push(id);
+    // Simulate a known destination whose object is absent without changing discovery.
+    flight.objects = flight.objects.filter((object) => object.id !== id);
+    expect(model.map?.places.some((place) => place.id === id)).toBe(false);
+    const start = { ...flight.player };
+    model.state.economy.stardust = 49;
+    expect(model.canTeleport(id)).toBe(false);
+    expect(model.teleport(id)).toBe(false);
+    expect(flight.objects.some((object) => object.id === id)).toBe(false);
+    expect(flight.player).toEqual(start);
+    expect(model.state.economy.stardust).toBe(49);
+    model.state.economy.stardust = 75;
+    expect(model.canTeleport(id)).toBe(true);
+    expect(flight.objects.some((object) => object.id === id)).toBe(false);
+    expect(model.teleport(id)).toBe(true);
+    const restored = flight.objects.filter((object) => object.id === id);
+    expect(restored).toHaveLength(1);
+    const arrival = { x: restored[0]!.x, y: restored[0]!.y };
+    expect(flight.player).toEqual(arrival);
+    expect(arrival).not.toEqual(start);
+    expect(model.state.economy.stardust).toBe(25);
+    expect(model.teleport(id)).toBe(false);
+    expect(flight.player).toEqual(arrival);
+    expect(model.state.economy.stardust).toBe(25);
+  });
+
+  it("keeps position and balance when the target is undiscovered, invalid or unsafe", () => {
     const model = flying();
     const flight = model.state.flight!;
     const progress = model.state.progress[1];
@@ -97,9 +128,9 @@ describe("priced local Map teleport", () => {
     expect(model.state.notice).toBe(CONTENT.labels.travelUnavailable);
     flight.dangerFor = 0;
     expect(model.canTeleport(target.id)).toBe(true);
-    flight.objects = flight.objects.filter(({ id }) => id !== target.id);
-    expect(model.canTeleport(target.id)).toBe(false);
-    expect(model.teleport(target.id)).toBe(false);
+    const invalidStation = "not-a-station";
+    progress.stations.push(invalidStation);
+    expect(model.teleport(invalidStation)).toBe(false);
     expect(flight.player).toEqual(start);
     expect(model.state.economy.stardust).toBe(75);
   });

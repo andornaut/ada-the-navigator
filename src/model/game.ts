@@ -3031,15 +3031,22 @@ export class GameModel {
   }
   private mapTravel(id: string) {
     const flight = this.state.flight;
-    if (!flight || this.state.mode !== "space" || this.state.dialogue || this.state.docked) {
+    if (
+      !flight ||
+      this.state.mode !== "space" ||
+      this.state.dialogue ||
+      this.state.docked ||
+      (flight.galaxy === 4 && id === "holodisk")
+    ) {
       return null;
     }
-    const place = this.map?.places.find((entry) => entry.id === id && entry.travel);
-    if (!place) {
+    // Discovery survives a destination's absence from the current flight and Map projection.
+    const station = this.current.stations.includes(id);
+    if (!station && !this.current.known.includes(id)) {
       return null;
     }
-    const { reason } = travelState(this.inDanger, this.towing, this.carrying, place);
-    return { flight, place, reason };
+    const { reason } = travelState(this.inDanger, this.towing, this.carrying, { travel: true });
+    return { flight, reason, station };
   }
   canTeleport(id: string): boolean {
     const travel = this.mapTravel(id);
@@ -3055,7 +3062,7 @@ export class GameModel {
     if (!travel) {
       return false;
     }
-    const { flight, place, reason } = travel;
+    const { flight, reason, station } = travel;
     if (reason !== null) {
       this.refuse(
         this.label(
@@ -3068,8 +3075,10 @@ export class GameModel {
     if (!canAffordMapJump(economy.stardust)) {
       return false;
     }
-    if (place.kind === "station" && !ensureStation(this.content, id, flight)) {
-      return false;
+    if (station) {
+      ensureStation(this.content, id, flight);
+    } else {
+      ensureDestination(this.content, id, flight);
     }
     if (!teleportFlight(this.content, id, flight)) {
       return false;
