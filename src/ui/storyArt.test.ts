@@ -133,9 +133,9 @@ describe("storybook art", () => {
         backgrounds[aboard],
       ]);
       expect(steps?.map(({ fadeMs, holdMs }) => [fadeMs, holdMs])).toEqual([
-        [160, 0],
-        [160, 0],
-        [200, 240],
+        [320, 0],
+        [320, 0],
+        [400, 480],
         [0, 0],
       ]);
     }
