@@ -1,5 +1,12 @@
 import PROJECTS_FILE from "../../public/art/projects.json" with { type: "json" };
-import { playDepth } from "../art/index.ts";
+import {
+  boundsOnScreen,
+  frameBounds,
+  type PlacedProjectArt,
+  playDepth,
+  readProjectArt,
+  revealAlpha,
+} from "../art/index.ts";
 import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { SCREEN } from "../data/screen.ts";
 import { pointOnCurrent } from "../model/currents.ts";
@@ -11,17 +18,10 @@ import {
 } from "../model/guideBeacons.ts";
 import { type NeedleCourse, needleCourses } from "../model/needle.ts";
 import type { FlightState, Vec } from "../model/types.ts";
-import {
-  boundsOnScreen,
-  type PlacedProjectArt,
-  readProjectArt,
-  revealAlpha,
-} from "./projectArt.ts";
 import { keylineSprite } from "./sceneHud.ts";
 import type { ObjectsContext } from "./sceneObjects.ts";
 import type { Asset } from "./sceneShared.ts";
 import { objectSprite } from "./sceneSprites.ts";
-import { frameBounds } from "./whirlpoolProjects.ts";
 
 const LAMP_SPACING = 128;
 const LAMP_EDGE = 20;

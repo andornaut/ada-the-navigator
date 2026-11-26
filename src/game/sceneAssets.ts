@@ -16,10 +16,12 @@ import {
   readBackdropRules,
   readDebrisArt,
   readGalaxyBackdrop,
+  readGalaxyStationArt,
   readJobArt,
   readMarloArt,
   readStreakSpec,
   readWhaleArt,
+  readWhirlpoolProjects,
   RockFrames,
   whaleFrameAsset,
   whaleViewBox,
@@ -78,12 +80,10 @@ import {
   readShipMaterials,
   ShipMaterialSources,
 } from "./shipMaterials.ts";
-import { readGalaxyStationArt } from "./stationArt.ts";
 import type { SvgRequest } from "./svgRasters.ts";
 import { vectorSheetKey, vectorSheetSource } from "./svgSheet.ts";
 import { type TextureFilter, vectorRaster } from "./textures.ts";
 import { readStrandedCraft, readTowLine } from "./towArt.ts";
-import { readWhirlpoolProjects } from "./whirlpoolProjects.ts";
 
 interface MaterialCache {
   readonly poses: Map<string, ReadonlyMap<string, string>>;

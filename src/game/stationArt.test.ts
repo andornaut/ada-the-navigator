@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { ART_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 import {
   type GalaxyStationFrame,
   readGalaxyStationArt,
@@ -10,7 +9,8 @@ import {
   type StationFrame,
   stationFrame,
   stationLoopFrame,
-} from "./stationArt.ts";
+} from "../art/index.ts";
+import { ART_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 
 const manifest = ART_MANIFEST as unknown as {
   assets: (StationFrame & { destination?: string; outpost?: string })[];

@@ -10,17 +10,21 @@ import {
   type CacheArt,
   type DebrisArt,
   type GalaxyBackdrop,
+  type GalaxyStationArt,
   hexNumber,
   type JobArt,
   type LoopArt,
   playDepth,
+  type ProjectArtSet,
   SPECK_RADIUS,
   speckField,
   spriteOwner,
   staleSpriteKeys,
   type StardustArt,
+  type StationArt,
   type StreakSpec,
   type WhaleArt,
+  type WhirlpoolProjects,
 } from "../art/index.ts";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { CONTENT } from "../data/content.ts";
@@ -120,7 +124,6 @@ import {
 } from "./lightField.ts";
 import { cameraWorldView, parentFit, sceneFit, viewShift } from "./playCamera.ts";
 import { hasPlayerHeadingPackage } from "./playerHeadingPackage.ts";
-import type { ProjectArtSet } from "./projectArt.ts";
 import { setRendering } from "./renderLoop.ts";
 import { drawAndromeda } from "./sceneAndromeda.ts";
 import {
@@ -180,7 +183,6 @@ import {
 } from "./shipJets.ts";
 import { Silhouettes } from "./silhouettes.ts";
 import { FALLBACK_SPACE_PALETTE, type SpacePalette } from "./spacePalette.ts";
-import type { GalaxyStationArt, StationArt } from "./stationArt.ts";
 import { aboardGalaxy, storyCoversScene } from "./storyPresentation.ts";
 import { SvgRasters } from "./svgRasters.ts";
 import { fileFilter } from "./textures.ts";
@@ -204,7 +206,6 @@ import {
   screenAngle,
   type WeaponSolids,
 } from "./weaponEffects.ts";
-import type { WhirlpoolProjects } from "./whirlpoolProjects.ts";
 
 export class GameScene extends Scene {
   // Read from the save once the launch's update check lets the first screen show (build).

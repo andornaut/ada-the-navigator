@@ -2,17 +2,19 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { PROJECTS } from "../data/projects.ts";
-import { ART_MANIFEST } from "../testing/publicArt.ts";
 import {
   boundsOnScreen,
   outpostParts,
   partsBounds,
   type ProjectArt,
+  readOutpostArt,
   readProjectArt,
   revealAlpha,
-} from "./projectArt.ts";
-import { readOutpostArt, stationDockWorld, type StationFrame } from "./stationArt.ts";
+  stationDockWorld,
+  type StationFrame,
+} from "../art/index.ts";
+import { PROJECTS } from "../data/projects.ts";
+import { ART_MANIFEST } from "../testing/publicArt.ts";
 
 const read = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(path, import.meta.url), "utf8"));

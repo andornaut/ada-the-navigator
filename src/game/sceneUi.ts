@@ -10,7 +10,10 @@ import {
   readBeaconArt,
   readCacheArt,
   readLoopArt,
+  readOutpostArt,
+  readProjectArt,
   readStardustArt,
+  readStationArt,
 } from "../art/index.ts";
 import { CHEAT_COPY } from "../data/cheatCopy.ts";
 import { CONTENT } from "../data/content.ts";
@@ -84,7 +87,6 @@ import { readEnemyWeaponsArt } from "./enemyWeaponsArt.ts";
 import { type CameraShake, HIT_SHAKE_SHARE, shakeCounter, TELEPORT_DISTANCE } from "./feedback.ts";
 import { LIGHT_FIELD, lightGalaxy, readLightGalaxies } from "./lightField.ts";
 import { fitPlayCamera, sceneFit, shakeIntensity } from "./playCamera.ts";
-import { readProjectArt } from "./projectArt.ts";
 import { readQuantumJump } from "./quantumJump.ts";
 import { markerHue, readRouteArt, readRouteMarkers, routePreviews } from "./routeArt.ts";
 import type { GameScene } from "./scene.ts";
@@ -112,7 +114,6 @@ import {
   readSpacePalette,
 } from "./spacePalette.ts";
 import { staticShipJets } from "./staticShipJets.ts";
-import { readOutpostArt, readStationArt } from "./stationArt.ts";
 import { aboardGalaxy } from "./storyPresentation.ts";
 import { RASTER_SCALE_EVENT } from "./svgRasters.ts";
 import { readUpgradePickup } from "./upgradePickup.ts";

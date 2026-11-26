@@ -1,8 +1,8 @@
+import type { StationFrame } from "../art/stationArt.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { Vec } from "../model/types.ts";
 import { ENEMY_HEADINGS } from "./enemyArt.ts";
 import { shipDirection } from "./shipArt.ts";
-import type { StationFrame } from "./stationArt.ts";
 
 // Art's stranded craft and tow line (art/cartwheel-props.md "Stranded craft", "Tow line"): each
 // galaxy's craft drawn at the 16 enemy headings, facing Ada, from that galaxy's tow.json, and a

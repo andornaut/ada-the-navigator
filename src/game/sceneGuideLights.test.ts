@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { readWhirlpoolProjects } from "../art/index.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { settlementsNear } from "../model/andromedaPlaces.ts";
 import { guideBeaconSlots } from "../model/guideBeacons.ts";
@@ -8,7 +9,6 @@ import type { FlightState, GalaxyProgress, Vec } from "../model/types.ts";
 import { GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
 import { andromedaSettlementVariant } from "./sceneAndromeda.ts";
 import { channelLampPlaces, createGuideLights } from "./sceneGuideLights.ts";
-import { readWhirlpoolProjects } from "./whirlpoolProjects.ts";
 
 const calls = vi.hoisted(() => ({ keyline: vi.fn(), sprite: vi.fn() }));
 vi.mock("./sceneObjects.ts", () => ({ drawOutpost: vi.fn(), placeStationFrame: vi.fn() }));

@@ -8,6 +8,7 @@ import {
   type AsteroidOutline,
   BEACON_SUFFIX,
   blinkRow,
+  boundsOnScreen,
   cacheApproached,
   cacheRow,
   debrisFrame,
@@ -24,16 +25,24 @@ import {
   hubBayKey,
   isDiscoveryCache,
   loopPhase,
+  type OutpostPart,
+  outpostParts,
   partKey,
+  partsBounds,
   playDepth,
   PULL_STREAK,
   pullStreakWedges,
+  revealAlpha,
   rockArt,
   sceneryDetail,
   stardustDrawn,
   stardustFrame,
   stardustPhase,
   stardustShown,
+  type StationArt,
+  stationFrame,
+  stationFrameIndex,
+  stationLoopFrame,
   type WhaleKind,
   whaleLoopFrame,
   whalePhase,
@@ -62,13 +71,6 @@ import { hubLayers } from "./cartwheelArt.ts";
 import { reducedAt, shardFamily, shardPolygons, wreckFlashAt } from "./destructionArt.ts";
 import { selectEnemyFrame } from "./enemyArt.ts";
 import { inkEdges, keylineOffsets, LIGHT_FIELD } from "./lightField.ts";
-import {
-  boundsOnScreen,
-  type OutpostPart,
-  outpostParts,
-  partsBounds,
-  revealAlpha,
-} from "./projectArt.ts";
 import type { GameScene } from "./scene.ts";
 import {
   enemyArtKey,
@@ -90,12 +92,6 @@ import {
 } from "./sceneTargetMarkers.ts";
 import { shipDirection } from "./shipArt.ts";
 import { spaceObjectColor } from "./spacePalette.ts";
-import {
-  type StationArt,
-  stationFrame,
-  stationFrameIndex,
-  stationLoopFrame,
-} from "./stationArt.ts";
 import { UPGRADE_CHEVRON, upgradeFrame } from "./upgradePickup.ts";
 import type { EffectShape } from "./weaponEffects.ts";
 

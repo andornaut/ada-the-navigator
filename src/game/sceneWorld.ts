@@ -4,7 +4,11 @@ import { Math as PhaserMath, type Scene } from "phaser";
 
 import {
   beaconLandmarkFrame,
+  boundsOnScreen,
+  buoyFrame,
+  buoyPlaces,
   dashes,
+  frameBounds,
   glintFrame,
   glintPing,
   hexNumber,
@@ -12,9 +16,14 @@ import {
   hubStoryKey,
   type JobFrame,
   nebulaTint,
+  nurseryFrame,
   partKey,
   playDepth,
+  poolRings,
+  revealAlpha,
+  stationFrame,
   streakMarks,
+  whalesCurrent,
 } from "../art/index.ts";
 import { CURRENTS } from "../data/galaxyFeatures.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
@@ -25,13 +34,11 @@ import { drawnHeading, hubBay, storyShips } from "../model/storyShips.ts";
 import type { FlightState, Vec } from "../model/types.ts";
 import { enemyJetTriangles, selectEnemyFrame } from "./enemyArt.ts";
 import { LIGHT_FIELD } from "./lightField.ts";
-import { boundsOnScreen, revealAlpha } from "./projectArt.ts";
 import type { GameScene } from "./scene.ts";
 import { drawCraftJets, keylineEdges, keylineSprite } from "./sceneHud.ts";
 import { LANDMARK_DEPTH, STORY_SHIP } from "./sceneShared.ts";
 import { objectSprite } from "./sceneSprites.ts";
 import { acknowledgePrimitiveGlint, acknowledgePrimitiveTarget } from "./sceneTargetMarkers.ts";
-import { stationFrame } from "./stationArt.ts";
 import {
   craftFrame,
   craftHeading,
@@ -42,14 +49,6 @@ import {
   towOffset,
 } from "./towArt.ts";
 import type { EffectShape } from "./weaponEffects.ts";
-import {
-  buoyFrame,
-  buoyPlaces,
-  frameBounds,
-  nurseryFrame,
-  poolRings,
-  whalesCurrent,
-} from "./whirlpoolProjects.ts";
 
 /** The scene state and methods this module's functions use. */
 export type WorldContext = Partial<Pick<GameScene, "fieldLight">> &

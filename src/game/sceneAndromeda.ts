@@ -1,4 +1,4 @@
-import { playDepth } from "../art/index.ts";
+import { playDepth, readBlinkArt, type StationArt } from "../art/index.ts";
 import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import type { SpaceObject } from "../model/types.ts";
 import { selectEnemyFrame } from "./enemyArt.ts";
@@ -6,7 +6,6 @@ import { keylineSprite } from "./sceneHud.ts";
 import { drawOutpost, type ObjectsContext, placeStationFrame } from "./sceneObjects.ts";
 import type { Asset } from "./sceneShared.ts";
 import { objectSprite } from "./sceneSprites.ts";
-import { readBlinkArt, type StationArt } from "./stationArt.ts";
 
 interface AndromedaArt {
   readonly dented: Asset | undefined;

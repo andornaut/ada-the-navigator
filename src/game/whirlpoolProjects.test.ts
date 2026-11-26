@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { CURRENTS } from "../data/galaxyFeatures.ts";
-import { PROJECTS } from "../data/projects.ts";
-import { currentsNear, nearestOnCurrent } from "../model/currents.ts";
-import { GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
 import {
   buoyFrame,
   buoyPlaces,
@@ -13,7 +9,11 @@ import {
   type ProjectFrame,
   readWhirlpoolProjects,
   whalesCurrent,
-} from "./whirlpoolProjects.ts";
+} from "../art/index.ts";
+import { CURRENTS } from "../data/galaxyFeatures.ts";
+import { PROJECTS } from "../data/projects.ts";
+import { currentsNear, nearestOnCurrent } from "../model/currents.ts";
+import { GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
 
 const FILE = publicJson("/art/whirlpool/projects.json") as {
   projects: Record<string, Record<string, unknown>>;

@@ -64,6 +64,22 @@ export {
   type PhantomAllyArt,
   readPhantomAllyArt,
 } from "./phantomAllyArt.ts";
+export {
+  type Bounds,
+  boundsOnScreen,
+  type OutpostPart,
+  outpostParts,
+  type OverlayAnchor,
+  type OverlayLayer,
+  partsBounds,
+  type PlacedProjectArt,
+  type ProjectArt,
+  type ProjectArtSet,
+  readPlacedProject,
+  readProjectArt,
+  revealAlpha,
+  type WorldProjectArt,
+} from "./projectArt.ts";
 export { decorationRasterSize, viewDecorations } from "./rareDecorations.ts";
 export { RockFrames } from "./rockFrames.ts";
 export { sceneryDetail } from "./scenery.ts";
@@ -93,6 +109,21 @@ export {
   stardustShown,
 } from "./stardustArt.ts";
 export {
+  type GalaxyStationArt,
+  type GalaxyStationFrame,
+  readBlinkArt,
+  readGalaxyStationArt,
+  readOutpostArt,
+  readStationArt,
+  type StationArt,
+  stationDockWorld,
+  type StationFrame,
+  stationFrame,
+  stationFrameIndex,
+  type StationLoop,
+  stationLoopFrame,
+} from "./stationArt.ts";
+export {
   familyMembers,
   readMarloArt,
   readWhaleArt,
@@ -103,6 +134,20 @@ export {
   whalePhase,
   whaleViewBox,
 } from "./whaleArt.ts";
+export {
+  buoyFrame,
+  type BuoyPlace,
+  buoyPlaces,
+  type CurrentBuoys,
+  frameBounds,
+  type NurseryBeacon,
+  nurseryFrame,
+  poolRings,
+  type ProjectFrame,
+  readWhirlpoolProjects,
+  whalesCurrent,
+  type WhirlpoolProjects,
+} from "./whirlpoolProjects.ts";
 export {
   AMMO_PACK_FRAMES,
   ammoPackFrame,
