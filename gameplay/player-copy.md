@@ -1391,11 +1391,13 @@ or replay rewards.
   owned scheme's swatch and name, including Classic. Other schemes show
   “Apply”, the selected scheme shows “In use”, and “Close” returns to Ship.
   Existing icons and detail return paths remain.
-- Pause: Pause (button label), Paused, Map, Quests, Settings, Ship, Back to
-  title, Resume. Pause is used only during active pausable gameplay.
-- Start Menu: Menu (three-line entry), Achievements, Exit, Settings, Close.
-  Earth and story Menu: Achievements, Settings, Back to title, Close. Exit shows
-  only where it closes the installed app.
+- Pause: Pause (button label), Paused, Cheats, Map, Quests, Ship, Achievements,
+  Settings, Back to title, Resume. Pause is used only during active pausable gameplay.
+- Quests: Flight log (button and page title when entries exist), Back to return
+  to the main Quests list.
+- Menu (three-line entry): Achievements, Cheats, Settings and Close, with Back
+  to title above Close outside Start. The separate Start button Exit shows
+  where it closes the installed app.
   Menu uses the same entry position as Pause; Settings has no standalone
   icon. Closing Menu or its children preserves the exact underlying context.
 - Update offer, shown in session once an update is staged: title "Update

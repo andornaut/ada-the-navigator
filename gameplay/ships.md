@@ -475,10 +475,23 @@ These policies are approved and their policy primitives are present in the
 inspected source. Production checks, delivery and acceptance are not established
 by this contract.
 
+## Authored capital encounters
+
+| Galaxy    | Ship              | Captain         | Route                                                               |
+| --------- | ----------------- | --------------- | ------------------------------------------------------------------- |
+| Sunflower | Hammer            | Captain Tally   | [Optional detour](quests.md#captain-tally)                          |
+| Whirlpool | Manta Dreadnought | Captain Sounder | [Required for the holodisk](quests.md#captain-sounder)              |
+| Needle    | Crossbow          | Captain Cadence | [Optional detour](quests.md#captain-cadence)                        |
+| Andromeda | Broad Wing        | Captain Redact  | [Optional detour](rules.md#captain-redact)                          |
+| Cartwheel | Outrigger Carrier | Captain Claim   | [Optional detour](rules.md#captain-claim)                           |
+| Phantom   | Archie's flagship | Admiral Archie  | [Required for the holodisk](rules.md#galaxy-six-phantom-the-finale) |
+
+Required capital route guards are also authored, with separate roles from the
+named bosses.
+
 ## Ambient admission
 
-The ambient roster uses frigates and smaller ships in every galaxy. Capital
-bosses, required capital guards and Phantom's flagship use authored encounters.
+The ambient roster uses frigates and smaller ships in every galaxy.
 
 Spawn admission counts only the group being placed, in its own lattice cell; the
 lattice spacing keeps groups apart ([Spawn targets](rules.md#spawn-targets)). The
@@ -579,7 +592,7 @@ eligible groups; a type absent from a stage cannot spawn ambiently.
 |                              10000 |               2 | 2–3 / 0.45           | 4 / 0.40                | 1 / 0.15                  | None                       |
 |                              25000 |               2 | 2–3 / 0.40           | 4 / 0.35                | 1 / 0.15                  | 1 / 0.10                   |
 
-No stage admits ambient frigates or capital battles. Required guards remain.
+No Sunflower region admits ambient frigates. Required guards remain.
 Swarm packs use `swarm` and flee after losses; fighters use `hitAndRun` and share
 pack morale; retaliators use `retaliate`, then `chase`, with a three-bolt spread;
 interceptors use `strafe`. Values not listed keep their catalog values. Each
@@ -598,11 +611,10 @@ holodisk drifted. They chase rather than hit and run.
 | `retaliator`  | Solo         |     1 |   0.10 | `retaliate`, then `chase`; three-bolt spread |
 | `frigate`     | Solo         |     1 |   0.15 | `siege`; size 5 Ada widths                   |
 
-The whale and family sites each keep their authored capital guard.
-[Sounder](quests.md#captain-sounder) guards the holodisk route after the
-reunion. Whirlpool's ambient roster has no capitals. Hunting packs appear near
-whale destinations and along the calf-guiding route. Hunters never target or
-damage whales. Their shots pass through them.
+See [Captain Sounder](quests.md#captain-sounder) for the authored guards and the
+holodisk encounter. Hunting packs appear near whale destinations and along the
+calf-guiding route. Hunters never target or damage whales. Their shots pass
+through them.
 Space currents push small craft and leave frigates and capitals unaffected (see
 [the version one rules](rules.md#galaxy-two-whirlpool-whale-family)). Whirlpool adds no new
 archetype: currents change how the existing ones fight.
@@ -1037,14 +1049,13 @@ Mica's mining ship is a finale ally and Cartwheel's story miner is a story ship,
 neither an enemy. Unengaged and not returning, the Mining Freighter traces
 asteroid edges:
 
-- **Edge:** it follows one rock's drawn outline, targeting its centre r + 20
-  from the outline, r being its spacing radius (30), so its hull keeps about 20
-  world units from the rock. The offset is the target; the Freighter never
-  touches the rock. It traces on its seeded side at the minimum speed, 0.25 of
+- **Edge:** it traces the rock's drawn outline on its seeded side at 0.25 of
   its current top speed (30 world units per second at its class top speed of
-  120), so it holds close to the offset. For the traced rock, obstacle steering
-  uses at most half the edge gap (10 world units) as clearance. Every other
-  obstacle keeps the usual avoidance berths.
+  120). The target distance from the outline to the Freighter's centre is
+  r + 20 world units, where r is the Freighter's spacing radius (30). The route
+  aims to keep its hull clear of the rock. Obstacle steering caps clearance for
+  the selected rock at half the 20-unit edge gap (10 world units) and uses the
+  usual avoidance berths for other obstacles.
 - **Dwell:** counting from its arrival at the rock, it follows the edge for a
   seeded 6 to 12 seconds, seeded from its ship ID and pick count, then picks the
   next rock. It picks at once when the traced rock is destroyed or starts

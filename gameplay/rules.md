@@ -79,14 +79,12 @@ Earth lands in Ada's room. Nonpausable story pages use the three-line Menu at th
 same position as Pause. Pause and Menu are one modal; Menu uses the smallest
 modal preset. Its bottom button is primary: Close in Menu, Resume in Pause. Every
 Menu or Pause outside Start, including Earth, story pages and maps, has Back to
-title immediately above the bottom button. All other buttons are in alphabetical
-order by label. Start's Menu lists Achievements, Exit and Settings; Earth and
-story Menus list Achievements and Settings. Exit shows only on Start, and only
-where exiting closes the installed app in the current runtime, detected at
-runtime; it is hidden in plain browser tabs and never navigates elsewhere. Q
-exits from the bare start screen only where Exit shows. Opening or closing Menu or
-its children preserves the exact story page, dialogue, choices, progress and
-locks. Closing a child returns to the same Menu and opener.
+title immediately above the bottom button. Menu lists Achievements, Cheats and
+Settings in label order before those actions. Start shows a separate Exit
+button where the installed app can close. Q exits from the bare start screen
+only where Exit shows. Opening or closing Menu or its children preserves the
+exact story page, dialogue, choices, progress and locks. Closing a child returns
+to the same Menu and opener.
 
 Restart asks first on a card with Restart and Cancel, as in Chibi; back and Escape
 cancel. Confirming clears all story progress, unlocked galaxies, holodisks, seen
@@ -818,12 +816,13 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   visible dismissal action. Restore focus to its opener or a logical control
   in the restored view. Keep mandatory choices, Cancel and confirmation or
   save guards, and block underlying gameplay input while the menu remains open.
-- Pause is visible at the top left during gameplay, including story and dialogue,
-  except on the title screen and during initial loading. Settings opens from Pause
-  or Menu. Pause opens a card titled "Paused" over the dimmed game without
-  advancing story or dialogue, with "Map", "Quests", "Settings" and "Ship" in
-  that order, then "Back to title", then primary "Resume". Map stays hidden before it unlocks
-  and during mandatory story beats or unresolved material choices. "Resume" remains primary and focused when the card opens. Ship opens a card titled "Ship" with Back and X returning to Pause.
+- Pause is visible at the top left during active pausable flight. It opens a
+  card titled "Paused" over the dimmed game without advancing story or dialogue.
+  The left column lists Cheats, Map, Quests and Ship in label order. The right
+  column lists Achievements, Settings, Back to title and primary Resume. Map
+  stays hidden before it unlocks and during mandatory story beats or unresolved
+  material choices. Resume takes focus when the card opens. Ship opens a card
+  titled "Ship" with Back and X returning to Pause.
   Cargo, Equipment and Weapons content columns are equal width, excluding shared
   divider/gap tracks; content does not size a column. A sole visible footer
   button is centered. Equipment lists Engine, Shield, Tractor beam and Paint;
@@ -840,8 +839,10 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   The local map's header shows the galaxy name with its landmark pips and
   "{percent}% mapped" below them, then a "Quests" button and "Galaxies".
   Quests opens an icon-and-summary list of all accepted story quests, station
-  jobs and activities, grouped as "Story quests" and "Station jobs". A row opens
-  one full-page detail with its complete approved description, actual next step,
+  jobs and activities, grouped as "Story quests" and "Station jobs". When the
+  flight log has entries, the main Quests list offers "Flight log". Back returns
+  to the list. A quest row opens one full-page detail with its complete
+  approved description, actual next step,
   known From/To locations, the canonical final payout derived once from the
   saved base reward or explicit story outcome, and actual
   progress. A story without currency or an explicit outcome shows "Story progress".

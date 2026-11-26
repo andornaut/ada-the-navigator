@@ -503,10 +503,11 @@ results.
 
 `ScanOutcome` drives a visual notice and [Astra's receipt](player-copy.md#canonical-astra-outcome-copy).
 The model submits the outcome and the scene drains it into the view. See
-[scan timing](../docs/work/ada-0309.md) and [notice placement](../docs/work/ada-0321.md)
-for the scoped checks. Those checks leave ordinary scans, remembered credit and
-contextual Use subject to their own flow verification. No scan mock-first or
-sequencing hold applies.
+[scan timing](../docs/work/ada-0309.md), [notice placement](../docs/work/ada-0401.md)
+for the scoped checks. The [earlier placement checks](../docs/work/ada-0321.md)
+cover a superseded layout. Ordinary scans, remembered credit and contextual Use
+remain subject to their own flow verification. No scan mock-first or sequencing
+hold applies.
 
 ### Scan outcomes
 
@@ -543,13 +544,15 @@ Keep offer filtering separate from reconciliation of accepted quest progress.
 ### Completion presentation
 
 Center the scan notice at the top of the playable area, using the same top
-inset as the resource pill. When a boss health bar or a crowded top row would
-overlap the notice, place it below those elements and keep it horizontally
-centered. The notice stays fixed relative to the screen as the camera moves.
+inset as the resource pill. Place it below a visible boss health bar or a
+crowded top row while keeping it horizontally centered. The notice stays fixed
+relative to the screen as the camera moves.
 Astra's dialogue draws over the notice.
 
-Hold at full opacity for two seconds, then fade over 500 ms. Both motion
-settings use the same placement and timing.
+Ordinary scan and quest-completion receipts hold at full opacity for two
+seconds. Task-completion receipts use the task text's reading time of three
+seconds plus 30 ms per character, including the fade. All receipts fade over
+500 ms. Both motion settings use the same placement and timing.
 
 ### Quest details through contextual Use
 
