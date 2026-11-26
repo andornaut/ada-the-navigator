@@ -2,7 +2,7 @@ import { CONVERSATIONS } from "../data/conversations.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { PROJECT_THANKS } from "../data/projects.ts";
 import type { GameContent } from "../data/types.ts";
-import { GameModel, newGameState } from "./game.ts";
+import { type Entropy, GameModel, newGameState } from "./game.ts";
 import { newProgress } from "./progress.ts";
 import type { GalaxyProgress, GameSave } from "./types.ts";
 
@@ -53,8 +53,12 @@ export function rewindCampaign(saved: GameSave): GameSave {
 }
 
 /** Use the ordinary Earth opening and persist its new cursor for Continue. */
-export function openRewoundCampaign(content: GameContent, saved: GameSave): GameModel {
-  const model = new GameModel(content, rewindCampaign(saved));
+export function openRewoundCampaign(
+  content: GameContent,
+  saved: GameSave,
+  entropy: Entropy,
+): GameModel {
+  const model = new GameModel(content, rewindCampaign(saved), entropy);
   if (model.canContinue) {
     model.continueGame();
   } else {

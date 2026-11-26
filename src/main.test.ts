@@ -81,8 +81,8 @@ vi.mock("./game/scene.ts", () => ({
       },
     };
     textures = { exists: () => boot.ship };
-    constructor(save: unknown) {
-      boot.scene(save);
+    constructor(save: unknown, entropy: () => number) {
+      boot.scene(save, entropy);
     }
   },
 }));
@@ -200,7 +200,7 @@ it("keeps launch before storage and passes the complete save result to the scene
   };
   release(result);
   await pending;
-  expect(boot.scene).toHaveBeenCalledWith(result);
+  expect(boot.scene).toHaveBeenCalledWith(result, expect.any(Function));
   expect(attempt.state.kind).toBe("ready");
   expect(boot.reveal.commit).toHaveBeenCalledOnce();
 });

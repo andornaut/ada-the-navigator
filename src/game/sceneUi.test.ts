@@ -851,6 +851,7 @@ function cheatScene(model: GameModel) {
   const scene = {
     controls: { closePause: vi.fn(), closeSettings: vi.fn(), reset: vi.fn(), setGains: vi.fn() },
     emergencyReturn: { active: false },
+    entropy: vi.fn(() => 173),
     entryCurrent: () => true,
     held: undefined as unknown,
     model,
@@ -946,6 +947,10 @@ it("commits the stored campaign with its cheat grants and only then hands off", 
   expect(f.scene.model.screen).toBe("story");
   expect(f.scene.model.state.economy.stardust).toBe(95 + CHEAT_AMOUNT);
   expect(f.values.get("ada-the-navigator.sound")).toBe("off");
+  // The retained geography needs only one draw, from the scene's source, on launch.
+  f.scene.model.startGalaxy(1);
+  expect(f.scene.entropy).toHaveBeenCalledExactlyOnceWith();
+  expect(f.scene.model.state.flight?.encounterSeed).toBe(173);
 });
 
 it("checks for updates when Continue leaves Start and when play returns to it", async () => {

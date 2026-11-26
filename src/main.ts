@@ -81,6 +81,7 @@ let retirement: Promise<void> = Promise.resolve();
 let saved: ReturnType<typeof saves.load> | undefined;
 let launched: ReturnType<typeof launchPhoneApp> | undefined;
 let cancelGame: (() => void) | undefined;
+const browserEntropy = () => crypto.getRandomValues(new Uint32Array(1))[0] ?? 1;
 
 /** Page resources retain successful imports, fonts and bitmaps across a failed game attempt. */
 export async function prepareGame(
@@ -158,7 +159,7 @@ async function enterGame(attempt: LoadingAttempt): Promise<void> {
   if (!attempt.isCurrent() || crashed) {
     return;
   }
-  const scene = new GameScene(initialSave);
+  const scene = new GameScene(initialSave, browserEntropy);
   scene.bootUiManifest = boot?.uiManifest;
   let owned: Game | undefined;
   let constructScene: (() => void) | undefined;

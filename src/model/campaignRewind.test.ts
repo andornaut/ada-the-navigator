@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { openRewoundCampaign, rewindCampaign } from "./campaignRewind.ts";
-import { GameModel } from "./game.ts";
+import { cryptoEntropy, GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { inspectAdaSave } from "./saveIntegrity.ts";
 
@@ -72,7 +72,7 @@ it("rewinds the campaign while keeping persisted equipment, ore, geography and e
     stage: 0,
   });
   expect(rewind.achievements).not.toBe(save.achievements);
-  const next = openRewoundCampaign(CONTENT, save);
+  const next = openRewoundCampaign(CONTENT, save, cryptoEntropy);
   expect(next.state.achievements.unlocked).toEqual(save.achievements.unlocked);
   expect(inspectAdaSave(next.save()).status).toBe("valid");
   expect(save.flight!.cargo).toBe(67);
@@ -84,7 +84,7 @@ it("persists the new Sunflower Earth opening and reloads it through Continue", (
   old.startGalaxy(1);
   const source = old.saveDocument();
   source.prologueSeen = true;
-  const next = openRewoundCampaign(CONTENT, source);
+  const next = openRewoundCampaign(CONTENT, source, cryptoEntropy);
   expect(next.screen).toBe("story");
   expect(next.state.flight).toBeNull();
   expect(next.state.prologueSeen).toBe(true);

@@ -24,7 +24,7 @@ import {
   drawnBeamFlash,
   shipSpeedFraction,
 } from "../model/flight.ts";
-import { GameModel } from "../model/game.ts";
+import { type Entropy, GameModel } from "../model/game.ts";
 import type { GainSnapshot } from "../model/itemGains.ts";
 import { nosePoint, shipHeading, shipSilhouette } from "../model/nose.ts";
 import { projectileOpacity } from "../model/playerProjectiles.ts";
@@ -463,11 +463,13 @@ export class GameScene extends Scene {
   disposeEntryResources: (() => void) | undefined;
 
   readonly initialSave: StoreLoadResult<GameSave>;
+  readonly entropy: Entropy;
   bootUiManifest?: unknown;
 
-  constructor(initialSave: StoreLoadResult<GameSave>) {
+  constructor(initialSave: StoreLoadResult<GameSave>, entropy: Entropy) {
     super("game");
     this.initialSave = initialSave;
+    this.entropy = entropy;
   }
 
   preload(): void {

@@ -165,6 +165,7 @@ export type UiContext = Partial<Pick<GameScene, "fieldLight">> &
     | "edgeMarkerInk"
     | "emergencyReturn"
     | "enabled"
+    | "entropy"
     | "entryCurrent"
     | "registerEntryCleanup"
     | "disposeEntryResources"
@@ -277,7 +278,7 @@ export function buildScene(scene: UiContext): void {
   const clock = () => performance.now();
   const newer = saved.status === "newer";
   scene.savingUnavailable = newer || saved.status === "unavailable";
-  scene.model = new GameModel(CONTENT, newer ? undefined : saved.save);
+  scene.model = new GameModel(CONTENT, newer ? undefined : saved.save, scene.entropy);
   scene.basePalette =
     readSpacePalette(scene.cache.json.get("space-palette")) ?? FALLBACK_SPACE_PALETTE;
   scene.palette = scene.basePalette;
@@ -1694,7 +1695,7 @@ async function commitCampaignRewind(
   writingCampaignRewinds.add(scene);
   let committed = false;
   try {
-    const next = openRewoundCampaign(CONTENT, source.save);
+    const next = openRewoundCampaign(CONTENT, source.save, scene.entropy);
     const adoptGeneration = await saves.commitCampaign(source, next.saveDocument(), authorized);
     if (!adoptGeneration) {
       return null;
