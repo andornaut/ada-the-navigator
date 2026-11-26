@@ -1,6 +1,6 @@
 import { judge, newlyEarned } from "@andornaut/game-kit/runtime/achievements";
 
-import type { Achievement, AchievementGoal } from "../data/achievements.ts";
+import { type Achievement, type AchievementGoal, ACHIEVEMENTS } from "../data/achievements.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { PROJECTS } from "../data/projects.ts";
@@ -11,6 +11,16 @@ import type { GameState } from "./types.ts";
 // Achievements (gameplay/quests.md "Achievements"). They and their progress survive Restart, so
 // their state holds every count it needs rather than reading story progress that Restart clears;
 // only the story achievements read the game's progress, at the moment it is reached.
+
+/** One entry on the Achievements card, in Gameplay's table order. */
+export interface AchievementView {
+  readonly condition: string;
+  readonly id: string;
+  readonly name: string;
+  /** A locked counted achievement's count; absent once unlocked or while its system is unbuilt. */
+  readonly progress?: { readonly have: number; readonly need: number };
+  readonly unlocked: boolean;
+}
 
 export interface AchievementState {
   /** Unlocked achievement ids, in the order they unlocked. */
@@ -213,6 +223,20 @@ export function achievementProgress(
       // The prologue and chapters unlock when reached; a locked one has nothing counted yet.
       return { have: 0, need: 1 };
   }
+}
+
+export function achievementViews(state: Readonly<AchievementState>): readonly AchievementView[] {
+  return ACHIEVEMENTS.map(({ condition, counted, goal, id, name }) => {
+    const unlocked = state.unlocked.includes(id);
+    const progress = achievementProgress(ACHIEVEMENT_TOTALS, goal, state);
+    return {
+      condition,
+      id,
+      name,
+      ...(counted && !unlocked && progress.need > 0 && { progress }),
+      unlocked,
+    };
+  });
 }
 
 interface AchievementFacts {

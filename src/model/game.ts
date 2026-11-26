@@ -58,7 +58,8 @@ import type { ChapterContent, GalaxyNumber, GameContent, Weapon } from "../data/
 import {
   ACHIEVEMENT_TOTALS,
   type AchievementEvent,
-  achievementProgress,
+  type AchievementView,
+  achievementViews,
   newAchievements,
   reachSensed,
   recordAchievement,
@@ -376,6 +377,7 @@ import { periodicWorldGrid, worldCellAt, worldCellKey } from "./worldCells.ts";
 import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 import { wrapPoint } from "./worldGeometry.ts";
 
+export type { AchievementView } from "./achievements.ts";
 export { newProgress } from "./progress.ts";
 const progress = newProgress;
 
@@ -529,16 +531,6 @@ export interface ConversationView {
   readonly speaker: keyof typeof SPEAKERS;
   readonly text: string;
   readonly desktop?: string;
-}
-
-/** One entry on the Achievements card, in Gameplay's table order. */
-export interface AchievementView {
-  readonly condition: string;
-  readonly id: string;
-  readonly name: string;
-  /** A locked counted achievement's count; absent once unlocked or while its system is unbuilt. */
-  readonly progress?: { readonly have: number; readonly need: number };
-  readonly unlocked: boolean;
 }
 
 export type PickupFeedback = Extract<ItemGain, { readonly kind: "ammo" }>;
@@ -5677,18 +5669,7 @@ export class GameModel {
   }
   /** The Achievements card's entries, in Gameplay's table order. */
   get achievements(): readonly AchievementView[] {
-    const state = this.state.achievements;
-    return ACHIEVEMENTS.map(({ condition, counted, goal, id, name }) => {
-      const unlocked = state.unlocked.includes(id);
-      const progress = achievementProgress(ACHIEVEMENT_TOTALS, goal, state);
-      return {
-        condition,
-        id,
-        name,
-        ...(counted && !unlocked && progress.need > 0 && { progress }),
-        unlocked,
-      };
-    });
+    return achievementViews(this.state.achievements);
   }
   /**
    * Galaxy selection, the ship on the farthest unlocked position on the route; after an unlock,
