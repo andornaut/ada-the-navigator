@@ -1229,12 +1229,13 @@ beacon light. Welcome!"
 
 Runtime strings are in `src/data/landmarkScanCopy.ts`.
 
-| Key                 | Exact copy                        | Token source                                       |
-| ------------------- | --------------------------------- | -------------------------------------------------- |
-| `outcomeScan`       | `Scan complete: {target}.`        | `ScanOutcome.target.name`                          |
-| `outcomeRemembered` | `We've already scanned {target}.` | `ScanOutcome.target.name`                          |
-| `outcomeTask`       | `Task complete: {task}.`          | `ScanCompletion.task.text`, only for kind `task`   |
-| `outcomeQuest`      | `Quest complete: {quest}.`        | `ScanCompletion.quest.name`, only for kind `quest` |
+| Key                 | Exact copy                                     | Token source                                       |
+| ------------------- | ---------------------------------------------- | -------------------------------------------------- |
+| `outcomeScan`       | `Scan complete: {target}.`                     | `ScanOutcome.target.name`                          |
+| `outcomeRemembered` | `We've already scanned {target}.`              | `ScanOutcome.target.name`                          |
+| `outcomeTask`       | `Task complete: {task}.`                       | `ScanCompletion.task.text`, only for kind `task`   |
+| `outcomeQuest`      | `Quest complete: {quest}.`                     | `ScanCompletion.quest.name`, only for kind `quest` |
+| `outcomeLead`       | `Someone needs help. The job is at {station}.` | The posted lead's issuing station display name     |
 
 Astra receives one dialogue receipt per actual outcome. Select exactly one intro
 from source `scan` or `remembered`, then append only actual completion sentences
@@ -1242,6 +1243,10 @@ in event order. An empty completions array adds no completion sentence. Do not
 repeat the intro for each completion or infer tasks, quests or labels from the
 nearest/current quest. The current single-condition Survey emits a quest
 completion only, never a synthetic task completion.
+
+A Scan that posts an [exploration lead](quests.md#posted-leads) appends
+`outcomeLead` after the intro. It names the station whose board now holds the
+job and claims no acceptance or reward.
 
 The receipt has notice priority in the conversation priority order
 ([Rules](rules.md#astra-and-penny-in-flight)): a warning, such as "Drones ahead.",

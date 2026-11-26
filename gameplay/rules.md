@@ -1243,7 +1243,9 @@ Required events and undiscovered quest destinations spawn ahead of Ada in chunks
 she approaches. Tune fresh-chunk exploration distance between encounters so continued
 exploration reliably encounters required events regardless of direction. Standing
 still, teleporting and revisiting chunks do not advance fresh-exploration pacing. Chunk generation must place
-content ahead of arrival, not visibly spawn it on top of the player.
+content ahead of arrival, not visibly spawn it on top of the player. Optional
+exploration sites pace by piloted fresh travel through
+[Lead pacing](quests.md#lead-pacing).
 
 Discovered destinations become teleport options, including the whale. Travel is
 available only outside danger (defined under [Flight and combat](#flight-and-combat))

@@ -1,9 +1,10 @@
 # Quests
 
-Station jobs, the landmarks surveys chart, repeatable activities and achievements. Every number in this
-document is provisional tuning. [Economy](economy.md) defines Stardust pacing and
-stations, and [the version one rules](rules.md) define direction indicators,
-Penny's sense, conversations, carried items and persistence.
+Station jobs, exploration leads, the landmarks surveys chart, repeatable
+activities and achievements. Every number in this document is provisional
+tuning. [Economy](economy.md) defines Stardust pacing and stations, and
+[the version one rules](rules.md) define direction indicators, Penny's sense,
+conversations, carried items and persistence.
 
 ## Station jobs
 
@@ -23,7 +24,8 @@ the Station welcome.
 
 - Each board offers three jobs at once, drawn from its galaxy's job pool by the
   station's seed, with no two of the same type while the pool allows. Short and
-  long deliveries count as one type.
+  long deliveries count as one type. A posted
+  [exploration lead](#exploration-leads) is an extra offer beyond the three.
 - The job row opens details with the job icon, title, objective, Reward with
   its Stardust amount, Cancel and Accept. A short galaxy-specific brief
   can add context for the actual job type. Preserve objective facts.
@@ -32,9 +34,9 @@ the Station welcome.
 - The held job shows at the top of every board in its galaxy, marked Active,
   with Drop. Drop asks "Drop this job?" with Drop and Cancel. Dropping loses the
   job's progress and returns it to the board that offered it.
-- Untaken offers re-roll at the start of each new flight. A slot refills with a
-  new job from the pool when its job is completed. When every landmark in a
-  galaxy is charted, its boards stop offering surveys.
+- Untaken offers other than posted leads re-roll at the start of each new
+  flight. A slot refills with a new job from the pool when its job is completed.
+  When every landmark in a galaxy is charted, its boards stop offering surveys.
 - An offer whose target becomes invalid, such as a survey landmark charted
   meanwhile or a target another offer already uses, is replaced with a new job
   from the pool.
@@ -68,11 +70,13 @@ layout regeneration like stations. Restart clears jobs and boards.
   run's), the local map's Travel here is unavailable and refuses with the shared
   refusal feedback, as while towing.
 - **Rescue and tow**: find a stranded pod or small ship 3000 to 7000 world units
-  away and tow it to safety at any known station or outpost in the galaxy. See
-  [Tow handling](#tow-handling).
-- **Lost-item hunt**: search a marked area, 900 world units in radius, for a lost
-  item. The indicator points to the area's centre while Ada is outside it and
-  hides while she is inside. Penny's sense helps: when the item is within 5000 world units, Penny's
+  from the issuing station and tow it to safety at any known station or outpost
+  in the galaxy. A rescue posted by an exploration lead is the one exception:
+  its craft waits at the lead site. See [Tow handling](#tow-handling).
+- **Lost-item hunt**: search a marked area, 900 world units in radius and centred
+  3000 to 7000 world units from the issuing station, for a lost item. The
+  indicator points to the area's centre while Ada is outside it and hides while
+  she is inside. Penny's sense helps: when the item is within 5000 world units, Penny's
   "Woof! Woof!" conversation plays once for that item, ignoring its usual 60 second
   limit. The item glints within 160 world units, like a discovery cache, and is
   collected as a pickup by the one pickup rule, and the tractor beam pulls it.
@@ -192,6 +196,70 @@ In-flight lines, each played once per save:
 - Tow attached: Astra: "Tow line attached. We'll be slow and heavy." Ada: "Hold
   on, we've got you!" (happy)
 - Search area entered: Ada: "It's around here somewhere. Penny, can you help?"
+
+## Exploration leads
+
+Fresh piloting places optional exploration sites near Ada. Each site offers
+Use (Scan) within the 160 world unit Talk range. An explicit Scan records the
+site once and shows [Astra's scan receipt](player-copy.md#canonical-astra-outcome-copy).
+A site pays no discovery reward, does not chart a landmark and does not count
+toward mapping progress. Sites and their scanned state persist with the galaxy,
+and Restart clears them. The pacing counter belongs to the flight: Continue
+resumes it, and a fresh entry starts it at zero.
+
+### Lead pacing
+
+- The near-route envelope is every point within 5000 world units, the shared
+  marker range, of the galaxy's story route: the legs from the flight's arrival
+  through each placed story destination in route order. Distances use the
+  shortest wrapped displacement.
+- One counter paces sites by piloted fresh travel. Inside the envelope, 75
+  seconds earn one site. Anywhere in fresh space outside it, 150 seconds earn one:
+  those seconds count at half rate toward the same counter.
+- Only movement with a steering command over fresh distance counts. Uncommanded
+  drift, standing still, revisited chunks, teleports, dialogue, docking and pause
+  add nothing. No wall-clock timer runs, and no site is mandatory.
+- The counter holds at most one pending site. Ada's next newly entered chunk
+  searches once for a free seeded place within 5000 world units of her, in the
+  same region as the travel that earned it, clear of stations, story
+  destinations, required hulls and landmark spacing. A failed search keeps the
+  site pending; placing it resets the counter.
+
+### Site kinds
+
+| Region               | Resources | Salvage | Job lead |
+| -------------------- | --------: | ------: | -------: |
+| Near-route envelope  |      0.50 |    0.35 |     0.15 |
+| Outside the envelope |         – |    0.70 |     0.30 |
+
+- A resources site is a scannable place with no added objects.
+- A salvage site also holds one disabled frigate of the galaxy, salvaged with
+  the existing Use (Salvage). It takes no job and no task slot.
+- A job lead is a rescue or a lost-item hunt from the galaxy's job pool. Near
+  routes offer both; outside the envelope only rescue. Phantom offers only
+  rescue. A site becomes a job lead only while Ada has discovered a station with
+  jobs in the galaxy; otherwise it draws among the other kinds by their weights.
+
+### Posted leads
+
+- Scanning a job lead posts it as a job on its issuer's board. The issuer is the
+  station with jobs that Ada has discovered nearest the site, by wrapped
+  distance, when she scans it. Astra's scan receipt names that station.
+- Scanning never accepts the job. Ada docks at the issuer and accepts it on the
+  board into the galaxy's one optional task slot. Accept, the busy refusals,
+  Drop, completion, payment and the lore line follow [Station jobs](#station-jobs).
+- A posted lead shows on its board beyond the three ordinary offers, with the
+  title and the galaxy's reward of its job type. A board holds at most one
+  untaken lead; a newer lead for that board replaces it. An untaken lead stays
+  across flights until it is taken or replaced, because it was found by
+  exploration rather than drawn by the board. Drop returns it to the board.
+  Completing it removes its row with no refill.
+- A rescue lead's stranded craft waits at the lead site, not 3000 to 7000 world
+  units from the issuer. Tow handling and completion at any known station or
+  outpost are unchanged.
+- A lost-item lead's search area lies 3000 to 7000 world units from the issuer,
+  as for a board hunt.
+- A site posts at most one lead. A scanned site offers no further Scan.
 
 ## Landmarks
 
