@@ -27,6 +27,7 @@ describe("specifiers", () => {
           'import { type E, e } from "./e.ts";',
           'export { f } from "./f.ts";',
           'export type * from "./g.ts";',
+          'export { type K } from "./k.ts";',
           'const h = await import("./h.ts");',
           'type I = import("./i.ts").I;',
           'import style from "./j.css?inline";',
@@ -37,10 +38,11 @@ describe("specifiers", () => {
     ).toEqual([
       { specifier: "./a.ts", typeOnly: false },
       { specifier: "../b.ts", typeOnly: true },
-      { specifier: "./c.ts", typeOnly: true },
+      { specifier: "./c.ts", typeOnly: false },
       { specifier: "./e.ts", typeOnly: false },
       { specifier: "./f.ts", typeOnly: false },
       { specifier: "./g.ts", typeOnly: true },
+      { specifier: "./k.ts", typeOnly: false },
       { specifier: "./h.ts", typeOnly: false },
       { specifier: "./i.ts", typeOnly: true },
       { specifier: "./j.css", typeOnly: false },
@@ -74,6 +76,24 @@ describe("cycles", () => {
     expect(importFindings(graph)).toEqual([
       "src/model/c.ts is in a runtime import cycle",
       "src/model/d.ts is in a runtime import cycle",
+    ]);
+  });
+
+  it("counts an inline type import as runtime, so it closes a runtime cycle", () => {
+    const edges = (source: string) =>
+      specifiers(source).map(({ specifier, typeOnly }) => ({
+        target: `src/model/${specifier.slice(2)}`,
+        typeOnly,
+      }));
+    const graph = new Map([
+      ["src/model/a.ts", edges('import { b } from "./b.ts";')],
+      ["src/model/b.ts", edges('import { type A } from "./a.ts";')],
+      ["src/model/c.ts", edges('import { d } from "./d.ts";')],
+      ["src/model/d.ts", edges('import type { C } from "./c.ts";')],
+    ]);
+    expect(importFindings(graph)).toEqual([
+      "src/model/a.ts is in a runtime import cycle",
+      "src/model/b.ts is in a runtime import cycle",
     ]);
   });
 });

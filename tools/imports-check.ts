@@ -116,34 +116,14 @@ export interface Import {
 /** Each module's relative imports, keyed and targeted by repository path. */
 export type Graph = ReadonlyMap<string, readonly Import[]>;
 
-const typeOnlyImport = (node: ts.ImportDeclaration) => {
-  const clause = node.importClause;
-  if (!clause) {
-    return false;
-  }
-  if (clause.phaseModifier === ts.SyntaxKind.TypeKeyword) {
-    return true;
-  }
-  const named = clause.namedBindings;
-  return (
-    clause.name === undefined &&
-    named !== undefined &&
-    ts.isNamedImports(named) &&
-    named.elements.length > 0 &&
-    named.elements.every((element) => element.isTypeOnly)
-  );
-};
-
-const typeOnlyExport = (node: ts.ExportDeclaration) =>
-  node.isTypeOnly ||
-  (node.exportClause !== undefined &&
-    ts.isNamedExports(node.exportClause) &&
-    node.exportClause.elements.length > 0 &&
-    node.exportClause.elements.every((element) => element.isTypeOnly));
+// Only `import type` and `export type` are erased: verbatimModuleSyntax keeps
+// `import { type A }` and `export { type A } from` as module loads.
+const typeOnlyImport = (node: ts.ImportDeclaration) =>
+  node.importClause?.phaseModifier === ts.SyntaxKind.TypeKeyword;
 
 /**
  * Every relative module specifier in a source: static imports and re-exports, dynamic import()
- * and inline import("...") types, each marked type-only when it brings in only types.
+ * and inline import("...") types, each marked type-only when the module never loads at runtime.
  */
 export function specifiers(source: string): { specifier: string; typeOnly: boolean }[] {
   const file = ts.createSourceFile("module.ts", source, ts.ScriptTarget.Latest, true);
@@ -157,7 +137,7 @@ export function specifiers(source: string): { specifier: string; typeOnly: boole
     if (ts.isImportDeclaration(node)) {
       add(node.moduleSpecifier, typeOnlyImport(node));
     } else if (ts.isExportDeclaration(node)) {
-      add(node.moduleSpecifier, typeOnlyExport(node));
+      add(node.moduleSpecifier, node.isTypeOnly);
     } else if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
       add(node.arguments[0], false);
     } else if (ts.isImportTypeNode(node) && ts.isLiteralTypeNode(node.argument)) {
