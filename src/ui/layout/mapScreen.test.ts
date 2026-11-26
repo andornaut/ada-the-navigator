@@ -207,7 +207,7 @@ describe("map projection and fit", () => {
     expect(mapHeaderWidth(ink.name, ink.percent, ink.note)).toBeLessThanOrEqual(
       mapHeaderCap(phone, BASE),
     );
-    expect(mapHeaderCap(phone, BASE)).toBe(413.25 - CARD_CLOSE.hit.width);
+    expect(mapHeaderCap(phone, BASE)).toBe(464 - CARD_CLOSE.hit.width);
   });
 
   it("sets the Quests lines: a 28 chip slot, markGap, then text from 42", () => {

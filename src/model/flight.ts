@@ -3758,18 +3758,20 @@ export function teleport(content: GameContent, target: string | Vec, flight: Fli
   }
   beginFlightStep(flight);
   const arrival = { x: point.x, y: point.y };
-  // A jump arrival begins calm: no new encounter is placed near it, and ordinary encounter
-  // ships already near it leave without counting as casualties. Guards keep their posts.
-  if (!arrivalPoints(flight).some((point) => point.x === arrival.x && point.y === arrival.y)) {
-    flight.arrivals = [...(flight.arrivals ?? []), { ...arrival }];
+  // Destinations and stations keep their calm arrival zones. A map waypoint can be the
+  // centre of a pending encounter, so it gets arrival grace without changing the site's roster.
+  if (typeof target === "string") {
+    if (!arrivalPoints(flight).some((point) => point.x === arrival.x && point.y === arrival.y)) {
+      flight.arrivals = [...(flight.arrivals ?? []), { ...arrival }];
+    }
+    clearLayoutObjects(
+      (other) =>
+        other.kind !== "enemy" ||
+        worldDistance(flightWorldContext(flight), other, arrival) >=
+          content.tuning.flight.arrivalCalm + other.radius,
+      flight,
+    );
   }
-  clearLayoutObjects(
-    (other) =>
-      other.kind !== "enemy" ||
-      worldDistance(flightWorldContext(flight), other, arrival) >=
-        content.tuning.flight.arrivalCalm + other.radius,
-    flight,
-  );
   generate(content, arrival, flight);
   flight.player = arrival;
   flight.velocity = { x: 0, y: 0 };
