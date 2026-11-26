@@ -40,15 +40,40 @@ function nonnegative(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value >= 0;
 }
 
-function validPacing(value: unknown): value is ExplorationPacing {
+function validPacing(period: number, value: unknown): value is ExplorationPacing {
   return (
     record(value) &&
-    exact(value, ["freshSeconds", "nextOpportunity"]) &&
+    exact(
+      value,
+      Object.hasOwn(value, "pending")
+        ? ["freshSeconds", "nextOpportunity", "pending"]
+        : ["freshSeconds", "nextOpportunity"],
+    ) &&
     nonnegative(value.freshSeconds) &&
     value.freshSeconds <= ROUTE_OPPORTUNITY_SECONDS &&
     nonnegative(value.nextOpportunity) &&
-    Number.isSafeInteger(value.nextOpportunity)
+    Number.isSafeInteger(value.nextOpportunity) &&
+    (!Object.hasOwn(value, "pending") ||
+      (value.freshSeconds === ROUTE_OPPORTUNITY_SECONDS && validPending(period, value.pending)))
   );
+}
+
+function validPending(period: number, value: unknown): boolean {
+  if (
+    !record(value) ||
+    !exact(value, ["cell", "region"]) ||
+    (value.region !== "near" && value.region !== "far") ||
+    typeof value.cell !== "string" ||
+    !/^-?\d+,-?\d+$/.test(value.cell)
+  ) {
+    return false;
+  }
+  const [x, y] = value.cell.split(",").map(Number);
+  if (!Number.isSafeInteger(x) || !Number.isSafeInteger(y)) {
+    return false;
+  }
+  const cell = canonicalCell(period, { x: x!, y: y! });
+  return value.cell === `${cell.x},${cell.y}`;
 }
 
 /** Saved renewal roles and footprints must already have their canonical identities. */
@@ -62,7 +87,6 @@ export function validExplorationState(
       value,
       Object.hasOwn(value, "pacing") ? ["version", "renewals", "pacing"] : ["version", "renewals"],
     ) ||
-    (Object.hasOwn(value, "pacing") && !validPacing(value.pacing)) ||
     value.version !== 1 ||
     !record(value.renewals)
   ) {
@@ -75,6 +99,9 @@ export function validExplorationState(
       return false;
     }
   } catch {
+    return false;
+  }
+  if (Object.hasOwn(value, "pacing") && !validPacing(period, value.pacing)) {
     return false;
   }
   const renewals = value.renewals;
@@ -107,8 +134,15 @@ export function validExplorationState(
   });
 }
 
-/** The values record an explicit Scan. An unscanned entry is a real admitted site. */
-export type ExplorationSites = Readonly<Record<string, boolean>>;
+/** Boolean entries are saved sites from before opportunity kinds were recorded. */
+export type ExplorationSiteKind = "resources" | "salvage" | "rescue" | "hunt";
+export type ExplorationSite =
+  boolean | { readonly kind: ExplorationSiteKind; readonly scanned: boolean };
+export type ExplorationSites = Readonly<Record<string, ExplorationSite>>;
+
+export function explorationSiteScanned(site: ExplorationSite | undefined): boolean {
+  return typeof site === "boolean" ? site : (site?.scanned ?? false);
+}
 
 const noOffers = { jobTemplates: [] };
 const siteCache = new WeakMap<
@@ -131,13 +165,14 @@ export function admittedExplorationSites(
   if (known?.galaxy === galaxy && known.seed === seed && known.worldSide === worldSide) {
     return known.sites;
   }
-  const sites = Object.keys(record).flatMap((id) => {
-    const site = proceduralPoiById(
-      { opportunityEligibility: noOffers, worldSide },
-      galaxy,
-      seed,
-      id,
-    );
+  const sites = Object.entries(record).flatMap(([id, entry]) => {
+    const kind = typeof entry === "boolean" ? undefined : entry.kind;
+    // Regenerate the original placement and visual name, but use the admitted opportunity kind.
+    const opportunityEligibility =
+      kind === "rescue" || kind === "hunt"
+        ? { jobTemplates: [kind], resources: false, salvage: false }
+        : { ...noOffers, resources: kind !== "salvage", salvage: kind !== "resources" };
+    const site = proceduralPoiById({ opportunityEligibility, worldSide }, galaxy, seed, id);
     return site ? [site] : [];
   });
   siteCache.set(record, { galaxy, seed, sites, worldSide });
@@ -150,7 +185,20 @@ export function validExplorationSites(
   seed: number,
   value: unknown,
 ): value is ExplorationSites {
-  if (!record(value) || !Object.values(value).every((scanned) => typeof scanned === "boolean")) {
+  if (
+    !record(value) ||
+    !Object.values(value).every(
+      (entry) =>
+        typeof entry === "boolean" ||
+        (record(entry) &&
+          exact(entry, ["kind", "scanned"]) &&
+          typeof entry.scanned === "boolean" &&
+          (entry.kind === "resources" ||
+            entry.kind === "salvage" ||
+            entry.kind === "rescue" ||
+            (entry.kind === "hunt" && galaxy !== 6))),
+    )
+  ) {
     return false;
   }
   const sites = admittedExplorationSites(worldSide, galaxy, seed, value as ExplorationSites);

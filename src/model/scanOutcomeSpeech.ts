@@ -11,6 +11,9 @@ export function scanOutcomeLines(outcome: ScanOutcome): readonly ConversationLin
       : LANDMARK_SCAN_COPY.outcomeRemembered;
   return [
     fill(intro, { target: outcome.target.name }),
+    ...(outcome.leadStation === undefined
+      ? []
+      : [fill(LANDMARK_SCAN_COPY.outcomeLead, { station: outcome.leadStation })]),
     ...outcome.completions.map((completion) =>
       completion.kind === "task"
         ? fill(LANDMARK_SCAN_COPY.outcomeTask, { task: completion.task.text })

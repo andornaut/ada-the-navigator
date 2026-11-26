@@ -15,14 +15,16 @@ import { dropRandom } from "./drops.ts";
 import { type LandmarkSite, landmarkSites } from "./landmarks.ts";
 import { stationById, type StationSite } from "./stations.ts";
 import type {
-  FlightState,
   GalaxyProgress,
   GameState,
   HeldJob,
   JobOffer,
   JobTarget,
+  SpaceObject,
   Vec,
 } from "./types.ts";
+import { type WorldContext, worldDistance } from "./worldContacts.ts";
+import { wrapPoint } from "./worldGeometry.ts";
 
 // Station job boards (gameplay/quests.md "Station jobs"): each station's three offers, the held
 // job and how it comes along. A held job fills the galaxy's one optional task slot, which other
@@ -54,13 +56,15 @@ export function heldJob(galaxy: GalaxyNumber, book: Pick<GameState, "tasks">): H
   return task?.kind === "job" ? task : undefined;
 }
 
-/** Live frigates and capitals in a flight. */
-export function jobHostiles(flight: Pick<FlightState, "objects">): Vec[] {
+/** Heavy hulls that job targets keep clear of. */
+export function jobHostiles(flight: { readonly objects: readonly SpaceObject[] }): Vec[] {
   return flight.objects.filter(
     (object) =>
       object.kind === "enemy" &&
       object.hp > 0 &&
-      (object.enemy?.archetype === "frigate" || object.enemy?.archetype === "capital"),
+      (object.enemy?.archetype === "frigate" ||
+        object.enemy?.archetype === "capital" ||
+        object.enemy?.archetype === "platform"),
   );
 }
 
@@ -94,6 +98,7 @@ function spotNear(
   next: () => number,
   reach: { readonly max: number; readonly min: number },
   station: Vec,
+  world: WorldContext = {},
 ): Vec | null {
   for (let attempt = 0; attempt < 24; attempt++) {
     const length = reach.min + next() * (reach.max - reach.min);
@@ -103,7 +108,9 @@ function spotNear(
       y: station.y + Math.sin(angle) * length,
     };
     if (
-      context.hostiles.every((hostile) => distance(hostile, spot) >= JOB_TUNING.hostileClearance)
+      context.hostiles.every(
+        (hostile) => worldDistance(world, hostile, spot) >= JOB_TUNING.hostileClearance,
+      )
     ) {
       return spot;
     }
@@ -149,20 +156,78 @@ function jobTarget(
     const item = pick(next, pool.craft);
     return spot && item ? { item, target: { id: "", ...spot } } : null;
   }
+  return huntTarget(context, next, station);
+}
+
+function huntTarget(
+  context: BoardContext,
+  next: () => number,
+  station: StationSite,
+  world: WorldContext = {},
+): Pick<JobOffer, "item" | "spot" | "target"> | null {
   const { hunt } = JOB_TUNING;
-  const centre = spotNear(context, next, hunt, station);
-  const item = pick(next, pool.lost);
+  const centre = spotNear(context, next, hunt, station, world);
+  const item = pick(next, JOB_POOL[context.galaxy]!.lost);
   if (!centre || !item) {
     return null;
   }
   // The item lies well inside the search area, so the glint is never at its rim.
   const reach = Math.sqrt(next()) * hunt.radius * 0.8;
   const angle = next() * Math.PI * 2;
+  const spot = { x: centre.x + Math.cos(angle) * reach, y: centre.y + Math.sin(angle) * reach };
+  const side = world.worldSide;
   return {
     item,
-    spot: { x: centre.x + Math.cos(angle) * reach, y: centre.y + Math.sin(angle) * reach },
-    target: { id: "", ...centre },
+    spot: side === undefined ? spot : wrapPoint(side, spot),
+    target: { id: "", ...(side === undefined ? centre : wrapPoint(side, centre)) },
   };
+}
+
+export type LeadJobType = Extract<JobType, "rescue" | "hunt">;
+export const isPostedLead = (offer: JobOffer): boolean => offer.id.startsWith("lead:poi:");
+
+/** A lead uses the board reward and job pool while keeping its site identity. */
+export function explorationLeadOffer(
+  world: WorldContext,
+  context: BoardContext,
+  seed: number,
+  station: StationSite,
+  site: JobTarget,
+  type: LeadJobType,
+): JobOffer | null {
+  const reward = byPosition(JOB_REWARDS, context.galaxy)[type];
+  if (reward === null || reward === undefined) {
+    return null;
+  }
+  const id = `lead:${site.id}`;
+  const next = dropRandom(seed, id);
+  let target: ReturnType<typeof huntTarget>;
+  if (type === "rescue") {
+    const item = pick(next, JOB_POOL[context.galaxy]!.craft);
+    if (
+      !item ||
+      context.hostiles.some(
+        (hostile) => worldDistance(world, hostile, site) < JOB_TUNING.hostileClearance,
+      )
+    ) {
+      return null;
+    }
+    target = { item, target: { id: "", x: site.x, y: site.y } };
+  } else {
+    target = huntTarget(context, next, station, world);
+  }
+  return target && { ...target, id, reward, station: station.id, type };
+}
+
+/** A new discovery replaces the untaken lead. A held lead keeps its original drop state. */
+export function postExplorationLead(galaxy: GalaxyNumber, book: JobBook, lead: JobOffer): void {
+  const boards = (book.jobs.boards[galaxy] ??= {});
+  const held = heldJob(galaxy, book);
+  const board = boards[lead.station] ?? [];
+  boards[lead.station] = [
+    ...board.filter((offer) => !isPostedLead(offer) || offer.id === held?.id),
+    lead,
+  ];
 }
 
 /**
@@ -217,8 +282,17 @@ export function stationBoard(
   const held = heldJob(context.galaxy, book);
   for (let slot = 0; slot < board.length; slot++) {
     const offer = board[slot]!;
-    if (offer.id !== held?.id && !offerValid(context, book, station.id, slot, offer)) {
-      const replacement = makeOffer(context, book, without(board, slot), station);
+    if (
+      !isPostedLead(offer) &&
+      offer.id !== held?.id &&
+      !offerValid(context, book, station.id, slot, offer)
+    ) {
+      const replacement = makeOffer(
+        context,
+        book,
+        without(board, slot).filter((job) => !isPostedLead(job)),
+        station,
+      );
       if (replacement) {
         board[slot] = replacement;
       } else {
@@ -226,14 +300,15 @@ export function stationBoard(
       }
     }
   }
-  while (board.length < JOB_TUNING.boardSize) {
-    const offer = makeOffer(context, book, board, station);
+  const ordinary = board.filter((offer) => !isPostedLead(offer));
+  while (ordinary.length < JOB_TUNING.boardSize) {
+    const offer = makeOffer(context, book, ordinary, station);
     if (!offer) {
       break;
     }
-    board.push(offer);
+    ordinary.push(offer);
   }
-  return board;
+  return (boards[station.id] = [...ordinary, ...board.filter(isPostedLead)]);
 }
 
 /**
@@ -274,7 +349,7 @@ function offerValid(
 
 /**
  * A new flight re-rolls the galaxy's untaken offers (quests.md "Job boards"): every board keeps
- * only the held job, and refills when it next shows.
+ * the held job and posted leads, and refills when it next shows.
  */
 export function rerollBoards(galaxy: GalaxyNumber, book: JobBook): void {
   const boards = book.jobs.boards[galaxy];
@@ -283,7 +358,7 @@ export function rerollBoards(galaxy: GalaxyNumber, book: JobBook): void {
   }
   const held = heldJob(galaxy, book);
   for (const [station, board] of Object.entries(boards)) {
-    boards[station] = board.filter((offer) => offer.id === held?.id);
+    boards[station] = board.filter((offer) => offer.id === held?.id || isPostedLead(offer));
   }
 }
 
@@ -312,8 +387,14 @@ export function acceptJob(
 
 /** Drops the held job: its progress is lost and its offer shows on its board again. */
 export function dropJob(galaxy: GalaxyNumber, book: JobBook): boolean {
-  if (!heldJob(galaxy, book)) {
+  const held = heldJob(galaxy, book);
+  if (!held) {
     return false;
+  }
+  const boards = book.jobs.boards[galaxy];
+  const board = boards?.[held.station];
+  if (isPostedLead(held) && boards && board) {
+    boards[held.station] = board.filter((offer) => !isPostedLead(offer) || offer.id === held.id);
   }
   delete book.tasks[galaxy];
   return true;
@@ -336,7 +417,15 @@ export function completeJob(
   const board = book.jobs.boards[context.galaxy]?.[held.station];
   const slot = board?.findIndex((offer) => offer.id === held.id) ?? -1;
   if (board && slot >= 0) {
-    const replacement = station && makeOffer(context, book, without(board, slot), station);
+    const replacement =
+      !isPostedLead(held) &&
+      station &&
+      makeOffer(
+        context,
+        book,
+        without(board, slot).filter((job) => !isPostedLead(job)),
+        station,
+      );
     if (replacement) {
       board[slot] = replacement;
     } else {
@@ -365,10 +454,17 @@ export function nearestSafePlace(
   station: StationSite | null,
   point: Vec,
 ): JobTarget | null {
-  const places = [...(station ? [station] : []), ...outposts];
+  return nearestWorldSafePlace({}, station ? [station, ...outposts] : outposts, point);
+}
+
+export function nearestWorldSafePlace(
+  world: WorldContext,
+  places: readonly JobTarget[],
+  point: Vec,
+): JobTarget | null {
   return (
-    places
-      .sort((a, b) => distance(a, point) - distance(b, point))
+    [...places]
+      .sort((a, b) => worldDistance(world, a, point) - worldDistance(world, b, point))
       .map(({ id, x, y }) => ({
         id,
         x,

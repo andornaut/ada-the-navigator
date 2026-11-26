@@ -90,7 +90,11 @@ import {
   stepEnemy,
 } from "./enemyAi.ts";
 import { enemyEquipmentDefinition, rollEnemyWeaponLevel } from "./enemyEquipment.ts";
-import { type ProceduralPoi, proceduralPoisNear } from "./proceduralPois.ts";
+import {
+  type ProceduralPoi,
+  type ProceduralPoiOpportunityEligibility,
+  proceduralPoisNear,
+} from "./proceduralPois.ts";
 export { rollEncounter } from "./encounterRoll.ts";
 import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
@@ -1372,34 +1376,28 @@ function combat(flight: FlightState) {
   return (flight.combat ??= { initialPackSizes: {}, routeEncounters: [] });
 }
 
-/** One bounded search per new cell while a pacing ordinal is pending. */
-const lastExplorationSearch = new WeakMap<FlightState, { cell: string; ordinal: number }>();
-
 export function placeExplorationSite(
   content: GameContent,
   flight: FlightState,
-  ordinal: number,
-  admitted: Readonly<Record<string, boolean>>,
-  protectedSites: readonly Vec[],
-  nearRoute: (point: Vec) => boolean,
+  options: {
+    admitted: Readonly<Record<string, unknown>>;
+    protectedSites: readonly Vec[];
+    inRegion: (point: Vec) => boolean;
+    opportunityEligibility: ProceduralPoiOpportunityEligibility;
+    canPostLead: (site: ProceduralPoi) => boolean;
+  },
 ): ProceduralPoi | undefined {
   const world = flightWorldContext(flight);
   if (world.worldSide === undefined) {
     return undefined;
   }
-  const cell = chunk(flight, content, flight.player);
-  const previous = lastExplorationSearch.get(flight);
-  if (previous?.cell === cell && previous.ordinal === ordinal) {
-    return undefined;
-  }
-  lastExplorationSearch.set(flight, { cell, ordinal });
   const stationContext = flightStationContext(flight);
   const sites = proceduralPoisNear(
     {
       ...world,
       isProtected: (point, clearance) =>
-        !nearRoute(point) ||
-        protectedSites.some(
+        !options.inRegion(point) ||
+        options.protectedSites.some(
           (site) => worldDistance(world, point, site) < clearance + content.tuning.exclusionRadius,
         ) ||
         !requiredFootprintClear(content, flight, { center: point, radius: clearance }) ||
@@ -1417,7 +1415,7 @@ export function placeExplorationSite(
         landmarkSites(flight.galaxy).some(
           (site) => worldDistance(world, site, point) < LANDMARK_TUNING.spacing,
         ),
-      opportunityEligibility: { jobTemplates: [] },
+      opportunityEligibility: options.opportunityEligibility,
     },
     flight.galaxy,
     flight.seed,
@@ -1425,7 +1423,10 @@ export function placeExplorationSite(
     flight.player,
   );
   for (const site of sites) {
-    if (Object.hasOwn(admitted, site.id)) {
+    if (
+      Object.hasOwn(options.admitted, site.id) ||
+      (site.opportunity.kind === "job" && !options.canPostLead(site))
+    ) {
       continue;
     }
     if (site.opportunity.kind === "salvage") {

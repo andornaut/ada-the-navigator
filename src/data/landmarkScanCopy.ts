@@ -2,6 +2,7 @@
 export const LANDMARK_SCAN_COPY = {
   action: "Scan",
   instruction: "Fly closer, then press {useIcon} to scan it.",
+  outcomeLead: "Someone needs help. The job is at {station}.",
   outcomeQuest: "Quest complete: {quest}.",
   outcomeRemembered: "We've already scanned {target}.",
   outcomeScan: "Scan complete: {target}.",

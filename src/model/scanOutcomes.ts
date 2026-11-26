@@ -20,6 +20,7 @@ export interface ScanOutcome {
   readonly source: "scan" | "remembered";
   readonly target: { readonly id: string; readonly name: string; readonly symbol: MapSymbol };
   readonly completions: readonly ScanCompletion[];
+  readonly leadStation?: string;
 }
 
 /** Outcome facts are detached from mutable quest state before the once-only presentation drain. */

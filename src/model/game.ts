@@ -100,8 +100,14 @@ import {
   advanceExplorationPacing,
   commitExplorationOpportunity,
   EMPTY_EXPLORATION_PACING,
+  type ExplorationSiteRegion,
+  OUTER_OPPORTUNITY_SECONDS,
 } from "./explorationPacing.ts";
-import { admittedExplorationSites } from "./explorationState.ts";
+import {
+  admittedExplorationSites,
+  type ExplorationSiteKind,
+  explorationSiteScanned,
+} from "./explorationState.ts";
 import {
   activateRequiredCartwheelRoute,
   activateRequiredWhirlpoolRoute,
@@ -144,6 +150,7 @@ import { liveEnemy } from "./geography.ts";
 import { hostileStationMapPlaces } from "./hostileStationMap.ts";
 import { acknowledgeHostileStationIdentification } from "./hostileStationPersistence.ts";
 import { materializeGeneratedHostileStations } from "./hostileStationRuntime.ts";
+import { stationPopulationObjects } from "./hostileStations.ts";
 import {
   INDICATOR_SOURCES,
   type IndicatorTarget,
@@ -157,9 +164,12 @@ import {
   type BoardContext,
   completeJob,
   dropJob,
+  explorationLeadOffer,
   heldJob,
   jobHostiles,
-  nearestSafePlace,
+  type LeadJobType,
+  nearestWorldSafePlace,
+  postExplorationLead,
   pullTow,
   rerollBoards,
   stationBoard,
@@ -312,6 +322,7 @@ import type {
 } from "./types.ts";
 import { applyUpgrade, chooseAmmoPack, chooseUpgrade } from "./upgradeDrops.ts";
 import { newEconomy, shipTuning } from "./upgrades.ts";
+import { visitedChunk } from "./visited.ts";
 import {
   collectWeapon,
   ensureOwnedWeapons,
@@ -320,7 +331,9 @@ import {
   UPGRADE_WEAPONS,
   type WeaponChoice,
 } from "./weapons.ts";
-import { worldDelta, worldDistance } from "./worldContacts.ts";
+import { periodicWorldGrid, worldCellAt, worldCellKey } from "./worldCells.ts";
+import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
+import { wrapPoint } from "./worldGeometry.ts";
 
 export { newProgress } from "./progress.ts";
 const progress = newProgress;
@@ -1377,7 +1390,10 @@ export class GameModel {
   }
 
   private scannedSite(id: string): boolean {
-    return this.current.charted.includes(id) || this.current.explorationSites?.[id] === true;
+    return (
+      this.current.charted.includes(id) ||
+      explorationSiteScanned(this.current.explorationSites?.[id])
+    );
   }
 
   private nearestScan() {
@@ -1610,6 +1626,7 @@ export class GameModel {
     source: ScanOutcome["source"],
     completions: readonly ScanCompletion[],
     site = landmarkById(flight.galaxy, targetId),
+    leadStation?: string,
   ): void {
     if (!site) {
       return;
@@ -1617,6 +1634,7 @@ export class GameModel {
     const outcome = immutableScanOutcome({
       completions,
       galaxy: flight.galaxy,
+      ...(leadStation === undefined ? {} : { leadStation }),
       source,
       target: {
         id: site.id,
@@ -2634,21 +2652,20 @@ export class GameModel {
     this.showScene(holodiskScene(holodiskInsertion(held, inserted), memories[held - 1] ?? ""));
   }
   /**
-   * The authored route's actual site legs, projected in the ship's chart. Use the
-   * existing local marker envelope only for this near-route slice.
+   * The authored route's placed legs from flight entry, projected in the ship's chart.
    */
   private explorationRoute(flight: FlightState): (point: Vec) => boolean {
     const world = flightWorldContext(flight);
     const progress = this.current;
     const legs: { from: Vec; delta: Vec; squared: number }[] = [];
-    let from = flight.arrivals?.[0] ?? { x: 0, y: 0 };
+    let from = { x: 0, y: 0 };
     for (const id of galaxyRoute(flight.galaxy)) {
       const to =
         flight.objects.find((object) => object.kind === "destination" && object.id === id) ??
         flight.world.notables[id] ??
         progress.requiredSites?.[id];
       if (!to) {
-        break;
+        continue;
       }
       const delta = worldDelta(world, from, to);
       legs.push({ delta, from, squared: delta.x ** 2 + delta.y ** 2 });
@@ -2696,7 +2713,13 @@ export class GameModel {
     // Before the step, so a sensed cache collected this step still counts as reached.
     reachSensed(PENNY_FIND_RANGE, f.galaxy, f.objects, f.player, this.state.achievements);
     const previousFreshDistance = f.freshDistance;
-    const travel: { nearRoute?: (point: Vec) => boolean; opportunity?: number } = {};
+    const travel: {
+      nearRoute?: (point: Vec) => boolean;
+      attempt?: { cell: string; region: ExplorationSiteRegion; ordinal: number };
+    } = {};
+    const world = flightWorldContext(f);
+    const grid = periodicWorldGrid(world, this.content.tuning.chunkSize);
+    const cellOf = (point: Vec) => worldCellKey(grid, worldCellAt(grid, point));
     const pacingActive = f.topology && this.current.geography?.seed === f.seed;
     const events = stepFlight(
       this.content,
@@ -2706,40 +2729,43 @@ export class GameModel {
       pacingActive
         ? (distance, seconds, point) => {
             const nearRoute = (travel.nearRoute ??= this.explorationRoute(f));
-            if (!nearRoute(point)) {
-              return;
-            }
+            const region = nearRoute(point) ? "near" : "far";
             const next = advanceExplorationPacing(
               f.exploration?.pacing ?? EMPTY_EXPLORATION_PACING,
               {
                 freshDistance: distance,
                 piloting: true,
-                region: { kind: "nearRoute" },
+                region:
+                  region === "near"
+                    ? { kind: "nearRoute" }
+                    : { kind: "outer", targetSeconds: OUTER_OPPORTUNITY_SECONDS },
                 seconds,
               },
             );
-            (f.exploration ??= { renewals: {}, version: 1 }).pacing = next.state;
-            if (next.opportunity !== undefined) {
-              travel.opportunity = next.opportunity;
+            const exploration = (f.exploration ??= { renewals: {}, version: 1 });
+            exploration.pacing = next.state;
+            if (next.opportunity === undefined) {
+              return;
+            }
+            const cell = cellOf(point);
+            const pending = next.state.pending;
+            if (!pending) {
+              exploration.pacing = { ...next.state, pending: { cell, region } };
+            } else if (
+              pending.cell !== cell &&
+              pending.region === region &&
+              (f.freshChunk === cell || !visitedChunk(f.visited, cell))
+            ) {
+              travel.attempt = { cell, ordinal: next.opportunity, region };
             }
           }
         : undefined,
     );
-    const { nearRoute, opportunity } = travel;
-    if (opportunity !== undefined && nearRoute && nearRoute(f.player)) {
-      const admitted = this.current.explorationSites ?? {};
-      const site = placeExplorationSite(
-        this.content,
-        f,
-        opportunity,
-        admitted,
-        Object.values(this.current.requiredSites ?? {}),
-        nearRoute,
-      );
-      if (site) {
-        this.current.explorationSites = { ...admitted, [site.id]: false };
-        const pacing = f.exploration!.pacing!;
-        f.exploration!.pacing = commitExplorationOpportunity(pacing, opportunity);
+    const { attempt, nearRoute } = travel;
+    if (nearRoute && attempt && cellOf(f.player) === attempt.cell) {
+      const inRegion = (point: Vec) => nearRoute(point) === (attempt.region === "near");
+      if (inRegion(f.player)) {
+        this.admitExplorationSite(f, inRegion, attempt);
       }
     }
     this.carryStoryPickups(dt, f);
@@ -3414,10 +3440,23 @@ export class GameModel {
     const scan = this.nearestScan();
     if (scan) {
       const sites = this.current.explorationSites;
-      if (sites && Object.hasOwn(sites, scan.id)) {
-        this.current.explorationSites = { ...sites, [scan.id]: true };
+      const site = sites?.[scan.id];
+      if (sites && site !== undefined) {
+        let leadStation: string | undefined;
+        if (typeof site !== "boolean" && (site.kind === "rescue" || site.kind === "hunt")) {
+          const lead = this.explorationOffer(this.state.flight, scan, site.kind);
+          if (!lead) {
+            return;
+          }
+          postExplorationLead(this.state.flight.galaxy, this.state, lead);
+          leadStation = this.keeperStationName(this.state.flight.galaxy, lead.station);
+        }
+        this.current.explorationSites = {
+          ...sites,
+          [scan.id]: typeof site === "boolean" ? true : { ...site, scanned: true },
+        };
         this.talk.completeScanLesson();
-        this.emitScanOutcome(this.state.flight, scan.id, "scan", [], scan);
+        this.emitScanOutcome(this.state.flight, scan.id, "scan", [], scan, leadStation);
         return;
       }
       this.current.charted.push(scan.id);
@@ -3577,17 +3616,85 @@ export class GameModel {
   }
   /**
    * Where a towed craft is safe (quests.md "Rescue and tow"): any known station or outpost in
-   * the galaxy, the issuing station among them, the hub listed once as the outpost it also is.
+   * the galaxy, with the hub listed once as the outpost it also is.
    */
   private towPlaces(flight: FlightState): JobTarget[] {
     const outposts = this.outposts(flight);
-    const held = this.held;
-    const ids = [...this.current.stations, ...(held ? [held.station] : [])];
+    const ids = this.current.stations;
     const stations = [...new Set(ids)]
       .filter((id) => !outposts.some((outpost) => outpost.id === id))
       .flatMap((id) => this.stationSite(flight, id) ?? []);
     return [...outposts, ...stations.map(({ id, x, y }) => ({ id, x, y }))];
   }
+  private discoveredJobStations(flight: FlightState): StationSite[] {
+    const ids = new Set(this.current.stations);
+    if (flight.galaxy === 2 && this.current.known.includes(HUB_STATION)) {
+      ids.add(HUB_STATION);
+    }
+    return [...ids].flatMap((id) => {
+      const specialty = stationSpecialty(flight.galaxy, id);
+      const site = specialty === null || specialty === "jobs" ? this.stationSite(flight, id) : null;
+      return site ? [site] : [];
+    });
+  }
+
+  private explorationOffer(
+    flight: FlightState,
+    site: JobTarget,
+    kind: LeadJobType,
+    stations = this.discoveredJobStations(flight),
+  ): JobOffer | null {
+    const world = flightWorldContext(flight);
+    const issuer = [...stations].sort(
+      (a, b) =>
+        worldDistance(world, site, a) - worldDistance(world, site, b) || a.id.localeCompare(b.id),
+    )[0];
+    if (!issuer) {
+      return null;
+    }
+    const context = {
+      ...this.jobContext(flight),
+      hostiles: jobHostiles({ objects: stationPopulationObjects(flight) }),
+    };
+    return explorationLeadOffer(world, context, flight.seed, issuer, site, kind);
+  }
+
+  private admitExplorationSite(
+    flight: FlightState,
+    inRegion: (point: Vec) => boolean,
+    attempt: { cell: string; region: ExplorationSiteRegion; ordinal: number },
+  ): void {
+    const { cell, ordinal, region } = attempt;
+    const exploration = flight.exploration!;
+    const pacing = exploration.pacing!;
+    exploration.pacing = { ...pacing, pending: { cell, region } };
+    const admitted = this.current.explorationSites ?? {};
+    const stations = this.discoveredJobStations(flight);
+    const jobTemplates: readonly LeadJobType[] = !stations.length
+      ? []
+      : region === "far" || flight.galaxy === 6
+        ? ["rescue"]
+        : ["rescue", "hunt"];
+    const kinds = new Map<string, ExplorationSiteKind>();
+    const site = placeExplorationSite(this.content, flight, {
+      admitted,
+      canPostLead: (candidate) => {
+        const next = dropRandom(flight.seed, `exploration-lead-kind:${candidate.id}`);
+        const kind = jobTemplates[Math.floor(next() * jobTemplates.length)]!;
+        kinds.set(candidate.id, kind);
+        return this.explorationOffer(flight, candidate, kind, stations) !== null;
+      },
+      inRegion,
+      opportunityEligibility: { jobTemplates, region },
+      protectedSites: Object.values(this.current.requiredSites ?? {}),
+    });
+    if (site) {
+      const kind = site.opportunity.kind === "job" ? kinds.get(site.id)! : site.opportunity.kind;
+      this.current.explorationSites = { ...admitted, [site.id]: { kind, scanned: false } };
+      exploration.pacing = commitExplorationOpportunity(pacing, ordinal);
+    }
+  }
+
   private jobContext(flight: FlightState): BoardContext {
     return {
       galaxy: flight.galaxy,
@@ -4024,7 +4131,7 @@ export class GameModel {
     if (
       held.type === "rescue" &&
       !f.tow &&
-      distance(held.target, f.player) <= JOB_TUNING.tow.attach
+      worldDistance(flightWorldContext(f), held.target, f.player) <= JOB_TUNING.tow.attach
     ) {
       return "tow";
     }
@@ -4081,13 +4188,21 @@ export class GameModel {
     if (held.type === "survey" && this.current.charted.includes(held.target.id)) {
       this.reconcileScannedSurvey(f, "remembered");
     } else if (held.type === "rescue" && f.tow) {
+      const world = flightWorldContext(f);
+      f.tow = { ...worldPoint(world, f.player, f.tow) };
       pullTow(f.player, f.tow);
-      const place = nearestSafePlace(this.towPlaces(f), null, f.tow);
-      if (place && distance(place, f.tow) <= JOB_TUNING.tow.complete) {
+      if (world.worldSide !== undefined) {
+        f.tow = wrapPoint(world.worldSide, f.tow);
+      }
+      const place = nearestWorldSafePlace(world, this.towPlaces(f), f.tow);
+      if (place && worldDistance(world, place, f.tow) <= JOB_TUNING.tow.complete) {
         this.finishJob(f);
       }
     } else if (held.type === "hunt") {
-      if (!held.entered && distance(held.target, f.player) <= JOB_TUNING.hunt.radius) {
+      if (
+        !held.entered &&
+        worldDistance(flightWorldContext(f), held.target, f.player) <= JOB_TUNING.hunt.radius
+      ) {
         held.entered = true;
         this.jobMoments.push("searchEntered");
       }
@@ -4153,7 +4268,8 @@ export class GameModel {
     const held = this.held;
     const target = this.jobTarget(f);
     // A hunt's indicator hides while Ada is inside its search area.
-    return held?.type === "hunt" && distance(held.target, f.player) <= JOB_TUNING.hunt.radius
+    return held?.type === "hunt" &&
+      worldDistance(flightWorldContext(f), held.target, f.player) <= JOB_TUNING.hunt.radius
       ? null
       : target;
   }
@@ -4199,7 +4315,9 @@ export class GameModel {
       return mark({ id: station, x: place.x, y: place.y });
     }
     if (held.type === "rescue") {
-      const place = f.tow ? nearestSafePlace(this.towPlaces(f), null, f.tow) : held.target;
+      const place = f.tow
+        ? nearestWorldSafePlace(flightWorldContext(f), this.towPlaces(f), f.tow)
+        : held.target;
       return place ? mark(place) : null;
     }
     return mark(held.target);
@@ -4248,7 +4366,8 @@ export class GameModel {
           ? { item: held.item, x: (f.tow ?? held.target).x, y: (f.tow ?? held.target).y }
           : null,
       glint:
-        hunt?.spot && distance(hunt.spot, f.player) <= JOB_TUNING.hunt.glint
+        hunt?.spot &&
+        worldDistance(flightWorldContext(f), hunt.spot, f.player) <= JOB_TUNING.hunt.glint
           ? { ...hunt.spot }
           : null,
       landmarks: this.scannableSites(f).map((site) => ({

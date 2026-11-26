@@ -634,6 +634,14 @@ function jobOffer(galaxy: GalaxyNumber, value: unknown): boolean {
   ) {
     return false;
   }
+  if (
+    value.id.startsWith("lead:") &&
+    (!/^lead:poi:[1-6]:-?\d+,-?\d+:0$/.test(value.id) ||
+      !value.id.startsWith(`lead:poi:${galaxy}:`) ||
+      (value.type !== "rescue" && (value.type !== "hunt" || galaxy === 6)))
+  ) {
+    return false;
+  }
   const target = value.target.id;
   if (value.type === "survey") {
     return isLandmark(galaxy, target);

@@ -1,11 +1,14 @@
-/** The midpoint of the approved 60 to 90 seconds of piloted fresh travel. */
 export const ROUTE_OPPORTUNITY_SECONDS = 75;
+export const OUTER_OPPORTUNITY_SECONDS = 150;
+export type ExplorationSiteRegion = "near" | "far";
 
 export interface ExplorationPacing {
   /** Fresh travel in route-equivalent seconds, capped at one pending opportunity. */
   readonly freshSeconds: number;
   /** Local to this saved pacing record. The placement owner supplies the actual POI identity. */
   readonly nextOpportunity: number;
+  /** Earned region and the cell where the opportunity was earned or last searched. */
+  readonly pending?: { readonly region: ExplorationSiteRegion; readonly cell: string };
 }
 
 export const EMPTY_EXPLORATION_PACING: ExplorationPacing = Object.freeze({

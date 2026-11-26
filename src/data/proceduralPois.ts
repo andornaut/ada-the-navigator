@@ -13,6 +13,10 @@ export const PROCEDURAL_POIS = {
     { kind: "salvage", weight: 0.35 },
     { kind: "job", weight: 0.15 },
   ],
+  outerOpportunities: [
+    { kind: "salvage", weight: 0.7 },
+    { kind: "job", weight: 0.3 },
+  ],
   placeClearance: LANDMARK_TUNING.placeClearance,
   spacing: LANDMARK_TUNING.spacing,
 } as const;

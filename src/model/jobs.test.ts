@@ -27,8 +27,11 @@ import {
   type BoardContext,
   completeJob,
   dropJob,
+  explorationLeadOffer,
   type JobBook,
+  postExplorationLead,
   pullTow,
+  rerollBoards,
   stationBoard,
 } from "./jobs.ts";
 import { chartLandmarks, landmarkSites } from "./landmarks.ts";
@@ -416,6 +419,39 @@ describe("job boards", () => {
     expect(acceptJob(1, station.id, second!.id, book)).toBe("accepted");
   });
 
+  it("keeps one untaken lead beyond the ordinary board and restores a dropped lead", () => {
+    const station = firstStation();
+    const book = emptyBook();
+    const contextAt = context();
+    const board = stationBoard(contextAt, book, station);
+    const craft = { id: "poi:1:0,0:0", x: station.x + 1800, y: station.y };
+    const first = explorationLeadOffer({}, contextAt, 173, station, craft, "rescue")!;
+    const second = explorationLeadOffer(
+      {},
+      contextAt,
+      173,
+      station,
+      { ...craft, id: "poi:1:1,0:0" },
+      "rescue",
+    )!;
+    expect(first.target).toEqual({ id: "", x: craft.x, y: craft.y });
+    expect(
+      explorationLeadOffer({}, { ...contextAt, hostiles: [craft] }, 173, station, craft, "rescue"),
+    ).toBeNull();
+    postExplorationLead(1, book, first);
+    postExplorationLead(1, book, second);
+    expect(stationBoard(contextAt, book, station)).toEqual([...board, second]);
+    expect(acceptJob(1, station.id, second.id, book)).toBe("accepted");
+    postExplorationLead(1, book, first);
+    rerollBoards(1, book);
+    expect(book.jobs.boards[1]![station.id]).toEqual([second, first]);
+    expect(dropJob(1, book)).toBe(true);
+    expect(book.jobs.boards[1]![station.id]).toEqual([second]);
+    expect(acceptJob(1, station.id, second.id, book)).toBe("accepted");
+    expect(completeJob(contextAt, station, book)).toBe(questReward(second.reward));
+    expect(book.jobs.boards[1]![station.id]).toEqual([]);
+  });
+
   it("refill a completed job's slot from the pool and pay its reward", () => {
     const station = firstStation();
     const book = emptyBook();
@@ -707,7 +743,7 @@ describe("jobs in play", () => {
     });
   });
 
-  it("complete a rescue once the craft is within 400 of the issuing station", () => {
+  it("complete a rescue once the craft is within 400 of the known issuing station", () => {
     const { model, station } = docked();
     const held = take(model, "rescue");
     const flight = model.state.flight!;
@@ -718,6 +754,9 @@ describe("jobs in play", () => {
     flyTo(model, { x: station.x + 480, y: station.y });
     expect(model.state.tasks[1]).toBeDefined();
     flight.tow = { x: station.x + 390, y: station.y };
+    flyTo(model, { x: station.x + 460, y: station.y });
+    expect(model.state.tasks[1]).toBeDefined();
+    model.state.progress[1].stations.push(station.id);
     flyTo(model, { x: station.x + 460, y: station.y });
     expect(model.state.tasks[1]).toBeUndefined();
     expect(flight.tow).toBeUndefined();

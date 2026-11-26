@@ -27,6 +27,7 @@ export interface ProceduralPoiContext {
   readonly opportunityEligibility?: ProceduralPoiOpportunityEligibility;
 }
 export interface ProceduralPoiOpportunityEligibility {
+  readonly region?: "near" | "far";
   readonly resources?: boolean;
   readonly salvage?: boolean;
   /** Existing templates with an eligible offer, supplied by the canonical job owner. */
@@ -56,8 +57,8 @@ function opportunity(
 ): ProceduralPoiOpportunity | undefined {
   const eligibility = context.opportunityEligibility;
   const templates = JOB_TYPES.filter((type) => eligibility?.jobTemplates?.includes(type));
-  const eligible = T.opportunities.filter((entry) =>
-    entry.kind === "job" ? templates.length > 0 : eligibility?.[entry.kind] !== false,
+  const eligible = (eligibility?.region === "far" ? T.outerOpportunities : T.opportunities).filter(
+    (entry) => (entry.kind === "job" ? templates.length > 0 : eligibility?.[entry.kind] !== false),
   );
   const total = eligible.reduce((sum, entry) => sum + entry.weight, 0);
   if (!total) {
