@@ -60,7 +60,7 @@ The title ship is the in-game ship art, not a separate drawing.
   behind the tail.
 - Held still: no bob, flicker or jet change (`ship.animated` is false).
 - Ink extents at the [layout](layout.md#start-screen) position: hull 281 to
-  484 by 42 to 141 in play-view px, jets reaching 211.2 (y 60.3 to 138.8).
+  484 by 40.5 to 141 in play-view px, jets reaching 211.2 (y 60.3 to 138.8).
 
 ## Field
 

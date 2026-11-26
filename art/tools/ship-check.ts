@@ -92,8 +92,8 @@ test("exported paints match the schemes: authored Classic tones and derived step
       "#ebf1f7",
       "#b4c4d6",
       "#8497ae",
-      "#7890ad",
-      "#4d6584",
+      "#6d829d",
+      "#445a76",
       "#2456b8",
       "#2251af",
       "#1a418f",
@@ -228,7 +228,7 @@ test("the tail rises from the ridge 2 units behind the canopy's rear edge", () =
   assert.equal(shoulder[1], centre + along + 2);
   // On the ridge line from the nose through (0, 6, 9.5), so the wing tops keep their plane.
   assert(Math.abs((shoulder[2] - nose[2]) / (shoulder[1] - nose[1]) - 8.3 / 38) < 1e-12);
-  assert.deepEqual(apex, [0, 17, 15]);
+  assert.deepEqual(apex, [0, 17, 16.5]);
 });
 
 // Canopy samples, at 8 per frame px on each axis, whose topmost drawn fragment is a tail face.

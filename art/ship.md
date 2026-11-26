@@ -150,8 +150,8 @@ A model or paint change regenerates all of these, in this order:
 | Notches   | (±5.44, 15.68, 1.2)  | Inner ends of the trailing edges          |
 | Tail      | (0, 24.32, 1.2)      | Tail tip                                  |
 | Shoulder  | (0, 9, 10.16)        | Ridge kink behind the canopy              |
-| Apex      | (0, 17, 15)          | Rear-centre top                           |
-| Corners   | (±4.25, 13.16, 9.52) | Where wall, steep face and tail side meet |
+| Apex      | (0, 17, 16.5)        | Rear-centre top                           |
+| Corners   | (±4.46, 13.17, 9.71) | Where wall, steep face and tail side meet |
 
 - The ridge runs from the nose through (0, 6, 9.5); the shoulder is the point
   on it 2 units behind the canopy's rear edge, local Y 9, so the wing tops keep
@@ -164,7 +164,7 @@ A model or paint change regenerates all of these, in this order:
   faces instead: per side a wall from the trailing edge (wing tip to notch) at
   the 76 degree lean, up to its corner, and a tail side from the notch up to the
   corner and the apex and down to the tail tip. The two tail sides meet on one
-  straight ridge from the apex to the tail tip, 62.1 degrees from horizontal, so
+  straight ridge from the apex to the tail tip, 64.4 degrees from horizontal, so
   the tail is a sharp wedge from behind. Each corner is the common point of its
   wall, steep face and tail side planes, so every face is planar.
 - The tail apex and shoulder are on local X 0. Each left corner is the exact
@@ -231,26 +231,26 @@ between.
 
 | Paint   | Hull lit  | Hull turned | Left wall | Right wall | Tail left | Tail right | Skirt     | Mouth     |
 | ------- | --------- | ----------- | --------- | ---------- | --------- | ---------- | --------- | --------- |
-| Classic | `#ffffff` | `#ebf1f7`   | `#b4c4d6` | `#8497ae`  | `#7890ad` | `#4d6584`  | `#abbfce` | `#86deff` |
-| Cobalt  | `#6f9ff0` | `#6997e4`   | `#557bbb` | `#426195`  | `#37527f` | `#243858`  | `#5074b1` | `#e4f6ff` |
-| Seafoam | `#d4f6ea` | `#c9eade`   | `#a5c0b6` | `#839891`  | `#6f827c` | `#4d5b56`  | `#9cb5ac` | `#80e5db` |
-| Crimson | `#d96b73` | `#ce656d`   | `#a95258` | `#863f45`  | `#72353a` | `#4f2326`  | `#a04d53` | `#dac3ff` |
-| Iris    | `#d9ccff` | `#cec2f2`   | `#a99fc7` | `#867d9e`  | `#726b87` | `#4f4a5e`  | `#a096bc` | `#b0d3ff` |
-| Amber   | `#f4b665` | `#e8ad60`   | `#be8d4d` | `#976f3c`  | `#815f32` | `#5a4120`  | `#b48548` | `#82e0fa` |
+| Classic | `#ffffff` | `#ebf1f7`   | `#b4c4d6` | `#8497ae`  | `#6d829d` | `#445a76`  | `#abbfce` | `#86deff` |
+| Cobalt  | `#6f9ff0` | `#6997e4`   | `#557bbb` | `#426195`  | `#314a73` | `#20314f`  | `#5074b1` | `#e4f6ff` |
+| Seafoam | `#d4f6ea` | `#c9eade`   | `#a5c0b6` | `#839891`  | `#657670` | `#44514c`  | `#9cb5ac` | `#80e5db` |
+| Crimson | `#d96b73` | `#ce656d`   | `#a95258` | `#863f45`  | `#672f33` | `#461e21`  | `#a04d53` | `#dac3ff` |
+| Iris    | `#d9ccff` | `#cec2f2`   | `#a99fc7` | `#867d9e`  | `#67617a` | `#464254`  | `#a096bc` | `#b0d3ff` |
+| Amber   | `#f4b665` | `#e8ad60`   | `#be8d4d` | `#976f3c`  | `#75552c` | `#503a1c`  | `#b48548` | `#82e0fa` |
 
 | Paint   | Accent lit | Accent turned | Accent left | Accent right | Canopy highlight | Canopy roof | Canopy shade | Glazing reference |
 | ------- | ---------- | ------------- | ----------- | ------------ | ---------------- | ----------- | ------------ | ----------------- |
-| Classic | `#2456b8`  | `#2251af`     | `#1a418f`   | `#123271`    | `#87bce5`        | `#2585d0`   | `#1f78c3`    | `#1767b3`         |
-| Cobalt  | `#16245c`  | `#142257`     | `#0e1a46`   | `#091236`    | `#f6faff`        | `#eef5ff`   | `#d4e1f4`    | `#b4c8e6`         |
-| Seafoam | `#f07a5a`  | `#e47455`     | `#bb5e44`   | `#954935`    | `#7eadb6`        | `#14697a`   | `#115c6b`    | `#0d4c59`         |
-| Crimson | `#f6efe6`  | `#eae3da`     | `#c0bab3`   | `#98948e`    | `#928a8e`        | `#382a32`   | `#2f242c`    | `#251d24`         |
-| Iris    | `#e0489f`  | `#d54497`     | `#ae367b`   | `#8a2961`    | `#938ac0`        | `#3a2b8c`   | `#31247b`    | `#271c66`         |
-| Amber   | `#12233a`  | `#102137`     | `#0b192b`   | `#071120`    | `#87a3b6`        | `#24577b`   | `#1e4a6b`    | `#173a57`         |
+| Classic | `#2456b8`  | `#2251af`     | `#1a418f`   | `#123271`    | `#6d829d`        | `#445a76`   | `#1f78c3`    | `#1767b3`         |
+| Cobalt  | `#16245c`  | `#142257`     | `#0e1a46`   | `#091236`    | `#314a73`        | `#20314f`   | `#d4e1f4`    | `#b4c8e6`         |
+| Seafoam | `#f07a5a`  | `#e47455`     | `#bb5e44`   | `#954935`    | `#657670`        | `#44514c`   | `#115c6b`    | `#0d4c59`         |
+| Crimson | `#f6efe6`  | `#eae3da`     | `#c0bab3`   | `#98948e`    | `#672f33`        | `#461e21`   | `#2f242c`    | `#251d24`         |
+| Iris    | `#e0489f`  | `#d54497`     | `#ae367b`   | `#8a2961`    | `#67617a`        | `#464254`   | `#31247b`    | `#271c66`         |
+| Amber   | `#12233a`  | `#102137`     | `#0b192b`   | `#071120`    | `#75552c`        | `#503a1c`   | `#1e4a6b`    | `#173a57`         |
 
 - Classic's hull and tail tones are authored. Every other tone is its top
   colour scaled in linear light by the linear luminance of a neutral grey at
   an sRGB step: turned top 0.95, left wall 0.78, right wall 0.62, tail left
-  0.53, tail right 0.37. Accent tones take the turned and wall steps from the
+  0.48, tail right 0.33. Accent tones take the turned and wall steps from the
   accent. The skirt keeps its linear-luminance reference `#abbfce`.
 - The canopy highlight is the roof mixed 45 percent toward white; the shade is
   45 percent of the way from the roof to the glazing reference.

@@ -402,7 +402,7 @@ follow the shield icon's current HUD-relative centre.
   hides and the HUD takes no input under the dim. The conversation box is not modal: the
   pause button, weapons and sticks stay visible and live beside it.
 - The conversation box's bottom (125.5) sits at least 24 above the ship's drawn
-  top at the 360-high view (42.67).
+  top at the 360-high view (42.02).
 
 ### Status pill
 
@@ -1235,7 +1235,7 @@ at 844x390 the logical view is 779.08x360 and `x0` is 29.
 | Available rect   | 16 to 704, 16 to 344         | 43 to 677, 16 to 341          | 16 to 763.08, 16 to 344       | 43 to 736.08, 16 to 341       |
 | Field            | -120 to 840, -120 to 540     | -120 to 840, -120 to 540      | -91 to 869, -120 to 540       | -91 to 869, -120 to 540       |
 | Ship frame       | 238 to 518, -56 to 224       | 238 to 518, -56 to 224        | 267 to 547, -56 to 224        | 267 to 547, -56 to 224        |
-| Ship ink         | 211.2 to 484, 42 to 141      | 211.2 to 484, 42 to 141       | 240.2 to 513, 42 to 141       | 240.2 to 513, 42 to 141       |
+| Ship ink         | 211.2 to 484, 40.5 to 141    | 211.2 to 484, 40.5 to 141     | 240.2 to 513, 40.5 to 141     | 240.2 to 513, 40.5 to 141     |
 | Wordmark         | 225 to 495, 148 to 250       | 225 to 495, 148 to 250        | 254 to 524, 148 to 250        | 254 to 524, 148 to 250        |
 | Note line box    | Centre 360, 320 to 340       | Centre 360, 320 to 340        | Centre 389, 320 to 340        | Centre 389, 320 to 340        |
 | Menu             | 2.25 to 54.75, 2.25 to 54.75 | 33.25 to 85.75, 2.25 to 54.75 | 31.25 to 83.75, 2.25 to 54.75 | 33.25 to 85.75, 2.25 to 54.75 |
@@ -1518,11 +1518,11 @@ and the name tab overhangs it by 10.
   alike: no portrait, and the text fills the inner width.
 - Clearance at the 360-high view: the box spans 65.5 to 125.5. The ship's
   pivot sits at the play view's centre (180) with a 42 display frame; its highest
-  drawn hull point across the 32 headings is 168.17 (heading 4, the apex),
-  42.67 below the box. The rule is at least 24.
+  drawn hull point across the 64 headings is 167.52 (heading 8, the apex),
+  42.02 below the box. The rule is at least 24.
 - At the 1280x720 view (720x405 logical) the HUD rect and the ship's pivot
   move down 22 with the game area: the box spans 87.5 to 147.5 and the hull top
-  is 190.17, 42.67 below, as at the 360-high view.
+  is 189.52, 42.02 below, as at the 360-high view.
 
 #### Tab clearance
 

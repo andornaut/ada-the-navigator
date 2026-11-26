@@ -114,8 +114,8 @@ export const TONE_STEPS = {
   turned: 0.95,
   wallLeft: 0.78,
   wallRight: 0.62,
-  tailLeft: 0.53,
-  tailRight: 0.37,
+  tailLeft: 0.48,
+  tailRight: 0.33,
 } as const;
 const step = (top: string, level: number) => scaled(top, linear(level));
 // The skirt keeps its fixed linear-luminance reference under every top.
@@ -163,8 +163,8 @@ const CLASSIC: Scheme = {
     topTurned: "#ebf1f7",
     wallLeft: "#b4c4d6",
     wallRight: "#8497ae",
-    tailLeft: "#7890ad",
-    tailRight: "#4d6584",
+    tailLeft: "#6d829d",
+    tailRight: "#445a76",
     skirt: SKIRT_REFERENCE,
     ...accentTones("#2456b8"),
     ...glazing("#2585d0", "#1767b3"),
@@ -264,7 +264,7 @@ const HULL = {
   // from there the ridge climbs steeply to the rear-centre apex. Local (x, y, z).
   ridge: [0, 6, 9.5],
   gap: 2,
-  apex: [0, 17, 15],
+  apex: [0, 17, 16.5],
   // Rear faces lean forward from the skirt top, degrees from horizontal.
   lean: 76,
 } as const;
