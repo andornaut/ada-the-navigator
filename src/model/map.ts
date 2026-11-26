@@ -259,6 +259,7 @@ export interface MapContext extends StationPlacementContext {
     readonly id: string;
     readonly label: string;
     readonly objective?: boolean;
+    readonly symbol?: MapSymbol;
   };
   /**
    * The held job's target, with the job's title: it marks the place there, or shows as its own
@@ -392,7 +393,7 @@ export function localMap(context: MapContext): LocalMap {
       kind: "destination",
       label,
       objective: context.chapterWaypoint.objective ?? true,
-      symbol: "holodisk",
+      symbol: context.chapterWaypoint.symbol ?? "holodisk",
       travel: false,
       x,
       y,

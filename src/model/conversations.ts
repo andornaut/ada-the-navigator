@@ -236,9 +236,14 @@ export function heavyInSight(
   archetype: "capital" | "frigate",
   view: { readonly height: number; readonly width: number },
   flight: Pick<FlightState, "objects" | "player">,
+  authoredId?: string,
 ): boolean {
   const heavies = flight.objects.filter(
-    (object) => object.kind === "enemy" && object.hp > 0 && object.enemy?.archetype === archetype,
+    (object) =>
+      object.id !== authoredId &&
+      object.kind === "enemy" &&
+      object.hp > 0 &&
+      object.enemy?.archetype === archetype,
   );
   const ids = new Set(heavies.map((object) => object.id));
   return (
@@ -547,6 +552,11 @@ export class ConversationDirector {
     this.eventCue([line], id);
   }
 
+  /** A stable authored event retries until exposed, then uses the existing saved seen list. */
+  authoredCue(id: string, line: ConversationLine): void {
+    this.eventCue([line], id, false, "never");
+  }
+
   /**
    * One receipt per actual immutable outcome; distinct same-worded events remain distinct. The
    * receipt ranks as a notice and is scheduled at once, so it shows on the step its outcome is
@@ -570,7 +580,12 @@ export class ConversationDirector {
     }
   }
 
-  private eventCue(lines: readonly ConversationLine[], id: string, notice = false): void {
+  private eventCue(
+    lines: readonly ConversationLine[],
+    id: string,
+    notice = false,
+    repeat: "always" | "never" = "always",
+  ): void {
     const galaxy = this.galaxy;
     if (galaxy === null) {
       return;
@@ -580,7 +595,7 @@ export class ConversationDirector {
         id,
         lines,
         priority: "warning",
-        repeat: "always",
+        repeat,
         trigger: { galaxy, id, kind: "chapter" },
       },
       holds: always,

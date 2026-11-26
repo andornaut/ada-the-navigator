@@ -5,6 +5,11 @@ import { ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
 import { ACTIVITIES, MINING_CONTRACT_DEPOSITS, SUPPLY_ITEMS } from "../data/activities.ts";
 import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import {
+  type CapitalBossHud,
+  SUNFLOWER_BOSS_CUES,
+  SUNFLOWER_CAPITAL_BOSS,
+} from "../data/capitalBosses.ts";
+import {
   ARCHIE_NAMED,
   CONVERSATION_TUNING,
   CONVERSATIONS,
@@ -69,6 +74,7 @@ import {
 } from "./activities.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { calfHome, calfRouteMidpoint, calfStart, placedCalf, stepCalf } from "./calf.ts";
+import { capitalBossActor, encounterBossHud } from "./capitalBossEncounter.ts";
 import type { ChapterResult } from "./chapterProtocol.ts";
 import { chapterRuntime } from "./chapters.ts";
 import { applyEconomyCheat, type CheatId, economyCheatAvailable } from "./cheats.ts";
@@ -118,6 +124,7 @@ import {
   dockFlight,
   dronesNear,
   ensureDestination,
+  ensureDestinationAt,
   ensureHuntingPacks,
   ensureRouteEncounter,
   ensureStation,
@@ -125,6 +132,7 @@ import {
   placeDestinationAhead,
   placeExplorationSite,
   placeHuntingPack,
+  placeSunflowerCapitalBoss,
   planRequiredCartwheelRoute,
   planRequiredWhirlpoolRoutes,
   populateFlight,
@@ -136,6 +144,7 @@ import {
   salvageTarget,
   settleRouteEncounters,
   stepFlight,
+  sunflowerBossCache,
   syncFlightRegion,
   teleport as teleportFlight,
   undockFlight,
@@ -146,7 +155,7 @@ import {
   flightWorldContext,
 } from "./flightTopology.ts";
 import { initializeGalaxyGeography } from "./galaxyGeography.ts";
-import { liveEnemy } from "./geography.ts";
+import { liveEnemy, worldSyncFlightRegion } from "./geography.ts";
 import { hostileStationMapPlaces } from "./hostileStationMap.ts";
 import { acknowledgeHostileStationIdentification } from "./hostileStationPersistence.ts";
 import { materializeGeneratedHostileStations } from "./hostileStationRuntime.ts";
@@ -510,6 +519,7 @@ export class GameModel {
   state: GameState;
   /** The last flight step's events, for view effects; empty when no step ran. */
   flightEvents: FlightEvent[] = [];
+  private readonly bossPlacementCells = new WeakMap<FlightState, string>();
   private readonly content: GameContent;
   private readonly entropy: Entropy;
   private readonly talk: ConversationDirector;
@@ -1426,6 +1436,95 @@ export class GameModel {
       : undefined;
   }
 
+  bossHud(): CapitalBossHud | null {
+    const flight = this.state.flight;
+    if (
+      this.screen !== "space" ||
+      this.state.docked ||
+      flight?.galaxy !== 1 ||
+      this.current.capitalBoss?.phase !== "active"
+    ) {
+      return null;
+    }
+    return encounterBossHud(
+      SUNFLOWER_CAPITAL_BOSS,
+      flight,
+      (object) =>
+        this.contextAction === "salvage" && salvageTarget(this.content, flight) === object,
+    );
+  }
+
+  private prepareSunflowerBoss(flight: FlightState): void {
+    if (flight.galaxy !== 1 || !this.current.questComplete || this.current.stage !== 4) {
+      return;
+    }
+    const saved = this.current.capitalBoss;
+    if (saved?.phase === "away") {
+      flight.objects.push(saved.actor);
+      worldSyncFlightRegion(flightWorldContext(flight), this.content, flight);
+      this.current.capitalBoss = { phase: "active", site: saved.site };
+      return;
+    }
+    if (saved) {
+      if (
+        saved.phase === "resolved" &&
+        !saved.cacheClaimed &&
+        capitalBossActor(flight, SUNFLOWER_CAPITAL_BOSS.cacheId) === undefined
+      ) {
+        flight.objects.push(sunflowerBossCache(this.content, saved.site));
+        worldSyncFlightRegion(flightWorldContext(flight), this.content, flight);
+      }
+      return;
+    }
+    const grid = periodicWorldGrid(flightWorldContext(flight), this.content.tuning.chunkSize);
+    const cell = worldCellKey(grid, worldCellAt(grid, flight.player));
+    if (this.bossPlacementCells.get(flight) === cell) {
+      return;
+    }
+    this.bossPlacementCells.set(flight, cell);
+    const [growers, workshop, salvagers] = ["growers", "workshop", "salvagers"].map(
+      (id) =>
+        flight.objects.find((object) => object.kind === "destination" && object.id === id) ??
+        this.current.requiredSites?.[id],
+    );
+    if (growers && workshop && salvagers) {
+      const site = placeSunflowerCapitalBoss(this.content, flight, [growers, workshop, salvagers]);
+      if (site) {
+        this.current.capitalBoss = { phase: "active", site };
+      }
+    }
+  }
+
+  private resolveSunflowerBoss(flight: FlightState, outcome: "defeated" | "salvaged"): void {
+    const boss = this.current.capitalBoss;
+    if (flight.galaxy === 1 && boss?.phase === "active") {
+      this.current.capitalBoss = {
+        cacheClaimed: false,
+        outcome,
+        phase: "resolved",
+        site: boss.site,
+      };
+      this.prepareSunflowerBoss(flight);
+      this.sunflowerBossCues(flight);
+    }
+  }
+
+  private sunflowerBossCues(flight: FlightState): void {
+    const { id } = SUNFLOWER_CAPITAL_BOSS;
+    const boss = this.current.capitalBoss;
+    if (flight.galaxy !== 1 || !boss) {
+      return;
+    }
+    if (boss.phase === "resolved") {
+      this.talk.authoredCue(`${id}:resolved`, SUNFLOWER_BOSS_CUES.resolved);
+    } else if (boss.phase === "active" && this.bossHud()) {
+      this.talk.authoredCue(`${id}:approach`, SUNFLOWER_BOSS_CUES.approach);
+      if (capitalBossActor(flight, id)?.enemy?.hardpoints.some(({ hp }) => hp <= 0)) {
+        this.talk.authoredCue(`${id}:hardpoint`, SUNFLOWER_BOSS_CUES.hardpoint);
+      }
+    }
+  }
+
   /** What Use does here, or undefined with nothing in reach. */
   get contextAction(): UseAction | undefined {
     if (
@@ -2306,6 +2405,18 @@ export class GameModel {
       if (populateRequiredFlight(this.content, this.current, sites, flight).status === "blocked") {
         return;
       }
+    } else if (flight.galaxy === 1) {
+      populateRequiredChapterFlight(this.content, this.current, flight, () => {
+        for (const id of this.current.known) {
+          const site = this.current.requiredSites?.[id];
+          if (site) {
+            ensureDestinationAt(this.content, id, site, flight);
+          } else {
+            ensureDestination(this.content, id, flight);
+          }
+        }
+        this.prepareSunflowerBoss(flight);
+      });
     } else if (flight.galaxy === 2) {
       populateRequiredChapterFlight(this.content, this.current, flight, () => {
         planRequiredCartwheelRoute(this.content, this.current, flight);
@@ -2355,6 +2466,7 @@ export class GameModel {
     for (const id of this.current.known) {
       ensureDestination(this.content, id, this.state.flight);
     }
+    this.prepareSunflowerBoss(flight);
     this.explore(this.state.flight);
     this.ensureWhaleDebris();
     this.beginConversations();
@@ -2463,6 +2575,13 @@ export class GameModel {
     this.closeGalaxyMapInFlight();
     const flight = this.state.flight;
     if (flight) {
+      const boss = this.current.capitalBoss;
+      if (flight.galaxy === 1 && boss?.phase === "active") {
+        const actor = capitalBossActor(flight, SUNFLOWER_CAPITAL_BOSS.id);
+        if (actor) {
+          this.current.capitalBoss = { actor, phase: "away", site: boss.site };
+        }
+      }
       if (cargo === "keep" && flight.cargo > 0) {
         this.state.economy.cargo = flight.cargo;
       } else {
@@ -2712,6 +2831,7 @@ export class GameModel {
     }
     const previousChapterPosition = runtime?.afterStep ? { ...f.player } : undefined;
     this.ensureRequiredApproaches();
+    this.prepareSunflowerBoss(f);
     // Before the step, so a sensed cache collected this step still counts as reached.
     reachSensed(PENNY_FIND_RANGE, f.galaxy, f.objects, f.player, this.state.achievements);
     const previousFreshDistance = f.freshDistance;
@@ -2779,6 +2899,25 @@ export class GameModel {
     const poiConfirmations: PoiConfirmation[] = mapped.map((id) => ({
       cue: { id, kind: "storyPlace" },
     }));
+    // Apply durable outcomes from the entire physics step before a depletion can end the flight.
+    if (f.galaxy === 1 && this.current.capitalBoss) {
+      if (
+        events.some(
+          (event) => event.type === "enemyDestroyed" && event.id === SUNFLOWER_CAPITAL_BOSS.id,
+        )
+      ) {
+        this.resolveSunflowerBoss(f, "defeated");
+      }
+      const boss = this.current.capitalBoss;
+      if (
+        boss.phase === "resolved" &&
+        events.some(
+          (event) => event.type === "collected" && event.id === SUNFLOWER_CAPITAL_BOSS.cacheId,
+        )
+      ) {
+        boss.cacheClaimed = true;
+      }
+    }
     for (const event of events) {
       if (event.type === "guardCue") {
         const store = this.markerStore(f);
@@ -2928,9 +3067,10 @@ export class GameModel {
       flightWorldContext(f).worldSide,
     );
     const approach = this.poiApproach(f, unknownPoi, landmarks);
+    this.sunflowerBossCues(f);
     this.talk.step(dt, held, {
       aimed: Math.hypot(input.aim.x, input.aim.y) > 0,
-      capitalInSight: heavyInSight("capital", SCREEN, f),
+      capitalInSight: heavyInSight("capital", SCREEN, f, SUNFLOWER_CAPITAL_BOSS.id),
       collectedStardust: events.some((event) => event.type === "stardust"),
       docked: this.dockedThisFlight,
       dronesNear: dronesNear(f),
@@ -2941,7 +3081,9 @@ export class GameModel {
           ? [{ destination: event.id, pick: dropRandom(f.seed, `guard-line:${event.id}`)() }]
           : [],
       ),
-      heavyDisabled: events.some((event) => event.type === "enemyDisabled"),
+      heavyDisabled: events.some(
+        (event) => event.type === "enemyDisabled" && event.id !== SUNFLOWER_CAPITAL_BOSS.id,
+      ),
       holodisks: holodisksHeld(this.state.progress),
       inCurrent: inCurrent(f.galaxy, 0, f.player),
       inDanger: this.inDanger,
@@ -3142,6 +3284,27 @@ export class GameModel {
     const labels = new Map(this.destinations().map(({ id, label }) => [id, label]));
     const context = this.chapterContext();
     const waypoint = context && f.galaxy === 6 ? phantomWaypoint(context) : null;
+    const boss = f.galaxy === 1 ? this.current.capitalBoss : undefined;
+    const sunflowerWaypoint =
+      boss?.phase === "resolved"
+        ? {
+            ...boss.site,
+            id: SUNFLOWER_CAPITAL_BOSS.routeId,
+            label: boss.cacheClaimed
+              ? SUNFLOWER_CAPITAL_BOSS.chartLabel.route
+              : SUNFLOWER_CAPITAL_BOSS.chartLabel.cache,
+            objective: false,
+            symbol: "destination" as const,
+          }
+        : boss?.phase === "active"
+          ? {
+              ...(capitalBossActor(f, SUNFLOWER_CAPITAL_BOSS.id)?.enemy?.home ?? boss.site),
+              id: SUNFLOWER_CAPITAL_BOSS.id,
+              label: SUNFLOWER_CAPITAL_BOSS.ship,
+              objective: false,
+              symbol: "destination" as const,
+            }
+          : undefined;
     const map = localMap({
       ...flightStationContext(f),
       ...(waypoint
@@ -3153,7 +3316,9 @@ export class GameModel {
               objective: !this.current.questComplete,
             },
           }
-        : {}),
+        : sunflowerWaypoint
+          ? { chapterWaypoint: sunflowerWaypoint }
+          : {}),
       catalog: ECONOMY,
       chartedPois: this.explorationSites(f)
         .filter(({ id }) => this.scannedSite(id))
@@ -3435,8 +3600,13 @@ export class GameModel {
       }
     }
     const flight = this.state.flight;
-    if (flight && this.salvageable() && salvage(this.content, flight)) {
-      this.panel("salvage", INTERACTION_COPY.salvage!.lines[0]!.text, "Astra");
+    const target = flight && salvageTarget(this.content, flight);
+    if (flight && target && salvage(this.content, flight)) {
+      if (flight.galaxy === 1 && target.id === SUNFLOWER_CAPITAL_BOSS.id) {
+        this.resolveSunflowerBoss(flight, "salvaged");
+      } else {
+        this.panel("salvage", INTERACTION_COPY.salvage!.lines[0]!.text, "Astra");
+      }
       return;
     }
     const scan = this.nearestScan();

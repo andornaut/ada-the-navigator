@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { SUNFLOWER_BOSS_CUES, SUNFLOWER_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
@@ -11,6 +12,8 @@ import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, readStory, relaunch } from "../testing/launch.ts";
 import { nearestSettlerStation } from "./andromedaPlaces.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
+import { capitalBossActor } from "./capitalBossEncounter.ts";
+import { enemyStardust } from "./drops.ts";
 import { createEnemy, damageEnemy } from "./enemyAi.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import {
@@ -26,7 +29,7 @@ import {
 } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
-import { worldRecordObjectRemoval } from "./geography.ts";
+import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import { needleCourses } from "./needle.ts";
 import { rememberRequiredSite } from "./requiredEncounterPlans.ts";
@@ -305,6 +308,220 @@ function introduce(model: GameModel, id: string) {
   expect(model.state.dialogue).not.toBeNull();
   model.choose("continue");
 }
+
+describe("Captain Tally in Sunflower", () => {
+  const { cacheId, id, routeId } = SUNFLOWER_CAPITAL_BOSS;
+  const flightOf = (model: GameModel) => model.state.flight!;
+  const actorOf = (model: GameModel) => capitalBossActor(flightOf(model), id)!;
+  const stardustDropped = (flight: FlightState) =>
+    flight.objects
+      .filter(({ role }) => role === "stardust")
+      .reduce((total, object) => total + (object.amount ?? 0), 0);
+
+  function flyTo(model: GameModel, x: number, y: number): void {
+    const flight = flightOf(model);
+    flight.player = { x, y };
+    flight.velocity = { x: 0, y: 0 };
+    worldSyncFlightRegion(flightWorldContext(flight), CONTENT, flight);
+  }
+
+  function traded(): GameModel {
+    const model = new GameModel(CONTENT, undefined, () => 173);
+    launch(model);
+    introduce(model, "growers");
+    talk(model, "workshop");
+    talk(model, "salvagers");
+    expect(model.state.progress[1].capitalBoss).toBeUndefined();
+    talk(model, "workshop");
+    model.step(0.01, idle);
+    expect(model.state.progress[1].capitalBoss?.phase).toBe("active");
+    expect(model.map?.places.find((place) => place.id === id)).toMatchObject({
+      label: "Hammer",
+      objective: false,
+      travel: false,
+    });
+    endArrivalGrace(flightOf(model));
+    return model;
+  }
+
+  function approach(model: GameModel): void {
+    const boss = actorOf(model);
+    flyTo(model, boss.x + 300, boss.y);
+    model.step(1 / 60, idle);
+  }
+
+  it("preserves the optional patrol, named hail and wounded hull through paging, Continue and a new flight", () => {
+    let model = traded();
+    expect(model.bossHud()).toBeNull();
+    expect(model.state.progress[1].holodisk).toBe(false);
+    recoverHolodisk(model);
+    expect(model.bossHud()).toBeNull();
+    expect(model.state.progress[1].capitalBoss?.phase).toBe("active");
+
+    approach(model);
+    const boss = actorOf(model);
+    const definition = enemyEquipmentDefinition(1, boss.enemy!);
+    expect(model.bossHud()).toEqual({
+      captain: "Captain Tally",
+      disabled: false,
+      hull: definition.hp,
+      id,
+      maxHull: definition.hp,
+      ship: "Hammer",
+    });
+    expect(model.conversation).toMatchObject({
+      ...SUNFLOWER_BOSS_CUES.approach,
+      name: "Captain Tally",
+    });
+    const damagedPart = definition.hardpoints[0]!;
+    boss.enemy = damageEnemy(
+      definition,
+      { amount: damagedPart.hp, hardpointId: damagedPart.id },
+      boss.enemy!,
+    );
+    boss.enemy = damageEnemy(definition, { amount: 1, hardpointId: null }, boss.enemy);
+    boss.hp = boss.enemy.hp;
+
+    const home = flightOf(model).objects.find(({ id }) => id === "growers")!;
+    flyTo(model, home.x, home.y);
+    expect(flightOf(model).objects.some((object) => object.id === id)).toBe(false);
+    expect(model.bossHud()).toBeNull();
+    model = relaunch(CONTENT, model.save());
+    expect(model.state.progress[1].capitalBoss?.phase).toBe("active");
+    expect(actorOf(model).enemy?.hardpoints.find(({ id }) => id === damagedPart.id)?.hp).toBe(0);
+    approach(model);
+    expect(model.bossHud()?.hull).toBe(definition.hp - 1);
+    expect(model.conversation).toMatchObject(SUNFLOWER_BOSS_CUES.hardpoint);
+
+    flyTo(model, home.x, home.y);
+    flightOf(model).dangerFor = 0;
+    model.returnHome();
+    expect(model.state.progress[1].capitalBoss?.phase).toBe("away");
+    model = relaunch(CONTENT, model.save());
+    expect(model.state.progress[1].capitalBoss?.phase).toBe("away");
+    launch(model);
+    endArrivalGrace(flightOf(model));
+    approach(model);
+    expect(model.bossHud()?.hull).toBe(definition.hp - 1);
+    const flight = flightOf(model);
+    expect(flight.objects.filter((object) => object.id === id)).toHaveLength(1);
+    expect(flight.world.notables).not.toHaveProperty(id);
+    expect(model.conversation?.text).not.toBe(SUNFLOWER_BOSS_CUES.approach.text);
+    expect(model.conversation?.text).not.toBe(SUNFLOWER_BOSS_CUES.hardpoint.text);
+  });
+
+  it("salvages via Use, marks a normal-flight route and allows exactly one Ore claim across flights", () => {
+    let model = traded();
+    approach(model);
+    const boss = actorOf(model);
+    const definition = enemyEquipmentDefinition(1, boss.enemy!);
+    for (const part of definition.hardpoints.filter(({ kind }) => kind === "weapon")) {
+      boss.enemy = damageEnemy(definition, { amount: part.hp, hardpointId: part.id }, boss.enemy!);
+    }
+    expect(boss.enemy?.disabled).toBe(true);
+    expect(model.bossHud()).toBeNull();
+    flyTo(model, boss.x + CONTENT.tuning.talkRange - 1, boss.y);
+    expect(model.contextAction).toBe("salvage");
+    expect(model.bossHud()).toMatchObject({ disabled: true, id });
+    const flight = flightOf(model);
+    const oldStardust = stardustDropped(flight);
+    model.interact();
+    expect(model.bossHud()).toBeNull();
+    expect(model.state.progress[1].capitalBoss).toMatchObject({
+      cacheClaimed: false,
+      outcome: "salvaged",
+      phase: "resolved",
+    });
+    expect(stardustDropped(flight) - oldStardust).toBe(
+      Math.floor(enemyStardust({ id, seed: flight.seed }, "capital") / 2),
+    );
+    model.interact();
+    expect(stardustDropped(flight) - oldStardust).toBe(
+      Math.floor(enemyStardust({ id, seed: flight.seed }, "capital") / 2),
+    );
+    model = relaunch(CONTENT, model.save());
+    const waypoint = model.map!.places.find((place) => place.id === routeId)!;
+    expect(waypoint).toMatchObject({ label: "Safer route and supply cache", travel: false });
+    expect(model.map?.places.some((place) => place.id === id)).toBe(false);
+
+    const home = flightOf(model).objects.find(({ id }) => id === "growers")!;
+    flyTo(model, home.x, home.y);
+    flightOf(model).dangerFor = 0;
+    model.returnHome();
+    launch(model);
+    flyTo(model, waypoint.x, waypoint.y);
+    const cargo = flightOf(model).cargo;
+    model.step(1 / 60, idle);
+    expect(model.flightEvents).toContainEqual(
+      expect.objectContaining({ id: cacheId, type: "collected" }),
+    );
+    expect(flightOf(model).cargo).toBe(cargo + 1);
+    expect(model.conversation).toMatchObject(SUNFLOWER_BOSS_CUES.resolved);
+    expect(model.state.progress[1].capitalBoss).toMatchObject({ cacheClaimed: true });
+    expect(model.map?.places.find((place) => place.id === routeId)?.label).toBe("Safer route");
+
+    model = relaunch(CONTENT, model.save());
+    expect(flightOf(model).cargo).toBe(cargo + 1);
+    flyTo(model, home.x, home.y);
+    flightOf(model).dangerFor = 0;
+    model.returnHome();
+    launch(model);
+    flyTo(model, waypoint.x, waypoint.y);
+    model.step(1 / 60, idle);
+    expect(flightOf(model).cargo).toBe(cargo + 1);
+    expect(capitalBossActor(flightOf(model), cacheId)).toBeUndefined();
+    expect(capitalBossActor(flightOf(model), id)).toBeUndefined();
+    expect(model.conversation?.text).not.toBe(SUNFLOWER_BOSS_CUES.resolved.text);
+  });
+
+  it("uses the destruction reward once and selects the resolution cue over a hardpoint beat", () => {
+    const model = traded();
+    approach(model);
+    expect(model.conversation).toMatchObject(SUNFLOWER_BOSS_CUES.approach);
+    model.dismissConversation();
+    const flight = flightOf(model);
+    const boss = actorOf(model);
+    // Simulate the first part loss and lethal hull contact in the same step's outcome.
+    const definition = enemyEquipmentDefinition(1, boss.enemy!);
+    const first = definition.hardpoints[0]!;
+    boss.enemy = damageEnemy(definition, { amount: first.hp, hardpointId: first.id }, boss.enemy!);
+    const oldStardust = stardustDropped(flight);
+    const shot = {
+      damage: 1000,
+      enemy: false,
+      hitIds: [],
+      id: "lethal-hull-hit",
+      life: 1,
+      piercing: false,
+      velocity: { x: 0, y: 0 },
+      x: boss.x,
+      y: boss.y,
+    };
+    flight.shots.push(shot, { ...shot, hitIds: [], id: "second-ship-hit" });
+    model.step(1 / 60, idle);
+    expect(model.flightEvents.filter(({ type }) => type === "enemyDestroyed")).toEqual([
+      { id, type: "enemyDestroyed" },
+    ]);
+    expect(model.state.progress[1].capitalBoss).toMatchObject({
+      outcome: "defeated",
+      phase: "resolved",
+    });
+    expect(model.bossHud()).toBeNull();
+    expect(model.conversation).toMatchObject(SUNFLOWER_BOSS_CUES.resolved);
+    expect(model.state.seenConversations).not.toContain(`${id}:hardpoint`);
+    const wreckTiming = ECONOMY.destruction.capital;
+    const released = Math.ceil(wreckTiming.durationSeconds * 60) + 1;
+    for (let frame = 0; frame < released; frame++) {
+      model.step(1 / 60, idle);
+    }
+    expect(stardustDropped(flight) - oldStardust).toBe(
+      enemyStardust({ id, seed: flight.seed }, "capital"),
+    );
+    expect(relaunch(CONTENT, model.save()).state.progress[1].capitalBoss).toEqual(
+      model.state.progress[1].capitalBoss,
+    );
+  });
+});
 
 describe("story and persistence", () => {
   it("preserves exact interrupted flight but regenerates after leaving, without repeating introductions", () => {

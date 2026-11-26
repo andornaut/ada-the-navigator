@@ -1,5 +1,6 @@
 import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { CRYSTAL_FLAGS, type CrystalFlag } from "../data/asteroidCatalog.ts";
+import { SUNFLOWER_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { deliveryDestination } from "../data/destinations.ts";
 import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
@@ -409,6 +410,82 @@ function spaceObject(
     (value.ammoPack === undefined || (value.ammoPack === true && value.kind === "pickup"))
   );
 }
+function sunflowerBossActor(value: unknown): value is SpaceObject {
+  return (
+    spaceObject(1, [], value) &&
+    value.id === SUNFLOWER_CAPITAL_BOSS.id &&
+    value.kind === "enemy" &&
+    value.persistent === true &&
+    value.hp > 0 &&
+    value.enemy?.archetype === "capital" &&
+    value.enemy.packId === null &&
+    !enemyDefeated(value.enemy)
+  );
+}
+
+function validBossProgress(galaxy: GalaxyNumber, progress: Record<string, unknown>): boolean {
+  const boss = progress.capitalBoss;
+  if (boss === undefined) {
+    return true;
+  }
+  if (
+    galaxy !== 1 ||
+    !record(boss) ||
+    progress.questComplete !== true ||
+    progress.stage !== 4 ||
+    !vector(boss.site)
+  ) {
+    return false;
+  }
+  switch (boss.phase) {
+    case "active":
+      return Object.keys(boss).length === 2;
+    case "away":
+      return (
+        Object.keys(boss).length === 3 &&
+        sunflowerBossActor(boss.actor) &&
+        boss.actor.enemy?.salvaged === false
+      );
+    case "resolved":
+      return (
+        Object.keys(boss).length === 4 &&
+        typeof boss.cacheClaimed === "boolean" &&
+        (boss.outcome === "defeated" || boss.outcome === "salvaged")
+      );
+    default:
+      return false;
+  }
+}
+
+function bossFlightConsistent(boss: GalaxyProgress["capitalBoss"], flight: FlightState): boolean {
+  const { cacheId, id } = SUNFLOWER_CAPITAL_BOSS;
+  const actor = flight.objects.find((object) => object.id === id) ?? flight.world.notables[id];
+  const cache =
+    flight.objects.find((object) => object.id === cacheId) ?? flight.world.notables[cacheId];
+  if (flight.galaxy !== 1) {
+    return actor === undefined && cache === undefined;
+  }
+  if (boss?.phase === "active") {
+    return cache === undefined && sunflowerBossActor(actor) && actor.enemy?.salvaged === false;
+  }
+  if (boss?.phase === "resolved") {
+    const actorValid =
+      actor == null ||
+      (boss.outcome === "salvaged" && sunflowerBossActor(actor) && actor.enemy?.salvaged === true);
+    return (
+      actorValid &&
+      (boss.cacheClaimed
+        ? cache == null
+        : cache?.kind === "pickup" &&
+          cache.role === "cargo" &&
+          cache.persistent === true &&
+          cache.hp > 0 &&
+          cache.amount === undefined)
+    );
+  }
+  return !boss && actor === undefined && cache === undefined;
+}
+
 function persistentWorld(
   galaxy: GalaxyNumber,
   routes: readonly string[],
@@ -745,6 +822,7 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
       const p = value.progress[id];
       if (
         !record(p) ||
+        !validBossProgress(id, p) ||
         (p.geography !== undefined && !validGalaxyGeography(p.geography)) ||
         (p.explorationSites !== undefined &&
           (!record(p.geography) ||
@@ -827,6 +905,13 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
       ) {
         return null;
       }
+    }
+    const sunflowerBoss = (value.progress as unknown as GameState["progress"])[1].capitalBoss;
+    if (
+      sunflowerBoss?.phase === "active" &&
+      (value.selectedGalaxy !== 1 || value.flight === null)
+    ) {
+      return null;
     }
     if (value.flight !== null) {
       const f = value.flight;
@@ -962,6 +1047,9 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
           f.world,
         )
       ) {
+        return null;
+      }
+      if (!bossFlightConsistent(sunflowerBoss, f as unknown as FlightState)) {
         return null;
       }
       if (

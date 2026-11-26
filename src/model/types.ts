@@ -8,6 +8,7 @@ import type { JobType } from "../data/jobs.ts";
 import type { StorySceneId } from "../data/storyShips.ts";
 import type { GalaxyNumber, Vec, Weapon } from "../data/types.ts";
 import type { AchievementState } from "./achievements.ts";
+import type { CapitalBossProgress } from "./capitalBossEncounter.ts";
 import type { EnemyState } from "./enemyAi.ts";
 import type { ExplorationSites, ExplorationState } from "./explorationState.ts";
 import type { FlightTopology } from "./flightTopology.ts";
@@ -244,6 +245,7 @@ export interface GalaxyGeography {
 }
 
 export interface GalaxyProgress {
+  capitalBoss?: CapitalBossProgress;
   explorationSites?: ExplorationSites;
   /** Permanent geographic knowledge, independent of current encounter bodies or outcomes. */
   hostileSites?: Record<string, HostileStationSiteState>;

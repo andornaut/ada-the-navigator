@@ -2,6 +2,7 @@ import { randomStream } from "@andornaut/game-kit/runtime/random";
 
 import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import { ASTEROID_LOOT, CRYSTAL_MINIMUM_ORE } from "../data/asteroidLoot.ts";
+import { SUNFLOWER_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
 import { SCENERY_IMPACT_SECONDS, sceneryImpactDamage } from "../data/collisionDamage.ts";
 import { CONTENT } from "../data/content.ts";
@@ -1021,6 +1022,21 @@ function flightSpawnExclusions(
     ),
     ...disc("player-clearance", ["rock", "moving"], flight.player, content.tuning.exclusionRadius),
     ...flight.objects.flatMap((object) => {
+      if (object.id === SUNFLOWER_CAPITAL_BOSS.id && object.enemy && !object.enemy.salvaged) {
+        return [
+          ...disc(
+            "authored-capital",
+            ["rock", "moving"],
+            object.enemy.home,
+            Math.max(actorFootprint(flight, object), object.radius + content.tuning.talkRange) +
+              gap,
+          ),
+          ...disc("authored-capital", ["enemy"], object, actorFootprint(flight, object) + gap),
+        ];
+      }
+      if (object.id === SUNFLOWER_CAPITAL_BOSS.cacheId) {
+        return disc("authored-cache", ["rock", "moving"], object, object.radius + gap);
+      }
       const reach = exclusionZoneRadius(content, object);
       return reach === null
         ? []
@@ -1446,6 +1462,93 @@ export function placeExplorationSite(
     return site;
   }
   return undefined;
+}
+
+/** Place Hammer off the completed trade circuit, beyond its pursuit and perception reach. */
+export function placeSunflowerCapitalBoss(
+  content: GameContent,
+  flight: FlightState,
+  route: readonly [Vec, Vec, Vec],
+): Vec | null {
+  const [growers, workshop, salvagers] = route;
+  const world = flightWorldContext(flight);
+  const leg = worldDelta(world, workshop, salvagers);
+  const midpoint = { x: workshop.x + leg.x / 2, y: workshop.y + leg.y / 2 };
+  const hull = spawnEnemy(content, flight, "capital", SUNFLOWER_CAPITAL_BOSS.id, midpoint);
+  const definition = enemyEquipmentDefinition(flight.galaxy, hull.enemy!);
+  const distance = definition.perception + definition.pursuit.homeRadius + hull.radius;
+  const heading = Math.atan2(leg.y, leg.x) + Math.PI / 2;
+  const legs = [
+    [FLIGHT_START, growers],
+    [growers, workshop],
+    [workshop, salvagers],
+  ] as const;
+  const nearby = stationPopulationObjects(flight);
+  for (const reach of [distance * 1.25, TARGET_MARKER_RANGE]) {
+    for (let index = 0; index < 8; index++) {
+      const angle = heading + (index * Math.PI) / 4;
+      const point = {
+        x: midpoint.x + Math.cos(angle) * reach,
+        y: midpoint.y + Math.sin(angle) * reach,
+      };
+      if (
+        legs.some(
+          ([from, to]) =>
+            segmentDistance(worldPoint(world, from, point), from, worldPoint(world, from, to)) <
+            distance,
+        ) ||
+        worldStationsNear(
+          flightStationContext(flight),
+          ECONOMY,
+          flight.galaxy,
+          ECONOMY.station.exclusionRadius + hull.radius,
+          point,
+        ).length > 0
+      ) {
+        continue;
+      }
+      const towardRoute = worldDelta(world, point, midpoint);
+      const offset = hull.radius + content.tuning.talkRange;
+      const site = {
+        x: point.x + (towardRoute.x * offset) / reach,
+        y: point.y + (towardRoute.y * offset) / reach,
+      };
+      canonicalPosition(flight, site);
+      const cache = sunflowerBossCache(content, site);
+      const actor = spawnEnemy(content, flight, "capital", SUNFLOWER_CAPITAL_BOSS.id, point);
+      canonicalObject(flight, actor);
+      if (
+        nearby.some(
+          (other) =>
+            capital(other) && worldDistance(world, actor, other) < enemySpacing(actor, other),
+        ) ||
+        !clearOfExclusionZones(content, actor, flight) ||
+        !clearOfExclusionZones(content, cache, flight) ||
+        nearby.some((other) => other.hp > 0 && !clearOf(flight, other.radius, other, cache)) ||
+        !stationFormationClear(questGuardPlacementContext(content, flight), [actor])
+      ) {
+        continue;
+      }
+      actor.persistent = true;
+      flight.objects.push(actor);
+      worldSyncFlightRegion(world, content, flight);
+      return site;
+    }
+  }
+  return null;
+}
+
+/** The repair cache is a single ordinary Ore pickup with a durable encounter identity. */
+export function sunflowerBossCache(content: GameContent, site: Vec): SpaceObject {
+  return {
+    ...site,
+    hp: 1,
+    id: SUNFLOWER_CAPITAL_BOSS.cacheId,
+    kind: "pickup",
+    persistent: true,
+    radius: content.tuning.flight.pieceRadius,
+    role: "cargo",
+  };
 }
 
 /** A new enemy with its galaxy's archetype changes, hit points and hardpoints. */
