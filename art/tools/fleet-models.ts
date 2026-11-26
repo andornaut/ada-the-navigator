@@ -264,9 +264,13 @@ export type FleetBlock = {
   intact: Mesh;
   destroyed: Mesh;
 };
+// A fixed front Laser: a flush port at the prow that fires along the facing only. Its solids
+// intact and destroyed are about `at`, and `muzzle` is the centre of its emitter face.
+export type FleetLaser = { id: string; at: Point; muzzle: Point; intact: Mesh; destroyed: Mesh };
 export type FleetHeavy = {
   blocks: FleetBlock[];
   mounts: { id: string; at: Point; capped: boolean }[];
+  lasers?: FleetLaser[];
 };
 export type FleetCraft = {
   archetype: "swarm" | "fighter" | "interceptor" | "retaliator" | "frigate" | "capital";
@@ -945,6 +949,86 @@ function driveCone(
   if (state === "ember") bx(m, cut - 0.4, cut, w - ember, w + ember, z - ember, z + ember, p.gun);
 }
 
+// A fixed front Laser's flush prow port: a bright emitter panel in a thin dark rim, let into the
+// prow deck and following its slope. Its forward face is at station l, centred on breadth w; the
+// deck there is `fore` high and `aft` high `depth` aft of it. hw is the emitter's half-breadth.
+// Destroyed, the rim is a low cut-back stump with a dark breach and no emitter. One port on the
+// centreline is `prow`; a pair either side of it is `prow-left`, at negative breadth, and
+// `prow-right`.
+export type ProwPort = {
+  l: number;
+  w: number;
+  hw: number;
+  depth: number;
+  fore: number;
+  aft: number;
+};
+const PORT_RIM = 0.6;
+// How far the port stands proud of the deck, and its height below the deck.
+const PORT_LIFT = 0.9;
+const PORT_HEIGHT = 3.2;
+function prowPorts(p: Paint, { aft, depth, fore, hw, l, w }: ProwPort): FleetLaser[] {
+  const sides: readonly (readonly [string, number])[] =
+    w === 0
+      ? [["prow", 0]]
+      : [
+          ["prow-left", -w],
+          ["prow-right", w],
+        ];
+  const breach: Tones = [p.dark[2], p.dark[2], p.dark[2]];
+  // A box between stations l0 and l1, half-breadth h about breadth c, from height `under` below
+  // the deck to `over` above it.
+  const panel = (
+    m: Mesh,
+    l0: number,
+    l1: number,
+    c: number,
+    h: number,
+    under: number,
+    over: number,
+    tones: Tones,
+  ) => {
+    const deck = (at: number) => fore + ((aft - fore) * (l - at)) / depth;
+    meshLoft(
+      m,
+      [l1, l0].map((at): Point[] => [
+        [at, c - h, deck(at) - under],
+        [at, c + h, deck(at) - under],
+        [at, c + h, deck(at) + over],
+        [at, c - h, deck(at) + over],
+      ]),
+      tones,
+    );
+  };
+  const rw = hw + PORT_RIM;
+  return sides.map(([id, at]) => {
+    const intact: Mesh = [];
+    panel(intact, l - depth, l - 0.2, at, rw, PORT_HEIGHT, PORT_LIFT, p.dark);
+    panel(
+      intact,
+      l - depth + PORT_RIM,
+      l + 0.3,
+      at,
+      hw,
+      PORT_HEIGHT - PORT_RIM,
+      PORT_LIFT + 0.15,
+      p.gun,
+    );
+    const destroyed: Mesh = [];
+    const cut = l - 1.2;
+    panel(destroyed, l - depth, cut, at, rw, PORT_HEIGHT, 0.35, p.dark);
+    panel(destroyed, l - depth + PORT_RIM, cut - PORT_RIM, at, hw, 0, 0.45, breach);
+    // The shot origin is on the emitter's face where it stands above the deck.
+    return {
+      id,
+      at: [l - depth / 2, at, (fore + aft) / 2 + (PORT_LIFT - PORT_HEIGHT) / 2],
+      muzzle: [l + 0.3, at, fore + (PORT_LIFT + 0.15) / 2],
+      intact,
+      destroyed,
+    };
+  });
+}
+
 // The single-hull frigate, the Shoulder frigate: one broad low hull with a blunt stepped bow block,
 // a short thick weapon shoulder close against each flank, a raised citadel aft and twin drive
 // cones in one stern block. `port` and `starboard` stand on the shoulders, `spine` on the main
@@ -1043,6 +1127,7 @@ function slimDelta(p: Paint): FleetCraft {
         { id: "spine", at: [-33, 0, deck], capped: true },
         { id: "bow", at: [43, 0, 12.5], capped: true },
       ],
+      lasers: prowPorts(p, { l: 60, w: 0, hw: 3, depth: 6, fore: 10, aft: 11.875 }),
     },
     fleck: p.armour,
     cuts: [],
@@ -1135,6 +1220,7 @@ function twinHull(p: Paint): FleetCraft {
         { id: "spine", at: [-9, 0, 21], capped: true },
         { id: "bow", at: [8, 0, 21], capped: true },
       ],
+      lasers: prowPorts(p, { l: 34, w: 0, hw: 1.9, depth: 5, fore: 13, aft: 17 }),
     },
     fleck: p.armour,
     cuts: [],
@@ -1227,8 +1313,13 @@ type CapitalSpec = Pick<FleetCraft, "stem" | "key" | "design" | "families"> & {
   command: FleetBlock;
   drive: { blocks: FleetBlock[]; mouths: FleetMouth[] };
   pairs: Pairs;
+  // The two fixed front Lasers' ports, either side of the centreline.
+  prow: ProwPort;
 };
-const capital = (p: Paint, { body, command, drive, pairs, ...craft }: CapitalSpec): FleetCraft => ({
+const capital = (
+  p: Paint,
+  { body, command, drive, pairs, prow, ...craft }: CapitalSpec,
+): FleetCraft => ({
   archetype: "capital",
   ...craft,
   parts: [
@@ -1238,7 +1329,11 @@ const capital = (p: Paint, { body, command, drive, pairs, ...craft }: CapitalSpe
     }),
   ],
   mouths: drive.mouths,
-  heavy: { blocks: [command, ...drive.blocks], mounts: capitalMounts(pairs) },
+  heavy: {
+    blocks: [command, ...drive.blocks],
+    mounts: capitalMounts(pairs),
+    lasers: prowPorts(p, prow),
+  },
   fleck: p.capital,
   cuts: [],
 });
@@ -1318,6 +1413,7 @@ function hammer(p: Paint): FleetCraft {
       claw: [67, 22, 19, 20],
       stern: [-47, 8, 28, 31],
     },
+    prow: { l: 84, w: 17, hw: 3, depth: 6, fore: 12, aft: 18 },
   });
 }
 
@@ -1393,6 +1489,7 @@ function mantaDreadnought(p: Paint): FleetCraft {
       claw: [36, 19, top(19) - 2, top(19) + 1],
       stern: [-36, 6.6, 33, 36.8],
     },
+    prow: { l: 60, w: 2.6, hw: 1.6, depth: 6, fore: 18.86, aft: 22.29 },
   });
 }
 
@@ -1480,6 +1577,7 @@ function outriggerCarrier(p: Paint): FleetCraft {
       claw: [63, 8.5, 25, 26],
       stern: [-56, 8, 28, 29],
     },
+    prow: { l: 86, w: 4.2, hw: 2, depth: 6, fore: 16, aft: 20.29 },
   });
 }
 
@@ -1569,6 +1667,7 @@ function broadWing(p: Paint): FleetCraft {
       claw: [44, 6, 24, 27],
       stern: [-45, 7.5, 31, 34.6],
     },
+    prow: { l: 72, w: 2.2, hw: 1.4, depth: 6, fore: 16, aft: 19 },
   });
 }
 
@@ -1667,6 +1766,7 @@ function crossbow(p: Paint): FleetCraft {
       claw: [44, 5.6, 18, 21],
       stern: [-48, 7.6, 24, 27.4],
     },
+    prow: { l: 76, w: 2.1, hw: 1.3, depth: 6, fore: 13.55, aft: 15.45 },
   });
 }
 
@@ -1760,6 +1860,7 @@ function forkedFortress(p: Paint): FleetCraft {
       claw: [56, 15.5, 23, 24],
       stern: [-44, 33, 27, 28],
     },
+    prow: { l: 84, w: 15.5, hw: 1.8, depth: 6, fore: 17.75, aft: 21.5 },
   });
 }
 
