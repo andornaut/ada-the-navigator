@@ -7,6 +7,7 @@ import { BUILT, GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../data/phantom.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
+import { clearPhantomTraffic } from "../testing/phantomTraffic.ts";
 import { worldParts } from "./convex.ts";
 import { enemyIntegrity, hardpointOffset } from "./enemyAi.ts";
 import { enemyPartOutline } from "./enemyBody.ts";
@@ -43,23 +44,10 @@ function defeat(model: GameModel, id: string): void {
   }
   placePlayer(model, { x: initial.x + 600, y: initial.y });
   const flight = model.state.flight!;
-  const phase = flight.phantom!;
-  const required = new Set([
-    PHANTOM_FLAGSHIP,
-    ...phase.enemyIds,
-    ...Object.values(phase.blockades).flat(),
-  ]);
-  // The synthetic shot excludes other targets by ID. Keep the chapter actors
-  // and landmarks without making each impact simulate the surrounding traffic
-  // and debris. Travel and reload still use their normal world paths.
-  flight.objects = flight.objects.filter(
-    (object) =>
-      object.kind === "destination" ||
-      object.kind === "station" ||
-      object.kind === "pickup" ||
-      required.has(object.id) ||
-      required.has(object.enemy?.escortOf ?? ""),
-  );
+  // The synthetic shot excludes other targets by ID. Each impact keeps the chapter actors and
+  // landmarks without simulating the surrounding traffic and debris, including what the first
+  // impact's step generates. Travel and reload still use their normal world paths.
+  clearPhantomTraffic(flight);
   expect(represented(model, id), `fixture must retain ${id}`).toBeDefined();
   for (let impact = 0; impact < 32; impact++) {
     const object = represented(model, id);
@@ -105,6 +93,7 @@ function defeat(model: GameModel, id: string): void {
       !after || after.hp <= 0 || enemyIntegrity(after.enemy!) < before,
       `projectile must damage ${id}`,
     ).toBe(true);
+    clearPhantomTraffic(flight);
   }
   throw new Error(`Impact fixture did not resolve ${id}`);
 }

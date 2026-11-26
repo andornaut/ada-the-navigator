@@ -6,6 +6,7 @@ import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import { PHANTOM_COPY, PHANTOM_DESTINATIONS } from "../data/phantom.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
+import { clearPhantomTraffic } from "../testing/phantomTraffic.ts";
 import { interactionCopy } from "./conversations.ts";
 import { worldParts } from "./convex.ts";
 import { enemyIntegrity, hardpointOffset } from "./enemyAi.ts";
@@ -38,6 +39,9 @@ function defeat(model: GameModel, id: string): void {
       return;
     }
     travel(model, { x: object.x + 600, y: object.y });
+    // The synthetic shot excludes other targets by ID. Each impact keeps the chapter actors and
+    // landmarks without simulating the surrounding traffic and debris that travel generated.
+    clearPhantomTraffic(model.state.flight!);
     const target = represented(model, id)!;
     const enemy = target.enemy!;
     const before = enemyIntegrity(enemy);

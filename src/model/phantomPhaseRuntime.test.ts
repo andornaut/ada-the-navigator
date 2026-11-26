@@ -6,6 +6,7 @@ import { BUILT, GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../data/phantom.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { relaunch } from "../testing/launch.ts";
+import { clearPhantomTraffic } from "../testing/phantomTraffic.ts";
 import { outlinesContact } from "./convex.ts";
 import { damageEnemy } from "./enemyAi.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
@@ -75,6 +76,9 @@ function freeSettlements(model: GameModel): void {
     flight.player = { x: site.x, y: site.y };
     flight.velocity = { x: 0, y: 0 };
     model.step(0.001, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
+    // The first step generated the settlement's region; only the chapter's actors and landmarks
+    // stay loaded.
+    clearPhantomTraffic(flight);
     model.step(0.001, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
     model.interact();
     expect(model.state.dialogue, id).not.toBeNull();
@@ -179,7 +183,9 @@ it("transfers actual phases and clears fixed-waypoint blockers only through cano
         seconds,
     );
     for (let frame = 0; frame < frameLimit; frame++) {
-      // Isolate phase geometry while canonical AI moves surviving support fighters.
+      // Isolate phase geometry while canonical AI moves surviving support fighters: the chapter's
+      // actors and landmarks stay loaded, without the generated rocks and debris around them.
+      clearPhantomTraffic(flight);
       for (const actor of stationPopulationObjects(flight)) {
         if (!actor.enemy) {
           continue;
