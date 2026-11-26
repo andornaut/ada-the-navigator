@@ -336,6 +336,103 @@ it("posts an admitted near-route hunt on Scan, then accepts and pays through the
   throw new Error("No near-route hunt fixture admitted");
 });
 
+it("admits and posts the seed-125 hunt when every seeded centre is blocked", () => {
+  const seed = 125;
+  const world = { worldSide: GALAXY_SIDE };
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
+  const progress = model.state.progress[1];
+  progress.geography = { seed, sitePolicy: "seeded", version: 1 };
+  model.startGalaxy(1);
+  const flight = model.state.flight!;
+  const stations = worldStationsNear(flightStationContext(flight), ECONOMY, 1, 20_000, {
+    x: 0,
+    y: 0,
+  })
+    .filter(({ id }) => stationSpecialty(1, id) === "jobs")
+    .slice(0, 2);
+  const site = proceduralPoisNear(
+    { ...world, opportunityEligibility: { jobTemplates: ["rescue", "hunt"] } },
+    1,
+    seed,
+    TARGET_MARKER_RANGE,
+    { x: 0, y: 0 },
+  ).find(({ id }) => id === "poi:1:0,-1:0")!;
+  const [issuer, other] = stations.sort(
+    (a, b) => worldDistance(world, a, site) - worldDistance(world, b, site),
+  );
+  expect(issuer?.id).toBe("station:-1,-2");
+  expect(other).toBeDefined();
+  progress.stations.push(issuer!.id, other!.id);
+  const id = `lead:${site.id}`;
+  const next = dropRandom(seed, id);
+  const { max, min } = JOB_TUNING.hunt;
+  const centres = Array.from({ length: 24 }, () => {
+    const reach = min + next() * (max - min);
+    const angle = next() * Math.PI * 2;
+    return { x: issuer!.x + Math.cos(angle) * reach, y: issuer!.y + Math.sin(angle) * reach };
+  });
+  const blockers = centres.map((point, index): SpaceObject => {
+    const blockerId = `hunt-clearance:${index}`;
+    const archetype = (["frigate", "capital", "platform"] as const)[index % 3]!;
+    const definition = enemyDefinition(1, archetype, blockerId);
+    return {
+      ...point,
+      enemy: createEnemy(definition, { archetype, id: blockerId, packId: null, phase: 0 }, point),
+      hp: definition.hp,
+      id: blockerId,
+      kind: "enemy",
+      radius: CONTENT.tuning.flight.shipRadius * definition.sizeRatio,
+    };
+  });
+  const score = (point: Vec) =>
+    Math.min(
+      ...jobHostiles({
+        objects: stationPopulationObjects(flight),
+      }).map((heavy) => worldDistance(world, heavy, point)),
+    );
+  flight.objects.push(...blockers);
+  flight.exploration = {
+    pacing: {
+      freshSeconds: ROUTE_OPPORTUNITY_SECONDS,
+      nextOpportunity: 0,
+      pending: { cell: "0,0", region: "near" },
+    },
+    renewals: {},
+    version: 1,
+  };
+  expect(centres.every((point) => score(point) < JOB_TUNING.hostileClearance)).toBe(true);
+  pilotAt(model, flight, { x: site.x - 250, y: site.y });
+  expect(progress.explorationSites?.[site.id]).toEqual({ kind: "hunt", scanned: false });
+  expect(flight.exploration.pacing?.nextOpportunity).toBe(1);
+  expect(model.state.jobs.boards[1]).toBeUndefined();
+
+  // The live population has changed since admission. A later candidate now has the best clearance.
+  const moved = stationPopulationObjects(flight).find(({ id }) => id === blockers[17]!.id)!;
+  moved.x += 750;
+  moved.enemy!.position = { x: moved.x, y: moved.y };
+  const scores = centres.map(score);
+  expect(scores.every((clearance) => clearance < JOB_TUNING.hostileClearance)).toBe(true);
+  expect(scores.indexOf(Math.max(...scores))).toBe(17);
+  const balance = model.state.economy.stardust;
+  flight.player = { x: site.x, y: site.y };
+  expect(model.contextAction).toBe("scan");
+  model.interact();
+  expect(progress.explorationSites?.[site.id]).toEqual({ kind: "hunt", scanned: true });
+  const [receipt] = model.drainScanOutcomes();
+  expect(receipt).toMatchObject({ completions: [], targetId: site.id });
+  expect(scanOutcomeLines(receipt!).at(-1)?.text).toBe(
+    `Someone needs help. The job is at ${receipt!.leadStation}.`,
+  );
+  const posted = [{ id, station: issuer!.id, target: { id: "", ...centres[17]! }, type: "hunt" }];
+  expect(model.state.jobs.boards[1]?.[issuer!.id]).toMatchObject(posted);
+  expect(model.state.jobs.boards[1]?.[other!.id]).toBeUndefined();
+  expect(model.state.tasks[1]).toBeUndefined();
+  model.interact();
+  expect(model.drainScanOutcomes()).toEqual([]);
+  expect(model.state.jobs.boards[1]?.[issuer!.id]).toMatchObject(posted);
+  expect(model.state.economy.stardust).toBe(balance);
+});
+
 function admittedFarRescue() {
   const world = { worldSide: GALAXY_SIDE };
   const far = { x: 25_000, y: 31_800 };

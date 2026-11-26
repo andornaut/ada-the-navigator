@@ -19,8 +19,10 @@ import { questReward } from "../data/questRewards.ts";
 import { galaxyCard } from "../data/storybook.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { GALAXY_SIDE } from "../data/world.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
+import { dropRandom } from "./drops.ts";
 import { ensureStation, stepFlight, towing } from "./flight.ts";
 import { GameModel, newGameState } from "./game.ts";
 import {
@@ -41,6 +43,8 @@ import { retainedLandmarkSites } from "./retainedLandmarks.ts";
 import { stationsNear } from "./stations.ts";
 import type { FlightState, HeldJob, Vec } from "./types.ts";
 import { noLevels, shipTuning } from "./upgrades.ts";
+import { worldDistance } from "./worldContacts.ts";
+import { wrapPoint } from "./worldGeometry.ts";
 
 /**
  * The same held target is absent beyond TARGET_MARKER_RANGE and present just inside it, without
@@ -417,6 +421,67 @@ describe("job boards", () => {
     expect(dropJob(1, book)).toBe(true);
     expect(stationBoard(context(), book, station)[0]).toEqual(first);
     expect(acceptJob(1, station.id, second!.id, book)).toBe("accepted");
+  });
+
+  it("uses wrapped clearance and seeded order for hunt leads across the seam", () => {
+    const seed = 125;
+    const site = { id: "poi:1:0,-1:0", x: 0, y: 0 };
+    const next = dropRandom(seed, `lead:${site.id}`);
+    const { max, min } = JOB_TUNING.hunt;
+    const offsets = Array.from({ length: 24 }, () => {
+      const reach = min + next() * (max - min);
+      const angle = next() * Math.PI * 2;
+      return { x: Math.cos(angle) * reach, y: Math.sin(angle) * reach };
+    });
+    const station = {
+      ...firstStation(),
+      x: Math.sign(offsets[0]!.x) * (GALAXY_SIDE / 2 - 1),
+      y: 0,
+    };
+    const centres = offsets.map((offset) => ({ x: station.x + offset.x, y: station.y + offset.y }));
+    const wrapped = centres.map((point) => wrapPoint(GALAXY_SIDE, point));
+    expect(Math.abs(centres[0]!.x)).toBeGreaterThan(GALAXY_SIDE / 2);
+    const world = { worldSide: GALAXY_SIDE };
+    expect(centres.map((point, index) => worldDistance(world, point, wrapped[index]!))).toEqual(
+      Array(24).fill(0),
+    );
+
+    const blocked = explorationLeadOffer(
+      world,
+      { ...context(), hostiles: wrapped },
+      seed,
+      station,
+      site,
+      "hunt",
+    );
+    expect(blocked?.target).toEqual({ id: "", ...wrapped[0]! });
+
+    const firstClear = wrapped.find(
+      (point) => worldDistance(world, point, wrapped[0]!) >= JOB_TUNING.hostileClearance,
+    )!;
+    expect(firstClear).toBeDefined();
+    expect(firstClear).not.toEqual(wrapped[0]);
+    const clear = explorationLeadOffer(
+      world,
+      { ...context(), hostiles: [wrapped[0]!] },
+      seed,
+      station,
+      site,
+      "hunt",
+      "scan",
+    );
+    expect(clear?.target).toEqual({ id: "", ...firstClear });
+  });
+
+  it("still omits ordinary board hunts and rescues when every centre is blocked", () => {
+    const station = firstStation();
+    const hostiles = Array.from({ length: 225 }, (_, index) => ({
+      x: station.x + ((index % 15) - 7) * 1_000,
+      y: station.y + (Math.floor(index / 15) - 7) * 1_000,
+    }));
+    const ordinary = stationBoard({ ...context(), hostiles }, emptyBook(), station);
+    expect(ordinary.some(({ type }) => type === "survey")).toBe(true);
+    expect(ordinary.some(({ type }) => type === "hunt" || type === "rescue")).toBe(false);
   });
 
   it("keeps one untaken lead beyond the ordinary board and restores a dropped lead", () => {

@@ -92,14 +92,21 @@ function surveyed(galaxy: GalaxyNumber, book: JobBook): Set<string> {
   );
 }
 
-/** A spot reach-away from the station, clear of hostiles, or null after a few tries. */
+interface SpotPlacement {
+  readonly world?: WorldContext;
+  readonly allowFallback?: boolean;
+}
+
+/** First clear seeded spot, or the safest tried spot when fallback is allowed. */
 function spotNear(
   context: BoardContext,
   next: () => number,
   reach: { readonly max: number; readonly min: number },
   station: Vec,
-  world: WorldContext = {},
+  { allowFallback = false, world = {} }: SpotPlacement = {},
 ): Vec | null {
+  let best: Vec | null = null;
+  let bestClearance = -Infinity;
   for (let attempt = 0; attempt < 24; attempt++) {
     const length = reach.min + next() * (reach.max - reach.min);
     const angle = next() * Math.PI * 2;
@@ -107,15 +114,19 @@ function spotNear(
       x: station.x + Math.cos(angle) * length,
       y: station.y + Math.sin(angle) * length,
     };
-    if (
-      context.hostiles.every(
-        (hostile) => worldDistance(world, hostile, spot) >= JOB_TUNING.hostileClearance,
-      )
-    ) {
+    let clearance = Infinity;
+    for (const hostile of context.hostiles) {
+      clearance = Math.min(clearance, worldDistance(world, hostile, spot));
+    }
+    if (clearance >= JOB_TUNING.hostileClearance) {
       return spot;
     }
+    if (allowFallback && clearance > bestClearance) {
+      best = spot;
+      bestClearance = clearance;
+    }
   }
-  return null;
+  return best;
 }
 
 /** The job type's target and pool item, or null when the galaxy has none to give. */
@@ -163,10 +174,10 @@ function huntTarget(
   context: BoardContext,
   next: () => number,
   station: StationSite,
-  world: WorldContext = {},
+  placement?: SpotPlacement,
 ): Pick<JobOffer, "item" | "spot" | "target"> | null {
   const { hunt } = JOB_TUNING;
-  const centre = spotNear(context, next, hunt, station, world);
+  const centre = spotNear(context, next, hunt, station, placement);
   const item = pick(next, JOB_POOL[context.galaxy]!.lost);
   if (!centre || !item) {
     return null;
@@ -175,7 +186,7 @@ function huntTarget(
   const reach = Math.sqrt(next()) * hunt.radius * 0.8;
   const angle = next() * Math.PI * 2;
   const spot = { x: centre.x + Math.cos(angle) * reach, y: centre.y + Math.sin(angle) * reach };
-  const side = world.worldSide;
+  const side = placement?.world?.worldSide;
   return {
     item,
     spot: side === undefined ? spot : wrapPoint(side, spot),
@@ -217,7 +228,7 @@ export function explorationLeadOffer(
     }
     target = { item, target: { id: "", x: site.x, y: site.y } };
   } else {
-    target = huntTarget(context, next, station, world);
+    target = huntTarget(context, next, station, { allowFallback: true, world });
   }
   return target && { ...target, id, reward, station: station.id, type };
 }
