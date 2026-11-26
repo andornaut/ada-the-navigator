@@ -13,6 +13,8 @@ const entry: QuestEntry = {
 const schema = {
   body: ["content"],
   heading: [],
+  log: ["entries"],
+  logEntry: [],
   objective: [],
   paragraph: [],
   quest: [],
@@ -20,6 +22,29 @@ const schema = {
   section: ["content"],
 } as const;
 describe("Quest body configuration", () => {
+  it("keeps the log's stable IDs and canonical text without rendering attribution metadata", () => {
+    const entries = [{ id: "transmission", speaker: "hidden", text: "Orders from fleet command." }];
+    const tree = questsBodyTree({ entries, mode: "flightLog" });
+    validateLayoutTree(schema, tree);
+    expect(tree.slots!.content).toEqual([
+      {
+        component: "log",
+        key: "flight-log",
+        kind: "component",
+        props: {},
+        slots: {
+          entries: [
+            {
+              component: "logEntry",
+              key: "transmission",
+              kind: "component",
+              props: { id: "transmission", text: "Orders from fleet command." },
+            },
+          ],
+        },
+      },
+    ]);
+  });
   it("keeps supplied group order and canonical quest identity without sorting or selecting", () => {
     const job = { ...entry, id: "job", line: { ...entry.line, kind: "job" as const } };
     const tree = questsBodyTree({
