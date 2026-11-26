@@ -1371,8 +1371,8 @@ export class GameScene extends Scene {
     if (keyline) {
       for (const { alpha, points } of triangles) {
         const [a, b, c] = points;
-        ink.fillStyle(this.edgeInk, alpha);
-        ink.lineStyle(2 * LIGHT_FIELD.keyline, this.edgeInk, alpha);
+        ink.fillStyle(LIGHT_FIELD.ink, alpha);
+        ink.lineStyle(2 * LIGHT_FIELD.keyline, LIGHT_FIELD.ink, alpha);
         ink.fillTriangle(a.x, a.y, b.x, b.y, c.x, c.y);
         ink.strokeTriangle(a.x, a.y, b.x, b.y, c.x, c.y);
       }
