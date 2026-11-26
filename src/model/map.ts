@@ -153,12 +153,9 @@ export function placeType(place: Pick<MapPlace, "symbol">): MapPlaceType | null 
   return PLACE_TYPES[place.symbol];
 }
 
-/**
- * A place the map shows. Destinations and stations offer Travel here; landmarks and a job's own
- * spot do not.
- */
 export type HostileStationMapStatus = "present" | "disabled" | "removed" | "unresolved";
 
+/** A place the map shows. Named places offer Travel here. */
 export interface MapPlace {
   readonly hostileStationStatus?: HostileStationMapStatus;
   readonly id: string;
@@ -177,7 +174,7 @@ export interface MapPlace {
   readonly y: number;
 }
 
-/** Model-composed geographic rows, with no travel or station-service permission. */
+/** Model-composed geographic rows before the map assigns travel. They confer no station services. */
 export interface KnownHostileStationMapPlace extends MapPlace {
   readonly hostileStationStatus: HostileStationMapStatus;
   readonly job: false;
@@ -299,7 +296,7 @@ export interface MapContext extends StationPlacementContext {
  * Story characters waiting at a station, such as Cartwheel's miner and visitors, are not map
  * places: the station stands for them, including as the objective's place.
  */
-function waitingAt(galaxy: GalaxyNumber, id: string): string | null {
+export function stationForMapDestination(galaxy: GalaxyNumber, id: string): string | null {
   return galaxy === CARTWHEEL_STORY_SHIPS.galaxy &&
     Object.hasOwn(CARTWHEEL_STORY_SHIPS.destinations, id)
     ? CARTWHEEL_STORY_SHIPS.station
@@ -313,9 +310,11 @@ export const withinChartingRadius = (point: Vec) =>
 export function localMap(context: MapContext): LocalMap {
   const { catalog, flight, landmarks, objective, progress } = context;
   const galaxy = flight.galaxy as GalaxyNumber;
-  const mapped = (id: string) => waitingAt(galaxy, id) === null;
-  const objectivePlace = objective === null ? null : (waitingAt(galaxy, objective) ?? objective);
-  const destinations = progress.known.filter(mapped).flatMap((id): MapPlace[] => {
+  const mapped = (id: string) => stationForMapDestination(galaxy, id) === null;
+  const objectivePlace =
+    objective === null ? null : (stationForMapDestination(galaxy, objective) ?? objective);
+  type Place = Omit<MapPlace, "travel">;
+  const destinations = progress.known.filter(mapped).flatMap((id): Place[] => {
     const object = flight.objects.find((entry) => entry.kind === "destination" && entry.id === id);
     return object
       ? [
@@ -326,14 +325,13 @@ export function localMap(context: MapContext): LocalMap {
             label: context.label(id, "destination"),
             objective: id === objectivePlace,
             symbol: destinationSymbol(id),
-            travel: !(galaxy === 4 && id === "holodisk"),
             x: object.x,
             y: object.y,
           },
         ]
       : [];
   });
-  const stations = progress.stations.flatMap((id): MapPlace[] => {
+  const stations = progress.stations.flatMap((id): Place[] => {
     const site = worldStationById(context, catalog, galaxy, id);
     return site
       ? [
@@ -344,21 +342,19 @@ export function localMap(context: MapContext): LocalMap {
             label: context.label(id, "station"),
             objective: false,
             symbol: "station",
-            travel: true,
             x: site.x,
             y: site.y,
           },
         ]
       : [];
   });
-  const charted: MapPlace[] = landmarks.charted.map(({ id, kind, label, x, y }) => ({
+  const charted: Place[] = landmarks.charted.map(({ id, kind, label, x, y }) => ({
     id,
     job: false,
     kind: "landmark",
     label,
     objective: false,
     symbol: kind,
-    travel: false,
     x,
     y,
   }));
@@ -370,7 +366,7 @@ export function localMap(context: MapContext): LocalMap {
     context.destinations.filter(mapped).length +
     worldStationsNear(context, catalog, galaxy, CHARTING_RADIUS, CHARTING_ORIGIN).length +
     (landmarks.surveyTotal ?? landmarks.total);
-  const waypoint: MapPlace[] = context.holodisk
+  const waypoint: Place[] = context.holodisk
     ? [
         {
           id: "holodisk",
@@ -379,7 +375,6 @@ export function localMap(context: MapContext): LocalMap {
           label: context.label("holodisk", "holodisk"),
           objective: false,
           symbol: "holodisk",
-          travel: false,
           x: context.holodisk.x,
           y: context.holodisk.y,
         },
@@ -394,7 +389,6 @@ export function localMap(context: MapContext): LocalMap {
       label,
       objective: context.chapterWaypoint.objective ?? true,
       symbol: context.chapterWaypoint.symbol ?? "holodisk",
-      travel: false,
       x,
       y,
     });
@@ -413,7 +407,6 @@ export function localMap(context: MapContext): LocalMap {
       label,
       objective: false,
       symbol: kind,
-      travel: false,
       x,
       y,
     });
@@ -426,7 +419,7 @@ export function localMap(context: MapContext): LocalMap {
   }
   const { job } = context;
   const marked = places.map((entry) => (entry.id === job?.id ? { ...entry, job: true } : entry));
-  const spot: MapPlace[] =
+  const spot: Place[] =
     job && !places.some((entry) => entry.id === job.id)
       ? [
           {
@@ -437,14 +430,16 @@ export function localMap(context: MapContext): LocalMap {
             label: job.label,
             objective: false,
             symbol: "job",
-            travel: false,
             x: job.x,
             y: job.y,
           },
         ]
       : [];
   const { chunkSize } = context;
-  const shown = [...marked, ...spot];
+  const shown = [...marked, ...spot].map((place) => ({
+    ...place,
+    travel: place.label.trim().length > 0,
+  }));
   const target = (tied: (place: MapPlace) => boolean) => shown.find(tied)?.id ?? null;
   const { quests } = context;
   const story: QuestLine[] = quests.storyComplete

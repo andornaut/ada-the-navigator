@@ -108,7 +108,7 @@ function completeEye(seed: number): GameModel {
     ...progress.capitalBoss!.site,
     label: "Crossbow",
     objective: false,
-    travel: false,
+    travel: true,
   });
   endArrivalGrace(flight);
   return model;
@@ -293,18 +293,26 @@ describe("mounted Needle interactions", () => {
     expect(relaunch(CONTENT, loaded.save()).state.progress[4].needle?.approach).toBe("show");
   });
 
-  it("keeps the discovered disk non-travelable and commits Collect only after all eight Eye gates", () => {
+  it("allows travel to the discovered disk but commits Collect only after all eight Eye gates", () => {
     const model = launch();
     learn(model);
     model.choose("independent");
     visit(model, "holodisk");
     expect(model.state.progress[4].known).toContain("holodisk");
-    expect(model.map?.places.find(({ id }) => id === "holodisk")?.travel).toBe(false);
+    const marker = model.map!.places.find(({ id }) => id === "holodisk")!;
+    expect(marker.travel).toBe(true);
     model.interact();
     expect(model.state.progress[4].holodisk).toBe(false);
-    const before = { ...model.state.flight!.player };
-    model.teleport("holodisk");
-    expect(model.state.flight!.player).toEqual(before);
+    model.state.flight!.player = { x: marker.x + CONTENT.tuning.talkRange * 2, y: marker.y };
+    model.state.economy.stardust = 50;
+    expect(model.canTeleport("holodisk")).toBe(true);
+    expect(model.teleport("holodisk")).toBe(true);
+    expect(model.state.flight!.player).toEqual({ x: marker.x, y: marker.y });
+    expect(model.state.economy.stardust).toBe(0);
+    expect(model.state.progress[4]).toMatchObject({ holodisk: false, questComplete: false });
+    expect(model.state.dialogue).toBeNull();
+    model.interact();
+    expect(model.state.progress[4].holodisk).toBe(false);
     Object.assign(model.state.progress[4].needle!, {
       eyeLit: 8,
       practiceLit: 3,

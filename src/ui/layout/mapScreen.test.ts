@@ -166,14 +166,13 @@ describe("map projection and fit", () => {
     expect(toolColumnLeft(NO_INSETS, BASE)).toBe(542 - CARD_CLOSE.hit.width);
   });
 
-  it("starts the header a gap right of the pause press area and ends it a gap before the tools", () => {
+  it("starts the header at the safe page inset and ends it a gap before the tools", () => {
     const phone = { bottom: 19, left: 43, right: 43, top: 0 };
-    // The status pill's rule (art/map.md "Header"), clear of the pause disc.
-    expect(mapHeaderLeft(NO_INSETS, BASE)).toBe(62.75);
-    expect(mapHeaderLeft(phone, BASE)).toBe(93.75);
+    expect(mapHeaderLeft(NO_INSETS, BASE)).toBe(16);
+    expect(mapHeaderLeft(phone, BASE)).toBe(43);
     // The close target reserves a fixed width to the right of the zoom tools.
-    expect(mapHeaderCap(NO_INSETS, BASE)).toBe(471.25 - CARD_CLOSE.hit.width);
-    expect(mapHeaderCap(phone, BASE)).toBe(413.25 - CARD_CLOSE.hit.width);
+    expect(mapHeaderCap(NO_INSETS, BASE)).toBe(518 - CARD_CLOSE.hit.width);
+    expect(mapHeaderCap(phone, BASE)).toBe(464 - CARD_CLOSE.hit.width);
   });
 
   it("fills one survey pip per whole tenth of the displayed percent", () => {

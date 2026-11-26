@@ -142,6 +142,7 @@ describe("Phantom full route under test-only chapter admission, not production r
       expect(model.state.progress[6].opened).toBe(true);
       model.startGalaxy(6);
       expect(model.state.flight?.phantom?.phase).toBe("blockades");
+      expect(model.canTeleport(PHANTOM_FLAGSHIP)).toBe(false);
       for (const id of PHANTOM_DESTINATIONS) {
         const guards = [...model.state.flight!.phantom!.blockades[id]!];
         for (const guard of guards) {
@@ -156,7 +157,16 @@ describe("Phantom full route under test-only chapter admission, not production r
         expect(model.state.progress[6].phantom!.freed).toContain(id);
         model = reload(model);
       }
-      travel(model, model.state.flight!.phantom!.waypoint);
+      const flagshipMarker = model.map!.places.find(({ id }) => id === PHANTOM_FLAGSHIP)!;
+      expect(flagshipMarker.travel).toBe(true);
+      model.state.flight!.dangerFor = 0;
+      model.state.economy.stardust = 50;
+      expect(model.teleport(PHANTOM_FLAGSHIP)).toBe(true);
+      expect(model.state.flight!.player).toEqual({ x: flagshipMarker.x, y: flagshipMarker.y });
+      expect(model.state.economy.stardust).toBe(0);
+      expect(model.state.progress[6].holodisk).toBe(false);
+      expect(model.state.dialogue).toBeNull();
+      model.step(0.000001, idle);
       for (let wave = 1; wave <= PHANTOM_TUNING.waves; wave++) {
         expect(model.state.flight!.phantom!.wave).toBe(wave);
         expect(model.state.flight!.phantom!.phase).toBe("waves");

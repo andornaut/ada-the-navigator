@@ -681,8 +681,7 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
 .ada-controls .ada-map-travel-cost{
   display:inline-flex;
   align-items:center;
-  gap:${units(BALANCE.markGap)};
-  margin-inline-start:${units(SPACING.gap)}
+  gap:${units(BALANCE.markGap)}
 }
 .ada-controls .ada-map-travel-cost::before{
   content:"";

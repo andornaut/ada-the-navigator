@@ -48,7 +48,7 @@ function fixture() {
   return { body: created.station, flight, model, progress, site };
 }
 
-it("maps only identified sites without travel permission or altered chart totals", () => {
+it("maps only identified sites and permits travel without altering chart totals", () => {
   const { body, flight, model, progress, site } = fixture();
   const mapped = model.map!.mapped;
   progress.markerKnowledge = { [site.id]: "sensed" };
@@ -69,7 +69,7 @@ it("maps only identified sites without travel permission or altered chart totals
     objective: false,
     symbol: "hostileStation",
     taskCategory: "generic",
-    travel: false,
+    travel: true,
     x: site.x,
     y: site.y,
   });
@@ -108,6 +108,6 @@ it("keeps an identified geographic point on a new encounter without carrying old
   const place = model.map!.places.find(({ id }) => id === site.id)!;
   expect(place.hostileStationStatus).toBe("unresolved");
   expect({ x: place.x, y: place.y }).toEqual({ x: site.x, y: site.y });
-  expect(place.travel).toBe(false);
+  expect(place.travel).toBe(true);
   expect(model.state).toEqual(before);
 });

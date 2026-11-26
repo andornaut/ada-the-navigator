@@ -238,6 +238,7 @@ import {
   localMap,
   type MapContext,
   recordExplored,
+  stationForMapDestination,
   withinChartingRadius,
 } from "./map.ts";
 import { markerKnowledgeStore } from "./markerBindings.ts";
@@ -3038,22 +3039,22 @@ export class GameModel {
   }
   private mapTravel(id: string) {
     const flight = this.state.flight;
-    if (
-      !flight ||
-      this.state.mode !== "space" ||
-      this.state.dialogue ||
-      this.state.docked ||
-      (flight.galaxy === 4 && id === "holodisk")
-    ) {
+    if (!flight || this.state.mode !== "space" || this.state.dialogue || this.state.docked) {
       return null;
     }
-    // Discovery survives a destination's absence from the current flight and Map projection.
-    const station = this.current.stations.includes(id);
-    if (!station && !this.current.known.includes(id)) {
+    const station = this.current.stations.includes(id) && this.stationSite(flight, id) !== null;
+    // Preserve rehydration for known destinations. Needle's disk is only a map waypoint here.
+    const destination =
+      this.current.known.includes(id) &&
+      stationForMapDestination(flight.galaxy, id) === null &&
+      !(flight.galaxy === 4 && id === "holodisk");
+    const place =
+      station || destination ? undefined : this.map?.places.find((p) => p.id === id && p.travel);
+    if (!station && !destination && !place) {
       return null;
     }
     const { reason } = travelState(this.inDanger, this.towing, this.carrying, { travel: true });
-    return { flight, reason, station };
+    return { flight, place, reason, station };
   }
   canTeleport(id: string): boolean {
     const travel = this.mapTravel(id);
@@ -3069,7 +3070,7 @@ export class GameModel {
     if (!travel) {
       return false;
     }
-    const { flight, reason, station } = travel;
+    const { flight, place, reason, station } = travel;
     if (reason !== null) {
       this.refuse(
         this.label(
@@ -3084,10 +3085,10 @@ export class GameModel {
     }
     if (station) {
       ensureStation(this.content, id, flight);
-    } else {
+    } else if (!place) {
       ensureDestination(this.content, id, flight);
     }
-    if (!teleportFlight(this.content, id, flight)) {
+    if (!teleportFlight(this.content, place ?? id, flight)) {
       return false;
     }
     economy.stardust -= MAP_JUMP_COST;

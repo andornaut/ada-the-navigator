@@ -15,7 +15,7 @@ import { CHARTING_ORIGIN, CHARTING_RADIUS } from "../../model/map.ts";
 import { wrapPoint } from "../../model/worldGeometry.ts";
 import { CARD_CLOSE } from "./cardFrame.ts";
 import { COLOURS, UNLISTED_COLOURS } from "./colours.ts";
-import { hudRect, type Insets, safeRect, type Size, STATUS_PILL } from "./playView.ts";
+import { type Insets, safeRect, type Size } from "./playView.ts";
 import { BUTTON_GAP, TYPE } from "./tokens.ts";
 export { MAP_PANEL, MAP_SYMBOL } from "../../data/layout.ts";
 
@@ -194,14 +194,9 @@ export function panelMaxWidth(
   return Math.max(0, page.width - navigationWidth - SPACING.gap);
 }
 
-/**
- * The header's left takes the status pill's rule: SPACING.gap right of the pause press area, 62.75
- * at the 720 base and 93.75 with phone insets. The navigation disc always shows over the map
- * (src/input/controls.ts syncNavigationEntry), so art/map.md's page-left case for a hidden pause
- * button does not arise here.
- */
+/** The map header anchors to the safe page's left edge. */
 export function mapHeaderLeft(insets: Insets, view: Size): number {
-  return hudRect(insets, view).x + STATUS_PILL.x;
+  return safeRect(insets, SPACING.pageInset, view).x;
 }
 
 /** The header ends SPACING.gap left of the tools, which sit left of the close target. */

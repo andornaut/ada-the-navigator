@@ -99,6 +99,12 @@ it("admits an optional Scan from fresh piloting and retains its exact map identi
   const { candidate, flight, model, progress } = fixture("resources");
   expect(flight.exploration?.pacing).toEqual({ freshSeconds: 0, nextOpportunity: 1 });
   expect(model.map!.places.some(({ id }) => id === candidate.id)).toBe(false);
+  model.state.economy.stardust = 50;
+  const departure = { ...flight.player };
+  expect(model.canTeleport(candidate.id)).toBe(false);
+  expect(model.teleport(candidate.id)).toBe(false);
+  expect(flight.player).toEqual(departure);
+  expect(model.state.economy.stardust).toBe(50);
   expect(model.jobScenery.landmarks.find(({ id }) => id === candidate.id)).toMatchObject({
     charted: false,
     x: candidate.x,
@@ -120,7 +126,7 @@ it("admits an optional Scan from fresh piloting and retains its exact map identi
   expect(model.state.jobs).toEqual(jobs);
   expect(model.state.tasks).toEqual(tasks);
   expect(model.map!.places.find(({ id }) => id === candidate.id)).toMatchObject({
-    travel: false,
+    travel: true,
     x: candidate.x,
     y: candidate.y,
   });
@@ -132,6 +138,18 @@ it("admits an optional Scan from fresh piloting and retains its exact map identi
   expect(resumed.map!.places.find(({ id }) => id === candidate.id)).toEqual(
     model.map!.places.find(({ id }) => id === candidate.id),
   );
+  flight.player = departure;
+  flight.dangerFor = 1;
+  expect(model.canTeleport(candidate.id)).toBe(false);
+  expect(model.teleport(candidate.id)).toBe(false);
+  expect(flight.player).toEqual(departure);
+  expect(model.state.economy.stardust).toBe(50);
+  flight.dangerFor = 0;
+  expect(model.canTeleport(candidate.id)).toBe(true);
+  expect(model.teleport(candidate.id)).toBe(true);
+  expect(flight.player).toEqual({ x: candidate.x, y: candidate.y });
+  expect(model.state.economy.stardust).toBe(0);
+  expect(progress).toMatchObject(before);
 });
 
 it("admits salvage sites among Andromeda's planned enemy groups", () => {

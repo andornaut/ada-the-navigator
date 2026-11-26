@@ -239,7 +239,7 @@ describe("galaxy map", () => {
     expect(half.mapped).toBe(Math.floor((100 * 2) / (galaxyRoute(1).length + inside.length)));
   });
 
-  it("charts landmarks through their slot: shown, counted, and never a Travel target", () => {
+  it("charts landmarks through their slot: shown, counted, and a Travel target", () => {
     const model = flying();
     const landmarks: LandmarkChart = {
       charted: [{ id: "comet", kind: "nebula", label: "Comet", x: 1000, y: 2000 }],
@@ -254,7 +254,7 @@ describe("galaxy map", () => {
         label: "Comet",
         objective: false,
         symbol: "nebula",
-        travel: false,
+        travel: true,
         x: 1000,
         y: 2000,
       },
@@ -299,7 +299,7 @@ describe("galaxy map", () => {
       label: "Find a lost toolbox",
       objective: false,
       symbol: "job",
-      travel: false,
+      travel: true,
       x: 5000,
       y: 0,
     });
@@ -417,7 +417,7 @@ describe("galaxy map", () => {
     expect(model.map).toBeNull();
   });
 
-  it("shows a landmark only after explicit Scan, counts it and never travels there", () => {
+  it("shows, counts and allows travel to a landmark only after explicit Scan", () => {
     const model = flying();
     const flight = model.state.flight!;
     model.state.dialogue = null;
@@ -441,7 +441,7 @@ describe("galaxy map", () => {
         objective: false,
         symbol: landmark.kind,
         taskCategory: "generic",
-        travel: false,
+        travel: true,
         x: landmark.x,
         y: landmark.y,
       },
@@ -449,9 +449,10 @@ describe("galaxy map", () => {
     const total =
       galaxyRoute(1).length + inside.length + landmarkSites(1).filter(withinChartingRadius).length;
     expect(model.map?.mapped).toBe(Math.floor(100 / total));
-    const at = { ...flight.player };
-    model.teleport(landmark.id);
-    expect(model.state.flight!.player).toEqual(at);
+    model.state.economy.stardust = 50;
+    expect(model.teleport(landmark.id)).toBe(true);
+    expect(flight.player).toEqual({ x: landmark.x, y: landmark.y });
+    expect(model.state.economy.stardust).toBe(0);
   });
 
   it("keeps the 25k survey circle separate from the expanded landmark extent", () => {
@@ -500,7 +501,7 @@ describe("galaxy map", () => {
       objective: false,
       symbol: "holodisk",
       taskCategory: "story",
-      travel: false,
+      travel: true,
       x: site.x,
       y: site.y,
     });
@@ -755,7 +756,7 @@ describe("periodic map metadata and separate procedural places", () => {
     expect(periodic.places.filter(({ id }) => id === site.id)).toHaveLength(1);
     expect(periodic.places.find(({ id }) => id === site.id)).toMatchObject({
       kind: "landmark",
-      travel: false,
+      travel: true,
     });
     expect(periodic.mapped).toBe(original.mapped);
     expect(localMap({ ...base, worldSide: 1_152_000 }).places).not.toContainEqual(
@@ -764,7 +765,7 @@ describe("periodic map metadata and separate procedural places", () => {
   });
 });
 
-it("blocks generic Travel only for Needle's floating disk while preserving other galaxies", () => {
+it("offers Travel to an exposed holodisk marker in every galaxy", () => {
   const model = flying();
   const base = context(model, { known: ["holodisk"], stations: [] });
   for (const galaxy of [1, 2, 3, 4, 5, 6] as const) {
@@ -777,7 +778,7 @@ it("blocks generic Travel only for Needle's floating disk while preserving other
         objects: [{ hp: 1, id: "holodisk", kind: "destination", radius: 10, x: 20, y: 30 }],
       },
     });
-    expect(mapped.places.find(({ id }) => id === "holodisk")?.travel).toBe(galaxy !== 4);
+    expect(mapped.places.find(({ id }) => id === "holodisk")?.travel).toBe(true);
   }
 });
 

@@ -76,7 +76,7 @@ function beginClaim(): GameModel {
     ...progress.claim!.site,
     label: "Outrigger Carrier",
     objective: false,
-    travel: false,
+    travel: true,
   });
   return model;
 }
@@ -233,7 +233,7 @@ it.each(["defeated", "salvaged"] as const)(
       ...claim.fieldSite,
       label: CARTWHEEL_CLAIM.fieldLabel,
       objective: false,
-      travel: false,
+      travel: true,
     });
     expect(model.state.progress[2].holodisk).toBe(false);
     hearCue(model, CARTWHEEL_CLAIM_CUES.resolved);

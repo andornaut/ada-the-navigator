@@ -550,7 +550,7 @@ try {
   const near = (actual, expected, within) =>
     actual.length === expected.length &&
     actual.every((value, index) => Math.abs(value - expected[index]) <= within);
-  // The map's header (art/map.md "Header"): its left SPACING.gap right of the pause press area, its
+  // The map's header starts at the safe page inset. Its
   // right at most its cap, SPACING.gap short of the tools, from the same insets. The pip row is ten
   // full-size pips, 6 across at an 8 pitch and 78 wide, unscaled, the first floor(percent / 10)
   // filled cream and the rest hollow rings. The widest header, the longest galaxy name with "100%
@@ -2683,8 +2683,7 @@ try {
       close: box('[data-action="map-close"]'),
       galaxies: box('[data-action="map-galaxies"]'),
       header: box(".ada-map-header"),
-      // The navigation disc at the pause button's place, over the map.
-      navigation: document.querySelector(".ada-controls [data-navigation]").getBoundingClientRect(),
+      screen: screen.getBoundingClientRect(),
       quests: box('[data-action="map-quests"]'),
       tools: box(".ada-map-tools"),
       closeX: box('[data-action="map-close-x"]'),
@@ -2728,11 +2727,10 @@ try {
     hudRow.header.right <= hudRow.tools.left - 8 * hudRow.unit + 0.5,
     `The header stays SPACING.gap short of the tools: ${JSON.stringify(hudRow)}`,
   );
-  // The header's left takes the status pill's rule, SPACING.gap right of the pause press area, so
-  // the navigation disc never covers it (art/map.md "Header").
   assert.ok(
-    Math.abs(hudRow.header.left - (hudRow.navigation.right + 8 * hudRow.unit)) <= 1,
-    `The header starts SPACING.gap right of the navigation disc: ${JSON.stringify(hudRow)}`,
+    Math.abs(logical(hudRow.header.left - hudRow.screen.left) - mapSpacing.pageInset) <= 0.5 &&
+      Math.abs(logical(hudRow.header.top - hudRow.screen.top) - mapSpacing.pageInset) <= 0.5,
+    `The header starts at the top-left page inset: ${JSON.stringify(hudRow)}`,
   );
   assert.equal(await mapEarth.getAttribute("aria-disabled"), "true", "It is disabled in danger");
   const reasonOnly = await mapScreen.evaluate((screen) => {

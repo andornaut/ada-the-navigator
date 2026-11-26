@@ -3743,18 +3743,21 @@ export function createFlight(
   return flight;
 }
 
-export function teleport(content: GameContent, id: string, flight: FlightState): boolean {
+export function teleport(content: GameContent, target: string | Vec, flight: FlightState): boolean {
   if (flight.dangerFor > 0) {
     return false;
   }
-  const object = flight.objects.find(
-    (o) => (o.kind === "destination" || o.kind === "station") && o.id === id,
-  );
-  if (!object) {
+  const point =
+    typeof target === "string"
+      ? flight.objects.find(
+          (o) => (o.kind === "destination" || o.kind === "station") && o.id === target,
+        )
+      : target;
+  if (!point) {
     return false;
   }
   beginFlightStep(flight);
-  const arrival = { x: object.x, y: object.y };
+  const arrival = { x: point.x, y: point.y };
   // A jump arrival begins calm: no new encounter is placed near it, and ordinary encounter
   // ships already near it leave without counting as casualties. Guards keep their posts.
   if (!arrivalPoints(flight).some((point) => point.x === arrival.x && point.y === arrival.y)) {
@@ -3767,12 +3770,12 @@ export function teleport(content: GameContent, id: string, flight: FlightState):
         content.tuning.flight.arrivalCalm + other.radius,
     flight,
   );
-  generate(content, object, flight);
+  generate(content, arrival, flight);
   flight.player = arrival;
   flight.velocity = { x: 0, y: 0 };
   flight.freshChunk = null;
   beginArrivalGrace(content, flight);
-  const key = chunk(flight, content, object);
+  const key = chunk(flight, content, arrival);
   markVisited(flight.visited, key);
   worldSyncFlightRegion(flightWorldContext(flight), content, flight);
   return true;
