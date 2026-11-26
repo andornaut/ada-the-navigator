@@ -1178,6 +1178,13 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   character format as the count ("+44.4k"). Ore spent on shield recharge shows
   a "−10" tick under the ore count for each 10 ore paid, mirroring the gain
   ticks.
+- Weapon equip notice: when Ada's equipped weapon changes in flight, show its
+  name in the [scan notice style](quests.md#completion-presentation). Center it
+  below the top HUD icon row, clear of any visible boss bar. When it overlaps
+  in-flight dialogue, draw the dialogue on top. Hold for two seconds and fade
+  over 500 ms. A newer equip replaces the previous weapon name. Automatic
+  fallback to Laser counts as an equip. Re-selecting the current weapon,
+  refused selections, detail cards and loading a save show no equip notice.
 - Item notices: when Ada gains anything other than Stardust or ore (a holodisk,
   a story item, a lost item, a job item, anything from an upgrade drop, or a
   towed craft), a small notice shows just below the status
