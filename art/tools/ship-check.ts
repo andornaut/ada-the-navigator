@@ -32,6 +32,7 @@ import {
   forwardJetMouths,
   FRAME,
   PAINT_SLOTS,
+  mouthDirection,
   plumeRoot,
   plumeSide,
   retroMouthAxis,
@@ -355,6 +356,29 @@ test("forward plumes root at the mouth centres with three layers and the hull re
   }
   // Head on, the hull hides both plume roots.
   assert(jets.headings[8]!.mouths.every((mouth) => mouth.occluders!.length > 0));
+});
+
+test("the start screen's plumes run 1.3 times as long, each along its engine mouth", () => {
+  const title = JSON.parse(readFileSync(new URL("title-screen.json", assets), "utf8")) as {
+    ship: { frame: number; jetLengthScale: number; jetMouths: unknown };
+  };
+  assert.equal(title.ship.jetLengthScale, 1.3);
+  assert.deepEqual(
+    title.ship.jetMouths,
+    forwardJetMouths(
+      FRAME / 2,
+      { yaw: title.ship.frame },
+      plumeReach((JET_LENGTH.base + JET_LENGTH.scale) * 1.3),
+      mouthDirection,
+    ),
+  );
+  for (const sign of [-1, 1]) {
+    const [x, y, z] = mouthDirection(sign);
+    // Square to the trailing edge from the tip (21.44, 20.48) to the notch (5.44, 15.68).
+    assert(Math.abs(sign * x * 16 + y * 4.8) < 1e-9);
+    assert.equal(z, 0);
+    assert(y > 0 && sign * x < 0, "rearward and inboard");
+  }
 });
 
 test("only the halo draws under the hull and on the 42 px flight sprite alone", () => {

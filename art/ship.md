@@ -36,18 +36,18 @@
 
 A model or paint change regenerates all of these, in this order:
 
-| Consumer                                 | Producer                                                             | Output                                                                                   |
-| ---------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| 64 headings, six paints, nine jump poses | `node art/tools/ship.ts`                                             | `ship-materials.json`, `ship-paint.json` and the 385 logical manifest entries            |
-| Collision and nose                       | `node art/tools/ship.ts`                                             | `ship-nose.json`                                                                         |
-| Forward plumes                           | `node art/tools/ship.ts`                                             | `ship-jets.json`                                                                         |
-| Reverse plumes                           | `node art/tools/ship-retro-jets.ts`                                  | `ship-retro-jets.json`                                                                   |
-| Light-field plume colours                | `node art/tools/galaxies.ts`                                         | `galaxies.json` `lightField.jets.shipLevels`                                             |
-| App icon                                 | `node art/tools/app-icon.ts`                                         | `app-icon/` ([app icon](app-icon.md))                                                    |
-| Aboard scenes                            | `node art/tools/aboard.ts`                                           | `aboard.svg`, `aboard-emergency.svg`, `aboard-holodisk-{0..3}.svg` ([aboard](aboard.md)) |
-| Jump pose plumes                         | `node art/tools/quantum-jump.ts`                                     | `quantum-jump.json` `warp.poses[].jets` ([quantum jump](quantum-jump.md#warp-ship))      |
-| Galaxy preview cards                     | `node art/tools/galaxy-previews.ts`                                  | `previews/card-{galaxy}.png` and `-locked` ([preview cards](galaxies.md#preview-cards))  |
-| Title screen ship                        | none: the runtime draws `ship-52` and its plumes from the data above | [title screen](title-screen.md)                                                          |
+| Consumer                                 | Producer                            | Output                                                                                           |
+| ---------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------ |
+| 64 headings, six paints, nine jump poses | `node art/tools/ship.ts`            | `ship-materials.json`, `ship-paint.json` and the 385 logical manifest entries                    |
+| Collision and nose                       | `node art/tools/ship.ts`            | `ship-nose.json`                                                                                 |
+| Forward plumes                           | `node art/tools/ship.ts`            | `ship-jets.json`                                                                                 |
+| Reverse plumes                           | `node art/tools/ship-retro-jets.ts` | `ship-retro-jets.json`                                                                           |
+| Light-field plume colours                | `node art/tools/galaxies.ts`        | `galaxies.json` `lightField.jets.shipLevels`                                                     |
+| App icon                                 | `node art/tools/app-icon.ts`        | `app-icon/` ([app icon](app-icon.md))                                                            |
+| Aboard scenes                            | `node art/tools/aboard.ts`          | `aboard.svg`, `aboard-emergency.svg`, `aboard-holodisk-{0..3}.svg` ([aboard](aboard.md))         |
+| Jump pose plumes                         | `node art/tools/quantum-jump.ts`    | `quantum-jump.json` `warp.poses[].jets` ([quantum jump](quantum-jump.md#warp-ship))              |
+| Galaxy preview cards                     | `node art/tools/galaxy-previews.ts` | `previews/card-{galaxy}.png` and `-locked` ([preview cards](galaxies.md#preview-cards))          |
+| Title screen ship                        | `node art/tools/title-screen.ts`    | `title-screen.json` `ship.jetLengthScale` and `ship.jetMouths` ([title screen](title-screen.md)) |
 
 - `art/tools/ship-check.ts` and `art/tools/ship-materials-check.ts` pin the
   model, paints, slots, plumes and published data

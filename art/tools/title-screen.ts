@@ -13,6 +13,8 @@ import { INK, IN_BETWEEN, SPACE_BG } from "./palette.ts";
 import { linkData, replaceEntries } from "./manifest.ts";
 import { json, SHIP_HEADINGS, SHIP_HEADING_CONTRACT } from "./projection.ts";
 import { Random } from "./random.ts";
+import { JET_LENGTH, plumeReach } from "./ship-jet-layers.ts";
+import { FRAME, forwardJetMouths, mouthDirection } from "./ship-model.ts";
 
 const art = fileURLToPath(new URL("../../public/art/", import.meta.url));
 
@@ -248,6 +250,18 @@ function field(): RgbaImage {
   return image;
 }
 
+// The start screen ship's plumes: 1.3 times the flight jet length, each turned in the exhaust
+// plane about its unchanged root to its engine mouth's own direction, square to the trailing
+// edge, so it leaves the lit opening in line. These mouths replace the flight
+// file's mouths at the title frame; widths, roots and the length curve's shape are the flight's.
+const TITLE_SHIP = { frame: (SHIP_HEADINGS * 292.5) / 360, jetSpeed: 0.8, jetLengthScale: 1.3 };
+const titleMouths = forwardJetMouths(
+  FRAME / 2,
+  { yaw: TITLE_SHIP.frame },
+  plumeReach((JET_LENGTH.base + JET_LENGTH.scale) * TITLE_SHIP.jetLengthScale),
+  mouthDirection,
+);
+
 const mark = wordmark();
 writeFileSync(`${art}ui/title-wordmark.svg`, svgText(mark.svg));
 writePng(`${art}title-field.png`, field(), true);
@@ -258,7 +272,13 @@ writeFileSync(
     shipHeadings: SHIP_HEADING_CONTRACT,
     background: `#${SPACE_BG}`,
     field: { id: "title-field", at: [FIELD.x, FIELD.y] },
-    ship: { frame: (SHIP_HEADINGS * 292.5) / 360, jetSpeed: 0.8, animated: false },
+    ship: {
+      frame: TITLE_SHIP.frame,
+      jetSpeed: TITLE_SHIP.jetSpeed,
+      animated: false,
+      jetLengthScale: TITLE_SHIP.jetLengthScale,
+      jetMouths: titleMouths,
+    },
     wordmark: { id: "title-wordmark" },
   }),
 );

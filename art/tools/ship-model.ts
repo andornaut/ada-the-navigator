@@ -538,18 +538,31 @@ export function forwardJetMouths(
   pivot: number,
   pose: Pose,
   reach: { halfWidth: number; length: number },
+  exhaust: (sign: number) => Point = () => [0, 1, 0],
 ) {
   const projected = (centre: number, point: Point) =>
     projectAt(centre, centre, place(pose, point)).map(round) as [number, number];
   return [-1, 1].map((sign) => {
-    const half = plumeSide(pose, [0, 1, 0], [sign, 0, 0]);
+    const axis = exhaust(sign);
+    const half = plumeSide(pose, axis, [sign, 0, 0]);
     return {
       anchor: projected(pivot, plumeRoot(sign)),
-      axis: projected(0, [0, 1, 0]),
+      axis: projected(0, axis),
       half,
-      occluders: plumeOccluders(pivot, pose, sign, reach, half),
+      occluders: plumeOccluders(pivot, pose, sign, reach, half, axis),
     };
   });
+}
+
+/**
+ * The sign side engine mouth's own exhaust direction in the horizontal exhaust plane, local: its
+ * rear wall's outward normal without the wall's lean, square to the trailing edge, 16.7 degrees
+ * inboard of straight back.
+ */
+export function mouthDirection(sign: number): Point {
+  const [tip, notch] = wallOf(sign);
+  const [x, y] = leaning(tip, notch).n;
+  return unit([x, y, 0]);
 }
 
 /**
@@ -902,10 +915,11 @@ export function plumeOccluders(
   sign: number,
   reach: { halfWidth: number; length: number },
   half: readonly [number, number],
+  exhaust: Point = [0, 1, 0],
 ): V2[][] {
   const root = plumeRoot(sign);
   const anchor = projectAt(pivot, pivot, place(pose, root));
-  const axis = projectAt(0, 0, minus(place(pose, [0, 1, 0]), place(pose, [0, 0, 0])));
+  const axis = projectAt(0, 0, minus(place(pose, exhaust), place(pose, [0, 0, 0])));
   const corners = [
     [-reach.halfWidth, 0],
     [reach.halfWidth, 0],
@@ -927,7 +941,7 @@ export function plumeOccluders(
     const edge: Point = [winding * (b[1] - a[1]), winding * (a[0] - b[0]), 0];
     return { normal: edge, distance: edge[0] * a[0] + edge[1] * a[1] };
   });
-  const depth = plumeDepthPlane(pose, root, [0, 1, 0]);
+  const depth = plumeDepthPlane(pose, root, exhaust);
   const fragments = ordered(viewer(pose), geometry().tree).flatMap((surface) => {
     const above = split(depth, surface.points).front;
     if (above.length < 3) return [];

@@ -41,14 +41,24 @@ The title ship is the in-game ship art, not a separate drawing.
 
 - Frame: the selected paint's `ship-52` (Classic `ship-52` before a paint is
   chosen), nose right with a slight climb, its 96 frame drawn 280 by 280.
-- Speed jets from `ship-jets.json` at `f = 0.8` (`title-screen.json`
-  `ship.jetSpeed`): a jet length of 21.36 ship units, the outer flame and
-  core at the frame's scale (280 / 96), composed with the hull as in flight.
-  The halo is a flight-sprite layer and does not draw here. The lower plume draws over the tail; the upper one passes behind
-  it.
+- Speed jets: the `ship-jets.json` layers, profile and length curve at
+  `f = 0.8` (`title-screen.json` `ship.jetSpeed`), with two title-only
+  changes in `title-screen.json`. `ship.jetLengthScale` (1.3) multiplies the
+  length curve, so the jet length is 27.77 ship units, 1.3 times the flight's
+  21.36. `ship.jetMouths` replaces the flight file's two mouths at the title
+  frame, port then starboard, in the same `anchor`, `axis`, `half` and
+  `occluders` form: the roots are the flight roots, and each axis turns in
+  the exhaust plane to its engine mouth's own direction, square to the
+  trailing edge and 16.7 degrees inboard of straight back, so the plume
+  leaves the lit opening in line. On screen the upper plume turns from 166.6
+  to 154.8 degrees and the lower from 166.6 to 176.7 (clockwise from screen
+  right). Widths are the flight's.
+- The outer flame and core draw at the frame's scale (280 / 96), composed with
+  the hull as in flight. The halo is a flight-sprite layer and does not draw
+  here. The lower plume draws over the tail; the upper one passes behind it.
 - Held still: no bob, flicker or jet change (`ship.animated` is false).
 - Ink extents at the [layout](layout.md#start-screen) position: hull 281 to
-  484 by 42 to 141 in play-view px, jets reaching 232.8.
+  484 by 42 to 141 in play-view px, jets reaching 226.4 (y 56.6 to 131.4).
 
 ## Field
 
