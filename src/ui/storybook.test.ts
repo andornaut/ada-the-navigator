@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ARCHIE_NAMED } from "../data/conversations.ts";
+import { SCREEN } from "../data/screen.ts";
 import { openingScene } from "../model/storybook.ts";
 import { AWAITING_TAB, SPEAKING_FRAME_MS, TAB_COLOURS } from "./conversation.ts";
 import { TEXT_BUTTON } from "./layout/controls.ts";
@@ -357,16 +358,37 @@ describe("story page portraits", () => {
   });
 });
 
-it("caps Earth content to the canonical game width while retaining full-width half-panel paint", () => {
-  expect(rule(".ada-controls .ada-story .ada-story-panel")).toContain("720px");
-  expect(rule(".ada-controls .ada-story.ada-story-half .ada-story-panel")).toContain("width:100%");
+it("centres the half spread within the game and safe edges over full-view art", () => {
+  const panel = rule(".ada-controls .ada-story.ada-story-half .ada-story-panel");
+  const gutter = `calc((100% - ${units(SCREEN.width)}) / 2)`;
+  for (const side of ["left", "right"] as const) {
+    expect(panel).toContain(`${side}:max(${gutter}, ${safeEdge(side, 0)})`);
+  }
+  expect(panel).toContain("transform:none;");
+  expect(panel).toContain("width:auto;");
+  expect(panel).toContain(`var(--ada-area-left) - ${gutter}`);
+  expect(rule(".ada-controls .ada-story-half .ada-story-art-window")).toContain("overflow:visible");
+});
+
+it("aligns the half spread's Next with the right edge of Skip in both HUD states", () => {
+  const panel = rule(".ada-controls .ada-story.ada-story-half .ada-story-panel");
+  expect(panel).toContain("padding-right:calc(var(--ada-story-action-right)");
+  expect(rule(".ada-controls .ada-story-half > .ada-story-skip")).toContain(
+    "right:var(--ada-story-action-right)",
+  );
+  expect(rule(".ada-controls .ada-story-half")).toContain(
+    `--ada-story-action-right:max(${fromHudEdge("right", STORY_SKIP.right.besideSettings)},`,
+  );
+  expect(rule(".ada-controls.ada-no-settings-button .ada-story-half")).toContain(
+    `--ada-story-action-right:max(${fromHudEdge("right", STORY_SKIP.right.corner)},`,
+  );
 });
 
 it("grows the half spread past the lower half up to the light spread's top cap", () => {
   const height = (top: number) =>
     `max-height:calc(100% - ${fromHudEdge("top", top)} - ${safeEdge("bottom", SPACING.pageInset)})`;
   const half = rule(".ada-controls .ada-story.ada-story-half .ada-story-panel");
-  expect(half).toContain("bottom:0;");
+  expect(half).toContain(`bottom:${safeEdge("bottom", 0)};`);
   expect(half).toContain("min-height:50%;");
   expect(half).toContain(height(STORY_PANEL_TOP));
   expect(half).not.toMatch(/(^|[\s;{])(top|height):/u);

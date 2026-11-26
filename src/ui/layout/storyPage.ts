@@ -94,15 +94,6 @@ export function storyHalfArtOffset(
   );
 }
 
-/** Full-width paint retains text and actions inside the canonical game area's padded sides. */
-export function storyContentPadding(view: Size): { readonly left: number; readonly right: number } {
-  const area = playView(view);
-  return {
-    left: area.x + STORY_PANEL.padding,
-    right: view.width - area.x - area.width + STORY_PANEL.padding,
-  };
-}
-
 /** Cover the Earth art window with an existing backdrop, keeping its canonical game-area centre. */
 export function storyBackdropRect(view: Size, image: Size): Rect {
   const area = playView(view);

@@ -49,7 +49,6 @@ import {
   STORY_BACKGROUND,
   STORY_PANEL,
   storyBackgroundTop,
-  storyContentPadding,
   storyHalfArtOffset,
   type SubjectBand,
 } from "./layout/storyPage.ts";
@@ -315,6 +314,13 @@ const ART_WIDTH = `max(${units(STORY_BACKGROUND.width)}, 100cqw, calc(100cqh * $
 
 // The panel's padding, including the card's 2 frame.
 const PANEL_PADDING = `calc(${units(STORY_PANEL.padding)} - ${slice(2)})`;
+const HALF_GUTTER = `calc((100% - ${units(SCREEN.width)}) / 2)`;
+const HALF_PANEL_LEFT = `max(${HALF_GUTTER}, ${safeEdge("left", 0)})`;
+const HALF_PANEL_RIGHT = `max(${HALF_GUTTER}, ${safeEdge("right", 0)})`;
+const HALF_ACTION_RIGHT = "--ada-story-action-right";
+const halfActionRight = (skipOffset: number) =>
+  `max(${fromHudEdge("right", skipOffset)}, calc(${HALF_PANEL_RIGHT} + ${slice(2)}))`;
+
 const { choiceColumn, columnGap, rule } = STORY_PANEL;
 // The choice column: its share of the inner width less the column gap, within its min and max.
 const CHOICE_WIDTH = `clamp(${units(choiceColumn.min)}, calc((100% - ${units(columnGap)}) * ${
@@ -338,19 +344,30 @@ export const STORYBOOK_STYLE = `
   overflow:hidden
 }
 .ada-controls .ada-story-half .ada-story-art-window{
-  bottom:50%
+  bottom:50%;
+  overflow:visible
 }
 .ada-controls .ada-story-half .ada-story-background{
   height:200%;
   bottom:auto;
   overflow:visible
 }
-/* The half spread paints the lower half at least, full width to the view's bottom, and grows over
-   the art window as tall as its page needs up to the light spread's top cap (art/layout.md
-   "Storybook page"), so every page within Gameplay's limits fits without scrolling. */
+/* The bottom spread sits over the full backdrop, within the safe 720-unit game width.
+   The copy keeps the game area's snapped inset, and Next shares Skip's outer right edge. */
+.ada-controls .ada-story-half{
+  ${HALF_ACTION_RIGHT}:${halfActionRight(STORY_SKIP.right.besideSettings)}
+}
+.ada-controls.ada-no-settings-button .ada-story-half{
+  ${HALF_ACTION_RIGHT}:${halfActionRight(STORY_SKIP.right.corner)}
+}
 .ada-controls .ada-story.ada-story-half .ada-story-panel{
-  bottom:0;
-  width:100%;
+  left:${HALF_PANEL_LEFT};
+  right:${HALF_PANEL_RIGHT};
+  bottom:${safeEdge("bottom", 0)};
+  transform:none;
+  width:auto;
+  padding-left:calc(${PANEL_PADDING} + var(${VIEW_PROPERTIES.areaLeft}) - ${HALF_GUTTER});
+  padding-right:calc(var(${HALF_ACTION_RIGHT}) - ${HALF_PANEL_RIGHT} - ${slice(2)});
   min-height:50%;
   max-height:${availableHeight(STORY_PANEL_TOP)}
 }
@@ -607,6 +624,9 @@ ${PRESSED_STORY_BUTTON}{
 }
 .ada-controls.ada-no-settings-button .ada-story-skip{
   right:${fromHudEdge("right", STORY_SKIP.right.corner)}
+}
+.ada-controls .ada-story-half > .ada-story-skip{
+  right:var(${HALF_ACTION_RIGHT})
 }
 .ada-controls .ada-story .ada-button.ada-story-choice-previous{
   position:absolute;
@@ -989,16 +1009,6 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     };
   };
   const panelTop = (unit: number) => frameBoxIn(layer, panel).y / unit;
-  const placePanelContent = () => {
-    if (rendered && !rendered.sleep) {
-      const padding = storyContentPadding(viewSize());
-      panel.style.paddingLeft = `calc(${units(padding.left)} - ${slice(2)})`;
-      panel.style.paddingRight = `calc(${units(padding.right)} - ${slice(2)})`;
-    } else {
-      panel.style.paddingLeft = "";
-      panel.style.paddingRight = "";
-    }
-  };
   // The background a key is placed as: a composite's base, else itself.
   const anchorOf = (key: Background): Background => art.bases[key] ?? key;
   // Measures each page of the story run in the panel, keeping the highest panel top on each
@@ -1348,7 +1358,6 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     );
     backdropShown = backdrop;
     layer.hidden = page === null && backdrop === null;
-    placePanelContent();
     skip.hidden = page === null || !page.canSkip;
     if (!page) {
       previous.hidden = true;
@@ -1390,7 +1399,6 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     }
     auditNavigation(navigationButtons);
     const focused = document.activeElement;
-    placePanelContent();
     measuredRun = "";
     measureRun(rendered);
     panel.hidden = rendered.sleep === true;
