@@ -6,7 +6,7 @@ import type { IndicatorTarget } from "../indicators.ts";
 import { nearestWorldSafePlace } from "../jobs.ts";
 import { landmarkById } from "../landmarks.ts";
 import type { MapContext } from "../map.ts";
-import { stationById } from "../stations.ts";
+import { flightStationContext, worldStationById } from "../stations.ts";
 import type { FlightState, GameState, HeldJob, JobTarget, Vec } from "../types.ts";
 import { worldDistance } from "../worldContacts.ts";
 
@@ -71,7 +71,7 @@ function jobTarget(context: JobNavigationContext, f: FlightState): IndicatorTarg
   if (held.type === "delivery") {
     const station = held.carrying ? held.target.id : held.station;
     const place =
-      stationById(ECONOMY, f.galaxy, station) ??
+      worldStationById(flightStationContext(f), ECONOMY, f.galaxy, station) ??
       f.objects.find((object) => object.kind === "destination" && object.id === station) ??
       held.target;
     return mark({ id: station, x: place.x, y: place.y });
@@ -107,7 +107,9 @@ function activityTarget(context: JobNavigationContext, f: FlightState): Indicato
   }
   // A supply run's item goes to its station; a lost one is replaced at the issuing outpost.
   if (activity.id === "supplyRun" && activity.carrying && activity.target) {
-    const site = stationById(ECONOMY, f.galaxy, activity.target.id) ?? activity.target;
+    const site =
+      worldStationById(flightStationContext(f), ECONOMY, f.galaxy, activity.target.id) ??
+      activity.target;
     return mark(site, activity.target.id);
   }
   const at = place(activity.place);

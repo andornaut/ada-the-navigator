@@ -10,7 +10,7 @@ import {
   worldStationsNear,
 } from "./stations.ts";
 import type { Vec } from "./types.ts";
-import { worldCellOrigin, worldCellsNear, worldGrid } from "./worldCells.ts";
+import { periodicWorldGrid, worldCellOrigin, worldCellsNear } from "./worldCells.ts";
 
 function exhaustive(
   context: StationPlacementContext,
@@ -19,7 +19,7 @@ function exhaustive(
   point: Vec,
 ) {
   const sites = worldLegacyStationsNear(context, ECONOMY, galaxy, radius, point);
-  const grid = worldGrid(context, ECONOMY.station.cellSize);
+  const grid = periodicWorldGrid(context, ECONOMY.station.cellSize);
   for (const cell of worldCellsNear(grid, radius + grid.pitch, point)) {
     const site = worldInfillStationInCell(context, ECONOMY, galaxy, cell);
     if (site && stationDistance(context, site, point) <= radius) {
@@ -38,7 +38,7 @@ describe("station query candidate bounds", () => {
         { worldSide: GALAXY_SIDE },
         { stationExclusions: [{ x: 12000, y: 0 }] },
       ] satisfies StationPlacementContext[]) {
-        const grid = worldGrid(context, ECONOMY.station.cellSize);
+        const grid = periodicWorldGrid(context, ECONOMY.station.cellSize);
         const origin = worldCellOrigin(grid, { x: 3, y: -2 });
         for (const point of [
           origin,

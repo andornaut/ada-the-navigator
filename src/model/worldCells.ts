@@ -74,11 +74,19 @@ export function worldCellKey(grid: WorldGrid, cell: Vec): string {
   return `${at.x},${at.y}`;
 }
 
+function cellIndex(grid: WorldGrid, coordinate: number): number {
+  if (grid.worldSide === undefined || grid.periodCells === undefined) {
+    return Math.floor(coordinate / grid.pitch);
+  }
+  // Scale by the integer period so the seam stays exact even with a repeating pitch.
+  return Math.floor((coordinate * grid.periodCells) / grid.worldSide + (grid.periodCells % 2) / 2);
+}
+
 export function worldCellAt(grid: WorldGrid, point: Vec): Vec {
   const at = grid.worldSide === undefined ? point : wrapPoint(grid.worldSide, point);
   return worldCell(grid, {
-    x: Math.floor((at.x - grid.phase) / grid.pitch),
-    y: Math.floor((at.y - grid.phase) / grid.pitch),
+    x: cellIndex(grid, at.x),
+    y: cellIndex(grid, at.y),
   });
 }
 
@@ -103,12 +111,12 @@ export function* worldCellsNear(grid: WorldGrid, radius: number, point: Vec): It
   }
   const at = grid.worldSide === undefined ? point : wrapPoint(grid.worldSide, point);
   const first = {
-    x: Math.floor((at.x - radius - grid.phase) / grid.pitch),
-    y: Math.floor((at.y - radius - grid.phase) / grid.pitch),
+    x: cellIndex(grid, at.x - radius),
+    y: cellIndex(grid, at.y - radius),
   };
   const last = {
-    x: Math.floor((at.x + radius - grid.phase) / grid.pitch),
-    y: Math.floor((at.y + radius - grid.phase) / grid.pitch),
+    x: cellIndex(grid, at.x + radius),
+    y: cellIndex(grid, at.y + radius),
   };
   if (![first.x, first.y, last.x, last.y].every(Number.isSafeInteger)) {
     throw new RangeError("Placement query exceeds safe cell bounds");

@@ -7,7 +7,7 @@ import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
-import { stationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations.ts";
 import { stationSpecialty } from "./stationServices.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -69,9 +69,10 @@ describe("explicit landmark Scan", () => {
 
   it("completes an accepted survey and pays its actual offer only on explicit Scan", () => {
     const { flight, model } = fixture();
-    const station = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 }).find(
-      ({ id }) => stationSpecialty(1, id) === "jobs",
-    )!;
+    const station = worldStationsNear(flightStationContext(flight), ECONOMY, 1, 40000, {
+      x: 0,
+      y: 0,
+    }).find(({ id }) => stationSpecialty(1, id) === "jobs")!;
     model.state.docked = station.id;
     const offer = model.jobBoard().find(({ type }) => type === "survey")!;
     expect(offer).toBeDefined();

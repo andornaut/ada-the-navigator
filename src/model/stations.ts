@@ -3,7 +3,7 @@ import { LANDMARK_TUNING } from "../data/jobs.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { flightDestinationSites } from "./destinationContext.ts";
 import { flightWorldContext } from "./flightTopology.ts";
-import { worldSettlementsNear } from "./legacySettlements.ts";
+import { retainedSettlementWithin } from "./legacySettlements.ts";
 import {
   GALAXY_SEEDS,
   HUB_STATION,
@@ -18,12 +18,12 @@ import {
 import { retainedLandmarkSites as landmarkSites } from "./retainedLandmarks.ts";
 import type { FlightState, Vec } from "./types.ts";
 import {
+  periodicWorldGrid,
   worldCell,
   type WorldCellContext,
   worldCellKey,
   worldCellOrigin,
   worldCellsNear,
-  worldGrid,
 } from "./worldCells.ts";
 import { wrapPoint } from "./worldGeometry.ts";
 export {
@@ -64,7 +64,7 @@ export function worldInfillStationInCell(
   galaxy: GalaxyNumber,
   rawCell: Vec,
 ): StationSite | null {
-  const grid = worldGrid(context, catalog.station.cellSize);
+  const grid = periodicWorldGrid(context, catalog.station.cellSize);
   const cell = worldCell(grid, rawCell);
   const seed = GALAXY_SEEDS[galaxy];
   if (seed === undefined || unit(mix(seed, cell.x, cell.y)) >= catalog.station.chance) {
@@ -106,8 +106,7 @@ export function worldInfillStationInCell(
       }
       if (
         galaxy === 5 &&
-        worldSettlementsNear(context, catalog, catalog.station.destinationClearance, point).length >
-          0
+        retainedSettlementWithin(context, catalog, catalog.station.destinationClearance, point)
       ) {
         continue;
       }
@@ -143,7 +142,7 @@ export function worldStationById(
   if (!Number.isSafeInteger(cell.x) || !Number.isSafeInteger(cell.y)) {
     return null;
   }
-  const grid = worldGrid(context, catalog.station.cellSize);
+  const grid = periodicWorldGrid(context, catalog.station.cellSize);
   if (worldCellKey(grid, cell) !== `${match[1]},${match[2]}`) {
     return null;
   }
@@ -159,7 +158,7 @@ export function worldStationsNear(
   point: Vec,
 ): StationSite[] {
   const sites = worldLegacyStationsNear(context, catalog, galaxy, radius, point);
-  const grid = worldGrid(context, catalog.station.cellSize);
+  const grid = periodicWorldGrid(context, catalog.station.cellSize);
   const extent = Math.min(
     catalog.station.jitter / 2,
     (grid.pitch - catalog.station.minimumSpacing) / 2,

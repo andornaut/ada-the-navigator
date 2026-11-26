@@ -7,13 +7,13 @@ import { dropRandom } from "./drops.ts";
 import { retainedLandmarkSites as landmarkSites } from "./retainedLandmarks.ts";
 import type { Vec } from "./types.ts";
 import {
+  periodicWorldGrid,
   worldCell,
   worldCellChance,
   worldCellKey,
   worldCellOrigin,
   worldCellsNear,
   type WorldGrid,
-  worldGrid,
 } from "./worldCells.ts";
 import { wrappedDistanceSquared, wrapPoint } from "./worldGeometry.ts";
 
@@ -187,7 +187,7 @@ export function proceduralPoisNear(
   }
   inputs(galaxy, seed);
   const center = queryCenter(worldSide, range, point);
-  const grid = worldGrid(context, T.cellSize);
+  const grid = periodicWorldGrid(context, T.cellSize);
   return sitesNear(worldSide, grid, center, range, (cell) =>
     candidate(context, galaxy, seed, grid, cell),
   );
@@ -234,7 +234,7 @@ export function spawnSalvagePoisNear(
     spawnSalvage = {
       candidates: new Map(),
       galaxy,
-      grid: worldGrid({ worldSide }, T.cellSize),
+      grid: periodicWorldGrid({ worldSide }, T.cellSize),
       seed,
       worldSide,
     };
@@ -275,7 +275,7 @@ export function proceduralPoiById(
   if (!Number.isSafeInteger(cell.x) || !Number.isSafeInteger(cell.y)) {
     return undefined;
   }
-  const grid = worldGrid(context, T.cellSize);
+  const grid = periodicWorldGrid(context, T.cellSize);
   if (worldCellKey(grid, cell) !== `${match[2]},${match[3]}`) {
     return undefined;
   }

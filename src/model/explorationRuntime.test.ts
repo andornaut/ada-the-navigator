@@ -441,7 +441,7 @@ function admittedFarRescue() {
       { ...world, opportunityEligibility: { jobTemplates: ["rescue"], region: "far" } },
       1,
       seed,
-      TARGET_MARKER_RANGE,
+      12_000,
       far,
     ).find(({ opportunity }) => opportunity.kind === "job");
     if (!site) {

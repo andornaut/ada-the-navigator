@@ -157,22 +157,22 @@ describe("saved exploration state validation", () => {
     ).toBe(true);
   });
 
-  it("accepts only canonical ownership cells on both seams of the 240000-unit chart", () => {
+  it("accepts only canonical ownership cells on both seams of the 200,000-unit chart", () => {
     const chart = { ...context, chunkSize: CONTENT.tuning.chunkSize, worldSide: GALAXY_SIDE };
     const validate = (x: number, y: number) =>
       validExplorationState(chart, {
         renewals: { "ordinary:one": { ...renewal(), footprint: { x, y } } },
         version: 1,
       });
-    expect(validate(-234, 233)).toBe(true);
-    expect(validate(233, -234)).toBe(true);
+    expect(validate(-195, 194)).toBe(true);
+    expect(validate(194, -195)).toBe(true);
     for (const [x, y] of [
-      [234, 233],
-      [-235, -234],
-      [233, 234],
-      [-234, -235],
-      [468, 0],
-      [0, -468],
+      [195, 194],
+      [-196, -195],
+      [194, 195],
+      [-195, -196],
+      [390, 0],
+      [0, -390],
     ] as const) {
       expect(validate(x, y), `${x},${y}`).toBe(false);
     }

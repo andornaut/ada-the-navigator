@@ -46,6 +46,7 @@ export interface BoardContext {
   readonly outposts: readonly JobTarget[];
   /** Live frigates and capitals, which job targets keep clear of. */
   readonly hostiles: readonly Vec[];
+  readonly stationSite?: (id: string) => StationSite | null;
 }
 
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -155,8 +156,10 @@ function jobTarget(
   if (type === "delivery") {
     // The nearest other known station or outpost at least the minimum away, with no upper limit;
     // other story places never take deliveries.
+    const stationSite =
+      context.stationSite ?? ((id: string) => stationById(ECONOMY, context.galaxy, id));
     const place = [
-      ...context.progress.stations.flatMap((id) => stationById(ECONOMY, context.galaxy, id) ?? []),
+      ...context.progress.stations.flatMap((id) => stationSite(id) ?? []),
       ...context.outposts.filter(({ id }) => deliveryDestination(id)),
     ]
       .filter(

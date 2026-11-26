@@ -49,14 +49,10 @@ describe("explicit world placement grids", () => {
   it("aliases station, chunk and ore cells at the approved chart seam", () => {
     const context = { worldSide: GALAXY_SIDE };
     const edge = GALAXY_SIDE / 2;
-    const station = worldGrid(context, ECONOMY.station.cellSize);
-    expect(station.periodCells).toBe(20);
-    expect(station.pitch).toBe(12000);
-    expect(keyAt(station, edge, -edge - 1)).toBe("-10,9");
-
     for (const [nominal, count, key] of [
-      [CONTENT.tuning.chunkSize, 468, "-234,233"],
-      [ORE_FIELDS.cellSize, 53, "-26,26"],
+      [ECONOMY.station.cellSize, 16, "-8,7"],
+      [CONTENT.tuning.chunkSize, 390, "-195,194"],
+      [ORE_FIELDS.cellSize, 44, "-22,21"],
     ] as const) {
       expect(() => worldGrid(context, nominal)).toThrow(RangeError);
       const grid = periodicWorldGrid(context, nominal);
@@ -69,7 +65,7 @@ describe("explicit world placement grids", () => {
 
   it.each([
     [exactGridSide, 338],
-    [GALAXY_SIDE, 70],
+    [GALAXY_SIDE, 58],
   ])("requires resampling for currents and preserves density at side %s", (worldSide, count) => {
     expect(() => worldGrid({ worldSide }, CURRENTS.cellSize)).toThrow(RangeError);
     const grid = periodicWorldGrid({ worldSide }, CURRENTS.cellSize);

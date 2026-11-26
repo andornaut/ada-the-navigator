@@ -11,7 +11,7 @@ import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, readStory, relaunch, supportEntropy } from "../testing/launch.ts";
-import { nearestSettlerStation } from "./andromedaPlaces.ts";
+import { worldNearestSettlerStation } from "./andromedaPlaces.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { enemyStardust } from "./drops.ts";
@@ -35,6 +35,7 @@ import { stationPopulationObjects } from "./hostileStations.ts";
 import { needleCourses } from "./needle.ts";
 import { rememberRequiredSite } from "./requiredEncounterPlans.ts";
 import { readRequiredRolePlan } from "./requiredRolePlans.ts";
+import { flightStationContext } from "./stations.ts";
 import type { FlightState } from "./types.ts";
 import { collectWeapon } from "./weapons.ts";
 
@@ -242,7 +243,7 @@ function finishAndromeda(model: GameModel): void {
     model.choose("continue");
   };
   const flight = model.state.flight!;
-  const station = nearestSettlerStation(ECONOMY, flight.player);
+  const station = worldNearestSettlerStation(flightStationContext(flight), ECONOMY, flight.player);
   ensureStation(CONTENT, station.id, flight);
   visit(station.id);
   if (!model.state.dialogue) {

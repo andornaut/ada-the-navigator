@@ -10,14 +10,14 @@ import {
 import { ECONOMY } from "../data/economy.ts";
 import {
   nearestSettlement,
-  nearestSettlerStation,
   settlementById,
   settlementsNear,
+  worldNearestSettlerStation,
 } from "./andromedaPlaces.ts";
 import type { ChapterContext, ChapterResult, ChapterRuntime } from "./chapterProtocol.ts";
 import { ensureDestination, ensureDestinationAt, ensureStation } from "./flight.ts";
 import { guideBeaconSlotAt, storyGuideBeaconSlot } from "./guideBeacons.ts";
-import { stationById } from "./stations.ts";
+import { flightStationContext, stationById, worldStationById } from "./stations.ts";
 import type { DialogueState, GalaxyProgress, UseAction, Vec } from "./types.ts";
 
 export const ANDROMEDA_PARTS = "beaconParts";
@@ -163,7 +163,8 @@ export function andromedaAction(
   }
   const target = memory(progress);
   if (
-    (progress.stage === 0 && stationById(ECONOMY, 5, destination)) ||
+    (progress.stage === 0 &&
+      worldStationById(flightStationContext(flight), ECONOMY, 5, destination)) ||
     (progress.stage === 3 && destination === target?.station) ||
     (destination === ANDROMEDA_PLACES.pip &&
       (relevant(progress, "confession") || relevant(progress, "holodisk")))
@@ -194,7 +195,10 @@ export function useAndromeda(
     return undefined;
   }
   const target = memory(progress);
-  if (progress.stage === 0 && stationById(ECONOMY, 5, destination)) {
+  if (
+    progress.stage === 0 &&
+    worldStationById(flightStationContext(flight), ECONOMY, 5, destination)
+  ) {
     return { dialogue: dialogue(context, "arrival") };
   }
   if (destination === ANDROMEDA_PLACES.beacon && relevant(progress, "dent")) {
@@ -229,11 +233,19 @@ function finish(context: ChapterContext, id: AndromedaConversationId): ChapterRe
       progress.stage = 2;
       break;
     case "confession":
-      remember(progress).station = nearestSettlerStation(ECONOMY, flight.player).id;
+      remember(progress).station = worldNearestSettlerStation(
+        flightStationContext(flight),
+        ECONOMY,
+        flight.player,
+      ).id;
       progress.stage = 3;
       break;
     case "ownsUp": {
-      const station = stationById(ECONOMY, 5, memory(progress)!.station!)!;
+      const stationContext = flightStationContext(flight);
+      const station = worldStationById(stationContext, ECONOMY, 5, memory(progress)!.station!);
+      if (!station) {
+        break;
+      }
       remember(progress).settlement = nearestSettlement(ECONOMY, station).id;
       progress.stage = 4;
       break;

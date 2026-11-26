@@ -8,22 +8,26 @@ import { rollEnemyDrop, rollSalvageDrop } from "./drops.ts";
 import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { type BoardContext, type JobBook, rerollBoards, stationBoard } from "./jobs.ts";
-import { stationsNear } from "./stations.ts";
+import { flightStationContext, stationsNear, worldStationsNear } from "./stations.ts";
 import type { JobOffer } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
-const sites = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 }).sort(
+const legacySites = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 }).sort(
   (a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y),
 );
 
 /** Sunflower's flight docked at its station nearest the origin, its two nearest discovered. */
-function docked(): GameModel {
+function docked() {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   Object.assign(model.state, { prologueSeen: true, started: true });
   model.startGalaxy(1);
   playOpening(model);
   model.state.dialogue = null;
   const flight = model.state.flight!;
+  const sites = worldStationsNear(flightStationContext(flight), ECONOMY, 1, 40000, {
+    x: 0,
+    y: 0,
+  }).sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y));
   flight.objects = flight.objects.filter((object) => !object.enemy);
   for (const site of sites.slice(0, 2)) {
     ensureStation(CONTENT, site.id, flight);
@@ -33,12 +37,12 @@ function docked(): GameModel {
   flight.dangerFor = 0;
   model.interact();
   expect(model.state.docked).toBe(sites[0]!.id);
-  return model;
+  return { model, sites };
 }
 
 describe("job board review decisions", () => {
   it("refuses Travel here while a delivery's item is aboard", () => {
-    const model = docked();
+    const { model, sites } = docked();
     const delivery = model.jobBoard().find((row) => row.type === "delivery");
     if (!delivery) {
       return;
@@ -57,7 +61,7 @@ describe("job board review decisions", () => {
   });
 
   it("re-rolls untaken offers at each new flight, keeping the held job", () => {
-    const model = docked();
+    const { model, sites } = docked();
     const first = model.jobBoard().filter((row) => row.kind === "job");
     expect(first).toHaveLength(3);
     expect(model.acceptJob(first[0]!.id)).toBe("accepted");
@@ -74,7 +78,7 @@ describe("job board review decisions", () => {
   });
 
   it("replaces an offer whose target an earlier offer in the galaxy already uses", () => {
-    const [a, b] = sites;
+    const [a, b] = legacySites;
     const survey = (id: string, station: string): JobOffer => ({
       id,
       item: "nebula",
@@ -106,7 +110,7 @@ describe("job board review decisions", () => {
   });
 
   it("ends a tow at any known station, not only the issuing one", () => {
-    const model = docked();
+    const { model, sites } = docked();
     const rescue = model.jobBoard().find((row) => row.type === "rescue");
     if (!rescue) {
       return;

@@ -4377,10 +4377,8 @@ export class GameModel {
       hostiles: jobHostiles(flight),
       landmarks: flightLandmarkSites(flight),
       outposts: this.outposts(flight),
-      progress: {
-        ...this.current,
-        stations: this.current.stations.filter((id) => this.stationSite(flight, id) !== null),
-      },
+      progress: this.current,
+      stationSite: (id) => this.stationSite(flight, id),
     };
   }
   private jobStation(job: HeldJob): StationSite | null {

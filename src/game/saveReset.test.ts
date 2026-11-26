@@ -49,6 +49,22 @@ it.each([
   expect(f.port.write).toHaveBeenCalledTimes(2);
   expect(await f.store.save(loaded.save)).toEqual({ status: "saved" });
 });
+it("backs up an in-progress campaign on the previous 240,000-unit chart", async () => {
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
+  model.startGalaxy(1);
+  const old = model.saveDocument();
+  old.flight!.topology = { kind: "torus", side: 240_000, version: 1 };
+  const raw = JSON.stringify(old);
+  const f = fixture(raw);
+
+  expect(restoreSave(raw)).toBeNull();
+  expect((await f.store.load()).save).toEqual(newGameState());
+  expect(f.port.write.mock.calls).toEqual([
+    [SAVE_KEYS.backup, raw],
+    [SAVE_KEYS.save, JSON.stringify(newGameState())],
+  ]);
+});
+
 it("retains actual required plans and complete flight clocks through valid Continue without repair", async () => {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.startGalaxy(1);

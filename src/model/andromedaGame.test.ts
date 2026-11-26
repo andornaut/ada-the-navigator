@@ -7,7 +7,7 @@ import type { GalaxyNumber } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
-import { nearestSettlerStation } from "./andromedaPlaces.ts";
+import { worldNearestSettlerStation } from "./andromedaPlaces.ts";
 import { ANDROMEDA_REDACT, andromedaRedactEligible } from "./andromedaRedact.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { interactionCopy } from "./conversations.ts";
@@ -19,6 +19,7 @@ import { ensureStation } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
+import { flightStationContext } from "./stations.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
@@ -55,7 +56,7 @@ function continuePanel(model: GameModel, context: string): void {
 }
 function arrival(model: GameModel): void {
   const flight = model.state.flight!;
-  const station = nearestSettlerStation(ECONOMY, flight.player);
+  const station = worldNearestSettlerStation(flightStationContext(flight), ECONOMY, flight.player);
   ensureStation(CONTENT, station.id, flight);
   visit(model, station.id);
   if (!model.state.dialogue) {

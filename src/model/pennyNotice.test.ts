@@ -10,7 +10,7 @@ import { ConversationDirector, type ConversationFacts, pennyPoints } from "./con
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { createFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { stationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations.ts";
 
 const facts: ConversationFacts = {
   aimed: false,
@@ -132,7 +132,10 @@ it("keeps a cache unknown until the actual renderer has lit it, then retains the
 
 it("replaces an undiscovered station arrow with the exact displayed question mark, then its real identity", () => {
   const { flight, model, talk } = fixture();
-  const site = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 })[0]!;
+  const site = worldStationsNear(flightStationContext(flight), ECONOMY, 1, 40000, {
+    x: 0,
+    y: 0,
+  })[0]!;
   flight.objects = [{ ...site, hp: 1, kind: "station", radius: ECONOMY.station.radius }];
   flight.player = { x: site.x - 1450, y: site.y };
   talk.step(0.05, null, { ...facts, pennyPoints: [site.id] });

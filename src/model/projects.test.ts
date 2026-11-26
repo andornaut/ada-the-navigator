@@ -22,7 +22,7 @@ import {
   revealWorldChange,
   worldChanges,
 } from "./projects.ts";
-import { stationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations.ts";
 import { stationSpecialty } from "./stationServices.ts";
 
 // Gameplay's economy doc, with its line wrapping undone.
@@ -274,7 +274,13 @@ describe("donating at a station", () => {
     model.startGalaxy(6);
     Object.assign(model.state.progress[6], { holodisk: true, questComplete: true, resolved: true });
     const flight = model.state.flight!;
-    const sites = stationsNear(ECONOMY, 6, 30_000, flight.player);
+    const sites = worldStationsNear(
+      flightStationContext(flight),
+      ECONOMY,
+      6,
+      30_000,
+      flight.player,
+    );
     const jobs = sites.find((site) => stationSpecialty(6, site.id) === "jobs")!;
     const equipment = sites.find((site) => stationSpecialty(6, site.id) === "equipment")!;
     for (const site of [jobs, equipment]) {
@@ -306,9 +312,13 @@ describe("donating at a station", () => {
   it("offers unlocked projects at a real station without Jobs or an active task", () => {
     const model = docked(1000);
     const flight = model.state.flight!;
-    const site = stationsNear(ECONOMY, 1, 30_000, flight.player).find(
-      ({ id }) => stationSpecialty(1, id) === "equipment",
-    )!;
+    const site = worldStationsNear(
+      flightStationContext(flight),
+      ECONOMY,
+      1,
+      30_000,
+      flight.player,
+    ).find(({ id }) => stationSpecialty(1, id) === "equipment")!;
     expect(ensureStation(CONTENT, site.id, flight)).not.toBeNull();
     model.state.docked = site.id;
     expect(model.stationServices).toMatchObject({ heldTask: false, jobs: false, projects: true });

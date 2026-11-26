@@ -26,7 +26,13 @@ import {
   validExplored,
   withinChartingRadius,
 } from "./map.ts";
-import { stationInCell, stationsNear, worldStationInCell } from "./stations.ts";
+import {
+  flightStationContext,
+  stationInCell,
+  stationsNear,
+  worldStationById,
+  worldStationInCell,
+} from "./stations.ts";
 import type { GameState } from "./types.ts";
 
 // A first flight in galaxy one with nothing discovered.
@@ -52,7 +58,9 @@ describe("priced local Map teleport", () => {
       const flight = model.state.flight!;
       const progress = model.state.progress[1];
       const target =
-        kind === "destination" ? ensureDestination(CONTENT, "growers", flight) : beyond;
+        kind === "destination"
+          ? ensureDestination(CONTENT, "growers", flight)
+          : worldStationById(flightStationContext(flight), ECONOMY, 1, beyond.id)!;
       if (kind === "destination") {
         progress.known.push(target.id);
       } else {

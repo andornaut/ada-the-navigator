@@ -9,16 +9,17 @@ import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { landmarkById, landmarkLabel, landmarkSites } from "./landmarks.ts";
-import { stationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations.ts";
 
 function fixture() {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.state.seenConversations.push(...CONVERSATIONS.map(({ id }) => id));
   model.startGalaxy(1);
   const flight = model.state.flight!;
-  const station = stationsNear(ECONOMY, 1, 20000, { x: 0, y: 0 }).sort(
-    (a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y),
-  )[0]!;
+  const station = worldStationsNear(flightStationContext(flight), ECONOMY, 1, 20000, {
+    x: 0,
+    y: 0,
+  }).sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y))[0]!;
   ensureStation(CONTENT, station.id, flight);
   model.state.progress[1].stations.push(station.id);
   flight.player = { x: station.x, y: station.y };

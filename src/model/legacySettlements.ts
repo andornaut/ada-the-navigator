@@ -73,3 +73,30 @@ export function settlementsNear(
 ): StationSite[] {
   return worldSettlementsNear({}, catalog, radius, point);
 }
+
+/** Retained outposts keep their original sites, including when queried across a flight seam. */
+export function retainedSettlementWithin(
+  context: WorldCellContext,
+  catalog: EconomyCatalog,
+  radius: number,
+  point: Vec,
+): boolean {
+  const side = context.worldSide;
+  if (side === undefined) {
+    return settlementsNear(catalog, radius, point).length > 0;
+  }
+  const center = wrapPoint(side, point);
+  const images = (coordinate: number) => {
+    if (coordinate - radius < -side / 2) {
+      return [coordinate, coordinate + side];
+    }
+    if (coordinate + radius >= side / 2) {
+      return [coordinate, coordinate - side];
+    }
+    return [coordinate];
+  };
+  const ys = images(center.y);
+  return images(center.x).some((x) =>
+    ys.some((y) => settlementsNear(catalog, radius, { x, y }).length > 0),
+  );
+}

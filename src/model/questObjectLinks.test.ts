@@ -9,7 +9,7 @@ import { GameModel } from "./game.ts";
 import { flightLandmarkSites } from "./landmarks.ts";
 import type { QuestEntry } from "./questDetails.ts";
 import { questsForObject, taskMarkerCategory } from "./questObjectLinks.ts";
-import { HUB_STATION, stationsNear } from "./stations.ts";
+import { flightStationContext, HUB_STATION, worldStationsNear } from "./stations.ts";
 import type { HeldJob } from "./types.ts";
 
 function job(target: string, station = "issuer"): HeldJob {
@@ -103,8 +103,11 @@ describe("contextual Use quest fallback", () => {
 
   it("offers repeatable Dock on every visit even when the station is linked to a held quest", () => {
     const model = game();
-    const site = stationsNear(ECONOMY, 1, 20000, { x: 0, y: 0 })[0]!;
     const flight = model.state.flight!;
+    const site = worldStationsNear(flightStationContext(flight), ECONOMY, 1, 20000, {
+      x: 0,
+      y: 0,
+    })[0]!;
     flight.player = { x: site.x, y: site.y };
     flight.objects = [{ ...site, hp: 1, kind: "station", radius: 1 }];
     model.state.progress[1].stations.push(site.id);

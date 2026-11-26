@@ -11,7 +11,7 @@ import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { activateRequiredRoute, ensureDestination } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { stationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations.ts";
 import type { FlightState } from "./types.ts";
 
 /** Test support: admit the saved required encounter, then disable its actual noncombat-fixture guard. */
@@ -47,7 +47,7 @@ function offer() {
   const place = ensureDestination(CONTENT, "growers", flight);
   flight.player = { x: place.x, y: place.y };
   model.state.progress[1].stations = [
-    stationsNear(ECONOMY, 1, 40000, place).find(
+    worldStationsNear(flightStationContext(flight), ECONOMY, 1, 40000, place).find(
       (site) => Math.hypot(site.x - place.x, site.y - place.y) >= 3000,
     )!.id,
   ];

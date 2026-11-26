@@ -8,7 +8,7 @@ import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { stationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations.ts";
 import { stationSpecialty } from "./stationServices.ts";
 import type { DialogueState } from "./types.ts";
 
@@ -19,10 +19,13 @@ function dockedIn(galaxy: GalaxyNumber): GameModel {
   model.startGalaxy(galaxy);
   playOpening(model);
   model.state.dialogue = null;
-  const site = stationsNear(ECONOMY, galaxy, 40000, { x: 0, y: 0 })
+  const flight = model.state.flight!;
+  const site = worldStationsNear(flightStationContext(flight), ECONOMY, galaxy, 40000, {
+    x: 0,
+    y: 0,
+  })
     .filter(({ id }) => stationSpecialty(galaxy, id) === "jobs")
     .sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y))[0]!;
-  const flight = model.state.flight!;
   ensureStation(CONTENT, site.id, flight);
   model.state.progress[galaxy].stations = [site.id];
   flight.objects = flight.objects.filter((object) => !object.enemy);

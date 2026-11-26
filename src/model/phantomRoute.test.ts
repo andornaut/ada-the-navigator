@@ -20,7 +20,7 @@ import { enemyPartOutline } from "./enemyBody.ts";
 import { ensureDestination, ensureStation } from "./flight.ts";
 import { GameModel, newGameState } from "./game.ts";
 import { activateFlightRegion } from "./geography.ts";
-import { stationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -265,7 +265,13 @@ describe("Phantom full route under test-only chapter admission, not production r
       model.choose("continue");
       expect(model.state.progress[6].phantom!.aftermathComplete).toBe(true);
       model = reload(model);
-      const site = stationsNear(ECONOMY, 6, 100000, model.state.flight!.player)[0]!;
+      const site = worldStationsNear(
+        flightStationContext(model.state.flight!),
+        ECONOMY,
+        6,
+        100000,
+        model.state.flight!.player,
+      )[0]!;
       expect(site).toBeDefined();
       const station = ensureStation(CONTENT, site.id, model.state.flight!)!;
       travel(model, station);

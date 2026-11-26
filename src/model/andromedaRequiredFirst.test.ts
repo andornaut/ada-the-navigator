@@ -5,8 +5,9 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import { nearestSettlement, nearestSettlerStation } from "./andromedaPlaces.ts";
+import { nearestSettlement, worldNearestSettlerStation } from "./andromedaPlaces.ts";
 import { chapterRuntime } from "./chapters.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import type { SpaceObject } from "./types.ts";
@@ -63,7 +64,10 @@ it("runs actual G5 launch initialization before optional chunks without selectin
 it("prepares remembered targets before population and retains their identities on repeated init", () => {
   const model = prepared();
   const progress = model.state.progress[5];
-  const station = nearestSettlerStation(ECONOMY, { x: 5000, y: 5000 });
+  const station = worldNearestSettlerStation({ worldSide: CURRENT_FLIGHT_TOPOLOGY.side }, ECONOMY, {
+    x: 5000,
+    y: 5000,
+  });
   const settlement = nearestSettlement(ECONOMY, station);
   progress.andromeda = { settlement: settlement.id, station: station.id };
   progress.stage = 4;

@@ -12,7 +12,7 @@ import { settlementsNear } from "./andromedaPlaces.ts";
 import { ConversationDirector } from "./conversations.ts";
 import { GameModel } from "./game.ts";
 import { lateEncounterCue } from "./lateEncounter.ts";
-import { stationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations.ts";
 import type { Vec } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -102,7 +102,13 @@ describe("Later chapter first encounters", () => {
 
   it("does not identify Avi at an arbitrary station or apply a queued Talk after Ada leaves Loom", () => {
     const model = launch(4);
-    const station = stationsNear(ECONOMY, 4, 50_000, { x: 0, y: 0 })[0]!;
+    const station = worldStationsNear(
+      flightStationContext(model.state.flight!),
+      ECONOMY,
+      4,
+      50_000,
+      { x: 0, y: 0 },
+    )[0]!;
     visit(model, station);
     currentExchange(model);
     expect(model.state.seenConversations).not.toContain("meeting:4:avi");
@@ -118,16 +124,16 @@ describe("Later chapter first encounters", () => {
   it("does not identify Munix from an invented settlement or station object", () => {
     const model = launch(5);
     const range = ECONOMY.station.discoveryRadius;
+    const flight = model.state.flight!;
     const point = Array.from({ length: 32 }, (_, index) => ({
       x: index * ECONOMY.station.cellSize,
       y: 0,
     })).find(
       (candidate) =>
-        stationsNear(ECONOMY, 5, range, candidate).length === 0 &&
-        settlementsNear(ECONOMY, range, candidate).length === 0,
+        worldStationsNear(flightStationContext(flight), ECONOMY, 5, range, candidate).length ===
+          0 && settlementsNear(ECONOMY, range, candidate).length === 0,
     );
     expect(point).toBeDefined();
-    const flight = model.state.flight!;
     flight.player = point!;
     flight.objects = [
       { ...point!, hp: 1, id: "settlement:invented", kind: "destination", radius: 30 },
@@ -142,7 +148,10 @@ describe("Later chapter first encounters", () => {
       const model = launch(5);
       const sites =
         kind === "station"
-          ? stationsNear(ECONOMY, 5, 50_000, { x: 0, y: 0 })
+          ? worldStationsNear(flightStationContext(model.state.flight!), ECONOMY, 5, 50_000, {
+              x: 0,
+              y: 0,
+            })
           : settlementsNear(ECONOMY, 50_000, { x: 0, y: 0 });
       expect(sites.length).toBeGreaterThan(0);
       visit(model, sites[0]!);

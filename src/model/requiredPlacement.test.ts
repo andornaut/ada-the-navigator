@@ -15,7 +15,7 @@ import { worldDistance } from "./worldContacts.ts";
 
 const ids = ["whale", "family", "holodisk"] as const;
 
-it("validates final Whirlpool reservations on the 240k chart without publishing actors or moving saved sites", () => {
+it("keeps production Whirlpool reservations stable without publishing actors or moving saved sites", () => {
   const plan = () => {
     const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     const flight = createUnpopulatedFlight(CONTENT, 3, 1, model.state.economy, 2);

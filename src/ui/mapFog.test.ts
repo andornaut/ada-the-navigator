@@ -43,7 +43,7 @@ it("culls distant reveals but keeps a reveal whose feather can reach the viewpor
   const { commands, context } = canvas();
   const map = {
     explored: [
-      { x: 1e9, y: 0 },
+      { x: SIDE / 4, y: 0 },
       { x: -1500, y: 1500 },
     ],
     places: [],
@@ -257,7 +257,7 @@ describe("bounded Gaussian stamp", () => {
           y: 0,
         },
       ],
-      player: { x: 1e6, y: 1e6 },
+      player: { x: SIDE / 4, y: SIDE / 4 },
     };
     drawMapFog(target.context, INNER, VIEW, map, 1, "#123456", 720, 360);
     expect(target.commands.filter(({ name }) => name === "drawImage")).toHaveLength(1);

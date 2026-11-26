@@ -17,6 +17,7 @@ import {
   syncFlightRegion,
   teleport,
 } from "./flight.ts";
+import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import {
   activateFlightRegion,
@@ -27,7 +28,7 @@ import {
   worldRecordObjectRemoval,
   worldSyncFlightRegion,
 } from "./geography.ts";
-import { stationById } from "./stations.ts";
+import { flightStationContext, stationById, worldStationById } from "./stations.ts";
 import type { FlightState, GalaxyProgress, SpaceObject } from "./types.ts";
 
 const progress: GalaxyProgress = {
@@ -95,7 +96,7 @@ describe("regenerating ordinary chunks and persistent notables", () => {
       model.startGalaxy(1);
       model.state.dialogue = null;
       const flight = model.state.flight!;
-      const site = stationById(ECONOMY, 1, id)!;
+      const site = worldStationById(flightStationContext(flight), ECONOMY, 1, id)!;
       flight.player = { x: site.x, y: site.y };
       const station = ensureStation(CONTENT, id, flight)!;
       model.step(1 / 60, idle);
@@ -108,7 +109,7 @@ describe("regenerating ordinary chunks and persistent notables", () => {
         x: site.x + CONTENT.tuning.chunkSize * (ACTIVE_CHUNK_RADIUS + 2),
         y: site.y,
       };
-      syncFlightRegion(CONTENT, flight);
+      worldSyncFlightRegion(flightWorldContext(flight), CONTENT, flight);
       expect(flight.objects.some((object) => object.id === id)).toBe(false);
       expect(flight.world.notables).not.toHaveProperty(id);
       // A prior save can already contain the canonical object from the former archive policy.
@@ -128,7 +129,11 @@ describe("regenerating ordinary chunks and persistent notables", () => {
       expect(loaded.state.progress[1].greetings[id]).toBe(visits! + 1);
       loaded.undock();
       loaded.state.flight!.player = { ...flight.player };
-      syncFlightRegion(CONTENT, loaded.state.flight!);
+      worldSyncFlightRegion(
+        flightWorldContext(loaded.state.flight!),
+        CONTENT,
+        loaded.state.flight!,
+      );
       expect(loaded.state.flight!.world.notables).not.toHaveProperty(id);
     },
   );

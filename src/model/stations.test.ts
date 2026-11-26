@@ -10,11 +10,13 @@ import { createEnemy } from "./enemyAi.ts";
 import { createFlight, ensureDestination, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import {
+  flightStationContext,
   stationById,
   stationInCell,
   stationIndicatorTarget,
   type StationSite,
   stationsNear,
+  worldStationById,
 } from "./stations.ts";
 import type { FlightInput, FlightState, Vec } from "./types.ts";
 
@@ -47,16 +49,17 @@ function atStation(seed = 5): FlightState {
   flight.shots = [];
   return flight;
 }
-function launched(): GameModel {
+function launched() {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.startGalaxy(1);
   playOpening(model);
   const flight = model.state.flight!;
-  flight.player = { ...approach };
+  const current = worldStationById(flightStationContext(flight), ECONOMY, 1, site.id)!;
+  flight.player = { x: current.x + 200 * Math.SQRT1_2, y: current.y + 200 * Math.SQRT1_2 };
   model.step(1 / 60, idle);
   flight.objects = flight.objects.filter((object) => object.kind === "station");
   flight.shots = [];
-  return model;
+  return { model, site: current };
 }
 
 describe("station placement", () => {
@@ -231,7 +234,7 @@ describe("station proximity", () => {
 
 describe("station discovery and docking", () => {
   it("discovers a station within its discovery range and offers it as a travel destination", () => {
-    const model = launched();
+    const { model, site } = launched();
     expect(model.state.progress[1].stations).toEqual([site.id]);
     expect(model.destinations()).toContainEqual({ id: site.id, label: "Station" });
     const flight = model.state.flight!;
@@ -248,7 +251,7 @@ describe("station discovery and docking", () => {
   });
 
   it("docks with Use within Talk range and pauses action like a conversation", () => {
-    const model = launched();
+    const { model, site } = launched();
     const flight = model.state.flight!;
     // 200 from the centre is outside Talk range, and flying over the station does nothing.
     expect(model.contextAction).toBeUndefined();
@@ -287,7 +290,7 @@ describe("station discovery and docking", () => {
 
   it("offers Dock within 160 world units of the station's centre", () => {
     const at = (reach: number) => {
-      const model = launched();
+      const { model, site } = launched();
       const flight = model.state.flight!;
       flight.player = { x: site.x + reach * Math.SQRT1_2, y: site.y - reach * Math.SQRT1_2 };
       flight.velocity = { x: 0, y: 0 };
@@ -300,7 +303,7 @@ describe("station discovery and docking", () => {
   });
 
   it("refuses travel and purchases outside a dock", () => {
-    const model = launched();
+    const { model } = launched();
     model.state.economy.stardust = 500;
     expect(model.buy({ kind: "weapon", weapon: "rapidMissile" })).toEqual({
       kind: "refused",

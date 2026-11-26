@@ -37,10 +37,15 @@ import {
   rerollBoards,
   stationBoard,
 } from "./jobs.ts";
-import { chartLandmarks, landmarkSites } from "./landmarks.ts";
+import { chartLandmarks, landmarkLabel, landmarkSites } from "./landmarks.ts";
 import { markerKnowledgeStore } from "./markerBindings.ts";
 import { retainedLandmarkSites } from "./retainedLandmarks.ts";
-import { stationsNear } from "./stations.ts";
+import {
+  flightStationContext,
+  stationsNear,
+  worldStationById,
+  worldStationsNear,
+} from "./stations.ts";
 import type { FlightState, HeldJob, Vec } from "./types.ts";
 import { noLevels, shipTuning } from "./upgrades.ts";
 import { worldDistance } from "./worldContacts.ts";
@@ -115,7 +120,7 @@ function docked(): {
   );
   model.startGalaxy(1);
   const flight = model.state.flight!;
-  const station = firstStation();
+  const station = worldStationById(flightStationContext(flight), ECONOMY, 1, firstStation().id)!;
   ensureStation(CONTENT, station.id, flight);
   flight.player = { x: station.x, y: station.y };
   model.state.docked = station.id;
@@ -695,7 +700,7 @@ describe("jobs in play", () => {
     const title = model.jobObjective!;
     const site = landmarkSites(1).find(({ id }) => id === held.target.id)!;
     // Surveys name their landmark.
-    expect(title).toBe(`Chart the ${label(site.name)}`);
+    expect(title).toBe(`Chart the ${landmarkLabel((key) => label(key) ?? "", site)}`);
     // An uncharted landmark is not on the Map, so the target shows as the job's own spot.
     expect(model.map?.places.find(({ job }) => job)).toMatchObject({
       kind: "job",
@@ -709,7 +714,7 @@ describe("jobs in play", () => {
     model.interact();
     const charted = model.map!.places.find(({ id }) => id === site.id)!;
     expect(charted).toMatchObject({ job: false, kind: "landmark", travel: false });
-    expect(charted.label).toBe(label(site.name));
+    expect(charted.label).toBe(landmarkLabel((key) => label(key) ?? "", site));
     expect(model.map!.places.some(({ job }) => job)).toBe(false);
     expect(model.map!.mapped).toBeGreaterThanOrEqual(before);
   });
@@ -889,7 +894,13 @@ describe("jobs in play", () => {
 
   it("deliver to a station with Use before Dock, and replace a lost item on docking at the issuing station", () => {
     const { model, station } = docked();
-    const target = stationsNear(ECONOMY, 1, 20_000, station).find(({ id }) => id !== station.id)!;
+    const target = worldStationsNear(
+      flightStationContext(model.state.flight!),
+      ECONOMY,
+      1,
+      20_000,
+      station,
+    ).find(({ id }) => id !== station.id)!;
     model.state.tasks[1] = {
       carrying: true,
       id: "job:test",

@@ -2960,9 +2960,14 @@ try {
   // A held job's long Job line wraps inside the place panel, which stays clear of the tool
   // column, and selecting its target pans the chip clear of the panel's rendered height.
   const { ECONOMY } = await import(new URL("../src/data/economy.ts", import.meta.url));
-  const { stationsNear } = await import(new URL("../src/model/stations.ts", import.meta.url));
+  const { flightStationContext, worldStationsNear } = await import(
+    new URL("../src/model/stations.ts", import.meta.url)
+  );
   const jobInput = relaunch(CONTENT, safeSerialized);
-  const issuer = stationsNear(ECONOMY, 1, 25000, { x: 0, y: 0 })[0];
+  const issuer = worldStationsNear(flightStationContext(jobInput.state.flight), ECONOMY, 1, 25000, {
+    x: 0,
+    y: 0,
+  })[0];
   const growersAt = jobInput.state.flight.objects.find(
     (o) => o.kind === "destination" && o.id === "growers",
   );
@@ -3081,7 +3086,13 @@ try {
   const questsInput = relaunch(CONTENT, safeSerialized);
   const unmapped = galaxyRoute(1).find((id) => !questsInput.state.progress[1].known.includes(id));
   const unmappedAt = ensureDestination(CONTENT, unmapped, questsInput.state.flight);
-  const [farIssuer, farTarget] = stationsNear(ECONOMY, 2, 40000, { x: 0, y: 0 });
+  const [farIssuer, farTarget] = worldStationsNear(
+    { worldSide: questsInput.state.flight.topology.side },
+    ECONOMY,
+    2,
+    40000,
+    { x: 0, y: 0 },
+  );
   questsInput.state.progress[1].stations = [issuer.id];
   questsInput.state.tasks = {
     1: {
@@ -3456,9 +3467,10 @@ try {
   const towFlight = towInput.state.flight;
   // The nearest station whose board offers a rescue.
   let rescue;
-  for (const site of stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 }).sort(
-    (a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y),
-  )) {
+  for (const site of worldStationsNear(flightStationContext(towFlight), ECONOMY, 1, 40000, {
+    x: 0,
+    y: 0,
+  }).sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y))) {
     ensureStation(CONTENT, site.id, towFlight);
     towFlight.player = { x: site.x, y: site.y };
     towInput.state.docked = site.id;
@@ -3586,9 +3598,10 @@ try {
   // Normal Dock exposes all available services alongside the selected keeper paragraph.
   const keeperInput = relaunch(CONTENT, roomInput.save());
   const keeperFlight = keeperInput.state.flight;
-  const [keeperSite] = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 }).sort(
-    (a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y),
-  );
+  const [keeperSite] = worldStationsNear(flightStationContext(keeperFlight), ECONOMY, 1, 40000, {
+    x: 0,
+    y: 0,
+  }).sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y));
   ensureStation(CONTENT, keeperSite.id, keeperFlight);
   keeperInput.state.progress[1].stations = [
     ...new Set([...keeperInput.state.progress[1].stations, keeperSite.id]),

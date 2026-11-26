@@ -8,7 +8,7 @@ import { supportEntropy } from "../testing/launchSeeds.ts";
 import { settlementsNear } from "./andromedaPlaces.ts";
 import { ensureDestination, ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { worldSettlementsNear } from "./legacySettlements.ts";
+import { retainedSettlementWithin } from "./legacySettlements.ts";
 import {
   flightStationContext,
   stationById,
@@ -18,6 +18,8 @@ import {
   worldStationById,
   worldStationsNear,
 } from "./stations.ts";
+import { periodicWorldGrid } from "./worldCells.ts";
+import { wrappedDistance } from "./worldGeometry.ts";
 
 describe("additive station density", () => {
   it.each([1, 2, 3, 4, 5, 6] as const)(
@@ -63,6 +65,18 @@ describe("additive station density", () => {
     }
   });
 
+  it("keeps Andromeda's original settlement clear when the new grid admits a nearby infill cell", () => {
+    const context = { worldSide: GALAXY_SIDE };
+    const settlement = settlementsNear(ECONOMY, GALAXY_SIDE / 2, { x: 0, y: 0 }).find(
+      ({ id }) => id === "settlement:-4,1",
+    )!;
+    const infill = worldInfillStationInCell(context, ECONOMY, 5, { x: -3, y: 2 });
+    expect(infill).not.toBeNull();
+    expect(wrappedDistance(GALAXY_SIDE, infill!, settlement)).toBeGreaterThanOrEqual(
+      ECONOMY.station.destinationClearance,
+    );
+  });
+
   it("uses strict infill IDs and includes offset sites in tiny boundary queries", () => {
     for (const id of [
       "station:infill:-0,1",
@@ -79,7 +93,7 @@ describe("additive station density", () => {
 
   it("keeps infill and retained settlements canonical across a periodic seam", () => {
     const context = { worldSide: GALAXY_SIDE };
-    const edge = -GALAXY_SIDE / ECONOMY.station.cellSize / 2;
+    const edge = -periodicWorldGrid(context, ECONOMY.station.cellSize).periodCells! / 2;
     const accepted = [];
     for (let y = -4; y <= 4; y++) {
       const site = worldInfillStationInCell(context, ECONOMY, 5, { x: edge, y });
@@ -92,8 +106,8 @@ describe("additive station density", () => {
         worldStationsNear(context, ECONOMY, 5, 0, { x: site.x + GALAXY_SIDE, y: site.y }),
       ).toEqual([site]);
       expect(
-        worldSettlementsNear(context, ECONOMY, ECONOMY.station.destinationClearance, site),
-      ).toEqual([]);
+        retainedSettlementWithin(context, ECONOMY, ECONOMY.station.destinationClearance, site),
+      ).toBe(false);
       const blocked = { ...context, stationExclusions: [{ x: site.x + GALAXY_SIDE, y: site.y }] };
       expect(worldStationById(blocked, ECONOMY, 5, site.id)).toBeNull();
     }
@@ -107,7 +121,7 @@ describe("additive station density", () => {
     model.startGalaxy(1);
     model.state.dialogue = null;
     const flight = model.state.flight!;
-    const site = stationById(ECONOMY, 1, "station:infill:1,0")!;
+    const site = worldStationById(flightStationContext(flight), ECONOMY, 1, "station:infill:1,0")!;
     expect(ensureStation(CONTENT, site.id, flight)).toMatchObject(site);
     flight.player = { x: site.x, y: site.y };
     flight.dangerFor = 0;
@@ -128,7 +142,12 @@ describe("additive station density", () => {
       model.startGalaxy(1);
       model.state.dialogue = null;
       const flight = model.state.flight!;
-      const site = stationById(ECONOMY, 1, "station:infill:1,0")!;
+      const site = worldStationById(
+        flightStationContext(flight),
+        ECONOMY,
+        1,
+        "station:infill:1,0",
+      )!;
       const destination = ensureDestination(CONTENT, "growers", flight);
       destination.x = site.x;
       destination.y = site.y;

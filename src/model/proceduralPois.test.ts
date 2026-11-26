@@ -14,6 +14,7 @@ import {
   spawnSalvagePoisNear,
 } from "./proceduralPois.ts";
 import { retainedLandmarkSites as landmarkSites } from "./retainedLandmarks.ts";
+import { periodicWorldGrid } from "./worldCells.ts";
 import { nearestImage, wrappedDistance } from "./worldGeometry.ts";
 
 const context = { worldSide: GALAXY_SIDE };
@@ -182,7 +183,7 @@ describe("additional procedural POIs", () => {
   it("rejects alternate alias spellings instead of treating them as another saved identity", () => {
     const site = proceduralPoisNear(context, 1, 42, 25000, far)[0]!;
     const parts = /^poi:1:(-?\d+),(-?\d+):0$/.exec(site.id)!;
-    const period = GALAXY_SIDE / T.cellSize;
+    const period = periodicWorldGrid(context, T.cellSize).periodCells!;
     expect(
       proceduralPoiById(context, 1, 42, `poi:1:${Number(parts[1]) + period},${parts[2]}:0`),
     ).toBeUndefined();
@@ -208,7 +209,9 @@ describe("additional procedural POIs", () => {
     for (const range of [-1, Infinity, NaN, T.maxQueryRadius + 1]) {
       expect(() => proceduralPoisNear(context, 5, 13, range, far)).toThrow(RangeError);
     }
-    expect(() => proceduralPoisNear({ worldSide: 12001 }, 5, 13, 1, far)).toThrow(RangeError);
+    expect(() => proceduralPoisNear({ worldSide: T.cellSize - 1 }, 5, 13, 1, far)).toThrow(
+      RangeError,
+    );
   });
 });
 

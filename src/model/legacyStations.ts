@@ -2,12 +2,12 @@ import type { EconomyCatalog } from "../data/economy.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { Vec } from "./types.ts";
 import {
+  periodicWorldGrid,
   worldCell,
   type WorldCellContext,
   worldCellKey,
   worldCellOrigin,
   worldCellsNear,
-  worldGrid,
 } from "./worldCells.ts";
 import { wrappedDistance } from "./worldGeometry.ts";
 
@@ -45,7 +45,7 @@ export function stationId(cell: Vec): string {
 /**
  * The station in one placement cell, or null. A station sits inside the cell's central
  * band of side `jitter`, so stations in different cells are at least
- * `cellSize - jitter` apart.
+ * `grid.pitch - jitter` apart.
  */
 export function worldStationInCell(
   context: WorldCellContext,
@@ -54,10 +54,11 @@ export function worldStationInCell(
   rawCell: Vec,
 ): StationSite | null {
   const { cellSize, chance, jitter, originClearance } = catalog.station;
-  const grid = worldGrid(context, cellSize);
+  const grid = periodicWorldGrid(context, cellSize);
   const cell = worldCell(grid, rawCell);
   const origin = worldCellOrigin(grid, cell);
   const seed = GALAXY_SEEDS[galaxy];
+  // The station catalog specifies occupancy per cell and already fills every production cell.
   if (seed === undefined || unit(mix(seed, cell.x, cell.y)) >= chance) {
     return null;
   }
@@ -89,7 +90,8 @@ export function worldLegacyStationById(
   }
   if (
     context.worldSide !== undefined &&
-    worldCellKey(worldGrid(context, catalog.station.cellSize), cell) !== `${match[1]},${match[2]}`
+    worldCellKey(periodicWorldGrid(context, catalog.station.cellSize), cell) !==
+      `${match[1]},${match[2]}`
   ) {
     return null;
   }
@@ -104,7 +106,7 @@ export function worldLegacyStationsNear(
   radius: number,
   point: Vec,
 ): StationSite[] {
-  const grid = worldGrid(context, catalog.station.cellSize);
+  const grid = periodicWorldGrid(context, catalog.station.cellSize);
   const sites: StationSite[] = [];
   for (const cell of worldCellsNear(grid, radius, point)) {
     const site = worldStationInCell(context, catalog, galaxy, cell);

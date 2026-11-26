@@ -527,8 +527,10 @@ describe("the square bound", () => {
   );
 
   it("pulls back a diagonal view whose ellipse box overlaps but whose actual oval misses", () => {
-    const { min } = scaleLimits(inner, field, SIDE);
-    const start = { centre: { x: 0, y: 0 }, scale: min, worldSide: SIDE };
+    // This extent leaves the survey oval as the tighter bound for the diagonal request.
+    const worldSide = 240_000;
+    const { min } = scaleLimits(inner, field, worldSide);
+    const start = { centre: { x: 0, y: 0 }, scale: min, worldSide };
     const { rx, ry, x, y } = mapSurveyEllipse(inner, start);
     const requested = {
       ...start,

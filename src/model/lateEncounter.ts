@@ -2,7 +2,7 @@ import type { EncounterCue } from "../data/conversations.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
 import { settlementsNear } from "./andromedaPlaces.ts";
 import { onScreen } from "./conversations.ts";
-import { stationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations.ts";
 import type { FlightState } from "./types.ts";
 
 /** Only the visible teacher, a mounted station or a verified settlement identifies its people. */
@@ -27,8 +27,9 @@ export function lateEncounterCue(
   if (flight.galaxy !== 5) {
     return null;
   }
-  const station = stationsNear(context.catalog, 5, range, flight.player).some((site) =>
-    flight.objects.some((object) => object.kind === "station" && object.id === site.id),
+  const placement = flightStationContext(flight);
+  const station = worldStationsNear(placement, context.catalog, 5, range, flight.player).some(
+    (site) => flight.objects.some((object) => object.kind === "station" && object.id === site.id),
   );
   const settlement = settlementsNear(context.catalog, range, flight.player).length > 0;
   return station || settlement ? "stationNear" : null;

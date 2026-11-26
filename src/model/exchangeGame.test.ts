@@ -8,7 +8,7 @@ import { relaunch, supportEntropy } from "../testing/launch.ts";
 import type { ExchangePreview, ExchangeQuote } from "./exchange.ts";
 import { ensureDestination, ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { stationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations.ts";
 
 function quote(preview: ExchangePreview): ExchangeQuote {
   expect(preview.kind).toBe("quote");
@@ -23,7 +23,13 @@ function docked() {
   model.startGalaxy(1);
   const flight = model.state.flight!;
   flight.objects = [];
-  const site = stationsNear(ECONOMY, 1, 40000, flight.player)[0]!;
+  const site = worldStationsNear(
+    flightStationContext(flight),
+    ECONOMY,
+    1,
+    40000,
+    flight.player,
+  )[0]!;
   ensureStation(CONTENT, site.id, flight);
   model.state.progress[1].stations.push(site.id);
   flight.player = { x: site.x, y: site.y };

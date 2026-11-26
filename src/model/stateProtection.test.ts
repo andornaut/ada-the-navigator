@@ -17,6 +17,7 @@ import {
   arrivalGraceActive,
   beginArrivalGrace,
   createFlight,
+  ensureStation,
   routeBlocked,
   stepFlight,
 } from "./flight.ts";
@@ -25,7 +26,7 @@ import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import { readRequiredPlan } from "./requiredEncounterPlans.ts";
-import { stationInCell, type StationSite } from "./stations.ts";
+import { flightStationContext, type StationSite, worldStationInCell } from "./stations.ts";
 import type { FlightInput, FlightState, SpaceObject, Vec } from "./types.ts";
 
 /** An explicit grace, independent of the tuned value. */
@@ -74,11 +75,12 @@ function outlastGrace(model: GameModel, input: FlightInput = idle): number {
   return flight.time - start;
 }
 
-function nearestStation(galaxy: GalaxyNumber): StationSite {
+function nearestStation(flight: FlightState): StationSite {
+  const context = flightStationContext(flight);
   for (let span = 0; span <= 6; span++) {
     for (let x = -span; x <= span; x++) {
       for (let y = -span; y <= span; y++) {
-        const site = stationInCell(ECONOMY, galaxy, { x, y });
+        const site = worldStationInCell(context, ECONOMY, flight.galaxy, { x, y });
         if (site) {
           return site;
         }
@@ -235,7 +237,7 @@ describe("arrival grace", () => {
     const model = sunflower();
     const flight = model.state.flight!;
     outlastGrace(model);
-    const site = nearestStation(1);
+    const site = nearestStation(flight);
     flight.player = { x: site.x + 100, y: site.y };
     model.step(SIMULATION_STEP_SECONDS, idle);
     expect(model.state.progress[1].stations).toContain(site.id);
@@ -262,7 +264,7 @@ describe("paused protection", () => {
     const flight = model.state.flight!;
     model.state.dialogue = null;
     outlastGrace(model);
-    const site = nearestStation(1);
+    const site = nearestStation(flight);
     flight.player = { x: site.x + 150, y: site.y };
     flight.velocity = { x: 0, y: 0 };
     model.step(SIMULATION_STEP_SECONDS, idle);
@@ -297,7 +299,7 @@ describe("paused protection", () => {
     const flight = model.state.flight!;
     model.state.dialogue = null;
     outlastGrace(model);
-    const site = nearestStation(1);
+    const site = nearestStation(flight);
     flight.player = { x: site.x + 150, y: site.y };
     flight.velocity = { x: 0, y: 0 };
     flight.objects = flight.objects.filter((object) => object.kind !== "enemy");
@@ -359,7 +361,7 @@ describe("paused protection", () => {
     const flight = model.state.flight!;
     model.state.dialogue = null;
     outlastGrace(model);
-    const site = nearestStation(1);
+    const site = nearestStation(flight);
     flight.player = { x: site.x + 150, y: site.y };
     flight.velocity = { x: 0, y: 0 };
     model.step(SIMULATION_STEP_SECONDS, idle);
@@ -495,18 +497,21 @@ describe("guards fire back wherever Ada attacks from", () => {
   });
 
   it("answers within three seconds when Ada fires on an ambient frigate beside a station", () => {
-    // This hand-placed frigate needs the fixture's clear approach lane.
     seedLaunches(1);
     const model = sunflower();
     const flight = model.state.flight!;
     model.state.dialogue = null;
     outlastGrace(model);
-    const site = nearestStation(1);
-    flight.objects = flight.objects.filter((object) => object.kind !== "enemy");
-    const enemy = frigate(1, "ambient-frigate", { x: site.x + 420, y: site.y });
-    flight.objects.push(enemy);
+    const site = nearestStation(flight);
     flight.player = { x: site.x + 100, y: site.y };
     flight.velocity = { x: 0, y: 0 };
+    model.step(SIMULATION_STEP_SECONDS, idle);
+    const station = ensureStation(content, site.id, flight)!;
+    expect(station).toMatchObject(site);
+    // Isolate the firing lane after the real station's local chunks have loaded.
+    const enemy = frigate(1, "ambient-frigate", { x: site.x + 420, y: site.y });
+    flight.objects = [station, enemy];
+    flight.shots = [];
     const { answered, hit } = answerTime(model, enemy, 8);
     expect(hit).toBe(true);
     expect(answered).not.toBeNull();
