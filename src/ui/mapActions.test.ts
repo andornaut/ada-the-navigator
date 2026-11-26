@@ -708,12 +708,16 @@ function boundFixture() {
     { id: "a", x: 0, y: 0 },
     { id: "corner", x: SIDE / 2 - 1, y: SIDE / 2 - 1 },
   ]);
+  const panel = Object.assign(f.document.createElement(), { scrollTop: 0 });
+  f.screen.append(panel);
   Object.assign(f.context, {
+    Node: f.document.defaultView.Node,
     clampView,
     dressPanel: () => {},
     focusTarget: () => {},
     keepClear,
     options: { reducedMotion: () => false },
+    panel,
     panelTop: () => 80,
     presentation: { clear: () => {} },
     recentreView,
