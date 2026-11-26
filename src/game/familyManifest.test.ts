@@ -11,6 +11,7 @@ import core from "../../public/art/manifest.json";
 import needle from "../../public/art/needle/manifest.json";
 import phantom from "../../public/art/phantom/manifest.json";
 import sunflower from "../../public/art/sunflower/manifest.json";
+import { PHANTOM_ALLIES_ART } from "../art/phantomAllyArt.ts";
 import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import { enemyAssetKey, hullDesign, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
@@ -40,7 +41,6 @@ import {
   mergeEnemyAssets,
   readSidecars,
 } from "./enemyArt.ts";
-import { PHANTOM_ALLIES_ART } from "./phantomAllyArt.ts";
 import type { Asset } from "./sceneShared.ts";
 import { readShardPalettePack } from "./shardPalettePack.ts";
 import { readShipJets } from "./shipJets.ts";

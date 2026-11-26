@@ -5,16 +5,24 @@ import { Math as PhaserMath, type Scene } from "phaser";
 
 import {
   type AsteroidOutline,
+  BEACON_SUFFIX,
   debrisFrame,
   debrisMarks,
   debrisPiece,
   drawnRockId,
   driftChips,
+  familyMembers,
+  FLASH_SUFFIX,
   footprintOutline,
   hexNumber,
+  hubBayKey,
+  partKey,
   playDepth,
   rockArt,
   sceneryDetail,
+  type WhaleKind,
+  whaleLoopFrame,
+  whalePhase,
 } from "../art/index.ts";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { CONTENT } from "../data/content.ts";
@@ -68,7 +76,6 @@ import {
 } from "./sceneTargetMarkers.ts";
 import { shipDirection } from "./shipArt.ts";
 import { spaceObjectColor } from "./spacePalette.ts";
-import { BEACON_SUFFIX, FLASH_SUFFIX, hubBayKey, partKey } from "./spriteKeys.ts";
 import {
   PULL_STREAK,
   pullStreakWedges,
@@ -85,7 +92,6 @@ import {
 } from "./stationArt.ts";
 import { UPGRADE_CHEVRON, upgradeFrame } from "./upgradePickup.ts";
 import type { EffectShape } from "./weaponEffects.ts";
-import { familyMembers, type WhaleKind, whaleLoopFrame, whalePhase } from "./whaleArt.ts";
 import {
   ammoPackFrame,
   blinkRow,

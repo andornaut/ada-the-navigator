@@ -1,12 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { CONTENT } from "../data/content.ts";
-import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
-import { GameModel } from "../model/game.ts";
-import { storyShips } from "../model/storyShips.ts";
-import { SAVE_RESTORE } from "../saving/index.ts";
-import { activateCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
-import { supportEntropy } from "../testing/launchSeeds.ts";
 import {
   BEACON_SUFFIX,
   hubBayKey,
@@ -14,7 +7,14 @@ import {
   hubStoryKey,
   spriteOwner,
   staleSpriteKeys,
-} from "./spriteKeys.ts";
+} from "../art/spriteKeys.ts";
+import { CONTENT } from "../data/content.ts";
+import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
+import { GameModel } from "../model/game.ts";
+import { storyShips } from "../model/storyShips.ts";
+import { SAVE_RESTORE } from "../saving/index.ts";
+import { activateCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
+import { supportEntropy } from "../testing/launchSeeds.ts";
 
 describe("object sprite keys", () => {
   it("keeps the hub's bay, buoys and story craft through the update's cleanup", () => {

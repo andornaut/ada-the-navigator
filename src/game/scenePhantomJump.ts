@@ -1,7 +1,7 @@
 import jumpData from "../../public/art/quantum-jump.json" with { type: "json" };
+import { type AllyJump, type AllyJumpStep, allyJumpStep } from "../art/index.ts";
 import { toScreen } from "../model/convex.ts";
 import type { Vec } from "../model/types.ts";
-import { type AllyJump, type AllyJumpStep, allyJumpStep } from "./phantomAllyArt.ts";
 import { readQuantumJump } from "./quantumJump.ts";
 import type { ObjectsContext } from "./sceneObjects.ts";
 import type { Asset } from "./sceneShared.ts";

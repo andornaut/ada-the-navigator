@@ -12,7 +12,10 @@ import {
   playDepth,
   SPECK_RADIUS,
   speckField,
+  spriteOwner,
+  staleSpriteKeys,
   type StreakSpec,
+  type WhaleArt,
 } from "../art/index.ts";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { CONTENT } from "../data/content.ts";
@@ -173,7 +176,6 @@ import {
 } from "./shipJets.ts";
 import { Silhouettes } from "./silhouettes.ts";
 import { FALLBACK_SPACE_PALETTE, type SpacePalette } from "./spacePalette.ts";
-import { spriteOwner, staleSpriteKeys } from "./spriteKeys.ts";
 import type { StardustArt } from "./stardustArt.ts";
 import type { GalaxyStationArt, StationArt } from "./stationArt.ts";
 import { aboardGalaxy, storyCoversScene } from "./storyPresentation.ts";
@@ -199,7 +201,6 @@ import {
   screenAngle,
   type WeaponSolids,
 } from "./weaponEffects.ts";
-import type { WhaleArt } from "./whaleArt.ts";
 import type { WhirlpoolProjects } from "./whirlpoolProjects.ts";
 import type { BlinkArt, CacheArt, LoopArt } from "./worldArt.ts";
 

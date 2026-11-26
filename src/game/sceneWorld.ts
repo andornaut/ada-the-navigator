@@ -2,7 +2,14 @@
 // Functions over the scene's WorldContext.
 import { Math as PhaserMath, type Scene } from "phaser";
 
-import { hexNumber, playDepth, streakMarks } from "../art/index.ts";
+import {
+  hexNumber,
+  hubBuoyKey,
+  hubStoryKey,
+  partKey,
+  playDepth,
+  streakMarks,
+} from "../art/index.ts";
 import { CURRENTS } from "../data/galaxyFeatures.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
 import { SCREEN } from "../data/screen.ts";
@@ -26,7 +33,6 @@ import { drawCraftJets, keylineEdges, keylineSprite } from "./sceneHud.ts";
 import { LANDMARK_DEPTH, STORY_SHIP } from "./sceneShared.ts";
 import { objectSprite } from "./sceneSprites.ts";
 import { acknowledgePrimitiveGlint, acknowledgePrimitiveTarget } from "./sceneTargetMarkers.ts";
-import { hubBuoyKey, hubStoryKey, partKey } from "./spriteKeys.ts";
 import { stationFrame } from "./stationArt.ts";
 import {
   craftFrame,

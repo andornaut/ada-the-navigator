@@ -2,9 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import whales from "../../public/art/friendly-whales.json";
 import core from "../../public/art/manifest.json";
-import { CONTENT } from "../data/content.ts";
-import { ASTEROID_SHAPES } from "../model/asteroids.ts";
-import { ART_MANIFEST as manifest } from "../testing/publicArt.ts";
 import {
   familyMembers,
   readMarloArt,
@@ -14,7 +11,10 @@ import {
   whaleLoopFrame,
   whalePhase,
   whaleViewBox,
-} from "./whaleArt.ts";
+} from "../art/whaleArt.ts";
+import { CONTENT } from "../data/content.ts";
+import { ASTEROID_SHAPES } from "../model/asteroids.ts";
+import { ART_MANIFEST as manifest } from "../testing/publicArt.ts";
 
 const assets = manifest.assets as WhaleFrame[];
 const art = readWhaleArt(whales, assets)!;

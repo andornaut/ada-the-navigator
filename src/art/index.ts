@@ -42,7 +42,37 @@ export {
   debrisPiece,
   readDebrisArt,
 } from "./debrisArt.ts";
+export {
+  type AllyJump,
+  type AllyJumpStep,
+  allyJumpStep,
+  finaleAllyCraft,
+  PHANTOM_ALLIES_ART,
+  type PhantomAllyArt,
+  readPhantomAllyArt,
+} from "./phantomAllyArt.ts";
 export { decorationRasterSize, viewDecorations } from "./rareDecorations.ts";
 export { RockFrames } from "./rockFrames.ts";
 export { sceneryDetail } from "./scenery.ts";
 export { SPECK_RADIUS, speckField } from "./speckField.ts";
+export {
+  BEACON_SUFFIX,
+  FLASH_SUFFIX,
+  hubBayKey,
+  hubBuoyKey,
+  hubStoryKey,
+  partKey,
+  spriteOwner,
+  staleSpriteKeys,
+} from "./spriteKeys.ts";
+export {
+  familyMembers,
+  readMarloArt,
+  readWhaleArt,
+  type WhaleArt,
+  whaleFrameAsset,
+  type WhaleKind,
+  whaleLoopFrame,
+  whalePhase,
+  whaleViewBox,
+} from "./whaleArt.ts";

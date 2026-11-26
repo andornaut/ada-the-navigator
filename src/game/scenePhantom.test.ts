@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import phantomAllies from "../../public/art/phantom/allies.json";
 import phantomManifest from "../../public/art/phantom/manifest.json";
+import { finaleAllyCraft, readPhantomAllyArt } from "../art/phantomAllyArt.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { galaxyProjects } from "../data/projects.ts";
@@ -11,7 +12,6 @@ import type { PhantomDeparture } from "../model/phantom.ts";
 import { phantomAllyRoster, rotatePhantomAllies } from "../model/phantomAllies.ts";
 import { projectAllies } from "../model/projects.ts";
 import type { SpaceObject } from "../model/types.ts";
-import { finaleAllyCraft, readPhantomAllyArt } from "./phantomAllyArt.ts";
 import type { ObjectsContext } from "./sceneObjects.ts";
 import {
   drawPhantomAllies,

@@ -1,5 +1,11 @@
 import jumpData from "../../public/art/quantum-jump.json" with { type: "json" };
-import { playDepth } from "../art/index.ts";
+import {
+  finaleAllyCraft,
+  PHANTOM_ALLIES_ART,
+  type PhantomAllyArt,
+  playDepth,
+  readPhantomAllyArt,
+} from "../art/index.ts";
 import { CONTENT } from "../data/content.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP } from "../data/phantom.ts";
@@ -13,12 +19,6 @@ import {
 } from "../model/phantomAllies.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
 import { enemyJetTriangles, selectEnemyFrame } from "./enemyArt.ts";
-import {
-  finaleAllyCraft,
-  PHANTOM_ALLIES_ART,
-  type PhantomAllyArt,
-  readPhantomAllyArt,
-} from "./phantomAllyArt.ts";
 import { jumpStepAt, readQuantumJump } from "./quantumJump.ts";
 import { familyArt, loadEnemyParts } from "./sceneAssets.ts";
 import { drawEnemySprite } from "./sceneEnemies.ts";

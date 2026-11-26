@@ -9,14 +9,19 @@ import {
   type DebrisArt,
   decorationRasterSize,
   paintBand,
+  PHANTOM_ALLIES_ART,
   type Raster,
   readBackdropBand,
   readBackdropHaze,
   readBackdropRules,
   readDebrisArt,
   readGalaxyBackdrop,
+  readMarloArt,
   readStreakSpec,
+  readWhaleArt,
   RockFrames,
+  whaleFrameAsset,
+  whaleViewBox,
 } from "../art/index.ts";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { ECONOMY } from "../data/economy.ts";
@@ -61,7 +66,6 @@ import {
   type Sidecars,
 } from "./enemyArt.ts";
 import { readJobArt } from "./jobArt.ts";
-import { PHANTOM_ALLIES_ART } from "./phantomAllyArt.ts";
 import { sceneFit } from "./playCamera.ts";
 import { readQuantumJump } from "./quantumJump.ts";
 import type { GameScene } from "./scene.ts";
@@ -79,7 +83,6 @@ import type { SvgRequest } from "./svgRasters.ts";
 import { vectorSheetKey, vectorSheetSource } from "./svgSheet.ts";
 import { type TextureFilter, vectorRaster } from "./textures.ts";
 import { readStrandedCraft, readTowLine } from "./towArt.ts";
-import { readMarloArt, readWhaleArt, whaleFrameAsset, whaleViewBox } from "./whaleArt.ts";
 import { readWhirlpoolProjects } from "./whirlpoolProjects.ts";
 
 interface MaterialCache {
