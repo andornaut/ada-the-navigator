@@ -110,6 +110,12 @@ import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
 import { inBattle, inDanger } from "./flight/danger.ts";
 import { movementSpeedFraction, shipSpeedFraction, towing } from "./flight/handling.ts";
+import {
+  ageFlashes,
+  recordBeamFlash,
+  recordBlastFlash,
+  recordProjectileImpact,
+} from "./flight/impactFeedback.ts";
 import { flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
 import {
   createFrigateEscorts,
@@ -191,7 +197,7 @@ import {
   stardustDropOffsets,
 } from "./stardustPlacement.ts";
 import { stationFormationClear, type StationPlacementContext } from "./stationPlacement.ts";
-import { type ImpactFamily, impactFamily, type WeaponImpact } from "./weaponImpacts.ts";
+import { type ImpactFamily, impactFamily } from "./weaponImpacts.ts";
 import {
   periodicWorldGrid,
   worldCell,
@@ -304,6 +310,17 @@ import { markVisited, visitedChunk } from "./visited.ts";
 import { clampAmmo, ensureOwnedWeapons, grantedAmmo, shotsLeft, spendAmmo } from "./weapons.ts";
 
 export { inBattle, inDanger, movementSpeedFraction, shipSpeedFraction, towing };
+export {
+  activeBeamFlashes,
+  activeBlastFlashes,
+  activeProjectileImpacts,
+  activeWeaponImpacts,
+  type BeamFlash,
+  BLAST_FLASH_SECONDS,
+  type BlastFlash,
+  drawnBeamFlash,
+  type ProjectileImpact,
+} from "./flight/impactFeedback.ts";
 
 const length = (v: Vec) => Math.hypot(v.x, v.y);
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -4907,8 +4924,7 @@ function shots(
  */
 function enemyImpact(shot: Shot, struck: boolean, flight: FlightState): void {
   if (shot.blast === undefined && shot.effectFamily && shot.life <= 0) {
-    const impacts = projectileImpacts.get(flight) ?? [];
-    impacts.push({
+    recordProjectileImpact(flight, {
       ...shot,
       age: 0,
       direction: { ...shot.velocity },
@@ -4916,12 +4932,9 @@ function enemyImpact(shot: Shot, struck: boolean, flight: FlightState): void {
       id: shot.id,
       targetId: "",
     });
-    projectileImpacts.set(flight, impacts);
   }
   if (shot.blast !== undefined) {
-    const blasts = blastFlashes.get(flight) ?? [];
-    blasts.push({ age: 0, radius: shot.blast, x: shot.x, y: shot.y });
-    blastFlashes.set(flight, blasts);
+    recordBlastFlash(flight, { age: 0, radius: shot.blast, x: shot.x, y: shot.y });
   }
   if (struck || (shot.blast !== undefined && blastCoversAda(flight, shot, shot.blast))) {
     damage(shot.damage, flight);
@@ -5037,15 +5050,13 @@ function strike(
     shot.hitIds.push(object.id);
     const part = hitPart(content, flight, partReach(content), shotRadius(shot), shot, object);
     const at = projectileContact(flight, object, shot, shotRadius(shot), from, part);
-    const impacts = projectileImpacts.get(flight) ?? [];
-    impacts.push({
+    recordProjectileImpact(flight, {
       ...at,
       age: 0,
       id: `${shot.id}:${object.id}`,
       targetId: object.id,
       ...(shot.effectFamily ? { direction: { ...shot.velocity }, family: shot.effectFamily } : {}),
     });
-    projectileImpacts.set(flight, impacts);
     hit(content, shot.damage, part, object, flight, events);
     if (shot.blast !== undefined) {
       blast(content, shot.damage, shot.blast, at, object, flight, events);
@@ -5299,9 +5310,7 @@ function blast(
   flight: FlightState,
   events: FlightEvent[],
 ): void {
-  const blasts = blastFlashes.get(flight) ?? [];
-  blasts.push({ age: 0, radius, x: at.x, y: at.y });
-  blastFlashes.set(flight, blasts);
+  recordBlastFlash(flight, { age: 0, radius, x: at.x, y: at.y });
   for (const mine of flight.mines) {
     if (armed(mine) && screenGap(flight, at, mine) <= radius) {
       mine.end = { age: 0, kind: "pop" };
@@ -5434,135 +5443,6 @@ function markBlasted(object: SpaceObject, flight: FlightState): void {
   const wreck = flight.objects.find((other) => other.id === wreckId(object.id))?.wreck;
   if (wreck) {
     wreck.blasted = true;
-  }
-}
-
-/**
- * A hitscan beam's visible flash, view-only and never saved: `from` and `to` are the fire-time
- * line, where the hit landed; a hit also shows a spark at `to`.
- */
-export interface BeamFlash {
-  from: Vec;
-  to: Vec;
-  hit: boolean;
-  age: number;
-}
-
-/**
- * Ada's beam as drawn now: it stays on her nose and turns with her aim, at the length it fired
- * with (gameplay/rules.md, Phaser).
- */
-export function drawnBeamFlash(flight: FlightState, flash: BeamFlash): { from: Vec; to: Vec } {
-  const span = length(flight.facing);
-  const reach = length({ x: flash.to.x - flash.from.x, y: flash.to.y - flash.from.y });
-  if (!span) {
-    return { from: flash.from, to: flash.to };
-  }
-  const from = nosePoint(flight.facing, flight.player);
-  return {
-    from,
-    to: {
-      x: from.x + (flight.facing.x / span) * reach,
-      y: from.y + (flight.facing.y / span) * reach,
-    },
-  };
-}
-const beamFlashes = new WeakMap<FlightState, BeamFlash[]>();
-
-/** A missile blast's visible flash at its impact, view-only and never saved. */
-export interface BlastFlash extends Vec {
-  radius: number;
-  age: number;
-}
-export interface ProjectileImpact extends Vec {
-  readonly family?: ImpactFamily;
-  readonly direction?: Vec;
-  readonly id: string;
-  readonly targetId: string;
-  age: number;
-}
-const projectileImpacts = new WeakMap<FlightState, ProjectileImpact[]>();
-/** Short-lived contact records survive consumed shots so feedback retains the actual hit point. */
-export function activeProjectileImpacts(flight: FlightState): readonly ProjectileImpact[] {
-  return projectileImpacts.get(flight) ?? [];
-}
-const blastFlashes = new WeakMap<FlightState, BlastFlash[]>();
-/** How long a blast shows: the longest blast effect, the Heavy Missile's 340 ms. */
-export const BLAST_FLASH_SECONDS = 0.34;
-
-/** The flight's beam flashes still showing. */
-export function activeBeamFlashes(flight: FlightState): readonly BeamFlash[] {
-  return beamFlashes.get(flight) ?? [];
-}
-
-const impactViewIds = new WeakMap<object, string>();
-let nextImpactViewId = 0;
-function impactViewId(entry: object): string {
-  let id = impactViewIds.get(entry);
-  if (id === undefined) {
-    id = `impact:${nextImpactViewId++}`;
-    impactViewIds.set(entry, id);
-  }
-  return id;
-}
-
-/** Explicit family snapshots for the existing contact renderer and Art's procedural fixture. */
-export function activeWeaponImpacts(flight: FlightState): readonly WeaponImpact[] {
-  return [
-    ...activeProjectileImpacts(flight).flatMap((impact): WeaponImpact[] =>
-      impact.family && impact.family !== "missile" ? [{ ...impact, family: impact.family }] : [],
-    ),
-    ...activeBlastFlashes(flight).map((flash): WeaponImpact => ({
-      ...flash,
-      blastRadius: flash.radius,
-      family: "missile",
-      id: impactViewId(flash),
-    })),
-    ...activeBeamFlashes(flight).flatMap((flash): WeaponImpact[] =>
-      flash.hit
-        ? [
-            {
-              ...flash.to,
-              age: flash.age,
-              direction: { x: flash.to.x - flash.from.x, y: flash.to.y - flash.from.y },
-              family: "phaserRings",
-              id: impactViewId(flash),
-            },
-          ]
-        : [],
-    ),
-  ];
-}
-
-/** The flight's blast flashes still showing. */
-export function activeBlastFlashes(flight: FlightState): readonly BlastFlash[] {
-  return blastFlashes.get(flight) ?? [];
-}
-
-function ageFlashes(dt: number, flight: FlightState): void {
-  const impacts = projectileImpacts.get(flight) ?? [];
-  for (const impact of impacts) {
-    impact.age += dt;
-  }
-  projectileImpacts.set(
-    flight,
-    impacts.filter((impact) => impact.age < 0.65),
-  );
-  const beams = beamFlashes.get(flight);
-  if (beams) {
-    beams.forEach((flash) => (flash.age += dt));
-    beamFlashes.set(
-      flight,
-      beams.filter((flash) => flash.age < Math.max(BEAM.flashSeconds, BEAM.sparkSeconds)),
-    );
-  }
-  const blasts = blastFlashes.get(flight);
-  if (blasts) {
-    blasts.forEach((flash) => (flash.age += dt));
-    blastFlashes.set(
-      flight,
-      blasts.filter((flash) => flash.age < BLAST_FLASH_SECONDS),
-    );
   }
 }
 
@@ -5747,14 +5627,12 @@ function fireBeam(
   }
   if (popped) {
     popped.mine.end = { age: 0, kind: "pop" };
-    const flashes = beamFlashes.get(flight) ?? [];
-    flashes.push({
+    recordBeamFlash(flight, {
       age: 0,
       from: origin,
       hit: true,
       to: { x: origin.x + direction.x * popped.at, y: origin.y + direction.y * popped.at },
     });
-    beamFlashes.set(flight, flashes);
     return;
   }
   const reach = struck ? struck.at : range;
@@ -5762,14 +5640,12 @@ function fireBeam(
   const contact = struck
     ? projectileContact(flight, struck.object, end, BEAM.halfWidth, end, struck.part)
     : end;
-  const flashes = beamFlashes.get(flight) ?? [];
-  flashes.push({
+  recordBeamFlash(flight, {
     age: 0,
     from: origin,
     hit: struck !== null,
     to: contact,
   });
-  beamFlashes.set(flight, flashes);
   if (struck) {
     hit(
       content,
