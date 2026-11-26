@@ -80,9 +80,9 @@ describe("current streaks", () => {
     expect([0, 1, 2, 3].map((lane) => rowOffset(spec, lane))).toEqual([0, 36, 0, 36]);
   });
 
-  it("scrolls each lane at 70 (1 - (2d / w)^2) and sizes darts in three flow steps", () => {
-    expect(laneSpeed(CURRENTS.peakFlow, 400, 0)).toBe(70);
-    expect(laneSpeed(CURRENTS.peakFlow, 400, 100)).toBeCloseTo(52.5, 9);
+  it("scrolls each lane at 105 (1 - (2d / w)^2) and sizes darts in three flow steps", () => {
+    expect(laneSpeed(CURRENTS.peakFlow, 400, 0)).toBe(105);
+    expect(laneSpeed(CURRENTS.peakFlow, 400, 100)).toBeCloseTo(78.75, 9);
     expect(laneSpeed(CURRENTS.peakFlow, 400, 200)).toBe(0);
     expect([0.07, 0.339, 0.34, 0.669, 0.67, 1].map((f) => dartStep(spec, f))).toEqual([
       0.3, 0.3, 0.65, 0.65, 1, 1,
