@@ -1,12 +1,13 @@
 import type { ComponentNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
-export type QuestFooterAction = "dismiss" | "other" | "previous" | "next";
+export type QuestFooterAction = "dismiss" | "flightLog" | "other" | "previous" | "next";
 export interface QuestFooterData {
   readonly dismiss: {
     readonly actionId: "quest-back" | "quest-close";
     readonly intent: "back" | "close";
     readonly label: string;
   };
+  readonly flightLog?: { readonly label: string };
   readonly other?: { readonly label: string };
   readonly pager?: {
     readonly count: string;
@@ -79,6 +80,21 @@ export function questsTree(
                 key: "page-count",
                 kind: "component" as const,
                 props: { text: data.pager.count },
+              },
+            ]),
+        ...(data.flightLog === undefined
+          ? []
+          : [
+              {
+                component: "button" as const,
+                key: "flight-log",
+                kind: "component" as const,
+                props: {
+                  action: "flightLog" as const,
+                  actionId: "quest-flight-log",
+                  label: data.flightLog.label,
+                  role: "secondary" as const,
+                },
               },
             ]),
         {

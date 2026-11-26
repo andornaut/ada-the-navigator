@@ -24,7 +24,12 @@ import { createCard, setFooterAction, setScrollGroup } from "./modal.ts";
 import { createStandardCloseAction } from "./modalClose.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
-import { type QuestsBodyData, type QuestsBodySchema, questsBodyTree } from "./questsBodyTree.ts";
+import {
+  type QuestFlightLogEntry,
+  type QuestsBodyData,
+  type QuestsBodySchema,
+  questsBodyTree,
+} from "./questsBodyTree.ts";
 import {
   type QuestFooterAction,
   type QuestFooterData,
@@ -37,6 +42,7 @@ import { createStandardTextAction } from "./standardTextAction.ts";
 import { CARGO_ICONS } from "./statusPill.ts";
 
 export type QuestOrigin = "flight" | "list" | "ship";
+const FLIGHT_LOG_LABEL = "Flight log";
 
 interface LocatedEndpoint {
   readonly kind: "source" | "target";
@@ -169,6 +175,8 @@ export function createQuestsScreen(
     );
   };
   let entries: readonly QuestEntry[] = [];
+  let flightLog: readonly QuestFlightLogEntry[] = [];
+  let showingFlightLog = false;
   let contextEntries: readonly QuestEntry[] | null = null;
   let places: readonly MapPlace[] = [];
   let selected: string | null = null;
@@ -192,6 +200,7 @@ export function createQuestsScreen(
   const hide = () => {
     release();
     contextEntries = null;
+    showingFlightLog = false;
     suspended = undefined;
     modal.hidden = true;
   };
@@ -221,16 +230,21 @@ export function createQuestsScreen(
     return image;
   };
   const back = () => {
-    if (selected !== null && origin === "list") {
+    if (showingFlightLog) {
+      showingFlightLog = false;
+      render({ flightLog: true });
+    } else if (selected !== null && origin === "list") {
       const focusQuestId = selected;
       selected = null;
-      render(focusQuestId);
+      render({ questId: focusQuestId });
     } else {
       hide();
       options.onClose();
     }
   };
-  function render(focusQuestId?: string, focusEndpoint?: LocatedEndpoint): void {
+  function render(
+    focus: { questId?: string; endpoint?: LocatedEndpoint; flightLog?: boolean } = {},
+  ): void {
     let questFocus: HTMLButtonElement | undefined;
     for (const binding of renderedBindings.splice(0)) {
       binding.dispose();
@@ -243,15 +257,32 @@ export function createQuestsScreen(
     if (!entry) {
       selected = null;
     }
+    const title = showingFlightLog ? FLIGHT_LOG_LABEL : labels.quests;
+    card.title.textContent = title;
+    card.frame.setAttribute("aria-label", title);
     const body = document.createElement("div");
     body.className = entry ? "ada-quest-content" : "ada-quest-list";
+    if (showingFlightLog) {
+      body.tabIndex = 0;
+      body.setAttribute("role", "region");
+      body.setAttribute("aria-label", FLIGHT_LOG_LABEL);
+    }
     const footer = document.createElement("footer");
     footer.className = "ada-quest-footer";
+    footer.classList.toggle("ada-flight-log-footer", showingFlightLog);
     const footerActions = new Map<QuestFooterAction, () => void>();
     let other: QuestFooterData["other"];
     let pager: QuestFooterData["pager"];
     let bodyData: QuestsBodyData;
-    if (entry) {
+    const offersFlightLog =
+      !showingFlightLog &&
+      !entry &&
+      contextEntries === null &&
+      origin !== "ship" &&
+      flightLog.length > 0;
+    if (showingFlightLog) {
+      bodyData = { entries: flightLog, mode: "flightLog" };
+    } else if (entry) {
       const line = entry.line;
       const endpoints = questRoute(entry, entry.galaxy === galaxy ? places : []);
       bodyData = {
@@ -280,6 +311,12 @@ export function createQuestsScreen(
         });
       }
     } else {
+      if (offersFlightLog) {
+        footerActions.set("flightLog", () => {
+          showingFlightLog = true;
+          render();
+        });
+      }
       const ordered = [
         ...visibleEntries.filter((entry) => entry.line.kind === "story"),
         ...visibleEntries.filter((entry) => entry.line.kind === "job"),
@@ -346,6 +383,24 @@ export function createQuestsScreen(
             },
             slots: [],
           },
+          log: {
+            create() {
+              const list = document.createElement("ul");
+              list.className = "ada-flight-log-entries";
+              list.setAttribute("role", "list");
+              return { dispose() {}, element: list, slots: { entries: list }, update() {} };
+            },
+            slots: ["entries"],
+          },
+          logEntry: {
+            create(initial) {
+              const row = document.createElement("li");
+              row.dataset.flightLogId = initial.id;
+              row.textContent = initial.text;
+              return { dispose() {}, element: row, slots: {}, update() {} };
+            },
+            slots: [],
+          },
           objective: {
             create(initial) {
               const { iconPath, step } = initial;
@@ -400,7 +455,7 @@ export function createQuestsScreen(
               const button = action.element;
               button.dataset.questId = item.id;
               setButtonRole("secondary", button);
-              if (item.id === focusQuestId) {
+              if (item.id === focus.questId) {
                 questFocus = button;
               }
               button.prepend(icon(item));
@@ -491,8 +546,8 @@ export function createQuestsScreen(
                 }
                 if (
                   !disabled &&
-                  focusEndpoint?.kind === endpoint.kind &&
-                  focusEndpoint.placeId === placeId
+                  focus.endpoint?.kind === endpoint.kind &&
+                  focus.endpoint.placeId === placeId
                 ) {
                   questFocus = button;
                 }
@@ -537,13 +592,12 @@ export function createQuestsScreen(
       },
       questsBodyTree(bodyData),
     );
+    const detailBack = showingFlightLog || (entry && origin === "list");
     const footerData: QuestFooterData = {
-      dismiss: {
-        actionId: entry && origin === "list" ? "quest-back" : "quest-close",
-        intent: entry && origin === "list" ? "back" : rootDismissal.intent,
-        label:
-          entry && origin === "list" ? (labels.questBack ?? labels.close) : rootDismissal.label,
-      },
+      dismiss: detailBack
+        ? { actionId: "quest-back", intent: "back", label: labels.questBack ?? labels.close }
+        : { actionId: "quest-close", ...rootDismissal },
+      ...(offersFlightLog ? { flightLog: { label: FLIGHT_LOG_LABEL } } : {}),
       ...(other === undefined ? {} : { other }),
       ...(pager === undefined ? {} : { pager }),
     };
@@ -588,6 +642,9 @@ export function createQuestsScreen(
               const button = action.element;
               if (initial.action === "dismiss") {
                 close = button;
+              }
+              if (initial.action === "flightLog" && focus.flightLog) {
+                questFocus = button;
               }
               const update = (data: QuestsFooterSchema["button"]["props"]) => {
                 if (data.label !== props.label) {
@@ -687,6 +744,7 @@ export function createQuestsScreen(
     ): void {
       rootDismissal = dismissal ?? { intent: "close", label: labels.close };
       contextEntries = null;
+      showingFlightLog = false;
       suspended = undefined;
       selected = id;
       origin = from;
@@ -702,6 +760,7 @@ export function createQuestsScreen(
       rootDismissal = { intent: "close", label: labels.close };
       suspended = undefined;
       contextEntries = [...context.quests];
+      showingFlightLog = false;
       selected = contextEntries.length === 1 ? contextEntries[0]!.id : null;
       origin = contextEntries.length === 1 ? "flight" : "list";
       listPage = 0;
@@ -718,15 +777,20 @@ export function createQuestsScreen(
         hide();
         options.onClose();
       } else {
-        render(undefined, endpoint);
+        render({ endpoint });
       }
     },
     setState(
       next: readonly QuestEntry[],
       knownPlaces: readonly MapPlace[],
       currentGalaxy?: GalaxyNumber,
+      nextFlightLog: readonly QuestFlightLogEntry[] = [],
     ): void {
-      const revision = JSON.stringify([next, knownPlaces, currentGalaxy]);
+      const revision = JSON.stringify([next, knownPlaces, currentGalaxy, nextFlightLog]);
+      flightLog = nextFlightLog;
+      if (!flightLog.length) {
+        showingFlightLog = false;
+      }
       galaxy = currentGalaxy;
       entries = next;
       places = knownPlaces;

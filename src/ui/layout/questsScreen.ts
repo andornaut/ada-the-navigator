@@ -152,6 +152,18 @@ export const QUESTS_SCREEN_STYLE = `
 .ada-controls .ada-quest-footer > .ada-button.ada-primary{
   margin-left:auto
 }
+.ada-controls .ada-flight-log-footer > .ada-button.ada-primary{
+  margin-inline:auto
+}
+.ada-controls .ada-flight-log-entries{
+  display:grid;
+  gap:${units(SPACING.gap)};
+  margin:0;
+  padding:0;
+  list-style:none;
+  overflow-wrap:anywhere;
+  white-space:pre-wrap
+}
 .ada-controls .ada-quest-list{align-self:stretch;
   flex:1;
   min-height:0;

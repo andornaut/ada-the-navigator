@@ -286,9 +286,10 @@ vi.mock("./modal.ts", async (load) => ({
     const frame = new QuestNode();
     const card = new QuestNode();
     const body = new QuestNode();
-    card.append(body);
+    const title = new QuestNode("h2");
+    card.append(title, body);
     frame.append(card, close);
-    return { body, card, close, dispose: producer.disposeCard, fit: producer.fit, frame };
+    return { body, card, close, dispose: producer.disposeCard, fit: producer.fit, frame, title };
   },
   setScrollGroup: producer.scroll,
 }));
@@ -555,6 +556,51 @@ it("resumes the selected endpoint and original filtered list page after locating
   expect(producer.reveal.mock.lastCall?.[0].focus.dataset.questId).toBe("last");
   screen.back();
   expect(onClose).toHaveBeenCalledOnce();
+  screen.dispose();
+});
+
+it("opens the flight log on the existing card and returns to the original page and opener", () => {
+  const { onClose, root, screen } = screenFixture();
+  const quests = [entry, { ...entry, id: "extra" }, { ...entry, id: "last" }];
+  const intercepted = { id: "needle:orders", text: "Orders from fleet command." };
+  const log = [intercepted, { id: "relay", text: "<Relay>" }];
+  const button = (id: string) =>
+    root.querySelectorAll("button").find(({ dataset }) => dataset.action === id);
+  const click = (node: QuestNode) => node.dispatchEvent(new Event("click", { cancelable: true }));
+  screen.setState(quests, [], 1);
+  screen.open();
+  expect(button("quest-flight-log")).toBeUndefined();
+  screen.setState(quests, [], 1, log);
+  const next = root.querySelectorAll("button").find(({ textContent }) => textContent === "Next");
+  click(next!);
+  const opener = button("quest-flight-log")!;
+  click(opener);
+  expect(root.querySelectorAll("h2")[0]?.textContent).toBe("Flight log");
+  expect(
+    root
+      .querySelectorAll("li")
+      .map(({ dataset, textContent }) => [dataset.flightLogId, textContent]),
+  ).toEqual(log.map(({ id, text }) => [id, text]));
+  const [card, scrollGroup] = producer.scroll.mock.lastCall!;
+  expect(scrollGroup.querySelectorAll("button")).toEqual([]);
+  expect(card.body.children[1]?.querySelectorAll("button")).toEqual([button("quest-back")]);
+
+  producer.reveal.mock.lastCall?.[0].close();
+  expect(root.querySelectorAll("output")[0]?.textContent).toBe("2/2");
+  expect(producer.reveal.mock.lastCall?.[0].focus).toBe(button("quest-flight-log"));
+  expect(onClose).not.toHaveBeenCalled();
+
+  click(button("quest-flight-log")!);
+  screen.setState(quests, [], 1);
+  expect(root.querySelectorAll("li")).toEqual([]);
+  expect(root.querySelectorAll("h2")[0]?.textContent).toBe(CONTENT.labels.quests);
+  expect(button("quest-flight-log")).toBeUndefined();
+  screen.setState(quests, [], 1, log);
+  expect(screen.openContext({ quests: quests.slice(0, 2), targetId: "growers" })).toBe(true);
+  expect(button("quest-flight-log")).toBeUndefined();
+  expect(root.querySelectorAll("button").flatMap(({ dataset }) => dataset.questId ?? [])).toEqual(
+    quests.slice(0, 2).map(({ id }) => id),
+  );
   screen.dispose();
 });
 

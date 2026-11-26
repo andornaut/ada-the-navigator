@@ -7,6 +7,12 @@ export interface QuestEndpointBody {
   readonly endpoint: ReturnType<typeof questRoute>[number];
   readonly entry: QuestEntry;
 }
+/** Display-ready entries from the model. Attribution is already resolved in the text. */
+export interface QuestFlightLogEntry {
+  readonly id: string;
+  readonly text: string;
+}
+
 export type QuestsBodyData =
   | {
       readonly mode: "detail";
@@ -26,10 +32,13 @@ export type QuestsBodyData =
         readonly entries: readonly QuestEntry[];
       }[];
       readonly emptyText?: string;
-    };
+    }
+  | { readonly mode: "flightLog"; readonly entries: readonly QuestFlightLogEntry[] };
 export type QuestsBodySchema = {
   body: { props: Record<string, never>; slots: "content" };
   heading: { props: { readonly text: string; readonly category?: "story" | "job" }; slots: never };
+  log: { props: Record<string, never>; slots: "entries" };
+  logEntry: { props: QuestFlightLogEntry; slots: never };
   objective: {
     props: { readonly iconPath: string | null; readonly step: QuestObjective };
     slots: never;
@@ -100,6 +109,21 @@ export function questsBodyTree(
         slots: { content: [] },
       },
     );
+  } else if (data.mode === "flightLog") {
+    content.push({
+      component: "log",
+      key: "flight-log",
+      kind: "component",
+      props: {},
+      slots: {
+        entries: data.entries.map(({ id, text }) => ({
+          component: "logEntry",
+          key: id,
+          kind: "component",
+          props: { id, text },
+        })),
+      },
+    });
   } else {
     for (const [index, group] of data.groups.entries()) {
       const category = group.entries[0]?.line.kind;

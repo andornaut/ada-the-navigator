@@ -20,6 +20,7 @@ import { createModalLayer } from "./modalLayer.ts";
 import { retainModalUnderlay } from "./modalUnderlay.ts";
 import { type PauseAction, pauseActions, type PausePlace } from "./pause.ts";
 import { type PauseLayoutSchema, pauseTree, type PauseTreeAction } from "./pauseTree.ts";
+import type { QuestFlightLogEntry } from "./questsBodyTree.ts";
 import { createQuestsScreen, type QuestOrigin } from "./questsScreen.ts";
 import { refuse } from "./refusal.ts";
 import { createResourceCard } from "./resourceCard.ts";
@@ -84,6 +85,7 @@ export interface PauseState {
   readonly galaxy?: GalaxyNumber;
   /** Live model-owned quests from every galaxy, with no UI or save-state duplication. */
   readonly questEntries?: readonly QuestEntry[];
+  readonly flightLog?: readonly QuestFlightLogEntry[];
   /** The current galaxy's map field: its name, background and fog. */
   readonly field: MapField | null;
   readonly inDanger: boolean;
@@ -543,7 +545,12 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   // frames, so a press is never lost to a rebuilt button.
   let shown: string | undefined;
   const render = () => {
-    quests.setState(state.questEntries ?? [], state.map?.places ?? [], state.galaxy);
+    quests.setState(
+      state.questEntries ?? [],
+      state.map?.places ?? [],
+      state.galaxy,
+      state.flightLog,
+    );
     mapScreen.setState({
       carrying: state.carrying,
       field: state.field,
