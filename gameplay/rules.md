@@ -891,7 +891,10 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   enter the explored record. The
   explored area persists per galaxy (see
   [What each event keeps](#what-each-event-keeps)). Choosing
-  a discovered destination or station offers "Travel here", which teleports there.
+  a discovered destination or station offers "Travel here", with the Stardust
+  icon and a price of 50. Deduct the price once after a successful local map
+  jump. If Ada has less than 50 Stardust or the jump is refused, she stays
+  where she is and keeps her Stardust.
   Travel here is unavailable while Ada tows a craft or carries a job or activity
   item, and refuses with the shared refusal feedback. The local
   map also has "Galaxies", a labelled secondary button on its top row beside
