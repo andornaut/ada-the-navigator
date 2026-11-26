@@ -171,15 +171,18 @@ A model or paint change regenerates all of these, in this order:
   reflection of its right corner, preserving the original notches and outer plan.
 - The canopy is a closed bubble on an elliptical plan, semi-axes 8.8 across
   and 10 along the hull, centred at local Y -3, its crown 4.4 units above the
-  ridge. It sits 0.15 above the ridge on a saddle that falls 0.62 of the wing's
+  ridge. It sits 0.6 above the ridge on a saddle that falls 0.62 of the wing's
   slope across the hull, and carries its own lower envelope 0.5 units deep, so
-  its outline does not follow the roof crease. The surface samples 72 angular
+  its outline does not follow the roof crease. The lip's bottom stays 0.1
+  above the ridge at the canopy's tips and above the wing tops elsewhere, so
+  no hull face cuts a nick into the canopy's outline at any heading or pose. The surface samples 72 angular
   positions and 14 rings; the crown inside 0.3 of the radius is one planar face.
 - The tip caps are the wing tips themselves: everything outboard of the chord
   at local `|x| = 15.4`, parallel to the hull axis, the outer 28 percent of the
   21.44 unit half span. A cap runs to the tip and both edges and includes its
-  edge faces: the wing top, the skirt along the leading and trailing edges and
-  the rear wall, all outboard of the chord. No geometry is added.
+  edge faces: the wing top, the skirt along the leading and trailing edges,
+  the rear wall and the sliver of the steep face that reaches the tip, all
+  outboard of the chord. No geometry is added.
 - The tail block is both tail sides and the part of each steep face inboard of
   the notch, `|x| <= 5.44`.
 - Surface-plane partitioning orders visible vector fragments by depth, so the

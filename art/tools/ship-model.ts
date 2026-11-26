@@ -405,7 +405,11 @@ function upperFaces(): Face[] {
       { normal: [Math.sign(tip[0]), 0, 0], distance: Math.abs(notch[0]) },
       steep,
     );
-    faces.push({ material: "hull", part: "steep", points: outboard.front });
+    // The steep face reaches the wing tip, so its sliver outboard of the cap chord is cap too.
+    const steepOutboard = capSplit(outboard.front);
+    faces.push({ material: "hull", part: "steep", points: steepOutboard.inboard });
+    for (const points of steepOutboard.caps)
+      faces.push({ material: "accent", part: "cap", points });
     faces.push({ material: "tail", part: "block", points: outboard.back });
     const wall = capSplit(up([tip, notch, corner]));
     faces.push({ material: "hull", part: "wall", points: wall.inboard });
@@ -657,13 +661,14 @@ const turned = (pose: Pose, points: readonly Point[]) => points.map((point) => p
 // The canopy: a closed bubble on an elliptical plan, semi-axes `across` and `along` the hull,
 // centred at local y `centre`, its crown `crown` above the ridge. It sits `base` above the
 // ridge on a saddle that falls `saddle` of the wing's slope across the hull, and carries its
-// own lower envelope `lip` deep, so its outline does not follow the roof crease.
+// own lower envelope `lip` deep, so its outline does not follow the roof crease. The lip's
+// bottom stays 0.1 above the ridge at the canopy's tips, so no wing top cuts the outline.
 export const CANOPY = {
   across: 8.8,
   along: 10,
   centre: -3,
   crown: 4.4,
-  base: 0.15,
+  base: 0.6,
   lip: 0.5,
   saddle: 0.62,
   segments: 72,
@@ -900,12 +905,17 @@ function slotted(pivot: number, pose: Pose) {
   return value;
 }
 
-/** The visible fragments in draw order with the model part each belongs to, for checks. */
-export function drawnParts(pivot: number, pose: Pose): { outline: V2[]; part: string }[] {
-  return ordered(viewer(pose), geometry().tree).flatMap((surface) => {
-    const outline = visibleOutline(pivot, pose, surface.kind, surface.points);
-    return outline.length < 3 ? [] : [{ outline, part: surface.kind ?? surface.color }];
-  });
+/** The visible fragments in draw order with their model part and paint slot, for checks. */
+export function drawnParts(
+  pivot: number,
+  pose: Pose,
+): { outline: V2[]; part: string; slot: PaintSlot }[] {
+  return ordered(viewer(pose), geometry().tree).flatMap((surface) =>
+    toned(pose, surface).flatMap(({ points, slot }) => {
+      const outline = visibleOutline(pivot, pose, surface.kind, points);
+      return outline.length < 3 ? [] : [{ outline, part: surface.kind ?? surface.color, slot }];
+    }),
+  );
 }
 
 /** Visible vector fragments, geometrically clipped and ordered at their actual depths. */

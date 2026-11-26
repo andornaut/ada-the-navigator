@@ -6868,7 +6868,7 @@
       },
       "focus": {
         "x": 493.9,
-        "y": 213.2
+        "y": 210.6
       }
     },
     {
@@ -6889,16 +6889,16 @@
       },
       "focus": {
         "x": 493.9,
-        "y": 213.2
+        "y": 210.6
       }
     },
     {
       "id": "aboard-holodisk-0",
       "path": "/art/aboard-holodisk-0.svg",
       "width": 285,
-      "height": 183,
+      "height": 186,
       "displayWidth": 285,
-      "displayHeight": 183,
+      "displayHeight": 186,
       "facing": "front",
       "pivot": {
         "x": 0,
@@ -6906,16 +6906,16 @@
       },
       "at": {
         "x": 379,
-        "y": 136
+        "y": 133
       }
     },
     {
       "id": "aboard-holodisk-1",
       "path": "/art/aboard-holodisk-1.svg",
       "width": 285,
-      "height": 183,
+      "height": 186,
       "displayWidth": 285,
-      "displayHeight": 183,
+      "displayHeight": 186,
       "facing": "front",
       "pivot": {
         "x": 0,
@@ -6923,16 +6923,16 @@
       },
       "at": {
         "x": 379,
-        "y": 136
+        "y": 133
       }
     },
     {
       "id": "aboard-holodisk-2",
       "path": "/art/aboard-holodisk-2.svg",
       "width": 285,
-      "height": 183,
+      "height": 186,
       "displayWidth": 285,
-      "displayHeight": 183,
+      "displayHeight": 186,
       "facing": "front",
       "pivot": {
         "x": 0,
@@ -6940,16 +6940,16 @@
       },
       "at": {
         "x": 379,
-        "y": 136
+        "y": 133
       }
     },
     {
       "id": "aboard-holodisk-3",
       "path": "/art/aboard-holodisk-3.svg",
       "width": 285,
-      "height": 183,
+      "height": 186,
       "displayWidth": 285,
-      "displayHeight": 183,
+      "displayHeight": 186,
       "facing": "front",
       "pivot": {
         "x": 0,
@@ -6957,7 +6957,7 @@
       },
       "at": {
         "x": 379,
-        "y": 136
+        "y": 133
       }
     },
     {

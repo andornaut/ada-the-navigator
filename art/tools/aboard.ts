@@ -48,7 +48,7 @@ const FIELD_DENSITY = 0.25;
 const BAKED_GLOW = { sigma: 12, density: 0.125 } as const;
 const PNG = { deflateLevel: 9, deflateStrategy: 0, filterType: -1 } as const;
 // The holodisk overlays' box on the canvas, logical px: every holodisk addition lies inside it.
-const HOLODISK_BOX = { x: 379, y: 136, width: 285, height: 183 } as const;
+const HOLODISK_BOX = { x: 379, y: 133, width: 285, height: 186 } as const;
 // A renderer may blur only what lies inside the image, so an overlay's softened content would not
 // meet the backdrop at its edge: each overlay is clear to `clear` logical px in from its edge,
 // where `aboard` shows through, and fades in to opaque at `opaque`, past the blur's reach.

@@ -23,7 +23,7 @@ jump-home page.
   Classic paint), the same faces as the `ship-50` sprite frame: heading 50 of
   64, up and to the right, the engine mouths toward the viewer.
 - 5.85 logical px per frame px, the frame centre on canvas (476, 257), so the
-  canopy spans canvas rows 170 to 256.
+  canopy spans canvas rows 168 to 254.
 - The ship is one path per paint colour (the shared opaque paint regions, as
   the sprite frames use).
 - A soft engine glow from each mouth centre (the `ship-jets.json` anchors at
@@ -100,7 +100,7 @@ hull just ahead of the canopy, toward the nose (canvas (594.1, 243.3)).
 - Astra's light is a 115.6 by 80.9 px glow about the canopy's centre, peak
   alpha 110 on Link and 150 on Restored.
 - Each overlay is that frame's full scene framed to one box (canvas (379,
-  136), 285 by 183 logical px) round every holodisk addition, so each alone
+  133), 285 by 186 logical px) round every holodisk addition, so each alone
   shows its frame over `aboard`. It is clear for 2 logical px in from its edge
   and fades in to opaque at 6 px, so `aboard` shows at the edge: a renderer
   may blur only what lies inside an image, which leaves the softened hull at

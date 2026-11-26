@@ -268,6 +268,67 @@ function canopyUnderTail(frame: number, pose: Parameters<typeof drawnParts>[1]):
   return top.reduce((n, kind, i) => n + (glass[i] && kind === 1 ? 1 : 0), 0);
 }
 
+// Samples, at 8 per frame px, that a closing of the drawn canopy by a 0.5 frame px disk adds:
+// the area of every concave nick any face (or the background) cuts into its outline.
+function canopyNicks(frame: number, pose: Parameters<typeof drawnParts>[1]): number {
+  const SS = 8;
+  const R = 4;
+  const W = frame * SS;
+  const glass = new Uint8Array(W * W);
+  for (const { outline, part } of drawnParts(frame / 2, pose)) {
+    const value = part === "bubble" || part === "lip" ? 1 : 0;
+    const ys = outline.map(([, y]) => y * SS);
+    for (
+      let y = Math.max(0, Math.floor(Math.min(...ys)));
+      y <= Math.min(W - 1, Math.ceil(Math.max(...ys)));
+      y++
+    ) {
+      const centre = y + 0.5;
+      const xs: number[] = [];
+      for (const [i, a] of outline.entries()) {
+        const b = outline[(i + 1) % outline.length]!;
+        const [ay, by] = [a[1] * SS, b[1] * SS];
+        if (ay <= centre !== by <= centre) {
+          xs.push((a[0] + ((centre - ay) / (by - ay)) * (b[0] - a[0])) * SS);
+        }
+      }
+      xs.sort((p, q) => p - q);
+      for (let i = 0; i + 1 < xs.length; i += 2) {
+        const to = Math.min(W, Math.ceil(xs[i + 1]! - 0.5));
+        for (let x = Math.max(0, Math.ceil(xs[i]! - 0.5)); x < to; x++) glass[y * W + x] = value;
+      }
+    }
+  }
+  let [x0, y0, x1, y1] = [W, W, 0, 0];
+  glass.forEach((v, i) => {
+    if (!v) return;
+    const [x, y] = [i % W, Math.floor(i / W)];
+    [x0, y0, x1, y1] = [Math.min(x0, x), Math.min(y0, y), Math.max(x1, x), Math.max(y1, y)];
+  });
+  const disk: [number, number][] = [];
+  for (let dy = -R; dy <= R; dy++)
+    for (let dx = -R; dx <= R; dx++) if (dx * dx + dy * dy <= R * R) disk.push([dx, dy]);
+  const morph = (source: Uint8Array, grow: boolean) => {
+    const result = new Uint8Array(source.length);
+    for (let y = y0 - 2 * R; y <= y1 + 2 * R; y++)
+      for (let x = x0 - 2 * R; x <= x1 + 2 * R; x++) {
+        const hit = disk.some(([dx, dy]) => source[(y + dy) * W + x + dx] === (grow ? 1 : 0));
+        result[y * W + x] = grow === hit ? 1 : 0;
+      }
+    return result;
+  };
+  const closed = morph(morph(glass, true), false);
+  return closed.reduce((n, v, i) => n + (v && !glass[i] ? 1 : 0), 0);
+}
+
+test("the canopy's outline has no nick at any heading or jump pose", () => {
+  // One sample is the polygon tessellation's own step.
+  for (const yaw of ALL) assert(canopyNicks(FRAME, { yaw }) <= 1, `heading ${yaw}`);
+  for (const { id, ...shape } of WARP_POSES) {
+    assert(canopyNicks(WARP_FRAME, { ...shape, yaw: WARP_HEADING }) <= 1, `jump pose ${id}`);
+  }
+});
+
 test("no tail face covers the canopy at any heading or jump pose", () => {
   for (const yaw of ALL) assert.equal(canopyUnderTail(FRAME, { yaw }), 0, `heading ${yaw}`);
   for (const { id, ...shape } of WARP_POSES) {
