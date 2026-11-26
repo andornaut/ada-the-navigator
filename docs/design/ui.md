@@ -89,3 +89,4 @@ Reference: [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.
 | ada-0402 | Fix flight slowdown when dialogue appears                                       | [ada-0402.md](../work/ada-0402.md) |
 | ada-0404 | Charge 50 Stardust for local map travel                                         | [ada-0404.md](../work/ada-0404.md) |
 | ada-0406 | Keep the galactic centre visible at maximum zoom-out                            | [ada-0406.md](../work/ada-0406.md) |
+| ada-0407 | Shade space outside the playable Local Map                                      | [ada-0407.md](../work/ada-0407.md) |
