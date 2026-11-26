@@ -50281,5 +50281,6 @@
       "shards": "/art/enemies/fleetSwarm-shards-packed.json"
     }
   },
-  "pickups": "/art/pickups/pickups.json"
+  "pickups": "/art/pickups/pickups.json",
+  "shipForwardFlight": "/art/ship-forward-flight.json"
 }

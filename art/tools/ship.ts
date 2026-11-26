@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { editManifest } from "./manifest.ts";
+import { editManifest, linkData } from "./manifest.ts";
 import { anchor, json, SHIP_HEADINGS, SHIP_HEADING_CONTRACT } from "./projection.ts";
 import { forwardFlightJson } from "./ship-forward-flight.ts";
 import {
@@ -80,8 +80,11 @@ function noses(): string {
 }
 
 mkdirSync(output, { recursive: true });
-if (forwardFlightOnly || (!paintOnly && !jetsOnly))
-  writeFileSync(`${output}ship-forward-flight.json`, forwardFlightJson());
+if (forwardFlightOnly || (!paintOnly && !jetsOnly)) {
+  const file = "ship-forward-flight.json";
+  writeFileSync(`${output}${file}`, forwardFlightJson());
+  linkData("core", { shipForwardFlight: `/art/${file}` });
+}
 if (!forwardFlightOnly && !paintOnly) writeFileSync(`${output}ship-jets.json`, jets());
 if (!forwardFlightOnly && !jetsOnly)
   writeFileSync(
