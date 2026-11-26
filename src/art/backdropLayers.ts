@@ -449,13 +449,16 @@ function rgb(color: string): Rgb {
 
 /** The sky's colour at view point (x, y) in logical px, 0 to 1 channels. */
 export function skyColor(sky: GalaxyBackdrop["sky"], x: number, y: number): Rgb {
+  return interpolateSky(sky, rgb(sky.from), rgb(sky.to), x, y);
+}
+
+function interpolateSky(sky: GalaxyBackdrop["sky"], from: Rgb, to: Rgb, x: number, y: number): Rgb {
   const fx = sky.flip ? 1 - x / VIEW[0] : x / VIEW[0];
   let t = Math.min(
     1,
     Math.max(0, fx * sky.weights[0] + (y / VIEW[1]) * sky.weights[1] + sky.offset),
   );
   t = t * t * (3 - 2 * t);
-  const [from, to] = [rgb(sky.from), rgb(sky.to)];
   return [0, 1, 2].map((k) => from[k]! * (1 - t) + to[k]! * t) as unknown as Rgb;
 }
 
@@ -825,11 +828,19 @@ export function paintSky(sky: GalaxyBackdrop["sky"], scale: number): Raster {
   const width = Math.ceil(SKY_AREA.width * scale);
   const height = Math.ceil(SKY_AREA.height * scale);
   const paint = new Paint(width, height);
+  const from = rgb(sky.from);
+  const to = rgb(sky.to);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       paint.over(
         y * width + x,
-        skyColor(sky, SKY_AREA.x + (x + 0.5) / scale, SKY_AREA.y + (y + 0.5) / scale),
+        interpolateSky(
+          sky,
+          from,
+          to,
+          SKY_AREA.x + (x + 0.5) / scale,
+          SKY_AREA.y + (y + 0.5) / scale,
+        ),
         1,
       );
     }
