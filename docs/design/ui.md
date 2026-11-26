@@ -93,3 +93,5 @@ Reference: [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.
 | ada-0410 | Show the equipped weapon in a short flight notice                               | [ada-0410.md](../work/ada-0410.md) |
 | ada-0412 | Place short flight notices above Ada's shield                                   | [ada-0412.md](../work/ada-0412.md) |
 | ada-0414 | Use one name badge above each boss bar                                          | [ada-0414.md](../work/ada-0414.md) |
+| ada-0418 | Keep Travel here visible on Local Map selections                                | [ada-0418.md](../work/ada-0418.md) |
+| ada-0421 | Centre Shop row icon wells and price badges                                     | [ada-0421.md](../work/ada-0421.md) |

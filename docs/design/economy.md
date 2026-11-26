@@ -25,3 +25,5 @@ prices and pacing.
 | ada-0355 | Group Ore and Stardust pickups in fives                                              | [ada-0355.md](../work/ada-0355.md) |
 | ada-0357 | Add three community projects across the middle galaxies                              | [ada-0357.md](../work/ada-0357.md) |
 | ada-0366 | Double awarded station job and repeatable activity payouts                           | [ada-0366.md](../work/ada-0366.md) |
+| ada-0420 | Spend one Multi-Laser ammo per full volley                                           | [ada-0420.md](../work/ada-0420.md) |
+| ada-0422 | Keep purchases Owned before rotating station stock                                   | [ada-0422.md](../work/ada-0422.md) |
