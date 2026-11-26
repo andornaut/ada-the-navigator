@@ -1363,16 +1363,13 @@ export class GameScene extends Scene {
         this.drawUnderHullJets(under, keyline);
       }
     }
-    if (!composed) {
-      keylineSprite(this, "ship", "player-ship", this.ship);
-    }
+    keylineSprite(this, "ship", "player-ship", this.ship);
     this.placeAda(
       flames,
       travel === "forward" && jetsInFront(activeJets, ship?.directionIndex ?? -1),
     );
     if (composed) {
       this.forwardJetComposition?.place(this.ship.depth);
-      this.ship.setVisible(false);
     }
     const launchDepth = this.ship.depth + ADA_LAYERS.launch;
     this.launchInk.setDepth(launchDepth);
@@ -1407,6 +1404,10 @@ export class GameScene extends Scene {
     }
 
     drawKeylines(this);
+    // Use the visible source sprite to draw Ada's hull keyline before the compositor replaces it.
+    if (composed) {
+      this.ship.setVisible(false);
+    }
     drawUseCallout(this, flight);
     this.bannerLayer?.place(this.banners);
   }
