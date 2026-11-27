@@ -59,7 +59,6 @@ import {
   sceneryBound,
   scenerySilhouette,
   type Silhouette,
-  worldSceneryBlocksSegment,
   worldSceneryBodyContact,
   worldSceneryContact,
 } from "./asteroids.ts";
@@ -78,10 +77,7 @@ import { worldCurrentsNear, worldFlowAt, worldInCurrent } from "./currents.ts";
 import {
   hammerAllowsMount,
   mantaEscortCommand,
-  mantaEscortCourse,
-  type MantaEscortIndex,
   mantaEscortMayFire,
-  type MantaEscortState,
 } from "./earlyEncounterPatterns.ts";
 import {
   EARLY_LANCE_MOUNT,
@@ -144,6 +140,7 @@ import {
   recordBlastFlash,
   recordProjectileImpact,
 } from "./flight/impactFeedback.ts";
+import { planMantaEscorts } from "./flight/mantaEscorts.ts";
 import { armed, layMine, stepMines, strikeMines } from "./flight/mines.ts";
 import {
   clearPilotHeading,
@@ -157,7 +154,11 @@ import {
   projectileSceneryContact,
   shotRadius,
 } from "./flight/projectileContact.ts";
-import { resolveScenery, type SceneryContactOf } from "./flight/sceneryResolution.ts";
+import {
+  resolveScenery,
+  sceneryBlocksFlightSegment,
+  type SceneryContactOf,
+} from "./flight/sceneryResolution.ts";
 import { bounceShipContact } from "./flight/shipContact.ts";
 import {
   firePlayerWeapon,
@@ -2758,21 +2759,12 @@ function minerInput(
       x: centre.x + (away.x / distance) * loop,
       y: centre.y + (away.y / distance) * loop,
     };
-    return !flight.objects.some(
-      (other) =>
-        other.id !== rock.id &&
-        other.hp > 0 &&
-        SCENERY.includes(other.kind) &&
-        worldSceneryBlocksSegment(
-          world,
-          other,
-          object,
-          entry,
-          ENEMY_AVOIDANCE.passageClearance + object.radius,
-          frameOf(flight, other),
-          drawnOf(flight, other),
-        ),
-    );
+    return !sceneryBlocksFlightSegment(sceneryResolution, world, flight, {
+      clearance: ENEMY_AVOIDANCE.passageClearance + object.radius,
+      except: rock.id,
+      from: object,
+      to: entry,
+    });
   });
   return {
     candidates: candidates.map((rock) => ({ id: rock.id, position: rock.position })),
@@ -4040,66 +4032,6 @@ export function dronesNear(flight: FlightState): boolean {
   );
 }
 
-/** Use existing escort berth and hull distances for the two opposite crossing paths. */
-function planMantaEscorts(flight: FlightState, leader: SpaceObject): MantaEscortState | undefined {
-  const world = flightWorldContext(flight);
-  const home = leader.enemy!.home;
-  const toward = worldDelta(world, home, FLIGHT_START);
-  const forward = length(toward) > 0 ? direction(toward) : { x: 1, y: 0 };
-  const gap = spacingRadius(ROUTE_POSITION[flight.galaxy], leader.enemy!) + escortTuning.stationGap;
-  const clear = (from: Vec, to: Vec) =>
-    !flight.objects.some(
-      (object) =>
-        SCENERY.includes(object.kind) &&
-        object.hp > 0 &&
-        worldSceneryBlocksSegment(
-          world,
-          object,
-          from,
-          to,
-          0,
-          frameOf(flight, object),
-          drawnOf(flight, object),
-        ),
-    );
-  const course = (escort: MantaEscortIndex) => {
-    const side = escort === 0 ? 1 : -1;
-    const point = (offset: Vec) => ({ x: home.x + offset.x, y: home.y + offset.y });
-    // Keep the two escorts on opposite sides and move a blocked pass outwards past the terrain.
-    for (const offset of [0, escortTuning.stationGap / 2, escortTuning.stationGap]) {
-      const distance = gap + offset;
-      const station = { x: -forward.y * distance * side, y: forward.x * distance * side };
-      for (const span of [escortTuning.stationGap, escortTuning.stationGap / 2]) {
-        const entry = {
-          x: station.x - forward.x * span * side,
-          y: station.y - forward.y * span * side,
-        };
-        const exit = {
-          x: station.x + forward.x * span * side,
-          y: station.y + forward.y * span * side,
-        };
-        if (
-          clear(point(entry), point(exit)) &&
-          clear(point(station), point(entry)) &&
-          clear(point(exit), point(station))
-        ) {
-          return mantaEscortCourse(
-            {
-              current: worldFlowAt(world, flight.galaxy, point(station)),
-              reverseIsClear: true,
-            },
-            { entry, exit, station },
-          );
-        }
-      }
-    }
-    return undefined;
-  };
-  const first = course(0);
-  const second = course(1);
-  return first && second ? { courses: [first, second], elapsed: 0 } : undefined;
-}
-
 function enemies(
   viewport: Readonly<Pick<PlayerWeaponCoverageContext, "viewportHeight" | "viewportWidth">>,
   content: GameContent,
@@ -4166,20 +4098,12 @@ function enemies(
   const peers = loadedPeers.filter((peer) => peer.hp > 0 && !peer.disabled);
   const visibility = new Map(
     objects.map((object) => {
-      const visible = !flight.objects.some(
-        (obstacle) =>
-          SCENERY.includes(obstacle.kind) &&
-          obstacle.hp > 0 &&
-          worldSceneryBlocksSegment(
-            flightWorldContext(flight),
-            obstacle,
-            object,
-            worldPoint(flightWorldContext(flight), object, flight.player),
-            0,
-            frameOf(flight, obstacle),
-            drawnOf(flight, obstacle),
-          ),
-      );
+      const world = flightWorldContext(flight);
+      const visible = !sceneryBlocksFlightSegment(sceneryResolution, world, flight, {
+        clearance: 0,
+        from: object,
+        to: worldPoint(world, object, flight.player),
+      });
       return [object.id, visible] as const;
     }),
   );
@@ -4306,7 +4230,7 @@ function enemies(
       !manta.enemy.earlyEncounter &&
       (manta.enemy.engaged || admissions.has(manta.id))
     ) {
-      const escortPlan = planMantaEscorts(flight, manta);
+      const escortPlan = planMantaEscorts(sceneryResolution, FLIGHT_START, flight, manta);
       if (escortPlan) {
         manta.enemy.earlyEncounter = { ...escortPlan, kind: "manta" };
       }

@@ -1,11 +1,36 @@
-import type { Silhouette } from "../asteroids.ts";
+import { type Silhouette, worldSceneryBlocksSegment } from "../asteroids.ts";
 import type { Contact } from "../convex.ts";
 import type { FlightState, SpaceObject, Vec } from "../types.ts";
+import type { WorldContext } from "../worldContacts.ts";
 
-interface SceneryResolution {
+export interface SceneryResolution {
   readonly kinds: readonly string[];
   readonly drawnOf: (flight: FlightState, object: SpaceObject) => Silhouette | null;
   readonly frameOf: (flight: FlightState, object: SpaceObject) => number;
+}
+
+/** Checks the live scenery against a segment in the caller's local chart. */
+export function sceneryBlocksFlightSegment(
+  scenery: SceneryResolution,
+  world: WorldContext,
+  flight: FlightState,
+  segment: { readonly from: Vec; readonly to: Vec; readonly clearance: number; readonly except?: string },
+): boolean {
+  return flight.objects.some(
+    (object) =>
+      scenery.kinds.includes(object.kind) &&
+      object.hp > 0 &&
+      object.id !== segment.except &&
+      worldSceneryBlocksSegment(
+        world,
+        object,
+        segment.from,
+        segment.to,
+        segment.clearance,
+        scenery.frameOf(flight, object),
+        scenery.drawnOf(flight, object),
+      ),
+  );
 }
 
 /** A body's overlap with a scenery object from `position`, at the object's current frame. */
