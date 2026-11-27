@@ -1603,6 +1603,35 @@ describe("Use copy resolution", () => {
     text: "",
     title: "Salvager",
   };
+  it("offers Wick's main question once and leads from his answer to the beacon", () => {
+    const arrival = { ...panel, context: "andromeda:arrival", title: "Wick" };
+    const run = new InteractionConversation();
+    run.show(interactionCopy({ galaxy: 5, progress: { stage: 0 } }, arrival), arrival);
+    run.advance();
+    expect(run.topicExitLabel).toBe("What's happening to the ships?");
+    expect(run.topics.map(({ label }) => label)).toEqual(["What do beacons do?"]);
+    expect(run.canSkip).toBe(false);
+    run.topic(0);
+    run.advance();
+    expect(run.completedTopic(0)).toBe(true);
+    run.leaveTopics();
+    expect(run.line).toMatchObject({
+      speaker: "Wick",
+      text: "They keep getting lost. It must be Archie's drones. Everyone is scared to fly.",
+    });
+    run.advance();
+    expect(run.line?.text).toBe("Without the beacons, the bright spiral is easy to get lost in.");
+    run.advance();
+    expect(run.line?.text).toBe("I'll look at the beacon.");
+    expect(run.choices).toEqual(arrival.choices);
+    expect(run.atOutcome).toBe(true);
+    run.previous();
+    run.previous();
+    run.previous();
+    expect(run.topicExitLabel).toBe("What's happening to the ships?");
+    expect(run.completedTopic(0)).toBe(true);
+  });
+
   it("keeps the addressed outpost as party while Ada and Astra speak as themselves", () => {
     const copy = interactionCopy(1, panel);
     expect(copy.party).toBe("Patch");

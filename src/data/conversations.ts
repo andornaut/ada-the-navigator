@@ -814,6 +814,7 @@ function displayChapterSpeaker(speaker: string): string {
 
 /** Approved Use exchanges, keyed by existing runtime galaxy and dialogue context. */
 export interface InteractionLine {
+  readonly id?: string;
   readonly speaker: string;
   readonly text: string;
 }
@@ -826,6 +827,7 @@ export interface InteractionTopic {
 export interface InteractionCopy {
   readonly party: string;
   readonly lines: readonly InteractionLine[];
+  readonly topicExit?: { readonly label: string; readonly target: string };
   readonly topics: readonly InteractionTopic[];
 }
 export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {

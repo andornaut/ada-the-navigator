@@ -1435,9 +1435,10 @@ export class InteractionConversation {
 
   get topicExitLabel(): string | undefined {
     if (this.page.kind === "topics") {
-      return this.panel?.context === "needle.arrival"
-        ? "Ask about the disk"
-        : "Resume conversation";
+      return (
+        this.copy?.topicExit?.label ??
+        (this.panel?.context === "needle.arrival" ? "Ask about the disk" : "Resume conversation")
+      );
     }
     return undefined;
   }
@@ -1478,8 +1479,13 @@ export class InteractionConversation {
   }
 
   leaveTopics(): void {
-    if (this.page.kind === "topics") {
-      this.showPage({ index: 1, kind: "main" });
+    if (this.page.kind !== "topics" || !this.copy) {
+      return;
+    }
+    const { lines, topicExit } = this.copy;
+    const index = topicExit ? lines.findIndex(({ id }) => id === topicExit.target) : 1;
+    if (index >= 0) {
+      this.showPage({ index, kind: "main" });
     }
   }
 
@@ -1576,8 +1582,9 @@ export function interactionCopy(
   ) {
     const copy = andromedaConversation(context.progress, chapter as AndromedaConversationId);
     return {
-      lines: copy.lines.map(({ speaker, text }) => ({ speaker: speaker ?? "", text })),
+      lines: copy.lines.map(({ speaker, ...line }) => ({ ...line, speaker: speaker ?? "" })),
       party: copy.party,
+      ...(copy.topicExit && { topicExit: copy.topicExit }),
       topics: (copy.questions ?? []).map(({ label, speaker, text }) => ({
         label,
         lines: [{ speaker: speaker ?? "", text }],

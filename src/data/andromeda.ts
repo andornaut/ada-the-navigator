@@ -45,6 +45,7 @@ export const ANDROMEDA_CHAPTER: ChapterContent = {
 };
 
 export interface AndromedaLine {
+  readonly id?: string;
   readonly speaker?: string;
   readonly text: string;
 }
@@ -53,6 +54,7 @@ export interface AndromedaConversation {
   readonly party: string;
   readonly lines: readonly AndromedaLine[];
   readonly questions?: readonly (AndromedaLine & { readonly label: string })[];
+  readonly topicExit?: { readonly label: string; readonly target: string };
 }
 
 /** Optional questions never advance or gate the chapter. */
@@ -60,10 +62,14 @@ export const ANDROMEDA_CONVERSATIONS = {
   arrival: {
     lines: [
       { speaker: "Wick", text: "A traveler! Be careful. One of our guide beacons has gone dark." },
-      { speaker: "Ada", text: "What's happening to the ships?" },
       {
+        id: "ships",
         speaker: "Wick",
         text: "They keep getting lost. It must be Archie's drones. Everyone is scared to fly.",
+      },
+      {
+        speaker: "Wick",
+        text: "Without the beacons, the bright spiral is easy to get lost in.",
       },
       { speaker: "Ada", text: "I'll look at the beacon." },
     ],
@@ -74,12 +80,8 @@ export const ANDROMEDA_CONVERSATIONS = {
         speaker: "Wick",
         text: "They guide ships between the settlements.",
       },
-      {
-        label: "Why are ships lost?",
-        speaker: "Wick",
-        text: "Without the beacons, the bright spiral is easy to get lost in.",
-      },
     ],
+    topicExit: { label: "What's happening to the ships?", target: "ships" },
   },
   confession: {
     lines: [
