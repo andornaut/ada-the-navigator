@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
+import { isNeedleCourseStart, NEEDLE } from "../data/needle.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
@@ -14,7 +15,9 @@ import { createFlight, ensureDestinationAt, spawnChapterEnemy } from "./flight.t
 import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { markerKnowledgeStore } from "./markerBindings.ts";
+import { needleCourses } from "./needle.ts";
 import type { SpaceObject } from "./types.ts";
+import { wrapPoint } from "./worldGeometry.ts";
 
 function fixture() {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
@@ -51,6 +54,104 @@ function boss(id: string, archetype: "capital" | "fighter" | "frigate" | "platfo
 }
 
 describe("production unified marker facade", () => {
+  it.each([
+    ["practice", "needlePractice", "Practice channel", 0],
+    ["eye", "needleEye", "The Eye", NEEDLE.practiceGates],
+  ] as const)(
+    "tracks the %s flag and then each automatic ring through the live registry",
+    (course, id, label, practiceLit) => {
+      const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
+      Object.assign(model.state, { prologueSeen: true, started: true, unlocked: [1, 4] });
+      const progress = model.state.progress[4];
+      progress.opened = true;
+      model.startGalaxy(4);
+      const flight = model.state.flight!;
+      const { gates, path } = needleCourses(flight)![course];
+      const [flag] = path;
+      const [first, second] = gates;
+      const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
+      const markers = () =>
+        model.targetMarkers(GAME_AREA).filter(({ id }) => isNeedleCourseStart(id));
+      const indicator = () => model.indicatorTargets.filter(({ id }) => isNeedleCourseStart(id));
+      const current = () =>
+        model.targetMarkers(GAME_AREA).filter(({ trackedLabel }) => trackedLabel !== undefined);
+      progress.introduced = true;
+      expect(markers()).toEqual([]);
+      Object.assign(progress.needle!, {
+        approach: "independent",
+        briefed: true,
+        met: true,
+        practiceLit,
+        practiceThanked: course === "eye",
+      });
+      // A player half a galaxy away on the opposite canonical side sees the nearest image.
+      const side = flight.topology!.side;
+      const direction = Math.sign(flag!.x) || 1;
+      flight.player = { x: -direction * (side / 2 - 1), y: flag!.y };
+      expect(markers()).toMatchObject([
+        {
+          id,
+          onScreen: false,
+          symbol: "destination",
+          trackedLabel: label,
+          x: flag!.x - direction * side,
+          y: flag!.y,
+        },
+      ]);
+      expect(indicator()).toEqual([]);
+      expect(progress.markerKnowledge?.[id]).toBeUndefined();
+      const entry = { ...flag!, id, kind: "objective" };
+      flight.player = { x: flag!.x + 500, y: flag!.y };
+      expect(indicator()).toEqual([entry]);
+
+      flight.player = { ...flag! };
+      model.step(0.001, idle);
+      expect(progress.known).toContain(id);
+      expect(
+        flight.objects.find((object) => object.id === id) ?? flight.world.notables[id],
+      ).toMatchObject(flag!);
+      expect(first!.point).not.toEqual(flag);
+      expect(indicator()).toEqual([{ ...first!.point, id, kind: "objective" }]);
+      expect(markers()).toMatchObject([{ ...first!.point, id, trackedLabel: label }]);
+
+      flight.player = {
+        x: first!.point.x - first!.tangent.x * 0.1,
+        y: first!.point.y - first!.tangent.y * 0.1,
+      };
+      flight.velocity = { x: first!.tangent.x * 20, y: first!.tangent.y * 20 };
+      model.step(0.05, {
+        ...idle,
+        move: { x: first!.tangent.x * 0.25, y: first!.tangent.y * 0.25 },
+      });
+      expect(indicator()).toEqual([{ ...second!.point, id, kind: "objective" }]);
+      expect(markers()).toMatchObject([{ ...second!.point, id, trackedLabel: label }]);
+      flight.player = { ...second!.point };
+      expect(markers()).toMatchObject([
+        { ...second!.point, id, onScreen: true, trackedLabel: label },
+      ]);
+
+      const target = wrapPoint(side, { x: flight.player.x + 6000, y: flight.player.y });
+      model.state.tasks[4] = {
+        id: "needle-hunt",
+        item: "a ring",
+        kind: "job",
+        reward: 17,
+        spot: { x: target.x, y: target.y + 100 },
+        station: "station:issuer",
+        target: { ...target, id: "" },
+        type: "hunt",
+      };
+      expect(model.trackQuest("job:4:needle-hunt")).toBe(true);
+      expect(indicator()).toEqual([]);
+      expect(markers()).toEqual([]);
+      expect(current()).toMatchObject([
+        { id: "job:needle-hunt:search", trackedLabel: "Search area" },
+      ]);
+      expect(model.dropJob()).toBe(true);
+      expect(current()).toMatchObject([{ ...second!.point, id, trackedLabel: label }]);
+    },
+  );
+
   it("tracks only the current known story step and keeps an ordinary marker at the same ID", () => {
     const { flight, model, progress } = fixture();
     flight.topology = CURRENT_FLIGHT_TOPOLOGY;

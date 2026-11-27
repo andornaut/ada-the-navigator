@@ -250,6 +250,7 @@ import {
   NEEDLE_CADENCE_CUES,
   needleCadenceSite,
   needleCadenceTransmission,
+  type NeedleTrackedObjective,
   needleTrackedObjective,
 } from "./needleRuntime.ts";
 import type { PennyMarker, PennyPoint } from "./pennyMarkers.ts";
@@ -1064,6 +1065,7 @@ export class GameModel {
     known: readonly string[],
     storyTargets: readonly string[],
     job: IndicatorTarget | null,
+    needle: NeedleTrackedObjective | null,
   ): (TrackedTarget & { readonly waypoint?: PennyPoint }) | undefined {
     const tracked = this.trackedQuestId;
     if (tracked === null) {
@@ -1090,6 +1092,9 @@ export class GameModel {
       },
     });
     const held = tracked === f.trackedQuestId ? this.held : undefined;
+    if (needle) {
+      return waypoint(needle.id, needle.point, "destination", this.label(needle.id));
+    }
     if (held?.type === "hunt") {
       return waypoint(`job:${held.id}:search`, held.target, "job", "Search area", held.type);
     }
@@ -1152,10 +1157,13 @@ export class GameModel {
         ? [PHANTOM_FLAGSHIP]
         : [];
     const job = this.jobIndicator(f);
-    const indicators = new Map(this.flightIndicators(f, job).map(({ id, kind }) => [id, kind]));
+    const needle = this.needleMarkerObjective(f);
+    const indicators = new Map(
+      this.flightIndicators(f, job, needle).map(({ id, kind }) => [id, kind]),
+    );
     const candidates = new Set([...known, ...store.ids(), ...indicators.keys(), ...encounterIds]);
     const tasks = this.markerTaskContext(f, known);
-    const tracked = this.trackedMarker(f, known, tasks.storyTargets, job);
+    const tracked = this.trackedMarker(f, known, tasks.storyTargets, job, needle);
     const categories = new Map<string, NonNullable<PennyMarker["taskCategory"]>>();
     const contributions: TargetContribution[] = known.map((id) => ({ id, source: "ordinary" }));
     for (const id of candidates) {
@@ -1193,6 +1201,10 @@ export class GameModel {
         return { state: "removed" };
       }
       const waypoint = tracked?.id === id ? tracked.waypoint : undefined;
+      // Course flags stay physical places. Their flight guidance comes from the active course step.
+      if (!waypoint && f.galaxy === 4 && isNeedleCourseStart(id)) {
+        return { state: "unresolved" };
+      }
       const point = waypoint ?? this.markerPoint(f, id, litCaches);
       if (!point) {
         return { state: "unresolved" };
@@ -3861,18 +3873,34 @@ export class GameModel {
     if (!f || this.state.mode !== "space") {
       return [];
     }
-    return this.flightIndicators(f, this.jobIndicator(f));
+    return this.flightIndicators(f, this.jobIndicator(f), this.needleMarkerObjective(f));
   }
-  private flightIndicators(f: FlightState, job: IndicatorTarget | null): IndicatorTarget[] {
+  private needleMarkerObjective(f: FlightState): NeedleTrackedObjective | null {
+    if (
+      f.galaxy !== 4 ||
+      (f.trackedQuestId !== undefined && this.canTrackQuest(f.trackedQuestId))
+    ) {
+      return null;
+    }
+    return needleTrackedObjective({ content: this.content, flight: f, progress: this.current });
+  }
+  private flightIndicators(
+    f: FlightState,
+    job: IndicatorTarget | null,
+    needle: NeedleTrackedObjective | null,
+  ): IndicatorTarget[] {
     const p = this.current;
     const chapter = chapterRuntime(f.galaxy);
-    const objective = this.objectiveId(f.galaxy);
+    const storyObjective = this.objectiveId(f.galaxy);
+    const objective =
+      f.galaxy === 4 && storyObjective && isNeedleCourseStart(storyObjective)
+        ? null
+        : storyObjective;
     const point =
       chapter && objective
         ? (f.objects.find((object) => object.id === objective) ?? f.world.notables[objective])
         : null;
     const context = chapter && this.chapterContext();
-    const needle = context && needleTrackedObjective(context);
     const waypoint = context && f.galaxy === 6 ? phantomWaypoint(context) : null;
     const marked = indicatorTargets(INDICATOR_SOURCES, {
       flight: f,
@@ -3881,7 +3909,12 @@ export class GameModel {
       job,
       objective,
       ...(needle
-        ? { objectivePoint: { id: needle.id, ...needle.point } }
+        ? {
+            objectivePoint: {
+              id: needle.id,
+              ...worldPoint(flightWorldContext(f), f.player, needle.point),
+            },
+          }
         : point
           ? { objectivePoint: { id: point.id, x: point.x, y: point.y } }
           : {}),
