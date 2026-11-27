@@ -476,6 +476,13 @@ settlements: a lit guide beacon stands every 2000 world units along the
 straight line between two settlements, alternating its two looks, and the dark
 beacon is one of them, dented until Ada and Pip relight it.
 
+After the Dark Beacon is relit, a noncombat courier flies its repaired lane
+between the beacon and the settlers' station. The traffic uses the existing
+lane and stays outside the objective and combat systems. The first time Ada
+sees the returning traffic, Pip says “Look. They're using the lane again.”
+The repaired lane remains active on subsequent visits. There is no extra
+interaction, reward or quest requirement.
+
 #### Captain Redact
 
 Completing the beacon repair exchange makes Captain Redact, an uncrewed

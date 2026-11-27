@@ -195,6 +195,12 @@ export const ANDROMEDA_CONFESSION_WITHOUT_INSPECTION: readonly AndromedaLine[] =
 export type AndromedaConversationId = keyof typeof ANDROMEDA_CONVERSATIONS;
 
 /** Stable story-role ids; stations retain their real seeded station ids. */
+export const ANDROMEDA_LANE_COURIER = {
+  id: "andromeda:lane-courier",
+  line: { speaker: "pip", text: "Look. They're using the lane again." },
+  sighting: "andromeda:lane-courier:sighted",
+} as const;
+
 export const ANDROMEDA_PLACES = {
   beacon: "darkBeacon",
   pip: "pip",

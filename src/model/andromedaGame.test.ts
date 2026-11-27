@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { COURIER } from "../data/activities.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { BUILT, GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
@@ -7,6 +8,7 @@ import type { GalaxyNumber } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
+import { andromedaLaneCourier } from "./andromedaLane.ts";
 import { worldNearestSettlerStation } from "./andromedaPlaces.ts";
 import { ANDROMEDA_REDACT, andromedaRedactEligible } from "./andromedaRedact.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
@@ -19,7 +21,8 @@ import { ensureStation } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
-import { flightStationContext } from "./stations.ts";
+import { flightStationContext, worldStationById } from "./stations.ts";
+import { worldDelta, worldPoint } from "./worldContacts.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
@@ -120,6 +123,90 @@ function repairBeacon(initial: GameModel): GameModel {
   });
   return model;
 }
+
+describe("repaired Andromeda lane", () => {
+  const baseSpeed = CONTENT.tuning.physics.maxSpeed;
+  const sample = (model: GameModel) =>
+    andromedaLaneCourier({ baseSpeed, progress: model.state.progress[5] }, model.state.flight!);
+
+  it("runs out and back on the wrapped leg to the accepted station as scenery", () => {
+    const launched = launch(301);
+    expect(sample(launched)).toBeNull();
+    launched.andromedaCourierDisplayed(launched.state.flight!);
+    expect(launched.state.seenConversations).not.toContain("andromeda:lane-courier:sighted");
+    const model = repairBeacon(launched);
+    const flight = model.state.flight!;
+    const progress = model.state.progress[5];
+    const beacon = progress.requiredSites!.darkBeacon!;
+    const station = worldStationById(
+      flightStationContext(flight),
+      ECONOMY,
+      5,
+      progress.andromeda!.station!,
+    )!;
+    const world = flightWorldContext(flight);
+    const leg = worldDelta(world, beacon, station);
+    const crossing = Math.hypot(leg.x, leg.y) / (baseSpeed * COURIER.speedFraction);
+    const objects = flight.objects.slice();
+    const economy = structuredClone(model.state.economy);
+
+    flight.time = 0;
+    expect(sample(model)).toEqual({ ...worldPoint(world, flight.player, beacon), heading: leg });
+    flight.time = crossing;
+    const stop = sample(model)!;
+    const endpoint = worldPoint(world, flight.player, station);
+    expect(stop.x).toBeCloseTo(endpoint.x);
+    expect(stop.y).toBeCloseTo(endpoint.y);
+    flight.time = crossing * 1.5;
+    const returning = sample(model)!;
+    expect(returning.heading).toEqual({ x: -leg.x, y: -leg.y });
+    flight.time = crossing / 2;
+    const outbound = sample(model)!;
+    expect(outbound.heading).toEqual(leg);
+    expect(outbound.x).toBeCloseTo(returning.x);
+    expect(outbound.y).toBeCloseTo(returning.y);
+    expect(flight.objects).toEqual(objects);
+    expect(model.state.economy).toEqual(economy);
+    expect(model.map?.places.some(({ id }) => id === "andromeda:lane-courier")).toBe(false);
+    expect(model.state.seenConversations).not.toContain("andromeda:lane-courier:sighted");
+  });
+
+  it("restores a pending real sight on Continue and never repeats Pip's line on later visits", () => {
+    let model = repairBeacon(launch(301));
+    const heard = "andromeda:lane-courier";
+    const sighted = "andromeda:lane-courier:sighted";
+    const line = "Look. They're using the lane again.";
+    const flight = model.state.flight!;
+    model.andromedaCourierDisplayed({ ...flight });
+    expect(model.state.seenConversations).not.toContain(sighted);
+    model.andromedaCourierDisplayed(flight);
+    model.andromedaCourierDisplayed(flight);
+    expect(model.state.seenConversations.filter((id) => id === sighted)).toHaveLength(1);
+    expect(model.state.seenConversations).not.toContain(heard);
+    const before = sample(model);
+    model = relaunch(CONTENT, model.save());
+    expect(sample(model)).toEqual(before);
+    endArrivalGrace(model.state.flight!);
+    for (let i = 0; i < 240 && model.conversation?.text !== line; i += 1) {
+      model.step(0.05, idle);
+    }
+    expect(model.conversation).toMatchObject({ speaker: "pip", text: line });
+    expect(model.state.seenConversations.filter((id) => id === heard)).toHaveLength(1);
+    model = relaunch(CONTENT, model.save());
+    model.state.flight!.dangerFor = 0;
+    model.returnHome();
+    readStory(model);
+    model.startGalaxy(5);
+    expect(sample(model)).not.toBeNull();
+    endArrivalGrace(model.state.flight!);
+    for (let i = 0; i < 240; i += 1) {
+      model.andromedaCourierDisplayed(model.state.flight!);
+      model.step(0.05, idle);
+      expect(model.conversation?.text).not.toBe(line);
+    }
+    expect(model.state.seenConversations.filter((id) => id === heard)).toHaveLength(1);
+  });
+});
 
 describe("mounted Andromeda chapter", () => {
   it.each([0, 3, 4, 5, 6])("withholds Talk when Pip has no conversation at stage %s", (stage) => {

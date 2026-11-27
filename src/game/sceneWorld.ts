@@ -36,6 +36,7 @@ import type { FlightState, Vec } from "../model/types.ts";
 import { enemyJetTriangles, selectEnemyFrame } from "./enemyArt.ts";
 import { LIGHT_FIELD } from "./lightField.ts";
 import type { GameScene } from "./scene.ts";
+import { drawAndromedaLaneCourier } from "./sceneAndromeda.ts";
 import { drawCraftJets, keylineEdges, keylineSprite } from "./sceneHud.ts";
 import { LANDMARK_DEPTH, STORY_SHIP } from "./sceneShared.ts";
 import { objectSprite } from "./sceneSprites.ts";
@@ -141,11 +142,14 @@ export type WorldContext = Partial<Pick<GameScene, "fieldLight">> &
   >;
 
 /**
- * Cartwheel's buoys and story ships around the hub. Each craft draws Art's frame for the
- * nearest of its 16 headings, with its speed jets while it moves; a craft whose frames are not
- * loaded yet draws as a vector dart.
+ * Draw the repaired Andromeda lane courier and Cartwheel's hub traffic. Cartwheel craft
+ * use the closest authored heading and fall back to vector darts during loading.
  */
 export function drawStoryShips(scene: WorldContext, flight: FlightState): void {
+  if (flight.galaxy === 5) {
+    drawAndromedaLaneCourier(scene, flight);
+    return;
+  }
   const hub =
     flight.galaxy === CARTWHEEL_STORY_SHIPS.galaxy
       ? flight.objects.find((object) => object.kind === "destination" && object.id === "hub")

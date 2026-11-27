@@ -2,11 +2,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import manifest from "../../public/art/andromeda/manifest.json";
 import core from "../../public/art/manifest.json";
+import { staleSpriteKeys } from "../art/index.ts";
+import { ECONOMY } from "../data/economy.ts";
+import { worldNearestSettlerStation } from "../model/andromedaPlaces.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
 import type { SpaceObject } from "../model/types.ts";
 import { selectEnemyFrame } from "./enemyArt.ts";
-import { andromedaSettlementVariant, drawAndromeda } from "./sceneAndromeda.ts";
+import {
+  andromedaSettlementVariant,
+  drawAndromeda,
+  drawAndromedaLaneCourier,
+} from "./sceneAndromeda.ts";
 import type { ObjectsContext } from "./sceneObjects.ts";
 import type { Asset } from "./sceneShared.ts";
+import type { WorldContext } from "./sceneWorld.ts";
 
 const calls = vi.hoisted(() => ({ outpost: vi.fn(), single: vi.fn(), sprite: vi.fn() }));
 vi.mock("./sceneObjects.ts", () => ({
@@ -103,5 +112,67 @@ describe("Andromeda authored rendering", () => {
     expect(calls.outpost).not.toHaveBeenCalled();
     expect(calls.single).not.toHaveBeenCalled();
     expect(calls.sprite).not.toHaveBeenCalled();
+  });
+});
+
+describe("visible Andromeda courier", () => {
+  function frame({
+    complete = true,
+    live = true,
+    ready = true,
+    visible = true,
+    warpCover = false,
+  } = {}) {
+    const context = scene(complete, ready) as unknown as WorldContext;
+    const flight = context.model.state.flight!;
+    const beacon = destination("darkBeacon");
+    Object.assign(flight, {
+      objects: [beacon],
+      time: 10,
+      topology: CURRENT_FLIGHT_TOPOLOGY,
+      world: { notables: {} },
+    });
+    Object.assign(context, {
+      flightLive: live,
+      project: () => (visible ? { x: 20, y: 40 } : { x: -200, y: 40 }),
+      warpCover,
+    });
+    context.model.andromedaCourierDisplayed = vi.fn();
+    Object.assign(context.model.state.progress[5], {
+      andromeda: {
+        station: worldNearestSettlerStation(
+          { worldSide: CURRENT_FLIGHT_TOPOLOGY.side },
+          ECONOMY,
+          beacon,
+        ).id,
+      },
+      requiredSites: { darkBeacon: beacon },
+    });
+    drawAndromedaLaneCourier(context, flight);
+    return { context, flight };
+  }
+
+  it("registers sight after placing the existing textured craft with a retained sprite owner", () => {
+    const { context, flight } = frame();
+    const sprite = calls.sprite.mock.results[0]!.value;
+    const key = "darkBeacon#andromeda:lane-courier";
+    expect(calls.sprite).toHaveBeenCalledWith(context, key, expect.stringMatching(/^craft-pip-/u));
+    expect(staleSpriteKeys(new Set(flight.objects.map(({ id }) => id)), [key])).toEqual([]);
+    expect(context.passes).toHaveBeenCalledWith(sprite);
+    expect(context.model.andromedaCourierDisplayed).toHaveBeenCalledWith(flight);
+  });
+
+  it.each([{ complete: false }, { ready: false }, { visible: false }])(
+    "records no sight or sprite for %j",
+    (condition) => {
+      const { context } = frame(condition);
+      expect(calls.sprite).not.toHaveBeenCalled();
+      expect(context.model.andromedaCourierDisplayed).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([{ live: false }, { warpCover: true }])("records no sight under %j", (condition) => {
+    const { context } = frame(condition);
+    expect(context.model.andromedaCourierDisplayed).not.toHaveBeenCalled();
   });
 });

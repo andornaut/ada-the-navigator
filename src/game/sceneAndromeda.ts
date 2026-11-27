@@ -1,11 +1,54 @@
-import { playDepth, readBlinkArt, type StationArt } from "../art/index.ts";
-import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
-import type { SpaceObject } from "../model/types.ts";
+import {
+  boundsOnScreen,
+  frameBounds,
+  partKey,
+  playDepth,
+  readBlinkArt,
+  type StationArt,
+} from "../art/index.ts";
+import { ANDROMEDA_LANE_COURIER, ANDROMEDA_PLACES } from "../data/andromeda.ts";
+import { CONTENT } from "../data/content.ts";
+import { SCREEN } from "../data/screen.ts";
+import { andromedaLaneCourier } from "../model/andromedaLane.ts";
+import type { FlightState, SpaceObject } from "../model/types.ts";
 import { selectEnemyFrame } from "./enemyArt.ts";
 import { keylineSprite } from "./sceneHud.ts";
 import { drawOutpost, type ObjectsContext, placeStationFrame } from "./sceneObjects.ts";
 import type { Asset } from "./sceneShared.ts";
 import { objectSprite } from "./sceneSprites.ts";
+import type { WorldContext } from "./sceneWorld.ts";
+
+/** A passing courier is scenery and acknowledges sight only from a visible, textured frame. */
+export function drawAndromedaLaneCourier(scene: WorldContext, flight: FlightState): void {
+  const craft = scene.craftArt.get("pip");
+  const { model } = scene;
+  if (!craft) {
+    return;
+  }
+  const courier = andromedaLaneCourier(
+    { baseSpeed: CONTENT.tuning.physics.maxSpeed, progress: model.state.progress[5] },
+    flight,
+  );
+  if (!courier) {
+    return;
+  }
+  const point = scene.project(courier);
+  const frame = selectEnemyFrame(craft, courier.heading);
+  if (!scene.textures.exists(frame.id) || !boundsOnScreen(SCREEN, point, frameBounds(frame))) {
+    return;
+  }
+  const id = partKey(ANDROMEDA_PLACES.beacon, ANDROMEDA_LANE_COURIER.id);
+  const sprite = objectSprite(scene, id, frame.id)
+    .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
+    .setOrigin(frame.pivot.x, frame.pivot.y)
+    .setPosition(point.x, point.y)
+    .setDepth(playDepth(point.y));
+  keylineSprite(scene, "storyCraft", id, sprite);
+  scene.passes(sprite);
+  if (scene.flightLive && !scene.warpCover) {
+    model.andromedaCourierDisplayed(flight);
+  }
+}
 
 interface AndromedaArt {
   readonly dented: Asset | undefined;

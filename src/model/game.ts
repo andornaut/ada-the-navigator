@@ -3,7 +3,7 @@ import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
 import { ACTIVITIES, MINING_CONTRACT_DEPOSITS, SUPPLY_ITEMS } from "../data/activities.ts";
-import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
+import { ANDROMEDA_LANE_COURIER, ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import {
   type CapitalBossHud,
   CARTWHEEL_CLAIM,
@@ -1432,6 +1432,14 @@ export class GameModel {
       { stardust: this.state.economy.stardust > 0 },
       randomStream(this.state.flight?.seed ?? 1, "line-pools"),
     );
+    const courier = ANDROMEDA_LANE_COURIER;
+    if (
+      this.state.flight?.galaxy === 5 &&
+      this.state.progress[5].questComplete &&
+      this.state.seenConversations.includes(courier.sighting)
+    ) {
+      this.talk.authoredCue(courier.id, courier.line);
+    }
   }
   get canContinue(): boolean {
     return this.state.started || this.heldStory !== null;
@@ -1688,6 +1696,25 @@ export class GameModel {
           Math.hypot(b.x - f.player.x, b.y - f.player.y),
       )[0]?.id;
   }
+  /** Save the first visible pass even if Pip's cue waits behind other chatter. */
+  andromedaCourierDisplayed(flight: FlightState): void {
+    const courier = ANDROMEDA_LANE_COURIER;
+    const seen = this.state.seenConversations;
+    if (
+      this.state.flight !== flight ||
+      flight.galaxy !== 5 ||
+      !this.state.progress[5].questComplete ||
+      this.screen !== "space" ||
+      this.state.dialogue ||
+      this.state.docked ||
+      seen.includes(courier.sighting)
+    ) {
+      return;
+    }
+    seen.push(courier.sighting);
+    this.talk.authoredCue(courier.id, courier.line);
+  }
+
   /** A rendered landmark may teach Scan without granting charting or survey outcomes. */
   landmarkDisplayed(id: string): void {
     const f = this.state.flight;
