@@ -124,13 +124,6 @@ function stack(): HTMLDivElement {
   return group;
 }
 
-// Two columns of equal actions, BUTTON_GAP between columns and STACK_BUTTON_GAP between rows.
-function grid(): HTMLDivElement {
-  const group = document.createElement("div");
-  group.className = "ada-actions ada-pause-grid";
-  return group;
-}
-
 // The Paused card (art/layout.md), its Ship card and its full-screen map (art/map.md), as in
 // Chibi: one shows at a time, the cards over the dimmed game and the map in the dim's place. The
 // X, an outside tap, back and Escape resume from the Paused card; from the Ship card and the map
@@ -180,28 +173,12 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   });
   paused.card.dataset.dialog = "pause";
   const actions = stack();
-  const others = grid();
   const buttons = new Map<PauseAction, HTMLButtonElement>();
   paused.body.append(actions);
   // Every action is built once in flight reading order; each place shows its own actions.
   const pauseLayout = mountLayout<PauseLayoutSchema>(
     {
       components: {
-        actionColumn: {
-          create({ side }) {
-            const column = document.createElement("div");
-            column.className = "ada-pause-column";
-            column.dataset.pauseColumn = side;
-            return { dispose() {}, element: column, slots: { buttons: column }, update() {} };
-          },
-          slots: ["buttons"],
-        },
-        actionGrid: {
-          create() {
-            return { dispose() {}, element: others, slots: { columns: others }, update() {} };
-          },
-          slots: ["columns"],
-        },
         pause: {
           create() {
             return { dispose() {}, element: paused.frame, slots: { actions }, update() {} };

@@ -1,6 +1,7 @@
 import { validateLayoutTree } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import { describe, expect, it } from "vitest";
 
+import { BUTTON_GAP, STACK_BUTTON_GAP } from "./layout/tokens.ts";
 import { pauseActions } from "./pause.ts";
 import { pauseTree } from "./pauseTree.ts";
 
@@ -17,10 +18,7 @@ describe("production Pause configuration", () => {
       ship: "Ship",
     }).map((action) => ({ ...action, hidden: action.id === "map", label: action.id }));
     const tree = pauseTree({ actions, closeLabel: "Close", title: "Paused" });
-    validateLayoutTree(
-      { actionColumn: ["buttons"], actionGrid: ["columns"], pause: ["actions"], pauseButton: [] },
-      tree,
-    );
+    validateLayoutTree({ pause: ["actions"], pauseButton: [] }, tree);
     expect(tree.props).toEqual({
       closeAction: "close-pause",
       closeLabel: "Close",
@@ -28,39 +26,29 @@ describe("production Pause configuration", () => {
       title: "Paused",
     });
     const grid = tree.slots!.actions![0]!;
-    if (grid.kind !== "component" || grid.component !== "actionGrid") {
-      throw Error("Expected native grid");
+    if (grid.kind !== "columns") {
+      throw Error("Expected structural columns");
     }
-    expect(grid.props).toEqual({});
-    const [left, right] = grid.slots!.columns!;
-    expect(left).toMatchObject({ component: "actionColumn", props: { side: "left" } });
-    expect(right).toMatchObject({ component: "actionColumn", props: { side: "right" } });
-    if (
-      left?.kind !== "component" ||
-      left.component !== "actionColumn" ||
-      right?.kind !== "component" ||
-      right.component !== "actionColumn"
-    ) {
-      throw Error("Expected both native columns");
+    expect(grid).toMatchObject({ gap: BUTTON_GAP, padding: 0, sizing: { mode: "equal" } });
+    const [left, right] = grid.children;
+    if (left?.kind !== "stack" || right?.kind !== "stack") {
+      throw Error("Expected both structural stacks");
     }
-    expect(left.slots!.buttons!.map((node) => node.key)).toEqual([
-      "cheats",
-      "map",
-      "quests",
-      "ship",
-    ]);
-    expect(right.slots!.buttons!.map((node) => node.key)).toEqual([
+    expect(left).toMatchObject({ gap: STACK_BUTTON_GAP, key: "left", padding: 0 });
+    expect(right).toMatchObject({ gap: STACK_BUTTON_GAP, key: "right", padding: 0 });
+    expect(left.children.map((node) => node.key)).toEqual(["cheats", "map", "quests", "ship"]);
+    expect(right.children.map((node) => node.key)).toEqual([
       "achievements",
       "settings",
       "backToTitle",
       "resume",
     ]);
     expect(
-      [...left.slots!.buttons!, ...right.slots!.buttons!].map((node) =>
+      [...left.children, ...right.children].map((node) =>
         node.kind === "component" && node.component === "pauseButton" ? node.props : undefined,
       ),
     ).toEqual(actions);
-    expect(right.slots!.buttons!.at(-1)).toMatchObject({
+    expect(right.children.at(-1)).toMatchObject({
       props: { id: "resume", role: "primary" },
     });
   });
@@ -78,14 +66,14 @@ describe("production Pause configuration", () => {
       title: "Paused",
     });
     const grid = tree.slots!.actions![0]!;
-    if (grid.kind !== "component" || grid.component !== "actionGrid") {
-      throw Error("Expected grid");
+    if (grid.kind !== "columns") {
+      throw Error("Expected structural columns");
     }
-    const left = grid.slots!.columns![0]!;
-    if (left.kind !== "component" || left.component !== "actionColumn") {
-      throw Error("Expected left column");
+    const left = grid.children[0]!;
+    if (left.kind !== "stack") {
+      throw Error("Expected left stack");
     }
-    const button = left.slots!.buttons![0]!;
+    const button = left.children[0]!;
     if (button.kind !== "component" || button.component !== "pauseButton") {
       throw Error("Expected native button");
     }

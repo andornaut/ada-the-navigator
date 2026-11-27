@@ -1,5 +1,6 @@
 import type { ComponentNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
+import { BUTTON_GAP, STACK_BUTTON_GAP } from "./layout/tokens.ts";
 import { PAUSE_RIGHT_ACTIONS, type PauseActionView } from "./pause.ts";
 
 export interface PauseTreeAction extends PauseActionView {
@@ -14,8 +15,6 @@ export interface PauseTreeData {
 }
 
 export type PauseLayoutSchema = {
-  actionColumn: { props: { readonly side: "left" | "right" }; slots: "buttons" };
-  actionGrid: { props: Readonly<Record<string, never>>; slots: "columns" };
   pause: {
     props: {
       readonly closeAction: "close-pause";
@@ -28,7 +27,7 @@ export type PauseLayoutSchema = {
   pauseButton: { props: PauseTreeAction; slots: never };
 };
 
-/** Native stack/grid slots keep their geometry; the caller supplies order and availability. */
+/** Kit lays out the actions in two equal columns. The caller supplies order and availability. */
 export function pauseTree(
   data: PauseTreeData,
 ): Extract<ComponentNode<PauseLayoutSchema>, { component: "pause" }> {
@@ -45,28 +44,25 @@ export function pauseTree(
     slots: {
       actions: [
         {
-          component: "actionGrid",
+          children: (["left", "right"] as const).map((side) => ({
+            children: data.actions
+              .filter(({ id }) => PAUSE_RIGHT_ACTIONS.includes(id) === (side === "right"))
+              .map((action) => ({
+                component: "pauseButton",
+                key: action.id,
+                kind: "component",
+                props: action,
+              })),
+            gap: STACK_BUTTON_GAP,
+            key: side,
+            kind: "stack",
+            padding: 0,
+          })),
+          gap: BUTTON_GAP,
           key: "actions",
-          kind: "component",
-          props: {},
-          slots: {
-            columns: (["left", "right"] as const).map((side) => ({
-              component: "actionColumn",
-              key: side,
-              kind: "component",
-              props: { side },
-              slots: {
-                buttons: data.actions
-                  .filter(({ id }) => PAUSE_RIGHT_ACTIONS.includes(id) === (side === "right"))
-                  .map((action) => ({
-                    component: "pauseButton",
-                    key: action.id,
-                    kind: "component",
-                    props: action,
-                  })),
-              },
-            })),
-          },
+          kind: "columns",
+          padding: 0,
+          sizing: { mode: "equal" },
         },
       ],
     },

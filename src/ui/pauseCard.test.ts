@@ -1101,11 +1101,11 @@ describe("Paused card", () => {
     expect(body.children).toHaveLength(1);
     const actions = body.children[0]!;
     expect(actions.className).toContain("ada-stack");
-    expect(actions.children[0]!.className).toContain("ada-pause-grid");
+    expect(actions.children[0]!.className).toBe("ui-layout-columns");
     expect(actions.children).toHaveLength(1);
     const [left, right] = actions.children[0]!.children;
-    expect(left?.dataset.pauseColumn).toBe("left");
-    expect(right?.dataset.pauseColumn).toBe("right");
+    expect(left?.className).toBe("ui-layout-stack");
+    expect(right?.className).toBe("ui-layout-stack");
     expect(shownActions(left!)).toEqual([
       "pause-cheats",
       "pause-map",
