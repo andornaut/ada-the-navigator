@@ -24,19 +24,20 @@ import {
 import { andromedaLaneCourier } from "./andromedaLane.ts";
 import { nearestSettlement, worldNearestSettlerStation } from "./andromedaPlaces.ts";
 import { ANDROMEDA_REDACT, andromedaRedactEligible } from "./andromedaRedact.ts";
+import { placementRadius, worldSceneryBlocksSegment } from "./asteroids.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { interactionCopy } from "./conversations.ts";
-import { outlineContact, worldParts } from "./convex.ts";
+import { closestOnSegment, outlineContact, worldParts } from "./convex.ts";
 import { damageEnemy } from "./enemyAi.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
-import { ensureStation, populateFlight } from "./flight.ts";
+import { ensureStation, questGuardPlacementContext } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import { flightStationContext, worldStationById } from "./stations.ts";
-import { worldDelta, worldPoint } from "./worldContacts.ts";
+import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
@@ -550,6 +551,43 @@ it("reserves Pip's unmodified seeded route and gates the real fighter pairs thro
   expect(hit.enemy.hp).toBe(hit.hp);
   model.step(2.91, idle);
   model.step(0.02, idle);
+  const firstRelease = ["released", "released", "held", "held"];
+  expect(ids.map((id) => andromedaCourierActor(route.flight, id))).toEqual(firstRelease);
+  const placement = questGuardPlacementContext(CONTENT, route.flight);
+  const occluders = (actor: (typeof actors)[number]) =>
+    route.flight.objects
+      .filter(
+        (object) =>
+          object.hp > 0 &&
+          (object.kind === "rock" || object.kind === "debris") &&
+          worldSceneryBlocksSegment(
+            route.world,
+            object,
+            actor,
+            worldPoint(route.world, actor, route.flight.player),
+            0,
+            placement.frameOf(object),
+            placement.drawnOf(object),
+          ),
+      )
+      .map(({ id }) => id);
+  const [lead, wing] = courierActors(model);
+  expect(wing!.enemy?.engaged).toBe(false);
+  expect(occluders(wing!)).toContain("rock:7,-18:4");
+
+  // This approach opens sight to both pairs on the seeded 180,000-unit chart.
+  route.flight.player = { x: (lead!.x + wing!.x) / 2, y: (lead!.y + wing!.y) / 2 + 180 };
+  route.flight.velocity = { x: 0, y: 0 };
+  worldSyncFlightRegion(route.world, CONTENT, route.flight);
+  for (const actor of courierActors(model)) {
+    const definition = enemyEquipmentDefinition(5, actor.enemy!);
+    expect(worldDistance(route.world, actor, route.flight.player)).toBeLessThan(
+      definition.perception,
+    );
+    expect(occluders(actor)).toEqual([]);
+  }
+  model.step(1 / 60, idle);
+  expect(ids.map((id) => andromedaCourierActor(route.flight, id))).toEqual(firstRelease);
   expect(courierActors(model).map(({ enemy }) => enemy?.engaged)).toEqual([
     true,
     true,
@@ -621,31 +659,54 @@ it("reserves Pip's unmodified seeded route and gates the real fighter pairs thro
 });
 
 it("keeps a blocked seeded leg open and refuses to spend another attempt after Continue", () => {
-  const blockerId = "rock:-4,-17:0";
-  let model = acceptCourierLeg(launch(173), (flight, stationId) => {
-    const player = flight.player;
+  const blockerId = "rock:6,-18:3";
+  const launched = launch(3);
+  let model = acceptCourierLeg(launched, (flight, stationId) => {
+    const player = { ...flight.player };
     const station = flight.objects.find(({ id }) => id === stationId)!;
     const settlement = nearestSettlement(ECONOMY, station);
-    const plan = planCourierAmbush(flightWorldContext(flight), { settlement, station })!;
-    // The same seeded corridor was already visited before Pip offered the delivery.
+    const world = flightWorldContext(flight);
+    const plan = planCourierAmbush(world, { settlement, station })!;
+    expect(flight.objects.some(({ id }) => id === blockerId)).toBe(false);
+    // Visit during normal flight before accepting Pip's delivery or reserving its terrain.
+    launched.closeInteraction();
     flight.player = { ...plan.warning };
-    populateFlight(CONTENT, { known: [] }, flight);
-    expect(flight.objects.some(({ id }) => id === blockerId)).toBe(true);
+    flight.velocity = { x: 0, y: 0 };
+    launched.step(0.001, idle);
+    const blocker = flight.objects.find(({ id }) => id === blockerId);
+    expect(blocker).toMatchObject({ asteroid: "asteroid-s3", kind: "rock" });
+    const { from, halfWidth, to } = plan.escape;
+    const point = worldPoint(world, from, blocker!);
+    const nearest = closestOnSegment(point, from, worldPoint(world, from, to));
+    expect(Math.hypot(point.x - nearest.x, point.y - nearest.y)).toBeLessThan(
+      halfWidth + placementRadius(blocker!),
+    );
     flight.player = player;
+    expect(launched.reopenInteraction()).toBe(true);
   });
   const route = routeBeforeWarning(model);
+  expect(courierAmbushTerrainCovered({ content: CONTENT, flight: route.flight }, route.plan)).toBe(
+    true,
+  );
   crossCourierLine(model, route.plan);
   expect(route.flight.objects.some(({ id }) => id === blockerId)).toBe(true);
-  expect(andromedaCourierAttempt(route.progress)?.state.phase).toBe("skipped");
+  const skipped = andromedaCourierAttempt(route.progress);
+  expect(skipped?.state.phase).toBe("skipped");
   expect(courierActors(model)).toEqual([]);
   expect(takeAndromedaCourierWarning(route.flight)).toBeUndefined();
-  model = relaunch(CONTENT, model.save());
+  const saved = model.save();
+  expect(restoreSave(saved)).not.toBeNull();
+  model = relaunch(CONTENT, saved);
   const retry = model.state.flight!;
   const { forward, warning } = route.plan;
   retry.player = { x: warning.x - forward.x, y: warning.y - forward.y };
   crossCourierLine(model, route.plan);
-  expect(andromedaCourierAttempt(model.state.progress[5])?.state.phase).toBe("skipped");
+  expect(andromedaCourierAttempt(model.state.progress[5])).toEqual(skipped);
   expect(courierActors(model)).toEqual([]);
+  expect(takeAndromedaCourierWarning(retry)).toBeUndefined();
   visit(model, route.leg.settlement.id);
   expect(model.contextAction).toBe("deliver");
+  model.interact();
+  continuePanel(model, "andromeda:parts");
+  expect(model.state.progress[5]).toMatchObject({ questItem: "beaconParts", stage: 5 });
 });
