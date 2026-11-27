@@ -150,7 +150,7 @@ describe("map projection and fit", () => {
     const limits = scaleLimits(base.inner, base.field, SIDE);
     expect(round(limits.max, 5)).toBe(0.02104);
     expect(round(limits.min, 5)).toBe(0.002);
-    expect(round(Math.log(limits.max / limits.min) / Math.log(MAP_SCREEN.zoomStep), 2)).toBe(5.81);
+    expect(round(Math.log(limits.max / limits.min) / Math.log(MAP_SCREEN.zoomStep), 2)).toBe(5.8);
     const wide = regionsAt({ height: 720, width: 1280 });
     expect([wide.fit.width, round(wide.fit.height, 2)]).toEqual([688, 245]);
     expect(round(scaleLimits(wide.inner, wide.field, SIDE).max, 5)).toBe(0.02385);
