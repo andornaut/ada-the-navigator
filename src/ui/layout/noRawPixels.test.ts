@@ -147,10 +147,7 @@ export function colourFindings(file: string, text: string): string[] {
       const line = code.slice(0, match.index).split("\n").length;
       return `${file}:${line} ${kind}: ${match[0]}${selector ? ` in ${selector}` : ""}`;
     });
-  return [
-    ...findings("hex colour", HEX_COLOUR),
-    ...findings("raw RGB colour", RAW_RGB_COLOUR),
-  ];
+  return [...findings("hex colour", HEX_COLOUR), ...findings("raw RGB colour", RAW_RGB_COLOUR)];
 }
 
 export function rawPixelFindings(file: string, text: string): string[] {
