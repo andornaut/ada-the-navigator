@@ -26,6 +26,9 @@ it("shares one actual immutable scan receipt with the UI drain and preserves it 
   expect(Object.isFrozen(receipt)).toBe(true);
   expect(receipt!.completions).toEqual([]);
   expect(model.drainScanOutcomes()).toEqual([]);
+  const speech = { name: "Astra", text: `Scan complete: ${receipt!.target.name}.` };
+  expect(model.conversation).toMatchObject({ ...speech, elapsed: 0 });
+  const receiptKey = model.conversation!.key;
   const entered = activateRequiredRoute(CONTENT, "growers", flight);
   if (entered.status !== "created" && entered.status !== "existing") {
     throw new Error(entered.status);
@@ -34,24 +37,30 @@ it("shares one actual immutable scan receipt with the UI drain and preserves it 
   const growers = ensureDestination(CONTENT, "growers", flight);
   flight.player = { x: growers.x, y: growers.y };
   model.step(SIMULATION_STEP_SECONDS, idle);
+  expect(model.state.dialogue).toBeNull();
+  expect(model.contextAction).toBe("talk");
+  expect(model.conversation).toMatchObject({ ...speech, key: receiptKey });
+  model.interact();
   const modal = model.state.dialogue;
-  expect(modal).not.toBeNull();
+  expect(modal).toMatchObject({ context: "grower" });
   const saved = model.save();
   model.step(5, { ...idle, move: { x: 1, y: 0 } });
   expect(model.save()).toBe(saved);
   expect(model.state.dialogue).toBe(modal);
   model.closeInteraction();
-  expect(model.conversation).toMatchObject({
-    name: "Astra",
-    text: `Scan complete: ${receipt!.target.name}.`,
-  });
-  // The receipt started at Use and showed for the one step before the modal, not under it.
+  // Growers lore stays behind the scan receipt, which is still active when Talk closes.
+  expect(model.conversation).toMatchObject({ ...speech, key: receiptKey });
   expect(model.conversation!.elapsed).toBeCloseTo(SIMULATION_STEP_SECONDS);
+  expect(model.state.seenConversations).not.toContain("chapter:sunflower:growers:approach");
+  expect(model.drainScanOutcomes()).toEqual([]);
   expect(model.reopenInteraction()).toBe(true);
   expect(model.state.dialogue).toBe(modal);
   const resumed = relaunch(CONTENT, model.save());
   expect(resumed.drainScanOutcomes()).toEqual([]);
   resumed.closeInteraction();
-  expect(resumed.conversation?.text).not.toBe(`Scan complete: ${receipt!.target.name}.`);
+  expect(resumed.conversation?.text).not.toBe(speech.text);
+  resumed.step(SIMULATION_STEP_SECONDS, idle);
+  expect(resumed.conversation?.text).not.toBe(speech.text);
+  expect(resumed.drainScanOutcomes()).toEqual([]);
   expect(resumed.state.economy.stardust).toBe(model.state.economy.stardust);
 });

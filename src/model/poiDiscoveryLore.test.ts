@@ -714,6 +714,11 @@ it("reuses station discovery and non-Pip destination dialogue for shown physical
   expect(model.state.progress[1]).toMatchObject({ introduced: false, questItem: null, stage: 0 });
   expect(model.contextAction).toBe("talk");
   expect(hear(model).filter((line) => words.includes(line))).toEqual([]);
+  const continued = relaunch(CONTENT, model.save());
+  expect(continued.state.progress[1].introduced).toBe(false);
+  expect(continued.contextAction).toBe("talk");
+  expect(continued.state.seenConversations).toContain("chapter:sunflower:growers:approach");
+  expect(hear(continued).filter((line) => words.includes(line))).toEqual([]);
   model.interact();
   expect(model.state.dialogue?.context).toBe("grower");
   model.choose("continue");

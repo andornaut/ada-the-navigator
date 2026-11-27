@@ -691,22 +691,27 @@ export class ConversationDirector {
     return true;
   }
 
-  /** A marked arrival uses the existing lore priority and is scoped to its current approach. */
+  /** An arrival is lore. A supplied onceId is saved only when the line first shows. */
   poiArrival(
     instance: string,
     line: ConversationLine,
-    presentation: Pick<Request, "onFirstShowing" | "relevant">,
+    {
+      onceId,
+      ...presentation
+    }: Pick<Request, "onFirstShowing" | "relevant"> & {
+      readonly onceId?: string;
+    },
   ): void {
     if (this.galaxy === null) {
       return;
     }
-    const id = `poi:arrival:${this.galaxy}:${instance}`;
+    const id = onceId ?? `poi:arrival:${this.galaxy}:${instance}`;
     this.enqueue({
       conversation: {
         id,
         lines: [line],
         priority: "lore",
-        repeat: "always",
+        repeat: onceId === undefined ? "always" : "never",
         trigger: { galaxy: this.galaxy, id, kind: "chapter" },
       },
       holds: always,

@@ -1176,8 +1176,9 @@ export class GameModel {
       this.screen === "space" &&
       this.nearest() === "growers";
     if (relevant()) {
-      this.talk.authoredCue(GROWERS_APPROACH_CUE, GROWERS_APPROACH_LINE, {
+      this.talk.poiArrival("growers", GROWERS_APPROACH_LINE, {
         onFirstShowing: () => this.coverPoiArrival(flight, "growers"),
+        onceId: GROWERS_APPROACH_CUE,
         relevant,
       });
     }
