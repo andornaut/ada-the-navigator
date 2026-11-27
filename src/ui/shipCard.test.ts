@@ -334,18 +334,18 @@ describe("Ship sections rendering", () => {
       "Engine [2]",
       LABELS.shield,
       `${LABELS.tractorBeam} [3]`,
-      "Sky blue",
+      "Sky blue paint",
     ]);
     expect(sections[0]!.children[1]!.children.map(rowText)).toEqual([
       ["Stardust", "1,234,567"],
       ["Ore", "12,500"],
-      ["Holodisks: 3 of 6"],
+      ["Holodisks", "3 of 6"],
       ["Carrying: Nothing"],
       ["Towing: Nothing"],
     ]);
   });
 
-  it("renders the swatch and both text lines in the same accessible paint button", () => {
+  it("renders the swatch and the inline hint in the same accessible paint button", () => {
     const swatch = "/material/obsidian.svg";
     const root = rendered(
       shipSections(LABELS, { ...VIEW, paint: "Obsidian", paintSwatch: swatch }),
@@ -353,8 +353,9 @@ describe("Ship sections rendering", () => {
     const rows = root.children[2]!.children[1]!.children;
     const paint = rows.at(-1)!;
     expect(rows.filter(({ dataset }) => dataset.item === "equipment:paint")).toEqual([paint]);
-    expect(paint.attributes.get("aria-label")).toBe("Change paint, Obsidian");
-    expect(rowText(paint)).toEqual(["Obsidian", "Change paint"]);
+    expect(paint.attributes.get("aria-label")).toBe("Obsidian paint (Click to change)");
+    expect(rowText(paint)).toEqual(["Obsidian paint"]);
+    expect(paint.children[1]!.children[0]!.children[0]!.textContent).toBe(" (Click to change)");
     expect(paint.children[0]!.style.background).toContain(swatch);
     expect(paint.children[0]!.attributes.get("aria-hidden")).toBe("true");
   });
