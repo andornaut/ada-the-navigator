@@ -243,6 +243,9 @@ class ElementFixture extends EventTarget {
       this.children.push(child);
     }
   }
+  getAttribute(key: string) {
+    return this.attributes.get(key) ?? null;
+  }
   setAttribute(key: string, value: string) {
     this.attributes.set(key, value);
   }
