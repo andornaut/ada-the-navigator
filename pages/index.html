@@ -20,91 +20,98 @@
   </head>
   <body class="site">
     <main class="site-home">
-      <div class="site-brand">
-        <div class="site-orbit" aria-hidden="true">
-          <span class="site-portrait"></span>
-          <span class="site-star site-star-one"></span>
-          <span class="site-star site-star-two"></span>
-          <span class="site-star site-star-three"></span>
-          <img class="site-ship" src="%CLASSIC_SHIP_40%" width="48" height="72" alt="" />
+      <section class="site-hero" aria-labelledby="site-title">
+        <div class="site-brand">
+          <div class="site-orbit" aria-hidden="true">
+            <span class="site-portrait"></span>
+            <span class="site-star site-star-one"></span>
+            <span class="site-star site-star-two"></span>
+            <span class="site-star site-star-three"></span>
+            <img class="site-ship" src="%CLASSIC_SHIP_40%" width="48" height="72" alt="" />
+          </div>
+          <h1 id="site-title">Ada <span>the Navigator</span></h1>
         </div>
-        <h1>Ada <span>the Navigator</span></h1>
-      </div>
-      <div class="site-details">
-        <p class="site-pitch">Explore space. Bring new ideas home.</p>
-        <p class="site-subline">%HOME_DESCRIPTION%</p>
-        <div class="site-actions">
-          <button class="site-install" id="install" type="button" hidden>Install</button>
-          <a class="site-play" href="/play/">Play <span aria-hidden="true">&rarr;</span></a>
+        <div class="site-details">
+          <p class="site-pitch">Explore space. Bring new ideas home.</p>
+          <p class="site-subline">%HOME_DESCRIPTION%</p>
+          <div class="site-actions">
+            <button class="site-install" id="install" type="button" hidden>Install</button>
+            <a class="site-play" href="/play/">Play <span aria-hidden="true">&rarr;</span></a>
+          </div>
         </div>
-        <section class="site-controls" aria-labelledby="controls">
-          <h2 id="controls">Controls</h2>
-          <table>
-            <caption>
-              Flight
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">Action</th>
-                <th scope="col">Input</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th scope="row">Thrust</th>
-                <td><kbd>W</kbd> or <kbd>Up Arrow</kbd>. Hold <kbd>Shift</kbd> for low thrust.</td>
-              </tr>
-              <tr>
-                <th scope="row">Turn</th>
-                <td>
-                  <kbd>A</kbd> / <kbd>D</kbd> or <kbd>Left Arrow</kbd> / <kbd>Right Arrow</kbd>
-                </td>
-              </tr>
-              <tr>
-                <th scope="row">Steer with mouse</th>
-                <td>Hold the left mouse button and point.</td>
-              </tr>
-              <tr>
-                <th scope="row">Aim and fire</th>
-                <td><kbd>Space</kbd> to fire, or hold the right mouse button to aim and fire.</td>
-              </tr>
-              <tr>
-                <th scope="row">Interact</th>
-                <td><kbd>E</kbd> or <kbd>Enter</kbd></td>
-              </tr>
-              <tr>
-                <th scope="row">Fly on touch</th>
-                <td>%HOME_MOBILE%</td>
-              </tr>
-            </tbody>
-          </table>
-          <table>
-            <caption>
-              Menus
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">Action</th>
-                <th scope="col">Input</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th scope="row">Pause or go back</th>
-                <td><kbd>Escape</kbd>, or click or tap Pause, Menu, Back or Close.</td>
-              </tr>
-              <tr>
-                <th scope="row">Move focus</th>
-                <td><kbd>Tab</kbd> or <kbd>Shift</kbd> + <kbd>Tab</kbd></td>
-              </tr>
-              <tr>
-                <th scope="row">Activate a button</th>
-                <td>Click, tap, or focus and press <kbd>Enter</kbd> or <kbd>Space</kbd>.</td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
-      </div>
+      </section>
+      <section class="site-about" aria-labelledby="about">
+        <h2 id="about">About</h2>
+        <p>
+          Chart galaxies, scan unusual places, and help communities through jobs and projects. Use
+          what you earn to outfit Ada’s ship for the next jump.
+        </p>
+      </section>
+      <section class="site-controls" aria-labelledby="controls">
+        <h2 id="controls">Controls</h2>
+        <table>
+          <caption>
+            Flight
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Action</th>
+              <th scope="col">Input</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Thrust</th>
+              <td><kbd>W</kbd> or <kbd>Up Arrow</kbd>. Hold <kbd>Shift</kbd> for low thrust.</td>
+            </tr>
+            <tr>
+              <th scope="row">Turn</th>
+              <td><kbd>A</kbd> / <kbd>D</kbd> or <kbd>Left Arrow</kbd> / <kbd>Right Arrow</kbd></td>
+            </tr>
+            <tr>
+              <th scope="row">Steer with mouse</th>
+              <td>Hold the left mouse button and point.</td>
+            </tr>
+            <tr>
+              <th scope="row">Aim and fire</th>
+              <td><kbd>Space</kbd> to fire, or hold the right mouse button to aim and fire.</td>
+            </tr>
+            <tr>
+              <th scope="row">Interact</th>
+              <td><kbd>E</kbd> or <kbd>Enter</kbd></td>
+            </tr>
+            <tr>
+              <th scope="row">Fly on touch</th>
+              <td>%HOME_MOBILE%</td>
+            </tr>
+          </tbody>
+        </table>
+        <table>
+          <caption>
+            Menus
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Action</th>
+              <th scope="col">Input</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Pause or go back</th>
+              <td><kbd>Escape</kbd>, or click or tap Pause, Menu, Back or Close.</td>
+            </tr>
+            <tr>
+              <th scope="row">Move focus</th>
+              <td><kbd>Tab</kbd> or <kbd>Shift</kbd> + <kbd>Tab</kbd></td>
+            </tr>
+            <tr>
+              <th scope="row">Activate a button</th>
+              <td>Click, tap, or focus and press <kbd>Enter</kbd> or <kbd>Space</kbd>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
     </main>
     <footer class="site-footer">
       <a href="https://github.com/andornaut/ada-the-navigator">View source on GitHub</a>
