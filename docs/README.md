@@ -22,5 +22,5 @@
   holds source art, `tools/` production utilities, `ui/` UI assets and notes, and `review/`
   visual review material.
 - [Source architecture](../src/README.md) describes the implementation, storage and phone runtime.
-- [Cross-game policies](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md)
+- [Cross-game policies](https://github.com/andornaut/game-coordinator/blob/main/docs/design/game-policies.md)
   describes the conventions shared across the games.

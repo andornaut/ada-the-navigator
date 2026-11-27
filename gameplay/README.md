@@ -12,7 +12,7 @@
 [Ideas](ideas.md) collects future candidates. [Cheats](../docs/design/cheats.md)
 lists the cheats, which act on the real save.
 
-The [cross-game policies](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md) define shared settings, updates,
+The [cross-game policies](https://github.com/andornaut/game-coordinator/blob/main/docs/design/game-policies.md) define shared settings, updates,
 product consistency, saves, cheats and proposal handling. The documents here
 retain Ada's specific rules, copy and lifecycle.
 

@@ -1,6 +1,6 @@
 # Cheats
 
-The [shared saves and cheats policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#saves-and-cheats) applies.
+The [shared saves and cheats policy](https://github.com/andornaut/game-coordinator/blob/main/docs/design/game-policies.md#saves-and-cheats) applies.
 The user approved this list on 2026-11-18.
 
 Choose **Cheats** directly from Menu or Pause in a browser tab or installed

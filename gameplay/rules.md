@@ -997,10 +997,10 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   the aim stick. The icon is decorative; the name stays for screen readers. This
   covers the first-flight lessons and the landing page's mobile line. Keyboard
   text stays words.
-- [Shared product consistency policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#product-consistency) applies.
+- [Shared product consistency policy](https://github.com/andornaut/game-coordinator/blob/main/docs/design/game-policies.md#product-consistency) applies.
   Every close X uses the same shared close icon, so all close controls look
   the same.
-- [Shared settings policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#settings) applies. Ada's rows, in order:
+- [Shared settings policy](https://github.com/andornaut/game-coordinator/blob/main/docs/design/game-policies.md#settings) applies. Ada's rows, in order:
   - Move controls and Aim controls, as in Chibi: each shows or hides one on-screen
     joystick (left and right). Each is shown unless the player hides it. Hiding a
     control hides only its drawing; its input still works. Each row has the note
@@ -1021,7 +1021,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
     "Install steps" in [the player copy](player-copy.md#install-steps).
 - Every setting persists on that device. Settings shows no keyboard binding text,
   and keyboard input is unchanged.
-- [Shared update policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#updates) governs staging and activation.
+- [Shared update policy](https://github.com/andornaut/game-coordinator/blob/main/docs/design/game-policies.md#updates) governs staging and activation.
   Ada starts offline from a known complete cached build. A first visit without a
   complete cache may bootstrap from the network; ordinary cached launches never
   wait for a mandatory new-version download.
@@ -1034,7 +1034,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   build and reloads once. Cancel, the close X, an outside tap, Escape and back
   dismiss it and continue play on the running build; the next launch activates
   the staged build silently. A session never switches builds without Update now,
-  including on Back to title or a visibility resume. Ada retains the [canonical newer-save recovery exception](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#updates).
+  including on Back to title or a visibility resume. Ada retains the [canonical newer-save recovery exception](https://github.com/andornaut/game-coordinator/blob/main/docs/design/game-policies.md#updates).
   Start, incompatible save loading and all save writes stay fenced until the new
   document rechecks compatibility. The save remains untouched while recovery is
   pending.
