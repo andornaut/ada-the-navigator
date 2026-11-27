@@ -1602,10 +1602,10 @@ about 2 logical pixels for about 100 ms; Art and Tech pin the final values.
 Reduced motion disables both the shake and the red line.
 
 Asteroids come in more sizes, including much larger ones, with irregular shapes
-and variety. Ambient slot and feature rock densities are in
-[Spawn targets](#spawn-targets). Preserve the slot rock size distributions, HP,
-loot and safe corridors. Caches and other points of interest are independent
-of the rock targets, and the rock targets do not change cache placement.
+and variety. Ambient rock size requests, densities and flight lanes are in
+[Spawn targets](#spawn-targets). Rocks keep their size-based HP and loot.
+Caches and other points of interest are independent of the rock targets,
+and the rock targets do not change cache placement.
 Authored `ORE_FIELDS` retain their 6-to-10-rock counts and associated points of
 interest, guards and platforms. Their rocks are ordinary medium and large
 asteroids with ordinary asteroid HP, 5 for medium and 10 for large. Every ore-field rock is a crystal rock: when destroyed it
@@ -1633,9 +1633,9 @@ guard counts, points of interest and saved field identities do not change.
 
 Spawn targets do not apply to authored ore fields; their counts and guard
 coupling stay as above.
-Ordinary asteroids have stationary centres and may rotate slowly;
-they do not translate in circles or oscillate. Legacy orbiting rocks settle at
-their current positions without a position jump, with HP and drops unchanged.
+Static asteroids have stationary centres and may rotate slowly. Legacy
+orbiting rocks settle at their current positions without a position jump, with
+HP and drops unchanged.
 Asteroid resource-yield caps are 4, 6, 8 and 10 units for small, medium, large and
 huge rocks. Small rocks may yield zero; all larger sizes guarantee at least one
 reward, including an ammo-only outcome. An asteroid that drops ammo drops nothing
@@ -1648,31 +1648,31 @@ selection or bonus.
 Chunks use normal contact and tractor collection and count as ordinary fungible
 ore. Larger rocks are more likely to yield larger totals and five-ore chunks,
 but no chunk is guaranteed. Exact weights are in [Economy](economy.md#earning-stardust).
-Ships bounce off them, with bump damage as for any asteroid. Large
-and huge asteroids stay out of passages and clear of stations, destinations and
-launch points. Background objects stay muted
-but carry a light tint of color; asteroids are play objects, not background.
-Moving rocks are chosen from placed slot and feature rocks at the densities in
-[Spawn targets](#spawn-targets) and keep the chosen rock's size and shape. A
-seeded half of the chosen rocks lead a small cluster: each pulls 1, 2 or 3
-(equal weight) of the nearest placed slot or feature rocks in its own chunk
-whose centres lie within 300 world units, fewer when fewer qualify, and the
-cluster shares the leader's velocity. The other half move alone. Every rock that
-moves counts toward the moving-rock target, so about 60% of moving rocks travel
-in clusters. A destroyed moving rock drops loot like a static rock of its size.
-Each cluster or solo rock rolls a seeded speed from 25 to 125 world units per
-second and travels in a straight line at constant velocity. It may rotate. A chosen rock starts outside the
-exclusion zones that apply to moving rocks; once moving, it may hit any object.
+Ships bounce off them, with bump damage as for any asteroid. Placed rocks keep
+the [flight lanes and protected clearances](#spawn-targets). Background objects
+stay muted but carry a light tint of color; asteroids are play objects, not
+background.
+Moving rocks are chosen from placed slot and feature rocks outside moving-rock
+exclusion zones at the densities in [Spawn targets](#spawn-targets). They keep
+their size and shape. A chosen rock has a seeded 50% chance to lead a small
+cluster. It rolls 1, 2 or 3 with equal weight and pulls up to that many of the
+nearest eligible, unassigned slot or feature rocks in its own chunk within 300
+world units, limited by the remaining moving-rock request. Each member counts
+toward the target. A destroyed moving rock drops loot like a static rock of
+its size.
+On each launch attempt, a solo rock or cluster rolls one seeded heading and one
+speed from 25 to 125 world units per second. Cluster members share that heading
+and cap the rolled speed individually at 125 for Small, 93.75 for Medium, 62.5
+for Large and 31.25 for Huge. An admitted rock travels in a straight line at
+constant velocity until a collision and may rotate.
 Authored current debris follows its current.
 
 A moving rock that touches another asteroid ricochets off it, and both rocks
 respond. Each rock's mass is its drawn area, so a small rock deflects more than
-a large one. The pair keeps 0.3 of its closing speed along the contact normal,
-a soft knock. No rock leaves a ricochet faster than 125 world units per second, the top
-moving-rock speed.
-A moving rock keeps its new velocity at constant speed; a rock in a moving
-cluster leaves the cluster's shared velocity. A struck static rock drifts, slows to
-rest within about 3 seconds and stays where it settles.
+a large one. The pair keeps 0.3 of its closing speed along the contact normal
+before applying each rock's size cap. A moving rock keeps its own new velocity.
+A struck static rock drifts, slows to rest within about 3 seconds and stays
+where it settles.
 
 Small enemy ships move and fire on their own, with solo, erratic circling,
 swarming and pack behaviors. Ships with fixed forward guns (swarm, fighter,
@@ -1766,22 +1766,34 @@ apply to the planner's output.
   keep the usual 20-world-unit gap from the wreck's footprint. Local admission
   (budget, archetype limit and capital count) does not apply to salvage wrecks
   ([Ships](ships.md#ambient-admission)).
-- Flight lanes stay: a static rock lies inside one chunk quadrant, 20 world
-  units (the corridor half width) clear of the quadrant boundaries. Feature
-  rocks use only shapes that fit a quadrant between lanes, which leaves Large
-  shapes; Huge shapes do not fit.
-- Two planner rules have no table entry: Cartwheel's claim jumpers gather at ore
-  fields ([Ships](ships.md#cartwheel-roster)), and each moving rock's straight
-  path over the next 30 seconds, up to 3750 world units, is checked against
-  station exclusion zones and launch and arrival clearances; the Needle channel
-  is not checked. A failed path redraws the rock's velocity, up to 24 times.
-  After the 24th failure the rock stays where it was placed as a static rock and
-  counts as one dropped mover under the rule that blocked its last path; no
-  replacement is chosen. A cluster shares one velocity, so its rocks stay
-  still together.
-- Once moving, a moving rock may hit any object and ricochets off other
-  ambient asteroids. Debris-river rocks, whale quest debris and legacy orbiting
-  rocks keep their authored behaviour and do not ricochet.
+- Slot rock requests use weights of 50% Small, 40% Medium, 7% Large and 3% Huge.
+  Each chunk orders seeded draws by footprint, largest first. When its slot
+  request exceeds the rounded-up per-chunk center baseline, it uses the
+  smallest footprint variant of each drawn size. Within the 48-attempt budget,
+  slots try seeded corners and midpoints, then tangent points derived from
+  overlaps at those positions, then uniform draws with any attempts left.
+  Feature shapes remain Large only.
+- An ambient rock starts within one quadrant, with its footprint 20 world units
+  clear of the quadrant boundaries. A Huge footprint too wide for a quadrant
+  may cross the interior lanes while keeping the same clearance from the
+  chunk's outside boundaries. It must still clear protected zones and other
+  footprints. For each Huge candidate, the planner compares usable quadrant
+  corners for the smallest Medium variant before and after placement. It
+  preserves the available Medium corner capacity up to the number of Medium
+  requests. Later placement can still leave requests unfilled.
+- Cartwheel's claim jumpers gather at ore fields ([Ships](ships.md#cartwheel-roster)).
+- A solo rock or cluster launches only if every member's footprint clears the
+  zones along its own 30-second straight path at capped velocity. These zones cover
+  stations, destinations present in flight, the flight start and Travel
+  arrivals. For movers, the Needle channel restricts only their starting
+  positions. Each failed attempt redraws the heading and speed for the whole
+  group. After 24 failures, every member stays static and counts as one
+  dropped mover under the first rule that blocked the final attempt, with no
+  replacement.
+- Once moving, a rock may hit any object and ricochets off eligible asteroids,
+  including ore-field rocks. Legacy orbiting rocks become eligible as static
+  rocks when their orbit is cleared. Debris-river rocks and whale quest debris
+  keep their authored behaviour and do not ricochet.
 
 Densities are mean counts per open 3x3-chunk area, one ninth per chunk. Each
 kind's request in a chunk shrinks by the share of the chunk covered by the
@@ -1795,14 +1807,12 @@ For ordinary rocks, let `edgeShare` be the larger absolute coordinate of the
 chunk centre's shortest wrapped offset from galactic center, divided by half
 the chart width. Multiply the baseline by `1 + 1.5 * edgeShare`. This is a
 linear ramp from 1× at the center to 2.5× on each edge of the square chart.
-At halfway to an edge in any direction, the multiplier is 1.75×. Preserve
-the existing size mix, flight lanes, feature placement and protected clearance.
+At halfway to an edge in any direction, the multiplier is 1.75×.
 
-Derive the requested number of moving rocks from the ordinary rocks actually
+Derive the requested number of moving rocks from the slot rocks actually
 placed. Use the galaxy's existing center moving target divided by its center
-slot-rock target as the share. Doubling the ordinary rock count therefore
-doubles the moving-rock request. Keep the existing move eligibility, path
-checks and cluster behavior. Count individual rocks in a moving cluster
+slot-rock target as the share. Doubling the placed slot count therefore
+doubles the moving-rock request. Count individual rocks in a moving cluster
 toward that request. A protected or blocked path can still reduce the
 delivered number.
 
