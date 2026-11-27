@@ -9,11 +9,7 @@ import type { GalaxyNumber } from "../data/types.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
 import type { MapPlace } from "../model/map.ts";
 import type { QuestEntry, QuestObjective } from "../model/questDetails.ts";
-import {
-  assertAdaActionBindings,
-  assertAdaActionMetadata,
-  bindAdaAction,
-} from "./actionBinding.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { createCompletionIndicator } from "./completionIndicator.ts";
 import { COLOURS } from "./layout/colours.ts";
 import { SCROLL } from "./layout/contentCard.ts";
@@ -175,23 +171,6 @@ export function createQuestsScreen(
   const renderedBindings: { dispose(): void }[] = [];
   let bodyLayout: ReturnType<typeof mountLayout<QuestsBodySchema>> | undefined;
   let footerLayout: ReturnType<typeof mountLayout<QuestsFooterSchema>> | undefined;
-  const createLocateButton = (run: () => void) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    const binding = bindAdaAction(
-      {
-        click: {
-          availability: () => (button.disabled ? { kind: "omitted" } : { kind: "available" }),
-          run: () => run(),
-        },
-        current: () => !disposed && !modal.hidden && inCurrentView(root, button),
-        slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
-      },
-      button,
-    );
-    renderedBindings.push({ dispose: () => binding.dispose() });
-    return button;
-  };
   let entries: readonly QuestEntry[] = [];
   let flightLog: readonly QuestFlightLogEntry[] = [];
   let showingFlightLog = false;
@@ -524,15 +503,18 @@ export function createQuestsScreen(
                   (endpoint.kind === "source" ? labels.questFrom : labels.questTo) ?? "";
                 const location = endpoint.location?.label ?? labels.questExplore ?? "";
                 const name = `${direction} ${location}`.trim();
-                let stopRefusal: (() => void) | undefined;
                 // Ship shows route context without offering Map navigation.
-                const refusal =
-                  disabled && origin !== "ship" && name
-                    ? createStandardTextAction(root, name, {
-                        availability: () => ({ kind: "unavailable", reason: location || name }),
-                        current: (): boolean =>
-                          !disposed && !modal.hidden && inCurrentView(root, button),
-                        pointerRefusal: true,
+                const pointerRefusal = disabled && origin !== "ship" && name !== "";
+                let stopRefusal: (() => void) | undefined;
+                const action = createStandardTextAction(root, name || labels.quests, {
+                  availability: (element) =>
+                    pointerRefusal
+                      ? { kind: "unavailable", reason: location || name }
+                      : { kind: disabled || element.disabled ? "disabled" : "available" },
+                  current: (): boolean => !disposed && !modal.hidden && inCurrentView(root, button),
+                  pointerRefusal,
+                  ...(pointerRefusal
+                    ? {
                         refuse: () => {
                           focusTarget(card.frame);
                           if (
@@ -542,12 +524,9 @@ export function createQuestsScreen(
                             stopRefusal = refuse(button, options.reducedMotion());
                           }
                         },
-                        run: () => {},
-                      })
-                    : undefined;
-                const button: HTMLButtonElement =
-                  refusal?.element ??
-                  createLocateButton(() => {
+                      }
+                    : {}),
+                  run: () => {
                     if (disabled || placeId === undefined) {
                       return;
                     }
@@ -555,19 +534,18 @@ export function createQuestsScreen(
                     release();
                     modal.hidden = true;
                     options.onLocate(placeId);
-                  });
+                  },
+                });
+                const button = action.element;
+                // Keep the route's compound content and layout on the Kit-owned button.
                 button.className = "ada-quest-endpoint";
-                button.disabled = disabled && !refusal;
-                if (refusal) {
-                  // Kit owns activation. Keep the route's authored compound content.
-                  button.replaceChildren();
-                  renderedBindings.push({
-                    dispose() {
-                      refusal.dispose();
-                      stopRefusal?.();
-                    },
-                  });
-                }
+                button.replaceChildren();
+                renderedBindings.push({
+                  dispose() {
+                    action.dispose();
+                    stopRefusal?.();
+                  },
+                });
                 if (endpoint.location?.symbol) {
                   const image = icon(entry, endpoint.location.symbol, endpoint.place?.taskCategory);
                   if (image) {

@@ -771,6 +771,31 @@ it("focuses dismissal when the located endpoint is no longer on the map", () => 
   screen.dispose();
 });
 
+it("uses the registered Locate action once and drops the old binding after resume", () => {
+  const { onLocate, root, screen } = screenFixture();
+  screen.setState([entry], [place("growers"), place("workshop")], 1);
+  screen.open(entry.id, "list");
+  const endpoint = () =>
+    root
+      .querySelectorAll("button")
+      .find((node) => node.getAttribute("aria-label") === "Show on map: Workshop")!;
+  const original = endpoint();
+  const hold = actionBinding.resolveAdaHoldAction(root as unknown as HTMLElement, original);
+  expect(hold?.available()).toBe(true);
+  expect(original.children.map(({ tag }) => tag)).toEqual(["img", "span"]);
+  hold!.activate();
+  original.dispatchEvent(new Event("click", { cancelable: true }));
+  expect(onLocate).toHaveBeenCalledExactlyOnceWith("workshop");
+
+  screen.resume();
+  expect(hold?.available()).toBe(false);
+  hold!.activate();
+  original.dispatchEvent(new Event("click", { cancelable: true }));
+  expect(onLocate).toHaveBeenCalledOnce();
+  expect(producer.reveal.mock.lastCall?.[0].focus).toBe(endpoint());
+  screen.dispose();
+});
+
 it("refuses an unavailable Locate endpoint without making the Ship route actionable", () => {
   const { onLocate, root, screen } = screenFixture();
   screen.setState([entry], [place("growers")], 1);
