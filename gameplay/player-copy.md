@@ -1223,6 +1223,21 @@ conversation box.
 - Resolved, Astra: "The patrol's clear. I marked a supply cache and a safer
   route between the outposts."
 
+## Encounter timing cues
+
+These one-time in-flight Astra cues accompany the
+[authored encounter patterns](ships.md#authored-encounter-difficulty).
+Formation positions, firing warnings and route markers carry the timing.
+
+| Encounter         | Trigger                              | Astra                                                                          |
+| ----------------- | ------------------------------------ | ------------------------------------------------------------------------------ |
+| Hammer            | First charged-lance tell             | "Wait for the aim line to stop moving. Then dodge. Aim for the glowing mount." |
+| Manta Dreadnought | First escort crossing                | "The escorts are taking turns. Use the gap between passes."                    |
+| Crossbow          | First sector warning                 | "Crossbow fires to one side at a time. Look for the marked lane."              |
+| Andromeda         | Courier ambush warning               | "Fighters on both sides. Keep going toward the settlement."                    |
+| Cartwheel         | Mining approach warning              | "Patrol ahead. Use the rocks for cover or take the marked route around."       |
+| Phantom           | Fighter groups resolve at a blockade | "Pull back and recharge if you need to. The frigate waits ahead."              |
+
 ## Greeters
 
 Normal Dock opens the Station welcome. It shows the keeper paragraph and the

@@ -827,6 +827,119 @@ Hits test the drawn convex outline at the current heading, so they match what is
 drawn; the spacing radius ([Hulls](#hulls)) serves only spacing and placement.
 Sprites keep their drawn sizes.
 
+## Authored encounter difficulty
+
+These encounter-specific patterns keep the shared hull, aim, fire-rate and spawn
+tuning. Delays gate existing firing opportunities. They never queue missed
+shots or let a ship catch up in a burst. Timers count active flight time only,
+and restore with phase, actors, damage, casualties and shown cues through
+Continue. Re-entry follows each encounter's existing retention and reset rules.
+Directions and paths use shortest wrapped displacement. Telegraphs show the
+same geometry that constrains the attacks. Their meaning remains readable with
+reduced motion and without relying on colour alone.
+
+### Sunflower: Hammer tutorial
+
+Hammer remains optional and off the outpost circuit. On its first eligible
+engagement, lead with the ordinary charged-lance tell from weapon-left.
+Keep its existing 0.7-second tracking line and 0.3-second fixed warning.
+Once that tell starts, hold its other mounts until the tell fires or is
+cancelled. Give Astra's cue once at the start of the tell and emphasize the
+existing weapon-left hardpoint outline during it. A destroyed or unavailable
+lance never holds the fight open. After this first tell, use the existing mount
+schedule. No tutorial requirement gates the outposts or their holodisk.
+
+### Whirlpool: Manta Dreadnought
+
+Use Sounder's two existing fighter escorts. Assign the stable first escort to
+the first pass and the other to the second. Use opposite sides of the capital,
+in the encounter's fixed approach frame. Bias the crossing direction with the
+existing current where it intersects a clear approach. Use the same pass roles
+in calm space. The ready escort moves in a readable crossing approach for
+one second without firing, then can fire under its usual cadence on a
+two-second pass. The other escort repositions on its side without firing.
+Both reposition for 1.5 seconds between passes and two seconds after the
+second pass. Repeat with surviving escorts and keep an empty pass's opening
+when its escort is gone. Existing currents still carry small craft and Ada.
+Manta and its swarm keep their usual attacks. The openings are gaps in escort
+fire. The reunion, disk marker, release and pickup rules stay in force.
+
+### Needle: Crossbow
+
+Keep Cadence's optional site outside the Eye and the disk route. Fix a central
+approach bearing from the capital's home to the Eye exit. Mark the clear lane
+within 20 degrees on each side of that bearing. Alternate the two firing
+sectors, 20 to 110 degrees to either side of the approach bearing. Each sector
+has a one-second readable warning, three seconds in which existing weapons
+can start attacks, and one second to switch sides. Preserve the lance's
+normal tracking and lock tell within its sector. Withhold any attack whose
+beam width or full pellet spread would leave the marked sector or enter the
+clear lane. Allow a shot
+to start only when its tell and firing fit in its active window. The lane
+shows a gap in Crossbow's fire. The Eye and the disk route remain playable
+independently of it.
+
+### Andromeda: Pip's courier route
+
+Use the story leg from the settlers' station to the parts settlement after
+Pip owns up. Place one encounter for that leg, separate from the repeatable
+courier run. Use one fighter allocation of four fighters in two pairs. Require
+room and budget for both pairs. Place their centres 60 world
+units forward of the leg midpoint and 260 units to either side, with members
+110 units apart along the leg or farther if hull clearance requires it.
+Keep a 200-unit-wide path through the formation and to a marked exit 450
+units past the midpoint. Start the warning on Ada's first inbound crossing
+525 units before the midpoint, within 180 units of the leg. Show both approach directions and the route ahead. Release one pair
+three seconds after the warning and the other after 4.2 seconds. The pairs
+stop pursuing when Ada reaches the exit or 12 seconds after the first release.
+If the formation or clear escape path cannot fit, leave the leg open.
+Neither combat nor escaping the ambush is a delivery gate. The beacon repair,
+Redact detour and Pip's disk handover retain their order.
+
+### Cartwheel: mining approach patrol
+
+Once Ada knows the hub, choose one seeded unguarded ore field clear of the
+required hub legs and Captain Claim's site. Spend one ordinary claim-jumper
+fighter allocation there, up to four, with staggered positions at least
+110 units apart. Use an approach traversed by at least two already-budgeted
+moving rocks on their normal seeded paths with normal hit and cover rules.
+Warn on first approach within 800 units of the patrol anchor. The patrol
+can engage after 2.5 seconds. Mark a 220-unit-wide bypass on the opposite
+side, at least 950 units from the field centre, beyond the patrol's pursuit
+and weapon reach. Check the bypass against currently represented rock paths
+and separately generated fixed ore rocks. When a chunk first generates,
+ordinary static rocks and moving rock paths avoid the reserved bypass.
+Forecast future ambient rock starting positions around the actors' homes
+separately, solely to check home clearance. Keep the bypass usable during
+the fight. If no field can fit both approaches within the existing placement
+budgets, leave mining as usual. This does not advance or block deposits,
+the docking story or the disk purchase.
+
+### Phantom: settlement blockade phases
+
+Split each settlement's existing blocker groups. On the inbound approach
+within 1000 units, show a 2.5-second warning before the two fighter groups
+engage from separate flanks. Keep the frigate and its escorts in reserve.
+When the existing resolution check clears both fighter groups, cue the
+withdrawal lane. The frigate and its existing escorts can engage on the
+next inbound crossing of 500 units after a minimum four-second break.
+Ada may wait outside indefinitely to recover under normal shield rules.
+If she is already inside the 500-unit line, she can pull out along the
+withdrawal lane and re-approach. Keep that lane clear of the reserve's
+fire and pursuit during the break. Fighters counted as fled end their
+blockade pursuit. Use the existing required-group
+placement and settlement gate. A settlement opens only when both phases
+resolve under the existing blocker rules. Keep liberation order and the
+separate three-wave finale, disable, Salvage and emergency reset.
+
+### Encounter verification
+
+Verify the cue and opening, route clearance, actor budget, saved phase
+and current re-entry behavior for all six encounters. Check damage and
+fight duration at base equipment and with earned upgrades, and compare
+frame time against the current fights under the same conditions. Keep each
+existing quest completable without optional fights.
+
 ## Enemy rule interface
 
 This module supplies pure observation-to-intent rules. Overall encounter placement,
