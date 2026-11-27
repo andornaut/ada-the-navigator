@@ -318,7 +318,7 @@ export function buildScene(scene: UiContext): void {
     const mapLabels = mapScreenLabels(CONTENT.labels);
     const penny = createPennyMarkerLayer(document, host, {
       available: () =>
-        scene.enabled &&
+        scene.enabled === true &&
         !scene.startShown &&
         !scene.settingsOpen &&
         !scene.model.state.dialogue &&
