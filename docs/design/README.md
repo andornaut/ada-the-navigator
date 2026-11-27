@@ -1,13 +1,12 @@
 # Design
 
-Each area has a short design summary and an index of its work items. The topic docs in
-[docs/](..), [src/](../../src/README.md), [art/](../../art/README.md) and
-[gameplay/](../../gameplay/README.md) remain the detailed reference. Work items and their
-convention are in [docs/work/](../work/README.md).
+Each page in this directory summarizes one design area and indexes its work items.
+The [documentation index](../README.md) links the detailed references, and
+the [work-file guide](../work/README.md) explains the linked work records.
 
 | Area                                      | Covers                                                                                            | Topic docs                                                                                                                                                         |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [tooling](tooling.md)                     | Checks, the container profile, CI, the build, download size, deployment and the docs              | [checks](../checks.md), [container adoption](../container-adoption.md), [download size](../download-size.md), [README](../../README.md#developing)                 |
+| [tooling](tooling.md)                     | Checks, the container profile, CI, the build, download size, deployment and the docs              | [checks](../checks.md), [container adoption](../container-adoption.md), [download size](../download-size.md), [development](../development.md)                     |
 | [ui](ui.md)                               | The HTML interface, typed layout trees, modals, inventory, completion indicators and phone layout | [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.md), [completion indicators](../completion-indicators.md), [phone](../../src/README.md#phone) |
 | [runtime](runtime.md)                     | The game model, flight and combat simulation, world generation, persistence and scene rendering   | [architecture](../../src/README.md#architecture), [save data](../../src/README.md#save-data)                                                                       |
 | [art](art.md)                             | Art rules, assets, layout specifications and the pipeline                                         | [art](../../art/README.md)                                                                                                                                         |
