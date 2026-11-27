@@ -1,13 +1,13 @@
-import { ROUTE_POSITION } from "../data/galaxies.ts";
-import { PHANTOM_TUNING } from "../data/phantom.ts";
-import { type Parts, partsReach, worldParts } from "./convex.ts";
-import { enemyPhysicalBody } from "./enemyBody.ts";
-import { flightWorldContext } from "./flightTopology.ts";
-import { placementOutlinesOverlap } from "./placementOverlap.ts";
-import { stationFormationClear, type StationPlacementContext } from "./stationPlacement.ts";
-import type { SpaceObject, Vec } from "./types.ts";
-import { worldDelta, worldDistance } from "./worldContacts.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import { ROUTE_POSITION } from "../../data/galaxies.ts";
+import { PHANTOM_TUNING } from "../../data/phantom.ts";
+import { type Parts, partsReach, worldParts } from "../convex.ts";
+import { enemyPhysicalBody } from "../enemyBody.ts";
+import { flightWorldContext } from "../flightTopology.ts";
+import { stationFormationClear, type StationPlacementContext } from "../stationPlacement.ts";
+import type { SpaceObject, Vec } from "../types.ts";
+import { worldDelta, worldDistance } from "../worldContacts.ts";
+import { wrapPoint } from "../worldGeometry.ts";
+import { placementOutlinesOverlap } from "./overlap.ts";
 
 export interface PhantomEncounterPlacementContext extends StationPlacementContext {
   readonly fixedIds: ReadonlySet<string>;

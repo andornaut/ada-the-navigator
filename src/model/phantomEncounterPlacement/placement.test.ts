@@ -1,25 +1,22 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { CONTENT } from "../data/content.ts";
-import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
-import type { EnemyArchetype } from "../data/enemyCatalog.ts";
-import { ROUTE_POSITION } from "../data/galaxies.ts";
-import { PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../data/phantom.ts";
-import { GALAXY_SIDE } from "../data/world.ts";
-import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { partsReach, worldParts } from "./convex.ts";
-import { createEnemy } from "./enemyAi.ts";
-import { enemyPhysicalBody } from "./enemyBody.ts";
-import { createUnpopulatedFlight } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
-import {
-  type PhantomEncounterPlacementContext,
-  placePhantomEncounter,
-} from "./phantomEncounterPlacement.ts";
-import * as placement from "./stationPlacement.ts";
-import type { SpaceObject, Vec } from "./types.ts";
-import { worldDelta, worldDistance } from "./worldContacts.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import { CONTENT } from "../../data/content.ts";
+import { enemyActorDefinition } from "../../data/enemyActorDefinition.ts";
+import type { EnemyArchetype } from "../../data/enemyCatalog.ts";
+import { ROUTE_POSITION } from "../../data/galaxies.ts";
+import { PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../../data/phantom.ts";
+import { GALAXY_SIDE } from "../../data/world.ts";
+import { ASTEROID_SHAPES } from "../asteroids.ts";
+import { partsReach, worldParts } from "../convex.ts";
+import { createEnemy } from "../enemyAi.ts";
+import { enemyPhysicalBody } from "../enemyBody.ts";
+import { createUnpopulatedFlight } from "../flight.ts";
+import { flightWorldContext } from "../flightTopology.ts";
+import * as placement from "../stationPlacement.ts";
+import type { SpaceObject, Vec } from "../types.ts";
+import { worldDelta, worldDistance } from "../worldContacts.ts";
+import { wrapPoint } from "../worldGeometry.ts";
+import { type PhantomEncounterPlacementContext, placePhantomEncounter } from "./index.ts";
 
 const waypoint = { x: 10000, y: 10000 };
 function fixture(at = waypoint): PhantomEncounterPlacementContext {

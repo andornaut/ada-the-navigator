@@ -1,11 +1,11 @@
 import { expect, it } from "vitest";
 
-import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
-import { ROUTE_POSITION } from "../data/galaxies.ts";
-import { outlinesContact, type Parts } from "./convex.ts";
-import { createEnemy } from "./enemyAi.ts";
-import { enemyPhysicalBody } from "./enemyBody.ts";
-import { placementOutlinesOverlap } from "./placementOverlap.ts";
+import { enemyActorDefinition } from "../../data/enemyActorDefinition.ts";
+import { ROUTE_POSITION } from "../../data/galaxies.ts";
+import { outlinesContact, type Parts } from "../convex.ts";
+import { createEnemy } from "../enemyAi.ts";
+import { enemyPhysicalBody } from "../enemyBody.ts";
+import { placementOutlinesOverlap } from "./overlap.ts";
 
 function largestPartsFirst(parts: Parts): Parts {
   const doubledArea = (part: Parts[number]) =>

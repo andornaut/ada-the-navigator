@@ -24,7 +24,7 @@ import {
 } from "./flight.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import { type PhantomAlly, type PhantomAllySpec, rotatePhantomAllies } from "./phantomAllies.ts";
-import { placePhantomEncounter } from "./phantomEncounterPlacement.ts";
+import { placePhantomEncounter } from "./phantomEncounterPlacement/index.ts";
 import { phantomFutureFlagshipGeometry } from "./phantomRequiredOccupants.ts";
 import {
   type PendingPhantomEncounter,
