@@ -426,7 +426,7 @@ origin, preserving the Shop pane and focused row where applicable.
 | Rapid Missile | "Fires small missiles quickly." "Explodes on impact or after a short distance." "Each level fires faster."                  |
 | Heavy Missile | "Fires slowly but hits hard." "Explodes on impact or after a short distance, with a large blast." "Each level hits harder." |
 | Scattershot   | "Fires {count} short-range pellets in three rows." "Each level adds pellets that hit harder."                               |
-| Phaser        | "Fires an instant beam that nothing can dodge." "Fires slowly but hits hard." "Each level hits harder."                     |
+| Phaser        | "Fires an instant beam through targets in its path." "Fires slowly but hits hard." "Each level hits harder."                |
 
 An upgrade card shows the upgrade's shop name (`weaponUpgrade`, `shield`,
 `engineTuning` or `tractorBeam`), Ada's current level as `level`, then
@@ -584,7 +584,7 @@ The shield shop row reuses the existing `shield` label.
 | `aboutRapidMissile`  | Quick missiles with a small blast.                                        |
 | `aboutMultiLaser`    | A fan of laser bolts that grows with each level.                          |
 | `aboutScattershot`   | A wide spread, strongest up close.                                        |
-| `aboutPhaser`        | An instant beam that strikes the first thing in its path.                 |
+| `aboutPhaser`        | An instant beam that pierces targets in its path.                         |
 | `jumpHome`           | Astra jumped you back to Earth to recharge. Your story progress is saved. |
 | `engineTuning`       | Engine tuning                                                             |
 | `tractorBeam`        | Tractor beam                                                              |

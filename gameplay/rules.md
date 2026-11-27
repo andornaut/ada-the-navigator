@@ -1069,11 +1069,13 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
     close every dot hits; toward its range the spread covers more area but fewer
     dots hit. Each pellet deals 0.8, 1 and 1.2 times Laser damage at levels 1,
     2 and 3. Dots do not apply damage over time.
-  - Phaser: the long-range weapon, a hitscan beam. Each shot hits instantly
-    along the aim to the fire-time rounded coverage boundary at every level,
-    stopping at the first enemy or obstacle it meets. The hit and contact
-    effects stay where the shot resolved. It fires once every 2.0 s and
-    deals 4, 6 or 8 damage at levels 1, 2 and 3.
+  - Phaser: a long-range hitscan beam that reaches the fire-time rounded
+    coverage boundary through ships, obstacles and mines. Each eligible
+    object it intersects takes one hit at full damage, with its own fixed
+    contact effect. A multipart ship takes one hit at the first eligible
+    contact on its hull or a live hardpoint. An armed mine in the beam pops.
+    The beam fires once every 2.0 s and deals 4, 6 or 8 damage at levels 1, 2
+    and 3. Normal target eligibility and protection still apply.
 - Rapid and Heavy Missiles have a full collision width of 12 world units
   (radius 6). Phaser also has a full hit width of 12 world units (radius 6),
   with its visible beam scaled from that same canonical width.

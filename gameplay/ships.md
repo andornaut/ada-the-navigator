@@ -431,9 +431,11 @@ Projectile speeds are world units per second. The three enemy-only weapons:
   A thin line tracks Ada for 0.7 seconds, then holds still for 0.3 seconds. The
   beam fires along it for 6 damage per hit and stops at the first obstacle.
 
-Tell lines (the lance's tracking and locked lines and the Phaser's aim line) stop
-at the first obstacle, as their beams do, so cover reads. The ring burst has no
-warning; its emission shows only as it fires.
+The Charged Lance tell and beam stop at the first obstacle. The enemy
+Phaser's fixed aim line and beam extend through objects to full range. Its
+shot can hit Ada once and preserves the existing no-friendly-fire and
+protection rules. The ring burst has no warning; its emission shows only
+as it fires.
 
 ### Heavy hull and disabling
 
@@ -941,8 +943,8 @@ Catch-up shots have explicit delays; advance each new projectile for only
 integration error. There is no spawn warning; Astra's drone-arrival line is the
 arrival cue. Weapon-specific tells are separate: Phaser uses a fixed 0.4-second
 aim line along the interceptor's facing; charged lance tracks for 0.7 seconds
-and locks for 0.3 seconds before firing. Tell lines and beams stop at obstacles. Each fired beam damages
-Ada at most once. Disabling a weapon prevents future fire and cancels an active
+and locks for 0.3 seconds before firing. Only the lance's tell and beam stop
+at obstacles. Each fired beam damages Ada at most once. Disabling a weapon prevents future fire and cancels an active
 lance tell, but does not delete already emitted projectiles.
 
 `stepDebris(dt, debris)` advances position by constant velocity times dt. Debris has
