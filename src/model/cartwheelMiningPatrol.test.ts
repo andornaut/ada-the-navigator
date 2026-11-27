@@ -356,6 +356,8 @@ it("uses a real pending fighter allocation only after discovery and reserves its
   }
   expect(along).toBeGreaterThanOrEqual(length([entry, end]));
   expect(restored.shield).toBe(startShield);
+  expect(actors.some((id) => (restored.world.notables[id]?.hp ?? 0) > 0)).toBe(true);
+  expect(restored.objects.some(({ id }) => actors.includes(id))).toBe(false);
 
   const malformed = JSON.parse(saved);
   malformed.flight.cartwheelMiningPatrol.plan.bypass = [entry];

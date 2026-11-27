@@ -3,6 +3,7 @@ import { SUNFLOWER_CAPITAL_BOSS, WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalB
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
 import { andromedaCourierMarkers } from "../model/andromeda.ts";
+import { CARTWHEEL_MINING_PATROL } from "../model/cartwheelMiningPatrol.ts";
 import { toScreen } from "../model/convex.ts";
 import { mantaEscortPhase } from "../model/earlyEncounterPatterns.ts";
 import { enemyPartOutline } from "../model/enemyBody.ts";
@@ -193,14 +194,20 @@ function drawCrossbow(scene: EarlyEncounterScene, flight: FlightState): void {
 
 function drawCartwheel(scene: EarlyEncounterScene, flight: FlightState): void {
   const patrol = flight.cartwheelMiningPatrol;
-  if (
-    patrol?.warnedAt === undefined ||
-    !flight.objects.some(({ hp, id }) => hp > 0 && patrol.actors.includes(id))
-  ) {
+  if (patrol?.warnedAt === undefined) {
     return;
   }
   const world = flightWorldContext(flight);
-  const [a, b] = patrol.plan.bypass;
+  const { anchor, bypass } = patrol.plan;
+  const [a, b] = bypass;
+  const extent = Math.max(worldDistance(world, anchor, a), worldDistance(world, anchor, b));
+  if (
+    worldDistance(world, anchor, flight.player) > extent + CARTWHEEL_MINING_PATROL.warningRange ||
+    (!patrol.actors.some((id) => (flight.world.notables[id]?.hp ?? 0) > 0) &&
+      !flight.objects.some(({ hp, id }) => hp > 0 && patrol.actors.includes(id)))
+  ) {
+    return;
+  }
   const [entry, exit] =
     worldDistance(world, flight.player, a) <= worldDistance(world, flight.player, b)
       ? [a, b]
