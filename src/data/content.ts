@@ -503,6 +503,7 @@ export const CONTENT: GameContent = {
     landmark3Nebula3: "Swirl Haze",
     landmark3Nebula4: "Kelp Glow",
     landmark3Wreck1: "Sunken Skimmer",
+    landmark3Wreck116: "Sunken Kite",
     landmark3Wreck2: "Coral Hull",
     landmark3Wreck3: "Driftwood Hull",
     landmark3Wreck4: "Old Diving Bell",

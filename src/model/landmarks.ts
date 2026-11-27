@@ -2,6 +2,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import {
   LANDMARK_KINDS,
+  LANDMARK_LABEL_OVERRIDES,
   LANDMARK_NAME_FORMAT,
   LANDMARK_TUNING,
   landmarkNameKey,
@@ -88,8 +89,12 @@ export function flightLandmarkSites(flight: FlightState): readonly LandmarkSite[
   );
 }
 
-/** Existing label keys stay unchanged; new sites add their approved identity words. */
+/** Resolves authored names and the stable word qualifiers of generated landmarks. */
 export function landmarkLabel(label: (key: string) => string, site: LandmarkSite): string {
+  const authored = LANDMARK_LABEL_OVERRIDES[site.id];
+  if (authored !== undefined) {
+    return label(authored);
+  }
   const base = label(site.name);
   return site.nameWords === undefined
     ? base

@@ -146,6 +146,9 @@ export function landmarkNameKey(galaxy: LandmarkGalaxy, kind: LandmarkKind, nth:
 }
 
 export const LANDMARK_NAME_FORMAT = "{baseName} {landmarkWords}";
+export const LANDMARK_LABEL_OVERRIDES: Readonly<Partial<Record<string, string>>> = {
+  "landmark:3:116": "landmark3Wreck116",
+};
 const RETAINED_LANDMARKS = { count: 12, radius: 25000 } as const;
 
 /** Landmark placement and charting (quests.md "Landmarks"), in world units. */

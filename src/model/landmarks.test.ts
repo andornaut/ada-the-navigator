@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { LANDMARK_GALAXIES } from "../data/jobs.ts";
-import { landmarkLabel, landmarkSites } from "./landmarks.ts";
+import { landmarkById, landmarkLabel, landmarkSites } from "./landmarks.ts";
 import { retainedLandmarkSites } from "./retainedLandmarks.ts";
 import { identityWords, stationWords } from "./stationIdentity.ts";
 
@@ -17,6 +17,18 @@ describe("landmark identity labels", () => {
         expect(landmarkLabel(label, site)).not.toBe("");
       }
     }
+  });
+
+  it("gives the Whirlpool wreck its short name without changing its identity", () => {
+    const wreck = landmarkById(3, "landmark:3:116")!;
+    expect(wreck).toMatchObject({
+      kind: "wreck",
+      name: "landmark3Wreck1",
+      nameWords: "Comet Lantern Kite",
+    });
+    expect(landmarkLabel(label, wreck)).toBe("Sunken Kite");
+    const retained = retainedLandmarkSites(3).find(({ name }) => name === wreck.name)!;
+    expect(landmarkLabel(label, retained)).toBe("Sunken Skimmer");
   });
 
   it("uses the approved short word qualifier without changing the base name", () => {

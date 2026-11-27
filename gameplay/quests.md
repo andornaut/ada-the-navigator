@@ -411,7 +411,8 @@ actual longest-label example for UI wrapping rather than invent an abbreviation.
 optional `nameWords` qualifier. The shared `landmarkLabel(labelFn, site)` returns
 legacy labels unchanged and formats new labels consistently for Scan, Penny,
 the map, survey offers and task details. Names remain stable across revisits
-and saves.
+and saves. Whirlpool's generated wreck `landmark:3:116` has the authored
+display name “Sunken Kite”.
 
 | Galaxy    | Nebulae                                                 | Wrecks                                                               | Beacons                                                |
 | --------- | ------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------ |
