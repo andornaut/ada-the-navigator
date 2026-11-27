@@ -49,13 +49,14 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
   });
   const card = createCard({ close: headerClose.element, size, title });
   card.card.dataset.dialog = "menu";
-  const actions = document.createElement("div");
-  actions.className = "ada-actions ada-stack";
-  card.body.append(actions);
   modal.append(card.frame);
   const view = root.ownerDocument.defaultView;
   const fitActionStack = () => {
     if (modal.hidden) {
+      return;
+    }
+    const actions = card.body.querySelector<HTMLElement>(".ui-layout-stack");
+    if (!actions) {
       return;
     }
     actions.style.rowGap = "";
@@ -129,7 +130,12 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
           ...ports.components,
           menu: {
             create() {
-              return { dispose() {}, element: card.frame, slots: { actions }, update() {} };
+              return {
+                dispose() {},
+                element: card.frame,
+                slots: { actions: card.body },
+                update() {},
+              };
             },
             slots: ["actions"],
           },
@@ -147,8 +153,9 @@ export function createMenuCard(root: HTMLElement, options: MenuOptions) {
       throw error;
     }
     const focus =
-      actions.querySelector<HTMLButtonElement>(`[data-action="menu-${returnAction ?? "close"}"]`) ??
-      actions.querySelector<HTMLButtonElement>('[data-action="menu-close"]')!;
+      card.body.querySelector<HTMLButtonElement>(
+        `[data-action="menu-${returnAction ?? "close"}"]`,
+      ) ?? card.body.querySelector<HTMLButtonElement>('[data-action="menu-close"]')!;
     card.fit();
     fitActionStack();
     layer = createModalLayer(modal);

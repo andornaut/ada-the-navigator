@@ -1,6 +1,7 @@
 import { validateLayoutTree } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import { describe, expect, it } from "vitest";
 
+import { STACK_BUTTON_GAP } from "./layout/tokens.ts";
 import { menuActions, menuTree } from "./menuTree.ts";
 
 const data = {
@@ -13,6 +14,14 @@ const data = {
   },
   title: "Menu",
 };
+
+function menuStack(tree: ReturnType<typeof menuTree>) {
+  const [stack, ...others] = tree.slots?.actions ?? [];
+  if (stack?.kind !== "stack" || others.length > 0) {
+    throw new Error("Expected one structural action stack");
+  }
+  return stack;
+}
 
 describe("production Menu tree", () => {
   it.each(["start", "nonplay"] as const)(
@@ -30,7 +39,9 @@ describe("production Menu tree", () => {
         size: "small",
         title: "Menu",
       });
-      const buttons = tree.slots!.actions!;
+      const stack = menuStack(tree);
+      expect(stack).toMatchObject({ gap: STACK_BUTTON_GAP, padding: 0 });
+      const buttons = stack.children;
       expect(buttons.map((node) => node.key)).toEqual([...menuActions(context), "close"]);
       expect(
         buttons.map((node) =>
@@ -53,7 +64,7 @@ describe("production Menu tree", () => {
       context: "nonplay",
       labels: { achievements: "Same", backToTitle: "", cheats: "Same", settings: "Same" },
     });
-    expect(tree.slots!.actions!.map((node) => node.key)).toEqual([
+    expect(menuStack(tree).children.map((node) => node.key)).toEqual([
       "achievements",
       "cheats",
       "settings",
@@ -72,9 +83,9 @@ it("sorts the actions by label, then Back to title and primary Close", () => {
     settings: "Options",
   };
   expect(
-    menuTree({ ...data, context: "nonplay", labels }).slots!.actions!.map((node) => node.key),
+    menuStack(menuTree({ ...data, context: "nonplay", labels })).children.map((node) => node.key),
   ).toEqual(["cheats", "settings", "achievements", "backToTitle", "close"]);
   expect(
-    menuTree({ ...data, context: "start", labels }).slots!.actions!.map((node) => node.key),
+    menuStack(menuTree({ ...data, context: "start", labels })).children.map((node) => node.key),
   ).toEqual(["cheats", "settings", "achievements", "close"]);
 });

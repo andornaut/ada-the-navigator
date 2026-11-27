@@ -1,5 +1,6 @@
 import type { ComponentNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
+import { STACK_BUTTON_GAP } from "./layout/tokens.ts";
 import type { AdaCardProps, AdaLayoutSchema } from "./layoutTree.ts";
 
 export type MenuAction = "achievements" | "backToTitle" | "cheats" | "settings";
@@ -64,11 +65,26 @@ export function menuTree(
     },
     slots: {
       actions: [
-        ...sorted,
-        ...(actions.includes("backToTitle")
-          ? [menuButton("backToTitle", "menu-backToTitle", data.labels.backToTitle, "secondary")]
-          : []),
-        menuButton("close", "menu-close", data.closeLabel, "primary"),
+        {
+          children: [
+            ...sorted,
+            ...(actions.includes("backToTitle")
+              ? [
+                  menuButton(
+                    "backToTitle",
+                    "menu-backToTitle",
+                    data.labels.backToTitle,
+                    "secondary",
+                  ),
+                ]
+              : []),
+            menuButton("close", "menu-close", data.closeLabel, "primary"),
+          ],
+          gap: STACK_BUTTON_GAP,
+          key: "action-stack",
+          kind: "stack",
+          padding: 0,
+        },
       ],
     },
   };

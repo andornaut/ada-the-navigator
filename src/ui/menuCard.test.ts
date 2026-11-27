@@ -430,6 +430,7 @@ describe("production Menu consumer", () => {
     menu.setContext("nonplay");
     menu.open();
     const stack = body.children[0]!;
+    expect(stack.className).toBe("ui-layout-stack");
     expect(rows()).toHaveLength(5);
     expect(stack.style.rowGap).toBe(units(4));
     expect(body.style.rowGap).toBe(units(3));

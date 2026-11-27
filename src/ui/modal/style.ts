@@ -476,6 +476,14 @@ ${UI_SCOPE} .ada-actions.ada-stack .ada-button{
   width:100%
 }
 
+${UI_SCOPE} [data-dialog="menu"] > .ada-card-body > .ui-layout-stack{
+  align-self:stretch;
+  grid-template-columns:minmax(0,1fr)
+}
+${UI_SCOPE} [data-dialog="menu"] > .ada-card-body > .ui-layout-stack .ada-button{
+  width:100%
+}
+
 /* Standard actions wrap with the same horizontal and vertical face gaps as action grids. */
 ${UI_SCOPE} .ada-actions.ada-wrap{
   display:flex;
