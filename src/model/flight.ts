@@ -68,7 +68,6 @@ import {
   sceneryBound,
   scenerySilhouette,
   type Silhouette,
-  silhouetteWorldReach,
   worldSceneryBlocksSegment,
   worldSceneryBodyContact,
   worldSceneryContact,
@@ -84,13 +83,7 @@ import {
 } from "./cartwheelMiningPatrol.ts";
 import { planChunkCaches } from "./chunkCaches.ts";
 import { onScreen } from "./conversations.ts";
-import {
-  pointOnCurrent,
-  worldCurrentInCell,
-  worldCurrentsNear,
-  worldFlowAt,
-  worldInCurrent,
-} from "./currents.ts";
+import { worldCurrentsNear, worldFlowAt, worldInCurrent } from "./currents.ts";
 import {
   advanceHammerTutorial,
   authoredLanceAction,
@@ -122,7 +115,6 @@ import {
   enemyIntegrity,
   type EnemyState,
   type FireIntent,
-  stepDebris,
   stepEnemy,
 } from "./enemyAi.ts";
 import { enemyEquipmentDefinition, rollEnemyWeaponLevel } from "./enemyEquipment.ts";
@@ -139,6 +131,7 @@ import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
 import { beamPoint, outlineBeamStrike, rayCircle, sampleBeam } from "./flight/beamContact.ts";
 import { inBattle, inDanger } from "./flight/danger.ts";
+import { moveDebris, placeRiverRock } from "./flight/debrisMotion.ts";
 import {
   destroyEnemy,
   dropFromRock,
@@ -165,7 +158,7 @@ import { armed, layMine, stepMines, strikeMines } from "./flight/mines.ts";
 import { projectileContact, projectileSceneryContact } from "./flight/projectileContact.ts";
 import { resolveScenery, type SceneryContactOf } from "./flight/sceneryResolution.ts";
 import { bounceShipContact } from "./flight/shipContact.ts";
-import { flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
+import { canonicalPosition, flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
 import {
   createFrigateEscorts,
   FRIGATE_ESCORT_ROLE,
@@ -236,7 +229,7 @@ import {
 } from "./requiredWorldReservations.ts";
 import { retaliatorAsteroidQuery } from "./retaliatorAsteroids.ts";
 import { INDUSTRIAL_HOME_RADIUS } from "./retaliatorNavigation.ts";
-import { MOVING_ROCK_PREFIX, ricochetRocks } from "./rockRicochet.ts";
+import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
 import { routeGuardEvidence } from "./routeGuardEvidence.ts";
 import { discoveryStardustId } from "./stardustPlacement.ts";
 import { stationFormationClear, type StationPlacementContext } from "./stationPlacement.ts";
@@ -250,8 +243,7 @@ import {
   worldCellsNear,
   type WorldGrid,
 } from "./worldCells.ts";
-import { type WorldContext, worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import { segmentDistance, worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 
 export { activateRouteEncounter, syncFlightRegion } from "./geography.ts";
 import {
@@ -291,13 +283,7 @@ import { impactSurface } from "./projectileImpact.ts";
 import { SceneryFrames } from "./sceneryFrames.ts";
 import { sceneryImpact } from "./sceneryImpact.ts";
 import { rechargeShield } from "./shieldRecharge.ts";
-import {
-  SHIP_REACH,
-  shipBody,
-  shipNearSegment,
-  shipTouches,
-  shipTouchesScreenCircle,
-} from "./shipBody.ts";
+import { shipBody, shipTouches, shipTouchesScreenCircle } from "./shipBody.ts";
 import { direction, stepShipMotion, turnToward } from "./shipPhysics.ts";
 import {
   worldFitsEncounter,
@@ -397,6 +383,7 @@ function frameOf(flight: FlightState, object: SpaceObject): number {
   return sceneryFrames.frame(flight, reducedMotions.get(flight) ?? false, object);
 }
 const projectileScenery = { drawnOf, frameOf };
+const debrisMotion = { ...projectileScenery, arrivalPoints, bumpAda };
 
 function hash(seed: number, x: number, y: number): number {
   let n = seed ^ Math.imul(x, 374761393) ^ Math.imul(y, 668265263);
@@ -641,11 +628,6 @@ function blastCoversAda(flight: FlightState, point: Vec, radius: number): boolea
     radius,
   );
 }
-function canonicalPosition(flight: FlightState, point: Vec): void {
-  if (flight.topology) {
-    Object.assign(point, wrapPoint(flight.topology.side, point));
-  }
-}
 function canonicalObject(flight: FlightState, object: SpaceObject): void {
   canonicalPosition(flight, object);
   if (object.enemy) {
@@ -736,36 +718,6 @@ function ensureDebrisRivers(content: GameContent, point: Vec, flight: FlightStat
       ids.add(id);
     }
   }
-}
-
-/**
- * A debris river rock's place: it follows its current's centre line at the peak flow speed,
- * entering at one end and leaving at the other, then re-entering at the start.
- */
-function placeRiverRock(flight: FlightState, object: SpaceObject): void {
-  const river = object.river!;
-  const match = /^current:(-?\d+),(-?\d+)$/.exec(river.current);
-  const current = match
-    ? worldCurrentInCell(flightWorldContext(flight), flight.galaxy, {
-        x: Number(match[1]),
-        y: Number(match[2]),
-      })
-    : null;
-  if (!current) {
-    object.hp = 0;
-    return;
-  }
-  const arc =
-    (((river.arc + CURRENTS.peakFlow * flight.time) % current.length) + current.length) %
-    current.length;
-  const { point, tangent } = pointOnCurrent(current, arc);
-  // Adding 0 turns -0 into 0, so a saved and restored rock compares equal.
-  object.x = point.x + 0;
-  object.y = point.y + 0;
-  object.velocity = {
-    x: tangent.x * CURRENTS.peakFlow + 0,
-    y: tangent.y * CURRENTS.peakFlow + 0,
-  };
 }
 
 /** Station sites within the active region become persistent station objects. */
@@ -5000,150 +4952,6 @@ const shotRadius = (shot: Pick<Shot, "projectile">) =>
   shot.projectile === "missile" ? MISSILE_HIT_RADIUS : 3;
 const mineStrike = { blast, shotParts: SHOT_PARTS, shotRadius };
 
-function segmentDistance(point: Vec, start: Vec, end: Vec): number {
-  const dx = end.x - start.x;
-  const dy = end.y - start.y;
-  const square = dx * dx + dy * dy;
-  const t = square
-    ? Math.max(0, Math.min(1, ((point.x - start.x) * dx + (point.y - start.y) * dy) / square))
-    : 0;
-  return distance(point, { x: start.x + dx * t, y: start.y + dy * t });
-}
-
-/**
- * Whether traveling debris moving from `from` to `to` meets Ada's drawn ship: its drawn piece
- * outline against hers, sampled every 2 units along the move; its circle without debris art.
- */
-function debrisTouchesAda(
-  world: WorldContext,
-  flight: FlightState,
-  object: SpaceObject,
-  from: Vec,
-  to: Vec,
-): boolean {
-  const end = worldPoint(world, from, to);
-  const player = worldPoint(world, from, flight.player);
-  const drawn = drawnOf(flight, object);
-  if (!drawn) {
-    return shipNearSegment(flight.facing, player, from, end, object.radius);
-  }
-  if (segmentDistance(player, from, end) > silhouetteWorldReach(drawn) + SHIP_REACH) {
-    return false;
-  }
-  const frame = frameOf(flight, object);
-  const body = shipBody(flight.facing);
-  const steps = Math.max(1, Math.ceil(distance(from, end) / 2));
-  for (let step = 0; step <= steps; step++) {
-    const t = step / steps;
-    const at = { ...object, x: from.x + (end.x - from.x) * t, y: from.y + (end.y - from.y) * t };
-    if (worldSceneryBodyContact(world, at, flight.player, body, frame, 0, drawn)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
- * Ballistic debris keeps constant velocity, struck static rocks settle and other asteroids hold
- * their centres; then moving rocks ricochet off the asteroids they touch.
- */
-function moveDebris(
-  content: GameContent,
-  dt: number,
-  events: FlightEvent[],
-  flight: FlightState,
-): void {
-  const world = flightWorldContext(flight);
-  let exclusionZones: { area: Vec; radius: number }[] | undefined;
-  let arrivalDisks: typeof exclusionZones;
-  for (const object of flight.objects) {
-    if (object.river) {
-      // River debris follows its current and bumps Ada on contact like other traveling debris.
-      const from = { x: object.x, y: object.y };
-      placeRiverRock(flight, object);
-      if (debrisTouchesAda(world, flight, object, from, object)) {
-        bumpAda(content, flight, events, object);
-      }
-      continue;
-    }
-    if (object.orbit && object.kind === "rock") {
-      // Legacy circular paths settle at their current centre without changing HP or drops.
-      delete object.orbit;
-      delete object.velocity;
-      continue;
-    }
-    const settling = object.kind === "rock" && object.settle !== undefined;
-    if (!object.velocity || (object.kind !== "debris" && !settling)) {
-      continue;
-    }
-    const next = settling
-      ? settleRock(dt, object)
-      : stepDebris(dt, { id: object.id, position: object, velocity: object.velocity });
-    // Existing protected objects absorb all moving debris; moving rocks, struck static rocks
-    // among them, also end at arrival disks.
-    if (!exclusionZones) {
-      exclusionZones = [];
-      for (const area of flight.objects) {
-        const radius = exclusionZoneRadius(content, area);
-        if (radius !== null) {
-          exclusionZones.push({ area, radius });
-        }
-      }
-    }
-    const reach = placementRadius(object);
-    const crosses = ({ area, radius }: { area: Vec; radius: number }): boolean =>
-      segmentDistance(worldPoint(world, object, area), object, next.position) < radius + reach;
-    if (
-      exclusionZones.some(crosses) ||
-      ((settling || object.id.startsWith(MOVING_ROCK_PREFIX)) &&
-        (arrivalDisks ??= arrivalPoints(flight).map((area) => ({
-          area,
-          radius: content.tuning.exclusionRadius,
-        }))).some(crosses))
-    ) {
-      object.hp = 0;
-      continue;
-    }
-    // A bump, though the debris may pass through her between frames (rules.md: 1 a bump).
-    if (debrisTouchesAda(world, flight, object, object, next.position)) {
-      bumpAda(content, flight, events, object);
-    }
-    object.x = next.position.x;
-    object.y = next.position.y;
-    canonicalPosition(flight, object);
-  }
-  ricochetRocks(
-    { chunkSize: content.tuning.chunkSize, frameOf: (rock) => frameOf(flight, rock), world },
-    content.tuning.flight.rockRicochet,
-    flight.objects,
-  );
-}
-
-/**
- * A struck static rock's move over `dt`: its speed falls evenly to rest at the end of its
- * settle time, where it stays as a static rock again.
- */
-function settleRock(dt: number, object: SpaceObject): { position: Vec } {
-  const velocity = object.velocity!;
-  const left = object.settle!;
-  const step = Math.min(dt, left);
-  const after = (left - step) / left;
-  // The mean of the speeds at the start and the end of the step, which fall linearly.
-  const mean = (1 + after) / 2;
-  const position = {
-    x: object.x + velocity.x * mean * step,
-    y: object.y + velocity.y * mean * step,
-  };
-  if (left - step <= 1e-9) {
-    delete object.velocity;
-    delete object.settle;
-  } else {
-    object.velocity = { x: velocity.x * after, y: velocity.y * after };
-    object.settle = left - step;
-  }
-  return { position };
-}
-
 /** Release committed Scattershot rows on the flight clock, with the rest of their slice to fly. */
 function releasePendingPellets(
   content: GameContent,
@@ -6085,7 +5893,7 @@ export function stepFlight(
     flight.time += slice;
     flight.sinceDamage += slice;
     generate(content, flight.player, input.cartwheelHubKnown === true, flight);
-    moveDebris(content, slice, events, flight);
+    moveDebris(debrisMotion, content, slice, events, flight);
     const playerBeforeMove = move(content, slice, input, events, flight, freshTravel);
     worldSyncFlightRegion(flightWorldContext(flight), content, flight);
     if (warnCartwheelPatrol(flight)) {

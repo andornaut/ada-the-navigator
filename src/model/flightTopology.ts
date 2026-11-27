@@ -1,6 +1,7 @@
 import { GALAXY_SIDE } from "../data/world.ts";
-import type { FlightState } from "./types.ts";
+import type { FlightState, Vec } from "./types.ts";
 import type { WorldContext } from "./worldContacts.ts";
+import { wrapPoint } from "./worldGeometry.ts";
 
 /** Explicit metadata selects periodic geometry; absence always means a legacy chart. */
 export interface FlightTopology {
@@ -66,4 +67,11 @@ export function flightWorldContext(flight: Pick<FlightState, "topology">): World
 /** Continue preserves the stored value; legacy flights keep their exact existing identity. */
 export function flightEncounterSeed(flight: Pick<FlightState, "seed" | "encounterSeed">): number {
   return flight.encounterSeed ?? flight.seed;
+}
+
+/** Canonicalize a mutable position only when this flight uses the periodic chart. */
+export function canonicalPosition(flight: Pick<FlightState, "topology">, point: Vec): void {
+  if (flight.topology) {
+    Object.assign(point, wrapPoint(flight.topology.side, point));
+  }
 }

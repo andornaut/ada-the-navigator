@@ -24,3 +24,15 @@ export function worldPoint(context: WorldContext, reference: Vec, point: Vec): V
     ? point
     : nearestImage(context.worldSide, reference, point).point;
 }
+
+/** Distance to the nearest point on a segment in a single local chart. */
+export function segmentDistance(point: Vec, start: Vec, end: Vec): number {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const square = dx * dx + dy * dy;
+  const t = square
+    ? Math.max(0, Math.min(1, ((point.x - start.x) * dx + (point.y - start.y) * dy) / square))
+    : 0;
+  const closest = { x: start.x + dx * t, y: start.y + dy * t };
+  return Math.hypot(point.x - closest.x, point.y - closest.y);
+}
