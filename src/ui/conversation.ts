@@ -55,6 +55,7 @@ import { hudButtonTarget, STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.
 import { readViewUnit } from "./layout/viewScale.ts";
 import { TEXT_TOKENS } from "./modal.ts";
 import { CONVERSATION_SLOT, FLIGHT_PANEL_BACKGROUND } from "./notice.ts";
+import { invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 import { createStandardTextAction } from "./standardTextAction.ts";
 
@@ -610,6 +611,8 @@ export function createInteractionCard(
           );
         }
       }
+      // A touch release can redraw the row before its native click finds a different button.
+      invalidatePressScope(parent);
       disposePageActions();
       card.choices.replaceChildren(...choices);
       card.controls.replaceChildren(...controls);
