@@ -5,7 +5,10 @@ import { CONTENT } from "../data/content.ts";
 import { carriedItemName } from "../data/itemNames.ts";
 import { questReward } from "../data/questRewards.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
-import { visitCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
+import {
+  completeCartwheelHubIntroductionFixture,
+  visitCartwheelHubFixture,
+} from "../testing/cartwheelFixture.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { questRoute } from "../ui/questsScreen.ts";
 import { ensureDestination } from "./flight.ts";
@@ -139,7 +142,7 @@ describe("GameModel map quest detail integration", () => {
     model.state.progress[2].opened = true;
     model.startGalaxy(2);
     const hub = visitCartwheelHubFixture(CONTENT, model);
-    model.choose("continue");
+    completeCartwheelHubIntroductionFixture(model);
     model.state.progress[2].stage = 4;
 
     const name = CONTENT.chapters[2]!.name;

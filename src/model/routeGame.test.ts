@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
-import { activateCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
+import {
+  activateCartwheelHubFixture,
+  completeCartwheelHubIntroductionFixture,
+} from "../testing/cartwheelFixture.ts";
 import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
 import { ensureDestination } from "./flight.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
@@ -88,10 +91,16 @@ describe("required route approach encounters", () => {
         );
         return;
       }
-      expect(resumed.state.progress[galaxy].introduced).toBe(true);
       expect(resumed.state.progress[galaxy].known).toContain(target.id);
-      expect(resumed.state.dialogue).not.toBeNull();
-      resumed.choose("continue");
+      if (galaxy === 2) {
+        expect(resumed.state.progress[2].introduced).toBe(false);
+        expect(resumed.state.dialogue).toBeNull();
+        completeCartwheelHubIntroductionFixture(resumed);
+      } else {
+        expect(resumed.state.dialogue).not.toBeNull();
+        resumed.choose("continue");
+      }
+      expect(resumed.state.progress[galaxy].introduced).toBe(true);
       resumed.step(1 / 60, idle);
       expect(next.objects.some((object) => object.routeId === target.id)).toBe(false);
     },

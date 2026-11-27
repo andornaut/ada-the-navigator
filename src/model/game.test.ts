@@ -10,6 +10,7 @@ import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
+import { completeCartwheelHubIntroductionFixture } from "../testing/cartwheelFixture.ts";
 import { playOpening, readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import { worldNearestSettlerStation } from "./andromedaPlaces.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
@@ -321,6 +322,10 @@ function recoverHolodisk(model: GameModel) {
 }
 function introduce(model: GameModel, id: string) {
   arrive(model, id);
+  if (id === "hub") {
+    completeCartwheelHubIntroductionFixture(model);
+    return;
+  }
   model.step(0.01, { ...idle, use: id === "growers" });
   expect(model.state.dialogue).not.toBeNull();
   model.choose("continue");

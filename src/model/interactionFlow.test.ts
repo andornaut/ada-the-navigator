@@ -6,7 +6,10 @@ import { enemyDefinition } from "../data/enemyCatalog.ts";
 import type { GameContent } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
-import { visitCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
+import {
+  completeCartwheelHubIntroductionFixture,
+  visitCartwheelHubFixture,
+} from "../testing/cartwheelFixture.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { activateRequiredRoute, ensureDestination } from "./flight.ts";
@@ -115,7 +118,7 @@ describe("Use card suspension", () => {
     model.state.unlocked = [1, 2, 3];
     model.startGalaxy(2);
     visitCartwheelHubFixture(CONTENT, model);
-    model.choose("continue");
+    completeCartwheelHubIntroductionFixture(model);
     const flight = model.state.flight!;
     flight.objects = [];
     const hub = ensureDestination(CONTENT, "hub", flight);

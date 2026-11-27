@@ -10,7 +10,10 @@ import { poiDiscoveryPool } from "../data/poiDiscoveryLore.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
-import { visitCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
+import {
+  completeCartwheelHubIntroductionFixture,
+  visitCartwheelHubFixture,
+} from "../testing/cartwheelFixture.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { pennyInstance, pennyPoints } from "./conversations.ts";
@@ -49,8 +52,8 @@ function beginClaim(): GameModel {
   const hub = visitCartwheelHubFixture(CONTENT, model);
   const flight = model.state.flight!;
   const progress = model.state.progress[2];
+  completeCartwheelHubIntroductionFixture(model);
   expect(progress.stage).toBe(1);
-  model.choose("continue");
   expect(progress.claim).toBeUndefined();
   const [first, second] = CONTENT.tuning.miningMilestones;
   flight.cargo = first;

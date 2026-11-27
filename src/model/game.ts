@@ -2495,6 +2495,9 @@ export class GameModel {
     }
     // At a station an action due there comes before Dock (gameplay/rules.md).
     if (id === HUB_STATION) {
+      if (flight.galaxy === 2 && this.hubIntroductionDue) {
+        return "talk";
+      }
       if (flight.cargo > 0) {
         return "deposit";
       }
@@ -3185,9 +3188,11 @@ export class GameModel {
     }
     if (flight.galaxy === 2 && docked === HUB_STATION) {
       const scene = this.readyHubDockingScene;
-      const key = scene?.talkPage ?? CARTWHEEL_STORY_SHIPS.scenes.docking.line;
-      const entry = scene && this.chapter.dialogue[key];
-      if (!entry) {
+      const key = this.hubIntroductionDue
+        ? HUB_STATION
+        : scene && (scene.talkPage ?? CARTWHEEL_STORY_SHIPS.scenes.docking.line);
+      const entry = key && this.chapter.dialogue[key];
+      if (!key || !entry) {
         return { panel: null, stationId: docked };
       }
       if (
@@ -3231,6 +3236,17 @@ export class GameModel {
       return;
     }
     const flight = this.state.flight;
+    if (
+      flight?.galaxy === 2 &&
+      this.state.docked === HUB_STATION &&
+      panel.context === HUB_STATION &&
+      id === "continue"
+    ) {
+      this.current.introduced = true;
+      this.current.stage = Math.max(1, this.current.stage);
+      this.stationTalkVisit = null;
+      return;
+    }
     const scene = this.readyHubDockingScene;
     if (scene && this.state.docked === HUB_STATION) {
       if (id !== "continue") {
@@ -3390,6 +3406,11 @@ export class GameModel {
     if (held?.type === "delivery" && held.station === id) {
       held.carrying = true;
     }
+  }
+  /** The introduction must finish before the first ordinary ore deposit. */
+  private get hubIntroductionDue(): boolean {
+    const progress = this.current;
+    return progress.stage === 0 || (!progress.introduced && !progress.questComplete);
   }
   /** Pending docked Talk is separate from an active scene or its blocked-approach reaction. */
   private get hubSceneCoversFlightDialogue(): boolean {
@@ -4717,6 +4738,7 @@ export class GameModel {
     const intro = first(f.galaxy);
     if (
       f.galaxy !== 1 &&
+      f.galaxy !== 2 &&
       intro !== undefined &&
       !this.current.introduced &&
       this.current.known.includes(intro) &&

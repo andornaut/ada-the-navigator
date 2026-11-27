@@ -45,3 +45,15 @@ export function visitCartwheelHubFixture(content: GameContent, model: GameModel)
   model.step(1 / 60, idle);
   return hub;
 }
+
+/** Test support: complete the first hosted Hub exchange and leave the berth for flight controls. */
+export function completeCartwheelHubIntroductionFixture(model: GameModel): void {
+  model.state.flight!.dangerFor = 0;
+  model.interact();
+  const intro = model.stationTalk?.panel;
+  if (intro?.context !== "hub") {
+    throw new Error("Expected the authored Hub introduction in station Talk");
+  }
+  model.chooseStationTalk(intro, "continue");
+  model.undock();
+}
