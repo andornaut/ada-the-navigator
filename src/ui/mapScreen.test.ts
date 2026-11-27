@@ -137,6 +137,10 @@ describe("map place type lines", () => {
       "Jobs & Projects",
     ]);
     expect(chipFace(lead)).toBe("#feae34");
+    expect(placeLines(LABELS, ADA, "Deliver a seed pod", { ...lead, job: true })).toEqual([
+      "Station · 0.4 light-years",
+      "Job: Deliver a seed pod · Jobs & Projects",
+    ]);
     expect(
       placeLines(
         LABELS,

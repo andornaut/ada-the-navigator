@@ -307,14 +307,18 @@ export function placeLines(
   const lines = [
     labels.typeLine.replace("{type}", labels.types[type]).replace("{distance}", distance),
   ];
+  const cues: string[] = [];
   if (place.job && job !== null) {
-    lines.push(labels.jobObjective.replace("{objective}", job));
+    cues.push(labels.jobObjective.replace("{objective}", job));
   }
   if (place.pendingJobLead) {
-    lines.push(labels.jobsProjects);
+    cues.push(labels.jobsProjects);
   }
   if (place.optionalEncounter) {
-    lines.push(labels.optionalEncounter.replace("{ship}", place.label));
+    cues.push(labels.optionalEncounter.replace("{ship}", place.label));
+  }
+  if (cues.length) {
+    lines.push(cues.join(" · "));
   }
   return lines;
 }
