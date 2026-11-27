@@ -1014,14 +1014,14 @@ function scanSource(context: ScanContext, path: string, text: string) {
     }
   }
   type SynchronousCallable =
-    | ts.FunctionDeclaration
-    | ts.FunctionExpression
-    | ts.ArrowFunction
-    | ts.MethodDeclaration;
+    ts.FunctionDeclaration | ts.FunctionExpression | ts.ArrowFunction | ts.MethodDeclaration;
   const synchronousCallable = (node: SynchronousCallable): boolean =>
     !node.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.AsyncKeyword) &&
     !(!ts.isArrowFunction(node) && node.asteriskToken);
-  const immediateWrapperCall = (site: ts.Node, owner: SynchronousCallable | ts.SourceFile): boolean => {
+  const immediateWrapperCall = (
+    site: ts.Node,
+    owner: SynchronousCallable | ts.SourceFile,
+  ): boolean => {
     if (!ts.isSourceFile(owner) && (!synchronousCallable(owner) || !owner.body)) {
       return false;
     }
