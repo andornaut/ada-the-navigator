@@ -74,6 +74,7 @@ function setup(quantum = true) {
   const scene = {
     cameras: { main: { width: 720, zoom: 1 } },
     controls: { overlay: { inert: false }, reset: vi.fn(), sample, setEnabled: vi.fn() },
+    displayedFlight: null,
     draw: vi.fn(),
     emergencyReturn: new EmergencyReturn(),
     entryCurrent: () => true,
@@ -86,6 +87,7 @@ function setup(quantum = true) {
     overlay: { clear: vi.fn() },
     quantum: quantum ? { play: vi.fn<(play: JumpPlay) => void>() } : undefined,
     reducedMotion: false,
+    releaseFlightDisplay: vi.fn(),
     savedAt: 0,
     scale: { gameSize: { height: SCREEN.height, width: SCREEN.width }, zoom: 1 },
     settingsOpen: false,
@@ -201,6 +203,7 @@ describe("emergency return presentation", () => {
       }
       expect(scene.quantum!.play).not.toHaveBeenCalled();
       expect(scene.controls.sample).toHaveBeenCalledTimes(1);
+      expect(scene.releaseFlightDisplay).not.toHaveBeenCalled();
       expect(flight).toEqual(frozen);
       frame();
       expect(scene.quantum!.play).toHaveBeenCalledExactlyOnceWith(
@@ -214,6 +217,7 @@ describe("emergency return presentation", () => {
       expect(scene.controls.overlay.inert).toBe(false);
       frame();
       expect(scene.quantum!.play).toHaveBeenCalledTimes(1);
+      expect(scene.releaseFlightDisplay).toHaveBeenCalledTimes(1);
       expect(model.state.economy.cargo).toBe(cargo);
       expect(model.save()).toBe(saved);
       const loaded = relaunch(CONTENT, saved);
