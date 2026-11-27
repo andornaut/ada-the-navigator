@@ -1322,6 +1322,46 @@ describe("Use conversation paging", () => {
     title: "Grower",
   };
 
+  it("offers Skip on linear pages only while the immediate successor also offers Next", () => {
+    const run = new InteractionConversation();
+    run.show(
+      {
+        ...copy,
+        lines: [copy.lines[0]!, { speaker: "Ada", text: "Middle" }, copy.lines[1]!],
+        topics: [],
+      },
+      panel,
+    );
+
+    expect(run).toMatchObject({ canSkip: true, hasPrevious: false, nextAction: "page" });
+    run.advance();
+    expect(run.line?.text).toBe("Middle");
+    expect(run).toMatchObject({ canSkip: false, hasPrevious: true, nextAction: "page" });
+    run.advance();
+    expect(run.line?.text).toBe("Last");
+    expect(run).toMatchObject({ canSkip: false, hasPrevious: true, nextAction: undefined });
+    expect(run.choices).toEqual(panel.choices);
+    run.previous();
+    expect(run.line?.text).toBe("Middle");
+  });
+
+  it("offers Skip for a known linear panel successor without applying a model action to inspect it", () => {
+    const run = new InteractionConversation();
+    const linear = { ...panel, choices: [{ id: "continue", label: "Continue" }] };
+    const singleLine = { ...copy, lines: [copy.lines[0]!], topics: [] };
+    run.show(singleLine, linear);
+    expect(run).toMatchObject({ canSkip: false, nextAction: "continue" });
+
+    const apply = vi.fn(() => run.show(singleLine, { ...linear, context: "successor" }));
+    run.choose("continue", apply);
+    expect(run).toMatchObject({ canSkip: false, nextAction: "continue" });
+    run.previous();
+    expect(run).toMatchObject({ canSkip: true, nextAction: "continue" });
+    run.skip();
+    expect(run.afterAppliedOutcome).toBe(false);
+    expect(apply).toHaveBeenCalledOnce();
+  });
+
   it("keeps a pending choice after Skip and never applies an outcome", () => {
     const run = new InteractionConversation();
     run.show(copy, panel);
@@ -1343,11 +1383,14 @@ describe("Use conversation paging", () => {
       },
       panel,
     );
-    expect(run.hasPrevious).toBe(false);
+    expect(run).toMatchObject({ canSkip: false, hasPrevious: false, nextAction: "page" });
     run.advance();
+    expect(run).toMatchObject({ canSkip: false, hasPrevious: true, nextAction: undefined });
     expect(run.topics.map(({ label }) => label)).toEqual(["Question"]);
     run.topic(0);
+    expect(run).toMatchObject({ canSkip: false, nextAction: "page" });
     run.advance();
+    expect(run).toMatchObject({ canSkip: false, nextAction: undefined });
     expect(run.topics).toEqual([child]);
     run.topic(0);
     expect(run.line?.text).toBe("Nested answer");
@@ -1412,6 +1455,7 @@ describe("Use conversation paging", () => {
     expect(run.atChoice).toBe(true);
     run.previous();
     expect(run.line?.text).toBe("Last");
+    expect(run.canSkip).toBe(false);
     run.show(intro, fork);
     expect(run.line?.text).toBe("Last");
     run.choose("continue", apply);

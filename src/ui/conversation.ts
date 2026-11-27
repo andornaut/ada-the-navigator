@@ -52,7 +52,6 @@ import {
   VIEW_PROPERTIES,
 } from "./layout/css.ts";
 import { hudButtonTarget, STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
-import { STORY_TOPIC_PREVIOUS_MIN, STORY_TOPIC_PREVIOUS_SHARE } from "./layout/storyPage.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { TEXT_TOKENS } from "./modal.ts";
 import { CONVERSATION_SLOT, FLIGHT_PANEL_BACKGROUND } from "./notice.ts";
@@ -183,15 +182,6 @@ export const INTERACTION_STYLE = `${DIALOGUE_PANEL_STYLE}
 .ada-controls .ada-interaction-modal .ada-dialogue-panel[data-choice-page] .ada-story-choices{
   overflow-x:hidden;
   padding-bottom:${units(SPACING.rowGap)}
-}
-.ada-controls .ada-interaction-modal .ada-dialogue-panel[data-topic-page] .ada-dialogue-controls{
-  grid-template-columns:max(${units(STORY_TOPIC_PREVIOUS_MIN)},${100 * STORY_TOPIC_PREVIOUS_SHARE}%) minmax(0,1fr);
-  column-gap:${units(SPACING.gap)}
-}
-.ada-controls .ada-interaction-modal .ada-dialogue-panel[data-topic-page] .ada-dialogue-controls > .ada-button{
-  width:100%;
-  min-width:0;
-  padding-inline:${units(SPACING.rowGap)}
 }
 .ada-controls .ada-interaction-modal > .ada-dialogue-frame > .ada-close{
   top:${interactionHudEdge("top", INTERACTION_ROW.close.y)};
@@ -461,9 +451,9 @@ export function createInteractionCard(
   let context: InteractionContext;
   const skipAction = createStandardTextAction(parent, CONTENT.labels.skip ?? "", {
     availability: (button) => (button?.disabled ? { kind: "disabled" } : { kind: "available" }),
-    current: () => !disposed && !state.atChoice,
+    current: () => !disposed && state.canSkip,
     run: () => {
-      if (state.atChoice) {
+      if (!state.canSkip) {
         return;
       }
       state.skip();
@@ -581,12 +571,12 @@ export function createInteractionCard(
         },
       });
       assertAdaActionMetadata(button);
-      // The controls share a row with the primary rightmost: a secondary goes before it.
-      const row = choice ? choices : controls;
-      const before = choice || primary ? -1 : row.findIndex(isPrimary);
-      row.splice(before === -1 ? row.length : before, 0, button);
+      (choice ? choices : controls).push(button);
     };
     try {
+      if (state.hasPrevious) {
+        add(CONTENT.labels.previous ?? "", () => state.previous());
+      }
       for (const [index, topic] of state.topics.entries()) {
         add(
           topic.label,
@@ -597,10 +587,10 @@ export function createInteractionCard(
         );
       }
       if (state.topicExitLabel) {
-        add(state.topicExitLabel, () => state.leaveTopics(), false, true);
-      } else if (state.topics.length === 0 && !state.atOutcome) {
+        add(state.topicExitLabel, () => state.leaveTopics(), true, true);
+      } else if (state.nextAction === "page") {
         add(CONTENT.labels.next ?? "", () => state.advance(), false, true);
-      } else if (state.linearContinuation) {
+      } else if (state.nextAction === "continue") {
         add(
           CONTENT.labels.next ?? "",
           () => state.choose("continue", () => options.choose("continue")),
@@ -619,9 +609,6 @@ export function createInteractionCard(
             !choice.refused && state.questChoice(choice.id, context) ? "quest" : undefined,
           );
         }
-      }
-      if (state.hasPrevious) {
-        add(CONTENT.labels.previous ?? "", () => state.previous());
       }
       disposePageActions();
       card.choices.replaceChildren(...choices);
@@ -648,7 +635,7 @@ export function createInteractionCard(
     card.card.toggleAttribute("data-choice-page", state.atChoice || state.topics.length > 0);
     const line = state.line;
     card.showLine(line?.speaker, line?.text ?? "");
-    skip.hidden = state.atChoice;
+    skip.hidden = !state.canSkip;
     if (reveal) {
       modal.hidden = false;
     }

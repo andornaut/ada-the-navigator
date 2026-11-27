@@ -8,10 +8,9 @@ import {
 } from "./dialoguePanelTree.ts";
 import { portraitBackground, selectPortraitCrop, storySpeakerName } from "./dialoguePortraits.ts";
 import { font, units } from "./layout/css.ts";
-import { frameSize } from "./layout/frameBox.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
-import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./layout/tokens.ts";
-import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
+import { BUTTON_GAP, SPACING, TYPE } from "./layout/tokens.ts";
+import { VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { STORY_PORTRAITS, storyPortrait, storyPortraitFrame, storyTabColour } from "./storybook.ts";
 
 export const DIALOGUE_PANEL_STYLE = `
@@ -30,22 +29,18 @@ export const DIALOGUE_PANEL_STYLE = `
   gap:${units(SPACING.gap)}
 }
 .ada-controls .ada-dialogue-panel .ada-dialogue-controls{
-  display:grid;
-  grid-template-columns:var(--ada-dialogue-row, minmax(0,1fr));
-  grid-template-areas:none;
-  justify-content:space-between;
-  justify-items:start
+  display:flex;
+  flex:none;
+  justify-content:center;
+  column-gap:${units(BUTTON_GAP)};
+  margin-top:auto
+}
+.ada-controls .ada-dialogue-panel .ada-dialogue-controls > .ada-button{
+  min-width:0
 }
 .ada-controls .ada-dialogue-panel .ada-dialogue-controls[hidden],
 .ada-controls .ada-dialogue-panel .ada-story-choices[hidden]{
   display:none
-}
-.ada-controls .ada-dialogue-panel .ada-dialogue-controls > .ada-primary{
-  justify-self:end
-}
-.ada-controls .ada-dialogue-panel .ada-dialogue-controls.ada-dialogue-stacked > .ada-button{
-  justify-self:stretch;
-  width:100%
 }
 .ada-controls .ada-dialogue-panel .ada-story-choices{
   flex:0 1 auto;
@@ -56,16 +51,6 @@ export const DIALOGUE_PANEL_STYLE = `
   font:${font(TYPE.label)}
 }
 `;
-
-/** Widths in logical pixels, in the semantic order of the visible buttons. */
-export function dialogueControlWidths(
-  column: number,
-  widths: readonly [number] | readonly [number, number],
-): { readonly stacked: boolean; readonly widths: readonly number[] } {
-  const [left, right] = widths;
-  const stacked = right !== undefined && left + SMALL_BUTTON_GAP + right > column;
-  return { stacked, widths: widths.map((width) => (stacked ? column : Math.min(column, width))) };
-}
 
 export type DialogueSpeaker =
   | string
@@ -108,7 +93,7 @@ export function createDialoguePanel(options: {
   const choices = document.createElement("div");
   choices.className = "ada-story-choices";
   const controls = document.createElement("div");
-  controls.className = "ada-story-controls ada-dialogue-controls";
+  controls.className = "ada-dialogue-controls";
   const { close } = options;
   const containers: Readonly<Record<DialoguePanelContainer, HTMLElement>> = {
     body,
@@ -159,34 +144,10 @@ export function createDialoguePanel(options: {
     if (disposed || !frame.isConnected) {
       return;
     }
-    const buttons = (Array.from(controls.children) as HTMLButtonElement[]).filter(
-      (button) => !button.hidden,
+    controls.hidden = !Array.from(controls.children).some(
+      (child) => !(child as HTMLElement).hidden,
     );
-    controls.hidden = buttons.length === 0;
     choices.hidden = !Array.from(choices.children).some((child) => !(child as HTMLElement).hidden);
-    const width = frameSize(controls).width;
-    const first = buttons[0];
-    if (first && width > 0) {
-      const second = buttons[1];
-      const unit = readViewUnit(controls);
-      const column = width / unit;
-      const ownWidth = (button: HTMLButtonElement): number => {
-        button.style.width = "max-content";
-        button.style.maxWidth = "none";
-        const own = frameSize(button).width / unit;
-        button.style.width = "";
-        button.style.maxWidth = "";
-        return own;
-      };
-      const left = ownWidth(first);
-      const layout = dialogueControlWidths(column, second ? [left, ownWidth(second)] : [left]);
-      controls.classList.toggle("ada-dialogue-stacked", layout.stacked);
-      controls.style.setProperty(
-        "--ada-dialogue-row",
-        second && !layout.stacked ? layout.widths.map(units).join(" ") : "minmax(0,1fr)",
-      );
-      first.style.justifySelf = second ? "" : "center";
-    }
     const scrolls = copy.scrollHeight > copy.clientHeight + 1;
     copy.classList.toggle("ada-story-scrolls", scrolls);
     copy.tabIndex = scrolls ? 0 : -1;

@@ -1221,6 +1221,38 @@ interface InteractionFrame {
   readonly panel: import("./types.ts").DialogueState;
 }
 
+function interactionAtOutcome({ copy, page }: InteractionFrame): boolean {
+  return (
+    page.kind === "main" &&
+    page.index >= copy.lines.length - 1 &&
+    (page.index !== 0 || copy.topics.length === 0)
+  );
+}
+
+function interactionNextPage(frame: InteractionFrame): InteractionPage | undefined {
+  const { copy, page } = frame;
+  if (page.kind === "answer") {
+    const topic = page.thread.at(-1)!.topic;
+    if (page.index + 1 < topic.lines.length) {
+      return { ...page, index: page.index + 1 };
+    }
+    return topic.choices?.length ? { kind: "fork", thread: page.thread } : { kind: "topics" };
+  }
+  if (page.kind === "main" && !interactionAtOutcome(frame)) {
+    return page.index === 0 && copy.topics.length
+      ? { kind: "topics" }
+      : { index: page.index + 1, kind: "main" };
+  }
+  return undefined;
+}
+
+function interactionNextAction(frame: InteractionFrame): "page" | "continue" | undefined {
+  if (interactionNextPage(frame)) {
+    return "page";
+  }
+  return interactionAtOutcome(frame) ? linearDialogueContinuation(frame.panel.choices) : undefined;
+}
+
 /** Traverses presentation pages and remembers the continuation of outcomes already applied. */
 export class InteractionConversation {
   private live: InteractionFrame["panel"] | null = null;
@@ -1302,12 +1334,7 @@ export class InteractionConversation {
   }
 
   get atOutcome(): boolean {
-    return (
-      this.copy !== null &&
-      this.page.kind === "main" &&
-      this.page.index >= this.copy.lines.length - 1 &&
-      (this.page.index !== 0 || this.copy.topics.length === 0)
-    );
+    return this.frame !== null && interactionAtOutcome(this.frame);
   }
 
   get choices() {
@@ -1324,6 +1351,28 @@ export class InteractionConversation {
 
   get linearContinuation(): "continue" | undefined {
     return linearDialogueContinuation(this.choices);
+  }
+
+  get nextAction(): "page" | "continue" | undefined {
+    return this.frame ? interactionNextAction(this.frame) : undefined;
+  }
+
+  /** An unvisited model continuation has no known successor until the caller commits it. */
+  get canSkip(): boolean {
+    const frame = this.frame;
+    if (!frame) {
+      return false;
+    }
+    const page = interactionNextPage(frame);
+    if (page) {
+      return interactionNextAction({ ...frame, page }) !== undefined;
+    }
+    const applied = this.applied.get(frame.panel);
+    return (
+      this.nextAction === "continue" &&
+      applied?.id === "continue" &&
+      interactionNextAction(applied.next) !== undefined
+    );
   }
 
   get party(): string {
@@ -1391,26 +1440,17 @@ export class InteractionConversation {
   }
 
   advance(): void {
-    const page = this.page;
-    if (page.kind === "answer") {
-      const { topic } = page.thread.at(-1)!;
-      if (page.index + 1 < topic.lines.length) {
-        this.showPage({ ...page, index: page.index + 1 });
-      } else if (topic.choices?.length) {
-        this.showPage({ kind: "fork", thread: page.thread });
-      } else {
-        for (const { key } of page.thread) {
-          this.completed.add(key);
-        }
-        this.showPage({ kind: "topics" });
-      }
-    } else if (page.kind === "main" && !this.atOutcome && this.copy) {
-      this.showPage(
-        page.index === 0 && this.copy.topics.length
-          ? { kind: "topics" }
-          : { index: page.index + 1, kind: "main" },
-      );
+    const frame = this.frame;
+    const next = frame && interactionNextPage(frame);
+    if (!frame || !next) {
+      return;
     }
+    if (frame.page.kind === "answer" && next.kind === "topics") {
+      for (const { key } of frame.page.thread) {
+        this.completed.add(key);
+      }
+    }
+    this.showPage(next);
   }
 
   /** Leave material outcomes for explicit selection; Skip never marks a topic as read. */

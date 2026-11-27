@@ -10,17 +10,18 @@ import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { registerAdaActionRoot } from "./actionRegistry.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { createConversationBox, createInteractionCard } from "./conversation.ts";
-import { createDialoguePanel, dialogueControlWidths } from "./dialoguePanel.ts";
+import { createDialoguePanel, DIALOGUE_PANEL_STYLE } from "./dialoguePanel.ts";
 import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
 import { currentView, enterPressView, rootPressGuard } from "./pressScope.ts";
 import * as refusal from "./refusal.ts";
 import { STORY_PORTRAITS, storyPortrait, storyPortraitFrame, storyTabColour } from "./storybook.ts";
 
-it("applies the approved stack, measured split, and lone primary widths", () => {
-  expect(dialogueControlWidths(228, [105, 101])).toEqual({ stacked: true, widths: [228, 228] });
-  expect(dialogueControlWidths(232, [105, 101])).toEqual({ stacked: false, widths: [105, 101] });
-  expect(dialogueControlWidths(240, [105, 101])).toEqual({ stacked: false, widths: [105, 101] });
-  expect(dialogueControlWidths(228, [101])).toEqual({ stacked: false, widths: [101] });
+it("centers dialogue navigation in one row with a 16 logical pixel gap", () => {
+  const row = DIALOGUE_PANEL_STYLE.match(/\.ada-dialogue-controls\{([^}]+)\}/u)?.[1];
+  expect(row).toContain("display:flex");
+  expect(row).toContain("justify-content:center");
+  expect(row).toContain("column-gap:calc(var(--ada-unit) * 16px)");
+  expect(row).not.toContain("flex-wrap");
 });
 
 class Element {
@@ -542,11 +543,11 @@ describe("shared Earth and space dialogue presentation", () => {
     navigation.children.find((node) => node.textContent === "Next")!.click();
     const choices = parent.all().find((node) => node.className === "ada-story-choices")!;
     expect(choices.children.length).toBeGreaterThan(0);
-    expect(choices.children.every((node) => !node.className.includes("ada-primary"))).toBe(true);
-    expect(navigation.children.map((node) => node.textContent)).toEqual([
-      CONTENT.labels.previous,
-      "Resume conversation",
-    ]);
+    expect(
+      choices.children.slice(0, -1).every((node) => !node.className.includes("ada-primary")),
+    ).toBe(true);
+    expect(navigation.children.map((node) => node.textContent)).toEqual([CONTENT.labels.previous]);
+    expect(choices.children.at(-1)?.textContent).toBe("Resume conversation");
     const skip = buttons().find((node) => node.textContent === CONTENT.labels.skip)!;
     expect(skip.className).toContain("ui-standard-button");
     expect(skip.className).toContain("ada-compact");
@@ -558,7 +559,7 @@ describe("shared Earth and space dialogue presentation", () => {
         .find((node) => node.className.includes("ada-dialogue-panel"))!
         .all(),
     ).not.toContain(skip);
-    expect(skip.hidden).toBe(false);
+    expect(skip.hidden).toBe(true);
     expect(
       buttons().filter((node) => node.className.includes("ada-primary")).length,
     ).toBeLessThanOrEqual(1);
@@ -584,7 +585,7 @@ describe("shared Earth and space dialogue presentation", () => {
       .all()
       .find((node) => node.className.includes("ada-dialogue-controls"))!;
     navigation.children[0]!.click();
-    const resume = navigation.children.find((node) => node.textContent === "Resume conversation")!;
+    const resume = parent.all().find((node) => node.textContent === "Resume conversation")!;
     resume.click();
     expect(navigation.children.map((node) => node.textContent)).toEqual([
       CONTENT.labels.previous,
@@ -594,6 +595,16 @@ describe("shared Earth and space dialogue presentation", () => {
     expect(primary.className.split(" ")).toContain("ada-primary");
     expect(navigation.children[0]!.className.split(" ")).not.toContain("ada-primary");
     expect(document.activeElement).toBe(primary);
+    const skip = parent.all().find((node) => node.dataset.action === "dialogue-skip")!;
+    expect(skip.hidden).toBe(false);
+    primary.click();
+    expect(skip.hidden).toBe(false);
+    navigation.children[1]!.click();
+    expect(navigation.children.map((node) => node.textContent)).toEqual([
+      CONTENT.labels.previous,
+      CONTENT.labels.next,
+    ]);
+    expect(skip.hidden).toBe(true);
     interaction.dispose();
   });
   it("uses Next to enter Loom's topics and Previous to restore the greeting without an outcome", () => {
@@ -619,12 +630,15 @@ describe("shared Earth and space dialogue presentation", () => {
       parent.all().find((node) => node.className === "ada-story-paragraph")!.textContent;
     expect(button("Ask more")).toBeUndefined();
     expect(button("Previous")).toBeUndefined();
+    const skip = button("Skip")!;
+    expect(skip.hidden).toBe(true);
     const greeting = paragraph();
     expect(greeting).toContain("Welcome to Needle");
     button("Next")!.click();
     expect(button("Who flies here?")).toBeDefined();
     expect(button("How do pilots learn?")).toBeDefined();
     expect(button("Next")).toBeUndefined();
+    expect(skip.hidden).toBe(true);
     button("Previous")!.click();
     expect(paragraph()).toBe(greeting);
     expect(button("Previous")).toBeUndefined();
@@ -1090,6 +1104,12 @@ it("binds native Skip and Close once with current callbacks and disposes their r
   });
   const skip = parent.all().find((node) => node.dataset.action === "dialogue-skip")!,
     close = parent.all().find((node) => node.dataset.action === "conversation-close")!;
+  const button = (label: string) =>
+    parent.all().find((node) => node.tag === "button" && node.textContent === label)!;
+  expect(skip.hidden).toBe(true);
+  button("Next").click();
+  button("Resume conversation").click();
+  expect(skip.hidden).toBe(false);
   const replacement = vi.fn();
   options.skip = replacement;
   expect(resolve(skip)!.hold).toBeUndefined();
