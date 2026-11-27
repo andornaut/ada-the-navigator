@@ -139,6 +139,12 @@ import {
   recordBlastFlash,
   recordProjectileImpact,
 } from "./flight/impactFeedback.ts";
+import {
+  arrivalGraceActive as adaProtected,
+  beginArrivalGrace,
+  createUnpopulatedFlight,
+  type Loadout,
+} from "./flight/lifecycle.ts";
 import { planMantaEscorts } from "./flight/mantaEscorts.ts";
 import { armed, layMine, stepMines, strikeMines } from "./flight/mines.ts";
 import {
@@ -315,7 +321,6 @@ import {
   worldStationsNear,
 } from "./stations.ts";
 import type {
-  EconomyState,
   FlightEvent,
   FlightInput,
   FlightState,
@@ -325,11 +330,11 @@ import type {
   SpaceObject,
   Vec,
 } from "./types.ts";
-import { leveledValue, noLevels, type ShipTuning, shipTuning } from "./upgrades.ts";
+import { leveledValue, type ShipTuning, shipTuning } from "./upgrades.ts";
 import { markVisited, visitedChunk } from "./visited.ts";
-import { clampAmmo, grantedAmmo, shotsLeft } from "./weapons.ts";
 
 export { wreckId };
+export { arrivalGraceActive, beginArrivalGrace, createUnpopulatedFlight, type Loadout } from "./flight/lifecycle.ts";
 export { salvage, salvageTarget } from "./flight/destruction.ts";
 export { activeEnemyBeams, type EnemyBeam } from "./flight/enemyBeams.ts";
 export { inBattle, inDanger, movementSpeedFraction, shipSpeedFraction, towing };
@@ -468,30 +473,6 @@ function requiredPlacementClear(
   });
 }
 
-/**
- * The flight time each flight's arrival grace ends. It is never saved, so a flight resumed with
- * Continue has none.
- */
-const arrivalGraceEnds = new WeakMap<FlightState, number>();
-
-/** Starts Ada's arrival grace at a launch, quantum jump arrival, Travel arrival or undocking. */
-export function beginArrivalGrace(content: GameContent, flight: FlightState): void {
-  arrivalGraceEnds.set(flight, flight.time + content.tuning.flight.arrivalGrace);
-}
-
-/** Whether Ada's arrival grace still runs; it counts flight time, so pauses do not use it up. */
-export function arrivalGraceActive(flight: FlightState): boolean {
-  const end = arrivalGraceEnds.get(flight);
-  return end !== undefined && flight.time < end;
-}
-
-/**
- * Whether Ada is protected while play runs: no enemy may target her and nothing damages her.
- * Docking, station menus and conversation cards pause the flight instead. No place protects her.
- */
-function adaProtected(flight: FlightState): boolean {
-  return arrivalGraceActive(flight);
-}
 /**
  * An object's whole reach for clearances: a drawn rock's silhouette radius, else its radius, and
  * a drifting asteroid's covers its path around the orbit center.
@@ -3410,67 +3391,6 @@ export function placeDestinationAhead(
     return ensureDestination(content, id, flight);
   }
   return existing;
-}
-
-export type Loadout = Pick<
-  EconomyState,
-  | "ammo"
-  | "cargo"
-  | "levels"
-  | "ownedWeapons"
-  | "weapon"
-  | "shieldRechargeCredit"
-  | "shieldOreSpent"
->;
-
-export function createUnpopulatedFlight(
-  content: GameContent,
-  galaxy: GalaxyNumber,
-  seed: number,
-  loadout: Loadout = {
-    ammo: grantedAmmo([]),
-    levels: noLevels(),
-    ownedWeapons: [],
-    weapon: "laser",
-  },
-  encounterSeed?: number,
-): FlightState {
-  const levels = structuredClone(loadout.levels);
-  const flight: FlightState = {
-    ...(encounterSeed === undefined ? {} : { encounterSeed }),
-    ammo: clampAmmo(ECONOMY, loadout.ammo),
-    cargo: loadout.cargo ?? 0,
-    ...(loadout.shieldRechargeCredit === undefined
-      ? {}
-      : { shieldRechargeCredit: loadout.shieldRechargeCredit }),
-    ...(loadout.shieldOreSpent === undefined ? {} : { shieldOreSpent: loadout.shieldOreSpent }),
-    chunks: [],
-    dangerFor: 0,
-    facing: { x: 0, y: -1 },
-    fireCooldown: 0,
-    freshChunk: "0,0",
-    freshDistance: 0,
-    galaxy,
-    levels,
-    mines: [],
-    nextId: 0,
-    objects: [],
-    ownedWeapons: [...loadout.ownedWeapons],
-    player: { x: 0, y: 0 },
-    seed,
-    shield: shipTuning(ECONOMY, content, levels).shieldMax,
-    shots: [],
-    sinceDamage: content.tuning.shieldRechargeDelay,
-    time: 0,
-    velocity: { x: 0, y: 0 },
-    visited: {},
-    // An empty saved selection starts the flight on Laser.
-    weapon: shotsLeft(loadout.weapon, loadout) === 0 ? "laser" : loadout.weapon,
-    weaponSwitchFor: 0,
-    world: { notables: {}, version: 1 },
-  };
-  markVisited(flight.visited, "0,0");
-  return flight;
 }
 
 /** Optional world generation starts only after the caller has installed required reservations. */
