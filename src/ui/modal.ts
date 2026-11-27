@@ -269,7 +269,7 @@ export function createSwitchRow(options: {
   return {
     dispose: action.dispose,
     row,
-    show(on) {
+    show(on: boolean) {
       const state = switchState(on);
       row.setAttribute("aria-checked", state.ariaChecked);
       toggle.dataset.tag = state.tag;
