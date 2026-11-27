@@ -24,7 +24,7 @@ const SHARED_ASTEROID_FIELD: AsteroidField = {
   featureChance: { cluster: 0.35, passage: 0.2, poi: 0, quiet: 0.45 },
   featureSizes: { huge: 0.35, large: 0.65 },
   hp: { huge: 16, large: 10, medium: 5, small: 3 },
-  slotSizes: { huge: 0.03, large: 0.07, medium: 0.4, small: 0.5 },
+  slotSizes: { huge: 0.04, large: 0.16, medium: 0.38, small: 0.42 },
 };
 /** Asteroid fields by route position; a placeholder reads the built galaxy before it. */
 export const ASTEROID_FIELDS: Readonly<Partial<Record<RoutePosition, AsteroidField>>> = {

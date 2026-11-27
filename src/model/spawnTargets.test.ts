@@ -141,9 +141,20 @@ describe("spawn target catalog", () => {
           );
         }
         const rock = (kind: string) => band.rocks.find((target) => target.kind === kind)!;
-        expect(rock("rock").density).toBeCloseTo(SLOT_ROCKS_PER_AREA / SPAWN_AREA_CHUNKS);
+        expect(rock("rock").density).toBeCloseTo(SLOT_ROCKS_PER_AREA[galaxy] / SPAWN_AREA_CHUNKS);
+        for (const [size, weight] of Object.entries({
+          huge: 0.04,
+          large: 0.16,
+          medium: 0.38,
+          small: 0.42,
+        })) {
+          const total = rock("rock").shapes.reduce(
+            (sum, shape) => sum + (shape.size === size ? shape.weight : 0),
+            0,
+          );
+          expect(total, `${galaxy}:${index}:${size}`).toBeCloseTo(weight);
+        }
         expect(band.rocks.map((target) => target.kind)).toEqual(["rock-feature", "rock"]);
-        expect(band.moving[0]!.density).toBeCloseTo(table.moving / SPAWN_AREA_CHUNKS);
         expect(rock("rock-feature").density).toBeCloseTo(table.features / SPAWN_AREA_CHUNKS);
         for (const shape of rock("rock-feature").shapes) {
           expect(ASTEROID_SHAPES.get(shape.id)!.size).toBe("large");
@@ -168,57 +179,121 @@ describe("ordinary slot density and moving-rock demand", () => {
   const grid = periodicWorldGrid(rules, rules.chunkSize);
   const seed = 31;
   const half = GALAXY_SIDE / 2;
-  const cellPlan = (point: Vec, exclusions: readonly ExclusionZone[] = []) =>
+  const cellPlan = (point: Vec, exclusions: readonly ExclusionZone[] = [], localRules = rules) =>
     planRegion(
-      rules,
+      localRules,
       { encounter: seed, world: seed },
       { cell: worldCellAt(grid, point), columns: 1, exclusions, rows: 1 },
     );
 
-  it("ramps across the square and uses the same requests for wrapped copies of a cell", () => {
-    const at = (x: number, y: number) => cellPlan({ x, y }).report.kinds.rock!.requested;
-    expect([4, 5]).toContain(at(0, 0));
-    expect([8, 9]).toContain(at(half / 2, 0));
-    expect([8, 9]).toContain(at(half / 2, half / 2));
-    expect([12, 13]).toContain(at(half, 0));
-    expect([12, 13]).toContain(at(half, half));
-    expect(at(half / 2, 0)).toBe(at(half / 2 + GALAXY_SIDE, 0));
-    expect(at(half, half)).toBe(at(-half, -half));
+  it("uses the same open-area slot density from the centre through the wrap edge", () => {
+    const points = [
+      { x: 0, y: 0 },
+      { x: half / 2, y: 0 },
+      { x: half / 2, y: half / 2 },
+      { x: half, y: 0 },
+      { x: half, y: half },
+    ];
+    for (const [galaxy, requests] of [
+      [1, 60],
+      [3, 64],
+      [4, 68],
+      [5, 72],
+      [2, 76],
+      [6, 80],
+    ] as const) {
+      const local = spawnRules(galaxy, GALAXY_SIDE);
+      expect(SLOT_ROCKS_PER_AREA[galaxy]).toBe(requests);
+      for (const point of points) {
+        const expected = chanceRound(
+          randomStream(seed, `spawn:rock:${worldCellKey(grid, worldCellAt(grid, point))}:count`),
+          requests / SPAWN_AREA_CHUNKS,
+        );
+        const plan = cellPlan(point, [], local);
+        expect(plan.report.kinds.rock!.requested).toBe(expected);
+        expect(cellPlan({ x: point.x + GALAXY_SIDE, y: point.y - GALAXY_SIDE }, [], local)).toEqual(
+          plan,
+        );
+      }
+    }
   });
 
-  it("budgets individual movers from admitted ordinary rocks even when movement is excluded", () => {
-    const point = { x: -half, y: 0 };
-    const key = worldCellKey(grid, worldCellAt(grid, point));
-    const share = SPAWN_TARGETS[6][0].moving / SLOT_ROCKS_PER_AREA;
-    const movingRequest = (ordinary: number) =>
-      chanceRound(randomStream(seed, `spawn:moving-rock:${key}:count`), ordinary * share);
-    const open = cellPlan(point);
-    const openings = open.report.kinds;
-    const expected = movingRequest(openings.rock!.delivered);
-    expect(expected).toBeGreaterThan(0);
-    expect(openings["moving-rock"]).toMatchObject({ delivered: expected, requested: expected });
-    const restricted = cellPlan(point, [
-      {
-        applies: ["moving"],
-        rule: "protected",
-        shape: { ...point, kind: "disc", radius: rules.chunkSize * 2 },
-      },
-    ]).report.kinds;
-    expect(restricted.rock!.delivered).toBe(openings.rock!.delivered);
-    expect(restricted["moving-rock"]).toMatchObject({
-      delivered: 0,
-      dropped: expected,
-      requested: expected,
-    });
-    const blockedSlots = cellPlan(point, [
-      {
-        applies: ["rock"],
-        rule: "protected",
-        shape: { ...point, kind: "disc", radius: rules.chunkSize * 2 },
-      },
-    ]);
-    expect(blockedSlots.placements.some(({ moving }) => moving)).toBe(false);
+  it("keeps the requested mix and uses compact silhouettes under dense route demand", () => {
+    const shapes = rules.bands[0]!.rocks.find(({ kind }) => kind === "rock")!.shapes;
+    for (const [size, weight] of [
+      ["small", 0.42],
+      ["medium", 0.38],
+      ["large", 0.16],
+      ["huge", 0.04],
+    ] as const) {
+      const variants = shapes.filter((shape) => shape.size === size);
+      expect(variants.reduce((sum, shape) => sum + shape.weight, 0)).toBeCloseTo(weight, 12);
+    }
+    const plan = cellPlan({ x: half, y: 0 });
+    expect(plan.report.kinds.rock!.requested).toBeGreaterThan(7);
+    const slots = plan.placements.filter(({ kind }) => kind === "rock");
+    expect(slots.some(({ size }) => size === "medium")).toBe(true);
+    for (const rock of slots) {
+      const variants = shapes.filter(({ size }) => size === rock.size);
+      expect(rock.radius).toBe(Math.min(...variants.map(({ radius }) => radius)));
+    }
   });
+
+  it.each([
+    [1, 0.25],
+    [3, 0.28],
+    [4, 0.31],
+    [5, 0.34],
+    [2, 0.37],
+    [6, 0.4],
+  ] as const)(
+    "budgets galaxy %i movers at share %f of admitted ordinary rocks",
+    (galaxy, share) => {
+      const local = spawnRules(galaxy, GALAXY_SIDE);
+      const point = { x: -half, y: 0 };
+      const key = worldCellKey(grid, worldCellAt(grid, point));
+      const open = cellPlan(point, [], local).report.kinds;
+      const expected = chanceRound(
+        randomStream(seed, `spawn:moving-rock:${key}:count`),
+        open.rock!.delivered * share,
+      );
+      expect(expected).toBeGreaterThan(0);
+      expect(open["moving-rock"]).toMatchObject({ delivered: expected, requested: expected });
+
+      for (const applies of ["moving", "path"] as const) {
+        const restricted = cellPlan(
+          point,
+          [
+            {
+              applies: [applies],
+              rule: "protected",
+              shape: { ...point, kind: "disc", radius: local.chunkSize * 2 },
+            },
+          ],
+          local,
+        ).report.kinds;
+        expect(restricted.rock!.delivered).toBe(open.rock!.delivered);
+        expect(restricted["moving-rock"]).toMatchObject({
+          delivered: 0,
+          dropped: expected,
+          requested: expected,
+        });
+      }
+
+      const blockedSlots = cellPlan(
+        point,
+        [
+          {
+            applies: ["rock"],
+            rule: "protected",
+            shape: { ...point, kind: "disc", radius: local.chunkSize * 2 },
+          },
+        ],
+        local,
+      );
+      expect(blockedSlots.placements.some(({ moving }) => moving)).toBe(false);
+    },
+  );
 });
 
 describe("moving rock values", () => {

@@ -23,8 +23,8 @@ import {
   ENEMY_DENSITY_FACTORS,
   type EnemyGroupTargets,
   LATTICE_OCCUPANCY,
+  MOVING_ROCK_SHARES,
   MOVING_ROCKS,
-  SLOT_ROCK_EDGE_MULTIPLIER,
   SLOT_ROCKS_PER_AREA,
   SPAWN_AREA_CHUNKS,
   SPAWN_BLEND_WIDTH,
@@ -199,8 +199,7 @@ function enemyTargets(
 export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules {
   const field = byPosition(ASTEROID_FIELDS, galaxy);
   const policy = SPAWNER_POLICIES[galaxy];
-  const centreSlots = SLOT_ROCKS_PER_AREA / SPAWN_AREA_CHUNKS;
-  const centreMovers = SPAWN_TARGETS[galaxy][0].moving / SPAWN_AREA_CHUNKS;
+  const slotsPerChunk = SLOT_ROCKS_PER_AREA[galaxy] / SPAWN_AREA_CHUNKS;
   const bands: SpawnBand[] = policy.stages.map((stage, index) => {
     const targets = SPAWN_TARGETS[galaxy][index]!;
     return {
@@ -210,9 +209,9 @@ export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules
       moving: [
         {
           cluster: MOVING_ROCKS.cluster,
-          density: centreMovers,
+          density: MOVING_ROCK_SHARES[galaxy],
           from: ["rock-feature", "rock"],
-          fromPlaced: { baseline: centreSlots, kind: "rock" },
+          fromPlaced: { kind: "rock" },
           kind: MOVING_KIND,
           path: MOVING_ROCKS.pathSeconds,
           speed: MOVING_ROCKS.speed,
@@ -227,9 +226,11 @@ export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules
           tries: PLACEMENT_TRIES.rocks,
         },
         {
-          density: centreSlots,
-          edgeMultiplier: SLOT_ROCK_EDGE_MULTIPLIER,
+          density: slotsPerChunk,
           kind: "rock",
+          // Share Sunflower's per-chunk ceiling across the route. Comparing to each target's
+          // own ceiling would disable compact placement at every flat density.
+          packing: { compactAbove: Math.ceil(SLOT_ROCKS_PER_AREA[1] / SPAWN_AREA_CHUNKS) },
           shapes: sized(field.slotSizes),
           tries: PLACEMENT_TRIES.rocks,
         },

@@ -10,19 +10,23 @@ export type EnemyGroupTargets = Readonly<
   >
 >;
 
-/** One region's feature, moving rock and enemy group targets. */
+/** One region's feature rock and enemy group targets. */
 export interface RegionSpawnTargets {
   readonly enemies: EnemyGroupTargets;
   readonly features: number;
-  readonly moving: number;
 }
 
 /** Chunks in the 3x3-chunk area every target counts over. */
 export const SPAWN_AREA_CHUNKS = 9;
-/** Ordinary slot rocks per area at the centre of every galaxy. */
-export const SLOT_ROCKS_PER_AREA = 44.76;
-/** Ordinary slot-rock density at the edge, relative to the centre. */
-export const SLOT_ROCK_EDGE_MULTIPLIER = 2.5;
+/** Ordinary slot-rock requests per open area, flat within each galaxy and indexed by galaxy ID. */
+export const SLOT_ROCKS_PER_AREA: Readonly<Record<GalaxyNumber, number>> = {
+  1: 60,
+  2: 76,
+  3: 64,
+  4: 68,
+  5: 72,
+  6: 80,
+};
 /**
  * Moving rocks (gameplay/rules.md "Space encounters and feedback"): the share of chosen rocks
  * that lead a cluster, how many placed rocks each leader pulls (equal weight, inclusive) and the
@@ -35,6 +39,15 @@ export const MOVING_ROCKS = {
   pathSeconds: 30,
   speed: [25, 125],
 } as const;
+/** Share of placed ordinary rocks requested as movers, by runtime galaxy ID. */
+export const MOVING_ROCK_SHARES: Readonly<Record<GalaxyNumber, number>> = {
+  1: 0.25,
+  2: 0.37,
+  3: 0.28,
+  4: 0.31,
+  5: 0.34,
+  6: 0.4,
+};
 /** Shares of the upper ambient speed bound, by asteroid size. */
 export const ASTEROID_SPEED_SHARE: Readonly<Record<AsteroidSize, number>> = {
   huge: 0.25,
@@ -62,7 +75,6 @@ export const SPAWN_BLEND_WIDTH = 2000;
 
 const region = (
   features: number,
-  moving: number,
   [swarm, fighter, interceptor, retaliator, frigate]: readonly [
     number,
     number,
@@ -73,7 +85,6 @@ const region = (
 ): RegionSpawnTargets => ({
   enemies: { fighter, frigate, interceptor, retaliator, swarm },
   features,
-  moving,
 });
 
 /**
@@ -85,38 +96,38 @@ export const SPAWN_TARGETS: Readonly<
 > = {
   // Sunflower
   1: [
-    region(2.25, 5, [0.244, 0.2, 0, 0, 0]),
-    region(2.4, 5, [0.2, 0.178, 0, 0.067, 0]),
-    region(2.25, 5, [0.178, 0.155, 0.044, 0.067, 0]),
+    region(2.25, [0.244, 0.2, 0, 0, 0]),
+    region(2.4, [0.2, 0.178, 0, 0.067, 0]),
+    region(2.25, [0.178, 0.155, 0.044, 0.067, 0]),
   ],
   // Cartwheel
   2: [
-    region(2.1, 6, [0.131, 0.209, 0.063, 0.052, 0.073]),
-    region(2.1, 6, [0.131, 0.209, 0.063, 0.052, 0.073]),
-    region(1.95, 6, [0.131, 0.209, 0.063, 0.052, 0.073]),
+    region(2.1, [0.131, 0.209, 0.063, 0.052, 0.073]),
+    region(2.1, [0.131, 0.209, 0.063, 0.052, 0.073]),
+    region(1.95, [0.131, 0.209, 0.063, 0.052, 0.073]),
   ],
   // Whirlpool
   3: [
-    region(1.95, 7, [0.105, 0.126, 0.063, 0.042, 0.063]),
-    region(1.8, 7, [0.105, 0.126, 0.063, 0.042, 0.063]),
-    region(1.65, 7, [0.105, 0.126, 0.063, 0.042, 0.063]),
+    region(1.95, [0.105, 0.126, 0.063, 0.042, 0.063]),
+    region(1.8, [0.105, 0.126, 0.063, 0.042, 0.063]),
+    region(1.65, [0.105, 0.126, 0.063, 0.042, 0.063]),
   ],
   // Needle
   4: [
-    region(1.95, 8, [0.084, 0.105, 0.105, 0.033, 0.075]),
-    region(2.1, 8, [0.084, 0.105, 0.105, 0.033, 0.075]),
-    region(2.1, 8, [0.084, 0.105, 0.105, 0.033, 0.075]),
+    region(1.95, [0.084, 0.105, 0.105, 0.033, 0.075]),
+    region(2.1, [0.084, 0.105, 0.105, 0.033, 0.075]),
+    region(2.1, [0.084, 0.105, 0.105, 0.033, 0.075]),
   ],
   // Andromeda
   5: [
-    region(2.1, 9, [0.092, 0.137, 0.069, 0.046, 0.107]),
-    region(2.25, 9, [0.092, 0.137, 0.069, 0.046, 0.107]),
-    region(2.1, 9, [0.092, 0.137, 0.069, 0.046, 0.107]),
+    region(2.1, [0.092, 0.137, 0.069, 0.046, 0.107]),
+    region(2.25, [0.092, 0.137, 0.069, 0.046, 0.107]),
+    region(2.1, [0.092, 0.137, 0.069, 0.046, 0.107]),
   ],
   // Phantom
   6: [
-    region(2.1, 10, [0.129, 0.179, 0.107, 0.05, 0.268]),
-    region(2.1, 10, [0.129, 0.179, 0.107, 0.05, 0.268]),
-    region(1.95, 10, [0.129, 0.179, 0.107, 0.05, 0.268]),
+    region(2.1, [0.129, 0.179, 0.107, 0.05, 0.268]),
+    region(2.1, [0.129, 0.179, 0.107, 0.05, 0.268]),
+    region(1.95, [0.129, 0.179, 0.107, 0.05, 0.268]),
   ],
 };

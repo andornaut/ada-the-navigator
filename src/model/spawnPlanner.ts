@@ -30,9 +30,12 @@ export interface SpawnShape {
 /** Static rocks of one kind, as a mean count per chunk. */
 export interface RockTarget {
   readonly density: number;
-  /** Multiplier at the square chart's wrap edge, interpolated from 1 at the centre. */
-  readonly edgeMultiplier?: number;
   readonly kind: string;
+  /** Use stratified requests and try seeded boundary positions before random positions. */
+  readonly packing?: {
+    /** Above this many requests, use existing compact silhouettes of the same size. */
+    readonly compactAbove: number;
+  };
   readonly shapes: readonly SpawnShape[];
   /** Candidate positions per rock before it is dropped. */
   readonly tries: number;
@@ -58,8 +61,8 @@ export interface MovingTarget {
   readonly cluster?: ClusterTarget;
   readonly density: number;
   readonly from: readonly string[];
-  /** Scale the baseline density by the actual placements of this source kind. */
-  readonly fromPlaced?: { readonly baseline: number; readonly kind: string };
+  /** When present, density is the share of actual placements of this source kind. */
+  readonly fromPlaced?: { readonly kind: string };
   readonly kind: string;
   /**
    * Seconds of straight travel checked against zones that apply to paths; a velocity whose path
@@ -425,7 +428,6 @@ interface Chunk {
   readonly cell: Vec;
   /** Whether the report counts this chunk's spawns. */
   readonly counted: boolean;
-  readonly edgeShare: number;
   readonly key: string;
   readonly origin: Vec;
 }
@@ -679,16 +681,10 @@ function chunks(rules: SpawnRules, grid: WorldGrid, region: SpawnRegion): Chunk[
           cell.x < report.cell.x + report.columns &&
           cell.y >= report.cell.y &&
           cell.y < report.cell.y + report.rows);
-      const delta = distanceTo(rules, { x: 0, y: 0 }, centre);
-      const edgeShare =
-        rules.worldSide === undefined
-          ? 0
-          : Math.max(Math.abs(delta.x), Math.abs(delta.y)) / (rules.worldSide / 2);
       list.push({
         band: spawnBandAt(rules, centre),
         cell,
         counted,
-        edgeShare,
         key: worldCellKey(grid, cell),
         origin,
       });
@@ -768,10 +764,9 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
         if (!target || !target.shapes.length) {
           continue;
         }
-        const scale = 1 + ((target.edgeMultiplier ?? 1) - 1) * chunk.edgeShare;
         const count = chanceRound(
           stream(seeds.world, kind, chunk, "count"),
-          target.density * scale * open(chunk, "rock"),
+          target.density * open(chunk, "rock"),
         );
         const next = stream(seeds.world, kind, chunk, "place");
         const slots = rockSlots.get(chunk.key) ?? [];
@@ -784,17 +779,17 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
         });
         // Strata preserve the requested weights. A larger footprint has fewer eligible
         // positions, so it gets first choice of the available space.
-        const packed = target.edgeMultiplier !== undefined;
-        const layout = packed
+        const packing = target.packing;
+        const layout = packing
           ? randomInt(stream(seeds.world, kind, chunk, "layout"), 0, 20)
           : undefined;
-        const ordered = packed
+        const ordered = packing
           ? Array.from({ length: count }, (_, spawn) =>
               draw(() => (spawn + next()) / count, spawn),
             ).sort((a, b) => b.shape.radius - a.shape.radius)
           : undefined;
         const compact = new Map<AsteroidSize, SpawnShape>();
-        if (packed) {
+        if (packing) {
           for (const variant of target.shapes) {
             if (variant.size && variant.radius < (compact.get(variant.size)?.radius ?? Infinity)) {
               compact.set(variant.size, variant);
@@ -812,7 +807,7 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
         for (let order = 0; order < count; order++) {
           const { shape, spawn } = ordered?.[order] ?? draw(next, order);
           const variant =
-            shape.size && count > Math.ceil(target.density)
+            shape.size && packing && count > packing.compactAbove
               ? (compact.get(shape.size) ?? shape)
               : shape;
           const medium = compact.get("medium");
@@ -898,8 +893,7 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
         const eligible = sources.filter((_, index) => !blocked[index]);
         // The placed-rock rule budgets individual movers, including each pulled cluster member.
         const demand = fromPlaced
-          ? (placedRocks.filter(({ kind }) => kind === fromPlaced.kind).length * target.density) /
-            fromPlaced.baseline
+          ? placedRocks.filter(({ kind }) => kind === fromPlaced.kind).length * target.density
           : (target.density * open(chunk, "moving")) / rocksPerChoice(target, eligible);
         let remaining = chanceRound(stream(seeds.world, kind, chunk, "count"), demand);
         if (!remaining) {

@@ -130,7 +130,9 @@ describe("planRegion", () => {
           enemies: [],
           from: 0,
           moving: [],
-          rocks: [{ density: 1, edgeMultiplier: 1, kind: "huge", shapes: [huge], tries: 48 }],
+          rocks: [
+            { density: 1, kind: "huge", packing: { compactAbove: 1 }, shapes: [huge], tries: 48 },
+          ],
         },
       ],
       worldSide: 4096,
