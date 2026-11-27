@@ -512,13 +512,13 @@ export function stepAndromeda(
         distance(place, flight.player) <= content.tuning.talkRange,
     );
     if (station) {
-      return { dialogue: dialogue(context, "arrival") };
+      return { arrivalPlace: station.id, dialogue: dialogue(context, "arrival") };
     }
   }
   if (progress.stage === 1) {
     const beacon = flight.objects.find((place) => place.id === ANDROMEDA_PLACES.beacon);
     if (beacon && distance(beacon, flight.player) <= content.tuning.talkRange) {
-      return { dialogue: dialogue(context, "dent") };
+      return { arrivalPlace: beacon.id, dialogue: dialogue(context, "dent") };
     }
   }
   return undefined;

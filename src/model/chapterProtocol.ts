@@ -18,6 +18,8 @@ export interface ChapterContext {
 
 /** Shared outcomes are committed by GameModel, after a module handles the actual event. */
 export interface ChapterResult {
+  /** A physical place whose automatic dialogue covers this approach. */
+  readonly arrivalPlace?: string;
   readonly complete?: boolean;
   readonly dialogue?: DialogueState;
   readonly holodisk?: { readonly giver?: string };

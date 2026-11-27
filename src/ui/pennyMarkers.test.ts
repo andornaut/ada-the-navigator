@@ -277,11 +277,15 @@ it("binds a marker before publication and rolls back a failed append", () => {
   });
   const player = { x: 0, y: 0 };
   const area = { height: 360, width: 720, x: 0, y: 0 };
-  expect(() => ui.place(player, area, undefined, [marker])).toThrow("Marker append failed");
+  const shown = vi.fn();
+  const style = { color: "white", light: false, markerShown: shown };
+  expect(() => ui.place(player, area, style, [marker])).toThrow("Marker append failed");
+  expect(shown).not.toHaveBeenCalled();
   expect(layer.children).toEqual([]);
   expect(() => assertAdaActionMetadata(original!)).toThrow("no registered action binding");
   failure.mockRestore();
-  ui.place(player, area, undefined, [marker]);
+  ui.place(player, area, style, [marker]);
+  expect(shown).toHaveBeenCalledExactlyOnceWith(marker);
   expect(layer.children).toHaveLength(1);
   assertAdaActionBindings(layer.children[0] as unknown as HTMLElement);
   ui.destroy();

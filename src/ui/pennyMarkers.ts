@@ -174,6 +174,7 @@ interface DirectionStyle {
   readonly color: string;
   /** Whether the field draws foreground edges, so each enemy marker draws over its outline. */
   readonly light: boolean;
+  readonly markerShown?: (marker: PennyMarker) => void;
   readonly reducedMotion?: boolean;
   readonly threat?: string;
 }
@@ -206,7 +207,7 @@ export function createPennyMarkerLayer(
     | undefined;
   const assets = maskInk(doc, () => {
     if (latest) {
-      view.place(latest.player, latest.area, latest.directionStyle, latest.markers);
+      view.place(latest.player, latest.area, latest.directionStyle, latest.markers, false);
     }
   });
   const view = {
@@ -225,6 +226,7 @@ export function createPennyMarkerLayer(
       area: Rect,
       directionStyle: DirectionStyle | undefined,
       markers: readonly PresentedPennyMarker[],
+      acknowledge = true,
     ) {
       latest = { area, directionStyle, markers, player };
       const style: DirectionStyle = directionStyle ?? {
@@ -417,6 +419,9 @@ export function createPennyMarkerLayer(
         const paint = paintSizes.get(target.id)!;
         node.style.left = pixels(areaLeft + (at.x - paint.width / 2) * unit);
         node.style.top = pixels(areaTop + (at.y - paint.height / 2) * unit);
+        if (acknowledge) {
+          style.markerShown?.(target);
+        }
       }
       for (const [id, { dispose, element }] of nodes) {
         if (!shown.has(id)) {

@@ -22,7 +22,7 @@ import {
 import { GAME_AREA, gameAreaPoint, inGameArea } from "./edgeMarkers.ts";
 import { damageEnemy } from "./enemyAi.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
-import { ensureStation } from "./flight.ts";
+import { ensureDestination, ensureStation } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
@@ -525,7 +525,7 @@ function moveTo(model: GameModel, point: { x: number; y: number }): void {
   clearFixtureThreats(model);
 }
 
-function markUnknownPoi(model: GameModel, id: string, point: { x: number; y: number }): void {
+function markUnknownPoi(model: GameModel, id: string, point: { x: number; y: number }) {
   const flight = model.state.flight!;
   moveTo(model, { x: point.x - 1200, y: point.y });
   const otherPoints = pennyPoints(
@@ -546,6 +546,13 @@ function markUnknownPoi(model: GameModel, id: string, point: { x: number; y: num
   expect(marker).toMatchObject({ id, identified: false, x: point.x, y: point.y });
   expect(inGameArea(gameAreaPoint(flight.player, marker!))).toBe(false);
   model.dismissConversation();
+  return marker!;
+}
+
+function showMarker(model: GameModel, id: string): void {
+  const marker = model.targetMarkers(GAME_AREA).find((candidate) => candidate.id === id);
+  expect(marker?.id).toBe(id);
+  model.flightMarkerShown(marker!);
 }
 
 it("guides a sensed Pip arrival before introduction and inspection without taking an action", () => {
@@ -563,13 +570,18 @@ it("guides a sensed Pip arrival before introduction and inspection without takin
     flight.world.notables[ANDROMEDA_PLACES.pip] ??
     flight.objects.find(({ id }) => id === ANDROMEDA_PLACES.pip)!;
   expect(pip).toMatchObject({ id: "pip", kind: "destination" });
-  markUnknownPoi(model, pip.id, pip);
+  const projected = markUnknownPoi(model, pip.id, pip);
 
   const beforeIntro = "Ask at a settlers’ station about the guide beacons.";
   const beforeInspection = "Check the dark guide beacon first.";
   const near = { x: pip.x + 80, y: pip.y };
   moveTo(model, near);
   model.markerTargetDisplayed(pip.id);
+  expect(hear(model)).not.toContain(beforeIntro);
+
+  moveTo(model, { x: pip.x - 1200, y: pip.y });
+  showMarker(model, projected.id);
+  moveTo(model, near);
   model.step(0.05, idle);
   moveTo(model, { x: pip.x - 400, y: pip.y });
   expect(hear(model)).not.toContain(beforeIntro);
@@ -595,7 +607,7 @@ it("guides a sensed Pip arrival before introduction and inspection without takin
   expect(model.state.progress[5]).toMatchObject({ introduced: true, stage: 1 });
 
   moveTo(model, { x: pip.x - 1200, y: pip.y });
-  expect(model.targetMarkers(GAME_AREA)).toContainEqual(expect.objectContaining({ id: pip.id }));
+  showMarker(model, pip.id);
   moveTo(model, near);
   model.markerTargetDisplayed(pip.id);
   expect(hear(model).filter((line) => line === beforeInspection)).toEqual([beforeInspection]);
@@ -618,7 +630,7 @@ it("guides a sensed Pip arrival before introduction and inspection without takin
   expect(model.state.progress[5].stage).toBe(2);
 
   moveTo(model, { x: pip.x - 1200, y: pip.y });
-  expect(model.targetMarkers(GAME_AREA)).toContainEqual(expect.objectContaining({ id: pip.id }));
+  showMarker(model, pip.id);
   moveTo(model, near);
   const eligible = model.objective;
   expect(eligible).toBe("Talk with Pip.");
@@ -633,9 +645,7 @@ it("guides a sensed Pip arrival before introduction and inspection without takin
   const continued = relaunch(CONTENT, saved);
   expect(continued.state.progress[5]).toMatchObject({ introduced: true, stage: 3 });
   moveTo(continued, { x: pip.x - 1200, y: pip.y });
-  expect(continued.targetMarkers(GAME_AREA)).toContainEqual(
-    expect.objectContaining({ id: pip.id }),
-  );
+  showMarker(continued, pip.id);
   moveTo(continued, near);
   const currentObjective = continued.objective;
   const arrival = hear(continued);
@@ -649,7 +659,7 @@ it("uses an identified landmark's spoken discovery for its first approach and sp
   const words = poiDiscoveryPool(1, { id: target.id, kind: "landmark", symbol: target.kind }).map(
     ({ lines }) => lines[0]!.text,
   );
-  markUnknownPoi(model, target.id, target);
+  model.flightMarkerShown(markUnknownPoi(model, target.id, target));
   moveTo(model, target);
   model.markerTargetDisplayed(target.id);
   const arrival = hear(model).filter((line) => words.includes(line));
@@ -662,4 +672,40 @@ it("uses an identified landmark's spoken discovery for its first approach and sp
   expect(hear(model).filter((line) => words.includes(line))).toHaveLength(1);
   expect(model.state.progress[1].charted).not.toContain(target.id);
   expect(model.drainScanOutcomes()).toEqual([]);
+});
+
+it("reuses station discovery and non-Pip destination dialogue for shown physical markers", () => {
+  const { model } = newFlight();
+  const flight = model.state.flight!;
+  const site = worldStationsNear(flightStationContext(flight), ECONOMY, 1, 25000, {
+    x: 0,
+    y: 0,
+  })[0]!;
+  const station = ensureStation(CONTENT, site.id, flight)!;
+  model.flightMarkerShown(markUnknownPoi(model, station.id, station));
+  moveTo(model, { x: station.x + 130, y: station.y });
+  expect(
+    hear(model).filter((line) => deck[1].station.some(({ text }) => text === line)),
+  ).toHaveLength(1);
+  expect(model.state.docked).toBeNull();
+
+  const growers = ensureDestination(CONTENT, "growers", flight)!;
+  expect(growers).toMatchObject({ id: "growers", kind: "destination" });
+  // Known destinations get their own authored lines even when their marker is station-like.
+  model.state.progress[1].known.push(growers.id);
+  moveTo(model, { x: growers.x - 1200, y: growers.y });
+  showMarker(model, growers.id);
+  moveTo(model, { x: growers.x + 100, y: growers.y });
+  const words = deck[1].storyPlace.growers.map(({ text }) => text);
+  model.step(0.05, idle);
+  expect(model.state.dialogue?.context).toBe("grower");
+  expect(model.conversation).toBeNull();
+  model.choose("continue");
+  expect(hear(model).filter((line) => words.includes(line))).toEqual([]);
+
+  moveTo(model, { x: growers.x - 1200, y: growers.y });
+  model.step(0.05, idle);
+  moveTo(model, { x: growers.x + 100, y: growers.y });
+  expect(hear(model).filter((line) => words.includes(line))).toHaveLength(1);
+  expect(model.state.dialogue).toBeNull();
 });

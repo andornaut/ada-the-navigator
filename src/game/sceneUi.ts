@@ -43,6 +43,7 @@ import { linearDialogueContinuation } from "../model/conversations.ts";
 import type { ImmediateExchangeOrder, ImmediateExchangeResult } from "../model/exchange.ts";
 import { GameModel } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
+import type { PennyMarker } from "../model/pennyMarkers.ts";
 import { fill, itemName, type ShopItem, type ShopRow, shopRow, weaponName } from "../model/shop.ts";
 import type { FlightState } from "../model/types.ts";
 import {
@@ -1545,6 +1546,14 @@ export function renderConversation(scene: UiContext): void {
       blocked,
       color: `#${scene.palette.pointOfInterest.toString(16).padStart(6, "0")}`,
       light: scene.light,
+      ...(!covered &&
+      !emergency &&
+      scene.enabled &&
+      !scene.startShown &&
+      !scene.jumping &&
+      !document.hidden
+        ? { markerShown: (marker: PennyMarker) => scene.model.flightMarkerShown(marker) }
+        : {}),
       reducedMotion: scene.reducedMotion,
       threat: `#${scene.palette.threat.toString(16).padStart(6, "0")}`,
     },

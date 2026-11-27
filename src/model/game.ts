@@ -553,7 +553,12 @@ export class GameModel {
   private readonly scanLeads = new WeakMap<FlightState, ScanActionLead & { origin: Vec }>();
   private readonly markerViews = new WeakMap<
     PennyMarker,
-    { area: Rect; flight: FlightState; litCaches: ReadonlySet<string> | undefined }
+    {
+      area: Rect;
+      flight: FlightState;
+      litCaches: ReadonlySet<string> | undefined;
+      waypointId: string | undefined;
+    }
   >();
   private readonly seenCacheGroups = new Set<string>();
   private scannedLandmarks: string[] = [];
@@ -965,6 +970,13 @@ export class GameModel {
     return selected;
   }
 
+  private coverPoiArrival(flight: FlightState, id: string): void {
+    const visit = this.poiVisits.get(flight)?.get(id);
+    if (visit) {
+      visit.heard = true;
+    }
+  }
+
   private poiVisitPresentation(flight: FlightState, id: string, relevant?: () => boolean) {
     const visits = this.poiVisits.get(flight);
     const visit = visits?.get(id);
@@ -1084,9 +1096,9 @@ export class GameModel {
         visits.delete(id);
         continue;
       }
-      // Far marks cannot arrive this frame. The marker projection refreshes their positions.
-      const point = distance <= range + this.content.tuning.chunkSize ? currentPoint(id) : null;
-      if (!point) {
+      // Physical POIs are anchored. Keep the last shown position for the range check and
+      // resolve the live target only when an unheard arrival can actually speak.
+      if (distance > range) {
         if (visit.arrived) {
           visits.set(id, { arrived: false, heard: false, point: visit.point });
         }
@@ -1096,13 +1108,17 @@ export class GameModel {
       if (visit.heard || !coversFlight()) {
         continue;
       }
-      const line = this.poiArrivalLine(flight, id, point);
+      const point = currentPoint(id);
+      const line = point && this.poiArrivalLine(flight, id, point);
       if (!line) {
         continue;
       }
       const presentation = this.poiVisitPresentation(flight, id, () => {
-        if (!coversFlight()) {
+        if (!coversFlight() || worldDistance(world, flight.player, visit.point) > range) {
           return false;
+        }
+        if (visit.heard) {
+          return true;
         }
         const current = currentPoint(id);
         const next = current && this.poiArrivalLine(flight, id, current);
@@ -1338,28 +1354,39 @@ export class GameModel {
       return [];
     }
     const { markers, waypointId } = this.projectTargetMarkers(f, area, litCaches);
-    const visits = this.poiVisits.get(f) ?? new Map<string, MarkedPoiVisit>();
-    this.poiVisits.set(f, visits);
-    const view = { area: { ...area }, flight: f, litCaches };
+    const view = { area: { ...area }, flight: f, litCaches, waypointId };
     for (const marker of markers) {
       this.markerViews.set(marker, view);
-      if (
-        marker.id !== waypointId &&
-        !marker.jobType &&
-        !marker.item &&
-        marker.symbol !== "guard" &&
-        marker.symbol !== "heavy" &&
-        marker.symbol !== "enemy"
-      ) {
-        const visit = visits.get(marker.id);
-        if (visit) {
-          visit.point = marker;
-        } else {
-          visits.set(marker.id, { arrived: false, heard: false, point: marker });
-        }
-      }
     }
     return markers;
+  }
+
+  /** Only a placed flight marker can start an arrival visit. */
+  flightMarkerShown(marker: PennyMarker): void {
+    const view = this.markerViews.get(marker);
+    if (
+      !view ||
+      this.state.flight !== view.flight ||
+      this.screen !== "space" ||
+      this.state.dialogue ||
+      this.state.docked ||
+      marker.id === view.waypointId ||
+      marker.jobType ||
+      marker.item ||
+      marker.symbol === "guard" ||
+      marker.symbol === "heavy" ||
+      marker.symbol === "enemy"
+    ) {
+      return;
+    }
+    const visits = this.poiVisits.get(view.flight) ?? new Map<string, MarkedPoiVisit>();
+    this.poiVisits.set(view.flight, visits);
+    const visit = visits.get(marker.id);
+    if (visit) {
+      visit.point = marker;
+    } else {
+      visits.set(marker.id, { arrived: false, heard: false, point: marker });
+    }
   }
 
   private projectTargetMarkers(
@@ -4099,7 +4126,11 @@ export class GameModel {
     this.stepCalf(dt, f);
     this.advanceCourier(f, f.time - flightTimeBeforeStep);
     if (context && previousChapterPosition) {
-      this.applyChapterResult(runtime?.afterStep?.(context, dt, previousChapterPosition, events));
+      const result = runtime?.afterStep?.(context, dt, previousChapterPosition, events);
+      if (result?.arrivalPlace && result.dialogue) {
+        this.coverPoiArrival(f, result.arrivalPlace);
+      }
+      this.applyChapterResult(result);
       if (f.galaxy === 5) {
         const warning = takeAndromedaCourierWarning(f);
         if (warning) {
@@ -4348,6 +4379,7 @@ export class GameModel {
       this.current.known.includes(intro) &&
       this.nearest() === intro
     ) {
+      this.coverPoiArrival(f, intro);
       this.current.introduced = true;
       this.current.stage = Math.max(1, this.current.stage);
       if (f.galaxy === 1) {
