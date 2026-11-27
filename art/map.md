@@ -496,16 +496,17 @@ discovered place for the reveal, so a hunt's search area is never fogged.
 
 ## Projection and fit
 
-| Token                       | Value | Rule                                                                         |
-| --------------------------- | ----- | ---------------------------------------------------------------------------- |
-| `MAP_SCREEN.fitMargin`      | 22    | Chip radius plus `SPACING.gap`: symbols keep this far inside the fit region  |
-| `MAP_SCREEN.minBox.width`   | 12000 | The opening box is at least this many projected units across                 |
-| `MAP_SCREEN.minBox.height`  | 6000  | And this many down                                                           |
-| `MAP_SCREEN.chartRadius`    | 25000 | `CHARTING_RADIUS` (`src/model/map.ts`), the disc used for the zoom reference |
-| `MAP_SCREEN.zoomStep`       | 1.5   | One zoom step                                                                |
-| `MAP_SCREEN.zoomRangeShift` | 2     | Outward shift applied to the zoom-in and disc-fit references                 |
-| `MAP_SCREEN.wheelStep`      | 100   | Wheel `deltaY` px per zoom step                                              |
-| `MAP_SCREEN.dragThreshold`  | 8     | `SCROLL.dragThreshold`: movement past this pans and never selects            |
+| Token                           | Value | Rule                                                                         |
+| ------------------------------- | ----- | ---------------------------------------------------------------------------- |
+| `MAP_SCREEN.fitMargin`          | 22    | Chip radius plus `SPACING.gap`: symbols keep this far inside the fit region  |
+| `MAP_SCREEN.minBox.width`       | 12000 | The opening box is at least this many projected units across                 |
+| `MAP_SCREEN.minBox.height`      | 6000  | And this many down                                                           |
+| `MAP_SCREEN.chartRadius`        | 25000 | `CHARTING_RADIUS` (`src/model/map.ts`), the disc used for the zoom reference |
+| `MAP_SCREEN.zoomStep`           | 1.5   | One zoom step                                                                |
+| `MAP_SCREEN.zoomInStepsRemoved` | 1     | Steps removed from the close-fit reference                                   |
+| `MAP_SCREEN.zoomOutStepsAdded`  | 2     | Outward steps from the disc-fit reference                                    |
+| `MAP_SCREEN.wheelStep`          | 100   | Wheel `deltaY` px per zoom step                                              |
+| `MAP_SCREEN.dragThreshold`      | 8     | `SCROLL.dragThreshold`: movement past this pans and never selects            |
 
 - Projection: the flight's own, `x - y` across and `(x + y) / 2` down
   (`chartProjection`), times the map's `scale` in logical px per projected
@@ -517,12 +518,12 @@ discovered place for the reveal, so a hunt's search area is never fogged.
   (288 at the 720 base, 285 with phone insets, above the footer). Inset by
   `fitMargin` on every side it is the inner region. The panel floats over its
   lower part.
-- Both zoom references move two steps outward by dividing their scales by
-  `shift = zoomStep ** zoomRangeShift` (`1.5²`). The zoom-in bound is
-  `maxScale = min(innerWidth / minBox.width, zoomHeight / minBox.height) / shift`,
+- The zoom-in bound is `maxScale = close fit / 1.5`, one step outward from
+  `close fit = min(innerWidth / minBox.width, zoomHeight / minBox.height)`,
   where `zoomHeight` is the page rect's height less `2 * fitMargin` (284 at
   the 720 base).
-- `minScale = max(disc fit / shift, world fit)`, where disc fit is
+- `minScale = max(disc fit / 2.25, world fit)`. The divisor `2.25` moves the
+  disc-fit reference two steps outward (`1.5²`). Disc fit is
   `min(innerWidth / (2 sqrt(2) R), innerHeight / (sqrt(2) R))` for
   `R = chartRadius`. The hard floor `world fit` is
   `max(fieldWidth / (2 side), fieldHeight / side)` for the wrap square's
@@ -554,9 +555,9 @@ box height), minScale, maxScale)`; the box centre at the inner region's
 
 | View, CSS px    | Fit region      | Inner region    | `maxScale` | `minScale` | Zoom steps between |
 | --------------- | --------------- | --------------- | ---------- | ---------- | ------------------ |
-| 844x390, insets | 692.31 x 196.62 | 648.31 x 152.62 | 0.02079    | 0.00216    | 5.58               |
-| 720x360 (base)  | 688 x 200       | 644 x 156       | 0.02104    | 0.00200    | 5.80               |
-| 1280x720        | 688 x 245       | 644 x 201       | 0.02385    | 0.00253    | 5.54               |
+| 844x390, insets | 692.31 x 196.62 | 648.31 x 152.62 | 0.03118    | 0.00216    | 6.58               |
+| 720x360 (base)  | 688 x 200       | 644 x 156       | 0.03156    | 0.00200    | 6.80               |
+| 1280x720        | 688 x 245       | 644 x 201       | 0.03578    | 0.00253    | 6.54               |
 
 ### Close places
 
