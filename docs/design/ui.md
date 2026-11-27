@@ -108,3 +108,5 @@ Reference: [UI layout tree](ui/ui-layout-tree.md), [ship screen](ui/ship-screen.
 | ada-0454 | Put Play first and remove the homepage footer                                   | [ada-0454.md](../work/ada-0454.md) |
 | ada-0455 | Remap desktop flight controls                                                   | [ada-0455.md](../work/ada-0455.md) |
 | ada-0456 | Centralize keyboard and mouse action bindings                                   | [ada-0456.md](../work/ada-0456.md) |
+| ada-0458 | Optically center the Dock glyph in the Use disc                                 | [ada-0458.md](../work/ada-0458.md) |
+| ada-0459 | Mark the selected Local Map place with a teal ring                              | [ada-0459.md](../work/ada-0459.md) |
