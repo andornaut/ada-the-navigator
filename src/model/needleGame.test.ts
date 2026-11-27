@@ -8,12 +8,14 @@ import { PHASER_AIM_SECONDS } from "../data/enemyCatalog.ts";
 import { BUILT, GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import { NEEDLE } from "../data/needle.ts";
 import { SCREEN } from "../data/screen.ts";
+import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { BEAM } from "../data/weaponCatalog.ts";
 import { ControlState } from "../input/state.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
+import { worldSceneryBodyContact } from "./asteroids.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { interactionCopy } from "./conversations.ts";
 import { partsReach, worldParts } from "./convex.ts";
@@ -23,14 +25,21 @@ import { damageEnemy, enemyFireLine } from "./enemyAi.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import { enemyBeamReach } from "./enemyProjectiles.ts";
-import { activeCrossbowSector, activeEnemyBeams, ensureStation } from "./flight.ts";
+import {
+  activeCrossbowSector,
+  activeEnemyBeams,
+  ensureStation,
+  questGuardPlacementContext,
+} from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import { inNeedleChannel, needleCourses, type NeedleGate } from "./needle.ts";
 import { NEEDLE_ACTIVITY_TARGET } from "./needleActivity.ts";
+import { isNeedleRim, needleRimContact } from "./needleFlight.ts";
 import { NEEDLE_CADENCE, needleTrackedObjective } from "./needleRuntime.ts";
+import { shipBody } from "./shipBody.ts";
 import { stationsNear } from "./stations.ts";
 import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 import { wrapPoint } from "./worldGeometry.ts";
@@ -246,13 +255,14 @@ describe("Captain Cadence admission and outcome", () => {
     let model = completeEye(173);
     let flight = model.state.flight!;
     const { id } = NEEDLE_CADENCE;
-    const boss = nearCrossbow(model, 265);
+    // Admit Crossbow from outside firing view so the first mount opportunity survives the warning.
+    const boss = nearCrossbow(model, 410);
     const definition = enemyEquipmentDefinition(4, boss.enemy!);
     const world = flightWorldContext(flight);
     const into = (angle: number) => ({ x: Math.cos(angle), y: Math.sin(angle) });
-    const place = (heading: number) => {
+    const place = (heading: number, radius: number) => {
       const direction = into(heading);
-      flight.player = { x: boss.x + direction.x * 245, y: boss.y + direction.y * 245 };
+      flight.player = { x: boss.x + direction.x * radius, y: boss.y + direction.y * radius };
       flight.velocity = { x: 0, y: 0 };
     };
     const phaser = definition.hardpoints.find(
@@ -269,22 +279,58 @@ describe("Captain Cadence admission and outcome", () => {
       }
     >();
     const fired = new Set<number>();
-    model.step(0.02, idle);
+    const warned = new Set<number>();
+    const placement = questGuardPlacementContext(CONTENT, flight);
+    const inScenery = () => {
+      const body = shipBody(flight.facing);
+      return flight.objects.some((object) => {
+        if (object.hp <= 0 || (object.kind !== "rock" && object.kind !== "debris")) {
+          return false;
+        }
+        return isNeedleRim(object)
+          ? needleRimContact({ body, position: flight.player, world }, object) !== null
+          : worldSceneryBodyContact(
+              world,
+              object,
+              flight.player,
+              body,
+              placement.frameOf(object),
+              0,
+              placement.drawnOf(object),
+            ) !== null;
+      });
+    };
+    model.step(SIMULATION_STEP_SECONDS, idle);
     expect(activeCrossbowSector(flight)?.phase).toBe("warning");
     expect(model.conversation).toMatchObject({
       speaker: "astra",
       text: "Crossbow fires to one side at a time. Look for the marked lane.",
     });
-    for (let frame = 0; frame < 1300 && fired.size < 2; frame++) {
+    for (let frame = 0; frame < 9 / SIMULATION_STEP_SECONDS && fired.size < 2; frame++) {
       const sector = activeCrossbowSector(flight)!;
       const side = Math.sign(sector.sector[0]);
+      if (sector.phase === "warning") {
+        warned.add(side);
+      }
       const pending = activeEnemyBeams(flight).find(
         (beam) => beam.ownerId === id && beam.kind === "phaser" && !beam.fired,
       );
       const heading = pending
         ? sector.bearing
         : sector.bearing + (sector.sector[0] + sector.sector[1]) / 2;
-      place(heading);
+      // Stay outside firing view between active sectors. Check nearby berths against the
+      // live scenery, starting closer for the opposite side of this chart.
+      const active = pending !== undefined || sector.phase === "active";
+      let clear = false;
+      if (active) {
+        const radius = side > 0 ? 245 : 185;
+        clear = [0, -10, 10, -20, 20, -30, 30, -40, 40].some((offset) => {
+          place(heading, radius + offset);
+          return !inScenery();
+        });
+      } else {
+        place(heading, 540);
+      }
       if (!pending) {
         const enemy = boss.enemy!;
         const mount = enemy.hardpoints.find(({ id }) => id === phaser.id)!;
@@ -322,13 +368,14 @@ describe("Captain Cadence admission and outcome", () => {
       }
       flight.shield = model.shieldMax;
       const centre = sector.vertex;
-      model.step(0.02, idle);
+      model.step(SIMULATION_STEP_SECONDS, idle);
       for (const beam of activeEnemyBeams(flight)) {
         if (beam.kind !== "phaser" || beam.ownerId !== id) {
           continue;
         }
         const tell = tells.get(beam.volley);
         if (!tell) {
+          expect(clear).toBe(true);
           expect(beam.fired).toBe(false);
           expect(beam.age).toBeLessThan(PHASER_AIM_SECONDS);
           expect(sector.phase).toBe("active");
@@ -352,6 +399,7 @@ describe("Captain Cadence admission and outcome", () => {
         const { direction, end, muzzle, range } = tell.beam;
         expect(beam).toMatchObject({ direction, end, muzzle, range });
         if (beam.fired && pending?.volley === beam.volley) {
+          expect(clear).toBe(true);
           expect(side).toBe(tell.side);
           expect(sector.phase).toBe("active");
           expect(beam.age).toBeGreaterThanOrEqual(PHASER_AIM_SECONDS);
@@ -366,7 +414,8 @@ describe("Captain Cadence admission and outcome", () => {
         }
       }
     }
-    expect(fired).toEqual(new Set([1, -1]));
+    expect(warned).toEqual(new Set([1, -1]));
+    expect(fired).toEqual(warned);
     expect(model.bossHud()).toMatchObject({
       captain: "Captain Cadence",
       hull: definition.hp,
