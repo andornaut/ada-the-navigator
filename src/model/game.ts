@@ -4678,8 +4678,12 @@ export class GameModel {
       if (sites && site !== undefined) {
         let leadStation: string | undefined;
         if (typeof site !== "boolean" && (site.kind === "rescue" || site.kind === "hunt")) {
-          const lead = this.explorationOffer(this.state.flight, "scan", scan, site.kind);
+          const stations = this.discoveredJobStations(this.state.flight);
+          const lead = this.explorationOffer(this.state.flight, "scan", scan, site.kind, stations);
           if (!lead) {
+            if (site.kind === "hunt" && stations.length) {
+              this.notify(this.label("huntScanRetry"));
+            }
             return;
           }
           postExplorationLead(this.state.flight.galaxy, this.state, lead);

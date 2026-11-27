@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
@@ -395,7 +395,7 @@ it("posts an admitted near-route hunt on Scan, then accepts and pays through the
   throw new Error("No near-route hunt fixture admitted");
 });
 
-it("admits and posts the seed-3 hunt when every seeded centre is blocked", () => {
+it("keeps an unsuccessful Hunt scan available to retry, then posts the seeded fallback", async () => {
   const seed = 3;
   const world = { worldSide: GALAXY_SIDE };
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
@@ -475,6 +475,28 @@ it("admits and posts the seed-3 hunt when every seeded centre is blocked", () =>
   const balance = model.state.economy.stardust;
   flight.player = { x: site.x, y: site.y };
   expect(model.contextAction).toBe("scan");
+  const failedPlacement = vi.spyOn(await import("./jobs.ts"), "explorationLeadOffer");
+  try {
+    failedPlacement.mockReturnValueOnce(null);
+    model.interact();
+    expect(failedPlacement).toHaveBeenCalledExactlyOnceWith(
+      expect.anything(),
+      expect.anything(),
+      seed,
+      issuer,
+      site,
+      "hunt",
+      "scan",
+    );
+    expect(model.state.notice).toBe(CONTENT.labels.huntScanRetry);
+    expect(model.contextAction).toBe("scan");
+    expect(progress.explorationSites?.[site.id]).toEqual({ kind: "hunt", scanned: false });
+    expect(model.state.jobs.boards[1]).toBeUndefined();
+    expect(model.drainScanOutcomes()).toEqual([]);
+  } finally {
+    failedPlacement.mockRestore();
+  }
+
   model.interact();
   expect(progress.explorationSites?.[site.id]).toEqual({ kind: "hunt", scanned: true });
   const [receipt] = model.drainScanOutcomes();

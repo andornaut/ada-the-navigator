@@ -286,7 +286,8 @@ extra loot, exposes no hidden target and accepts no job.
   frigate, capital and platform. If all fall short, use the candidate farthest
   from its nearest qualifying heavy, breaking ties by seeded order. Measure
   the shortest wrapped distance. Heavy proximity cannot prevent placement
-  or posting of the Hunt lead.
+  or posting of the Hunt lead. If Hunt Scan cannot place a safe target,
+  Astra gives a brief retry notice. Scan stays available to retry.
 - A site posts at most one lead. A scanned site offers no further Scan.
 
 ## Captain Tally

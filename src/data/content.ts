@@ -438,6 +438,7 @@ export const CONTENT: GameContent = {
     home: "Ada the Navigator",
     homeButton: "Earth",
     huntAbout: "It's in the marked area. Ask Penny.",
+    huntScanRetry: "I couldn't find a safe search area. Try scanning again later.",
     huntTitle: "Find a lost {item}",
     inUse: "In use",
     install: "Install",
