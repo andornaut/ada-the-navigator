@@ -7,6 +7,7 @@ import {
   type AndromedaConversationId,
   type AndromedaProgress,
 } from "../data/andromeda.ts";
+import type { Speaker } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import {
   admitCourierAmbush,
@@ -491,7 +492,7 @@ function stepCourierAmbushLeg(context: ChapterContext, seconds: number, previous
   }
 }
 
-/** First contact uses an actual station; inspecting the dent is useful but never an extra gate. */
+/** Arrival speaks in flight. Only Use can open and complete the corresponding exchange. */
 export function stepAndromeda(
   context: ChapterContext,
   seconds = 0,
@@ -504,21 +505,28 @@ export function stepAndromeda(
   if (seconds > 0) {
     stepCourierAmbushLeg(context, seconds, previous);
   }
-  if (!progress.introduced && progress.stage === 0) {
+  const inRange = (point: Vec) => distance(point, flight.player) <= content.tuning.talkRange;
+  const cue = (id: "arrival" | "dent", speaker: Speaker, place: Vec & { id: string }) => ({
+    arrival: {
+      id: `chapter:andromeda:${id}:approach`,
+      line: { speaker, text: ANDROMEDA_CONVERSATIONS[id].lines[0].text },
+      place: place.id,
+      relevant: () =>
+        (id === "dent" ? progress.stage === 1 : relevant(progress, id)) && inRange(place),
+    },
+  });
+  if (relevant(progress, "arrival")) {
     const station = flight.objects.find(
-      (place) =>
-        place.kind === "station" &&
-        progress.stations.includes(place.id) &&
-        distance(place, flight.player) <= content.tuning.talkRange,
+      (place) => place.kind === "station" && progress.stations.includes(place.id) && inRange(place),
     );
     if (station) {
-      return { arrivalPlace: station.id, dialogue: dialogue(context, "arrival") };
+      return cue("arrival", "settler", station);
     }
   }
   if (progress.stage === 1) {
     const beacon = flight.objects.find((place) => place.id === ANDROMEDA_PLACES.beacon);
-    if (beacon && distance(beacon, flight.player) <= content.tuning.talkRange) {
-      return { arrivalPlace: beacon.id, dialogue: dialogue(context, "dent") };
+    if (beacon && inRange(beacon)) {
+      return cue("dent", "ada", beacon);
     }
   }
   return undefined;

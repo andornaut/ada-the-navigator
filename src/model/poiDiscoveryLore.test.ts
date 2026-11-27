@@ -599,9 +599,10 @@ it("guides a sensed Pip arrival before introduction and inspection without takin
   ensureStation(CONTENT, station.id, flight);
   moveTo(model, station);
   model.step(0.001, idle);
-  if (!model.state.dialogue) {
-    model.interact();
-  }
+  expect(model.state.dialogue).toBeNull();
+  expect(model.state.progress[5].stage).toBe(0);
+  expect(hear(model)).toContain("A traveler! Be careful. One of our guide beacons has gone dark.");
+  model.interact();
   expect(model.state.dialogue?.context).toBe("andromeda:arrival");
   model.choose("continue");
   expect(model.state.progress[5]).toMatchObject({ introduced: true, stage: 1 });
@@ -621,9 +622,12 @@ it("guides a sensed Pip arrival before introduction and inspection without takin
   expect(beacon).toMatchObject({ id: "darkBeacon", kind: "destination" });
   moveTo(model, beacon!);
   model.step(0.05, idle);
-  if (!model.state.dialogue) {
-    model.interact();
-  }
+  expect(model.state.dialogue).toBeNull();
+  expect(model.state.progress[5].stage).toBe(1);
+  expect(hear(model)).toContain(
+    "This beacon isn't shot. It's dented, like something bumped into it.",
+  );
+  model.interact();
   expect(model.state.dialogue?.context).toBe("andromeda:dent");
   expect(model.conversation).toBeNull();
   model.choose("continue");

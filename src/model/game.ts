@@ -4130,8 +4130,18 @@ export class GameModel {
     this.advanceCourier(f, f.time - flightTimeBeforeStep);
     if (context && previousChapterPosition) {
       const result = runtime?.afterStep?.(context, dt, previousChapterPosition, events);
-      if (result?.arrivalPlace && result.dialogue) {
-        this.coverPoiArrival(f, result.arrivalPlace);
+      const arrival = result?.arrival;
+      if (arrival) {
+        this.talk.authoredCue(arrival.id, arrival.line, {
+          onFirstShowing: () => this.coverPoiArrival(f, arrival.place),
+          relevant: () =>
+            this.state.flight === f &&
+            this.screen === "space" &&
+            !this.state.dialogue &&
+            !this.state.docked &&
+            !this.suspendedInteraction &&
+            arrival.relevant(),
+        });
       }
       this.applyChapterResult(result);
       if (f.galaxy === 5) {

@@ -1,3 +1,4 @@
+import type { ConversationLine } from "../data/conversations.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import type {
   DialogueChoice,
@@ -18,8 +19,13 @@ export interface ChapterContext {
 
 /** Shared outcomes are committed by GameModel, after a module handles the actual event. */
 export interface ChapterResult {
-  /** A physical place whose automatic dialogue covers this approach. */
-  readonly arrivalPlace?: string;
+  /** A passive authored cue for an arrival that still needs an explicit Use. */
+  readonly arrival?: {
+    readonly id: string;
+    readonly place: string;
+    readonly line: ConversationLine;
+    readonly relevant: () => boolean;
+  };
   readonly complete?: boolean;
   readonly dialogue?: DialogueState;
   readonly holodisk?: { readonly giver?: string };

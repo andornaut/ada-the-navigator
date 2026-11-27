@@ -80,9 +80,9 @@ function arrival(model: GameModel): void {
   const station = worldNearestSettlerStation(flightStationContext(flight), ECONOMY, flight.player);
   ensureStation(CONTENT, station.id, flight);
   visit(model, station.id);
-  if (!model.state.dialogue) {
-    model.interact();
-  }
+  expect(model.state.dialogue).toBeNull();
+  expect(model.state.progress[5].stage).toBe(0);
+  model.interact();
   continuePanel(model, "andromeda:arrival");
   expect(model.state.docked).toBeNull();
 }
@@ -278,6 +278,9 @@ describe("mounted Andromeda chapter", () => {
     arrival(model);
     if (inspected) {
       visit(model, "darkBeacon");
+      expect(model.state.dialogue).toBeNull();
+      expect(model.state.progress[5].stage).toBe(1);
+      model.interact();
       continuePanel(model, "andromeda:dent");
     }
     visit(model, "pip");
