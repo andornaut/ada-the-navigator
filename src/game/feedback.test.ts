@@ -189,36 +189,58 @@ describe("model feedback", () => {
 });
 
 describe("hit feedback", () => {
-  it("flashes the threat red at full opacity on a hit, fading linearly to 0 over 200 ms", () => {
+  it("flashes the threat red at full opacity on a hit and follows the approved 120 ms fade", () => {
     const palette = readSpacePalette(publicJson("/art/space-palette.json"))!;
-    expect(HIT_FLASH).toEqual({ colour: "#FF6B6B", duration: 200, width: 3 });
+    expect(HIT_FLASH).toEqual({ colour: "#FF6B6B", duration: 120, width: 2 });
     expect(HIT_FLASH_FILL).toBe(palette.threat);
     expect(hitFlashAlpha(false, 0)).toBe(1);
-    expect(hitFlashAlpha(false, 50)).toBeCloseTo(0.75, 9);
-    expect(hitFlashAlpha(false, 100)).toBeCloseTo(0.5, 9);
-    expect(hitFlashAlpha(false, 199)).toBeCloseTo(0.005, 9);
-    expect(hitFlashAlpha(false, 200)).toBe(0);
+    for (const [since, opacity] of [
+      [20, 0.82],
+      [40, 0.58],
+      [60, 0.37],
+      [80, 0.2],
+      [100, 0.08],
+    ] as const) {
+      expect(Math.abs(hitFlashAlpha(false, since) - opacity)).toBeLessThan(0.01);
+    }
+    let previous = 1;
+    for (let since = 1; since < HIT_FLASH.duration; since++) {
+      const alpha = hitFlashAlpha(false, since);
+      expect(alpha).toBeGreaterThan(0);
+      expect(alpha).toBeLessThan(previous);
+      previous = alpha;
+    }
+    expect(hitFlashAlpha(false, 120)).toBe(0);
+    expect(hitFlashAlpha(false, 260)).toBe(0);
     // Before any hit the latest hit time is -Infinity, so the time since it is Infinity.
     expect(hitFlashAlpha(false, Infinity)).toBe(0);
     expect(hitFlashAlpha(false, -1)).toBe(0);
   });
 
   it("draws no flash under reduced motion", () => {
-    for (const since of [0, 50, 199]) {
+    for (const since of [0, 60, 119]) {
       expect(hitFlashAlpha(true, since)).toBe(0);
     }
   });
 
-  it("bands the game area's edge 3 wide inside it with square corners and no overlap", () => {
-    const bands = hitFlashBands({ height: 360, width: 720, x: 0, y: 0 });
-    expect(bands).toEqual([
-      { height: 3, width: 720, x: 0, y: 0 },
-      { height: 3, width: 720, x: 0, y: 357 },
-      { height: 354, width: 3, x: 0, y: 3 },
-      { height: 354, width: 3, x: 717, y: 3 },
-    ]);
-    const covered = bands.reduce((sum, band) => sum + band.width * band.height, 0);
-    expect(covered).toBe(720 * 360 - 714 * 354);
+  it("bands the exact device viewport two pixels inside with square corners and no overlap", () => {
+    const expected = [
+      { height: 2, width: 1280, x: 0, y: 0 },
+      { height: 2, width: 1280, x: 0, y: 637 },
+      { height: 635, width: 2, x: 0, y: 2 },
+      { height: 635, width: 2, x: 1278, y: 2 },
+    ];
+    for (const zoom of [0.8, 1, 1280 / 720, 2.1667]) {
+      const bands = hitFlashBands(zoom, { height: 639 / zoom, width: 1280 / zoom, x: 0, y: 0 });
+      expect(
+        bands.map(({ height, width, x, y }) => ({
+          height: Math.round(height * zoom),
+          width: Math.round(width * zoom),
+          x: Math.round(x * zoom),
+          y: Math.round(y * zoom),
+        })),
+      ).toEqual(expected);
+    }
   });
 
   it("holds the band fixed on the play view's edge through installed Phaser's shake", () => {
@@ -252,10 +274,12 @@ describe("hit feedback", () => {
         zoom,
       };
       const shake = new Shake(camera);
-      const corners = hitFlashBands({ height: 360, width: 720, x: 0, y: 0 }).flatMap((band) => [
-        { x: band.x, y: band.y },
-        { x: band.x + band.width, y: band.y + band.height },
-      ]);
+      const corners = hitFlashBands(zoom, { height: 360, width: 720, x: 0, y: 0 }).flatMap(
+        (band) => [
+          { x: band.x, y: band.y },
+          { x: band.x + band.width, y: band.y + band.height },
+        ],
+      );
       const screen = (point: Point, counter: Point) => {
         matrix.applyITRS(0, 0, 0, zoom, zoom);
         matrix.translate(0, 0);

@@ -947,8 +947,9 @@ export class GameScene extends Scene {
       return;
     }
     this.hitFlashInk.fillStyle(HIT_FLASH_FILL, alpha);
-    const area = { height: SCREEN.height, width: SCREEN.width, x: 0, y: 0 };
-    for (const band of hitFlashBands(area)) {
+    const { height, width, zoom } = this.cameras.main;
+    const area = { height: height / zoom, width: width / zoom, x: 0, y: 0 };
+    for (const band of hitFlashBands(zoom, area)) {
       this.hitFlashInk.fillRect(band.x, band.y, band.width, band.height);
     }
   }

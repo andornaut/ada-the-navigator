@@ -173,22 +173,25 @@ export class ModelFeedback {
 }
 
 /**
- * The hit flash's opacity sinceMs after the latest shield hit: 1 at the hit, falling linearly to
- * 0 over HIT_FLASH.duration. Reduced motion never draws it.
+ * The hit flash's opacity sinceMs after the latest shield hit: immediate peak, then a smooth
+ * decay to zero. Reduced motion never draws it.
  */
 export function hitFlashAlpha(reducedMotion: boolean, sinceMs: number): number {
   if (reducedMotion || !(sinceMs >= 0) || sinceMs >= HIT_FLASH.duration) {
     return 0;
   }
-  return 1 - sinceMs / HIT_FLASH.duration;
+  const progress = sinceMs / HIT_FLASH.duration;
+  const left = 1 - progress;
+  // Fit the approved opacity samples and approach zero with zero slope.
+  return left * left * (1 + progress * (1.56 + progress * (-3.57 + 4.71 * progress)));
 }
 
 /** HIT_FLASH.colour as the number Phaser's fill style takes. */
 export const HIT_FLASH_FILL = Number.parseInt(HIT_FLASH.colour.slice(1), 16);
 
-/** The hit flash's band: four square-cornered rects HIT_FLASH.width wide just inside area. */
-export function hitFlashBands(area: Rect): Rect[] {
-  const { width: band } = HIT_FLASH;
+/** Four non-overlapping bands two render pixels wide, in the camera's logical coordinates. */
+export function hitFlashBands(zoom: number, area: Rect): Rect[] {
+  const band = HIT_FLASH.width / zoom;
   const { height, width, x, y } = area;
   return [
     { height: band, width, x, y },

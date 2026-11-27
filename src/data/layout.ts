@@ -548,7 +548,7 @@ export const USE_DISC = {
 // width logical px wide just inside the game area's edge in the space palette's threat red, its
 // opacity falling linearly from 1 to 0 over duration ms, and shakes the view by about offset
 // logical px for duration ms. Reduced motion skips both.
-export const HIT_FLASH = { colour: UNLISTED_COLOURS.alertRed, duration: 200, width: 3 } as const;
+export const HIT_FLASH = { colour: UNLISTED_COLOURS.alertRed, duration: 120, width: 2 } as const;
 export const HIT_SHAKE = { duration: 100, offset: 2 } as const;
 
 // stationCard (src/ui/layout/stationCard.ts)
