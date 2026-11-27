@@ -137,10 +137,10 @@ export interface CartwheelMiningPatrolContext extends WorldContext {
   readonly fieldIsClear: (field: CartwheelMiningField) => boolean;
   readonly fields: readonly CartwheelMiningField[];
   readonly hubKnown: boolean;
-  /** All existing rock footprints whose normal projected paths can reach the sampled disc. */
+  /** Live and fixed terrain for the route, plus future ambient footprints around actor homes. */
   readonly rocksNear: (
     field: CartwheelMiningField,
-    radius: number,
+    radii: Readonly<{ homes: number; route: number }>,
   ) => readonly CartwheelMiningRockPath[];
 }
 
@@ -232,11 +232,13 @@ export function planCartwheelMiningPatrol(
     MIN_BYPASS_DISTANCE + halfWidth,
     Math.max(...threats) + halfWidth + SPAWN_GAP - homeProjection,
   );
+  const homeRadius =
+    Math.hypot(ORE_FIELD_CLEAR_RADIUS + 2 * MIN_MEMBER_SPACING + spacing / 2, flank) +
+    maxRadius +
+    SPAWN_GAP;
   const sampleRadius = Math.max(
     reach,
-    Math.hypot(ORE_FIELD_CLEAR_RADIUS + 2 * MIN_MEMBER_SPACING + spacing / 2, flank) +
-      maxRadius +
-      SPAWN_GAP,
+    homeRadius,
     Math.hypot(maxBypass + 4 * fieldRadius, 2 * fieldRadius) + halfWidth,
   );
   const rejected: { fieldId: string; reason: Rejection }[] = [];
@@ -253,7 +255,7 @@ export function planCartwheelMiningPatrol(
       continue;
     }
     const rocks = context
-      .rocksNear(field, sampleRadius)
+      .rocksNear(field, { homes: homeRadius, route: sampleRadius })
       .map(({ end, id, radius, start, unspawned }) => {
         const from = worldDelta(context, field, start);
         const to = end ? add(from, worldDelta(context, start, end)) : from;

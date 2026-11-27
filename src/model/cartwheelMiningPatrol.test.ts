@@ -328,6 +328,16 @@ it("uses a real pending fighter allocation only after discovery and reserves its
   ).toBe(false);
   expect(cartwheelPatrolAdmits(restored, { id: actors[0]! })).toBe(false);
 
+  const admittedAt = patrol.warnedAt! + CARTWHEEL_MINING_PATROL.warningSeconds;
+  while (restored.time + 0.05 < admittedAt) {
+    const frame = stepFlight(CONTENT, 0.05, { ...idle, cartwheelHubKnown: true }, restored);
+    expect(frame.some(({ type }) => type === "cartwheelPatrolWarning")).toBe(false);
+    expect(cartwheelPatrolAdmits(restored, { id: actors[0]! })).toBe(false);
+  }
+  stepFlight(CONTENT, 0.051, { ...idle, cartwheelHubKnown: true }, restored);
+  expect(restored.time).toBeGreaterThan(admittedAt);
+  expect(cartwheelPatrolAdmits(restored, { id: actors[0]! })).toBe(true);
+
   const malformed = JSON.parse(saved);
   malformed.flight.cartwheelMiningPatrol.plan.bypass = [entry];
   expect(restoreSave(JSON.stringify(malformed))).toBeNull();

@@ -47,7 +47,6 @@ import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../data/
 import { SCREEN } from "../data/screen.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
-import { MOVING_ROCKS } from "../data/spawnTargets.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
@@ -1225,24 +1224,26 @@ function planAmbientCartwheelPatrol(
       ),
     fields,
     hubKnown: true,
-    rocksNear: (field, reach) => cartwheelPatrolTerrain(content, field, reach, flight),
+    rocksNear: (field, radii) => cartwheelPatrolTerrain(content, field, radii, flight),
   });
   return result.status === "planned" ? result.plan : undefined;
 }
 
-/** Check the seeded terrain beyond the active chunks before choosing a bypass. */
+/** Check seeded terrain beyond the active chunks before placing a patrol. */
 function cartwheelPatrolTerrain(
   content: GameContent,
   field: Vec,
-  reach: number,
+  radii: Readonly<{ homes: number; route: number }>,
   flight: FlightState,
 ): CartwheelMiningRockPath[] {
-  const rocks = cartwheelPatrolRockPaths(placementRadius, field, reach, flight);
+  const rocks = cartwheelPatrolRockPaths(placementRadius, field, radii.route, flight);
   const rules = flightSpawnRules(flight);
   const grid = periodicWorldGrid(flightWorldContext(flight), rules.chunkSize);
   const cell = worldCellAt(grid, field);
   const chunkReach = chunkSpawnReach(rules);
-  const span = Math.ceil((reach + chunkReach) / grid.pitch);
+  // The reserved bypass excludes future ambient rocks when their chunks generate.
+  // The pending rocks only need to leave the fighters' possible starting footprints clear.
+  const span = Math.ceil((radii.homes + chunkReach) / grid.pitch);
   const radius = (span + 1) * grid.pitch * Math.SQRT2 + chunkReach;
   const generated = generatedChunks(flight);
   const { placements } = planRegion(
@@ -1267,33 +1268,20 @@ function cartwheelPatrolTerrain(
       kind: movement ? "debris" : "rock",
       radius: asteroid.radius,
     });
-    if (
-      worldDistance(grid, field, placement) >
-      reach +
-        footprint +
-        (movement ? Math.hypot(movement.x, movement.y) * MOVING_ROCKS.pathSeconds : 0)
-    ) {
+    if (worldDistance(grid, field, placement) > radii.homes + footprint) {
       continue;
     }
-    const start = { x: placement.x, y: placement.y };
-    const end = movement
-      ? {
-          x: start.x + movement.x * MOVING_ROCKS.pathSeconds,
-          y: start.y + movement.y * MOVING_ROCKS.pathSeconds,
-        }
-      : undefined;
     rocks.push({
       id: movement ? MOVING_ROCK_PREFIX + placement.id : placement.id,
       radius: footprint,
-      start,
+      start: { x: placement.x, y: placement.y },
       unspawned: "ambient",
-      ...(end ? { end } : {}),
     });
   }
   for (const ore of worldOreFieldsNear(
     grid,
     flight.galaxy,
-    reach + ORE_FIELD_CLEAR_RADIUS,
+    radii.route + ORE_FIELD_CLEAR_RADIUS,
     field,
   )) {
     if (generated.has(worldCellKey(grid, worldCellAt(grid, ore)))) {
