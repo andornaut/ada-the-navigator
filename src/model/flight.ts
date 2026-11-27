@@ -75,6 +75,7 @@ import {
   worldSceneryContact,
 } from "./asteroids.ts";
 import {
+  CARTWHEEL_MINING_PATROL,
   type CartwheelMiningPatrolPlan,
   type CartwheelMiningRockPath,
   cartwheelPatrolAdmits,
@@ -1036,6 +1037,19 @@ function flightSpawnExclusions(
       ),
     ]),
     ...courierSpawnExclusions(flight, radius, point),
+    ...(flight.cartwheelMiningPatrol
+      ? [
+          {
+            applies: ["rock", "moving", "path"] as const,
+            rule: "cartwheel-patrol-bypass",
+            shape: {
+              halfWidth: CARTWHEEL_MINING_PATROL.bypassWidth / 2,
+              kind: "path" as const,
+              points: flight.cartwheelMiningPatrol.plan.bypass,
+            },
+          },
+        ]
+      : []),
     ...activeNeedleCourses(flight).map((course) => ({
       applies: ["rock", "moving", "enemy"] as const,
       rule: "needle-channel",
@@ -1271,7 +1285,7 @@ function cartwheelPatrolTerrain(
       id: movement ? MOVING_ROCK_PREFIX + placement.id : placement.id,
       radius: footprint,
       start,
-      unspawned: true,
+      unspawned: "ambient",
       ...(end ? { end } : {}),
     });
   }
@@ -1290,7 +1304,7 @@ function cartwheelPatrolTerrain(
         id: `${ore.id}:${index}`,
         radius: placementRadius({ asteroid: shape.id, kind: "rock", radius: shape.radius }),
         start: rock,
-        unspawned: true,
+        unspawned: "fixed",
       });
     }
   }

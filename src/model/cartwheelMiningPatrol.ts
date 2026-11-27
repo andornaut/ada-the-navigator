@@ -28,8 +28,8 @@ export interface CartwheelMiningRockPath {
   readonly id: string;
   readonly radius: number;
   readonly start: Vec;
-  /** A future footprint may block a path but cannot supply cover on approach. */
-  readonly unspawned?: true;
+  /** Predicted scenery cannot provide cover. Only ambient spawns can honour a reserved bypass. */
+  readonly unspawned?: "ambient" | "fixed";
 }
 
 export type CartwheelMiningField = Readonly<Pick<OreField, "guard" | "id" | "x" | "y">>;
@@ -324,7 +324,10 @@ export function planCartwheelMiningPatrol(
             homes.some(
               (home, member) => fromSegment(home, bypass) < threats[member]! + halfWidth,
             ) ||
-            rocks.some(({ path, radius }) => pathsWithin(bypass, path, halfWidth + radius))
+            rocks.some(
+              ({ path, radius, unspawned }) =>
+                unspawned !== "ambient" && pathsWithin(bypass, path, halfWidth + radius),
+            )
           ) {
             reasons.add("bypass");
             continue;

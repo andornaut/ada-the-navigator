@@ -137,7 +137,7 @@ describe("Cartwheel mining patrol placement", () => {
 
   it("does not rely on predicted rocks as cover for the patrol", () => {
     const result = planCartwheelMiningPatrol(
-      context([moving("live", 850), { ...moving("future", 1050), unspawned: true }]),
+      context([moving("live", 850), { ...moving("future", 1050), unspawned: "ambient" }]),
     );
     expect(result).toEqual({
       rejected: [{ fieldId: field.id, reason: "cover" }],

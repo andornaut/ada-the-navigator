@@ -158,6 +158,35 @@ function achievementState(value: unknown): boolean {
 function nonnegative(value: unknown): boolean {
   return finite(value) && value >= 0;
 }
+function validCartwheelPatrol(value: unknown, time: unknown): boolean {
+  if (!record(value) || !record(value.plan) || !Array.isArray(value.actors)) {
+    return false;
+  }
+  const { actors, plan, warnedAt } = value;
+  const { allocationId, anchor, approach, bypass, coverIds, fieldId, homes } = plan;
+  return (
+    typeof allocationId === "string" &&
+    allocationId.startsWith("pack:") &&
+    actors.length >= 1 &&
+    actors.length <= 4 &&
+    actors.every((id, index) => id === `${allocationId}:${index}`) &&
+    typeof fieldId === "string" &&
+    fieldId.startsWith("ore:") &&
+    Array.isArray(coverIds) &&
+    coverIds.length >= 2 &&
+    new Set(coverIds).size === coverIds.length &&
+    coverIds.every((id) => typeof id === "string" && id.startsWith("moving:")) &&
+    Array.isArray(homes) &&
+    homes.length === actors.length &&
+    homes.every(vector) &&
+    vector(anchor) &&
+    [approach, bypass].every(
+      (path) => Array.isArray(path) && path.length === 2 && path.every(vector),
+    ) &&
+    (warnedAt === undefined || (nonnegative(warnedAt) && finite(time) && warnedAt <= time))
+  );
+}
+
 function pendingEarlyLance(value: unknown): boolean {
   return (
     record(value) &&
@@ -1440,6 +1469,8 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
             },
             f.exploration,
           )) ||
+        (f.cartwheelMiningPatrol !== undefined &&
+          (f.galaxy !== 2 || !validCartwheelPatrol(f.cartwheelMiningPatrol, f.time))) ||
         (f.needle !== undefined && (f.galaxy !== 4 || !validNeedleFlight(f.needle))) ||
         (f.phantom !== undefined && (f.galaxy !== 6 || !validPhantomFlight(f.phantom))) ||
         f.galaxy !== value.selectedGalaxy ||
