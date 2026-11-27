@@ -25,7 +25,6 @@ import {
   type EnemyArchetype,
   enemyCatalog,
   enemyOnly,
-  escortTuning,
   FRIGATE_ESCORT_COUNT,
 } from "../data/enemyCatalog.ts";
 import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
