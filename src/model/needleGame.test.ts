@@ -838,6 +838,15 @@ describe("mounted Needle interactions", () => {
     const progress = structuredClone(model.state.progress[4].needle);
     model.interact();
     expect(model.state.dialogue?.context).toBe("activityActive:elderLoom");
+    expect(model.state.dialogue?.choices).toContainEqual({
+      id: "continue",
+      label: "Keep activity",
+    });
+    const activity = model.state.tasks[4];
+    model.choose("continue");
+    expect(model.state.dialogue).toBeNull();
+    expect(model.state.tasks[4]).toBe(activity);
+    model.interact();
     model.choose("drop");
     expect(model.state.dialogue?.context).toBe("activityDrop");
     expect(model.state.tasks[4]).toBeDefined();

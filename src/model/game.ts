@@ -3055,7 +3055,7 @@ export class GameModel {
       this.state.dialogue = {
         choices: [
           { id: "drop", label: this.label("jobDrop") },
-          { id: "continue", label: this.label("continue") },
+          { id: "continue", label: this.label("activityKeep") },
           ...extraChoices,
         ],
         context: `activityActive:${place}`,

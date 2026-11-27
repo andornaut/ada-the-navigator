@@ -375,6 +375,7 @@ export const CONTENT: GameContent = {
     activityPip:
       "I've got a parcel for the far settlement. Fly with me? It's less scary with company.",
     activityPipChoice: "Drones patrol the way to the outpost. How should we get past them?",
+    activityKeep: "Keep activity",
     activityPipScout: "Scout ahead",
     activityPipStay: "Stay with Pip",
     activityPipUnavailable: "I don't have a route ready yet. Check back later.",
