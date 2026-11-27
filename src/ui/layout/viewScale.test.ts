@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { fitRegion, mapQuestsRect } from "../map/layout/mapScreen.ts";
 import { VIEW_PROPERTIES, viewStyle } from "./css.ts";
-import { fitRegion, mapQuestsRect } from "./mapScreen.ts";
 import { controlsBottom, hudRect, NO_INSETS, SAFE_MARGIN, safeRect } from "./playView.ts";
 import { stickTargets, useDiscLayout } from "./touchControls.ts";
 import {

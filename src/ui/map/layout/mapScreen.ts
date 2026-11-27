@@ -1,7 +1,7 @@
 import { clamp } from "@andornaut/game-kit/runtime/numbers";
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
-import type { MapSymbol } from "../../data/destinations.ts";
+import type { MapSymbol } from "../../../data/destinations.ts";
 import {
   HUD_BUTTON,
   MAP_HUD_LABEL_WIDTHS,
@@ -9,15 +9,15 @@ import {
   MAP_SYMBOL,
   SPACING,
   TEXT_BUTTON,
-} from "../../data/layout.ts";
-import { TASK_COLORS } from "../../data/taskCategories.ts";
-import { CHARTING_ORIGIN, CHARTING_RADIUS } from "../../model/map.ts";
-import { wrapPoint } from "../../model/worldGeometry.ts";
-import { CARD_CLOSE } from "./cardFrame.ts";
-import { COLOURS, UNLISTED_COLOURS } from "./colours.ts";
-import { type Insets, safeRect, type Size } from "./playView.ts";
-import { BUTTON_GAP, TYPE } from "./tokens.ts";
-export { MAP_PANEL, MAP_SYMBOL } from "../../data/layout.ts";
+} from "../../../data/layout.ts";
+import { TASK_COLORS } from "../../../data/taskCategories.ts";
+import { CHARTING_ORIGIN, CHARTING_RADIUS } from "../../../model/map.ts";
+import { wrapPoint } from "../../../model/worldGeometry.ts";
+import { CARD_CLOSE } from "../../layout/cardFrame.ts";
+import { COLOURS, UNLISTED_COLOURS } from "../../layout/colours.ts";
+import { type Insets, safeRect, type Size } from "../../layout/playView.ts";
+import { BUTTON_GAP, TYPE } from "../../layout/tokens.ts";
+export { MAP_PANEL, MAP_SYMBOL } from "../../../data/layout.ts";
 
 // The pause menu's full-screen map (art/map.md): the screen's header, tools, fog and fit
 // (MAP_SCREEN), the place panel (MAP_PANEL) and the place symbols (MAP_SYMBOL), in logical px, and

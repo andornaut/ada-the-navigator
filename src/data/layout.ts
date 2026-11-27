@@ -558,7 +558,7 @@ export const KEEPER_PIP = { count: 3, disc: 6, gap: 4, ring: 1 };
 export const KEEPER_PIPS_WIDTH =
   KEEPER_PIP.count * KEEPER_PIP.disc + (KEEPER_PIP.count - 1) * KEEPER_PIP.gap;
 
-// mapScreen (src/ui/layout/mapScreen.ts)
+// mapScreen (src/ui/map/layout/mapScreen.ts)
 
 /**
  * The local map's HUD row labels' TYPE.label widths, up to the quarter pixel (art/map.md "Quests
@@ -616,7 +616,7 @@ export const MAP_SYMBOL = {
 const QUEST_LINE_CHIP = 28;
 const QUEST_LINE_INSET = (TEXT_BUTTON.height - TEXT_BUTTON.lipHeight - QUEST_LINE_CHIP) / 2;
 
-// MAP_SCREEN's authored parts; src/ui/layout/mapScreen.ts adds chartRadius, hudRow.
+// MAP_SCREEN's authored parts; src/ui/map/layout/mapScreen.ts adds chartRadius, hudRow.
 export const MAP_SCREEN_LAYOUT = {
   /** Movement past this pans and never selects (SCROLL.dragThreshold). */
   dragThreshold: SCROLL.dragThreshold,

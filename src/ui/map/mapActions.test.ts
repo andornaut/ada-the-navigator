@@ -5,12 +5,20 @@ import { HIT_RULE, hitAround, pressedArea } from "@andornaut/game-kit/runtime/ui
 import ts from "typescript";
 import { afterEach, expect, it, vi } from "vitest";
 
-import { canAffordMapJump, MAP_JUMP_COST } from "../data/mapJump.ts";
-import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
-import { bindAdaAction, resolveAdaHoldAction } from "./actionBinding.ts";
-import { registerForegroundSurface } from "./foregroundInput.ts";
-import { bindAdaActionRoot, bindAdaHoldActions } from "./holdActionsAdapter.ts";
-import { framePoint, turnOf } from "./layout/frameBox.ts";
+import { canAffordMapJump, MAP_JUMP_COST } from "../../data/mapJump.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "../../model/flightTopology.ts";
+import { bindAdaAction, resolveAdaHoldAction } from "../actionBinding.ts";
+import { registerForegroundSurface } from "../foregroundInput.ts";
+import { bindAdaActionRoot, bindAdaHoldActions } from "../holdActionsAdapter.ts";
+import { framePoint, turnOf } from "../layout/frameBox.ts";
+import { VIEW_SCALE_EVENT } from "../layout/viewScale.ts";
+import {
+  enterPressView,
+  inCurrentView,
+  invalidatePressScope,
+  rootPressGuard,
+} from "../pressScope.ts";
+import { createStandardTextAction } from "../standardTextAction.ts";
 import {
   chipRect,
   clampView,
@@ -24,14 +32,6 @@ import {
   toScreen,
   zoomView,
 } from "./layout/mapScreen.ts";
-import { VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import {
-  enterPressView,
-  inCurrentView,
-  invalidatePressScope,
-  rootPressGuard,
-} from "./pressScope.ts";
-import { createStandardTextAction } from "./standardTextAction.ts";
 
 const source = ts.createSourceFile(
   "mapScreen.ts",

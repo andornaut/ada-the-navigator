@@ -11,28 +11,28 @@ import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayo
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import JOBS from "../../public/art/jobs.json" with { type: "json" };
-import { readMapArea } from "../art/index.ts";
-import { BALANCE, HUD_BUTTON } from "../data/layout.ts";
-import { canAffordMapJump, MAP_JUMP_COST, travelState } from "../data/mapJump.ts";
-import { TASK_COLORS } from "../data/taskCategories.ts";
-import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
-import { type LocalMap, type MapPlace, type MapPlaceType, placeType } from "../model/map.ts";
-import { shipHeading } from "../model/nose.ts";
-import type { Vec } from "../model/types.ts";
-import { nearestImage } from "../model/worldGeometry.ts";
+import JOBS from "../../../public/art/jobs.json" with { type: "json" };
+import { readMapArea } from "../../art/index.ts";
+import { BALANCE, HUD_BUTTON } from "../../data/layout.ts";
+import { canAffordMapJump, MAP_JUMP_COST, travelState } from "../../data/mapJump.ts";
+import { TASK_COLORS } from "../../data/taskCategories.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "../../model/flightTopology.ts";
+import { type LocalMap, type MapPlace, type MapPlaceType, placeType } from "../../model/map.ts";
+import { shipHeading } from "../../model/nose.ts";
+import type { Vec } from "../../model/types.ts";
+import { nearestImage } from "../../model/worldGeometry.ts";
 import {
   ADA_ACTION_HOLD_MS,
   type AdaActionOptions,
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
-} from "./actionBinding.ts";
-import { registerForegroundSurface } from "./foregroundInput.ts";
-import { CARD_CLOSE } from "./layout/cardFrame.ts";
-import { COLOURS, translucentInk, UNLISTED_COLOURS } from "./layout/colours.ts";
-import { BUTTON_SLICE, CARD_SLICE } from "./layout/controls.ts";
+} from "../actionBinding.ts";
+import { registerForegroundSurface } from "../foregroundInput.ts";
+import { CARD_CLOSE } from "../layout/cardFrame.ts";
+import { COLOURS, translucentInk, UNLISTED_COLOURS } from "../layout/colours.ts";
+import { BUTTON_SLICE, CARD_SLICE } from "../layout/controls.ts";
 import {
   COMPACT_VIEWPORT,
   font,
@@ -41,8 +41,17 @@ import {
   slice,
   units,
   VIEW_PROPERTIES,
-} from "./layout/css.ts";
-import { frameBoxIn, framePoint, frameSize, turnOf } from "./layout/frameBox.ts";
+} from "../layout/css.ts";
+import { frameBoxIn, framePoint, frameSize, turnOf } from "../layout/frameBox.ts";
+import { SAFE_MARGIN, safeRect } from "../layout/playView.ts";
+import { BUTTON_GAP, SPACING, TYPE } from "../layout/tokens.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "../layout/viewScale.ts";
+import { BUTTON_FACE, MODAL_LAYER, TEXT_TOKENS } from "../modal.ts";
+import { createStandardCloseAction } from "../modalClose.ts";
+import { galaxiesAvailable, mapShowsEmpty } from "../pause.ts";
+import { inCurrentView, invalidatePressScope } from "../pressScope.ts";
+import { refuse } from "../refusal.ts";
+import { createStandardTextAction } from "../standardTextAction.ts";
 import {
   chipRect,
   clampView,
@@ -76,16 +85,13 @@ import {
   toScreen,
   zoomView,
 } from "./layout/mapScreen.ts";
-import { SAFE_MARGIN, safeRect } from "./layout/playView.ts";
-import { BUTTON_GAP, SPACING, TYPE } from "./layout/tokens.ts";
-import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import {
   type MapChromeGroup,
   type MapChromeLeaf,
   type MapChromeSchema,
   mapChromeTrees,
 } from "./mapChromeTree.ts";
-import { mapCloseActionStyle } from "./mapCloseAction.ts";
+import { mapCloseActionStyle } from "../mapCloseAction.ts";
 import { drawMapFog as fogOver } from "./mapFog.ts";
 import {
   type MapPanelGroup,
@@ -99,15 +105,9 @@ import {
   mapPresentationContext,
 } from "./mapRenderQueue.ts";
 import { drawMapSurveyOutline } from "./mapSurveyOutline.ts";
-import { BUTTON_FACE, MODAL_LAYER, TEXT_TOKENS } from "./modal.ts";
-import { createStandardCloseAction } from "./modalClose.ts";
-import { galaxiesAvailable, mapShowsEmpty } from "./pause.ts";
-import { inCurrentView, invalidatePressScope } from "./pressScope.ts";
-import { refuse } from "./refusal.ts";
-import { createStandardTextAction } from "./standardTextAction.ts";
-import { HUD_DISC_STATES, hudDiscStyle } from "./weapons.ts";
+import { HUD_DISC_STATES, hudDiscStyle } from "../weapons.ts";
 
-export { travelState } from "../data/mapJump.ts";
+export { travelState } from "../../data/mapJump.ts";
 
 // The pause menu's full-screen map (art/map.md): the galaxy's field under its fog, a chip per
 // discovered place, Ada's arrow, the header, the tool column and the place panel. It takes input

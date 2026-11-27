@@ -22,11 +22,11 @@ import {
 } from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { units } from "./layout/css.ts";
-import { MAP_COLORS, MAP_SYMBOL } from "./layout/mapScreen.ts";
 import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
 import { safeGameArea } from "./layout/playView.ts";
 import { layoutTargetMarkers } from "./layout/targetMarkers.ts";
 import { playLayout } from "./layout/viewScale.ts";
+import { MAP_COLORS, MAP_SYMBOL } from "./map/layout/mapScreen.ts";
 import {
   createPennyMarkerLayer,
   PENNY_MARKERS_STYLE,

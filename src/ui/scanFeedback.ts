@@ -1,6 +1,6 @@
 import { visualNoticeTiming } from "../data/noticeTiming.ts";
 import type { ScanOutcome, ScanQuestIdentity } from "../model/scanOutcomes.ts";
-import { chipGlyph } from "./mapScreen.ts";
+import { chipGlyph } from "./map/index.ts";
 
 export interface ScanFeedbackContent {
   readonly checkbox: boolean;

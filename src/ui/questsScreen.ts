@@ -15,7 +15,7 @@ import { COLOURS } from "./layout/colours.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { QUEST_LIST_PAGE_SIZE, QUEST_ROUTE_ARROW } from "./layout/questsScreen.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { chipFace, chipGlyph, type MapScreenLabels } from "./mapScreen.ts";
+import { chipFace, chipGlyph, type MapScreenLabels } from "./map/index.ts";
 import { createCard, setFooterAction, setScrollGroup } from "./modal.ts";
 import { createStandardCloseAction } from "./modalClose.ts";
 import { createModalLayer } from "./modalLayer.ts";

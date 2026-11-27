@@ -1,7 +1,7 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
-import type { LocalMap } from "../model/map.ts";
-import { UNLISTED_COLOURS } from "./layout/colours.ts";
+import type { LocalMap } from "../../model/map.ts";
+import { UNLISTED_COLOURS } from "../layout/colours.ts";
 import { type FogStampBounds, fogStampBounds } from "./layout/mapFog.ts";
 import { fogBlur, fogReveal, type MapView, toScreen } from "./layout/mapScreen.ts";
 

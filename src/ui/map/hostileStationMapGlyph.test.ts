@@ -2,10 +2,10 @@ import { readFileSync } from "node:fs";
 
 import { expect, it } from "vitest";
 
-import { CONTENT } from "../data/content.ts";
-import { HOSTILE_STATION_COPY } from "../data/hostileStationCopy.ts";
-import { uiIconUrl } from "../data/uiIconUrl.ts";
-import type { HostileStationMapStatus, KnownHostileStationMapPlace } from "../model/map.ts";
+import { CONTENT } from "../../data/content.ts";
+import { HOSTILE_STATION_COPY } from "../../data/hostileStationCopy.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
+import type { HostileStationMapStatus, KnownHostileStationMapPlace } from "../../model/map.ts";
 import { MAP_FACES, MAP_GLYPHS, MAP_SYMBOL, mapGlyphSize } from "./layout/mapScreen.ts";
 import { createMapPresentationRevision } from "./mapRenderQueue.ts";
 import { chipFace, chipGlyph, mapScreenLabels, placeLines, travelState } from "./mapScreen.ts";
@@ -15,7 +15,7 @@ it("uses the native hostile-station asset while retaining friendly station ident
   expect(chipGlyph({ symbol: "station" })).toBe("map-station");
   expect(MAP_GLYPHS.hostileStation).not.toBe(MAP_GLYPHS.station);
   const source = readFileSync(
-    new URL(`../../public${uiIconUrl("map-hostile-station")}`, import.meta.url),
+    new URL(`../../../public${uiIconUrl("map-hostile-station")}`, import.meta.url),
     "utf8",
   );
   expect(source).toContain(`width="${MAP_SYMBOL.hostileStationGlyph}"`);

@@ -8,8 +8,8 @@ appear. Every distance and size comes from [Layout](layout.md) or the tokens
 below; states and colours of shared controls are in [Controls](controls.md).
 
 Constants: `MAP_SCREEN`, `MAP_PANEL`, `MAP_SYMBOL`, `MAP_FACES`, `MAP_GLYPHS`
-and `MAP_TOOLS` in `src/ui/layout/mapScreen.ts`; the panel's height is
-`panelHeight` in `src/ui/mapScreen.ts`.
+and `MAP_TOOLS` in `src/ui/map/layout/mapScreen.ts`; the panel's height is
+`panelHeight` in `src/ui/map/mapScreen.ts`.
 
 ## Screen
 
@@ -239,7 +239,7 @@ unavailable. Inactive reasons take no space.
 
 ### Shared Quests
 
-The Map footer's Quests action delegates from `src/ui/mapScreen.ts` through
+The Map footer's Quests action delegates from `src/ui/map/mapScreen.ts` through
 `src/ui/pauseCard.ts` to the shared screen in `src/ui/questsScreen.ts`.
 The list opens over the dimmed Map. Dismissing the list restores focus to
 the Map's Quests button and keeps the Map's view and selection. Its footer

@@ -18,7 +18,6 @@ import * as conversationBox from "../src/ui/layout/conversationBox.ts";
 import * as css from "../src/ui/layout/css.ts";
 import * as galaxyMap from "../src/ui/layout/galaxyMap.ts";
 import * as itemNotice from "../src/ui/layout/itemNotice.ts";
-import * as mapScreen from "../src/ui/layout/mapScreen.ts";
 import * as playView from "../src/ui/layout/playView.ts";
 import * as shopCard from "../src/ui/layout/shopCard.ts";
 import * as startScreen from "../src/ui/layout/startScreen.ts";
@@ -27,6 +26,7 @@ import * as storyPage from "../src/ui/layout/storyPage.ts";
 import * as tokens from "../src/ui/layout/tokens.ts";
 import * as touchControls from "../src/ui/layout/touchControls.ts";
 import * as viewScale from "../src/ui/layout/viewScale.ts";
+import * as mapScreen from "../src/ui/map/layout/mapScreen.ts";
 
 /** Every src/ui/layout module by file name; the test checks this against the directory. */
 export const LAYOUT_MODULES: Readonly<Record<string, Readonly<Record<string, unknown>>>> = {

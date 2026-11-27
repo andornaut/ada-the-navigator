@@ -28,7 +28,7 @@ try {
   page.on("console", (m) => console.log(m.text()));
   await page.goto(new URL("/__map-perf__.html", origin).href);
   await page.evaluate(async () => {
-    const { createMapScreen, mapScreenLabels } = await import("/src/ui/mapScreen.ts");
+    const { createMapScreen, mapScreenLabels } = await import("/src/ui/map/index.ts");
     const { CONTENT } = await import("/src/data/content.ts");
     const { UI_STYLESHEET } = await import("/src/ui/stylesheet.ts");
     const style = document.createElement("style");

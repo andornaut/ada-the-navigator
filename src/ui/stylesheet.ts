@@ -19,7 +19,7 @@ import { QUESTS_SCREEN_STYLE } from "./layout/questsScreen.ts";
 import { SHIP_CARD_STYLE } from "./layout/shipCard.ts";
 import { STATION_STYLE } from "./layout/stationStyle.ts";
 import { LOADING_STYLE } from "./loadingBar.ts";
-import { MAP_SCREEN_STYLE } from "./mapScreen.ts";
+import { MAP_SCREEN_STYLE } from "./map/index.ts";
 import { NOTICE_STYLE } from "./notice.ts";
 import { PENNY_MARKERS_STYLE } from "./pennyMarkers.ts";
 import { RESTART_STYLE } from "./restartCard.ts";

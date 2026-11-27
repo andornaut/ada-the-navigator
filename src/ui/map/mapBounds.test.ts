@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { CONTENT } from "../data/content.ts";
-import type { GalaxyNumber } from "../data/types.ts";
-import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
-import { GameModel } from "../model/game.ts";
-import { landmarkSites } from "../model/landmarks.ts";
-import { SAVE_RESTORE } from "../saving/index.ts";
-import { playOpening, supportEntropy } from "../testing/launch.ts";
+import { CONTENT } from "../../data/content.ts";
+import type { GalaxyNumber } from "../../data/types.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "../../model/flightTopology.ts";
+import { GameModel } from "../../model/game.ts";
+import { landmarkSites } from "../../model/landmarks.ts";
+import { SAVE_RESTORE } from "../../saving/index.ts";
+import { playOpening, supportEntropy } from "../../testing/launch.ts";
+import { NO_INSETS } from "../layout/playView.ts";
 import {
   fitRegion,
   innerRegion,
@@ -23,7 +24,6 @@ import {
   toScreen,
   zoomView,
 } from "./layout/mapScreen.ts";
-import { NO_INSETS } from "./layout/playView.ts";
 
 const GALAXIES: readonly GalaxyNumber[] = [1, 2, 3, 4, 5, 6];
 const VIEW = { height: 360, width: 720 };

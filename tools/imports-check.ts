@@ -41,6 +41,8 @@ const ENTRIES = new Set([
 const SOURCE = /\.(?:mjs|mts|ts)$/u;
 const TEST = /\.test\.ts$/u;
 
+const uiLayout = (path: string) => /^src\/ui\/(?:map\/)?layout\//u.test(path);
+
 const sceneModule = (path: string) => {
   const name = /^src\/game\/([^/]+)\.ts$/u.exec(path)?.[1];
   return name !== undefined && (name.startsWith("scene") || SCENE_MODULES.has(name));
@@ -73,7 +75,7 @@ export const LAYERS: readonly Layer[] = [
   },
   {
     band: "Presentation",
-    holds: (path) => path.startsWith("src/ui/layout/") || INPUT_STATE.has(path),
+    holds: (path) => uiLayout(path) || INPUT_STATE.has(path),
     name: "layout and input state",
   },
   {
@@ -83,7 +85,7 @@ export const LAYERS: readonly Layer[] = [
   },
   {
     band: "Engine and views",
-    holds: (path) => path.startsWith("src/ui/") && !path.startsWith("src/ui/layout/"),
+    holds: (path) => path.startsWith("src/ui/") && !uiLayout(path),
     name: "ui",
   },
   {

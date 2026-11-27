@@ -4,9 +4,9 @@ import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
-import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
-import { CHARTING_ORIGIN, CHARTING_RADIUS, withinChartingRadius } from "../model/map.ts";
-import { UNLISTED_COLOURS } from "./layout/colours.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "../../model/flightTopology.ts";
+import { CHARTING_ORIGIN, CHARTING_RADIUS, withinChartingRadius } from "../../model/map.ts";
+import { UNLISTED_COLOURS } from "../layout/colours.ts";
 import {
   MAP_COLORS,
   type MapView,

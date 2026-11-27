@@ -173,6 +173,7 @@ describe("DOM UI sizes", () => {
       rawPixelFindings(relative(UI, path), readFileSync(path, "utf8")),
     );
     expect(findings).toEqual([]);
+    expect(UI_SOURCES).toContain(join(UI, "map/mapScreen.ts"));
   });
 
   it("are caught in CSS strings, computed px, geometry assignments and literal units", () => {
@@ -216,7 +217,8 @@ describe("DOM UI sizes", () => {
         "../style.css",
         "layout/bootSplash.css",
         "layout/bootSplashColours.ts",
-        "layout/mapScreen.ts",
+        "map/layout/mapScreen.ts",
+        "map/mapScreen.ts",
         "modal.ts",
         "modal/style.ts",
       ]),

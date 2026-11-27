@@ -100,6 +100,7 @@ import {
   createScanFeedbackView,
   createStationView,
   createStorybook,
+  fogColor,
   mapDistance,
   type MapField,
   mapScreenLabels,
@@ -112,7 +113,6 @@ import {
 } from "../ui/index.ts";
 import { itemDetailName } from "../ui/itemDetailContent.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
-import { fogColor } from "../ui/layout/mapScreen.ts";
 import { safeGameArea } from "../ui/layout/playView.ts";
 import { markerFootprints } from "../ui/markerFootprints.ts";
 import { navigationEntry } from "../ui/navigationEntry.ts";

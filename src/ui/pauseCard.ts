@@ -14,7 +14,7 @@ import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBindin
 import { compactLevelName } from "./compactLevelName.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { createMapScreen, type MapField, type MapScreenLabels } from "./mapScreen.ts";
+import { createMapScreen, type MapField, type MapScreenLabels } from "./map/index.ts";
 import { createCard } from "./modal.ts";
 import { createStandardCloseAction } from "./modalClose.ts";
 import { createModalLayer } from "./modalLayer.ts";

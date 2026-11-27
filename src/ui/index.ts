@@ -9,7 +9,7 @@ export { createBannerLayer, type PlacedBanner } from "./disabledBanner.ts";
 export { createFpsCounter } from "./fpsCounter.ts";
 export { createGalaxyMap, type GalaxyMapView } from "./galaxyMap.ts";
 export { createJumpOverlay, type SheetArt, type WarpPaint } from "./jumpOverlay.ts";
-export { mapDistance, type MapField, mapScreenLabels } from "./mapScreen.ts";
+export { fogColor, mapDistance, type MapField, mapScreenLabels } from "./map/index.ts";
 export { createCoveredPaint } from "./modalScenePaint.ts";
 export { BOX_OCCUPANT, type BoxOccupant, boxOccupant } from "./notice.ts";
 export { createPennyMarkerLayer, markerName } from "./pennyMarkers.ts";

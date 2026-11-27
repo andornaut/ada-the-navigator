@@ -138,6 +138,30 @@ export default defineConfig(
   ts.configs.recommended,
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
   { files: SOURCE_FILES, plugins, rules: sourceRules },
+  {
+    // Keep the Local Map's emitted module order when its shared UI dependencies are one level up.
+    files: ["src/ui/map/mapScreen.ts"],
+    rules: {
+      "simple-import-sort/imports": [
+        "error",
+        {
+          groups: [
+            ["^\\u0000"],
+            ["^node:"],
+            ["^@?\\w"],
+            ["^"],
+            [
+              "^\\.",
+              "^\\./(?:layout/|mapChromeTree\\.ts$)",
+              "^\\.\\./mapCloseAction\\.ts$",
+              "^\\./",
+              "^\\.\\./weapons\\.ts$",
+            ],
+          ],
+        },
+      ],
+    },
+  },
   ...boundaryConfigs(),
   phaserModuleConfig,
   ...importLayerConfigs(import.meta.dirname),

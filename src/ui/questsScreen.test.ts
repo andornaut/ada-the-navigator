@@ -8,10 +8,10 @@ import type { QuestEntry } from "../model/questDetails.ts";
 import * as actionBinding from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { slice, units } from "./layout/css.ts";
-import { MAP_SCREEN } from "./layout/mapScreen.ts";
 import { QUEST_ICON, QUESTS_SCREEN_STYLE } from "./layout/questsScreen.ts";
 import { BUTTON_GAP } from "./layout/tokens.ts";
-import { mapScreenLabels } from "./mapScreen.ts";
+import { MAP_SCREEN } from "./map/layout/mapScreen.ts";
+import { mapScreenLabels } from "./map/mapScreen.ts";
 import { createQuestsScreen, questRoute } from "./questsScreen.ts";
 
 const entry: QuestEntry = {

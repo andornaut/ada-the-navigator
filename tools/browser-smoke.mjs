@@ -555,7 +555,7 @@ try {
   // full-size pips at the approved diameter and pitch, unscaled, the first floor(percent / 10)
   // filled cream and the rest hollow rings. The widest header, the longest galaxy name with "100%
   // mapped", measured in the header's own fonts, stays in the cap.
-  const mapLayout = await import(new URL("../src/ui/layout/mapScreen.ts", import.meta.url));
+  const mapLayout = await import(new URL("../src/ui/map/layout/mapScreen.ts", import.meta.url));
   const { SPACING: mapSpacing } = await import(new URL("../src/data/layout.ts", import.meta.url));
   const { GALAXIES } = await import(new URL("../src/data/storybook.ts", import.meta.url));
   const mapHeaders = {};

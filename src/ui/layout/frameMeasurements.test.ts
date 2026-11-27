@@ -15,8 +15,8 @@ const PAGE_BOX_USES: Readonly<Record<string, string>> = {
     "Maps a pointer's client point into the game through pageToGame and the turn",
   "ui/layout/frameBox.ts": "The frame measurement helpers",
   "ui/layoutTreeMeasurements.ts": "Turns every box into the host's frame axes with frameRect",
-  "ui/mapRenderQueue.ts": "A change key for re-rendering, compared and never laid out",
-  "ui/mapScreen.ts": "Maps a pointer's client point into the map's frame with framePoint",
+  "ui/map/mapRenderQueue.ts": "A change key for re-rendering, compared and never laid out",
+  "ui/map/mapScreen.ts": "Maps a pointer's client point into the map's frame with framePoint",
   "ui/markerFootprints.ts": "Turns each footprint into the host's frame axes with frameRect",
   "ui/pennyMarkers.ts":
     "Turns each marker box into the frame axes with frameRect and frameDeviceOrigin",

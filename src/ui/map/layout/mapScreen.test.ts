@@ -4,11 +4,13 @@ import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import { HIT_RULE, hitAround, pressedArea } from "@andornaut/game-kit/runtime/ui/hitAreas";
 import { describe, expect, it } from "vitest";
 
-import { FALLBACK_SPACE_PALETTE, readGalaxyFields } from "../../art/spacePalette.ts";
-import type { GalaxyNumber } from "../../data/types.ts";
-import { uiIconUrl } from "../../data/uiIconUrl.ts";
-import { CURRENT_FLIGHT_TOPOLOGY } from "../../model/flightTopology.ts";
-import { CARD_CLOSE } from "./cardFrame.ts";
+import { FALLBACK_SPACE_PALETTE, readGalaxyFields } from "../../../art/spacePalette.ts";
+import type { GalaxyNumber } from "../../../data/types.ts";
+import { uiIconUrl } from "../../../data/uiIconUrl.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "../../../model/flightTopology.ts";
+import { CARD_CLOSE } from "../../layout/cardFrame.ts";
+import { logicalView, NO_INSETS, safeInsets, safeRect, viewScale } from "../../layout/playView.ts";
+import { SPACING } from "../../layout/tokens.ts";
 import {
   adaAngle,
   chipRect,
@@ -49,8 +51,6 @@ import {
   toScreen,
   zoomView,
 } from "./mapScreen.ts";
-import { logicalView, NO_INSETS, safeInsets, safeRect, viewScale } from "./playView.ts";
-import { SPACING } from "./tokens.ts";
 
 const BASE = { height: 360, width: 720 };
 const SIDE = CURRENT_FLIGHT_TOPOLOGY.side;
@@ -136,7 +136,7 @@ describe("map screen tokens", () => {
     expect(new Set(glyphs).size).toBe(14);
     for (const glyph of glyphs) {
       const svg = readFileSync(
-        new URL(`../../../public${uiIconUrl(glyph)}`, import.meta.url),
+        new URL(`../../../../public${uiIconUrl(glyph)}`, import.meta.url),
         "utf8",
       );
       expect(svg, glyph).toContain('aria-hidden="true"');
@@ -382,7 +382,7 @@ describe("fog and Ada", () => {
   it("colours each galaxy's fog as Art's table: the mean of environment and its detail", () => {
     const fields = readGalaxyFields(
       JSON.parse(
-        readFileSync(new URL("../../../public/art/galaxies.json", import.meta.url), "utf8"),
+        readFileSync(new URL("../../../../public/art/galaxies.json", import.meta.url), "utf8"),
       ),
     );
     const fog = (galaxy: GalaxyNumber) => {

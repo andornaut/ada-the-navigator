@@ -17,7 +17,6 @@ import {
 import { SCROLL } from "./layout/contentCard.ts";
 import { pixels, units, VIEW_PROPERTIES } from "./layout/css.ts";
 import { frameDeviceOrigin, frameRect, turnOf } from "./layout/frameBox.ts";
-import { MAP_COLORS, MAP_FACES, MAP_SYMBOL } from "./layout/mapScreen.ts";
 import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
 import {
   layoutTargetMarkers,
@@ -26,7 +25,7 @@ import {
 } from "./layout/targetMarkers.ts";
 import { SPACING } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
-import { chipGlyph } from "./mapScreen.ts";
+import { chipGlyph, MAP_COLORS, MAP_FACES, MAP_SYMBOL } from "./map/index.ts";
 const { question: BODY_QUESTION, size: SIZE } = PENNY_MARKER;
 /** The enemy markers, each a filled threat disc; a hostile station draws the heavy disc. */
 const THREAT_SYMBOLS = ["enemy", "guard", "heavy", "hostileStation"] as const;

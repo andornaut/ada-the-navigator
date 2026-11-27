@@ -101,6 +101,8 @@ describe("layers", () => {
     expect(layerOf("src/saving/index.ts")).toBe(layer("saving"));
     expect(layerOf("src/game/sceneHud.ts")).toBe(layer("scene"));
     expect(layerOf("src/ui/layout/tokens.ts")).toBe(layer("layout and input state"));
+    expect(layerOf("src/ui/map/layout/mapScreen.ts")).toBe(layer("layout and input state"));
+    expect(layerOf("src/ui/map/mapScreen.ts")).toBe(layer("ui"));
     expect(layerOf("src/ui/modal.ts")).toBe(layer("ui"));
     expect(layerOf("src/input/controls.ts")).toBe(layer("scene"));
     expect(layerOf("src/loading/bootstrap.ts")).toBe(layer("entry"));
