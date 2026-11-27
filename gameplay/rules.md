@@ -153,9 +153,10 @@ invitations on the desk, its boarding pages included, resolves at the
 community garden lot in the rain and closes in Ada's room at night with the rock
 glowing; the prologue moves from the park to Ada's room. Narration
 pages show no name tab; dialogue pages show the speaker's. Back on a storybook
-page acts as Previous. An optional-question page returns to its question list
-until Next, so Ada can ask every question. Next shows Astra's boarding line,
-then the galaxy map. Back to title and Continue, or closing and reopening the
+page acts as Previous where available. A completed optional thread returns to
+its original question list with every topic still available;
+a named boarding action leaves that list and resumes Astra's boarding lines
+before the galaxy map. Back to title and Continue, or closing and reopening the
 game, retain the exact story page, unanswered choice, questions already asked,
 cross-scene Previous trail and elapsed sleep time. Resume does not select an
 answer, repeat completed scene effects or restart the sleep scene. Saves keep
@@ -269,10 +270,24 @@ Story and quest interactions in space (Talk, Deliver, Tow, Salvage and Deposit)
 open the conversation card: the storybook's story panel over the
 paused, dimmed space view. Each line shows its actual speaker's name tab and
 portrait. An interaction with no person to address uses Astra. The card offers
-Next for generic dialog advancement, along with choices, Ask more and Skip
-where available. Choice, spoken-response and named-action buttons use their
-authored labels. X is the only Close control. Skip advances to the outcome and
-still asks for a pending choice.
+Next and Previous on linear pages. A topic list or internal fork shows the
+authored questions, responses or actions, with Previous when there is a page
+to return to. Next is absent while a choice is required. Previous retraces the
+actual path within the open conversation without applying or undoing outcomes.
+A completed optional thread returns to its original topic list, including
+topics already read. Internal forks are reached only by entering their thread
+and following its choices. A topic list offers a named action to resume the
+main conversation when its topics are optional.
+
+A quest icon identifies a choice that advances the quest. A checkmark identifies
+a thread read to its end during this visit. Backing out partway leaves it
+unchecked. Checked threads remain selectable. Checkmarks persist across page
+turns and station screens, and reset on undock or when Ada closes a standalone
+conversation. X is the Close control. Skip can pass optional dialogue and
+leaves a material choice for the player to answer.
+The card's outer edges stay inside the actual game viewport intersected with
+device-safe insets, including on wide phones. Backgrounds and dimming may bleed
+beyond it.
 Normal Dock opens the Station welcome with the keeper paragraph and available
 services. [Stations](economy.md#stations) describes the welcome and services.
 Conversations use brief essential exchanges with optional

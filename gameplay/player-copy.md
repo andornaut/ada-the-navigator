@@ -12,17 +12,19 @@ and stops for an unresolved choice.
 Every space Use interaction, Dock included, opens the conversation card. The conversation's PARTY heading names the person or group Ada is
 addressing. Each line has its own speaker name and portrait, including Ada,
 Astra and Penny when they speak. A PARTY heading never attributes every line to
-that party. Narration remains unattributed. Next advances essential lines;
-Ask more offers the listed optional topics and returns to the same conversation.
-Optional topics never gate progress. Skip dialogue reaches the existing outcome
-once, preserving any pending choice for the player to answer.
+that party. Narration remains unattributed. Next advances a linear page.
+Previous follows the actual path back and is available at a fork when an
+earlier page exists. A choice page shows its questions, responses or named
+actions in place of Next. A completed optional thread returns to its original
+topic list, where every topic remains available. Skip reaches the existing
+outcome once, preserving any pending material choice for the player to answer.
 
 In-flight chatter and drone/Admiral broadcasts remain in the small conversation
 box with touch dismissal. Automatic gate and battle reactions below stay chatter;
 their presence in a chapter does not turn them into Use interactions.
 
 Each quest step gets roughly four to eight essential lines plus two or three
-optional Ask more topics. Runtime keys use galaxy IDs, not chapter
+optional topics. Runtime keys use galaxy IDs, not chapter
 order: Sunflower 1, Cartwheel 2, Whirlpool 3, Needle 4, Andromeda 5 and Phantom 6.
 Chapter headings below identify the authored exchanges. Outcome chains keep
 their existing keys and order. Repeated mechanical actions use the short Astra
@@ -152,7 +154,7 @@ Aboard, standing:
 - Astra: "In space. I'll fly where you steer. You choose where we go, and tell me
   what you see."
 
-Optional questions, each returning to the list until Next:
+Optional questions, each returning to the list until the boarding action:
 
 - "What's a holodisk?" Astra: "A disk that holds part of my memory. Each one you
   find helps me remember, maybe even how I came to Earth, and shows me new
@@ -245,7 +247,7 @@ Space dialogue, in story order:
 - Clover: "There's a workshop out here somewhere. Would you take them some food and ask for help?"
 - Ada: "I'll take the food and ask."
 
-Ask more:
+Optional topics:
 
 - "What do you need?" Clover: "Help with the equipment. We could grow more if it worked."
 - "Do you know the others?" Clover: "We haven't spoken much with the other outposts."
@@ -257,7 +259,7 @@ Ask more:
 - Ada: "Where could we find some?"
 - Rivet: "The salvagers might have what we need. Take them this tool kit."
 
-Ask more:
+Optional topics:
 
 - "What do you repair?" Rivet: "Tools, ships and growing equipment. Spare parts really help!"
 - "Why a tool kit?" Rivet: "Useful tools for them, spare parts for us."
@@ -269,7 +271,7 @@ Ask more:
 - Ada: "The growers have food. I brought some to the workshop."
 - Patch: "Take these parts to the workshop. We'll contact the growers."
 
-Ask more:
+Optional topics:
 
 - "What do you salvage?" Patch: "Things people have lost or left behind. Plenty can be used again."
 - "Who will ask for food?" Patch: "We will. You've shown us who to ask."
@@ -281,7 +283,7 @@ Ask more:
 - Ada: "And the salvagers will contact the growers for food."
 - Rivet: "We'll arrange the next exchange ourselves. Thank you for introducing us!"
 
-Ask more:
+Optional topics:
 
 - "Need another delivery?" Rivet: "Not for this repair. We can arrange the next exchange ourselves."
 - "Who has the holodisk?" Rivet: "Ask at any of our outposts. We have something for you."
@@ -296,7 +298,7 @@ Outpost speaker line. The handover uses the existing outcome once.
 - Astra: "Yes. A piece of my memory."
 - Outpost: "Take it. And thank you."
 
-Ask more:
+Optional topics:
 
 - "Where was it?" Outpost: "Drifting near our outposts."
 - "What does it hold?" Astra: "Part of my memory."
@@ -362,7 +364,7 @@ Space dialogue, in story order:
 - Marlo: "Yes, and I'd like to get through. Could you help clear a way?"
 - Ada: "I'll clear those rocks. My shots won't hurt you."
 
-Ask more:
+Optional topics:
 
 - "Where do you travel?" Marlo: "We travel through space together. There are places we visit and currents we follow."
 - "Are you stuck?" Marlo: "These rocks block my way. Clear them so I can move again."
@@ -374,7 +376,7 @@ Ask more:
 - Marlo: "I don't know where my family went. Would you look for them?"
 - Ada: "I'll look. Then I'll bring you their coordinates."
 
-Ask more:
+Optional topics:
 
 - "Will they be looking?" Marlo: "They'll be searching for me too."
 - "What do you like?" Marlo: "Familiar voices and finding places I haven't seen before. The young ones learn our routes from us."
@@ -386,7 +388,7 @@ Ask more:
 - Whale family: "They're safe? Please share our coordinates so they can find us."
 - Ada: "I'll go back and tell Marlo where you are."
 
-Ask more:
+Optional topics:
 
 - "Who are you seeking?" Whale family: "The whale traveling alone. We want to be together again."
 - "What should I share?" Whale family: "Our coordinates. Then Marlo will know where to go."
@@ -398,7 +400,7 @@ Ask more:
 - Ada: "They're searching for you too."
 - Marlo: "Thank you for listening."
 
-Ask more:
+Optional topics:
 
 - "Can you reach them?" Marlo: "Yes. The rocks are clear, and now I know where they are."
 - "What happens next?" Marlo: "I'll swim back to my family."
@@ -414,7 +416,7 @@ the family is traveling together again." Then keep `3.holodiskLead` and
 - Whale family: "A shining disk drifts on the current ahead. Drones guard it. Follow our song."
 - Ada: "Astra's holodisk! We'll follow."
 
-Ask more:
+Optional topics:
 
 - "Where is the disk?" Whale family: "Ahead on the current. Follow our song."
 - "Is it guarded?" Whale family: "Drones guard it. Take care on your way."
@@ -488,7 +490,7 @@ Space dialogue, in story order:
 - Elder Loom: "It drifted into the Eye, our narrowest channel."
 - Ada: "How do I reach it?"
 
-Ask more:
+Optional topics:
 
 - "Who flies here?" Elder Loom: "We Avi fly between the star clouds through channels thin as thread."
 - "How do pilots learn?" Elder Loom: "Every pilot learns them one gate at a time."
@@ -500,7 +502,7 @@ Ask more:
 - Elder Loom: "Try our practice channel. Three gates. Breathe, and go slowly."
 - Ada: "Three gates first. I'll take my time."
 
-Ask more:
+Optional topics:
 
 - "Why practice?" Elder Loom: "The Eye is our narrowest channel. Learn the gates here first."
 - "How many practice gates?" Elder Loom: "Three. One gate at a time."
@@ -512,7 +514,7 @@ Ask more:
 - Elder Loom: "The Eye is waiting."
 - Ada: "I'll go slowly through each gate."
 
-Ask more:
+Optional topics:
 
 - "Where is the disk?" Elder Loom: "In the Eye, our narrowest channel."
 - "Should I hurry now?" Elder Loom: "No. The channels cannot be rushed."
@@ -601,7 +603,7 @@ Space dialogue, in story order:
 - Wick: "They keep getting lost. It must be Archie's drones. Everyone is scared to fly."
 - Ada: "I'll look at the beacon."
 
-Ask more:
+Optional topics:
 
 - "What do beacons do?" Wick: "They guide ships between the settlements."
 - "Why are ships lost?" Wick: "Without the beacons, the bright spiral is easy to get lost in."
@@ -618,7 +620,7 @@ dented, like something bumped into it."
 - Pip: "There's something else. I found this disk floating by the beacon. It's so strange and shiny. I kept it."
 - Ada: "I won't tell on you, Pip. But I'll come with you while you tell them."
 
-Ask more:
+Optional topics:
 
 - "What do you carry?" Pip: "Mail between the settlements. I'm good at it, mostly. I just hurry."
 - "Will you come with me?" Pip: "Yes. I'll tell them what happened."
@@ -630,7 +632,7 @@ Ask more:
 - Wick: "Now, who can help us fix it?"
 - Pip: "I can help! Spare beacon parts are kept at the settlement. Let's go get them."
 
-Ask more:
+Optional topics:
 
 - "Where are the parts?" Pip: "At the settlement. Come with me."
 - "What needs fixing?" Wick: "The dark guide beacon. Ships need its light."
@@ -642,7 +644,7 @@ Ask more:
 - Wick: "There. The beacon is lit again, and ships can find their way."
 - Ada: "I can see its light!"
 
-Ask more:
+Optional topics:
 
 - "Can ships travel now?" Wick: "Yes. The beacon can guide them again."
 - "What was damaged?" Wick: "The beacon Pip clipped. The parts have repaired it."
@@ -654,7 +656,7 @@ Ask more:
 - Pip: "I should have given it back right away. Here."
 - Ada: "Thank you, Pip."
 
-Ask more:
+Optional topics:
 
 - "Where did you find it?" Pip: "Floating by the beacon."
 - "Why did you keep it?" Pip: "It was so strange and shiny. I should have given it back."
@@ -736,7 +738,7 @@ Deposit uses Astra's short brief below.
 - Ada: "Can I bring a little at a time?"
 - Quartz: "Partial loads count, and you can travel back when you're out of danger."
 
-Ask more:
+Optional topics:
 
 - "Who uses the hub?" Quartz: "Independent miners. There's docking space for everyone."
 - "Should I keep some ore?" Astra: "Yes. Above ten percent shield, recharge needs ore."
@@ -751,7 +753,7 @@ There's plenty of room. Why block them?"
 - Ada: "Would you like company next time?"
 - Mica: "I'd like some company next time. That would help."
 
-Ask more:
+Optional topics:
 
 - "Do you need docking help?" Mica: "I know how to dock. I just need them to stop blocking me."
 - "What would help?" Mica: "Company on the approach. Stay nearby."
@@ -763,7 +765,7 @@ Ask more:
 - Ada: "Mica would like company next time. Will you come?"
 - Opal: "I'll come in with you. We can make room and stay nearby."
 
-Ask more:
+Optional topics:
 
 - "Does Mica want company?" Ada: "Yes. I asked, and Mica said it would help."
 - "What will we do?" Opal: "Come in together. Make room and stay nearby."
@@ -775,7 +777,7 @@ Ask more:
 - Mica: "I'm coming in."
 - Jasper: "We are staying."
 
-Ask more:
+Optional topics:
 
 - "Should we move away?" Jasper: "Stay nearby. There's room for everyone."
 - "What does Mica need?" Ada: "Room to dock and company on the approach."
@@ -853,7 +855,7 @@ Space dialogue, in story order:
 - Blurbs: "We haven't left since the Admiral came."
 - Ada: "The blockade here is broken."
 
-Ask more:
+Optional topics:
 
 - "Who lives here?" Blurbs: "We Blurbs wobble, but we always hold together."
 - "What kept you inside?" Blurbs: "The Admiral's drones. They're gone now."
@@ -865,7 +867,7 @@ Ask more:
 - Blurbs: "Yes. The stranded travelers can come home now."
 - Ada: "Then they have a way back."
 
-Ask more:
+Optional topics:
 
 - "Can travelers return?" Blurbs: "Yes. The blockade is broken."
 - "Who blocked the way?" Blurbs: "The Admiral's drones."
@@ -877,7 +879,7 @@ Ask more:
 - Dollop: "Past the dark nebula."
 - Dollop: "We'll send word to everyone you've helped."
 
-Ask more:
+Optional topics:
 
 - "Where should I look?" Dollop: "Past the dark nebula. His flagship waits there."
 - "Who will you tell?" Dollop: "Everyone you've helped."
@@ -901,7 +903,7 @@ holodisk outcome. After the sixth memory line:
 - Ada: "No one has to. But you could help fix what you broke here."
 - Admiral Archie: "The Blurbs' docks. My blockades cracked them. I'll start there."
 
-Ask more:
+Optional topics:
 
 - "What is on the map?" Astra: "Every coordinate. There are galaxies past galaxies."
 - "Where will you start?" Admiral Archie: "The Blurbs' docks. My blockades cracked them."
@@ -961,7 +963,7 @@ Last holodisk, after the flagship is disabled:
 - Astra: "The last holodisk is here. I can bring it aboard."
 - Ada: "Let's get your memory back."
 
-Ask more, optional for the relevant salvage:
+Optional topics for the relevant salvage:
 
 - "What can we collect?" Astra: "Parts from this disabled ship." For the flagship's last holodisk: Astra: "The last piece of my memory."
 - "Is it disabled?" Astra: "Yes. Its weapons are down."
@@ -980,7 +982,7 @@ Tow keeps its existing attach and rescue outcome.
 - Astra: "Ore deposited at the hub. Partial loads count."
 - Ada: "Let's keep ore for your shield too."
 
-Ask more:
+Optional topics:
 
 - "Why keep ore?" Astra: "Above ten percent shield, recharge needs ore. Without ore, it won't charge higher."
 - "When does recharge start?" Astra: "Thirty seconds after our last hit. Keep ore for recharge above ten percent."
@@ -1337,9 +1339,13 @@ or replay rewards.
 - Use actions, each the disc's accessible name and drawn as a symbol: Talk,
   Deliver, Deposit, Tow, Salvage, Dock, Scan, Quest details, and Use for any other
   interaction. Available real actions, including repeatable Dock, take priority.
-- Dialog buttons: Next for an action that only advances the dialog, including
-  greeting pages and optional-topic lists. Use the authored label for a choice,
-  spoken response or named action. Ask more opens optional topics.
+- Dialogue buttons: Next advances linear pages. On a choice page, use authored
+  questions, responses and named actions. Previous returns to the page just
+  left when history exists, including from a choice page. A topic list's exit
+  names the next beat, such as taking the pilot's seat or asking how to reach
+  the Eye. Questions never gate the exit. A quest icon identifies a choice that
+  advances the quest. A checkmark identifies a fully read thread during this
+  visit. Keep the question text and communicate both meanings accessibly.
 - Shop ammunition lock reason: key `requiresWeapon`, exact text
   "Requires {weapon}". Substitute the canonical current weapon display name for
   `ShopRow.requiresWeapon`, without an inferred level or alternate nickname.
