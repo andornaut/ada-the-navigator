@@ -6,7 +6,7 @@ import { questReward } from "../data/questRewards.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { visitCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
-import { playOpening, supportEntropy } from "../testing/launch.ts";
+import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
 import { ensureDestination } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { HUB_STATION } from "./stations.ts";
@@ -79,13 +79,13 @@ describe("the mining hub as a station", () => {
     expect(model.state.flight!.velocity).toEqual({ x: 0, y: 0 });
   });
 
-  it("waits to offer Dock until a story scene near the hub and its line have ended", () => {
+  it("waits for the blocked scene before offering Dock and plays Ada's reaction in flight", () => {
     const model = atHub();
     const f = model.state.flight!;
     const [first] = CONTENT.tuning.miningMilestones;
     f.cargo = first;
     model.interact();
-    // The first milestone starts the blocked scene: no Use until it and its line are done.
+    // The first milestone starts the blocked scene: Dock waits for the manoeuvre.
     expect(f.storyScene).toMatchObject({ id: "blocked", lineDue: true });
     expect(model.contextAction).toBeUndefined();
     model.interact();
@@ -101,12 +101,24 @@ describe("the mining hub as a station", () => {
     for (let time = 0; time <= duration + 0.1; time += 0.1) {
       model.step(0.1, idle);
     }
-    expect(f.storyScene?.lineDue).toBe(false);
-    expect(model.state.dialogue).toMatchObject({ context: "firstDeposit" });
-    expect(model.contextAction).toBeUndefined();
-    model.choose("continue");
-    expect(model.state.progress[2].deposited).toBe(first);
-    expect(model.contextAction).toBe("dock");
+    expect(f.storyScene?.lineDue).toBe(true);
+    const resumed = relaunch(CONTENT, model.save());
+    const resumedFlight = resumed.state.flight!;
+    expect(resumedFlight.storyScene?.lineDue).toBe(true);
+    const afterScene = resumedFlight.time;
+    resumed.step(0.1, idle);
+    expect(resumedFlight.time).toBeGreaterThan(afterScene);
+    expect(resumed.state.dialogue).toBeNull();
+    expect(resumed.conversation).toMatchObject({
+      speaker: "ada",
+      text: CONTENT.chapters[2]!.dialogue.firstDeposit?.text,
+    });
+    expect(resumedFlight.storyScene?.lineDue).toBe(false);
+    expect(resumed.conversation?.text).toBe(CONTENT.chapters[2]!.dialogue.firstDeposit?.text);
+    expect(resumed.state.progress[2].deposited).toBe(first);
+    expect(resumed.contextAction).toBe("dock");
+    resumed.interact();
+    expect(resumed.state.docked).toBe(HUB_STATION);
   });
 
   it("delivers a job's item bound for the hub before Dock", () => {

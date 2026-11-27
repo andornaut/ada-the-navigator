@@ -827,11 +827,16 @@ it("plays each Cartwheel story scene first, then its line, at the held story des
     } else {
       model.step(0.05, idle);
     }
+    void model.conversation;
   }
   expect(f.time - f.storyScene!.at).toBeGreaterThanOrEqual(
     CARTWHEEL_STORY_SHIPS.scenes.blocked.duration,
   );
-  expect(model.state.dialogue?.text).toBe(CONTENT.chapters[2]!.dialogue.firstDeposit?.text);
+  expect(model.state.dialogue).toBeNull();
+  expect(model.conversation).toMatchObject({
+    speaker: "ada",
+    text: CONTENT.chapters[2]!.dialogue.firstDeposit?.text,
+  });
   expect(f.storyScene!.lineDue).toBe(false);
   // The miner and the visitors stand at their holding points beside the hub, unguarded.
   const hub = f.objects.find((o) => o.id === "hub")!;
@@ -881,13 +886,17 @@ it("replays a story scene cut short by the flight's end at the hub after a reloa
     } else {
       reloaded.step(0.05, idle);
     }
+    void reloaded.conversation;
   }
   expect(f.time - f.storyScene!.at).toBeGreaterThanOrEqual(
     CARTWHEEL_STORY_SHIPS.scenes.blocked.duration,
   );
-  expect(reloaded.state.dialogue?.text).toBe(CONTENT.chapters[2]!.dialogue.firstDeposit?.text);
+  expect(reloaded.state.dialogue).toBeNull();
+  expect(reloaded.conversation).toMatchObject({
+    speaker: "ada",
+    text: CONTENT.chapters[2]!.dialogue.firstDeposit?.text,
+  });
   // Spoken once: a later flight does not replay it.
-  reloaded.state.dialogue = null;
   reloaded.returnHome();
   expect(reloaded.state.progress[2].replayScene).toBeUndefined();
 });

@@ -4343,6 +4343,29 @@ export class GameModel {
     this.sounderCues(f);
     if (f.galaxy === 2) {
       this.cartwheelClaimCues();
+      const scene = f.storyScene;
+      const blocked = CARTWHEEL_STORY_SHIPS.scenes.blocked;
+      if (
+        scene?.id === "blocked" &&
+        scene.lineDue &&
+        !this.suspendedInteraction &&
+        f.time >= scene.at + blocked.duration
+      ) {
+        const reaction = this.chapter.dialogue[blocked.line];
+        if (reaction) {
+          this.talk.authoredCue(
+            "chapter:cartwheel:firstDeposit",
+            { speaker: "ada", text: reaction.text },
+            {
+              onFirstShowing: () => {
+                scene.lineDue = false;
+              },
+              relevant: () =>
+                this.state.flight === f && f.storyScene === scene && !this.state.docked,
+            },
+          );
+        }
+      }
     }
     this.talk.step(dt, held, {
       aimed: Math.hypot(input.aim.x, input.aim.y) > 0,
@@ -4481,15 +4504,16 @@ export class GameModel {
       f.storyScene = { at: f.time, id: replay, lineDue: true };
       delete this.current.replayScene;
     }
-    // A story ship scene plays first; its line follows when it ends.
+    // The approach conversation still needs its own scene and speaker handoffs.
     const scene = f.storyScene;
     if (
-      scene?.lineDue &&
+      scene?.id === "docking" &&
+      scene.lineDue &&
       !this.state.dialogue &&
-      f.time >= scene.at + CARTWHEEL_STORY_SHIPS.scenes[scene.id].duration
+      f.time >= scene.at + CARTWHEEL_STORY_SHIPS.scenes.docking.duration
     ) {
       scene.lineDue = false;
-      this.exchange(CARTWHEEL_STORY_SHIPS.scenes[scene.id].line);
+      this.exchange(CARTWHEEL_STORY_SHIPS.scenes.docking.line);
       return;
     }
     const intro = first(f.galaxy);
