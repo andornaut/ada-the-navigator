@@ -101,7 +101,7 @@ describe("enemy weapon damage", () => {
       }
     }
     expect(levels.map((level) => fireDamageRatio({ level, weapon: "heavyMissile" }))).toEqual([
-      5, 6, 7,
+      5, 7, 9,
     ]);
     expect(levels.map((level) => fireDamageRatio({ level, weapon: "phaser" }))).toEqual([4, 6, 8]);
     expect(fireDamageRatio({ level: 1, weapon: "rapidMissile" })).toBe(2);

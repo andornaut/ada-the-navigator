@@ -18,6 +18,8 @@ describe("pure player projectile volleys", () => {
     ["rapidMissile", 2, 0.4, 600 / 600, 2, 30],
     ["rapidMissile", 3, 0.3, 700 / 600, 2, 30],
     ["heavyMissile", 1, 2, 400 / 600, 5, 60],
+    ["heavyMissile", 2, 2, 400 / 600, 7, 60],
+    ["heavyMissile", 3, 2, 400 / 600, 9, 60],
   ] as const)(
     "plans one straight %s at level %i with interval %f, speed x%f, damage x%f and blast %i",
     (weapon, level, interval, speed, damage, blast) => {

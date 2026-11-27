@@ -136,11 +136,11 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
     },
     {
       ...heavyMissileBase,
-      damageRatio: 6,
+      damageRatio: 7,
     },
     {
       ...heavyMissileBase,
-      damageRatio: 7,
+      damageRatio: 9,
     },
   ],
   // Damage and fire rate each grow 1.25/1.2 then 1.5/1.5; the bolt flies 500, 600 and 700 world

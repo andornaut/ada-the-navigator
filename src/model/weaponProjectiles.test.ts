@@ -398,26 +398,36 @@ describe("integrated weapon projectiles", () => {
     expect(flight.shots).toHaveLength(0);
   });
 
-  it("damages every enemy within a Heavy Missile's blast and never Ada", () => {
-    const { flight } = launched("heavyMissile");
-    flight.ownedWeapons = ["heavyMissile"];
-    flight.facing = { x: 1, y: 0 };
-    // The missile strikes the first hull, radius 20, about 37 ahead; Ada is inside the blast.
-    flight.objects = [
-      retaliator("struck", 60, 0, 5),
-      retaliator("inside", 40, 60, 5),
-      retaliator("outside", 40, -85),
-    ];
-    const shield = flight.shield;
-    for (let slice = 0; slice < 30 && alive(flight, "struck"); slice++) {
-      stepFlight(CONTENT, 1 / 60, slice ? idle : right, flight);
-    }
-    expect(alive(flight, "struck")).toBe(false);
-    expect(alive(flight, "inside")).toBe(false);
-    expect(hp(flight, "outside")).toBe(8);
-    expect(flight.shield).toBe(shield);
-    expect(activeBlastFlashes(flight)).toMatchObject([{ radius: 60 }]);
-  });
+  it.each([
+    [1, 5],
+    [2, 7],
+    [3, 9],
+  ])(
+    "deals a level %i Heavy Missile's %i damage once to each target in its blast",
+    (level, damage) => {
+      const { flight } = launched("heavyMissile");
+      flight.ownedWeapons = ["heavyMissile"];
+      flight.ammo.heavyMissile = 3;
+      flight.levels.weapons.heavyMissile = level;
+      flight.facing = { x: 1, y: 0 };
+      // The missile strikes the first hull while Ada and another enemy are inside the blast.
+      flight.objects = [
+        retaliator("struck", 60, 0, 30),
+        retaliator("inside", 40, 60, 30),
+        retaliator("outside", 40, -85),
+      ];
+      const shield = flight.shield;
+      for (let slice = 0; slice < 30 && hp(flight, "struck") === 30; slice++) {
+        stepFlight(CONTENT, 1 / 60, slice ? idle : right, flight);
+      }
+      expect(hp(flight, "struck")).toBe(30 - damage);
+      expect(hp(flight, "inside")).toBe(30 - damage);
+      expect(hp(flight, "outside")).toBe(8);
+      expect(flight.shield).toBe(shield);
+      expect(flight.ammo.heavyMissile).toBe(2);
+      expect(activeBlastFlashes(flight)).toMatchObject([{ radius: 60 }]);
+    },
+  );
 
   it("lets one blast flash stand in for the destruction flash of every enemy it destroys", () => {
     const { flight, model } = launched("heavyMissile");

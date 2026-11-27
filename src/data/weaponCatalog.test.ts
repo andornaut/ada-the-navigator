@@ -97,9 +97,9 @@ describe("weapon levels", () => {
       expect(rapid.intervalSeconds).toBeLessThan(heavy.intervalSeconds);
       expect(heavy.damageRatio).toBeGreaterThan(rapid.damageRatio);
     }
-    // Heavy output is 2.5, 3 and 3.5 damage per second.
+    // Heavy output is 2.5, 3.5 and 4.5 damage per second.
     WEAPON_CATALOG.heavyMissile.forEach((level, index) =>
-      expect(perSecond(level)).toBeCloseTo([2.5, 3, 3.5][index]!, 9),
+      expect(perSecond(level)).toBeCloseTo([2.5, 3.5, 4.5][index]!, 9),
     );
     WEAPON_CATALOG.rapidMissile.forEach((level, index) =>
       expect(perSecond(level)).toBeCloseTo([4, 5, 20 / 3][index]!, 9),
@@ -109,7 +109,7 @@ describe("weapon levels", () => {
   it("keeps the Heavy Missile's blast at 60 and the Phaser's range at 370", () => {
     // The Heavy Missile fires every 2 s at every level; only its damage grows.
     expect(WEAPON_CATALOG.heavyMissile.map((level) => level.intervalSeconds)).toEqual([2, 2, 2]);
-    expect(WEAPON_CATALOG.heavyMissile.map((level) => level.damageRatio)).toEqual([5, 6, 7]);
+    expect(WEAPON_CATALOG.heavyMissile.map((level) => level.damageRatio)).toEqual([5, 7, 9]);
     const blasts = WEAPON_CATALOG.heavyMissile.map((level) => level.blastRadius);
     const ranges = WEAPON_CATALOG.phaser.map((level) => level.beamRange);
     expect(blasts).toEqual([60, 60, 60]);
