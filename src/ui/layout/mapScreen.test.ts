@@ -109,7 +109,6 @@ describe("map screen tokens", () => {
       zoomStep: 1.5,
     });
     expect(MAP_PANEL).toMatchObject({
-      actionGap: 16,
       markGap: 8,
       padding: 16,
       reasonGap: 8,

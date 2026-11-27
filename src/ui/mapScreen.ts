@@ -330,17 +330,18 @@ export function emptyPanelHeight(reason: boolean): number {
 }
 
 /**
- * The panel's height: its row, which grows past 48 for a third text line, and the reason line
- * while one shows. lines counts the name; 0 is the reason-only panel, with no row (52).
+ * The expected panel height before layout, with additional rows for Travel and a reason.
+ * The line count includes the name and is zero for a reason-only panel.
  */
-export function panelHeight(reason: boolean, lines = 2): number {
+export function panelHeight(reason: boolean, lines = 2, offersTravel = false): number {
   const { padding, reasonGap, row, textTop } = MAP_PANEL;
   const reasonLine = reason ? TYPE.body.lineHeight : 0;
   if (lines === 0) {
     return 2 * padding + reasonLine;
   }
   const text = 2 * textTop + lines * TYPE.body.lineHeight;
-  return 2 * padding + Math.max(row, text) + (reason ? reasonGap + reasonLine : 0);
+  const action = offersTravel ? SPACING.gap + row : 0;
+  return 2 * padding + Math.max(row, text) + action + (reason ? reasonGap + reasonLine : 0);
 }
 
 export const MAP_SCREEN_STYLE = `
@@ -668,11 +669,8 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
   display:none
 }
 .ada-controls .ada-map-row{
-  min-height:${units(MAP_PANEL.row)};
-  display:flex;
-  flex-wrap:wrap;
-  align-items:center;
-  gap:${units(MAP_PANEL.markGap)} ${units(MAP_PANEL.actionGap)}
+  display:grid;
+  gap:${units(SPACING.gap)}
 }
 /* The reason-only and empty panels hold no row. */
 .ada-controls .ada-map-row[hidden]{
@@ -682,7 +680,7 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
   display:flex;
   align-items:center;
   gap:${units(MAP_PANEL.markGap)};
-  flex:1 1 max-content;
+  min-height:${units(MAP_PANEL.row)};
   min-width:0
 }
 .ada-controls .ada-map-row .ada-map-place{
@@ -703,7 +701,7 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
   color:${MAP_COLORS.cream}
 }
 .ada-controls .ada-map-row .ada-button{
-  flex:none;
+  justify-self:start;
   min-width:max-content;
   white-space:nowrap
 }
@@ -1353,11 +1351,12 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       }
     }
     const place = selectedPlace();
-    const reason = travelNow().reason !== null;
+    const { offered, reason: refusal } = travelNow();
+    const reason = refusal !== null;
     if (!place && mapShowsEmpty(places())) {
       return bottom - emptyPanelHeight(reason);
     }
-    return bottom - panelHeight(reason, place ? 1 + detailLines(place).length : 0);
+    return bottom - panelHeight(reason, place ? 1 + detailLines(place).length : 0, offered);
   };
 
   const drawFog = (inner: Rect, unit: number, current: MapView) => {

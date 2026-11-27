@@ -214,6 +214,8 @@ describe("map screen place panel", () => {
     expect(panelHeight(false, 1)).toBe(80);
     expect(panelHeight(false, 3)).toBe(100);
     expect(panelHeight(true, 3)).toBe(128);
+    expect(panelHeight(false, 2, true)).toBe(136);
+    expect(panelHeight(true, 3, true)).toBe(184);
   });
 
   it("marks every held job on the orange face: a target keeps its glyph, a job's spot its type's", () => {

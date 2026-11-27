@@ -566,8 +566,6 @@ export const KEEPER_PIPS_WIDTH =
 export const MAP_HUD_LABEL_WIDTHS = { galaxies: 66, quests: 54.25 } as const;
 
 export const MAP_PANEL = {
-  /** Text block to Travel here, at least. */
-  actionGap: 16,
   /** Chip to the text block (SPACING.gap). */
   markGap: SPACING.gap,
   /** SPACING.panelPadding, including the 2 frame. */
