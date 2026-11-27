@@ -474,8 +474,29 @@ an inset of three logical pixels. That corner exception is not a new global
 margin. Measure actual visible art, outline and scale rather than transparent
 image bounds; do not infer universal zero error or exact one-to-two-pixel
 containment from component evidence. Penny's `?`, known quests, bosses and other
-markers follow this placement rule. The 5,000 range, lifetime and knowledge/icon
-rules remain unchanged.
+markers follow this placement rule. The 5,000-unit range applies to ordinary
+markers; the tracked objective below has its own range.
+
+### Tracked quest objective
+
+Highlight one objective in the current galaxy. Default to the active story
+step. Quest Details offers “Track quest” for an active job in that galaxy;
+selecting it replaces the story highlight. Return to the story highlight if the
+tracked job ends or Ada leaves its galaxy. Follow the selected quest's current
+step as it updates.
+
+A tracked, explicitly revealed destination remains marked at any distance in
+the current galaxy. For a search step, guide to its known search area when
+available. Hidden items remain undisclosed. The tracked highlight uses the
+same registry entry, real location icon and wrapped bearing as ordinary
+guidance. Add a quest badge and a short target label at the edge while it is
+off screen. Move the highlight above the target while it is on screen.
+Briefly pulse on an objective change, then hold steady. With reduced motion,
+show the steady highlight immediately.
+
+After Elder Loom's briefing, highlight the Practice Channel's green-flag start.
+When Ada starts the course, move guidance to the next uncleared ring. Use the
+same handoff for the Eye once it becomes the current step.
 
 ### Task category colours
 

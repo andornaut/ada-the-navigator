@@ -504,7 +504,8 @@ Optional topics:
 
 - Elder Loom: "To reach the disk you must thread every gate, slowly."
 - Ada: "Can I try a shorter channel first?"
-- Elder Loom: "Try our practice channel. Three gates. Breathe, and go slowly."
+- Elder Loom: "Follow the green flag to the Practice Channel. That's where the
+  first ring is."
 - Ada: "Three gates first. I'll take my time."
 
 Optional topics:
