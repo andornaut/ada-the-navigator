@@ -454,11 +454,11 @@ home muddy and happy."
 Objectives, in order:
 
 1. Explore the galaxy.
-2. Shoot the debris blocking the whale.
+2. Shoot the three rocks trapping Marlo.
 3. Talk with the freed whale.
 4. Explore to find the whale's family.
 5. Return to the whale and share the coordinates.
-6. Fight your way to the holodisk.
+6. Defeat the guard, then collect the holodisk.
 7. Go home to Earth when ready.
 
 ## Chapter three: the needle
@@ -559,8 +559,8 @@ Objectives, in order:
 
 1. Explore the galaxy.
 2. Meet Elder Loom.
-3. Light the practice gates.
-4. Light the Eye's gates.
+3. Start at the Practice Channel’s green flag and clear its three rings.
+4. Start at the Eye’s green flag and clear its eight rings.
 5. Collect the holodisk.
 6. Go home to Earth when ready.
 
@@ -691,8 +691,8 @@ Objectives, in order:
 1. Explore the galaxy.
 2. Find out why ships are getting lost.
 3. Talk with Pip.
-4. Go with Pip to the settlers.
-5. Get beacon parts at the settlement with Pip.
+4. Follow Pip to the settlers’ station.
+5. Follow Pip to the outpost to pick up the beacon parts.
 6. Bring beacon parts to the dark beacon.
 7. Take the holodisk from Pip.
 8. Go home to Earth when ready.
@@ -817,7 +817,7 @@ Objectives, in order:
 3. Keep depositing ore and talk with the miner.
 4. Speak with regular visitors about approaching together.
 5. Join the miner's approach at the hub.
-6. Buy the holodisk at the hub.
+6. Buy the holodisk in the Mining Hub’s Shop.
 7. Go home to Earth when ready.
 
 ### Captain Claim and Outrigger Carrier
@@ -944,8 +944,8 @@ Objectives, in order:
 2. Break the drone blockades.
 3. Talk with the freed Blurbs.
 4. Fly to Archie's flagship.
-5. Disable the flagship.
-6. Salvage the last holodisk.
+5. Destroy the flagship’s weapon hardpoints to disable it.
+6. Use Salvage at the flagship to recover the last holodisk.
 7. Go home to Earth when ready.
 
 ## Repeated mechanical Use briefs
