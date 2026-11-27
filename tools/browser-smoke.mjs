@@ -663,7 +663,7 @@ try {
       measured.note,
       pixelUnit,
     );
-    const expectedWidth = mapLayout.mapCardWidth(insets, view, current.width, pixelUnit);
+    const expectedWidth = mapLayout.mapHeaderWidthForView(insets, view, current.width, pixelUnit);
     const { divider, dividerCount, gapCount, padding, pip, pipPitch, pips } =
       mapLayout.MAP_SCREEN.header;
     const pixels = (logical) => Math.round(logical * pixelUnit);
@@ -742,9 +742,7 @@ try {
         noteRounding < gapCount &&
         headerRounding >= 0 &&
         Math.abs(width - expectedWidth) <= 0.5,
-      `${name}: header fits its ${cap} cap and ink floors at the shared card width: ${JSON.stringify(
-        mapHeaders[name],
-      )}`,
+      `${name}: header fits its ${cap} cap and ink floors: ${JSON.stringify(mapHeaders[name])}`,
     );
   }
   // The galaxy map's panel and destination action (art/layout.md "Galaxy selector"): where
@@ -2763,7 +2761,17 @@ try {
       getComputedStyle(document.querySelector("#app")).getPropertyValue("--ada-unit"),
     );
     const box = panel.getBoundingClientRect();
+    const innerWidth = Math.max(
+      ...[
+        ...panel.querySelectorAll(".ada-map-empty:not([hidden]), .ada-map-reason [data-shown]"),
+      ].map((line) => {
+        const text = document.createRange();
+        text.selectNodeContents(line);
+        return text.getBoundingClientRect().width / unit;
+      }),
+    );
     return {
+      innerWidth,
       height: Math.round((box.height / unit) * 10) / 10,
       hidden: panel.hidden,
       reason: [...panel.querySelectorAll(".ada-map-reason [data-shown]")].map(
@@ -2787,21 +2795,21 @@ try {
   });
   // With nothing mapped the reason follows the empty note: 80 high, else 52.
   const emptyMap = (await mapScreen.locator(".ada-map-places .ada-map-place").count()) === 0;
+  const { innerWidth, width: reasonWidth, ...reasonState } = reasonOnly;
   assert.deepEqual(
-    reasonOnly,
+    reasonState,
     {
       height: emptyMap ? 80 : 52,
       hidden: false,
       order: emptyMap ? { centred: ["center", "center"], emptyAbove: true } : null,
       reason: [CONTENT.labels.travelUnavailable],
       row: true,
-      // The danger line is narrower than the floor, so the panel takes
-      // min(MAP_PANEL.minWidth, maxWidth); maxWidth is the label-sized footer's Quests left less
-      // SPACING.gap and the page inset.
-      width: Math.min(360, Math.round((hudRow.quests.left / hudRow.unit - 8 - 16) * 10) / 10),
     },
-    "In danger with nothing selected the reason-only panel takes the floor width by 52, or 80 " +
-      "with the empty note",
+    "In danger with nothing selected the reason-only panel is 52 high, or 80 with the empty note",
+  );
+  assert.ok(
+    Math.abs(reasonWidth - innerWidth - 2 * mapLayout.MAP_PANEL.padding) <= 0.5,
+    `The reason-only panel hugs its visible text: ${JSON.stringify(reasonOnly)}`,
   );
   await page.screenshot({ path: `${output}/map-earth-danger.png` });
   // Map proofs: the local map in danger with nothing mapped, its header, tools, empty panel and
@@ -3044,13 +3052,11 @@ try {
     jobPanel.jobHeight > 1.5 * jobPanel.lineHeight,
     `A long Job line wraps inside the panel: ${JSON.stringify(jobPanel)}`,
   );
-  // The selection matches the header and leaves a gap to the footer, beside or above it.
+  // The selection sits at the page inset and leaves a gap to the footer.
   assert.ok(
     Math.abs(jobPanel.panel.left - jobPanel.header.left) <= 0.5 &&
-      Math.abs(jobPanel.panel.width - jobPanel.header.width) <= 0.5 &&
-      (jobPanel.panel.right <= jobPanel.quests.left - 8 * jobPanel.unit + 0.5 ||
-        jobPanel.panel.bottom <= jobPanel.quests.top - 8 * jobPanel.unit + 0.5),
-    `The matched selection panel clears the footer: ${JSON.stringify(jobPanel)}`,
+      jobPanel.panel.right <= jobPanel.quests.left - 8 * jobPanel.unit + 0.5,
+    `The selection panel clears the footer: ${JSON.stringify(jobPanel)}`,
   );
   assert.ok(
     jobPanel.chip.bottom < jobPanel.panel.top,

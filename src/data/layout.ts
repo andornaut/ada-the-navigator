@@ -570,8 +570,6 @@ export const MAP_PANEL = {
   actionGap: 16,
   /** Chip to the text block (SPACING.gap). */
   markGap: SPACING.gap,
-  /** The card floor: half the 720 base width. */
-  minWidth: SCREEN.width / 2,
   /** SPACING.panelPadding, including the 2 frame. */
   padding: SPACING.panelPadding,
   /** Row to the reason line (SPACING.gap). */

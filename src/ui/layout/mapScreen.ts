@@ -206,8 +206,8 @@ export function mapHeaderCap(insets: Insets, view: Size): number {
   return Math.max(0, toolColumnLeft(insets, view) - SPACING.gap - mapHeaderLeft(insets, view));
 }
 
-/** Both cards share the approved width, with room for the header ink and the tools. */
-export function mapCardWidth(
+/** The header has room for its ink and ends clear of the tools. */
+export function mapHeaderWidthForView(
   insets: Insets,
   view: Size,
   headerWidth: number,
@@ -217,11 +217,6 @@ export function mapCardWidth(
   const preferred = Math.ceil(Math.max(page.width * 0.53, headerWidth) * pixelUnit);
   const cap = Math.floor(mapHeaderCap(insets, view) * pixelUnit);
   return Math.min(preferred, cap) / pixelUnit;
-}
-
-/** Lift a selected card clear of the footer when the matched width needs the space. */
-export function mapCardLift(width: number, sideBySideWidth: number): number {
-  return width > sideBySideWidth ? MAP_SCREEN.hudRow.height + SPACING.gap : 0;
 }
 
 /** Filled survey pips: one per whole tenth of the header's displayed percent. */

@@ -56,11 +56,10 @@ import {
   MAP_SCREEN,
   MAP_SYMBOL,
   MAP_TOOLS,
-  mapCardLift,
-  mapCardWidth,
   mapGlyphSize,
   mapHeaderGeometry,
   mapHeaderLeft,
+  mapHeaderWidthForView,
   type MapTool,
   type MapView,
   mapWorldDiamond,
@@ -642,15 +641,13 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
   }
 }
 
-/* The place panel is left-aligned, above the footer when it needs the extra width. */
+/* The place panel hugs its content, capped at the footer's left edge. */
 .ada-controls .ada-map-panel{
   position:absolute;
   left:${safeEdge("left", SAFE_MARGIN.page)};
   bottom:${safeEdge("bottom", SAFE_MARGIN.page)};
   box-sizing:border-box;
-  /* Its own text width: shrink-to-fit would stop at the half view right of a centred left. */
   width:max-content;
-  min-width:min(${units(MAP_PANEL.minWidth)},var(--map-panel-width));
   padding:calc(${units(MAP_PANEL.padding)} - ${slice(CARD_SLICE)});
   display:grid;
   gap:${units(MAP_PANEL.reasonGap)};
@@ -675,7 +672,7 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
   display:flex;
   flex-wrap:wrap;
   align-items:center;
-  gap:${units(MAP_PANEL.markGap)}
+  gap:${units(MAP_PANEL.markGap)} ${units(MAP_PANEL.actionGap)}
 }
 /* The reason-only and empty panels hold no row. */
 .ada-controls .ada-map-row[hidden]{
@@ -696,8 +693,7 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
   flex:1;
   min-width:0;
   display:grid;
-  padding:${units(MAP_PANEL.textTop)} 0;
-  margin-right:${units(MAP_PANEL.actionGap - MAP_PANEL.markGap)}
+  padding:${units(MAP_PANEL.textTop)} 0
 }
 .ada-controls .ada-map-text,.ada-controls .ada-map-reason{
   overflow-wrap:anywhere
@@ -705,10 +701,6 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
 .ada-controls .ada-map-name{
   font:${font(TYPE.label)};
   color:${MAP_COLORS.cream}
-}
-/* Use the name's intrinsic width to decide when to wrap the action. Details wrap within that line. */
-.ada-controls .ada-map-detail{
-  contain:inline-size
 }
 .ada-controls .ada-map-row .ada-button{
   flex:none;
@@ -727,16 +719,11 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
   height:${units(BALANCE.icon)};
   background:url('${uiIconUrl("icon-stardust-20")}') center / 100% 100% no-repeat
 }
-/* Every reason shares one cell, so the panel keeps the widest reason's width in every state. */
 .ada-controls .ada-map-reason{
-  display:grid;
   text-align:left
 }
-.ada-controls .ada-map-reason > span{
-  grid-area:1 / 1
-}
 .ada-controls .ada-map-reason > span:not([data-shown]){
-  visibility:hidden
+  display:none
 }
 .ada-controls .ada-map-reason:not(:has([data-shown])){
   display:none
@@ -1309,7 +1296,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   let textMeasure: CanvasRenderingContext2D | null | undefined;
   const inkMeasurements = new Map<string, { offset: number; width: number }>();
   let view: MapView | null = null;
-  let cardWidth = 0;
   const chips = new Map<string, HTMLButtonElement>();
   let order = "";
 
@@ -1359,10 +1345,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     if (!panelShown()) {
       return null;
     }
-    const bottom =
-      size.height -
-      Math.max(SAFE_MARGIN.page, insets.bottom) -
-      (panel.hasAttribute("data-above-footer") ? MAP_SCREEN.hudRow.height + SPACING.gap : 0);
+    const bottom = size.height - Math.max(SAFE_MARGIN.page, insets.bottom);
     if (!panel.hidden) {
       const measured = frameBoxIn(screen, panel);
       if (measured.height > 0) {
@@ -1544,12 +1527,12 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     const percentWidth = measureInk(percent, percentInk);
     const noteWidth = measureInk(noteInk, noteInk);
     const geometry = mapHeaderGeometry(nameWidth, percentWidth, noteWidth, pixelUnit);
-    cardWidth = mapCardWidth(insets, size, geometry.width, pixelUnit);
+    const headerWidth = mapHeaderWidthForView(insets, size, geometry.width, pixelUnit);
     const page = safeRect(insets, SPACING.pageInset, size);
     header.style.left = pixels(Math.ceil(mapHeaderLeft(insets, size) * pixelUnit) / density);
     header.style.top = pixels(Math.ceil(page.y * pixelUnit) / density);
-    header.style.width = units(cardWidth);
-    const gap = geometry.gap + (cardWidth - geometry.width) / MAP_SCREEN.header.gapCount;
+    header.style.width = units(headerWidth);
+    const gap = geometry.gap + (headerWidth - geometry.width) / MAP_SCREEN.header.gapCount;
     header.style.setProperty("--map-header-gap", units(gap));
     const dividerWidth = pixels(Math.round(MAP_SCREEN.header.divider.width * pixelUnit) / density);
     for (const divider of dividers) {
@@ -1636,15 +1619,8 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     const sideBySide = panelMaxWidth(insets, size, navigation || undefined);
     const place = selectedPlace();
     const travelling = travelNow();
-    const lift = place ? mapCardLift(cardWidth, sideBySide) : 0;
-    const bottom = size.height - Math.max(SAFE_MARGIN.page, insets.bottom) - lift;
-    const width = units(place ? cardWidth : sideBySide);
-    panel.style.width = place ? width : "";
-    panel.style.left = place ? header.style.left : "";
-    panel.style.maxWidth = width;
-    panel.style.setProperty("--map-panel-width", width);
-    panel.style.bottom = lift ? units(size.height - bottom) : "";
-    panel.toggleAttribute("data-above-footer", lift > 0);
+    const bottom = size.height - Math.max(SAFE_MARGIN.page, insets.bottom);
+    panel.style.maxWidth = units(sideBySide);
     panel.style.maxHeight = place ? units(selectedPanelMaxHeight(fit, bottom)) : "";
     panel.hidden = !panelShown();
     row.hidden = place === null;

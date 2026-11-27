@@ -24,14 +24,13 @@ import {
   MAP_SCREEN,
   MAP_SYMBOL,
   MAP_TOOLS,
-  mapCardLift,
-  mapCardWidth,
   mapCloseRect,
   mapGalaxiesRect,
   mapHeaderCap,
   mapHeaderGeometry,
   mapHeaderLeft,
   mapHeaderWidth,
+  mapHeaderWidthForView,
   mapImage,
   mapProjection,
   mapQuestsRect,
@@ -112,7 +111,6 @@ describe("map screen tokens", () => {
     expect(MAP_PANEL).toMatchObject({
       actionGap: 16,
       markGap: 8,
-      minWidth: 360,
       padding: 16,
       reasonGap: 8,
       textTop: 4,
@@ -177,15 +175,13 @@ describe("map projection and fit", () => {
     expect(mapHeaderCap(phone, BASE)).toBe(464 - CARD_CLOSE.hit.width);
   });
 
-  it("fits a shared card width and lifts the selection only where it meets the footer", () => {
+  it("sizes the header independently of the selection and caps it at the tools", () => {
     const phone = { bottom: 19, left: 43, right: 43, top: 0 };
-    const width = mapCardWidth(NO_INSETS, BASE, 362, 2);
+    const width = mapHeaderWidthForView(NO_INSETS, BASE, 362, 2);
     expect(width).toBe(365);
-    expect(mapCardLift(width, 374)).toBe(0);
-    const compactWidth = mapCardWidth(phone, BASE, 362, 2);
+    const compactWidth = mapHeaderWidthForView(phone, BASE, 362, 2);
     expect(compactWidth).toBe(362);
-    expect(mapCardLift(compactWidth, 320)).toBe(56);
-    expect(mapCardWidth(phone, BASE, 500, 2)).toBe(mapHeaderCap(phone, BASE));
+    expect(mapHeaderWidthForView(phone, BASE, 500, 2)).toBe(mapHeaderCap(phone, BASE));
   });
 
   it("fills one survey pip per whole tenth of the displayed percent", () => {
