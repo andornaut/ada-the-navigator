@@ -4,7 +4,16 @@ import { dirname, join } from "node:path";
 import type { Point } from "@andornaut/game-kit/runtime/rect";
 import { describe, expect, it } from "vitest";
 
-import { readSpacePalette } from "../art/spacePalette.ts";
+import {
+  type CameraShake,
+  HIT_FLASH_FILL,
+  HIT_SHAKE_SHARE,
+  hitFlashAlpha,
+  hitFlashBands,
+  ModelFeedback,
+  readSpacePalette,
+  shakeCounter,
+} from "../art/index.ts";
 import { CONTENT } from "../data/content.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { HIT_FLASH, HIT_SHAKE } from "../data/layout.ts";
@@ -15,15 +24,6 @@ import { syncFlightRegion } from "../model/geography.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { publicJson } from "../testing/publicArt.ts";
-import {
-  type CameraShake,
-  HIT_FLASH_FILL,
-  HIT_SHAKE_SHARE,
-  hitFlashAlpha,
-  hitFlashBands,
-  ModelFeedback,
-  shakeCounter,
-} from "./feedback.ts";
 import { shakeIntensity } from "./playCamera.ts";
 
 function launched() {

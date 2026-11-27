@@ -32,6 +32,9 @@ import {
   hasPlayerHeadingPackage,
   heldFade,
   hexNumber,
+  HIT_FLASH_FILL,
+  hitFlashAlpha,
+  hitFlashBands,
   impactEffect,
   type JobArt,
   laserBolt,
@@ -40,6 +43,7 @@ import {
   missileFrame,
   missileKind,
   missileSolid,
+  ModelFeedback,
   overlaps,
   type PassableDraw,
   pellet,
@@ -93,6 +97,7 @@ import { direction } from "../model/shipPhysics.ts";
 import type { StoryNoses } from "../model/storyShips.ts";
 import type { FlightInput, FlightState, GameSave, Vec } from "../model/types.ts";
 import { shipTuning } from "../model/upgrades.ts";
+import { FeedbackSound } from "../platform/index.ts";
 import type { createBossHud } from "../ui/bossHud.ts";
 import type { ConversationBox } from "../ui/conversation.ts";
 import { createBannerLayer, type PlacedBanner } from "../ui/disabledBanner.ts";
@@ -127,13 +132,6 @@ import {
   readSidecars,
   type Sidecars,
 } from "./enemyArt.ts";
-import {
-  FeedbackSound,
-  HIT_FLASH_FILL,
-  hitFlashAlpha,
-  hitFlashBands,
-  ModelFeedback,
-} from "./feedback.ts";
 import {
   FORWARD_FLIGHT_KEY,
   FORWARD_FLIGHT_PATH,

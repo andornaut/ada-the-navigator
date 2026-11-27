@@ -6,11 +6,13 @@ import { Scale, type Scene, Scenes } from "phaser";
 import PROJECTS_FILE from "../../public/art/projects.json" with { type: "json" };
 import {
   AMMO_PACK_FRAMES,
+  type CameraShake,
   EDGE_MARKER_DEPTH,
   FALLBACK_SPACE_PALETTE,
   galaxyPalettes,
   hasShipHeadings,
   HIT_FLASH_DEPTH,
+  HIT_SHAKE_SHARE,
   HOLODISK_FRAMES,
   RASTER_SCALE_EVENT,
   readBeaconArt,
@@ -25,6 +27,8 @@ import {
   readStationArt,
   readUpgradePickup,
   readWeaponSolids,
+  shakeCounter,
+  TELEPORT_DISTANCE,
 } from "../art/index.ts";
 import { CHEAT_COPY } from "../data/cheatCopy.ts";
 import { CONTENT } from "../data/content.ts";
@@ -96,7 +100,6 @@ import { readTitleScreen, type TitleScreenArt } from "../ui/titleScreen.ts";
 import { type CoreManifest, galaxyManifestKey, readGalaxyManifest } from "./artManifest.ts";
 import { readDestruction } from "./destructionArt.ts";
 import { enemyPartFrame, GALAXY_FAMILIES } from "./enemyArt.ts";
-import { type CameraShake, HIT_SHAKE_SHARE, shakeCounter, TELEPORT_DISTANCE } from "./feedback.ts";
 import { LIGHT_FIELD, lightGalaxy, readLightGalaxies } from "./lightField.ts";
 import { fitPlayCamera, sceneFit, shakeIntensity } from "./playCamera.ts";
 import { readQuantumJump } from "./quantumJump.ts";

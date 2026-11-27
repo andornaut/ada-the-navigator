@@ -36,6 +36,18 @@ export {
 } from "./backdropLayers.ts";
 export { readStreakSpec, streakMarks, type StreakSpec } from "./currentStreaks.ts";
 export {
+  type CameraShake,
+  type FeedbackKind,
+  type FeedbackPulse,
+  HIT_FLASH_FILL,
+  HIT_SHAKE_SHARE,
+  hitFlashAlpha,
+  hitFlashBands,
+  ModelFeedback,
+  shakeCounter,
+  TELEPORT_DISTANCE,
+} from "./feedback.ts";
+export {
   type DebrisArt,
   debrisFrame,
   debrisMarks,

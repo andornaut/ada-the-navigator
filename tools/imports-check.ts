@@ -78,7 +78,7 @@ export const LAYERS: readonly Layer[] = [
   },
   {
     band: "Platform",
-    holds: (path) => /^src\/(?:crash|loading|pwa)\//u.test(path) && !ENTRIES.has(path),
+    holds: (path) => /^src\/(?:crash|loading|platform|pwa)\//u.test(path) && !ENTRIES.has(path),
     name: "platform",
   },
   {
