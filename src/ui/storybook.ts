@@ -13,7 +13,7 @@ import {
 import { ARCHIE_NAMED, type Speaker, SPEAKERS } from "../data/conversations.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { Background } from "../data/storybook.ts";
-import type { StoryChoice, StoryPage } from "../model/storybook.ts";
+import { showsStoryNext, type StoryChoice, type StoryPage } from "../model/storybook.ts";
 import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
@@ -125,7 +125,7 @@ export function storyPageView(
   return {
     background: page.background,
     canGoBack,
-    canSkip: canSkip && !page.sleep && !page.action && choices.length === 0,
+    canSkip: canSkip && showsStoryNext(page) && choices.length === 0,
     ...(page.heading ? { heading: page.heading } : {}),
     text: page.text,
     ...(page.speaker ? { speaker: page.speaker } : {}),

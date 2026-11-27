@@ -101,7 +101,7 @@ describe("storybook page", () => {
       canSkip: false,
       next: false,
     });
-    expect(storyPageView(page, [], true, true)).toMatchObject({ canSkip: true, next: true });
+    expect(storyPageView(page, [], true, true)).toMatchObject({ canSkip: false, next: true });
     const decision = {
       background: "aboard" as const,
       choices: [

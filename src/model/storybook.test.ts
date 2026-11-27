@@ -314,7 +314,7 @@ describe("story runs", () => {
     model.storyPrevious();
     expect(model.storyView).toMatchObject({
       canGoBack: false,
-      canSkip: true,
+      canSkip: false,
       page: { action: "Pick up the rock.", id: "room" },
     });
     model.storyPrevious();
@@ -333,7 +333,7 @@ describe("story runs", () => {
     model.leaveCockpit();
     expect(model.storyView).toMatchObject({
       canGoBack: false,
-      canSkip: true,
+      canSkip: false,
       page: { action: "Pick up the rock.", id: "room" },
     });
   });
@@ -389,10 +389,18 @@ describe("story runs", () => {
         const successor = model.storyView;
         const expected = showsNext(view) && showsNext(successor);
         expect(view.canSkip, view.page.id).toBe(expected);
-        if (expected && view.canGoBack) {states.add("middle");}
-        if (expected && !view.canGoBack) {states.add("first");}
-        if (successor?.page.choices?.length) {states.add("before-fork");}
-        if (!successor) {states.add("final");}
+        if (expected && view.canGoBack) {
+          states.add("middle");
+        }
+        if (expected && !view.canGoBack) {
+          states.add("first");
+        }
+        if (successor?.page.choices?.length) {
+          states.add("before-fork");
+        }
+        if (!successor) {
+          states.add("final");
+        }
       }
     }
     expect(model.screen).toBe("selector");

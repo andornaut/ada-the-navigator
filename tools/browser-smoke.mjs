@@ -4288,7 +4288,7 @@ try {
   // A story run (gameplay/rules.md "Earth scenes"): from Start, Previous on the prologue's first
   // page returns across Grandma's garden into chapter one's opening, Skip from a mid-prologue page aboard
   // passes the rest of the run to galaxy selection, and Stay on Earth lands on Ada's room page,
-  // which starts its run and, like every page with Next or a named action, offers Skip.
+  // which starts its run with a named action and no Skip.
   await seedOnce(
     new GameModel(CONTENT, supportEntropy, SAVE_RESTORE).save(),
     "ada-browser.story-run.v1",
@@ -4327,7 +4327,12 @@ try {
     await nextTo(text, remaining - 1);
   }
   await nextThrough(CONTENT.premise.gardenArrival.slice(1).map(({ text }) => text));
+  const beforeFork = await storyPage();
+  assert.ok(!beforeFork.skipShown, "Skip stays hidden immediately before authored choices");
   await storyButton("next").click();
+  const fork = await storyPage();
+  assert.ok(fork.previousShown && !fork.skipShown, "A fork keeps Previous and hides Skip");
+  assert.ok(!(await storyButton("next").isVisible()), "A fork only offers its authored choices");
   await storyButton("choice").first().click();
   await showsText(CONTENT.chapters[1].openingBranches[0]);
   await storyButton("next").click();
@@ -4367,12 +4372,12 @@ try {
   assert.equal(aboard.background, "aboard", "Skip is pressed on a page aboard");
   assert.equal(room.background, "adaRoom", "Home from galaxy selection shows Ada's room");
   assert.equal(roomAction, CONTENT.labels.pickUpRock);
-  assert.ok(room.skipShown, "Ada's room page offers Skip with its named action");
+  assert.ok(!room.skipShown, "Ada's room page keeps the named action without Skip");
   assert.ok(!room.previousShown, "Ada's room page from galaxy selection starts its run");
   events.checks.push(
     "A story run's Previous crosses from the prologue across Grandma's garden into chapter one, " +
       "Skip from aboard passes the run to galaxy selection, and Ada's room page starts a run " +
-      "with its named action and Skip",
+      "with its named action",
   );
 
   // The start screen (art/layout.md "Start screen"): every part in play-view px from the game
