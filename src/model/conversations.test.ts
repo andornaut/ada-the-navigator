@@ -333,7 +333,7 @@ describe("conversation triggers", () => {
     run(talk, 0.05);
     expect(showing(talk)).toBe("lesson:move:0");
     expect(talk.showing?.line).toEqual({
-      desktop: "Fly with WASD.",
+      desktop: "Move with WASD or the arrow keys.",
       speaker: "astra",
       text: "Fly with the {move}.",
     });
@@ -837,7 +837,7 @@ describe("conversations in the game", () => {
     const model = flying();
     model.step(0.05, idle);
     expect(model.conversation).toMatchObject({
-      desktop: "Fly with WASD.",
+      desktop: "Move with WASD or the arrow keys.",
       mood: "neutral",
       name: "Astra",
       named: false,

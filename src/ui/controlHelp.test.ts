@@ -68,9 +68,9 @@ describe("control help tokens", () => {
     expect(controlHelpText(CONTROL_WORDS, LESSON_AIM.text)).toBe(
       "Aim and fire with the right stick.",
     );
-    expect(LESSON_MOVE.desktop).toBe("Fly with WASD.");
+    expect(LESSON_MOVE.desktop).toBe("Move with WASD or the arrow keys.");
     expect(controlHelpParts(LESSON_MOVE.desktop!)).toEqual([
-      { kind: "text", text: "Fly with WASD." },
+      { kind: "text", text: "Move with WASD or the arrow keys." },
     ]);
     expect(controlHelpText(CONTROL_WORDS, HOME_COPY.mobile)).toBe(
       "Move with the left stick. Aim and fire with the right stick. Tap Use to interact.",
