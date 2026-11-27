@@ -15,6 +15,10 @@ import {
   playDepth,
   ringDart,
   ringEmission,
+  SALVAGED,
+  salvagedMatrix,
+  showsBanner,
+  spritesBounds,
 } from "../art/index.ts";
 import { CONTENT } from "../data/content.ts";
 import { enemyActorLoadout } from "../data/enemyActorDefinition.ts";
@@ -34,7 +38,6 @@ import {
   type PartSprite,
   selectEnemyFrame,
 } from "./enemyArt.ts";
-import { SALVAGED, salvagedMatrix, showsBanner, spritesBounds } from "./heavyStates.ts";
 import { keylineOffsets, LIGHT_FIELD } from "./lightField.ts";
 import type { GameScene } from "./scene.ts";
 import { familyArt, filterTexture } from "./sceneAssets.ts";

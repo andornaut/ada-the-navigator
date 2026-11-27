@@ -1,5 +1,10 @@
+import type { Vec } from "../data/types.ts";
 import type { EnemyState } from "../model/enemyAi.ts";
-import type { PartSprite } from "./enemyArt.ts";
+
+interface PositionedSprite {
+  frame: { displayHeight?: number; displayWidth?: number; pivot: Vec };
+  offset: Vec;
+}
 
 // Which heavy shows the Disabled banner, and a salvaged heavy's dimming (art/heavies.md
 // "States"), for the scene to draw.
@@ -35,7 +40,7 @@ export function salvagedColour(rgb: readonly [number, number, number], grey = SA
 }
 
 /** The drawn bounds of composed sprites about the hull sprite position, in display px. */
-export function spritesBounds(sprites: readonly Pick<PartSprite, "frame" | "offset">[]): {
+export function spritesBounds(sprites: readonly PositionedSprite[]): {
   bottom: number;
   left: number;
   right: number;

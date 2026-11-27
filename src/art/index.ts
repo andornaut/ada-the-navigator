@@ -86,6 +86,7 @@ export {
   shakeCounter,
   TELEPORT_DISTANCE,
 } from "./feedback.ts";
+export { SALVAGED, salvagedMatrix, showsBanner, spritesBounds } from "./heavyStates.ts";
 export {
   AUTHORED_JET_LENGTH,
   type JetPoint,
