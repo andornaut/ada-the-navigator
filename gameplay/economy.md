@@ -201,7 +201,7 @@ in 4 medium-or-larger ordinary asteroids in other galaxies, chosen once per rock
 by its seed so it never changes on Continue. Small asteroids are never crystal
 rocks and keep the ammo roll. A destroyed crystal rock skips the ammo roll and gives at least 1 ore;
 any further ore and Stardust roll as usual. Ore aboard fuels
-shield recharge starting 25 seconds after the last hit, at 4% of maximum
+shield recharge starting 20 seconds after the last hit, at 5% of maximum
 shield capacity per second. Each ore funds restoration of 1% of maximum shield capacity,
 so fewer than 10 ore are useful: 10 ore funds 10%, and an empty-to-full recharge
 costs 100 ore at every Shield level. Carried ore stays integer-valued; unused
@@ -295,7 +295,7 @@ are the exception: they drop for every weapon Ada owns, in any galaxy (see
 | Scattershot    | Owned weapon                                                                                                                                         | 800               |
 | Phaser         | Owned weapon                                                                                                                                         | 1000              |
 | Weapon upgrade | Per weapon, Laser included: levels 2 and 3, each about ×1.5 effective output (×1.2 to 1.33 for Rapid Missile and Multi-Laser)                        | See below         |
-| Shield         | Levels 2 and 3: capacity 15, then 20. Full recharge takes 25 s at every level with enough ore.                                                       | 450, 900          |
+| Shield         | Levels 2 and 3: capacity 15, then 20. Refill takes up to 20 s once recharge begins, at every level with enough ore.                                  | 450, 900          |
 | Engine tuning  | Levels 2 and 3: top speeds 200 and 225. Reach 90% speed in 0.80 and 0.65 s. Both coast about 120 units from top speed. See [Ships](ships.md#values). | 180, 360          |
 | Tractor beam   | Levels 2 and 3: pull radius 90, then 120; pull speed 160, then 200                                                                                   | 120, 240          |
 | Ship paint     | Cosmetic colour schemes for Ada's ship; the white and blue scheme stays free                                                                         | By purchase order |
