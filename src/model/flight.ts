@@ -148,7 +148,6 @@ import {
 import { planMantaEscorts } from "./flight/mantaEscorts.ts";
 import { armed, layMine, stepMines, strikeMines } from "./flight/mines.ts";
 import {
-  clearPilotHeading,
   flightChunkKey,
   type FreshTravel,
   movePilot,
@@ -314,12 +313,7 @@ import {
   worldSpawnExclusions,
   worldSpawnSites,
 } from "./spawnTargets.ts";
-import {
-  flightStationContext,
-  HUB_STATION,
-  worldStationById,
-  worldStationsNear,
-} from "./stations.ts";
+import { flightStationContext, worldStationById, worldStationsNear } from "./stations.ts";
 import type {
   FlightEvent,
   FlightInput,
@@ -334,6 +328,7 @@ import { leveledValue, type ShipTuning, shipTuning } from "./upgrades.ts";
 import { markVisited, visitedChunk } from "./visited.ts";
 
 export { wreckId };
+export { dockFlight, undockFlight } from "./flight/berth.ts";
 export { salvage, salvageTarget } from "./flight/destruction.ts";
 export { activeEnemyBeams, type EnemyBeam } from "./flight/enemyBeams.ts";
 export {
@@ -3900,35 +3895,6 @@ export function pickupTouched(
         margin,
       ) !== null
     : touchesAda(flight, center, radius + margin);
-}
-/**
- * Docks at a station within Talk range (gameplay/economy.md): Ada stops where she is. Returns
- * false unless that station is in this flight and in range.
- */
-export function dockFlight(content: GameContent, id: string, flight: FlightState): boolean {
-  const station = flight.objects.find(
-    (object) =>
-      object.id === id &&
-      (object.kind === "station" || (object.kind === "destination" && id === HUB_STATION)),
-  );
-  if (
-    !station ||
-    worldDistance(flightWorldContext(flight), station, flight.player) > content.tuning.talkRange
-  ) {
-    return false;
-  }
-  flight.velocity = { x: 0, y: 0 };
-  clearPilotHeading(flight);
-  return true;
-}
-/**
- * Undocking leaves Ada at rest where she docked, so Use offers Dock again at once, and starts her
- * arrival grace.
- */
-export function undockFlight(content: GameContent, flight: FlightState): void {
-  flight.velocity = { x: 0, y: 0 };
-  clearPilotHeading(flight);
-  beginArrivalGrace(content, flight);
 }
 /**
  * Whether an enemy presses Ada: engaged, neither returning nor fleeing, within its perception,
