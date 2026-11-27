@@ -507,6 +507,11 @@ export interface JobScenery {
 
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
 
+interface ContextOffer {
+  readonly action?: UseAction | undefined;
+  readonly id?: string | undefined;
+}
+
 /** The conversation line the box shows, with its speaker's name tab and portrait side. */
 export interface ConversationView {
   /** Flight seconds at which the final discovery line finishes fading. */
@@ -1893,22 +1898,27 @@ export class GameModel {
     if (!f || this.state.mode !== "space" || this.state.dialogue) {
       return undefined;
     }
-    return f.objects
-      .filter(
-        (o) =>
-          ((o.kind === "destination" &&
-            o.id !== ANDROMEDA_REDACT.relayId &&
-            (f.galaxy !== 4 || !isNeedleCourseStart(o.id)) &&
-            this.current.known.includes(o.id) &&
-            !routeBlocked(o.id, f)) ||
-            (o.kind === "station" && this.current.stations.includes(o.id))) &&
-          Math.hypot(o.x - f.player.x, o.y - f.player.y) <= this.content.tuning.talkRange,
-      )
-      .sort(
-        (a, b) =>
-          Math.hypot(a.x - f.player.x, a.y - f.player.y) -
-          Math.hypot(b.x - f.player.x, b.y - f.player.y),
-      )[0]?.id;
+    const progress = this.current;
+    let nearest: string | undefined;
+    let reach = this.content.tuning.talkRange;
+    for (const object of f.objects) {
+      if (!(
+        (object.kind === "destination" &&
+          object.id !== ANDROMEDA_REDACT.relayId &&
+          (f.galaxy !== 4 || !isNeedleCourseStart(object.id)) &&
+          progress.known.includes(object.id) &&
+          !routeBlocked(object.id, f)) ||
+        (object.kind === "station" && progress.stations.includes(object.id))
+      )) {
+        continue;
+      }
+      const gap = distance(object, f.player);
+      if (gap <= reach && (nearest === undefined || gap < reach)) {
+        nearest = object.id;
+        reach = gap;
+      }
+    }
+    return nearest;
   }
   /** Save the first visible pass even if Pip's cue waits behind other chatter. */
   andromedaCourierDisplayed(flight: FlightState): void {
@@ -1966,7 +1976,7 @@ export class GameModel {
     );
   }
 
-  private nearestScan() {
+  private nearestScan(placeId: string | undefined) {
     const f = this.state.flight;
     if (!f || this.state.mode !== "space" || this.state.dialogue || this.state.docked) {
       return undefined;
@@ -1986,7 +1996,6 @@ export class GameModel {
       },
       this.scannableSites(f),
     );
-    const placeId = this.nearest();
     const place = placeId && f.objects.find(({ id }) => id === placeId);
     return site &&
       (!place || worldDistance(context, f.player, site) < worldDistance(context, f.player, place))
@@ -2386,55 +2395,54 @@ export class GameModel {
     }
   }
 
-  /** What Use does here, or undefined with nothing in reach. */
-  private get availableContextAction(): UseAction | undefined {
+  private availableContextOffer(id: string | undefined): ContextOffer {
     if (
       this.suspendedInteraction?.galaxy === this.state.flight?.galaxy &&
       !this.state.dialogue &&
       !this.state.docked
     ) {
-      return "use";
+      return { action: "use" };
     }
     const job = this.jobUse();
     if (job) {
-      return job;
+      return { action: job, id };
     }
     if (this.salvageable()) {
-      return "salvage";
+      return { action: "salvage", id };
     }
-    if (this.nearestScan()) {
-      return "scan";
+    const scan = this.nearestScan(id);
+    if (scan) {
+      return { action: "scan", id: scan.id };
     }
-    const id = this.nearest();
-    if (!id) {
-      return undefined;
+    if (id === undefined) {
+      return {};
     }
     const context = this.chapterContext();
     const action = context && chapterRuntime(context.flight.galaxy)?.action?.(context, id);
     if (action) {
-      return action;
+      return { action, id };
     }
     if (context?.flight.galaxy === 5 && id === ANDROMEDA_PLACES.pip) {
-      return placeActivity(5, context.progress, id) ? "talk" : undefined;
+      return { action: placeActivity(5, context.progress, id) ? "talk" : undefined, id };
     }
     // At a station an action due there comes before Dock (gameplay/rules.md).
     if (id === HUB_STATION) {
       if ((this.state.flight?.cargo ?? 0) > 0) {
-        return "deposit";
+        return { action: "deposit", id };
       }
-      return this.hubSceneDue ? undefined : "dock";
+      return { action: this.hubSceneDue ? undefined : "dock", id };
     }
     if (this.current.stations.includes(id)) {
-      return this.supplyDue(id) ? "deliver" : "dock";
+      return { action: this.supplyDue(id) ? "deliver" : "dock", id };
     }
     if (this.state.flight?.galaxy === 1 && id === questItemDestination(this.current)) {
-      return "deliver";
+      return { action: "deliver", id };
     }
-    return context?.flight.galaxy === 5 ? undefined : "talk";
+    return { action: context?.flight.galaxy === 5 ? undefined : "talk", id };
   }
 
   /** A known Andromeda place without a current material action still responds to Use. */
-  private andromedaUseHintTarget(): string | undefined {
+  private andromedaUseHintTarget(place: string | undefined): string | undefined {
     const flight = this.state.flight;
     if (
       flight?.galaxy !== 5 ||
@@ -2444,7 +2452,6 @@ export class GameModel {
     ) {
       return undefined;
     }
-    const place = this.nearest();
     if (place !== undefined) {
       return place;
     }
@@ -2452,19 +2459,33 @@ export class GameModel {
       return undefined;
     }
     const world = flightWorldContext(flight);
-    return this.scannableSites(flight)
-      .filter((site) => this.scannedSite(site.id))
-      .map((site) => ({ gap: worldDistance(world, flight.player, site), id: site.id }))
-      .filter(({ gap }) => gap <= this.content.tuning.talkRange)
-      .sort((a, b) => a.gap - b.gap)[0]?.id;
+    let nearest: string | undefined;
+    let reach = this.content.tuning.talkRange;
+    for (const site of this.scannableSites(flight)) {
+      const gap = worldDistance(world, flight.player, site);
+      if (gap <= reach && (nearest === undefined || gap < reach) && this.scannedSite(site.id)) {
+        nearest = site.id;
+        reach = gap;
+      }
+    }
+    return nearest;
+  }
+
+  private contextOffer(): ContextOffer {
+    const flight = this.state.flight;
+    const place = this.nearest();
+    const offer = this.availableContextOffer(place);
+    if (!flight || offer.action !== undefined) {
+      return offer;
+    }
+    const id = this.andromedaUseHintTarget(place);
+    return id !== undefined && !this.inRangeQuestDetails(flight, id)
+      ? { action: "use", id }
+      : offer;
   }
 
   get contextAction(): UseAction | undefined {
-    const action = this.availableContextAction;
-    if (action !== undefined) {
-      return action;
-    }
-    return this.andromedaUseHintTarget() && !this.contextQuestDetails ? "use" : undefined;
+    return this.contextOffer().action;
   }
 
   private showAndromedaUseHint(id: string): void {
@@ -2502,17 +2523,10 @@ export class GameModel {
    * undefined when Use acts on no place, as on a tow line's craft.
    */
   get useTarget(): { action: UseAction; id: string } | undefined {
-    const action = this.contextAction;
-    if (action === undefined || action === "tow" || this.suspendedInteraction) {
-      return undefined;
-    }
-    const id =
-      action === "scan"
-        ? this.nearestScan()?.id
-        : action === "use" && this.availableContextAction === undefined
-          ? this.andromedaUseHintTarget()
-          : this.nearest();
-    return id === undefined ? undefined : { action, id };
+    const { action, id } = this.contextOffer();
+    return action === undefined || action === "tow" || id === undefined || this.suspendedInteraction
+      ? undefined
+      : { action, id };
   }
   /** Read-only Use fallback. Every available interaction takes priority on every visit. */
   get contextQuestDetails(): ContextQuestDetails | null {
@@ -2522,12 +2536,24 @@ export class GameModel {
       !flight ||
       this.state.dialogue ||
       this.state.docked ||
-      this.suspendedInteraction ||
-      this.availableContextAction !== undefined ||
-      (flight.galaxy !== 5 && this.nearest() !== undefined)
+      this.suspendedInteraction
     ) {
       return null;
     }
+    const place = this.nearest();
+    if (
+      this.availableContextOffer(place).action !== undefined ||
+      (flight.galaxy !== 5 && place !== undefined)
+    ) {
+      return null;
+    }
+    return this.inRangeQuestDetails(flight, this.andromedaUseHintTarget(place));
+  }
+
+  private inRangeQuestDetails(
+    flight: FlightState,
+    hintTarget?: string,
+  ): ContextQuestDetails | null {
     const progress = this.current;
     const task = this.state.tasks[flight.galaxy];
     const context = {
@@ -2539,34 +2565,36 @@ export class GameModel {
       ),
       ...(task ? { task } : {}),
     };
-    const hintTarget = this.andromedaUseHintTarget();
     if (hintTarget !== undefined) {
       const quests = questsForObject(context, hintTarget);
       return quests.length ? { quests, targetId: hintTarget } : null;
     }
     const world = flightWorldContext(flight);
-    const candidates = [
-      ...flight.objects.map((object) => ({ gap: distance(flight.player, object), object })),
-      ...flightLandmarkSites(flight).map((object) => ({
-        gap: worldDistance(world, flight.player, object),
-        object,
-      })),
-    ]
-      .filter(
-        ({ gap, object }) =>
-          context.knownIds.includes(object.id) &&
-          (flight.galaxy !== 4 || !isNeedleCourseStart(object.id)) &&
-          !routeBlocked(object.id, flight) &&
-          gap <= this.content.tuning.talkRange,
-      )
-      .sort((a, b) => a.gap - b.gap);
-    for (const { object: candidate } of candidates) {
-      const quests = questsForObject(context, candidate.id);
-      if (quests.length > 0) {
-        return { quests, targetId: candidate.id };
+    let closest: ContextQuestDetails | null = null;
+    let reach = this.content.tuning.talkRange;
+    const consider = (id: string, gap: number) => {
+      if (
+        !(gap <= reach) ||
+        (gap === reach && closest !== null) ||
+        !context.knownIds.includes(id) ||
+        (flight.galaxy === 4 && isNeedleCourseStart(id)) ||
+        routeBlocked(id, flight)
+      ) {
+        return;
       }
+      const quests = questsForObject(context, id);
+      if (quests.length) {
+        closest = { quests, targetId: id };
+        reach = gap;
+      }
+    };
+    for (const object of flight.objects) {
+      consider(object.id, distance(flight.player, object));
     }
-    return null;
+    for (const site of flightLandmarkSites(flight)) {
+      consider(site.id, worldDistance(world, flight.player, site));
+    }
+    return closest;
   }
   /** The Use action's name, the disc's accessible name. */
   get contextLabel(): string | undefined {
@@ -4935,7 +4963,8 @@ export class GameModel {
       }
       return;
     }
-    const scan = this.nearestScan();
+    const id = this.nearest();
+    const scan = this.nearestScan(id);
     if (scan) {
       const sites = this.current.explorationSites;
       const site = sites?.[scan.id];
@@ -4975,15 +5004,11 @@ export class GameModel {
       return;
     }
     const f = this.state.flight;
-    if (f?.galaxy === 5 && this.availableContextAction === undefined) {
-      const id = this.andromedaUseHintTarget();
-      if (id !== undefined && !this.contextQuestDetails) {
-        this.showAndromedaUseHint(id);
+    if (!id) {
+      const hint = this.andromedaUseHintTarget(undefined);
+      if (hint !== undefined && !this.inRangeQuestDetails(f, hint)) {
+        this.showAndromedaUseHint(hint);
       }
-      return;
-    }
-    const id = this.nearest();
-    if (!id || !f) {
       return;
     }
     if (
@@ -5014,16 +5039,18 @@ export class GameModel {
         return;
       }
     }
-    // Pip has no generic exchange outside his chapter actions and optional activity.
-    if (f.galaxy === 5 && id === ANDROMEDA_PLACES.pip) {
-      return;
-    }
     if (id !== HUB_STATION && this.current.stations.includes(id)) {
       if (this.supplyDue(id)) {
         this.finishActivity(f.galaxy);
         this.panel("deliver", this.state.notice, "Astra");
       } else {
         this.dock(id, f);
+      }
+      return;
+    }
+    if (f.galaxy === 5) {
+      if (!this.inRangeQuestDetails(f, id)) {
+        this.showAndromedaUseHint(id);
       }
       return;
     }
