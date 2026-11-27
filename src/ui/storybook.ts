@@ -941,7 +941,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
           current: () => !disposed,
           run: () => options.onChoose(index),
         });
-        const { element: button } = action;
+        const button = action.element;
         button.classList.add("ada-story-button");
         button.dataset.action = "story-choice";
         button.dataset.choice = String(index);
