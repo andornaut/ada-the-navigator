@@ -30,7 +30,7 @@ import {
   TAB_COLOURS,
 } from "./conversation.ts";
 import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
-import { fromHudEdge, units, VIEW_HOST_ID } from "./layout/css.ts";
+import { units, VIEW_HOST_ID } from "./layout/css.ts";
 import { hudRect, logicalView, NO_INSETS, STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
 import { BOX_OCCUPANT, boxOccupant, NOTICE_STYLE } from "./notice.ts";
 import { rootPressGuard } from "./pressScope.ts";
@@ -397,21 +397,24 @@ describe("Interaction card HUD row", () => {
     expect(Math.max(skip[2]!, inView(hud, close)[3]!)).toBeLessThanOrEqual(hud.y + STORY_PANEL_TOP);
   });
 
-  it("positions the X and Skip against the HUD only for the full-screen interaction", () => {
+  it("positions the interaction X and Skip against the HUD and device insets", () => {
     const { close, skipRight } = interactionHudRow();
+    const edge = (side: "top" | "right", offset: number) =>
+      `calc(max(var(--ada-hud-${side}), var(--ada-interaction-inset-${side})) + ${units(offset)})`;
     expect(INTERACTION_STYLE).not.toMatch(/\[data-station\][^{]*\.ada-close/u);
     expect(INTERACTION_STYLE).not.toContain(".ada-controls .ada-dialogue-frame > .ada-close");
     expect(INTERACTION_STYLE).toContain(
       `.ada-interaction-modal > .ada-dialogue-frame > .ada-close{
-  top:${fromHudEdge("top", close.y)};
-  right:${fromHudEdge("right", -(close.x + close.width))};
+  top:${edge("top", close.y)};
+  right:${edge("right", -(close.x + close.width))};
   width:${units(close.width)};
   height:${units(close.height)}
 }`,
     );
     expect(INTERACTION_STYLE).toContain(
       `.ada-dialogue-frame:has(> .ada-close:not([hidden])) > .ada-story-skip{
-  right:${fromHudEdge("right", skipRight)}
+  top:${edge("top", STORY_SKIP.top)};
+  right:${edge("right", skipRight)}
 }`,
     );
   });

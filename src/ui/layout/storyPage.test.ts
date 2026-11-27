@@ -29,6 +29,8 @@ import {
 import {
   STORY_CHOICE_GAP,
   STORY_PANEL,
+  STORY_TOPIC_PREVIOUS_MIN,
+  STORY_TOPIC_PREVIOUS_SHARE,
   storyBackgroundTop,
   storyChoiceWidth,
   storyPanelLayout,
@@ -61,8 +63,8 @@ function textHeight(page: StoryPage, width: number): number {
 }
 
 /** A story button's height for a label in a face width: 36, growing a label line per line. */
-function buttonHeight(label: string, width: number): number {
-  const lines = lineCount(label, TYPE.label.size, "bold", () => width - 2 * STORY_BUTTON.inset);
+function buttonHeight(label: string, width: number, inset: number = STORY_BUTTON.inset): number {
+  const lines = lineCount(label, TYPE.label.size, "bold", () => width - 2 * inset);
   return STORY_BUTTON.height + (lines - 1) * TYPE.label.lineHeight;
 }
 
@@ -72,6 +74,17 @@ function choiceHeight(page: StoryPage, width: number): number {
   expect(labels.length).toBeLessThanOrEqual(3);
   const half = (width - SMALL_BUTTON_GAP) / 2;
   const parts = labels.map((label) => buttonHeight(label, width));
+  if (page.questions && page.showActionWithChoices && page.action) {
+    const previousWidth = Math.max(STORY_TOPIC_PREVIOUS_MIN, width * STORY_TOPIC_PREVIOUS_SHARE);
+    const actionWidth = width - previousWidth - SPACING.gap;
+    parts.push(
+      Math.max(
+        buttonHeight("Previous", previousWidth, SPACING.rowGap),
+        buttonHeight(page.action, actionWidth, SPACING.rowGap),
+      ),
+    );
+    return parts.reduce((sum, part) => sum + part, 0) + (parts.length - 1) * SPACING.gap;
+  }
   if (
     page.action &&
     measure(page.action, TYPE.label.size, "bold") + 2 * STORY_BUTTON.inset > half
@@ -217,8 +230,8 @@ describe("story text fit", () => {
     const heights = (page: StoryPage) => SCREENS.map((screen) => panelFor(page, screen).height);
     expect(heights(opening)).toEqual([212, 212, 198, 212]);
 
-    expect(heights(questions)).toEqual([224, 224, 224, 224]);
-    expect(SCREENS.map((screen) => panelFor(questions, screen).top)).toEqual([117, 117, 120, 165]);
+    expect(heights(questions)).toEqual([200, 200, 200, 200]);
+    expect(SCREENS.map((screen) => panelFor(questions, screen).top)).toEqual([141, 141, 144, 189]);
   });
 });
 
@@ -350,14 +363,14 @@ describe("story background placement", () => {
     };
     // Run tops at the two viewport sizes after applying the stacked spacing.
     expect(tops(SCREENS[0]!)).toEqual({
-      aboard: 117,
+      aboard: 141,
       adaRoom: 221,
       adaRoomUnpolished: 231,
       grandmaGarden: 129,
       park: 229,
     });
     expect(tops(SCREENS[3]!)).toEqual({
-      aboard: 165,
+      aboard: 189,
       adaRoom: 269,
       adaRoomUnpolished: 279,
       grandmaGarden: 177,

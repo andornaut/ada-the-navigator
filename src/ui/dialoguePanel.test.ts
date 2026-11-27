@@ -539,11 +539,14 @@ describe("shared Earth and space dialogue presentation", () => {
     expect(buttons().filter((node) => node.dataset.action === "conversation-close")).toHaveLength(
       1,
     );
-    navigation.children.find((node) => node.textContent === "Ask more")!.click();
+    navigation.children.find((node) => node.textContent === "Next")!.click();
     const choices = parent.all().find((node) => node.className === "ada-story-choices")!;
     expect(choices.children.length).toBeGreaterThan(0);
     expect(choices.children.every((node) => !node.className.includes("ada-primary"))).toBe(true);
-    expect(navigation.children.map((node) => node.textContent)).toEqual([CONTENT.labels.next]);
+    expect(navigation.children.map((node) => node.textContent)).toEqual([
+      CONTENT.labels.previous,
+      "Resume conversation",
+    ]);
     const skip = buttons().find((node) => node.textContent === CONTENT.labels.skip)!;
     expect(skip.className).toContain("ui-standard-button");
     expect(skip.className).toContain("ada-compact");
@@ -580,9 +583,11 @@ describe("shared Earth and space dialogue presentation", () => {
     const navigation = parent
       .all()
       .find((node) => node.className.includes("ada-dialogue-controls"))!;
-    // Ask more, secondary, shares the row on the left; the primary is rightmost.
+    navigation.children[0]!.click();
+    const resume = navigation.children.find((node) => node.textContent === "Resume conversation")!;
+    resume.click();
     expect(navigation.children.map((node) => node.textContent)).toEqual([
-      "Ask more",
+      CONTENT.labels.previous,
       CONTENT.labels.next,
     ]);
     const primary = navigation.children.at(-1)!;
@@ -591,6 +596,56 @@ describe("shared Earth and space dialogue presentation", () => {
     expect(document.activeElement).toBe(primary);
     interaction.dispose();
   });
+  it("uses Next to enter Loom's topics and Previous to restore the greeting without an outcome", () => {
+    setup();
+    const parent = connectedParent();
+    fixtureActionRoot(parent);
+    const choose = vi.fn();
+    const interaction = createInteractionCard(parent as unknown as HTMLElement, {
+      choose,
+      close: vi.fn(),
+      reducedMotion: () => false,
+      skip: vi.fn(),
+    });
+    interaction.show(4, {
+      choices: [{ id: "continue", label: CONTENT.labels.continue! }],
+      context: "needle.arrival",
+      text: "",
+      title: "Elder Loom",
+    });
+    const button = (label: string) =>
+      parent.all().find((node) => node.tag === "button" && node.textContent === label);
+    const paragraph = () =>
+      parent.all().find((node) => node.className === "ada-story-paragraph")!.textContent;
+    expect(button("Ask more")).toBeUndefined();
+    expect(button("Previous")).toBeUndefined();
+    const greeting = paragraph();
+    expect(greeting).toContain("Welcome to Needle");
+    button("Next")!.click();
+    expect(button("Who flies here?")).toBeDefined();
+    expect(button("How do pilots learn?")).toBeDefined();
+    expect(button("Next")).toBeUndefined();
+    button("Previous")!.click();
+    expect(paragraph()).toBe(greeting);
+    expect(button("Previous")).toBeUndefined();
+    expect(button("Who flies here?")).toBeUndefined();
+    expect(choose).not.toHaveBeenCalled();
+
+    button("Next")!.click();
+    button("Who flies here?")!.click();
+    expect(paragraph()).toContain("We Avi fly");
+    button("Next")!.click();
+    const completed = parent
+      .all()
+      .find((node) => node.getAttribute("aria-label") === "Who flies here?, Topic completed");
+    expect(completed).toBeDefined();
+    expect(button("How do pilots learn?")).toBeDefined();
+    button("Ask about the disk")!.click();
+    expect(paragraph()).toBe("I'm looking for a shining disk.");
+    expect(choose).not.toHaveBeenCalled();
+    interaction.dispose();
+  });
+
   it("hides Skip at material decisions and cannot bypass or select an outcome", () => {
     setup();
     const parent = connectedParent();
@@ -627,46 +682,6 @@ describe("shared Earth and space dialogue presentation", () => {
       .find((node) => node.tag === "button" && node.textContent === "Accept")!
       .click();
     expect(choose).toHaveBeenCalledExactlyOnceWith("accept");
-    interaction.dispose();
-  });
-
-  it("returns from a selected background answer to essential dialogue without reopening the menu", () => {
-    setup();
-    const parent = connectedParent();
-    fixtureActionRoot(parent);
-    const interaction = createInteractionCard(parent as unknown as HTMLElement, {
-      choose: vi.fn(),
-      close: vi.fn(),
-      reducedMotion: () => false,
-      skip: vi.fn(),
-    });
-    interaction.show(1, {
-      choices: [{ id: "continue", label: CONTENT.labels.continue! }],
-      context: "deliveryComplete",
-      text: "",
-      title: "Rivet",
-    });
-    const paragraph = () =>
-      parent.all().find((node) => node.className === "ada-story-paragraph")!.textContent;
-    const initial = paragraph();
-    parent
-      .all()
-      .find((node) => node.tag === "button" && node.textContent === "Ask more")!
-      .click();
-    const topics = parent.all().find((node) => node.className === "ada-story-choices")!;
-    topics.children[0]!.click();
-    expect(paragraph()).not.toBe(initial);
-    parent
-      .all()
-      .find((node) => node.tag === "button" && node.textContent === CONTENT.labels.next)!
-      .click();
-    expect(paragraph()).toBe(initial);
-    expect(topics.children).toHaveLength(0);
-    parent
-      .all()
-      .find((node) => node.tag === "button" && node.textContent === CONTENT.labels.next)!
-      .click();
-    expect(paragraph()).not.toBe(initial);
     interaction.dispose();
   });
 

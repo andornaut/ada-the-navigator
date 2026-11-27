@@ -15,6 +15,9 @@ import {
   CONVERSATIONS,
   type EncounterCue,
   INTERACTION_COPY,
+  type InteractionCopy,
+  type InteractionLine,
+  type InteractionTopic,
   type JobMoment,
   type Lesson,
   lineDuration,
@@ -36,7 +39,7 @@ import type { PhantomChatter } from "./phantom.ts";
 import { phantomSettlementCopy } from "./phantomSettlementCopy.ts";
 import type { ScanOutcome } from "./scanOutcomes.ts";
 import { scanOutcomeLines } from "./scanOutcomeSpeech.ts";
-import type { FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
+import type { DialogueChoice, FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
 import { nearestImage } from "./worldGeometry.ts";
 
 // The in-flight conversation box's schedule (gameplay/rules.md "Astra and Penny in flight"):
@@ -1173,128 +1176,279 @@ export class ConversationDirector {
   }
 }
 
-/** Pages one Use panel without applying or guessing any gameplay outcome. */
-export class InteractionConversation {
-  private panel: import("./types.ts").DialogueState | null = null;
-  private copy: import("../data/conversations.ts").InteractionCopy | null = null;
-  private index = 0;
-  private answer: readonly import("../data/conversations.ts").InteractionLine[] | null = null;
-  private answerIndex = 0;
-  private topicsShown = false;
-  private readonly asked = new Set<number>();
+/** A generic continuation may advance or be skipped without choosing a named action. */
+export function linearDialogueContinuation(
+  choices: readonly DialogueChoice[],
+): "continue" | undefined {
+  const visible = choices.filter(({ id }) => id !== "optional");
+  const choice = visible[0];
+  return visible.length === 1 &&
+    choice?.id === "continue" &&
+    !choice.refused &&
+    (choice.label === "Continue" || choice.label === "Next")
+    ? "continue"
+    : undefined;
+}
 
-  show(
-    copy: import("../data/conversations.ts").InteractionCopy,
-    panel: import("./types.ts").DialogueState,
-  ): void {
-    if (panel === this.panel) {
+type InteractionThread = readonly { key: string; topic: InteractionTopic }[];
+
+type InteractionPage =
+  | { kind: "main"; index: number }
+  | { kind: "topics" }
+  | { kind: "answer"; index: number; thread: InteractionThread }
+  | { kind: "fork"; thread: InteractionThread };
+
+interface InteractionFrame {
+  readonly copy: InteractionCopy;
+  readonly page: InteractionPage;
+  readonly panel: import("./types.ts").DialogueState;
+}
+
+/** Traverses presentation pages and remembers the continuation of outcomes already applied. */
+export class InteractionConversation {
+  private live: InteractionFrame["panel"] | null = null;
+  private frame: InteractionFrame | null = null;
+  private history: InteractionFrame[] = [];
+  private readonly applied = new Map<
+    InteractionFrame["panel"],
+    { id: string; next: InteractionFrame }
+  >();
+  private choosing: string | undefined;
+  private readonly completed = new Set<string>();
+  private docked: string | undefined;
+
+  show(copy: InteractionCopy, panel: InteractionFrame["panel"]): void {
+    if (panel === this.live) {
       return;
     }
-    this.panel = panel;
-    this.copy = copy;
-    this.index = 0;
-    this.answer = null;
-    this.answerIndex = 0;
-    this.topicsShown = false;
-    this.asked.clear();
+    const next: InteractionFrame = { copy, page: { index: 0, kind: "main" }, panel };
+    if (this.choosing && this.live && this.frame?.panel === this.live) {
+      this.applied.set(this.live, { id: this.choosing, next });
+      this.history.push(this.frame);
+    } else {
+      this.clearPage();
+    }
+    this.live = panel;
+    this.frame = next;
   }
 
-  get line(): import("../data/conversations.ts").InteractionLine | null {
-    return this.answer?.[this.answerIndex] ?? this.copy?.lines[this.index] ?? null;
+  private get page(): InteractionPage {
+    return this.frame?.page ?? { index: 0, kind: "main" };
+  }
+
+  private get copy(): InteractionCopy | null {
+    return this.frame?.copy ?? null;
+  }
+
+  private get panel(): InteractionFrame["panel"] | null {
+    return this.frame?.panel ?? null;
+  }
+
+  get afterAppliedOutcome(): boolean {
+    return this.panel !== this.live;
+  }
+
+  canReplayChoice(id: string): boolean {
+    return (
+      !this.afterAppliedOutcome || (this.panel && this.applied.get(this.panel)?.id === id) === true
+    );
+  }
+
+  choose(id: string, apply: () => void): void {
+    if (!this.frame) {
+      return;
+    }
+    const past = this.applied.get(this.frame.panel);
+    if (past) {
+      if (past.id === id) {
+        this.history.push(this.frame);
+        this.frame = past.next;
+      }
+    } else if (!this.afterAppliedOutcome) {
+      this.choosing = id;
+      try {
+        apply();
+      } finally {
+        this.choosing = undefined;
+      }
+    }
+  }
+
+  get line(): InteractionLine | null {
+    const page = this.page;
+    if (page.kind === "answer" || page.kind === "fork") {
+      const lines = page.thread.at(-1)?.topic.lines;
+      return (page.kind === "answer" ? lines?.[page.index] : lines?.at(-1)) ?? null;
+    }
+    const lines = this.copy?.lines;
+    return (page.kind === "main" ? (lines?.[page.index] ?? lines?.at(-1)) : lines?.[0]) ?? null;
   }
 
   get atOutcome(): boolean {
     return (
       this.copy !== null &&
-      !this.answer &&
-      !this.topicsShown &&
-      this.index >= this.copy.lines.length - 1
+      this.page.kind === "main" &&
+      this.page.index >= this.copy.lines.length - 1 &&
+      (this.page.index !== 0 || this.copy.topics.length === 0)
     );
   }
 
-  get topics() {
-    return this.topicsShown ? this.remainingTopics : [];
-  }
-
   get choices() {
-    return this.atOutcome ? (this.panel?.choices.filter(({ id }) => id !== "optional") ?? []) : [];
+    const panel = this.panel;
+    if (!this.atOutcome || !panel) {
+      return [];
+    }
+    return panel.choices.filter(({ id }) => id !== "optional");
   }
 
-  /** Visible model decisions are material; a sole Continue only ends exposition. */
   get atChoice(): boolean {
-    const choices = this.choices;
-    return choices.length > 0 && !(choices.length === 1 && choices[0]?.id === "continue");
+    return this.choices.length > 0 && this.linearContinuation === undefined;
+  }
+
+  get linearContinuation(): "continue" | undefined {
+    return linearDialogueContinuation(this.choices);
   }
 
   get party(): string {
     return this.copy?.party ?? "Astra";
   }
 
-  private get remainingTopics() {
-    return (this.copy?.topics ?? []).filter((_, index) => !this.asked.has(index));
-  }
-
-  get hasTopics(): boolean {
-    return !this.answer && this.remainingTopics.length > 0;
-  }
-
-  get choosingTopic(): boolean {
-    return this.topicsShown;
-  }
-
-  ask(): void {
-    if (this.hasTopics) {
-      this.topicsShown = true;
+  get topics(): readonly InteractionTopic[] {
+    if (this.page.kind === "topics") {
+      return this.copy?.topics ?? [];
     }
+    if (this.page.kind === "fork") {
+      return this.page.thread.at(-1)?.topic.choices ?? [];
+    }
+    return [];
   }
 
-  topic(index: number): void {
-    const topic = this.topics[index];
-    if (!topic || !this.copy || topic.lines.length === 0) {
-      return;
-    }
-    this.topicsShown = false;
-    this.asked.add(this.copy.topics.indexOf(topic));
-    this.answer = topic.lines;
-    this.answerIndex = 0;
-  }
-
-  /** Advance one page. Leaving topics at an outcome can request its sole Continue. */
-  advance(): "continue" | undefined {
-    if (this.answer) {
-      if (++this.answerIndex >= this.answer.length) {
-        this.answer = null;
-      }
-      return undefined;
-    }
-    const fromTopics = this.topicsShown;
-    this.topicsShown = false;
-    if (this.copy && !this.atOutcome) {
-      this.index++;
-    } else if (fromTopics && this.choices.length === 1 && this.choices[0]?.id === "continue") {
-      return "continue";
+  get topicExitLabel(): string | undefined {
+    if (this.page.kind === "topics") {
+      return this.panel?.context === "needle.arrival"
+        ? "Ask about the disk"
+        : "Resume conversation";
     }
     return undefined;
   }
 
-  /** Pending choices remain visible and must be explicitly answered. */
-  skip(): void {
-    if (!this.copy || this.atChoice) {
-      return;
+  get hasPrevious(): boolean {
+    return this.history.length > 0;
+  }
+
+  previous(): void {
+    this.frame = this.history.pop() ?? this.frame;
+  }
+
+  private showPage(page: InteractionPage): void {
+    if (this.frame) {
+      this.history.push(this.frame);
+      this.frame = { ...this.frame, page };
     }
-    this.answer = null;
-    this.topicsShown = false;
-    this.index = Math.max(0, (this.copy?.lines.length ?? 0) - 1);
+  }
+
+  private topicKey(index: number): string {
+    const parent = this.page.kind === "fork" ? this.page.thread.at(-1)?.key : this.panel?.context;
+    return JSON.stringify([parent, index]);
+  }
+
+  completedTopic(index: number): boolean {
+    return this.completed.has(this.topicKey(index));
+  }
+
+  topic(index: number): void {
+    const topic = this.topics[index];
+    if (topic) {
+      const parents = this.page.kind === "fork" ? this.page.thread : [];
+      const thread = [...parents, { key: this.topicKey(index), topic }];
+      this.showPage(
+        topic.lines.length > 0 ? { index: 0, kind: "answer", thread } : { kind: "fork", thread },
+      );
+    }
+  }
+
+  leaveTopics(): void {
+    if (this.page.kind === "topics") {
+      this.showPage({ index: 1, kind: "main" });
+    }
+  }
+
+  advance(): void {
+    const page = this.page;
+    if (page.kind === "answer") {
+      const { topic } = page.thread.at(-1)!;
+      if (page.index + 1 < topic.lines.length) {
+        this.showPage({ ...page, index: page.index + 1 });
+      } else if (topic.choices?.length) {
+        this.showPage({ kind: "fork", thread: page.thread });
+      } else {
+        for (const { key } of page.thread) {
+          this.completed.add(key);
+        }
+        this.showPage({ kind: "topics" });
+      }
+    } else if (page.kind === "main" && !this.atOutcome && this.copy) {
+      this.showPage(
+        page.index === 0 && this.copy.topics.length
+          ? { kind: "topics" }
+          : { index: page.index + 1, kind: "main" },
+      );
+    }
+  }
+
+  /** Leave material outcomes for explicit selection; Skip never marks a topic as read. */
+  skip(): void {
+    const from = this.frame;
+    let next = from && this.applied.get(from.panel);
+    if (from && next) {
+      this.history.push(from);
+      while (next) {
+        this.frame = next.next;
+        next = this.applied.get(this.frame.panel);
+      }
+    }
+    if (this.copy && !this.atOutcome) {
+      this.showPage({
+        index: Math.max(this.copy.topics.length ? 1 : 0, this.copy.lines.length - 1),
+        kind: "main",
+      });
+    }
+  }
+
+  questChoice(id: string, context: InteractionContext): boolean {
+    return (
+      !this.afterAppliedOutcome &&
+      this.panel?.context === "needle.learning" &&
+      ["show", "feedback", "independent"].includes(id) &&
+      (typeof context === "number" ||
+        (context.progress.needle?.met === true && !context.progress.needle.briefed))
+    );
+  }
+
+  setDocked(docked: string | undefined): void {
+    if (docked !== this.docked) {
+      this.docked = docked;
+      this.reset();
+    }
+  }
+
+  hide(): void {
+    this.clearPage();
+    if (!this.docked) {
+      this.completed.clear();
+    }
   }
 
   reset(): void {
-    this.panel = null;
-    this.copy = null;
-    this.answer = null;
-    this.answerIndex = 0;
-    this.index = 0;
-    this.topicsShown = false;
-    this.asked.clear();
+    this.clearPage();
+    this.completed.clear();
+  }
+
+  private clearPage(): void {
+    this.live = null;
+    this.frame = null;
+    this.history = [];
+    this.applied.clear();
   }
 }
 
@@ -1302,7 +1456,8 @@ export type InteractionContext =
   | number
   | {
       readonly galaxy: number;
-      readonly progress: Pick<GalaxyProgress, "phantom" | "stage">;
+      readonly docked?: string;
+      readonly progress: Pick<GalaxyProgress, "needle" | "phantom" | "stage">;
     };
 
 /** Resolves authored chapter lines and legacy role labels through the existing cast. */

@@ -20,6 +20,7 @@ import {
   bindAdaAction,
 } from "./actionBinding.ts";
 import { bedroomBackground, bedroomSideOffset, bedroomTop } from "./bedroom.ts";
+import { showDialogueChoiceStatus } from "./dialogueChoice.ts";
 import {
   type StoryPanelContainer,
   type StoryPanelNative,
@@ -49,6 +50,8 @@ import {
   STORY_BACKGROUND,
   STORY_CHOICE_GAP,
   STORY_PANEL,
+  STORY_TOPIC_PREVIOUS_MIN,
+  STORY_TOPIC_PREVIOUS_SHARE,
   storyBackgroundTop,
   storyHalfArtOffset,
   type SubjectBand,
@@ -87,9 +90,10 @@ export interface StoryPageView {
   readonly heading?: string;
   readonly speaker?: string;
   readonly text: string;
-  readonly choices?: readonly { readonly label: string }[];
+  readonly choices?: readonly Pick<StoryChoice, "completed" | "label">[];
   /** Whether Next (or its named action) shows: every page but a choice page. */
   readonly next: boolean;
+  readonly topicList?: true;
   readonly action?: string;
   readonly canGoBack: boolean;
   readonly previousAction?: string;
@@ -125,13 +129,21 @@ export function storyPageView(
     ...(page.heading ? { heading: page.heading } : {}),
     text: page.text,
     ...(page.speaker ? { speaker: page.speaker } : {}),
-    ...(choices.length ? { choices: choices.map(({ label }) => ({ label })) } : {}),
+    ...(choices.length
+      ? {
+          choices: choices.map(({ completed, label }) => ({
+            ...(completed ? { completed } : {}),
+            label,
+          })),
+        }
+      : {}),
     ...(page.action ? { action: page.action } : {}),
     ...(page.previousAction ? { previousAction: page.previousAction } : {}),
     ...(page.id === "room" ? { room: true } : {}),
     ...(page.sleep ? { sleep: true } : {}),
     ...(page.holodisk ? { holodisk: true } : {}),
     next: page.showActionWithChoices === true || (!page.choices && choices.length === 0),
+    ...(page.questions?.length && page.showActionWithChoices ? { topicList: true } : {}),
   };
 }
 
@@ -573,6 +585,21 @@ ${STORY_PORTRAIT_RULES}
   grid-template-columns:minmax(0,1fr);
   grid-template-areas:"previous"
 }
+.ada-controls .ada-story-panel[data-topic-page] :is(.ada-story-choice-column,.ada-story-choices){
+  row-gap:${units(SPACING.gap)}
+}
+.ada-controls .ada-story-panel[data-topic-page] .ada-story-choices > .ada-button,
+.ada-controls .ada-story-panel[data-topic-page] .ada-story-controls > .ada-button{
+  padding-inline:${units(SPACING.rowGap)}
+}
+.ada-controls .ada-story-panel[data-topic-page] .ada-story-controls:not(.ada-story-no-previous){
+  grid-template-columns:max(${units(STORY_TOPIC_PREVIOUS_MIN)},${100 * STORY_TOPIC_PREVIOUS_SHARE}%) minmax(0,1fr);
+  column-gap:${units(SPACING.gap)}
+}
+.ada-controls .ada-story-panel[data-topic-page] .ada-story-controls > .ada-button{
+  width:100%;
+  min-width:0
+}
 .ada-controls .ada-story-controls.ada-story-beside{
   grid-template-columns:max-content minmax(0, 1fr)
 }
@@ -675,8 +702,8 @@ export function storyControlsLayout(
  * The text column holds the chapter heading, the speaker's tab and portrait, then the paragraph;
  * the choice column holds the choices and the page controls: Previous (left), disabled on the
  * run's first page, and Next (right), absent on a choice page, showing a page's named action in
- * its slot or on its own row when the action is too wide. A question page shows its remaining
- * questions with Continue in Next's place. Each background keeps one placement for the story run,
+ * its slot or on its own row when the action is too wide. A topic list keeps all questions and
+ * offers a named exit. Each background keeps one placement for the story run,
  * anchored on the run's tallest page on it. Between two pages whose images Art's story
  * transition joins (Ada's room to aboard), the panel hides while its frames play.
  */
@@ -888,6 +915,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
   // and the text column's scroll reserve when it scrolls. Returns the choice buttons.
   const fill = (page: StoryPageView): HTMLButtonElement[] => {
     panel.classList.toggle("ada-story-room", page.room === true);
+    panel.toggleAttribute("data-topic-page", page.topicList === true);
     heading.hidden = !page.heading;
     heading.textContent = page.heading ?? "";
     speaker.hidden = !page.speaker;
@@ -912,7 +940,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     const actions: typeof choiceActions = [];
     let buttons: HTMLButtonElement[];
     try {
-      buttons = (page.choices ?? []).map(({ label }, index) => {
+      buttons = (page.choices ?? []).map(({ completed, label }, index) => {
         const action = createStandardTextAction(root, label, {
           availability: (button) =>
             button?.disabled ? { kind: "disabled" } : { kind: "available" },
@@ -923,6 +951,9 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
         button.classList.add("ada-story-button");
         button.dataset.action = "story-choice";
         button.dataset.choice = String(index);
+        if (completed) {
+          showDialogueChoiceStatus(button, label, "completed");
+        }
         button.hidden = true;
         actions.push(action);
         assertAdaActionMetadata(button);
@@ -959,7 +990,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     previous.classList.remove("ada-story-choice-previous");
     controls.replaceChildren(previous, next);
     let layout: StoryControlsLayout = "halves";
-    if (page.canGoBack && page.next) {
+    if (page.canGoBack && page.next && !page.topicList) {
       const unit = readViewUnit(controls);
       previous.style.maxWidth = "none";
       next.style.maxWidth = "none";

@@ -66,12 +66,15 @@ const asking: Scene = {
 };
 
 describe("storybook pages", () => {
-  it("keeps a question page's unasked questions, and Skip and Next take Continue", () => {
+  it("keeps both questions and marks the answer only after returning", () => {
     let position = storyStart(asking);
     position = advance(position, 1)!;
     expect(currentPage(position).id).toBe("two");
     position = advance(position)!;
-    expect(shownChoices(position).map(({ label }) => label)).toEqual(["One?"]);
+    expect(shownChoices(position)).toEqual([
+      { label: "One?", next: "one" },
+      { completed: true, label: "Two?", next: "two" },
+    ]);
     expect(currentPage(advance(position)!).id).toBe("end");
     expect(currentPage(sceneEnd(storyStart(asking))).id).toBe("end");
     // The default path leaves every optional question unasked.

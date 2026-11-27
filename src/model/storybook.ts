@@ -3,6 +3,7 @@ import type { ChapterContent, GalaxyNumber, GameContent, PrologueStep } from "..
 
 /** A choice and the page it leads to; without one, the choice ends the scene. */
 export interface StoryChoice {
+  readonly completed?: true;
   readonly label: string;
   readonly next?: string;
 }
@@ -19,8 +20,7 @@ export interface StoryPage {
   /** A choice page's two or three choices, each leading to its branch; the first is the default. */
   readonly choices?: readonly StoryChoice[];
   /**
-   * Optional questions: each answer page returns here, and an asked question leaves the list.
-   * Continue (this page's next) moves on and is the default.
+   * Optional questions stay available after completion. The named action moves on.
    */
   readonly questions?: readonly StoryChoice[];
   /** The page after this one; absent on the scene's last page and on choice pages. */
@@ -81,6 +81,7 @@ export interface StoryPosition extends StoryStep {
 }
 
 export interface StoryLabels {
+  readonly boardingAction?: string;
   readonly next: string;
   readonly pickUpRock: string;
 }
@@ -97,13 +98,15 @@ export function currentPage(position: StoryPosition): StoryPage {
   return lookup(position.scene, position.page);
 }
 
-/** The page's choices as shown: a choice page's, or the questions not yet asked. */
+/** The page's choices, including completed optional threads. */
 export function shownChoices(position: StoryPosition): readonly StoryChoice[] {
   const page = currentPage(position);
   return (
     page.choices ??
-    (page.questions ?? []).filter(
-      ({ next }) => next === undefined || !position.asked.includes(next),
+    (page.questions ?? []).map((question) =>
+      question.next && position.asked.includes(question.next)
+        ? { ...question, completed: true }
+        : question,
     )
   );
 }
@@ -146,7 +149,14 @@ export function canGoBack(position: StoryPosition): boolean {
 /** The page shown before, in this scene or an earlier one of the run. */
 export function goBack(position: StoryPosition): StoryPosition {
   const step = position.trail.at(-1);
-  return step === undefined ? position : { ...step, trail: position.trail.slice(0, -1) };
+  if (!step) {
+    return position;
+  }
+  return {
+    ...step,
+    asked: step.scene === position.scene ? position.asked : step.asked,
+    trail: position.trail.slice(0, -1),
+  };
 }
 
 /** Whether the run ends on this page: the last page of a scene that ends it. */
@@ -172,10 +182,17 @@ export function advance(position: StoryPosition, choice?: number): StoryPosition
   }
   const question = choice === undefined ? undefined : shownChoices(position)[choice];
   if (question?.next !== undefined) {
-    const asked = moveTo(position, question.next);
-    return asked && { ...asked, asked: [...position.asked, question.next] };
+    return moveTo(position, question.next);
   }
-  return moveTo(position, page.next);
+  const next = moveTo(position, page.next);
+  if (
+    next &&
+    currentPage(next).questions?.some(({ next: answer }) => answer === page.id) &&
+    !position.asked.includes(page.id)
+  ) {
+    return { ...next, asked: [...position.asked, page.id] };
+  }
+  return next;
 }
 
 /**
@@ -367,7 +384,7 @@ export function replayChapterScene(content: GameContent, galaxy: GalaxyNumber): 
 
 /**
  * The prologue: the park where Ada finds the rock, her room as she polishes it and as it glows,
- * then aboard, where Astra's optional questions return to their list until Next.
+ * then aboard, where Astra's optional questions return to their list until Ada takes the seat.
  */
 export function prologueScene(content: GameContent, labels: StoryLabels): Scene {
   const { prologue } = content.premise;
@@ -382,13 +399,14 @@ export function prologueScene(content: GameContent, labels: StoryLabels): Scene 
     if (step.questions) {
       pages.push({
         ...line,
-        action: labels.next,
+        action: labels.boardingAction ?? "Take the seat",
         id,
         ...(following ? { next: following } : {}),
         questions: step.questions.map(({ question }, choice) => ({
           label: question,
           next: `${id}:answer:${choice}`,
         })),
+        showActionWithChoices: true,
         text: step.text,
       });
       step.questions.forEach(({ answer }, choice) => {

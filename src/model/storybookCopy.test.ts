@@ -144,7 +144,7 @@ describe("storybook text", () => {
         for (const { label } of [...(choices ?? []), ...(questions ?? [])]) {
           expect(COPY).toContain(`"${label}"`);
         }
-        if (action && action !== labels.next && action !== labels.pickUpRock) {
+        if (action && !questions && action !== labels.next && action !== labels.pickUpRock) {
           expect(COPY).toContain(`Action: "${action}"`);
         }
       }

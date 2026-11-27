@@ -382,7 +382,6 @@ export const CONTENT: GameContent = {
     ammo: "Ammo",
     ammoPack: "{weapon} ammo",
     ammoPackCount: "×{count}",
-    askMore: "Ask more",
     backToTitle: "Back to title",
     calfFind: "Find the whale calf.",
     calfGoal: "Guide a whale calf home.",

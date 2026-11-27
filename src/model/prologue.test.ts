@@ -181,7 +181,7 @@ describe("prologue", () => {
         "aboard",
         "Astra",
         "In space. I'll fly where you steer. You choose where we go, and tell me what you see.",
-        "Next",
+        "Take the seat",
         questions,
       ],
       ["aboard", "", "Ada sits in the pilot's chair and buckles Penny in beside her.", "Next"],
@@ -233,14 +233,14 @@ describe("prologue", () => {
     ]);
   });
 
-  it("returns each answer to the question list without that question, until Next", () => {
+  it("keeps answered questions selectable with completion through Previous, Continue and replay", () => {
     const model = started();
     while (!model.storyView?.page.questions) {
       model.storyNext();
     }
     const hub = model.storyView.page.id;
     const answers: string[] = [];
-    for (const index of [1, 0, 0]) {
+    for (const index of [1, 0, 2]) {
       const remaining = model.storyView!.choices.map(({ label }) => label);
       model.storyChoose(index);
       answers.push(`${remaining[index]} ${model.storyView!.page.text}`);
@@ -248,7 +248,8 @@ describe("prologue", () => {
       expect(model.storyView?.page).toMatchObject({ background: "aboard", speaker: "Astra" });
       model.storyNext();
       expect(model.storyView?.page.id).toBe(hub);
-      expect(model.storyView?.choices.map(({ label }) => label)).not.toContain(remaining[index]);
+      expect(model.storyView?.choices.map(({ label }) => label)).toEqual(questions);
+      expect(model.storyView?.choices[index]?.completed).toBe(true);
     }
     expect(answers).toEqual([
       "Can Penny come? There are two seats. Please strap Penny in.",
@@ -256,7 +257,17 @@ describe("prologue", () => {
         "remember, maybe even how I came to Earth, and shows me new places to jump.",
       "How do I get home? Ask me any time you're safe. I'll jump you back to the moment you left.",
     ]);
-    expect(model.storyView?.choices).toEqual([]);
+    for (let replay = 0; replay < 40; replay++) {
+      model.storyChoose(0);
+      model.storyNext();
+    }
+    const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, model.save());
+    resumed.continueGame();
+    expect(resumed.storyView?.page.id).toBe(hub);
+    expect(resumed.storyView?.choices.every(({ completed }) => completed)).toBe(true);
+    resumed.storyPrevious();
+    expect(resumed.storyView?.page.text).toContain("A disk that holds part of my memory.");
+    expect(model.storyView?.page.action).toBe("Take the seat");
     expect(model.state.prologueSeen).toBe(false);
     model.storyNext();
     expect(model.storyView?.page.text).toBe(

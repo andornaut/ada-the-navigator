@@ -38,6 +38,7 @@ import { createControls } from "../input/controls.ts";
 import { requiredLoading, requiredReady } from "../loading/required.ts";
 import { openRewoundCampaign } from "../model/campaignRewind.ts";
 import { CHEAT_IDS, type CheatId } from "../model/cheats.ts";
+import { linearDialogueContinuation } from "../model/conversations.ts";
 import type { ImmediateExchangeOrder, ImmediateExchangeResult } from "../model/exchange.ts";
 import { GameModel } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
@@ -754,14 +755,11 @@ export function buildScene(scene: UiContext): void {
     apply(() => {
       for (let count = 0; count < 20; count++) {
         const panel = scene.model.state.dialogue;
-        if (
-          !panel ||
-          panel.choices.some(({ id }) => id !== "continue" && id !== "optional") ||
-          !panel.choices.some(({ id }) => id === "continue")
-        ) {
+        const next = panel && linearDialogueContinuation(panel.choices);
+        if (!next) {
           break;
         }
-        scene.model.choose("continue");
+        scene.model.choose(next);
         if (scene.model.state.dialogue === panel) {
           break;
         }
@@ -1595,12 +1593,14 @@ export function refreshScene(scene: UiContext, covered = false): void {
   scene.shell.render(state, screen, continuation.canContinue, continuation.noticeOpacity);
   const interactionPanel = screen === "space" && state.dialogue?.text ? state.dialogue : null;
   const interactionGalaxy = state.flight?.galaxy ?? state.selectedGalaxy;
-  interactionCards
-    .get(scene)
-    ?.show(
-      { galaxy: interactionGalaxy, progress: state.progress[interactionGalaxy] },
-      interactionPanel,
-    );
+  interactionCards.get(scene)?.show(
+    {
+      ...(state.docked ? { docked: state.docked } : {}),
+      galaxy: interactionGalaxy,
+      progress: state.progress[interactionGalaxy],
+    },
+    interactionPanel,
+  );
   const flightGalaxy =
     (state.mode === "space" ? state.flight?.galaxy : undefined) ??
     aboardGalaxy(state, scene.model.storyView?.page);

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import {
@@ -1333,82 +1333,90 @@ describe("Use conversation paging", () => {
     expect(run.choices).toEqual(panel.choices);
   });
 
-  it("returns a selected topic to essential progression without reopening the same menu", () => {
+  it("retraces scoped forks and marks only a completed optional thread", () => {
     const run = new InteractionConversation();
-    run.show(copy, panel);
-    run.ask();
-    run.topic(0);
-    expect(run.line?.text).toBe("Answer");
-    run.advance();
-    expect(run.topics).toEqual([]);
-    expect(run.line?.text).toBe("First");
-    run.advance();
-    expect(run.line?.speaker).toBe("Ada");
-    expect(run.choices).toEqual(panel.choices);
-  });
-
-  it("leaves the topic list on Continue without choosing any material outcome", () => {
-    for (const atOutcome of [false, true]) {
-      const run = new InteractionConversation();
-      run.show(copy, panel);
-      if (atOutcome) {
-        run.advance();
-      }
-      run.ask();
-      run.topic(-1);
-      expect(run.topics.map(({ label }) => label)).toEqual(["Question"]);
-      expect(run.advance()).toBeUndefined();
-      expect(run.line?.text).toBe("Last");
-      expect(run.topics).toEqual([]);
-      expect(run.choices).toEqual(panel.choices);
-    }
-  });
-
-  it("offers only remaining topics and forwards a sole outcome Continue", () => {
-    const run = new InteractionConversation();
-    run.show(
-      { ...copy, topics: [...copy.topics, { ...copy.topics[0]!, label: "Other question" }] },
-      { ...panel, choices: [{ id: "continue", label: "Continue" }] },
-    );
-    run.advance();
-    run.ask();
-    run.topic(0);
-    run.advance();
-    run.ask();
-    expect(run.topics.map(({ label }) => label)).toEqual(["Other question"]);
-    expect(run.advance()).toBe("continue");
-  });
-
-  it("plays every selected branch line once before resuming its current essential page", () => {
-    const run = new InteractionConversation();
+    const child = { label: "Nested choice", lines: [{ speaker: "Ada", text: "Nested answer" }] };
     run.show(
       {
         ...copy,
-        topics: [
-          {
-            label: "Question",
-            lines: [
-              { speaker: "Clover", text: "Part one" },
-              { speaker: "Ada", text: "Part two" },
-            ],
-          },
-        ],
+        topics: [{ ...copy.topics[0]!, choices: [child] }],
       },
       panel,
     );
-    run.ask();
+    expect(run.hasPrevious).toBe(false);
+    run.advance();
+    expect(run.topics.map(({ label }) => label)).toEqual(["Question"]);
     run.topic(0);
-    expect(run.line?.text).toBe("Part one");
-    run.ask();
-    expect(run.topics).toEqual([]);
     run.advance();
-    expect(run.line?.text).toBe("Part two");
-    expect(run.choices).toEqual([]);
+    expect(run.topics).toEqual([child]);
+    run.topic(0);
+    expect(run.line?.text).toBe("Nested answer");
+    run.previous();
+    expect(run.topics).toEqual([child]);
+    expect(run.completedTopic(0)).toBe(false);
+    run.previous();
+    expect(run.line?.text).toBe("Answer");
+    run.previous();
+    expect(run.completedTopic(0)).toBe(false);
+
+    run.topic(0);
     run.advance();
-    expect(run.line?.text).toBe("First");
-    expect(run.topics).toEqual([]);
+    run.topic(0);
     run.advance();
+    expect(run.topics.map(({ label }) => label)).toEqual(["Question"]);
+    expect(run.completedTopic(0)).toBe(true);
+    run.previous();
+    expect(run.line?.text).toBe("Nested answer");
+    run.advance();
+    expect(run.completedTopic(0)).toBe(true);
+    run.leaveTopics();
+    expect(run.choices).toEqual(panel.choices);
+    run.previous();
+    expect(run.completedTopic(0)).toBe(true);
+    expect(panel.choices).toHaveLength(2);
+  });
+
+  it("retains completion across station screens and clears it on undock or standalone close", () => {
+    const run = new InteractionConversation();
+    run.setDocked("station:1,2");
+    const open = () => {
+      run.show(structuredClone(copy), { ...panel });
+      run.advance();
+    };
+    open();
+    run.topic(0);
+    run.advance();
+    expect(run.completedTopic(0)).toBe(true);
+    run.hide();
+    open();
+    expect(run.completedTopic(0)).toBe(true);
+    run.setDocked(undefined);
+    open();
+    expect(run.completedTopic(0)).toBe(false);
+    run.topic(0);
+    run.advance();
+    run.hide();
+    open();
+    expect(run.completedTopic(0)).toBe(false);
+  });
+
+  it("returns from a model fork to its actual preceding page without replaying an applied outcome", () => {
+    const run = new InteractionConversation();
+    const linear = { ...panel, choices: [{ id: "continue", label: "Continue" }] };
+    const intro = { ...copy, topics: [] };
+    const fork = { ...panel, context: "fork" };
+    run.show(intro, linear);
+    run.advance();
+    const apply = vi.fn(() => run.show({ ...intro, lines: [intro.lines[0]!] }, fork));
+    run.choose("continue", apply);
+    expect(run.atChoice).toBe(true);
+    run.previous();
     expect(run.line?.text).toBe("Last");
+    run.show(intro, fork);
+    expect(run.line?.text).toBe("Last");
+    run.choose("continue", apply);
+    expect(run.atChoice).toBe(true);
+    expect(apply).toHaveBeenCalledOnce();
   });
 
   it("retains pending meaningful choices and leaves their outcome to explicit model selection", () => {
@@ -1437,7 +1445,7 @@ describe("Use conversation paging", () => {
     const run = new InteractionConversation();
     const before = structuredClone(panel);
     run.show(copy, panel);
-    run.ask();
+    run.advance();
     expect(run.atChoice).toBe(false);
     run.skip();
     expect(run.line?.text).toBe("Last");
@@ -1536,6 +1544,7 @@ describe("Use conversation paging", () => {
     const run = new InteractionConversation();
     run.show(copy, panel);
     run.advance();
+    run.leaveTopics();
     run.show(copy, panel);
     expect(run.line?.text).toBe("Last");
     run.show(copy, { ...panel });

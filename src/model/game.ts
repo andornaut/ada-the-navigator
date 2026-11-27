@@ -2785,9 +2785,6 @@ export class GameModel {
       this.current.sounder = { phase: "revealed" };
       this.prepareWhirlpoolDisk(flight);
     }
-    if (entry.optional && this.label("askMore")) {
-      this.state.dialogue?.choices.unshift({ id: "optional", label: this.label("askMore") });
-    }
   }
   private launch(): void {
     this.pickupFeedback = [];

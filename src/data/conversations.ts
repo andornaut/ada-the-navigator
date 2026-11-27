@@ -809,13 +809,16 @@ export interface InteractionLine {
   readonly speaker: string;
   readonly text: string;
 }
+export interface InteractionTopic {
+  readonly label: string;
+  readonly lines: readonly InteractionLine[];
+  readonly choices?: readonly InteractionTopic[];
+}
+
 export interface InteractionCopy {
   readonly party: string;
   readonly lines: readonly InteractionLine[];
-  readonly topics: readonly {
-    readonly label: string;
-    readonly lines: readonly InteractionLine[];
-  }[];
+  readonly topics: readonly InteractionTopic[];
 }
 export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
   ...Object.fromEntries(

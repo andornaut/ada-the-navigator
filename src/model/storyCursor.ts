@@ -163,6 +163,28 @@ function trailCapacity(scenes: Iterable<Scene>): number {
   return capacity;
 }
 
+/** Replayable question transitions can revisit the same canonical pages indefinitely. */
+function trailFits(position: StoryPosition, scenes: Iterable<Scene>): boolean {
+  const steps = [...position.trail, position];
+  let length = position.trail.length;
+  for (let index = 1; index < steps.length; index++) {
+    const from = steps[index - 1]!;
+    const to = steps[index]!;
+    if (from.scene !== to.scene) {
+      continue;
+    }
+    const returnsToList = to.scene.pages.find(({ id }) => id === to.page);
+    const answer = from.scene.pages.find(({ id }) => id === from.page);
+    if (
+      answer?.next === to.page &&
+      returnsToList?.questions?.some(({ next }) => next === from.page)
+    ) {
+      length -= 2;
+    }
+  }
+  return length <= trailCapacity(scenes);
+}
+
 /** Store references and navigation state without copying authored pages or applying effects. */
 export function storyCursor(
   context: { readonly reference: (scene: Scene) => StorySceneReference },
@@ -180,7 +202,7 @@ export function storyCursor(
   };
   const current = encode(position);
   const trail = position.trail.map(encode);
-  if (trail.length > trailCapacity(scenes.values())) {
+  if (!trailFits(position, scenes.values())) {
     throw new RangeError("Story cursor trail exceeds canonical pages");
   }
   return { current, trail, version: 1 };
@@ -232,10 +254,8 @@ export function readStoryCursor(
       }
       trail.push(decoded);
     }
-    if (trail.length > trailCapacity(scenes.values())) {
-      return null;
-    }
-    return { ...current, trail };
+    const position = { ...current, trail };
+    return trailFits(position, scenes.values()) ? position : null;
   } catch {
     return null;
   }

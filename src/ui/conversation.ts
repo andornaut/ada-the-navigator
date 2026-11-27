@@ -8,13 +8,20 @@ import { CONTENT } from "../data/content.ts";
 import { CONTROL_WORDS } from "../data/controlWords.ts";
 import type { Mood, Speaker } from "../data/conversations.ts";
 import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
+import { SPACING } from "../data/layout.ts";
 import { NOTICE_TIMING } from "../data/noticeTiming.ts";
-import { InteractionConversation, interactionCopy } from "../model/conversations.ts";
+import { SCREEN } from "../data/screen.ts";
+import {
+  type InteractionContext,
+  InteractionConversation,
+  interactionCopy,
+} from "../model/conversations.ts";
 import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
 } from "./actionBinding.ts";
+import { showDialogueChoiceStatus } from "./dialogueChoice.ts";
 import { createDialoguePanel, DIALOGUE_PANEL_STYLE } from "./dialoguePanel.ts";
 import {
   COMPACT_PORTRAITS,
@@ -36,8 +43,16 @@ import { controlHelpText, createControlHelp } from "./controlHelp.ts";
 import { CARD_CLOSE } from "./layout/cardFrame.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
-import { font, fromHudEdge, units, VIEW_HOST_ID } from "./layout/css.ts";
-import { hudButtonTarget, STORY_SKIP } from "./layout/playView.ts";
+import {
+  font,
+  fromAreaLeft,
+  safeEdge,
+  units,
+  VIEW_HOST_ID,
+  VIEW_PROPERTIES,
+} from "./layout/css.ts";
+import { hudButtonTarget, STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
+import { STORY_TOPIC_PREVIOUS_MIN, STORY_TOPIC_PREVIOUS_SHARE } from "./layout/storyPage.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { TEXT_TOKENS } from "./modal.ts";
 import { CONVERSATION_SLOT, FLIGHT_PANEL_BACKGROUND } from "./notice.ts";
@@ -126,17 +141,67 @@ export function interactionHudRow(): {
 }
 
 const INTERACTION_ROW = interactionHudRow();
+const deviceEdge = (side: string) => `var(--ada-interaction-inset-${side})`;
+const interactionHudEdge = (side: "top" | "right", offset: number) =>
+  `calc(max(var(${VIEW_PROPERTIES.hud(side)}), ${deviceEdge(side)}) + ${units(offset)})`;
+const areaBottom = `calc(var(${VIEW_PROPERTIES.areaBottom}) + ${units(SPACING.pageInset)})`;
+const areaRight = `calc(100% - ${fromAreaLeft(SCREEN.width - SPACING.pageInset)})`;
+const interactionBottom = `max(${areaBottom}, ${safeEdge("bottom", SPACING.pageInset)}, ${deviceEdge("bottom")})`;
 
 // Only the full-screen interaction positions its controls against the HUD.
 export const INTERACTION_STYLE = `${DIALOGUE_PANEL_STYLE}
+.ada-controls .ada-interaction-modal{
+  --ada-interaction-inset-top:env(safe-area-inset-top,0px);
+  --ada-interaction-inset-right:env(safe-area-inset-right,0px);
+  --ada-interaction-inset-bottom:env(safe-area-inset-bottom,0px);
+  --ada-interaction-inset-left:env(safe-area-inset-left,0px)
+}
+:root[data-frame-turn="90"] .ada-controls .ada-interaction-modal{
+  --ada-interaction-inset-top:env(safe-area-inset-right,0px);
+  --ada-interaction-inset-right:env(safe-area-inset-bottom,0px);
+  --ada-interaction-inset-bottom:env(safe-area-inset-left,0px);
+  --ada-interaction-inset-left:env(safe-area-inset-top,0px)
+}
+:root[data-frame-turn="-90"] .ada-controls .ada-interaction-modal{
+  --ada-interaction-inset-top:env(safe-area-inset-left,0px);
+  --ada-interaction-inset-right:env(safe-area-inset-top,0px);
+  --ada-interaction-inset-bottom:env(safe-area-inset-right,0px);
+  --ada-interaction-inset-left:env(safe-area-inset-bottom,0px)
+}
+.ada-controls .ada-interaction-modal > .ada-dialogue-frame > .ada-dialogue-panel{
+  left:max(${fromAreaLeft(SPACING.pageInset)}, ${safeEdge("left", SPACING.pageInset)}, ${deviceEdge("left")});
+  right:max(${areaRight}, ${safeEdge("right", SPACING.pageInset)}, ${deviceEdge("right")});
+  bottom:${interactionBottom};
+  width:auto;
+  max-height:calc(100% - ${interactionHudEdge("top", STORY_PANEL_TOP)} - ${interactionBottom});
+  transform:none
+}
+.ada-controls .ada-interaction-modal .ada-dialogue-panel[data-choice-page]
+  :is(.ada-story-choice-column,.ada-story-choices,.ada-dialogue-controls){
+  row-gap:${units(SPACING.gap)}
+}
+.ada-controls .ada-interaction-modal .ada-dialogue-panel[data-choice-page] .ada-story-choices{
+  overflow-x:hidden;
+  padding-bottom:${units(SPACING.rowGap)}
+}
+.ada-controls .ada-interaction-modal .ada-dialogue-panel[data-topic-page] .ada-dialogue-controls{
+  grid-template-columns:max(${units(STORY_TOPIC_PREVIOUS_MIN)},${100 * STORY_TOPIC_PREVIOUS_SHARE}%) minmax(0,1fr);
+  column-gap:${units(SPACING.gap)}
+}
+.ada-controls .ada-interaction-modal .ada-dialogue-panel[data-topic-page] .ada-dialogue-controls > .ada-button{
+  width:100%;
+  min-width:0;
+  padding-inline:${units(SPACING.rowGap)}
+}
 .ada-controls .ada-interaction-modal > .ada-dialogue-frame > .ada-close{
-  top:${fromHudEdge("top", INTERACTION_ROW.close.y)};
-  right:${fromHudEdge("right", -(INTERACTION_ROW.close.x + INTERACTION_ROW.close.width))};
+  top:${interactionHudEdge("top", INTERACTION_ROW.close.y)};
+  right:${interactionHudEdge("right", -(INTERACTION_ROW.close.x + INTERACTION_ROW.close.width))};
   width:${units(INTERACTION_ROW.close.width)};
   height:${units(INTERACTION_ROW.close.height)}
 }
 .ada-controls .ada-interaction-modal > .ada-dialogue-frame:has(> .ada-close:not([hidden])) > .ada-story-skip{
-  right:${fromHudEdge("right", INTERACTION_ROW.skipRight)}
+  top:${interactionHudEdge("top", STORY_SKIP.top)};
+  right:${interactionHudEdge("right", INTERACTION_ROW.skipRight)}
 }
 `;
 
@@ -393,6 +458,7 @@ export function createInteractionCard(
   modal.hidden = true;
   let disposed = false;
   const state = new InteractionConversation();
+  let context: InteractionContext;
   const skipAction = createStandardTextAction(parent, CONTENT.labels.skip ?? "", {
     availability: (button) => (button?.disabled ? { kind: "disabled" } : { kind: "available" }),
     current: () => !disposed && !state.atChoice,
@@ -401,8 +467,7 @@ export function createInteractionCard(
         return;
       }
       state.skip();
-      const choices = state.choices;
-      if (choices.length === 1 && choices[0]?.id === "continue") {
+      if (state.linearContinuation) {
         options.skip();
       }
       draw();
@@ -447,7 +512,7 @@ export function createInteractionCard(
     leaveView?.();
     leaveView = undefined;
     returnFocus = null;
-    state.reset();
+    state.hide();
     signature = "";
   };
   const disposePageActions = () => {
@@ -476,7 +541,13 @@ export function createInteractionCard(
     const choices: HTMLButtonElement[] = [];
     const controls: HTMLButtonElement[] = [];
     // Refused outcomes keep the current page and the original button while the cue plays.
-    const add = (label: string, callback: (() => void) | null, choice = false, primary = false) => {
+    const add = (
+      label: string,
+      callback: (() => void) | null,
+      choice = false,
+      primary = false,
+      status?: "completed" | "quest",
+    ) => {
       let stopRefusal: (() => void) | undefined;
       const action = createStandardTextAction(parent, label, {
         availability: (button) => (button?.disabled ? { kind: "disabled" } : { kind: "available" }),
@@ -500,6 +571,9 @@ export function createInteractionCard(
       button.classList.toggle("ada-primary", primary);
       setButtonRole(primary ? "primary" : "secondary", button);
       button.hidden = true;
+      if (status) {
+        showDialogueChoiceStatus(button, label, status);
+      }
       nextActions.push({
         dispose() {
           action.dispose();
@@ -514,37 +588,40 @@ export function createInteractionCard(
     };
     try {
       for (const [index, topic] of state.topics.entries()) {
-        add(topic.label, () => state.topic(index), true);
-      }
-      const next = CONTENT.labels.next ?? "";
-      if (!state.atOutcome) {
         add(
-          next,
-          () => {
-            const action = state.advance();
-            if (action) {
-              options.choose(action);
-            }
-          },
+          topic.label,
+          () => state.topic(index),
+          true,
+          false,
+          state.completedTopic(index) ? "completed" : undefined,
+        );
+      }
+      if (state.topicExitLabel) {
+        add(state.topicExitLabel, () => state.leaveTopics(), false, true);
+      } else if (state.topics.length === 0 && !state.atOutcome) {
+        add(CONTENT.labels.next ?? "", () => state.advance(), false, true);
+      } else if (state.linearContinuation) {
+        add(
+          CONTENT.labels.next ?? "",
+          () => state.choose("continue", () => options.choose("continue")),
           false,
           true,
         );
       } else {
         for (const choice of state.choices) {
-          const label =
-            choice.id === "continue" && choice.label === CONTENT.labels.continue
-              ? next
-              : choice.label;
           add(
-            label,
-            choice.refused ? null : () => options.choose(choice.id),
-            choice.id !== "continue",
+            choice.label,
+            choice.refused || !state.canReplayChoice(choice.id)
+              ? null
+              : () => state.choose(choice.id, () => options.choose(choice.id)),
+            true,
             state.choices.length === 1,
+            !choice.refused && state.questChoice(choice.id, context) ? "quest" : undefined,
           );
         }
       }
-      if (state.hasTopics && !state.choosingTopic && !state.atChoice) {
-        add(CONTENT.labels.askMore ?? "Ask more", () => state.ask());
+      if (state.hasPrevious) {
+        add(CONTENT.labels.previous ?? "", () => state.previous());
       }
       disposePageActions();
       card.choices.replaceChildren(...choices);
@@ -567,6 +644,8 @@ export function createInteractionCard(
     for (const button of [...choices, ...controls]) {
       button.hidden = false;
     }
+    card.card.toggleAttribute("data-topic-page", state.topicExitLabel !== undefined);
+    card.card.toggleAttribute("data-choice-page", state.atChoice || state.topics.length > 0);
     const line = state.line;
     card.showLine(line?.speaker, line?.text ?? "");
     skip.hidden = state.atChoice;
@@ -610,13 +689,11 @@ export function createInteractionCard(
       modal.remove();
     },
     isOpen: () => !modal.hidden,
-    show(
-      context: import("../model/conversations.ts").InteractionContext,
-      panel: import("../model/types.ts").DialogueState | null,
-    ) {
+    show(nextContext: InteractionContext, panel: import("../model/types.ts").DialogueState | null) {
       if (disposed) {
         return;
       }
+      state.setDocked(typeof nextContext === "number" ? undefined : nextContext.docked);
       if (panel && !leaveView) {
         returnFocus =
           document.activeElement instanceof (document.defaultView?.HTMLElement ?? HTMLElement)
@@ -636,6 +713,7 @@ export function createInteractionCard(
           throw error;
         }
       }
+      context = nextContext;
       const copy = interactionCopy(context, panel);
       state.show(copy, panel);
       const next = JSON.stringify(panel);
