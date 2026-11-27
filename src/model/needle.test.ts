@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { NEEDLE } from "../data/needle.ts";
-import { NEEDLE_LEARNING } from "../data/needleCopy.ts";
+import { NEEDLE_COURSE_COPY, NEEDLE_LEARNING } from "../data/needleCopy.ts";
 import { toScreen } from "./convex.ts";
 import { createFlight, stepFlight } from "./flight.ts";
 import {
@@ -13,6 +13,7 @@ import {
   needleDebris,
   type NeedleGate,
   needleGateOrientation,
+  needleGateReadiness,
   needleLearningCue,
   needleLearningFeedback,
   needleRimContacts,
@@ -323,6 +324,53 @@ function cross(context: NeedleContext, gate: NeedleGate, speed: number) {
   stepNeedle(context, 0.1, from);
 }
 describe("Needle chapter runtime", () => {
+  it.each([100, 200])(
+    "updates the next-gate signal at each exact speed boundary for top speed %s",
+    (topSpeed) => {
+      const signal = (share: number) =>
+        needleGateReadiness({ topSpeed, velocity: { x: 0, y: -topSpeed * share } });
+      expect([
+        signal(0.6),
+        signal(0.599),
+        signal(0.4),
+        signal(0.399),
+        signal(0),
+        signal(0.7),
+      ]).toEqual(["red", "yellow", "yellow", "green", "green", "red"]);
+    },
+  );
+
+  it("coaches each approach to the current flag and distinguishes a fresh start from a failed attempt", () => {
+    const context = chapter();
+    learn(context, "independent");
+    const { flight } = context;
+    const { eye, practice } = needleCourses(flight)!;
+    const cue = () => chapterFlight(context).chatter.at(-1)?.text;
+    const visitStart = (course: NeedleCourse) => {
+      flight.player = { ...course.path[0]! };
+      stepNeedle(context, 0.001, flight.player);
+    };
+    const approachCount = () =>
+      chapterFlight(context).chatter.filter(({ text }) => text === NEEDLE_COURSE_COPY.approach)
+        .length;
+    visitStart(eye);
+    expect(approachCount()).toBe(0);
+    expect(useNeedle(context, "needleEye")).toEqual({ useRefused: true });
+    visitStart(practice);
+    expect(cue()).toBe(NEEDLE_COURSE_COPY.approach);
+    visitStart(practice);
+    expect(approachCount()).toBe(1);
+    expect(useNeedle(context, "needlePractice")).toEqual({});
+    expect(cue()).toBe(NEEDLE_COURSE_COPY.start);
+    cross(context, practice.gates[0]!, 200);
+    expect(chapterProgress(context).practiceLit).toBe(0);
+    visitStart(practice);
+    expect(approachCount()).toBe(2);
+    expect(useNeedle(context, "needlePractice")).toEqual({});
+    expect(cue()).toBe(NEEDLE_COURSE_COPY.retry);
+    expect(chapterFlight(context).guidance).toEqual(practice.gates[0]!.point);
+  });
+
   it.each(["show", "feedback", "independent"] as const)(
     "requires and preserves the %s learning choice across Continue",
     (approach) => {

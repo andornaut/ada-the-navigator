@@ -10,6 +10,17 @@ export interface NeedleProgress {
   /** Absent until Ada makes the required practice choice through Loom's Talk. */
   approach?: NeedleApproach;
 }
+export function unfinishedNeedleCourse(
+  progress: Readonly<NeedleProgress> | undefined,
+): "practice" | "eye" | undefined {
+  if (!progress?.approach) {
+    return undefined;
+  }
+  if (progress.practiceLit < NEEDLE.practiceGates) {
+    return "practice";
+  }
+  return progress.eyeLit < NEEDLE.eyeGates ? "eye" : undefined;
+}
 /** Strict finite save validation; a completed Eye requires the practice course. */
 export function readNeedleProgress(value: unknown): NeedleProgress | null {
   if (!value || typeof value !== "object") {
@@ -114,10 +125,20 @@ export function needleSlow(context: {
   readonly velocity: Vec;
   readonly topSpeed: number;
 }): boolean {
-  return (
-    context.topSpeed > 0 &&
-    Math.hypot(context.velocity.x, context.velocity.y) < NEEDLE.speedFraction * context.topSpeed
-  );
+  return needleGateReadiness(context) === "green";
+}
+export function needleGateReadiness({
+  topSpeed,
+  velocity,
+}: {
+  readonly velocity: Vec;
+  readonly topSpeed: number;
+}): "red" | "yellow" | "green" {
+  const speed = Math.hypot(velocity.x, velocity.y);
+  if (!(topSpeed > 0) || !Number.isFinite(speed) || speed >= NEEDLE.fastFraction * topSpeed) {
+    return "red";
+  }
+  return speed < NEEDLE.speedFraction * topSpeed ? "green" : "yellow";
 }
 export interface NeedlePass {
   readonly lit: number;

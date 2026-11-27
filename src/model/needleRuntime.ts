@@ -2,18 +2,20 @@ import { NEEDLE_CADENCE } from "../data/capitalBosses.ts";
 import type { ConversationLine } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { NEEDLE, NEEDLE_PLACES } from "../data/needle.ts";
-import { NEEDLE_COPY, NEEDLE_LEARNING } from "../data/needleCopy.ts";
+import { NEEDLE_COPY, NEEDLE_COURSE_COPY, NEEDLE_LEARNING } from "../data/needleCopy.ts";
 import type { CapitalBossProgress } from "./capitalBossEncounter.ts";
 import type { ChapterContext, ChapterResult } from "./chapterProtocol.ts";
 import { ensureDestination, ensureDestinationAt, spawnChapterEnemy } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import {
   type NeedleApproach,
+  type NeedleCourse,
   needleCourses,
   needleLearningFeedback,
   type NeedleProgress,
   readNeedleProgress,
   stepNeedleCourse,
+  unfinishedNeedleCourse,
 } from "./needle.ts";
 import {
   type NeedleCadencePlacement,
@@ -60,6 +62,15 @@ const progressOf = (context: ChapterContext): NeedleChapterProgress =>
     practiceThanked: false,
   });
 const stateOf = (context: ChapterContext) => (context.flight as ChapterFlight).needle;
+type StoryCourse = "practice" | "eye";
+const nearbyStarts = new WeakMap<NeedleFlight, StoryCourse>();
+const attemptedStarts = new WeakMap<NeedleFlight, StoryCourse>();
+
+function nearCourseStart(context: ChapterContext, course: NeedleCourse): boolean {
+  const { player } = context.flight;
+  const start = course.path[0]!;
+  return Math.hypot(player.x - start.x, player.y - start.y) <= context.content.tuning.talkRange;
+}
 export { needleCourses } from "./needle.ts";
 export { NEEDLE_CADENCE };
 
@@ -168,12 +179,22 @@ export function stepNeedle(context: ChapterContext, _seconds: number, previous: 
   if (context.progress.holodisk) {
     return;
   }
-  const practice = progress.practiceLit < NEEDLE.practiceGates;
-  const course = practice ? layout.practice : layout.eye;
-  const lit = practice ? progress.practiceLit : progress.eyeLit;
-  if (lit === course.gates.length) {
+  const kind = unfinishedNeedleCourse(progress);
+  if (!kind) {
+    nearbyStarts.delete(state);
     return;
   }
+  const course = layout[kind];
+  if (nearCourseStart(context, course)) {
+    if (nearbyStarts.get(state) !== kind) {
+      nearbyStarts.set(state, kind);
+      state.chatter.push({ speaker: "loom", text: NEEDLE_COURSE_COPY.approach });
+    }
+  } else {
+    nearbyStarts.delete(state);
+  }
+  const litKey = kind === "practice" ? "practiceLit" : "eyeLit";
+  const lit = progress[litKey];
   const attempt = stepNeedleCourse(
     {
       from: previous,
@@ -184,12 +205,9 @@ export function stepNeedle(context: ChapterContext, _seconds: number, previous: 
     course,
     lit,
   );
-  if (practice) {
-    progress.practiceLit = attempt.lit;
-  } else {
-    progress.eyeLit = attempt.lit;
-  }
+  progress[litKey] = attempt.lit;
   if (attempt.missed) {
+    attemptedStarts.set(state, kind);
     state.guidance = { ...course.gates[attempt.guidanceGate]!.point };
   } else if (attempt.passed.length) {
     delete state.guidance;
@@ -198,7 +216,7 @@ export function stepNeedle(context: ChapterContext, _seconds: number, previous: 
   if (feedback) {
     state.chatter.push({ speaker: "loom", text: feedback });
   }
-  if (!practice && attempt.lit === NEEDLE.eyeGates && attempt.passed.length) {
+  if (kind === "eye" && attempt.lit === NEEDLE.eyeGates && attempt.passed.length) {
     state.chatter.push({ speaker: "ada", text: NEEDLE_LEARNING.eyeComplete });
   }
 }
@@ -241,7 +259,26 @@ export function useNeedle(context: ChapterContext, id: string): ChapterResult | 
     return canCollect(context) ? { dialogue: panel("collect") } : { useRefused: true };
   }
   if (id === "needlePractice" || id === "needleEye") {
-    return { useRefused: true };
+    const kind = id === "needlePractice" ? "practice" : "eye";
+    const state = stateOf(context);
+    const course = needleCourses(context.flight)?.[kind];
+    if (
+      context.progress.holodisk ||
+      !progress.briefed ||
+      unfinishedNeedleCourse(progress) !== kind ||
+      !state ||
+      !course ||
+      !nearCourseStart(context, course)
+    ) {
+      return { useRefused: true };
+    }
+    const litKey = kind === "practice" ? "practiceLit" : "eyeLit";
+    const retry = progress[litKey] > 0 || attemptedStarts.get(state) === kind;
+    progress[litKey] = 0;
+    attemptedStarts.set(state, kind);
+    state.guidance = { ...course.gates[0]!.point };
+    state.chatter.push({ speaker: "loom", text: NEEDLE_COURSE_COPY[retry ? "retry" : "start"] });
+    return {};
   }
   return undefined;
 }

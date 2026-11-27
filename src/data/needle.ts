@@ -13,6 +13,7 @@ export const NEEDLE = {
   eyeGates: 8,
   /** Keep the two courses separate and their entries away from the teaching station. */
   eyeOffset: { x: 2000, y: -2000 },
+  fastFraction: 0.6,
   gate: GATES,
   insideDebrisEvery: 10,
   insideDebrisOffset: 5,

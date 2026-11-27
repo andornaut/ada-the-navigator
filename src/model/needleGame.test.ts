@@ -5,6 +5,7 @@ import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { BUILT, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { NEEDLE } from "../data/needle.ts";
+import { NEEDLE_COURSE_COPY } from "../data/needleCopy.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { ControlState } from "../input/state.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
@@ -128,8 +129,8 @@ function nearCrossbow(model: GameModel, distance: number) {
 
 describe("Needle contextual Use", () => {
   it.each([
-    ["needlePractice", 0, 0, "Light the practice gates."],
-    ["needleEye", NEEDLE.practiceGates, 0, "Light the Eye's gates."],
+    ["needlePractice", NEEDLE.practiceGates, 0, "Light the Eye's gates."],
+    ["needleEye", 0, 0, "Light the practice gates."],
     ["holodisk", NEEDLE.practiceGates, NEEDLE.eyeGates - 1, "Light the Eye's gates."],
   ] as const)(
     "answers a press at %s without bypassing the gate objectives",
@@ -161,6 +162,49 @@ describe("Needle contextual Use", () => {
       });
       model.step(0.001, controls.sample());
       expect(model.useRefusals).toBe(before + 1);
+    },
+  );
+
+  it.each([
+    ["needlePractice", "practice", 1, 0, 0, 0],
+    ["needleEye", "eye", NEEDLE.practiceGates, 2, NEEDLE.practiceGates, 0],
+  ] as const)(
+    "restarts only the current course at %s through a queued Use press",
+    (id, course, practiceLit, eyeLit, nextPracticeLit, nextEyeLit) => {
+      const model = launch(173);
+      const progress = model.state.progress[4];
+      Object.assign(progress.needle!, {
+        approach: "independent",
+        briefed: true,
+        eyeLit,
+        met: true,
+        practiceLit,
+        practiceThanked: course === "eye",
+      });
+      visit(model, id);
+      model.dismissNotice();
+      expect(model.useTarget).toEqual({ action: "use", id });
+      const flight = model.state.flight!;
+      const before = structuredClone(progress);
+      const at = { ...flight.player };
+      const refusals = model.useRefusals;
+      const controls = new ControlState();
+      controls.setUseAvailable(true);
+      controls.requestUse();
+      model.step(0.001, controls.sample());
+      expect(progress).toEqual({
+        ...before,
+        needle: { ...before.needle, eyeLit: nextEyeLit, practiceLit: nextPracticeLit },
+      });
+      expect(flight.player).toEqual(at);
+      expect(flight.needle?.guidance).toEqual(needleCourses(flight)![course].gates[0]!.point);
+      expect(flight.needle?.chatter).toContainEqual({
+        speaker: "loom",
+        text: NEEDLE_COURSE_COPY.retry,
+      });
+      expect(model.state.dialogue).toBeNull();
+      expect(model.useRefusals).toBe(refusals);
+      expect(controls.sample().use).toBe(false);
     },
   );
 
