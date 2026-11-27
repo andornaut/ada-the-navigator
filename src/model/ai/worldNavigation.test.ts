@@ -166,3 +166,32 @@ it("admits a moving rock only when its path over the look-ahead comes within rea
   expect(query(rock(far, -closing))).toBeUndefined();
   expect(query(rock(far, 0))).toBeUndefined();
 });
+
+it("rechecks clearance when either centre changes between checks of the same pose", () => {
+  const shape = [...ASTEROID_SHAPES.values()].find((entry) => entry.size === "large")!;
+  const rock: SpaceObject = {
+    asteroid: shape.id,
+    hp: 10,
+    id: "projection-rock",
+    kind: "rock",
+    radius: shape.radius,
+    x: 990,
+    y: 0,
+  };
+  const definition = enemyCatalog.frigate;
+  const enemy = createEnemy(
+    definition,
+    { archetype: "frigate", id: "projection-guard", packId: null, phase: 0.4 },
+    { x: -990, y: 0 },
+  );
+  const context = { drawnOf: scenerySilhouette, frameOf: () => 0, worldSide: 2000 };
+  const query = worldNavigationQuery(context, [rock], definition, { ...enemy, radius: 40 })!;
+  const pose = { facing: enemy.facing, position: { ...enemy.position }, time: 0 };
+  expect(query.clear(pose, 0)).toBe(false);
+  expect(query.clear(pose, 40)).toBe(false);
+
+  pose.position.y = 500;
+  expect(query.clear(pose, 40)).toBe(true);
+  rock.y = 500;
+  expect(query.clear(pose, 0)).toBe(false);
+});

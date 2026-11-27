@@ -99,6 +99,7 @@ export function worldNavigationQuery(
       frame,
       object,
       outline,
+      projection: { centreX: NaN, centreY: NaN, distance: 0, poseX: NaN, poseY: NaN, x: 0, y: 0 },
       reach: outline ? partsReach(worldParts(outline)) : 0,
       velocity:
         object.velocity && (object.velocity.x || object.velocity.y) ? object.velocity : null,
@@ -213,11 +214,26 @@ export function worldNavigationQuery(
         if (!outline) {
           return contact(pose, clearance, obstacle) !== null;
         }
-        const image = worldPoint(context, pose.position, centreAt(pose, obstacle));
+        // A predicted pose is checked at both contact and berth clearance. Reuse its
+        // relative image only while both centres are unchanged.
+        const centre = centreAt(pose, obstacle);
+        const projection = obstacle.projection;
         if (
-          Math.hypot(pose.position.x - image.x, pose.position.y - image.y) >=
-          obstacle.reach + bodyReach + clearance
+          projection.poseX !== pose.position.x ||
+          projection.poseY !== pose.position.y ||
+          projection.centreX !== centre.x ||
+          projection.centreY !== centre.y
         ) {
+          const image = worldPoint(context, pose.position, centre);
+          projection.poseX = pose.position.x;
+          projection.poseY = pose.position.y;
+          projection.centreX = centre.x;
+          projection.centreY = centre.y;
+          projection.x = pose.position.x - image.x;
+          projection.y = pose.position.y - image.y;
+          projection.distance = Math.hypot(projection.x, projection.y);
+        }
+        if (projection.distance >= obstacle.reach + bodyReach + clearance) {
           return false;
         }
         const shape = worldParts(outline);
@@ -225,8 +241,8 @@ export function worldNavigationQuery(
         // Boolean admission needs no exit normal or depth. Existing primitives retain exact contact boundaries.
         return overlaps(
           parts,
-          pose.position.x - image.x,
-          pose.position.y - image.y,
+          projection.x,
+          projection.y,
           body ? clearance : enemy.radius + clearance,
         );
       });
