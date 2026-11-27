@@ -7,6 +7,7 @@ import type { CapitalBossProgress } from "./capitalBossEncounter.ts";
 import type { ChapterContext, ChapterResult } from "./chapterProtocol.ts";
 import { ensureDestination, ensureDestinationAt, spawnChapterEnemy } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
+import { worldActivateFlightRegion } from "./geography.ts";
 import {
   type NeedleApproach,
   type NeedleCourse,
@@ -31,6 +32,8 @@ import type {
   Vec,
 } from "./types.ts";
 import { shipTuning } from "./upgrades.ts";
+import { worldDistance, worldPoint } from "./worldContacts.ts";
+import { wrapPoint } from "./worldGeometry.ts";
 export interface NeedleChapterProgress extends NeedleProgress {
   met: boolean;
   briefed: boolean;
@@ -43,6 +46,7 @@ export interface NeedleCue {
 type StoryCourse = "practice" | "eye";
 export interface NeedleFlight {
   anchor: Vec;
+  activityPatrol?: { id: number; tried: number[] };
   chatter: NeedleCue[];
   exitPackPlaced: boolean;
   exitWarned?: boolean;
@@ -98,7 +102,10 @@ export function needleTrackedObjective(context: ChapterContext): NeedleTrackedOb
 function nearCourseStart(context: ChapterContext, course: NeedleCourse): boolean {
   const { player } = context.flight;
   const start = course.path[0]!;
-  return Math.hypot(player.x - start.x, player.y - start.y) <= context.content.tuning.talkRange;
+  return (
+    worldDistance(flightWorldContext(context.flight), player, start) <=
+    context.content.tuning.talkRange
+  );
 }
 export { needleCourses } from "./needle.ts";
 export { NEEDLE_CADENCE };
@@ -172,7 +179,24 @@ export function initNeedle(context: ChapterContext): void {
   ensureDestinationAt(context.content, "needlePractice", layout.practice.path[0]!, context.flight);
   ensureDestinationAt(context.content, "needleEye", layout.eye.path[0]!, context.flight);
   if (!context.progress.holodisk) {
-    ensureDestinationAt(context.content, "holodisk", layout.eye.holodisk, context.flight);
+    const world = flightWorldContext(context.flight);
+    const retained = context.flight.world.notables.holodisk;
+    if (retained) {
+      worldActivateFlightRegion(world, context.content, retained, context.flight);
+    }
+    const disk = ensureDestinationAt(
+      context.content,
+      "holodisk",
+      layout.eye.holodisk,
+      context.flight,
+    );
+    const point =
+      world.worldSide === undefined
+        ? layout.eye.holodisk
+        : wrapPoint(world.worldSide, layout.eye.holodisk);
+    // Older flights retain the same disk identity at the exit of the shorter Eye.
+    disk.x = point.x;
+    disk.y = point.y;
   }
   if (!state.exitPackPlaced && !context.progress.holodisk) {
     for (const actor of planNeedleExit(context.flight.seed, layout.eye.pack)) {
@@ -193,11 +217,11 @@ export function stepNeedle(context: ChapterContext, _seconds: number, previous: 
     return;
   }
   const exit = layout.eye.path.at(-1)!;
+  const world = flightWorldContext(context.flight);
   if (
     progress.eyeLit === NEEDLE.eyeGates &&
     !state.exitWarned &&
-    Math.hypot(context.flight.player.x - exit.x, context.flight.player.y - exit.y) <=
-      layout.eye.width
+    worldDistance(world, context.flight.player, exit) <= layout.eye.width
   ) {
     state.chatter.push({ speaker: "astra", text: NEEDLE_LEARNING.drones });
     state.exitWarned = true;
@@ -222,10 +246,11 @@ export function stepNeedle(context: ChapterContext, _seconds: number, previous: 
   }
   const litKey = kind === "practice" ? "practiceLit" : "eyeLit";
   const lit = progress[litKey];
+  const from = worldPoint(world, course.path[0]!, previous);
   const attempt = stepNeedleCourse(
     {
-      from: previous,
-      to: context.flight.player,
+      from,
+      to: worldPoint(world, from, context.flight.player),
       topSpeed: shipTuning(ECONOMY, context.content, context.flight.levels).physics.maxSpeed,
       velocity: context.flight.velocity,
     },
@@ -441,6 +466,16 @@ export function validNeedleFlight(value: unknown): value is NeedleFlight {
     Number.isFinite((point as Vec).y);
   return (
     point(state.anchor) &&
+    (state.activityPatrol === undefined ||
+      (state.activityPatrol !== null &&
+        Number.isSafeInteger(state.activityPatrol.id) &&
+        state.activityPatrol.id >= 0 &&
+        Array.isArray(state.activityPatrol.tried) &&
+        state.activityPatrol.tried.length <= NEEDLE.activityPatrolGates.length &&
+        state.activityPatrol.tried.every((index) =>
+          NEEDLE.activityPatrolGates.some((gate) => gate === index),
+        ) &&
+        new Set(state.activityPatrol.tried).size === state.activityPatrol.tried.length)) &&
     typeof state.exitPackPlaced === "boolean" &&
     (state.exitWarned === undefined || typeof state.exitWarned === "boolean") &&
     (state.guidance === undefined || point(state.guidance)) &&

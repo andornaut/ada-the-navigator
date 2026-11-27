@@ -244,26 +244,26 @@ describe("repeatable activities", () => {
   it("keeps repeatable Needle gates separate from chapter progress and releases its task slot", () => {
     const book: Pick<GameState, "tasks"> = { tasks: {} };
     const chapter = { resolved: true };
-    expect(acceptActivity(4, chapter, book, "elderLoom", { reward: 150 })).toBe(true);
+    expect(acceptActivity(4, chapter, book, "elderLoom", { reward: 50 })).toBe(true);
     expect(book.tasks[4]).toEqual({
       id: "threadNeedle",
       kind: "activity",
       lit: 0,
       place: "elderLoom",
-      reward: 150,
+      reward: 50,
     });
     expect(activityOffer(4, chapter, book, "elderLoom")).toBeUndefined();
-    expect(completeActivity(4, book)).toBe(600);
+    expect(completeActivity(4, book)).toBe(200);
     expect(completeActivity(4, book)).toBe(0);
     expect(activityOffer(4, chapter, book, "elderLoom")?.id).toBe("threadNeedle");
   });
 
   it("validates saved Needle gate counts and rejects chapter or foreign activity fields", () => {
-    const saved = { id: "threadNeedle", lit: 0, place: "elderLoom", reward: 150 };
-    for (const lit of [0, 1, 7, 8]) {
+    const saved = { id: "threadNeedle", lit: 0, place: "elderLoom", reward: 50 };
+    for (const lit of [0, 1, 7, 8, 9, 10]) {
       expect(validActivity(4, { ...saved, lit }), String(lit)).toBe(true);
     }
-    for (const lit of [undefined, -1, 9, 1.5, NaN, "3"]) {
+    for (const lit of [undefined, -1, 11, 1.5, NaN, "3"]) {
       expect(validActivity(4, { ...saved, lit }), String(lit)).toBe(false);
     }
     expect(validActivity(4, { ...saved, place: "needleEye" })).toBe(false);
@@ -280,14 +280,14 @@ describe("repeatable activities", () => {
   });
 
   it("pays the approved rewards across the five repeatable activities, excluding Phantom", () => {
-    expect(ACTIVITY_REWARDS).toEqual({ 2: 105, 3: 150, 4: 165, 5: 180 });
+    expect(ACTIVITY_REWARDS).toEqual({ 2: 105, 3: 50, 4: 165, 5: 180 });
     expect(ACTIVITIES[3]?.reward).toBe(105);
     expect(ACTIVITIES[2]?.reward).toBe(180);
     expect(ACTIVITIES[1]?.reward).toBeUndefined();
     expect(ACTIVITIES[4]).toMatchObject({
       id: "threadNeedle",
       places: { elderLoom: "activityLoom" },
-      reward: 150,
+      reward: 50,
     });
     expect(ACTIVITIES[5]).toMatchObject({
       id: "courierRun",

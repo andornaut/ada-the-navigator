@@ -252,6 +252,11 @@ import {
 import { markerKnowledgeStore } from "./markerBindings.ts";
 import { markerActorTracked } from "./markerKnowledge.ts";
 import { needleCourses, setNeedleActivity, stepNeedleCourse } from "./needle.ts";
+import {
+  ensureNeedleActivityPatrols,
+  NEEDLE_ACTIVITY_TARGET,
+  retireNeedleActivityPatrols,
+} from "./needleActivity.ts";
 import { clearNeedleEnemies, ensureNeedleDebris } from "./needleFlight.ts";
 import {
   NEEDLE_CADENCE,
@@ -1126,6 +1131,14 @@ export class GameModel {
       return undefined;
     }
     const held = tracked === f.trackedQuestId ? this.held : undefined;
+    const activity = heldActivity(f.galaxy, this.state);
+    if (activity?.id === "threadNeedle") {
+      const ring = activity.lit ?? 0;
+      const gate = needleCourses(f)?.activity.gates[ring];
+      return (
+        gate && waypoint(NEEDLE_ACTIVITY_TARGET, gate.point, "destination", `Ring ${ring + 1}`)
+      );
+    }
     if (needle) {
       const label = needle.step === "ring" ? `Ring ${needle.ringIndex + 1}` : this.label(needle.id);
       return waypoint(needle.id, needle.point, "destination", label);
@@ -1286,7 +1299,7 @@ export class GameModel {
         state: "present",
         symbol: point.symbol,
         taskCategory: waypoint
-          ? waypoint.symbol === "job"
+          ? waypoint.symbol === "job" || waypoint.jobType || id === NEEDLE_ACTIVITY_TARGET
             ? "job"
             : "story"
           : (categories.get(id) ?? "generic"),
@@ -3082,6 +3095,9 @@ export class GameModel {
     if (terms.start && !courierApproach) {
       this.current.guides = (this.current.guides ?? 0) + 1;
     }
+    if (heldActivity(f.galaxy, this.state)?.id === "threadNeedle") {
+      setNeedleActivity(f, true);
+    }
     this.state.dialogue = null;
   }
   /**
@@ -3101,6 +3117,10 @@ export class GameModel {
     }
     if (held?.id === "threadNeedle") {
       held.lit = 0;
+      if (f?.galaxy === galaxy) {
+        setNeedleActivity(f, false);
+        retireNeedleActivityPatrols(this.content, f);
+      }
     }
     if (f?.galaxy === galaxy && held?.id === "guideCalf") {
       delete f.calf;
@@ -3889,10 +3909,11 @@ export class GameModel {
       const thread = heldActivity(f.galaxy, this.state);
       const layout = needleCourses(f);
       if (thread?.id === "threadNeedle" && layout) {
+        const from = worldPoint(world, layout.activity.path[0]!, previousChapterPosition);
         const attempt = stepNeedleCourse(
           {
-            from: previousChapterPosition,
-            to: f.player,
+            from,
+            to: worldPoint(world, from, f.player),
             topSpeed: shipTuning(ECONOMY, this.content, f.levels).physics.maxSpeed,
             velocity: f.velocity,
           },
@@ -3903,6 +3924,9 @@ export class GameModel {
         if (thread.lit === layout.activity.gates.length) {
           this.finishActivity(f.galaxy);
           setNeedleActivity(f, false);
+          retireNeedleActivityPatrols(this.content, f);
+        } else {
+          ensureNeedleActivityPatrols(this.content, f);
         }
       }
       for (const cue of f.needle?.chatter.splice(0) ?? []) {
@@ -4128,6 +4152,7 @@ export class GameModel {
   private needleMarkerObjective(f: FlightState): NeedleTrackedObjective | null {
     if (
       f.galaxy !== 4 ||
+      heldActivity(f.galaxy, this.state)?.id === "threadNeedle" ||
       (f.trackedQuestId !== undefined && this.canTrackQuest(f.trackedQuestId))
     ) {
       return null;
@@ -5025,6 +5050,10 @@ export class GameModel {
     const id = flight.trackedQuestId;
     if (id !== undefined && this.canTrackQuest(id)) {
       return id;
+    }
+    const activity = heldActivity(flight.galaxy, this.state);
+    if (activity?.id === "threadNeedle") {
+      return this.taskQuestId(flight.galaxy, activity);
     }
     const progress = this.state.progress[flight.galaxy];
     const activity = heldActivity(flight.galaxy, this.state);

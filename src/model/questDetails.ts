@@ -2,6 +2,7 @@ import { MINING_CONTRACT_DEPOSITS, SUPPLY_ITEMS } from "../data/activities.ts";
 import type { MapSymbol } from "../data/destinations.ts";
 import { carriedItemName, STORY_ITEM_NAMES } from "../data/itemNames.ts";
 import type { JobType } from "../data/jobs.ts";
+import { NEEDLE } from "../data/needle.ts";
 import { questReward } from "../data/questRewards.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { questItemDestination } from "./indicators.ts";
@@ -290,6 +291,19 @@ export function questDetails(
             label: context.label("questOreDeposited"),
           },
         ],
+        reward,
+      };
+    } else if (task.id === "threadNeedle") {
+      const progress = count(task.lit ?? 0, NEEDLE.activityGates);
+      jobDetails = {
+        objectives: [
+          {
+            checked: task.lit === NEEDLE.activityGates,
+            count: progress,
+            label: context.label("needleGoal"),
+          },
+        ],
+        progress,
         reward,
       };
     } else if (task.id === "guideCalf") {

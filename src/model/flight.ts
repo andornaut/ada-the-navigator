@@ -676,18 +676,11 @@ function canonicalObject(flight: FlightState, object: SpaceObject): void {
 }
 /** Ada's drawn ship against scenery at her current facing. */
 function adaContact(flight: FlightState): SceneryContactOf {
+  const world = flightWorldContext(flight);
   return (object, position, frame, drawn) =>
     isNeedleRim(object)
-      ? needleRimContact({ body: shipBody(flight.facing), position }, object)
-      : worldSceneryBodyContact(
-          flightWorldContext(flight),
-          object,
-          position,
-          shipBody(flight.facing),
-          frame,
-          0,
-          drawn,
-        );
+      ? needleRimContact({ body: shipBody(flight.facing), position, world }, object)
+      : worldSceneryBodyContact(world, object, position, shipBody(flight.facing), frame, 0, drawn);
 }
 
 /** Pushes Ada's drawn ship out of scenery and bounces her off what she touched. */
@@ -2259,6 +2252,8 @@ export function spawnChapterEnemy(
   point: Vec,
   flight: FlightState,
   options: {
+    /** A placement that must fit without clearing any existing world objects. */
+    admit?: (actor: SpaceObject) => boolean;
     packId?: string;
     escortOf?: string;
     home?: Vec;
@@ -2295,10 +2290,16 @@ export function spawnChapterEnemy(
   if (options.home) {
     object.enemy!.home = { ...options.home };
   }
-  clearLayoutObjects(
-    (other) => other.kind === "destination" || clearOf(flight, object.radius, object, other),
-    flight,
-  );
+  if (options.admit) {
+    if (!options.admit(object)) {
+      return null;
+    }
+  } else {
+    clearLayoutObjects(
+      (other) => other.kind === "destination" || clearOf(flight, object.radius, object, other),
+      flight,
+    );
+  }
   canonicalObject(flight, object);
   flight.objects.push(object);
   if (options.packId) {

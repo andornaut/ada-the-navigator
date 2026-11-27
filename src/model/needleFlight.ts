@@ -1,5 +1,6 @@
 import type { GameContent } from "../data/types.ts";
 import { closestOnSegment, type Contact, outlinesContact, type Parts, toScreen } from "./convex.ts";
+import { flightWorldContext } from "./flightTopology.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
 import {
   activeNeedleCourses,
@@ -10,6 +11,8 @@ import {
   needleRimParts,
 } from "./needle.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
+import { type WorldContext, worldPoint } from "./worldContacts.ts";
+import { wrapPoint } from "./worldGeometry.ts";
 
 const rims = new WeakMap<NeedleCourse, readonly SpaceObject[]>();
 const shapes = new WeakMap<SpaceObject, Parts>();
@@ -46,11 +49,15 @@ export function isNeedleRim(object: SpaceObject): boolean {
 
 /** The gate opening uses Ada's actual projected hull, rather than its enclosing circle. */
 export function needleRimContact(
-  context: { readonly body: Parts; readonly position: Vec },
+  context: { readonly body: Parts; readonly position: Vec; readonly world?: WorldContext },
   object: SpaceObject,
 ): Contact | null {
   const parts = shapes.get(object);
-  return parts ? outlinesContact(parts, object, context.body, context.position) : null;
+  const origin =
+    context.world && object.id.startsWith("needle:activity:rim:")
+      ? worldPoint(context.world, context.position, object)
+      : object;
+  return parts ? outlinesContact(parts, origin, context.body, context.position) : null;
 }
 
 export function needleChannelContains(
@@ -58,13 +65,22 @@ export function needleChannelContains(
   flight: FlightState,
   point: Vec,
 ): boolean {
-  return activeNeedleCourses(flight).some((course) => inNeedleChannel(context, course, point));
+  return activeNeedleCourses(flight).some((course) =>
+    inNeedleChannel(
+      context,
+      course,
+      course.kind === "activity"
+        ? worldPoint(flightWorldContext(flight), course.path[0]!, point)
+        : point,
+    ),
+  );
 }
 
 /** Normal persistent debris uses the canonical descriptors and the existing removal ledger. */
 export function ensureNeedleDebris(content: GameContent, flight: FlightState): void {
   const ids = new Set(flight.objects.map((object) => object.id));
   const reach = (ACTIVE_CHUNK_RADIUS + 1) * content.tuning.chunkSize;
+  const world = flightWorldContext(flight);
   for (const course of activeNeedleCourses(flight)) {
     let descriptors = debris.get(course);
     if (!descriptors) {
@@ -72,8 +88,12 @@ export function ensureNeedleDebris(content: GameContent, flight: FlightState): v
       debris.set(course, descriptors);
     }
     for (const descriptor of descriptors) {
-      const x = descriptor.x + descriptor.velocity.x * flight.time;
-      const y = descriptor.y + descriptor.velocity.y * flight.time;
+      const drifted = {
+        x: descriptor.x + descriptor.velocity.x * flight.time,
+        y: descriptor.y + descriptor.velocity.y * flight.time,
+      };
+      const { x, y } =
+        course.kind === "activity" ? worldPoint(world, flight.player, drifted) : drifted;
       if (
         ids.has(descriptor.id) ||
         Object.hasOwn(flight.world.notables, descriptor.id) ||
@@ -89,8 +109,9 @@ export function ensureNeedleDebris(content: GameContent, flight: FlightState): v
         persistent: true,
         radius: descriptor.radius,
         velocity: { ...descriptor.velocity },
-        x,
-        y,
+        ...(course.kind === "activity" && world.worldSide !== undefined
+          ? wrapPoint(world.worldSide, drifted)
+          : drifted),
       });
       ids.add(descriptor.id);
     }
@@ -103,6 +124,7 @@ export function clearNeedleEnemies(flight: FlightState): void {
   if (!courses.length) {
     return;
   }
+  const world = flightWorldContext(flight);
   for (const object of flight.objects) {
     if (
       object.kind !== "enemy" ||
@@ -117,11 +139,15 @@ export function clearNeedleEnemies(flight: FlightState): void {
     let bottom = -Infinity;
     for (const course of courses) {
       const radius = course.width / 2 + object.radius;
+      const start = course.path[0]!;
+      const image = course.kind === "activity" ? worldPoint(world, object, start) : start;
+      const shift = { x: image.x - start.x, y: image.y - start.y };
+      const toLocal = (point: Vec) => ({ x: point.x + shift.x, y: point.y + shift.y });
       const skin =
         Number.EPSILON * 32 * Math.max(1, Math.abs(object.x), Math.abs(object.y), radius);
       for (let index = 1; index < course.path.length; index++) {
-        const a = course.path[index - 1]!;
-        const b = course.path[index]!;
+        const a = toLocal(course.path[index - 1]!);
+        const b = toLocal(course.path[index]!);
         left = Math.min(left, a.x - radius - skin, b.x - radius - skin);
         right = Math.max(right, a.x + radius + skin, b.x + radius + skin);
         top = Math.min(top, a.y - radius - skin, b.y - radius - skin);
@@ -154,12 +180,13 @@ export function clearNeedleEnemies(flight: FlightState): void {
     if (!target) {
       continue;
     }
-    object.x = target.x;
-    object.y = target.y;
+    const point = world.worldSide === undefined ? target : wrapPoint(world.worldSide, target);
+    object.x = point.x;
+    object.y = point.y;
     if (object.enemy) {
-      object.enemy.position = { ...target };
+      object.enemy.position = { ...point };
       if (needleChannelContains({ radius: object.radius }, flight, object.enemy.home)) {
-        object.enemy.home = { ...target };
+        object.enemy.home = { ...point };
       }
     }
   }

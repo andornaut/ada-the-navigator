@@ -1,6 +1,7 @@
 import { driftChipsFromBounds, playDepth } from "../art/index.ts";
 import { NEEDLE } from "../data/needle.ts";
 import { toScreen } from "../model/convex.ts";
+import { flightWorldContext } from "../model/flightTopology.ts";
 import {
   activeNeedleCourses,
   type NeedleCourse,
@@ -12,6 +13,7 @@ import {
   unfinishedNeedleCourse,
 } from "../model/needle.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
+import { type WorldContext, worldPoint } from "../model/worldContacts.ts";
 import { COLOURS, UNLISTED_COLOURS } from "../ui/layout/colours.ts";
 
 export interface NeedleStitch {
@@ -161,6 +163,7 @@ export interface NeedleRenderFrame {
   readonly seed: number;
   /** Paused flight time, not wall time, in milliseconds. */
   readonly timeMs: number;
+  readonly world?: WorldContext;
 }
 
 const debrisByCourse = new WeakMap<
@@ -223,6 +226,7 @@ export function needleRenderFrame(
     reducedMotion: context.reducedMotion,
     seed: flight.seed,
     timeMs: flight.time * 1000,
+    world: flightWorldContext(flight),
   };
 }
 
@@ -288,7 +292,21 @@ export function createNeedleRenderer(context: NeedleRenderContext) {
         return image;
       };
       const stitch = NEEDLE.channels.stitch;
-      const dashes = frame.courses.flatMap((course) => needleStitches(context, course));
+      const activity = frame.courses.find((course) => course.kind === "activity");
+      const start = activity?.path[0];
+      const image = start && worldPoint(frame.world ?? {}, frame.player, start);
+      const shift = start && image && { x: image.x - start.x, y: image.y - start.y };
+      const coursePoint = (course: NeedleCourse, point: Vec): Vec =>
+        course === activity && shift ? { x: point.x + shift.x, y: point.y + shift.y } : point;
+      const dashes = frame.courses.flatMap((course) =>
+        needleStitches(
+          {
+            project: (point) => context.project(coursePoint(course, point)),
+            viewport: context.viewport,
+          },
+          course,
+        ),
+      );
       if (dashes.length) {
         for (const [width, colour, alpha] of [
           [stitch.keyline.width, stitch.keyline.color, 1],
@@ -303,7 +321,8 @@ export function createNeedleRenderer(context: NeedleRenderContext) {
       for (const course of frame.courses) {
         const lit = frame.lit(course);
         course.gates.forEach((gate, index) => {
-          const at = context.project(gate.point);
+          const point = coursePoint(course, gate.point);
+          const at = context.project(point);
           const size = NEEDLE.gate.frame * NEEDLE.gate.displayScale;
           if (!visible(at, size / 2)) {
             return;
@@ -312,8 +331,7 @@ export function createNeedleRenderer(context: NeedleRenderContext) {
             (o) => o.index === needleGateOrientation(gate),
           )!;
           const threading =
-            Math.hypot(frame.player.x - gate.point.x, frame.player.y - gate.point.y) <=
-            NEEDLE.gate.rim.outer;
+            Math.hypot(frame.player.x - point.x, frame.player.y - point.y) <= NEEDLE.gate.rim.outer;
           const next =
             index === lit && (course.kind === frame.activeCourse || course.kind === "activity");
           const { dark, lit: litPair } = orientation.files;
@@ -353,7 +371,10 @@ export function createNeedleRenderer(context: NeedleRenderContext) {
           continue;
         }
         handled.add(object.id);
-        const at = context.project(object);
+        const point = object.id.startsWith("needle:activity:")
+          ? worldPoint(frame.world ?? {}, frame.player, object)
+          : object;
+        const at = context.project(point);
         if (visible(at, piece.display / 2)) {
           if (NEEDLE.channels.debris.cue === "asteroid" && object.velocity) {
             const [left, top, right, bottom] = piece.frames[index]!.bounds;

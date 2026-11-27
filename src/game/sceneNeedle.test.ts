@@ -4,6 +4,7 @@ import MANIFEST from "../../public/art/needle/manifest.json" with { type: "json"
 import { driftChipsFromBounds } from "../art/asteroidArt.ts";
 import { CONTENT } from "../data/content.ts";
 import { NEEDLE } from "../data/needle.ts";
+import { GALAXY_SIDE } from "../data/world.ts";
 import { chapterRuntime } from "../model/chapters.ts";
 import { GameModel } from "../model/game.ts";
 import {
@@ -29,7 +30,7 @@ describe("production Needle frame", () => {
   const context = {
     activityLit: 4,
     playerDepth: 2.002,
-    progress: { approach: "independent" as const, eyeLit: 2, practiceLit: 3 },
+    progress: { approach: "independent" as const, eyeLit: 2, practiceLit: 4 },
     reducedMotion: false,
     topSpeed: 100,
   };
@@ -55,7 +56,7 @@ describe("production Needle frame", () => {
     f.velocity = { x: 49, y: 0 };
     let frame = needleRenderFrame(context, f)!;
     expect(frame.courses.map((course) => course.kind)).toEqual(["practice", "eye"]);
-    expect(frame.courses.map(frame.lit)).toEqual([3, 2]);
+    expect(frame.courses.map(frame.lit)).toEqual([4, 2]);
     expect(frame.timeMs).toBe(1250);
     expect(frame.playerDepth).toBe(context.playerDepth);
     expect(frame.activeCourse).toBe("eye");
@@ -65,7 +66,7 @@ describe("production Needle frame", () => {
     frame = needleRenderFrame(context, f)!;
     expect(frame.readiness).toBe("yellow");
     expect(frame.courses.map((course) => course.kind)).toEqual(["practice", "eye", "activity"]);
-    expect(frame.courses.map(frame.lit)).toEqual([3, 2, 4]);
+    expect(frame.courses.map(frame.lit)).toEqual([4, 2, 4]);
     expect(frame.timeMs).toBe(1250);
     setNeedleActivity(f, false);
     expect(needleRenderFrame(context, f)!.courses).toHaveLength(2);
@@ -215,6 +216,25 @@ function fixture() {
 }
 
 describe("Needle renderer lifecycle and published gate art", () => {
+  it("renders the race ring and stitches in the player's adjacent chart", () => {
+    const f = fixture();
+    const race = createNeedleCourse({ anchor: { x: GALAXY_SIDE / 2 + 4000, y: 0 } }, "activity");
+    const first = race.gates[0]!.point;
+    const player = { x: first.x - GALAXY_SIDE, y: first.y };
+    const renderer = createNeedleRenderer({
+      ...f.context,
+      project: ({ x, y }) => ({ x: x - player.x + 360, y: y - player.y + 180 }),
+    });
+    renderer.draw({
+      ...f.frame,
+      courses: [race],
+      player,
+      world: { worldSide: GALAXY_SIDE },
+    });
+    expect(f.images.filter(({ x, y }) => x === 360 && y === 180)).toHaveLength(2);
+    expect(f.lines.length).toBeGreaterThan(0);
+  });
+
   it("draws only published gate frames at their authored size with back and front around the ship", () => {
     const f = fixture();
     f.renderer.draw(f.frame);

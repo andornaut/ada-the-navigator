@@ -1,3 +1,4 @@
+import { CONTENT } from "../data/content.ts";
 import { NEEDLE } from "../data/needle.ts";
 import { NEEDLE_LEARNING } from "../data/needleCopy.ts";
 import { closestOnSegment, type Contact, partContact, toScreen } from "./convex.ts";
@@ -67,6 +68,43 @@ const unit = (v: Vec): Vec => {
   const length = Math.hypot(v.x, v.y);
   return { x: v.x / length, y: v.y / length };
 };
+const scale = (v: Vec, factor: number): Vec => ({ x: v.x * factor, y: v.y * factor });
+
+/** Add two trailing rings, then carry the authored exit through the same widened interval. */
+function longCourse(offset: Vec, kind: "eye" | "activity"): NeedleCourse {
+  const authored = NEEDLE.eye.gates;
+  const last = authored.at(-1)!;
+  const lastPoint = point(last.point);
+  const delta = subtract(lastPoint, point(authored.at(-2)!.point));
+  const tangent = unit(point(last.tangent));
+  const interval = scale(tangent, Math.hypot(delta.x, delta.y));
+  const extension = [add(lastPoint, interval), add(lastPoint, scale(interval, 2))];
+  const shift = scale(interval, 2);
+  const at = (p: Vec) => add(offset, scale(p, NEEDLE.longSpacing));
+  const path = NEEDLE.eye.path;
+  const end = point(path.at(-1)!);
+  const beyondExit = (p: readonly number[]) => add(at(add(end, shift)), subtract(point(p), end));
+  const along = (index: number) => (index * NEEDLE.eye.length) / (path.length - 1);
+  return {
+    gates: [
+      ...authored.map((gate) => ({
+        point: at(point(gate.point)),
+        tangent: unit(point(gate.tangent)),
+      })),
+      ...extension.map((point) => ({ point: at(point), tangent })),
+    ],
+    holodisk: beyondExit(NEEDLE.eye.holodisk),
+    kind,
+    pack: beyondExit(NEEDLE.eye.pack),
+    path: [
+      ...path.filter((_, index) => along(index) < last.along).map((p) => at(point(p))),
+      at(lastPoint),
+      ...extension.map(at),
+      ...path.filter((_, index) => along(index) > last.along).map((p) => at(add(point(p), shift))),
+    ],
+    width: NEEDLE.eye.width,
+  };
+}
 /** Translation preserves Art's authored bends, gate angles and reachable exit layout. */
 export function createNeedleCourse(
   context: {
@@ -87,24 +125,29 @@ export function createNeedleCourse(
         ? NEEDLE.practiceOffset
         : NEEDLE.eyeOffset;
   const offset = add(context.anchor, translation);
+  if (kind !== "practice") {
+    const course = longCourse(offset, kind);
+    const arrival = CONTENT.tuning.flight.arrivalCalm;
+    const shoulder = NEEDLE.gate.rim.outer;
+    // Keep the race on the original side of Loom while leaving room outside the launch exclusion.
+    return kind === "activity" &&
+      inNeedleChannel({ radius: arrival + shoulder }, course, { x: 0, y: 0 })
+      ? longCourse({ x: offset.x, y: arrival + course.width / 2 + shoulder }, kind)
+      : course;
+  }
   const path = NEEDLE.eye.path
-    .filter(
-      (_, i) =>
-        !practice || (i / (NEEDLE.eye.path.length - 1)) * NEEDLE.eye.length <= NEEDLE.practiceEnd,
-    )
+    .filter((_, i) => (i / (NEEDLE.eye.path.length - 1)) * NEEDLE.eye.length <= NEEDLE.practiceEnd)
     .map((p) => add(offset, point(p)));
   return {
-    gates: NEEDLE.eye.gates
-      .slice(0, practice ? NEEDLE.practiceGates : NEEDLE.eyeGates)
-      .map((g) => ({
-        point: add(offset, point(g.point)),
-        tangent: unit(point(g.tangent)),
-      })),
+    gates: NEEDLE.eye.gates.slice(0, NEEDLE.practiceGates).map((g) => ({
+      point: add(offset, point(g.point)),
+      tangent: unit(point(g.tangent)),
+    })),
     holodisk: add(offset, point(NEEDLE.eye.holodisk)),
     kind,
     pack: add(offset, point(NEEDLE.eye.pack)),
     path,
-    width: practice ? NEEDLE.practiceWidth : NEEDLE.eye.width,
+    width: NEEDLE.practiceWidth,
   };
 }
 /**

@@ -50,12 +50,33 @@ const pass = (gate: NeedleGate, speed: number, across = 0) => ({
   velocity: { x: speed, y: 0 },
 });
 describe("Needle course geometry", () => {
-  it("keeps the held activity's seeded eight-gate course separate from both chapter courses", () => {
+  it("keeps Practice at its original spacing and widens both ten-ring courses by 30%", () => {
+    expect(course("practice").gates.map(({ point }) => point)).toEqual(
+      NEEDLE.eye.gates.slice(0, 4).map(({ point: [x, y] }) => ({
+        x: anchor.x + NEEDLE.practiceOffset.x + x!,
+        y: anchor.y + NEEDLE.practiceOffset.y + y!,
+      })),
+    );
     const activity = createNeedleCourse({ anchor, seed: 42 }, "activity");
-    expect(activity.gates).toHaveLength(8);
+    const authored = NEEDLE.eye.gates;
+    for (const layout of [course("eye"), activity]) {
+      expect(layout.gates).toHaveLength(10);
+      for (let index = 1; index < layout.gates.length; index++) {
+        const original = Math.min(index, authored.length - 1);
+        const [x, y] = authored[original]!.point;
+        const [previousX, previousY] = authored[original - 1]!.point;
+        const { point: a } = layout.gates[index - 1]!;
+        const { point: b } = layout.gates[index]!;
+        expect(Math.hypot(b.x - a.x, b.y - a.y)).toBeCloseTo(
+          Math.hypot(x! - previousX!, y! - previousY!) * 1.3,
+          9,
+        );
+      }
+    }
     expect(activity).toEqual(createNeedleCourse({ anchor, seed: 42 }, "activity"));
     expect(activity.path).not.toEqual(createNeedleCourse({ anchor, seed: 43 }, "activity").path);
     for (const gate of activity.gates) {
+      expect(inNeedleChannel({}, activity, gate.point)).toBe(true);
       expect(inNeedleChannel({}, course("practice"), gate.point)).toBe(false);
       expect(inNeedleChannel({}, course(), gate.point)).toBe(false);
     }
@@ -78,12 +99,19 @@ describe("Needle course geometry", () => {
       expect(piece).not.toHaveProperty("damage");
     }
   });
-  it("orders the Eye's 360 eyelid pieces by row, with tumble frames by index and row", () => {
+  it("orders the Eye's eyelid pieces by row, with tumble frames by index and row", () => {
     const eye = course();
     const eyelids = (seed: number) =>
       needleDebris(eye, seed).filter((piece) => !piece.id.endsWith(":inside"));
     const pieces = eyelids(42);
-    expect(pieces).toHaveLength(360);
+    const length = eye.path
+      .slice(1)
+      .reduce(
+        (sum, point, index) =>
+          sum + Math.hypot(point.x - eye.path[index]!.x, point.y - eye.path[index]!.y),
+        0,
+      );
+    expect(pieces).toHaveLength((Math.floor(length / NEEDLE.eye.debris.spacing) + 1) * 6);
     const plate = "needle-debris-plate";
     expect(NEEDLE.eye.debris.pieces).toEqual([plate, "needle-debris-girder", plate]);
     for (const piece of pieces) {
@@ -94,30 +122,25 @@ describe("Needle course geometry", () => {
     // No spread: the eyelid positions do not depend on the seed.
     expect(eyelids(7).map(({ x, y }) => ({ x, y }))).toEqual(pieces.map(({ x, y }) => ({ x, y })));
   });
-  it("translates the authored Eye without replacing its path, gates, disk or pack", () => {
+  it("keeps the authored Eye entry and carries the disk and exit patrol beyond the ten rings", () => {
     const eye = course();
-    const offset = { x: anchor.x + NEEDLE.eyeOffset.x, y: anchor.y + NEEDLE.eyeOffset.y };
-    expect(eye.path).toEqual(
-      NEEDLE.eye.path.map(([x, y]) => ({ x: x! + offset.x, y: y! + offset.y })),
-    );
-    expect(eye.gates).toHaveLength(8);
-    expect(eye.holodisk).toEqual({
-      x: NEEDLE.eye.holodisk[0]! + offset.x,
-      y: NEEDLE.eye.holodisk[1]! + offset.y,
-    });
-    expect(eye.pack).toEqual({
-      x: NEEDLE.eye.pack[0]! + offset.x,
-      y: NEEDLE.eye.pack[1]! + offset.y,
-    });
+    const start = { x: anchor.x + NEEDLE.eyeOffset.x, y: anchor.y + NEEDLE.eyeOffset.y };
+    expect(eye.path[0]).toEqual(start);
+    expect(eye.gates).toHaveLength(10);
+    const last = eye.gates.at(-1)!;
+    const beyond = (point: Vec) =>
+      (point.x - last.point.x) * last.tangent.x + (point.y - last.point.y) * last.tangent.y;
+    expect(beyond(eye.path.at(-1)!)).toBeGreaterThan(0);
+    expect(beyond(eye.holodisk)).toBeGreaterThan(beyond(eye.path.at(-1)!));
+    expect(beyond(eye.pack)).toBeGreaterThan(beyond(eye.holodisk));
     expect(eye.width).toBe(150);
     expect(inNeedleChannel({}, eye, eye.pack)).toBe(false);
     expect(inNeedleChannel({}, eye, eye.holodisk)).toBe(true);
   });
-  it("uses three practice gates in the wider separate channel and an independent eight-gate activity", () => {
+  it("uses four practice gates in the wider separate channel", () => {
     const practice = course("practice");
     expect(practice.width).toBe(210);
-    expect(practice.gates).toHaveLength(3);
-    expect(course("activity").gates).toHaveLength(8);
+    expect(practice.gates).toHaveLength(4);
     for (const gate of practice.gates) {
       expect(inNeedleChannel({}, practice, gate.point)).toBe(true);
       expect(inNeedleChannel({}, course(), gate.point)).toBe(false);
@@ -199,8 +222,8 @@ describe("Needle actual centre crossings", () => {
     for (const gate of eye.gates) {
       lit = stepNeedleCourse(pass(gate, 20), eye, lit).lit;
     }
-    expect(lit).toBe(8);
-    expect(stepNeedleCourse(pass(eye.gates[7]!, 20), eye, lit).passed).toEqual([]);
+    expect(lit).toBe(10);
+    expect(stepNeedleCourse(pass(eye.gates[9]!, 20), eye, lit).passed).toEqual([]);
   });
   it("uses actual resultant velocity including diagonal movement and the current engine top speed", () => {
     expect(needleSlow({ topSpeed: 200, velocity: { x: 80, y: 80 } })).toBe(false);
@@ -229,15 +252,15 @@ describe("Needle saved practice choice and real guidance", () => {
       eyeLit: 0,
       practiceLit: 0,
     });
-    expect(readNeedleProgress({ approach: "show", eyeLit: 8, practiceLit: 3 })).toEqual({
+    expect(readNeedleProgress({ approach: "show", eyeLit: 10, practiceLit: 4 })).toEqual({
       approach: "show",
-      eyeLit: 8,
-      practiceLit: 3,
+      eyeLit: 10,
+      practiceLit: 4,
     });
     for (const value of [
       null,
       {},
-      { eyeLit: 0, practiceLit: 4 },
+      { eyeLit: 0, practiceLit: 5 },
       { eyeLit: 0, practiceLit: 1.5 },
       { eyeLit: 1, practiceLit: 0 },
       { eyeLit: 0, practiceLit: 1 },
@@ -468,7 +491,7 @@ describe("Needle chapter runtime", () => {
       cross(context, gate, 20);
     }
     expect(needleObjectiveIndex(context)).toBe(4);
-    expect(chapterProgress(context)).toMatchObject({ eyeLit: 8, practiceLit: 3 });
+    expect(chapterProgress(context)).toMatchObject({ eyeLit: 10, practiceLit: 4 });
     expect(useNeedle(context, "holodisk")).toEqual({ useRefused: true });
     context.flight.player = { ...layout.eye.holodisk };
     stepNeedle(context, 0.1, context.flight.player);

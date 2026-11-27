@@ -9,8 +9,8 @@ export const NEEDLE_CHAPTER: ChapterContent = {
   objectives: [
     "Explore the galaxy.",
     "Meet Elder Loom.",
-    "Start at the Practice Channel’s green flag and clear its three rings.",
-    "Start at the Eye’s green flag and clear its eight rings.",
+    "Start at the Practice Channel’s green flag and clear its four rings.",
+    "Start at the Eye’s green flag and clear its ten rings.",
     "Collect the holodisk.",
     "Go home to Earth when ready.",
   ],
@@ -70,8 +70,11 @@ export const NEEDLE_COPY: Readonly<Record<string, InteractionCopy>> = {
     lines: [
       { speaker: "loom", text: "To reach the disk you must thread every gate, slowly." },
       { speaker: "ada", text: "Can I try a shorter channel first?" },
-      { speaker: "loom", text: "Try our practice channel. Three gates. Breathe, and go slowly." },
-      { speaker: "ada", text: "Three gates first. I'll take my time." },
+      {
+        speaker: "loom",
+        text: "Follow the green flag to the Practice Channel. That's where the first ring is.",
+      },
+      { speaker: "ada", text: "Four gates first. I'll take my time." },
     ],
     party: "loom",
     topics: [
@@ -86,7 +89,7 @@ export const NEEDLE_COPY: Readonly<Record<string, InteractionCopy>> = {
       },
       {
         label: "How many practice gates?",
-        lines: [{ speaker: "loom", text: "Three. One gate at a time." }],
+        lines: [{ speaker: "loom", text: "Four. One gate at a time." }],
       },
     ],
   },
@@ -117,7 +120,7 @@ export const NEEDLE_COURSE_COPY = {
 export const NEEDLE_LEARNING = {
   changeLabel: "Change practice approach",
   drones: "Drones ahead, Navigator. They've been waiting for us.",
-  eyeComplete: "Eight gates! I did it, one at a time.",
+  eyeComplete: "Ten gates! I did it, one at a time.",
   feedback: {
     label: "Tell me how I did.",
     response: "Try the first gate. I'll tell you what I notice.",

@@ -371,7 +371,7 @@ export const CONTENT: GameContent = {
     activityFamily:
       "One of our young ones swam off to play. Could you guide them home? Stay close. They follow friends.",
     activityGrower: "Fresh food for the station traders. Would you carry it?",
-    activityLoom: "The practice channel is open. Thread it again, slowly.",
+    activityLoom: "The long course is open. Ten rings. Slow down before each one.",
     activityPip:
       "I've got a parcel for the far settlement. Fly with me? It's less scary with company.",
     activityPipChoice: "Drones patrol the way to the outpost. How should we get past them?",
@@ -567,7 +567,7 @@ export const CONTENT: GameContent = {
     motionNote: "Reduces animation and disables screen shake and flashes.",
     moveControls: "Move controls",
     needleEye: "The Eye",
-    needleGoal: "Light the gates of a practice channel.",
+    needleGoal: "Clear the 10 rings of the long course.",
     needlePractice: "Practice channel",
     // A first install that could not complete, so the game plays from the network
     // (gameplay/player-copy.md).

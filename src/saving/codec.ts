@@ -1,3 +1,4 @@
+import { ACTIVITIES } from "../data/activities.ts";
 import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { CRYSTAL_FLAGS, type CrystalFlag } from "../data/asteroidCatalog.ts";
 import {
@@ -1235,6 +1236,22 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
     for (const id of GALAXY_NUMBERS) {
       const p = value.progress[id];
       if (
+        id === 4 &&
+        record(p) &&
+        record(p.needle) &&
+        p.needle.practiceLit === 3 &&
+        Number.isInteger(p.needle.eyeLit) &&
+        Number(p.needle.eyeLit) >= 0 &&
+        Number(p.needle.eyeLit) <= 8 &&
+        (p.needle.practiceThanked === true || Number(p.needle.eyeLit) > 0)
+      ) {
+        // Keep completed stages from the shorter courses in existing same-version saves.
+        p.needle.practiceLit = NEEDLE.practiceGates;
+        if (p.needle.eyeLit === 8) {
+          p.needle.eyeLit = NEEDLE.eyeGates;
+        }
+      }
+      if (
         !record(p) ||
         !validBossProgress(id, p) ||
         !validRedactProgress(id, p) ||
@@ -1306,6 +1323,12 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
           ))
       ) {
         return null;
+      }
+    }
+    if (record(value.tasks) && record(value.tasks[4])) {
+      const task = value.tasks[4];
+      if (task.kind === "activity" && task.id === "threadNeedle" && task.reward === 150) {
+        task.reward = ACTIVITIES[4]!.reward;
       }
     }
     if (

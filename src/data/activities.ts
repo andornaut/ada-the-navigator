@@ -22,7 +22,7 @@ export interface ActivityDefinition {
 /** Fixed activity pay by route position; Sunflower uses delivery pay, Phantom has no activity. */
 export const ACTIVITY_REWARDS: Readonly<Partial<Record<RoutePosition, number>>> = {
   2: 105,
-  3: 150,
+  3: 50,
   4: 165,
   5: 180,
 };

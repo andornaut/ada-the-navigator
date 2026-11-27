@@ -1,9 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { ACTIVITIES } from "../data/activities.ts";
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { BUILT, GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { BUILT, GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import { NEEDLE } from "../data/needle.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { ControlState } from "../input/state.ts";
@@ -12,15 +13,22 @@ import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { interactionCopy } from "./conversations.ts";
+import { partsReach, worldParts } from "./convex.ts";
+import { GAME_AREA } from "./edgeMarkers.ts";
 import { damageEnemy } from "./enemyAi.ts";
+import { enemyPhysicalBody } from "./enemyBody.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import { activeEnemyBeams, ensureStation } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
-import { needleCourses } from "./needle.ts";
+import { stationPopulationObjects } from "./hostileStations.ts";
+import { inNeedleChannel, needleCourses, type NeedleGate } from "./needle.ts";
+import { NEEDLE_ACTIVITY_TARGET } from "./needleActivity.ts";
 import { NEEDLE_CADENCE, needleTrackedObjective } from "./needleRuntime.ts";
 import { stationsNear } from "./stations.ts";
+import { worldDistance, worldPoint } from "./worldContacts.ts";
+import { wrapPoint } from "./worldGeometry.ts";
 
 const built = BUILT as Set<GalaxyNumber>;
 const present = built.has(4);
@@ -147,7 +155,7 @@ describe("Needle contextual Use and automatic guidance", () => {
     controls.requestUse();
     model.step(0.001, controls.sample());
     expect(model.useRefusals).toBe(before + 1);
-    expect(model.state.notice).toBe("Start at the Eye’s green flag and clear its eight rings.");
+    expect(model.state.notice).toBe("Start at the Eye’s green flag and clear its ten rings.");
     expect(model.state.dialogue).toBeNull();
     expect(progress).toMatchObject({
       holodisk: false,
@@ -368,6 +376,164 @@ describe("Captain Cadence admission and outcome", () => {
 });
 
 describe("mounted Needle interactions", () => {
+  it("restores completed shorter Needle courses and an already accepted task at the new payout", () => {
+    const model = launch(173);
+    learn(model);
+    model.choose("independent");
+    const flight = model.state.flight!;
+    const disk = flight.objects.find(({ id }) => id === "holodisk")!;
+    Object.assign(disk, {
+      x: flight.needle!.anchor.x + NEEDLE.eyeOffset.x + NEEDLE.eye.holodisk[0]!,
+      y: flight.needle!.anchor.y + NEEDLE.eyeOffset.y + NEEDLE.eye.holodisk[1]!,
+    });
+    Object.assign(model.state.progress[4].needle!, {
+      eyeLit: 8,
+      practiceLit: 3,
+      practiceThanked: true,
+    });
+    const legacy = restoreSave(model.save());
+    expect(legacy?.progress[4].needle).toMatchObject({ eyeLit: 10, practiceLit: 4 });
+    const resumed = relaunch(CONTENT, legacy!);
+    const current = resumed.state.flight!;
+    expect(
+      current.objects.find(({ id }) => id === "holodisk") ?? current.world.notables.holodisk,
+    ).toMatchObject(needleCourses(current)!.eye.holodisk);
+    Object.assign(resumed.state.progress[4], {
+      holodisk: true,
+      questComplete: true,
+      resolved: true,
+    });
+    resumed.state.tasks[4] = {
+      id: "threadNeedle",
+      kind: "activity",
+      lit: 6,
+      place: "elderLoom",
+      reward: 150,
+    };
+    expect(restoreSave(resumed.save())?.tasks[4]).toMatchObject({ lit: 6, reward: 50 });
+  });
+
+  it("finishes the 10-ring race through Use and Continue with safe retained patrols and live guidance", () => {
+    let model = launch(173);
+    learn(model);
+    model.choose("independent");
+    Object.assign(model.state.progress[4], { holodisk: true, questComplete: true, resolved: true });
+    Object.assign(model.state.progress[4].needle!, {
+      eyeLit: 10,
+      practiceLit: 4,
+      practiceThanked: true,
+    });
+    visit(model, "elderLoom");
+    model.interact();
+    model.choose("take");
+    const story = structuredClone(model.state.progress[4].needle);
+    const reward = model.state.economy.stardust + 200;
+    const race = needleCourses(model.state.flight!)!.activity;
+    const marker = () =>
+      model.targetMarkers(GAME_AREA).find(({ id }) => id === NEEDLE_ACTIVITY_TARGET);
+    const patrols = () =>
+      stationPopulationObjects(model.state.flight!).filter(
+        ({ id, kind }) => id.startsWith("needle:activity:patrol:") && kind === "enemy",
+      );
+    const cross = (gate: NeedleGate) => {
+      const flight = model.state.flight!;
+      flight.player = {
+        x: gate.point.x - gate.tangent.x * 0.1,
+        y: gate.point.y - gate.tangent.y * 0.1,
+      };
+      flight.velocity = { x: gate.tangent.x * 20, y: gate.tangent.y * 20 };
+      model.step(0.05, { ...idle, move: { x: gate.tangent.x * 0.25, y: gate.tangent.y * 0.25 } });
+    };
+    expect(model.trackedQuestId).toBe("activity:4:threadNeedle");
+    expect(marker()).toMatchObject({ ...race.gates[0]!.point, trackedLabel: "Ring 1" });
+    const admitted = new Set<string>();
+    for (const [index, gate] of race.gates.entries()) {
+      cross(gate);
+      for (const actor of patrols()) {
+        if (admitted.has(actor.id)) {
+          continue;
+        }
+        admitted.add(actor.id);
+        const world = flightWorldContext(model.state.flight!);
+        const home = actor.enemy!.home;
+        const hull = enemyPhysicalBody(ROUTE_POSITION[4], actor.enemy!);
+        const radius = hull ? Math.max(actor.radius, partsReach(worldParts(hull))) : actor.radius;
+        expect(["swarm", "fighter", "interceptor"]).toContain(actor.enemy!.archetype);
+        expect(inNeedleChannel({ radius }, race, worldPoint(world, race.path[0]!, home))).toBe(
+          false,
+        );
+        expect(
+          race.gates.every(
+            ({ point }) => worldDistance(world, home, point) > NEEDLE.gate.rim.outer + radius,
+          ),
+        ).toBe(true);
+      }
+      if (index < 9) {
+        expect(model.state.tasks[4]).toMatchObject({ lit: index + 1 });
+        expect(marker()).toMatchObject({
+          ...race.gates[index + 1]!.point,
+          trackedLabel: `Ring ${index + 2}`,
+        });
+      }
+      if (index === 6) {
+        const atSeven = marker()!;
+        expect(model.markerDetails(atSeven)).toMatchObject({
+          details: { quests: [{ id: "activity:4:threadNeedle", line: { progress: "7 / 10" } }] },
+          kind: "quest",
+        });
+        const before = structuredClone(patrols());
+        const saved = model.save();
+        expect(restoreSave(saved)).not.toBeNull();
+        model = relaunch(CONTENT, saved);
+        expect(model.state.tasks[4]).toMatchObject({ lit: 7 });
+        expect(marker()).toMatchObject({ trackedLabel: "Ring 8" });
+        expect(patrols()).toEqual(before);
+      }
+    }
+    expect(admitted.size).toBe(4);
+    expect(patrols()).toEqual([]);
+    expect(model.state.tasks[4]).toBeUndefined();
+    expect(model.state.economy.stardust).toBe(reward);
+    expect(model.state.progress[4].needle).toEqual(story);
+    expect(marker()).toBeUndefined();
+  });
+
+  it("lights and marks the race at the adjacent image across the galaxy seam", () => {
+    const model = launch(173);
+    const flight = model.state.flight!;
+    const side = flight.topology!.side;
+    const original = needleCourses(flight)!.activity.gates[0]!.point;
+    const anchor = flight.needle!.anchor;
+    flight.needle = {
+      ...flight.needle!,
+      anchor: { ...anchor, x: anchor.x - original.x + side / 2 + 0.1 },
+    };
+    Object.assign(model.state.progress[4], { holodisk: true, questComplete: true, resolved: true });
+    model.state.tasks[4] = {
+      id: "threadNeedle",
+      kind: "activity",
+      lit: 0,
+      place: "elderLoom",
+      reward: ACTIVITIES[4]!.reward!,
+    };
+    const first = needleCourses(flight)!.activity.gates[0]!;
+    flight.player = wrapPoint(side, {
+      x: first.point.x - first.tangent.x * 0.4,
+      y: first.point.y - first.tangent.y * 0.4,
+    });
+    flight.velocity = { x: first.tangent.x * 30, y: first.tangent.y * 30 };
+    expect(flight.player.x).toBeGreaterThan(side / 2 - 1);
+    expect(
+      model.targetMarkers(GAME_AREA).find(({ id }) => id === NEEDLE_ACTIVITY_TARGET),
+    ).toMatchObject({ onScreen: true, trackedLabel: "Ring 1" });
+    model.step(0.05, { ...idle, move: { x: first.tangent.x * 0.25, y: first.tangent.y * 0.25 } });
+    expect(flight.player.x).toBeLessThan(-side / 2 + 2);
+    expect(model.state.tasks[4]).toMatchObject({ lit: 1 });
+    expect(
+      model.targetMarkers(GAME_AREA).find(({ id }) => id === NEEDLE_ACTIVITY_TARGET),
+    ).toMatchObject({ trackedLabel: "Ring 2" });
+  });
+
   it("requires an actual learning choice and retains it through Close, save and Continue", () => {
     const model = launch();
     learn(model);
@@ -400,7 +566,7 @@ describe("mounted Needle interactions", () => {
     expect(relaunch(CONTENT, loaded.save()).state.progress[4].needle?.approach).toBe("show");
   });
 
-  it("allows travel to the discovered disk but commits Collect only after all eight Eye gates", () => {
+  it("allows travel to the discovered disk but commits Collect only after all ten Eye gates", () => {
     const model = launch();
     learn(model);
     model.choose("independent");
@@ -421,8 +587,8 @@ describe("mounted Needle interactions", () => {
     model.interact();
     expect(model.state.progress[4].holodisk).toBe(false);
     Object.assign(model.state.progress[4].needle!, {
-      eyeLit: 8,
-      practiceLit: 3,
+      eyeLit: 10,
+      practiceLit: 4,
       practiceThanked: true,
     });
     model.interact();
@@ -459,8 +625,8 @@ describe("mounted Needle interactions", () => {
     model.choose("feedback");
     Object.assign(model.state.progress[4], { holodisk: true, questComplete: true, resolved: true });
     Object.assign(model.state.progress[4].needle!, {
-      eyeLit: 8,
-      practiceLit: 3,
+      eyeLit: 10,
+      practiceLit: 4,
       practiceThanked: true,
     });
     visit(model, "elderLoom");
