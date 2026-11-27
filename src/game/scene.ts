@@ -126,16 +126,21 @@ import type { StoryNoses } from "../model/storyShips.ts";
 import type { FlightInput, FlightState, GameSave, Vec } from "../model/types.ts";
 import { shipTuning } from "../model/upgrades.ts";
 import { FeedbackSound } from "../platform/index.ts";
-import type { createBossHud } from "../ui/bossHud.ts";
-import type { ConversationBox } from "../ui/conversation.ts";
-import { createBannerLayer, type PlacedBanner } from "../ui/disabledBanner.ts";
-import { createFpsCounter } from "../ui/fpsCounter.ts";
-import { createGalaxyMap, type GalaxyMapView } from "../ui/galaxyMap.ts";
-import { createJumpOverlay, type WarpPaint } from "../ui/jumpOverlay.ts";
-import type { BoxOccupant } from "../ui/notice.ts";
-import { createRestartCard } from "../ui/restartCard.ts";
-import { createStationView } from "../ui/station.ts";
-import { createStorybook } from "../ui/storybook.ts";
+import type {
+  BoxOccupant,
+  ConversationBox,
+  createBannerLayer,
+  createBossHud,
+  createFpsCounter,
+  createGalaxyMap,
+  createJumpOverlay,
+  createRestartCard,
+  createStationView,
+  createStorybook,
+  GalaxyMapView,
+  PlacedBanner,
+  WarpPaint,
+} from "../ui/index.ts";
 import { EmergencyReturn, returnedOnDepletion } from "./emergencyReturn.ts";
 import {
   FORWARD_FLIGHT_KEY,
