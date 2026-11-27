@@ -53,7 +53,7 @@ describe("claim jumper art loading", () => {
 
   it("resolves every composed claim body's exact parts once Cartwheel's manifest is known", () => {
     const expectedCounts = {
-      capital: 528,
+      capital: 544,
       frigate: 256,
       hostileStation: 416,
       platform: 160,

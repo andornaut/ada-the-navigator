@@ -98,10 +98,10 @@ describe("hardpoint export for Art", () => {
           );
         }
       });
-      // Every runtime signature needs a drawn top, including the late aft mine variant.
+      // The core capital serves Hammer and the ordinary Sunflower loadouts.
       const required =
         archetype === "capital"
-          ? ["scattershot", "chargedLance", "mineLayer"]
+          ? ["chargedLance", "laser", "rapidMissile", "scattershot"]
           : ["laser", "heavyMissile"];
       expect(Object.keys(file.weaponTops)).toEqual(expect.arrayContaining(required));
     },
@@ -111,6 +111,11 @@ describe("hardpoint export for Art", () => {
     const archie = archieFile as ArtFile;
     expect(archie.fill).toEqual(art.capital.fill);
     expect(archie.tiers).toEqual(art.capital.tiers);
-    expect(archie.weaponTops).toEqual(art.capital.weaponTops);
+    expect(archie.weaponTops).toEqual({
+      chargedLance: { aim: "target", top: "lance" },
+      heavyMissile: { aim: "target", top: "rail" },
+      laser: { aim: "target", top: "gun" },
+      mineLayer: { aim: "aft", top: "hopper" },
+    });
   });
 });
