@@ -97,8 +97,31 @@ describe("required route approach encounters", () => {
         expect(resumed.state.dialogue).toBeNull();
         completeCartwheelHubIntroductionFixture(resumed);
       } else {
-        expect(resumed.state.dialogue).not.toBeNull();
-        resumed.choose("continue");
+        const time = next.time;
+        resumed.step(1 / 60, idle);
+        expect(next.time).toBeGreaterThan(time);
+        expect(resumed.state.progress[3]).toMatchObject({ introduced: false, stage: 0 });
+        expect(resumed.state.dialogue).toBeNull();
+        expect(resumed.contextAction).toBe("talk");
+        const continued = relaunch(CONTENT, resumed.save());
+        expect(continued.state.dialogue).toBeNull();
+        expect(continued.contextAction).toBe("talk");
+        continued.interact();
+        expect(continued.state.dialogue).toMatchObject({
+          context: "whale",
+          text: CONTENT.chapters[3]!.dialogue.whale!.text,
+        });
+        expect(continued.state.progress[3]).toMatchObject({ introduced: true, stage: 1 });
+        const pending = relaunch(CONTENT, continued.save());
+        expect(pending.state.dialogue).toEqual(continued.state.dialogue);
+        pending.choose("continue");
+        expect(pending.state.dialogue).toBeNull();
+        pending.step(1 / 60, idle);
+        expect(pending.state.dialogue).toBeNull();
+        expect(pending.state.flight!.objects.some(({ routeId }) => routeId === target.id)).toBe(
+          false,
+        );
+        return;
       }
       expect(resumed.state.progress[galaxy].introduced).toBe(true);
       resumed.step(1 / 60, idle);

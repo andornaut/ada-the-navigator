@@ -82,7 +82,14 @@ function revealSounder() {
 
   const { encounterFreshDistance, introFreshDistance } = CONTENT.tuning;
   const whale = reachGuardedSite(model, "whale", introFreshDistance);
-  expect(model.state.dialogue).not.toBeNull();
+  expect(model.state.dialogue).toBeNull();
+  expect(progressOf(model)).toMatchObject({ introduced: false, stage: 0 });
+  expect(model.contextAction).toBe("talk");
+  model.interact();
+  expect(model.state.dialogue).toMatchObject({
+    context: "whale",
+    text: CONTENT.chapters[3]!.dialogue.whale!.text,
+  });
   model.choose("continue");
   clearWhaleDebris(model);
   flyTo(model, whale);

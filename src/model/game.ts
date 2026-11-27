@@ -4737,26 +4737,7 @@ export class GameModel {
       f.storyScene = { at: f.time, id: replay, lineDue: true };
       delete this.current.replayScene;
     }
-    const intro = first(f.galaxy);
-    if (
-      f.galaxy !== 1 &&
-      f.galaxy !== 2 &&
-      intro !== undefined &&
-      !this.current.introduced &&
-      this.current.known.includes(intro) &&
-      this.nearest() === intro
-    ) {
-      this.coverPoiArrival(f, intro);
-      this.current.introduced = true;
-      this.current.stage = Math.max(1, this.current.stage);
-      this.ensureWhaleDebris();
-      if (f.galaxy === 3 && this.current.stage === 2) {
-        this.current.stage = 3;
-        this.exchange("freed");
-      } else {
-        this.exchange(intro);
-      }
-    } else if (input.use) {
+    if (input.use) {
       this.interact();
     }
   }
@@ -5370,6 +5351,17 @@ export class GameModel {
       } else if (id === "visitors" && p.stage === 3) {
         p.stage = 4;
         this.exchange("visitors");
+      } else {
+        this.exchange(id);
+      }
+    } else if (f.galaxy === 3 && id === "whale" && !p.introduced) {
+      this.coverPoiArrival(f, id);
+      p.introduced = true;
+      p.stage = Math.max(1, p.stage);
+      this.ensureWhaleDebris();
+      if (p.stage === 2) {
+        p.stage = 3;
+        this.exchange("freed");
       } else {
         this.exchange(id);
       }

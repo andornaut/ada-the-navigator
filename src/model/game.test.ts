@@ -326,7 +326,7 @@ function introduce(model: GameModel, id: string) {
     completeCartwheelHubIntroductionFixture(model);
     return;
   }
-  model.step(0.01, { ...idle, use: id === "growers" });
+  model.step(0.01, { ...idle, use: true });
   expect(model.state.dialogue).not.toBeNull();
   model.choose("continue");
 }
@@ -969,9 +969,19 @@ it("places whale debris offscreen and preserves pre-introduction clearing", () =
   const restored = relaunch(CONTENT, model.save());
   expect(restored.state).toEqual(model.state);
   arrive(restored, "whale");
+  const flight = restored.state.flight!;
+  const time = flight.time;
   restored.step(0.01, idle);
-  expect(restored.state.dialogue?.text).toBe(CONTENT.chapters[3]!.dialogue.freed?.text);
-  expect(restored.state.progress[3].stage).toBe(3);
+  expect(flight.time).toBeGreaterThan(time);
+  expect(restored.state.dialogue).toBeNull();
+  expect(restored.state.progress[3]).toMatchObject({ introduced: false, stage: 2 });
+  expect(restored.contextAction).toBe("talk");
+  restored.interact();
+  expect(restored.state.dialogue).toMatchObject({
+    context: "freed",
+    text: CONTENT.chapters[3]!.dialogue.freed!.text,
+  });
+  expect(restored.state.progress[3]).toMatchObject({ introduced: true, stage: 3 });
   expect(restored.state.flight!.objects.some((o) => o.id.startsWith("whale-debris:"))).toBe(false);
   restored.choose("continue");
   talk(restored, "family");
