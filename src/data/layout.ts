@@ -681,7 +681,7 @@ export const MAP_SCREEN_LAYOUT = {
   /** Wheel deltaY px per zoom step. */
   wheelStep: 100,
   /** Steps removed from the closest view. */
-  zoomInStepsRemoved: 3,
+  zoomInStepsRemoved: 2,
   /** Additional outward steps from the charting-circle fit. */
   zoomOutStepsAdded: 1,
   /** One zoom step. */

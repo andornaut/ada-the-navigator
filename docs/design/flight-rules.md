@@ -68,3 +68,4 @@ and scan feedback.
 | ada-0417 | Shrink the navigable galaxy to 200,000 units per side                                                      | [ada-0417.md](../work/ada-0417.md) |
 | ada-0423 | Strengthen Whirlpool currents by 50 percent                                                                | [ada-0423.md](../work/ada-0423.md) |
 | ada-0443 | Remove three farthest Local Map zoom levels                                                                | [ada-0443.md](../work/ada-0443.md) |
+| ada-0444 | Add one closer Local Map zoom step                                                                         | [ada-0444.md](../work/ada-0444.md) |

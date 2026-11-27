@@ -107,7 +107,7 @@ describe("map screen tokens", () => {
       minZoomStepsAboveWorldFit: 1,
       tools: { pitch: 57 },
       wheelStep: 100,
-      zoomInStepsRemoved: 3,
+      zoomInStepsRemoved: 2,
       zoomOutStepsAdded: 1,
       zoomStep: 1.5,
     });
@@ -665,7 +665,7 @@ describe("the square bound", () => {
     expectSurveyArc(field, inner, view);
   });
 
-  it("removes the three farthest zoom steps while preserving the closest scale", () => {
+  it("keeps the shorter zoom-out range and adds exactly one closer step", () => {
     for (const frame of [{ field, inner }, wide]) {
       const { max, min } = scaleLimits(frame.inner, frame.field, SIDE);
       const disc = Math.min(
@@ -681,8 +681,14 @@ describe("the square bound", () => {
         frame.inner.width / MAP_SCREEN.minBox.width,
         (frame.inner.zoomHeight ?? frame.inner.height) / MAP_SCREEN.minBox.height,
       );
-      expect(max).toBeCloseTo(closeFit / step ** 3, 12);
+      const previousMax = closeFit / step ** 3;
+      expect(max).toBeCloseTo(previousMax * step, 12);
       const pointer = { x: frame.inner.x, y: frame.inner.y };
+      const closest = { centre: { x: 0, y: 0 }, scale: previousMax, worldSide: SIDE };
+      const zoomed = zoomView(frame.inner, frame.field, step, pointer, closest);
+      expect(zoomed.refused).toBe(false);
+      expect(zoomed.view.scale).toBeCloseTo(max, 12);
+      expect(zoomView(frame.inner, frame.field, step, pointer, zoomed.view).refused).toBe(true);
       const oneCloser = { centre: { x: 0, y: 0 }, scale: min * step, worldSide: SIDE };
       const view = zoomView(frame.inner, frame.field, 1 / step, pointer, oneCloser).view;
       expect(view.scale).toBeCloseTo(min, 12);
