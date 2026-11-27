@@ -27,6 +27,7 @@ import { stationPopulationObjects } from "./hostileStations.ts";
 import { inNeedleChannel, needleCourses, type NeedleGate } from "./needle.ts";
 import { NEEDLE_ACTIVITY_TARGET } from "./needleActivity.ts";
 import { NEEDLE_CADENCE, needleTrackedObjective } from "./needleRuntime.ts";
+import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
 import { stationsNear } from "./stations.ts";
 import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 import { wrapPoint } from "./worldGeometry.ts";
@@ -289,6 +290,9 @@ describe("Captain Cadence admission and outcome", () => {
         }
       }
       flight.shield = model.shieldMax;
+      // Newly generated ambient movers can cover a firing lane while the boss turns.
+      // Keep static scenery and isolate both timed firing windows from passing traffic.
+      flight.objects = flight.objects.filter(({ id }) => !id.startsWith(MOVING_ROCK_PREFIX));
       model.step(0.02, idle);
       for (const beam of activeEnemyBeams(flight)) {
         if (beam.kind !== "phaser" || beam.ownerId !== id) {
