@@ -282,9 +282,9 @@ export function scaleLimits(
   const {
     chartRadius,
     minBox,
+    minZoomStepsAboveWorldFit,
     zoomInStepsRemoved,
     zoomOutStepsAdded,
-    zoomOutStepsBeyondWorldFit,
     zoomStep,
   } = MAP_SCREEN;
   const square = squareExtent(side);
@@ -297,11 +297,15 @@ export function scaleLimits(
     inner.height / (Math.SQRT2 * chartRadius),
   );
   const worldFit = Math.max(field.width / square.width, field.height / square.height);
+  const max = closeFit / zoomStep ** zoomInStepsRemoved;
   return {
-    max: closeFit / zoomStep ** zoomInStepsRemoved,
-    min: Math.max(
-      discFit / zoomStep ** zoomOutStepsAdded,
-      worldFit / zoomStep ** zoomOutStepsBeyondWorldFit,
+    max,
+    min: Math.min(
+      max,
+      Math.max(
+        discFit / zoomStep ** zoomOutStepsAdded,
+        worldFit * zoomStep ** minZoomStepsAboveWorldFit,
+      ),
     ),
   };
 }

@@ -145,7 +145,7 @@ describe.each(GALAXIES)("galaxy %i's local map", (galaxy) => {
       ...start,
       centre: mapProjection(mapImage(start, point)),
     });
-    expectSurveyArc(centredOn(map.player));
+    expectSurveyArc(recentreView(INNER, FIELD, map.player, start));
     let compatible = 0;
     for (const point of points) {
       const view = recentreView(INNER, FIELD, point, start);

@@ -104,11 +104,11 @@ describe("map screen tokens", () => {
         stackTop: 9,
       },
       minBox: { height: 6000, width: 12000 },
+      minZoomStepsAboveWorldFit: 1,
       tools: { pitch: 57 },
       wheelStep: 100,
       zoomInStepsRemoved: 3,
-      zoomOutStepsAdded: 4,
-      zoomOutStepsBeyondWorldFit: 2,
+      zoomOutStepsAdded: 1,
       zoomStep: 1.5,
     });
     expect(MAP_PANEL).toMatchObject({
@@ -151,8 +151,8 @@ describe("map projection and fit", () => {
     expect([base.inner.width, base.inner.height]).toEqual([644, 156]);
     const limits = scaleLimits(base.inner, base.field, SIDE);
     expect(round(limits.max, 5)).toBe(0.01402);
-    expect(round(limits.min, 5)).toBe(0.00089);
-    expect(round(Math.log(limits.max / limits.min) / Math.log(MAP_SCREEN.zoomStep), 2)).toBe(6.8);
+    expect(round(limits.min, 5)).toBe(0.003);
+    expect(round(Math.log(limits.max / limits.min) / Math.log(MAP_SCREEN.zoomStep), 2)).toBe(3.8);
     const wide = regionsAt({ height: 720, width: 1280 });
     expect([wide.fit.width, round(wide.fit.height, 2)]).toEqual([688, 245]);
     expect(round(scaleLimits(wide.inner, wide.field, SIDE).max, 5)).toBe(0.0159);
@@ -263,9 +263,9 @@ describe("map projection and fit", () => {
       expect(at.x).toBeGreaterThanOrEqual(inner.x - 1e-6);
       expect(at.x).toBeLessThanOrEqual(inner.x + inner.width + 1e-6);
     }
-    // A far station fits at the newly available wider scale.
+    // Fitting a far station uses the far limit and keeps Ada in view.
     const far = openingView(inner, field, SIDE, [{ x: 85_000, y: 85_000 }], { x: 0, y: 0 });
-    expect(far.scale).toBeCloseTo(inner.height / 85_000, 9);
+    expect(far.scale).toBe(min);
     const ada = toScreen(inner, far, { x: 0, y: 0 });
     expect(ada.x).toBeGreaterThanOrEqual(inner.x - 1e-6);
     expect(ada.x).toBeLessThanOrEqual(inner.x + inner.width + 1e-6);
@@ -665,73 +665,44 @@ describe("the square bound", () => {
     expectSurveyArc(field, inner, view);
   });
 
-  it("adds two zoom-out presses beyond the previous playable zoom limit", () => {
+  it("removes the three farthest zoom steps while preserving the closest scale", () => {
     for (const frame of [{ field, inner }, wide]) {
-      const { min } = scaleLimits(frame.inner, frame.field, SIDE);
+      const { max, min } = scaleLimits(frame.inner, frame.field, SIDE);
       const disc = Math.min(
         frame.inner.width / (2 * Math.SQRT2 * MAP_SCREEN.chartRadius),
         frame.inner.height / (Math.SQRT2 * MAP_SCREEN.chartRadius),
       );
       const step = MAP_SCREEN.zoomStep;
-      const previous = Math.max(
-        disc / step ** 2,
-        frame.field.width / (2 * SIDE),
-        frame.field.height / SIDE,
-      );
-      const expected = previous / step ** 2;
+      const worldFit = Math.max(frame.field.width / (2 * SIDE), frame.field.height / SIDE);
+      const previous = Math.max(disc / step ** 4, worldFit / step ** 2);
+      const expected = previous * step ** 3;
       expect(min).toBeCloseTo(expected, 12);
-      const start = { centre: { x: 0, y: 0 }, scale: previous, worldSide: SIDE };
+      const closeFit = Math.min(
+        frame.inner.width / MAP_SCREEN.minBox.width,
+        (frame.inner.zoomHeight ?? frame.inner.height) / MAP_SCREEN.minBox.height,
+      );
+      expect(max).toBeCloseTo(closeFit / step ** 3, 12);
       const pointer = { x: frame.inner.x, y: frame.inner.y };
-      const zoomOut = (view: MapView) =>
-        zoomView(frame.inner, frame.field, 1 / MAP_SCREEN.zoomStep, pointer, view);
-      const first = zoomOut(start);
-      expect(first.refused).toBe(false);
-      expect(first.view.scale).toBeCloseTo(previous / step, 9);
-      const second = zoomOut(first.view);
-      expect(second.refused).toBe(false);
-      expect(second.view.scale).toBeCloseTo(min, 9);
-      expect(zoomOut(second.view).refused).toBe(true);
-      const capped = clampView(frame.inner, frame.field, {
-        centre: { x: 0, y: 0 },
-        scale: 0,
-        worldSide: SIDE,
-      });
-      expect(capped.scale).toBeCloseTo(expected, 12);
+      const oneCloser = { centre: { x: 0, y: 0 }, scale: min * step, worldSide: SIDE };
+      const view = zoomView(frame.inner, frame.field, 1 / step, pointer, oneCloser).view;
+      expect(view.scale).toBeCloseTo(min, 12);
+      expect(zoomView(frame.inner, frame.field, 1 / step, pointer, view).refused).toBe(true);
+      expect(zoomView(frame.inner, frame.field, 0.01, pointer, oneCloser).view.scale).toBe(min);
     }
   });
 
-  it("centres the full diamond when the world fits inside the wider view", () => {
+  it("keeps the closest scale when the world is too small for a wider view", () => {
     const side = 20_000;
     for (const frame of [{ field, inner }, wide]) {
-      const { min } = scaleLimits(frame.inner, frame.field, side);
-      const limiting = Math.max(frame.field.width / (2 * side), frame.field.height / side);
-      expect(min).toBeCloseTo(limiting / MAP_SCREEN.zoomStep ** 2, 12);
-      for (const direction of Object.values(directions)) {
-        const start = { centre: { x: 0, y: 0 }, scale: min, worldSide: side };
-        const view = panView(frame.inner, frame.field, hard(direction), start);
-        expectInside(frame, view);
-        const at = extent(frame, view);
-        const across = (at.right - at.left) / (2 * side);
-        const down = (at.bottom - at.top) / side;
-        expect(Math.max(across, down)).toBeCloseTo(MAP_SCREEN.zoomStep ** 2, 6);
-      }
-      const out = zoomView(
-        frame.inner,
-        frame.field,
-        1 / MAP_SCREEN.zoomStep,
-        { x: 10, y: 10 },
-        { centre: { x: 0, y: 0 }, scale: min * 1.2, worldSide: side },
-      ).view;
-      expect(out.scale).toBeCloseTo(min, 12);
-      expectInside(frame, out);
+      const { max, min } = scaleLimits(frame.inner, frame.field, side);
+      expect(min).toBe(max);
+      const clamped = clampView(frame.inner, frame.field, {
+        centre: { x: 0, y: 0 },
+        scale: 0,
+        worldSide: side,
+      });
+      expect(clamped.scale).toBe(max);
     }
-    // The base field and the projected world have the same proportions.
-    const base = clampView(inner, field, { centre: { x: 0, y: 0 }, scale: 0, worldSide: side });
-    const at = extent({ field, inner }, base);
-    expect([at.right - at.left, at.bottom - at.top].map((value) => round(value, 6))).toEqual([
-      2 * side * MAP_SCREEN.zoomStep ** 2,
-      side * MAP_SCREEN.zoomStep ** 2,
-    ]);
   });
 
   it("opens at minScale with the oval in view and places on their canonical sides", () => {
@@ -767,7 +738,6 @@ describe("the square bound", () => {
     }
     for (const frame of [{ field, fit, inner }, wide]) {
       const { min } = scaleLimits(frame.inner, frame.field, SIDE);
-      const previousMin = min * MAP_SCREEN.zoomStep ** 2;
       for (const { ada, depth, out } of positions) {
         // Places 1500 past the nearest seam and past both nearest seams, which draw at the
         // square's far edges, and one beside Ada.
@@ -801,8 +771,7 @@ describe("the square bound", () => {
             at.y <= frame.inner.y + frame.inner.height + tolerance;
           outsideInner += inInner ? 0 : 1;
           if (kind === "across") {
-            // Fitting places across the seam now uses the additional outward range.
-            expect(view.scale).toBeLessThan(previousMin);
+            expect(view.scale).toBeGreaterThanOrEqual(min);
             expect(shown).toBe(true);
           }
         }

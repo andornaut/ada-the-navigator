@@ -924,9 +924,10 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   Flight, placement and distance queries use the same wrap geometry, so
   distances run the short way across the seam. The local map shows one wrap
   period. Panning stops at the seam, and every position draws at its canonical
-  point. The widest views can show near-black space around the playable world.
-  When the world fits on an axis, it stays centered on that axis. At maximum
-  zoom-out, pan and zoom keep part of the survey oval visible. Before v1, loading a version-14 save with an
+  point, with near-black outside the playable world. The far limit is one zoom
+  step beyond the survey-oval fit, capped at the closer of that view and one
+  step in from the playable-world fit. At that limit, pan and zoom keep part of
+  the survey oval visible. Before v1, loading a version-14 save with an
   in-progress flight on the former 200000-unit chart triggers the existing save
   repair. It backs up the original save and starts a new game on the
   180000-unit chart. This size check applies to the saved flight's topology.

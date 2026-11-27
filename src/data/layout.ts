@@ -661,6 +661,8 @@ export const MAP_SCREEN_LAYOUT = {
   },
   /** The opening box is at least this many projected units across and down. */
   minBox: { height: 6000, width: 12000 },
+  /** Inward steps from the playable world extent filling the field. */
+  minZoomStepsAboveWorldFit: 1,
   /**
    * The shared Quests list's line buttons (art/map.md "Quests modal"): a chip slot
    * (MAP_SYMBOL.chip) from the face's inset, markGap, then the label on textColumn.
@@ -681,9 +683,7 @@ export const MAP_SCREEN_LAYOUT = {
   /** Steps removed from the closest view. */
   zoomInStepsRemoved: 3,
   /** Additional outward steps from the charting-circle fit. */
-  zoomOutStepsAdded: 4,
-  /** Outward steps allowed beyond the playable world extent filling the field. */
-  zoomOutStepsBeyondWorldFit: 2,
+  zoomOutStepsAdded: 1,
   /** One zoom step. */
   zoomStep: 1.5,
 } as const;
