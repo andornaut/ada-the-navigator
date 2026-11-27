@@ -935,7 +935,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   Undiscovered places never appear. Placement and discovery generation keep
   every mapped place at least 1020 world units apart, including outposts and
   the waypoint. Story destinations keep at least 1200 world units apart.
-  At the widest map view, nearby place chips can overlap. Within overlapping
+  Nearby place chips can overlap. Within overlapping
   press areas, the nearest chip centre wins. Press either chip's visible centre
   to select that place. Story characters
   waiting at a station, such as Cartwheel's miner and visitors, are not map
