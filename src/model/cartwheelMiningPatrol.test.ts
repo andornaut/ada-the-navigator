@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
@@ -27,6 +28,7 @@ import { stationPopulationObjects } from "./hostileStations.ts";
 import { worldOreFieldInCell } from "./oreFields.ts";
 import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
 import type { FlightInput, Vec } from "./types.ts";
+import { shipTuning } from "./upgrades.ts";
 import { worldDistance, worldPoint } from "./worldContacts.ts";
 import { wrapPoint } from "./worldGeometry.ts";
 
@@ -244,20 +246,18 @@ function discoverMiningPatrol(knowHub: boolean) {
   flight.player = { x: ore.x, y: ore.y };
   populateFlight(CONTENT, progress, flight);
   expect(flight.objects.some(({ id }) => id.startsWith(`${ore.id}:`))).toBe(true);
-  const directions = [
-    { x: 1, y: 0 },
-    { x: 0, y: 1 },
-    { x: -1, y: 0 },
-    { x: 0, y: -1 },
-  ];
-  for (const radius of [850, 1450]) {
-    for (const direction of directions) {
-      flight.player = { x: ore.x + radius * direction.x, y: ore.y + radius * direction.y };
-      populateFlight(CONTENT, progress, flight);
-      if (flight.cartwheelMiningPatrol) {
-        return { flight, model, ore, progress, world };
-      }
-    }
+  // Page in the cover before reaching the seeded fighter allocation on the west approach.
+  for (const offset of [
+    { x: 850, y: 0 },
+    { x: 0, y: 850 },
+    { x: -850, y: 0 },
+    { x: 0, y: -850 },
+    { x: 1450, y: 0 },
+    { x: 0, y: 1450 },
+    { x: -1450, y: 0 },
+  ]) {
+    flight.player = { x: ore.x + offset.x, y: ore.y + offset.y };
+    populateFlight(CONTENT, progress, flight);
   }
   return { flight, model, ore, progress, world };
 }
@@ -329,20 +329,26 @@ it("uses a real pending fighter allocation only after discovery and reserves its
   expect(cartwheelPatrolAdmits(restored, { id: actors[0]! })).toBe(false);
 
   const admittedAt = patrol.warnedAt! + CARTWHEEL_MINING_PATROL.warningSeconds;
-  while (restored.time + 0.05 < admittedAt) {
-    const frame = stepFlight(CONTENT, 0.05, { ...idle, cartwheelHubKnown: true }, restored);
+  // Jump the idle clock to the boundary, then use real steps on both sides.
+  restored.time = admittedAt - 0.01;
+  for (const [dt, admitted] of [
+    [0.005, false],
+    [0.01, true],
+  ] as const) {
+    const frame = stepFlight(CONTENT, dt, { ...idle, cartwheelHubKnown: true }, restored);
     expect(frame.some(({ type }) => type === "cartwheelPatrolWarning")).toBe(false);
-    expect(cartwheelPatrolAdmits(restored, { id: actors[0]! })).toBe(false);
+    expect(cartwheelPatrolAdmits(restored, { id: actors[0]! })).toBe(admitted);
   }
-  stepFlight(CONTENT, 0.051, { ...idle, cartwheelHubKnown: true }, restored);
   expect(restored.time).toBeGreaterThan(admittedAt);
   expect(cartwheelPatrolAdmits(restored, { id: actors[0]! })).toBe(true);
 
   // Fly the entire marked bypass after the fighters can engage, with real collision and paging.
   restored.player = { ...entry };
-  restored.velocity = { x: 0, y: 0 };
   const leg = { x: end.x - entry.x, y: end.y - entry.y };
   const move = { x: leg.x / length([entry, end]), y: leg.y / length([entry, end]) };
+  const speed = shipTuning(ECONOMY, CONTENT, restored.levels).physics.maxSpeed;
+  restored.velocity = { x: move.x * speed, y: move.y * speed };
+  restored.facing = move;
   const startShield = restored.shield;
   let along = 0;
   for (let step = 0; step < 320 && along < length([entry, end]); step++) {
