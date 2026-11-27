@@ -198,9 +198,9 @@ function painted(
 export const SCHEMES: readonly Scheme[] = [
   CLASSIC,
   painted("cobalt", "Cobalt", "#6f9ff0", "#16245c", "#eef5ff", "#b4c8e6"),
-  painted("seafoam", "Seafoam", "#d4f6ea", "#f07a5a", "#14697a", "#0d4c59"),
+  painted("seafoam", "Obsidian", "#282d36", "#aebbc7", "#eab84d", "#b68334"),
   painted("graphite", "Crimson", "#d96b73", "#f6efe6", "#382a32", "#251d24"),
-  painted("iris", "Iris", "#d9ccff", "#e0489f", "#3a2b8c", "#271c66"),
+  painted("iris", "Iris", "#8455bf", "#e0489f", "#3a2b8c", "#271c66"),
   painted("amber", "Amber", "#f4b665", "#12233a", "#24577b", "#173a57"),
 ];
 export const classic = SCHEMES[0]!;

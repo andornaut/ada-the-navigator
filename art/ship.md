@@ -229,23 +229,23 @@ between.
 
 ## Paint schemes
 
-| Paint   | Hull lit  | Hull turned | Left wall | Right wall | Tail left | Tail right | Skirt     | Mouth     |
-| ------- | --------- | ----------- | --------- | ---------- | --------- | ---------- | --------- | --------- |
-| Classic | `#ffffff` | `#ebf1f7`   | `#b4c4d6` | `#8497ae`  | `#6d829d` | `#445a76`  | `#abbfce` | `#86deff` |
-| Cobalt  | `#6f9ff0` | `#6997e4`   | `#557bbb` | `#426195`  | `#314a73` | `#20314f`  | `#5074b1` | `#e4f6ff` |
-| Seafoam | `#d4f6ea` | `#c9eade`   | `#a5c0b6` | `#839891`  | `#657670` | `#44514c`  | `#9cb5ac` | `#80e5db` |
-| Crimson | `#d96b73` | `#ce656d`   | `#a95258` | `#863f45`  | `#672f33` | `#461e21`  | `#a04d53` | `#dac3ff` |
-| Iris    | `#d9ccff` | `#cec2f2`   | `#a99fc7` | `#867d9e`  | `#67617a` | `#464254`  | `#a096bc` | `#b0d3ff` |
-| Amber   | `#f4b665` | `#e8ad60`   | `#be8d4d` | `#976f3c`  | `#75552c` | `#503a1c`  | `#b48548` | `#82e0fa` |
+| Paint    | Hull lit  | Hull turned | Left wall | Right wall | Tail left | Tail right | Skirt     | Mouth     |
+| -------- | --------- | ----------- | --------- | ---------- | --------- | ---------- | --------- | --------- |
+| Classic  | `#ffffff` | `#ebf1f7`   | `#b4c4d6` | `#8497ae`  | `#6d829d` | `#445a76`  | `#abbfce` | `#86deff` |
+| Cobalt   | `#6f9ff0` | `#6997e4`   | `#557bbb` | `#426195`  | `#314a73` | `#20314f`  | `#5074b1` | `#e4f6ff` |
+| Obsidian | `#282d36` | `#252a33`   | `#1d2128` | `#15181d`  | `#0d1014` | `#06080b`  | `#1b1e25` | `#ffd4c0` |
+| Crimson  | `#d96b73` | `#ce656d`   | `#a95258` | `#863f45`  | `#672f33` | `#461e21`  | `#a04d53` | `#dac3ff` |
+| Iris     | `#8455bf` | `#7d50b5`   | `#664094` | `#4f3175`  | `#3c245a` | `#27163d`  | `#603c8c` | `#b0d3ff` |
+| Amber    | `#f4b665` | `#e8ad60`   | `#be8d4d` | `#976f3c`  | `#75552c` | `#503a1c`  | `#b48548` | `#82e0fa` |
 
-| Paint   | Accent lit | Accent turned | Accent left | Accent right | Canopy highlight | Canopy roof | Canopy shade | Glazing reference |
-| ------- | ---------- | ------------- | ----------- | ------------ | ---------------- | ----------- | ------------ | ----------------- |
-| Classic | `#2456b8`  | `#2251af`     | `#1a418f`   | `#123271`    | `#6d829d`        | `#445a76`   | `#1f78c3`    | `#1767b3`         |
-| Cobalt  | `#16245c`  | `#142257`     | `#0e1a46`   | `#091236`    | `#314a73`        | `#20314f`   | `#d4e1f4`    | `#b4c8e6`         |
-| Seafoam | `#f07a5a`  | `#e47455`     | `#bb5e44`   | `#954935`    | `#657670`        | `#44514c`   | `#115c6b`    | `#0d4c59`         |
-| Crimson | `#f6efe6`  | `#eae3da`     | `#c0bab3`   | `#98948e`    | `#672f33`        | `#461e21`   | `#2f242c`    | `#251d24`         |
-| Iris    | `#e0489f`  | `#d54497`     | `#ae367b`   | `#8a2961`    | `#67617a`        | `#464254`   | `#31247b`    | `#271c66`         |
-| Amber   | `#12233a`  | `#102137`     | `#0b192b`   | `#071120`    | `#75552c`        | `#503a1c`   | `#1e4a6b`    | `#173a57`         |
+| Paint    | Accent lit | Accent turned | Accent left | Accent right | Canopy highlight | Canopy roof | Canopy shade | Glazing reference |
+| -------- | ---------- | ------------- | ----------- | ------------ | ---------------- | ----------- | ------------ | ----------------- |
+| Classic  | `#2456b8`  | `#2251af`     | `#1a418f`   | `#123271`    | `#6d829d`        | `#445a76`   | `#1f78c3`    | `#1767b3`         |
+| Cobalt   | `#16245c`  | `#142257`     | `#0e1a46`   | `#091236`    | `#314a73`        | `#20314f`   | `#d4e1f4`    | `#b4c8e6`         |
+| Obsidian | `#aebbc7`  | `#a5b1bd`     | `#87919b`   | `#6a737a`    | `#f3d89d`        | `#eab84d`   | `#d3a042`    | `#b68334`         |
+| Crimson  | `#f6efe6`  | `#eae3da`     | `#c0bab3`   | `#98948e`    | `#672f33`        | `#461e21`   | `#2f242c`    | `#251d24`         |
+| Iris     | `#e0489f`  | `#d54497`     | `#ae367b`   | `#8a2961`    | `#938ac0`        | `#3a2b8c`   | `#31247b`    | `#271c66`         |
+| Amber    | `#12233a`  | `#102137`     | `#0b192b`   | `#071120`    | `#75552c`        | `#503a1c`   | `#1e4a6b`    | `#173a57`         |
 
 - Classic's hull and tail tones are authored. Every other tone is its top
   colour scaled in linear light by the linear luminance of a neutral grey at
@@ -259,7 +259,7 @@ between.
   opening hue turned by the paint glazing's hue difference from Classic's, and
   reduces chroma at fixed lightness and hue to reach sRGB. Engine surfaces do
   not recolour the plumes.
-- Crimson retains the stable `graphite` id and asset paths.
+- Obsidian and Crimson retain the stable `seafoam` and `graphite` ids and asset paths.
 - Classic is free and uses the 64 logical `ship-N` entries. Other schemes use
   Gameplay's purchase-order prices; Gameplay owns names and prices.
 - Purchased paints use the same geometry and plumes as Classic. Their logical

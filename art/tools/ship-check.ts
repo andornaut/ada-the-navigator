@@ -108,7 +108,7 @@ test("exported paints match the schemes: authored Classic tones and derived step
   );
   assert.deepEqual(
     SCHEMES.map(({ paint }) => paint.accent),
-    ["#2456b8", "#16245c", "#f07a5a", "#f6efe6", "#e0489f", "#12233a"],
+    ["#2456b8", "#16245c", "#aebbc7", "#f6efe6", "#e0489f", "#12233a"],
   );
   // Each derived tone keeps its step's linear luminance ratio to its top after byte rounding.
   const steps = [
@@ -364,7 +364,7 @@ test("engine openings keep Classic's luminous brightness and paint-derived hues"
   assert.equal(classic.canopySides, ENGINE_MATERIAL_RELATIONSHIPS.referenceWall);
   assert.deepEqual(
     SCHEMES.map(({ paint }) => paint.engineOpening),
-    ["#86deff", "#e4f6ff", "#80e5db", "#dac3ff", "#b0d3ff", "#82e0fa"],
+    ["#86deff", "#e4f6ff", "#ffd4c0", "#dac3ff", "#b0d3ff", "#82e0fa"],
   );
 });
 
