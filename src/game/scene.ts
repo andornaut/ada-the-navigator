@@ -1223,7 +1223,9 @@ export class GameScene extends Scene {
         continue;
       }
       if (object.id === PHANTOM_FLAGSHIP && object.enemy) {
-        drawPhantomFlagship(this, object);
+        if (!drawPhantomFlagship(this, object)) {
+          drawObject(this, object);
+        }
       } else if (!drawAndromeda(this, object) && !drawPhantomSettlement(this, object)) {
         drawObject(this, object);
       }
