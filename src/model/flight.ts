@@ -341,7 +341,6 @@ export {
 } from "./flight/impactFeedback.ts";
 
 const length = (v: Vec) => Math.hypot(v.x, v.y);
-const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
 /**
  * Smoothed requested movement direction per flight. It is transient so saves gain
  * no field; a restored or newly pressed stick starts from the velocity heading.
