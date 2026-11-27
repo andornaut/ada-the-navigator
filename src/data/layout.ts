@@ -544,10 +544,10 @@ export const USE_DISC = {
   radius: 63 + 37,
 } as const;
 
-// Hit feedback (art/layout.md "Hit flash"; Gameplay's shake): each shield hit flashes a band
-// width logical px wide just inside the game area's edge in the space palette's threat red, its
-// opacity falling linearly from 1 to 0 over duration ms, and shakes the view by about offset
-// logical px for duration ms. Reduced motion skips both.
+// Each shield hit restarts the threat-red band just inside the play viewport at full opacity
+// (art/layout.md "Hit flash"). Width is in rendered pixels. Opacity decays smoothly to zero over
+// HIT_FLASH.duration ms. The view shakes by about HIT_SHAKE.offset logical px for
+// HIT_SHAKE.duration ms. Reduced motion skips both.
 export const HIT_FLASH = { colour: UNLISTED_COLOURS.alertRed, duration: 120, width: 2 } as const;
 export const HIT_SHAKE = { duration: 100, offset: 2 } as const;
 
