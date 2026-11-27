@@ -1790,6 +1790,22 @@ points, and an area's request is the sum of its nine chunks. Flight lanes are no
 exclusion zones and do not count as covered. Enemy columns count groups.
 Frigate groups include their escorts. Capital encounters use authored
 placements and have zero ambient density in every region.
+The table gives the center baseline for ordinary slot rocks and movers.
+For ordinary rocks, let `edgeShare` be the larger absolute coordinate of the
+chunk centre's shortest wrapped offset from galactic center, divided by half
+the chart width. Multiply the baseline by `1 + 1.5 * edgeShare`. This is a
+linear ramp from 1× at the center to 2.5× on each edge of the square chart.
+At halfway to an edge in any direction, the multiplier is 1.75×. Preserve
+the existing size mix, flight lanes, feature placement and protected clearance.
+
+Derive the requested number of moving rocks from the ordinary rocks actually
+placed. Use the galaxy's existing center moving target divided by its center
+slot-rock target as the share. Doubling the ordinary rock count therefore
+doubles the moving-rock request. Keep the existing move eligibility, path
+checks and cluster behavior. Count individual rocks in a moving cluster
+toward that request. A protected or blocked path can still reduce the
+delivered number.
+
 The table sets the per-kind enemy requests. Lattice spacing and occupancy
 remain set by [ambient admission](ships.md#ambient-admission), with roster
 weights and the frigate heavy share described in [Ships](ships.md#difficulty).
