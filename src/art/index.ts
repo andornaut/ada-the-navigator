@@ -125,6 +125,11 @@ export {
   shipDirection,
   skipShipPreload,
 } from "./shipArt.ts";
+export {
+  readShipMaterialPalettes,
+  readShipMaterials,
+  ShipMaterialSources,
+} from "./shipMaterials.ts";
 export { Silhouettes } from "./silhouettes.ts";
 export {
   FALLBACK_SPACE_PALETTE,

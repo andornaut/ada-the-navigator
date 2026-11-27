@@ -21,11 +21,14 @@ import {
   readGalaxyStationArt,
   readJobArt,
   readMarloArt,
+  readShipMaterialPalettes,
+  readShipMaterials,
   readStreakSpec,
   readWhaleArt,
   readWhirlpoolProjects,
   rockArt,
   RockFrames,
+  ShipMaterialSources,
   type SvgRequest,
   type TextureFilter,
   vectorRaster,
@@ -88,11 +91,6 @@ import type { GameScene } from "./scene.ts";
 import type { Asset } from "./sceneShared.ts";
 import { readShardPalettePack } from "./shardPalettePack.ts";
 import { readShipJets } from "./shipJets.ts";
-import {
-  readShipMaterialPalettes,
-  readShipMaterials,
-  ShipMaterialSources,
-} from "./shipMaterials.ts";
 import { vectorSheetKey, vectorSheetSource } from "./svgSheet.ts";
 import { readStrandedCraft, readTowLine } from "./towArt.ts";
 

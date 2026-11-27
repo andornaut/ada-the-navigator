@@ -2,15 +2,15 @@ import { readFile } from "node:fs/promises";
 
 import type { Plugin } from "vite";
 
-import { CONTROL_WORDS } from "../../data/controlWords.ts";
-import { ECONOMY } from "../../data/economy.ts";
-import { HOME_COPY } from "../../data/homeCopy.ts";
-import { readQuantumJump } from "../../game/quantumJump.ts";
 import {
   readShipMaterialPalettes,
   readShipMaterials,
   ShipMaterialSources,
-} from "../../game/shipMaterials.ts";
+} from "../../art/index.ts";
+import { CONTROL_WORDS } from "../../data/controlWords.ts";
+import { ECONOMY } from "../../data/economy.ts";
+import { HOME_COPY } from "../../data/homeCopy.ts";
+import { readQuantumJump } from "../../game/quantumJump.ts";
 import { controlHelpMarkup, escaped } from "../../ui/controlHelp.ts";
 
 interface HomeCopy {

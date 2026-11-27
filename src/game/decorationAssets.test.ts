@@ -5,11 +5,10 @@ import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
 import paints from "../../public/art/ship-paint.json";
-import { decorationRasterSize } from "../art/rareDecorations.ts";
+import { decorationRasterSize, ShipMaterialSources } from "../art/index.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
-import { ShipMaterialSources } from "./shipMaterials.ts";
 const source = ts.createSourceFile(
   "sceneAssets.ts",
   readFileSync(new URL("./sceneAssets.ts", import.meta.url), "utf8"),

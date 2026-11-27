@@ -4,12 +4,8 @@ import manifest from "../../public/art/manifest.json" with { type: "json" };
 import quantum from "../../public/art/quantum-jump.json" with { type: "json" };
 import paints from "../../public/art/ship-paint.json" with { type: "json" };
 import title from "../../public/art/title-screen.json" with { type: "json" };
+import { readShipMaterialPalettes, readShipMaterials, ShipMaterialSources } from "../art/index.ts";
 import { ECONOMY } from "../data/economy.ts";
-import {
-  readShipMaterialPalettes,
-  readShipMaterials,
-  ShipMaterialSources,
-} from "../game/shipMaterials.ts";
 
 /** The active shipped geometry, with invalid linked material documents rejected. */
 function shippedShipSources(): ShipMaterialSources | null {
