@@ -264,6 +264,7 @@ export {
   readShipJets,
   shipJetDirection,
   type ShipJets,
+  staticShipJets,
   travelJets,
 } from "./shipJets.ts";
 export {

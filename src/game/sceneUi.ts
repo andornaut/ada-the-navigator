@@ -39,6 +39,7 @@ import {
   readWeaponSolids,
   routePreviews,
   shakeCounter,
+  staticShipJets,
   TELEPORT_DISTANCE,
 } from "../art/index.ts";
 import { CHEAT_COPY } from "../data/cheatCopy.ts";
@@ -131,7 +132,6 @@ import { coverShip, endJump, jumpScene } from "./sceneJump.ts";
 import { type Asset, projectId, TITLE_SCREEN_KEY } from "./sceneShared.ts";
 import { StoryShell } from "./shell.ts";
 import { shopItemDetail, stationRow } from "./shopView.ts";
-import { staticShipJets } from "./staticShipJets.ts";
 import { aboardGalaxy } from "./storyPresentation.ts";
 
 const scanViews = new WeakMap<

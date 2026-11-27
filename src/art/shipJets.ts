@@ -1,6 +1,12 @@
 import { readShipHeadingContract, SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import type { Vec } from "../model/types.ts";
-import { type JetProfile, jetShapePolygons, layerAlpha, validJetProfile } from "./jetGeometry.ts";
+import {
+  AUTHORED_JET_LENGTH,
+  type JetProfile,
+  jetShapePolygons,
+  layerAlpha,
+  validJetProfile,
+} from "./jetGeometry.ts";
 
 /** The existing thrust cutoff suppresses direction changes while the ship is effectively still. */
 export function shipJetDirection(facing: Vec, velocity: Vec): "forward" | "reverse" | undefined {
@@ -238,6 +244,21 @@ export function travelJets(
     layers.push({ ...layer, colors: override ?? colors });
   }
   return { ...engineJets(geometry, level), layers };
+}
+
+/** Static travel cues keep their authored model length and the selected main material object. */
+export function staticShipJets(
+  main: EngineJets | undefined,
+  fieldLevels: readonly (readonly JetLayer[])[] | undefined,
+  level: number,
+): ShipJets | undefined {
+  const selected = travelJets(main, undefined, fieldLevels, level, "forward");
+  return (
+    selected && {
+      ...selected,
+      length: { ...selected.length, base: AUTHORED_JET_LENGTH, scale: 0 },
+    }
+  );
 }
 
 function readOccluders(value: unknown): Vec[][] | undefined {

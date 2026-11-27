@@ -3,12 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import data from "../../public/art/quantum-jump.json";
 import mainData from "../../public/art/ship-jets.json";
-import { type JetGeometry, readEngineJets } from "../art/index.ts";
+import { type JetGeometry, readEngineJets, staticShipJets } from "../art/index.ts";
 import { CONTENT } from "../data/content.ts";
 import type { RoutePosition } from "../data/galaxies.ts";
 import { LIGHT_FIELD } from "../game/lightField.ts";
 import { type QuantumJump, readQuantumJump } from "../game/quantumJump.ts";
-import { staticShipJets } from "../game/staticShipJets.ts";
 import * as actionBinding from "./actionBinding.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
