@@ -65,7 +65,8 @@ export function selectPortraitCrop(face: HTMLElement, sheet: CastPortraitSheet |
       const canvas = document.createElement("canvas");
       canvas.width = width;
       canvas.height = height;
-      const context = canvas.getContext("2d");
+      // This scratch crop is serialized immediately and never displayed as a canvas.
+      const context = canvas.getContext("2d", { willReadFrequently: true });
       if (!context) {
         throw new Error("Unable to read the portrait crop");
       }
