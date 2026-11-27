@@ -2496,7 +2496,7 @@ export class GameModel {
     // At a station an action due there comes before Dock (gameplay/rules.md).
     if (id === HUB_STATION) {
       if (flight.galaxy === 2 && this.hubIntroductionDue) {
-        return "talk";
+        return !this.hubSceneDue || this.readyHubDockingScene ? "talk" : undefined;
       }
       if (flight.cargo > 0) {
         return "deposit";
@@ -3188,9 +3188,11 @@ export class GameModel {
     }
     if (flight.galaxy === 2 && docked === HUB_STATION) {
       const scene = this.readyHubDockingScene;
-      const key = this.hubIntroductionDue
-        ? HUB_STATION
-        : scene && (scene.talkPage ?? CARTWHEEL_STORY_SHIPS.scenes.docking.line);
+      const key = scene
+        ? (scene.talkPage ?? CARTWHEEL_STORY_SHIPS.scenes.docking.line)
+        : !this.hubSceneDue && this.hubIntroductionDue
+          ? HUB_STATION
+          : undefined;
       const entry = key && this.chapter.dialogue[key];
       if (!key || !entry) {
         return { panel: null, stationId: docked };

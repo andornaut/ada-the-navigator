@@ -169,6 +169,13 @@ describe("contextual Use quest fallback", () => {
     flight.player = { x: hub.x, y: hub.y };
     expect(model.contextAction).toBeUndefined();
     expect(model.contextQuestDetails).toBeNull();
+    flight.cargo = 10;
+    expect(model.contextAction).toBeUndefined();
+    model.interact();
+    expect(model.stationTalk).toBeNull();
+    expect(model.state.docked).toBeNull();
+    expect(model.state.progress[2]).toMatchObject({ deposited: 0, introduced: false, stage: 0 });
+    expect(flight.cargo).toBe(10);
   });
 
   it("keeps dialogue and gameplay mode guards without mutating an accepted task", () => {

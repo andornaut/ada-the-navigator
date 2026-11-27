@@ -5,6 +5,7 @@ import { ECONOMY } from "../data/economy.ts";
 import type { Weapon } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
+import { completeCartwheelHubIntroductionFixture } from "../testing/cartwheelFixture.ts";
 import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
 import { beginArrivalGrace, ensureDestination, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
@@ -247,6 +248,10 @@ it("collects every nearby cargo piece above the former limit and preserves large
   const destination = ensureDestination(CONTENT, "hub", flight);
   model.state.progress[2].known.push("hub");
   flight.player = { x: destination.x, y: destination.y };
+  expect(model.contextAction).toBe("talk");
+  completeCartwheelHubIntroductionFixture(model);
+  expect(flight.cargo).toBe(1025);
+  expect(model.contextAction).toBe("deposit");
   model.interact();
   expect(model.state.progress[2].deposited).toBe(1025);
   expect(flight.cargo).toBe(0);
