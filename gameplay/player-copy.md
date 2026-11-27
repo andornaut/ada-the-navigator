@@ -1545,6 +1545,10 @@ Shown when the browser holds no install prompt. Title, then steps:
 - Subline and meta description: Join Ada on space adventures and help her community
   back home with what she learns.
 
+### About
+
+Chart galaxies, scan unusual places, and help communities through jobs and projects. Use what you earn to outfit Ada’s ship for the next jump.
+
 ### Controls
 
 #### Flight
