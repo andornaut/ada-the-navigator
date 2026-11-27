@@ -158,6 +158,7 @@ import {
   projectileSceneryContact,
   shotRadius,
 } from "./flight/projectileContact.ts";
+import { recordRingEmission, stepRingEmissions } from "./flight/ringEmissions.ts";
 import {
   resolveScenery,
   sceneryBlocksFlightSegment,
@@ -337,6 +338,7 @@ export {
   createUnpopulatedFlight,
   type Loadout,
 } from "./flight/lifecycle.ts";
+export { activeRingEmissions, type RingEmission } from "./flight/ringEmissions.ts";
 export { inBattle, inDanger, movementSpeedFraction, shipSpeedFraction, towing };
 export {
   activeBeamFlashes,
@@ -4416,33 +4418,16 @@ function enemies(
       }
     }
     for (const [delay, origins] of rings) {
-      const emissions = ringEmissions.get(flight) ?? [];
-      emissions.push({
-        age: -delay,
-        at: { ...before },
+      recordRingEmission(
+        delay,
+        before,
         origins,
-        spawnRadius: content.tuning.flight.shipRadius * definition.sizeRatio,
-      });
-      ringEmissions.set(flight, emissions);
+        content.tuning.flight.shipRadius * definition.sizeRatio,
+        flight,
+      );
     }
   }
   return withheld;
-}
-
-/** A ring burst's emission at its hull, view-only and never saved. */
-export interface RingEmission {
-  age: number;
-  at: Vec;
-  origins: readonly Vec[];
-  spawnRadius: number;
-}
-const ringEmissions = new WeakMap<FlightState, RingEmission[]>();
-/** How long a ring burst's emission shows (art/weapons.md "Ring burst"). */
-const RING_EMISSION_SECONDS = 0.18;
-
-/** The flight's ring burst emissions still showing. */
-export function activeRingEmissions(flight: FlightState): readonly RingEmission[] {
-  return ringEmissions.get(flight) ?? [];
 }
 
 /** A shot's strike against a mine's drawn silhouette: a 6 px square about the shot. */
@@ -4980,18 +4965,6 @@ function obstacleStop(
 }
 
 const enemyBeamContact = { crossbowFrame, damage, obstacleStop, touchesAda };
-
-/** Ages each ring burst emission until it has shown. */
-function stepRingEmissions(dt: number, flight: FlightState): void {
-  const emissions = ringEmissions.get(flight);
-  if (emissions) {
-    emissions.forEach((emission) => (emission.age += dt));
-    ringEmissions.set(
-      flight,
-      emissions.filter((emission) => emission.age < RING_EMISSION_SECONDS),
-    );
-  }
-}
 
 /**
  * A pickup's motion over `dt`, alike for every kind (gameplay/rules.md): a current drifts it
