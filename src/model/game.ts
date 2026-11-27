@@ -198,6 +198,7 @@ import { earlyRequiredDestination, galaxyRoute, newGameState } from "./game/camp
 import { dockedShopGroups, dockedShopOffers, dockedShopSupply } from "./game/dockedShop.ts";
 import { encounterCues, stationsInRange } from "./game/encounterCues.ts";
 import { jobIndicator, jobMapTarget, type JobNavigationContext } from "./game/jobNavigation.ts";
+import { type HeldFlight, saveSnapshot } from "./game/saveSnapshot.ts";
 import {
   floatingHolodisk,
   holodiskTouched,
@@ -369,8 +370,8 @@ import {
   storyStart,
   type StoryStep,
 } from "./storybook.ts";
-import { readStoryCursor, storyCursor, type StorySceneReference } from "./storyCursor.ts";
-import { canReplayEarthChapter, referenceStoryScene, resolveStoryScene } from "./storyScenes.ts";
+import { readStoryCursor, type StorySceneReference } from "./storyCursor.ts";
+import { canReplayEarthChapter, resolveStoryScene } from "./storyScenes.ts";
 import {
   resolveTargetObject,
   type TargetContribution,
@@ -595,8 +596,7 @@ export class GameModel {
   // A flight saved mid-flight, with its notice, held off the state while the launch's start
   // screen shows so nothing in flight runs or shows; save() writes it back unchanged and
   // Continue restores it.
-  private heldFlight: Pick<GameState, "dialogue" | "docked" | "flight" | "mode" | "notice"> | null =
-    null;
+  private heldFlight: HeldFlight | null = null;
   private story: StoryPosition | null = null;
   private choosingReplay = false;
   private heldStory: { position: StoryPosition; slept: number } | null = null;
@@ -6439,39 +6439,16 @@ export class GameModel {
   }
   saveDocument(): GameSave {
     this.pullLoadout();
-    const effective = this.heldFlight ? { ...this.state, ...this.heldFlight } : this.state;
-    const flight = effective.flight;
-    const snapshot =
-      flight && (flight.needle || flight.phantom)
-        ? {
-            ...effective,
-            flight: {
-              ...flight,
-              ...(flight.needle ? { needle: { ...flight.needle, chatter: [] } } : {}),
-            },
-          }
-        : effective;
-    return {
-      ...snapshot,
-      depletionContinuation: this.depletionContinuation || undefined,
-      pendingInteraction: this.suspendedInteraction ?? undefined,
-      pendingStory:
-        this.story || this.heldStory
-          ? {
-              cursor: storyCursor(
-                {
-                  reference: (scene) =>
-                    referenceStoryScene(
-                      { emergency: (candidate) => this.emergencyReferences.get(candidate) },
-                      scene,
-                    ),
-                },
-                this.story ?? this.heldStory!.position,
-              ),
-              slept: this.story ? this.slept : this.heldStory!.slept,
-            }
-          : undefined,
-    };
+    return saveSnapshot(
+      {
+        depletionContinuation: this.depletionContinuation,
+        emergency: (scene) => this.emergencyReferences.get(scene),
+        heldFlight: this.heldFlight,
+        pendingInteraction: this.suspendedInteraction,
+        story: this.story ? { position: this.story, slept: this.slept } : this.heldStory,
+      },
+      this.state,
+    );
   }
   save(): string {
     return JSON.stringify(this.saveDocument());
