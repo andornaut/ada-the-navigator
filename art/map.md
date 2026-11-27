@@ -381,9 +381,11 @@ hunt's own chip, from `mapArea` in [jobs.json](../public/art/jobs.json).
 | `mapArea.minRadius` | 19      | Hidden while `rx` is under the selection ring's outer radius               |
 
 - It draws over the fog and under every chip, so the hunt's chip and its
-  selection ring sit on top. At `maxScale` it is about 60 x 30 at the phone
-  view; at `minScale` (rx about 5.5) it hides and the chip alone marks the
-  hunt.
+  selection ring sit on top. The ellipse reaches the 19 logical px `rx`
+  threshold at a scale of about 0.01493. Of the three reference views below,
+  only 1280x720 reaches that threshold. At its `maxScale` the ellipse is about
+  40 x 20 logical px before clipping. At `minScale` the chip alone marks the
+  hunt in all three views.
 - It takes no press: the hunt's chip is the place.
 - The search area is always explored: the hunt's own spot is a discovered
   place, so the fog reveals 1500 world units around it, past the 900 radius.
@@ -496,18 +498,18 @@ discovered place for the reveal, so a hunt's search area is never fogged.
 
 ## Projection and fit
 
-| Token                                   | Value | Rule                                                                         |
-| --------------------------------------- | ----- | ---------------------------------------------------------------------------- |
-| `MAP_SCREEN.fitMargin`                  | 22    | Chip radius plus `SPACING.gap`: symbols keep this far inside the fit region  |
-| `MAP_SCREEN.minBox.width`               | 12000 | The opening box is at least this many projected units across                 |
-| `MAP_SCREEN.minBox.height`              | 6000  | And this many down                                                           |
-| `MAP_SCREEN.chartRadius`                | 25000 | `CHARTING_RADIUS` (`src/model/map.ts`), the disc used for the zoom reference |
-| `MAP_SCREEN.zoomStep`                   | 1.5   | One zoom step                                                                |
-| `MAP_SCREEN.zoomInStepsRemoved`         | 3     | Steps removed from the close-fit reference                                   |
-| `MAP_SCREEN.zoomOutStepsAdded`          | 4     | Outward steps from the disc-fit reference                                    |
-| `MAP_SCREEN.zoomOutStepsBeyondWorldFit` | 2     | Outward steps from the world-fit reference                                   |
-| `MAP_SCREEN.wheelStep`                  | 100   | Wheel `deltaY` px per zoom step                                              |
-| `MAP_SCREEN.dragThreshold`              | 8     | `SCROLL.dragThreshold`: movement past this pans and never selects            |
+| Token                                  | Value | Rule                                                                         |
+| -------------------------------------- | ----- | ---------------------------------------------------------------------------- |
+| `MAP_SCREEN.fitMargin`                 | 22    | Chip radius plus `SPACING.gap`: symbols keep this far inside the fit region  |
+| `MAP_SCREEN.minBox.width`              | 12000 | The opening box is at least this many projected units across                 |
+| `MAP_SCREEN.minBox.height`             | 6000  | And this many down                                                           |
+| `MAP_SCREEN.chartRadius`               | 25000 | `CHARTING_RADIUS` (`src/model/map.ts`), the disc used for the zoom reference |
+| `MAP_SCREEN.zoomStep`                  | 1.5   | One zoom step                                                                |
+| `MAP_SCREEN.zoomInStepsRemoved`        | 3     | Steps removed from the close-fit reference                                   |
+| `MAP_SCREEN.zoomOutStepsAdded`         | 1     | Outward steps from the disc-fit reference                                    |
+| `MAP_SCREEN.minZoomStepsAboveWorldFit` | 1     | Inward steps from the world-fit reference                                    |
+| `MAP_SCREEN.wheelStep`                 | 100   | Wheel `deltaY` px per zoom step                                              |
+| `MAP_SCREEN.dragThreshold`             | 8     | `SCROLL.dragThreshold`: movement past this pans and never selects            |
 
 - Projection: the flight's own, `x - y` across and `(x + y) / 2` down
   (`chartProjection`), times the map's `scale` in logical px per projected
@@ -523,8 +525,8 @@ discovered place for the reveal, so a hunt's search area is never fogged.
   `close fit = min(innerWidth / minBox.width, zoomHeight / minBox.height)`,
   where `zoomHeight` is the page rect's height less `2 * fitMargin` (284 at
   the 720 base).
-- `minScale = max(disc fit / 1.5⁴, world fit / 1.5²)`, taking the larger of
-  the two floors. Disc fit is
+- `minScale = min(maxScale, max(disc fit / 1.5, world fit * 1.5))`. Take the
+  larger of the two floors, capped at `maxScale`. Disc fit is
   `min(innerWidth / (2 sqrt(2) R), innerHeight / (sqrt(2) R))` for
   `R = chartRadius`. World fit is
   `max(fieldWidth / (2 side), fieldHeight / side)` for the wrap square's
@@ -558,9 +560,9 @@ box height), minScale, maxScale)`; the box centre at the inner region's
 
 | View, CSS px    | Fit region      | Inner region    | `maxScale` | `minScale` | Zoom steps between |
 | --------------- | --------------- | --------------- | ---------- | ---------- | ------------------ |
-| 844x390, insets | 692.31 x 196.62 | 648.31 x 152.62 | 0.01386    | 0.00096    | 6.58               |
-| 720x360 (base)  | 688 x 200       | 644 x 156       | 0.01402    | 0.00089    | 6.80               |
-| 1280x720        | 688 x 245       | 644 x 201       | 0.01590    | 0.00112    | 6.54               |
+| 844x390, insets | 692.31 x 196.62 | 648.31 x 152.62 | 0.01386    | 0.00325    | 3.58               |
+| 720x360 (base)  | 688 x 200       | 644 x 156       | 0.01402    | 0.00300    | 3.80               |
+| 1280x720        | 688 x 245       | 644 x 201       | 0.01590    | 0.00379    | 3.54               |
 
 ### Close places
 
