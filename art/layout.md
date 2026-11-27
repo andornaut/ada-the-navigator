@@ -1186,15 +1186,14 @@ Map, from the Paused card, is a full-screen map rather than a card: the
 galaxy's field under the insets, with every part on the page rect
 (`safeRect(insets, SPACING.pageInset, view)`): a header panel on its top-left
 (the name, the percent, then ten survey pips), a row of three `HUD_BUTTON` tools
-(zoom out, zoom in, recentre) on its top-right, the place panel on its
+(zoom out, zoom in, recentre) left of the top-right Close X, the place panel on its
 bottom-left, and the footer of Quests, Galaxies and Close (primary) on its
 bottom-right. Quests opens a Quests modal card over it. Its tokens
 (`MAP_SCREEN`, `MAP_PANEL`, `MAP_SYMBOL`), fit, press areas and states are in
 [Map](map.md). Close (labelled Back from the Paused card), back and Escape
-return to Paused. The modal's top-right X uses that same one-layer path
-exactly once and preserves focus restoration. The current Map has the footer
-dismissal but lacks the header X. Its informational Place panel is part of
-the Map, with no separate X or dim.
+return to Paused. The shared Close X uses that same one-layer path and
+restores focus. The informational Place panel belongs to the Map and has
+no separate X or dim.
 
 The balance is one centred group: `icon-stardust-20`, `SPACING.markGap`, the
 amount in `TYPE.label`, on a 20 line. The shop's row and well geometry is in
@@ -1535,9 +1534,10 @@ The Galaxy selector is a standalone full-screen modal over the
 [route sky](route-sky.md), after Chibi's zone map. Six galaxy markers run
 left to right along one arc over the night sky, with Earth inside the arc.
 The selected destination has a panel and one centred destination action
-below it. Use the top-right X for the existing one-layer Back action exactly
-once, with no extra Back button in the action area. The current selector
-offers Back and Escape input and lacks the header X.
+below it. The shared top-right Close X (`galaxy-close-x`) uses the same
+one-layer return as Back and Escape. It uses the `ui-close.png` atlas and
+is hidden during the unlock animation. The destination action stays in
+its own row below the informational panel.
 
 Constants: `GALAXY_MAP`, `GALAXY_MAP_PANEL`, `GALAXY_MAP_ACTIONS` and `GALAXY_MAP_MOVE`,
 `src/ui/layout/galaxyMap.ts`. Positions are logical px from the play view's
@@ -1651,8 +1651,9 @@ Input and focus:
 - Tapping an open marker moves the ship there. Tapping a locked
   marker shows its panel face while the ship stays on its open galaxy; the
   action is then unavailable and refuses. Tapping Earth shows Earth's panel.
-- In the current selector, Tab focuses every galaxy marker in route
-  order, then Earth and the destination action, and wraps. Focus starts on the action, the default. A
+- In the current selector, Tab focuses every galaxy marker in route order,
+  then Earth, the destination action and the Close X when shown, and wraps.
+  Focus starts on the destination action. A
   focused locked marker or Earth shows its panel as a tap does; a focused open
   marker moves the ship there. Enter, Space and the gamepad's confirm activate
   the focused control; on a marker they act as a tap.
