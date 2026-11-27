@@ -1,31 +1,32 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { isEnemyActorKind } from "../data/enemyActors.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
-import { ROUTE_POSITION } from "../data/galaxies.ts";
-import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
-import { MOVING_ROCKS } from "../data/spawnTargets.ts";
-import { ASTEROID_SHAPES } from "./asteroids.ts";
+import { GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { restoreSave,SAVE_RESTORE } from "../saving/index.ts";
+import { relaunch, supportEntropy } from "../testing/launch.ts";
+import { placementRadius } from "./asteroids.ts";
 import {
   CARTWHEEL_MINING_PATROL,
   type CartwheelMiningPatrolContext,
   type CartwheelMiningRockPath,
+  cartwheelPatrolAdmits,
   planCartwheelMiningPatrol,
 } from "./cartwheelMiningPatrol.ts";
 import { closestOnSegment } from "./convex.ts";
-import { createEnemy } from "./enemyAi.ts";
-import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
+import {
+  createUnpopulatedFlight,
+  planRequiredCartwheelRoute,
+  populateFlight,
+  stepFlight,
+} from "./flight.ts";
 import { CURRENT_FLIGHT_TOPOLOGY, flightWorldContext } from "./flightTopology.ts";
-import { ambientPackId } from "./geography.ts";
+import { GameModel } from "./game.ts";
+import { stationPopulationObjects } from "./hostileStations.ts";
 import { worldOreFieldInCell } from "./oreFields.ts";
 import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
-import { worldFitsEncounter, worldSpawnerStage } from "./spawner.ts";
-import { planRegion } from "./spawnPlanner.ts";
-import { spawnRules, worldSpawnExclusions, worldSpawnSites } from "./spawnTargets.ts";
-import type { SpaceObject, Vec } from "./types.ts";
-import { periodicWorldGrid, worldCellAt } from "./worldCells.ts";
-import { worldDelta, worldDistance } from "./worldContacts.ts";
+import type { FlightInput, Vec } from "./types.ts";
+import { worldDistance, worldPoint } from "./worldContacts.ts";
 import { wrapPoint } from "./worldGeometry.ts";
 
 const field = { guard: null, id: "field", x: 0, y: 0 } as const;
@@ -210,126 +211,119 @@ describe("Cartwheel mining patrol placement", () => {
     expect(placement.coverIds).toEqual(["a", "b"]);
     expect(placement.homes).toEqual(plan().homes.map(shifted));
   });
+});
 
-  it.each([
-    { groupId: "fighter:lattice:2,-9", seed: 67, status: "planned" },
-    { groupId: "fighter:lattice:4,-8", seed: 1103, status: "no-placement" },
-  ])("checks ordinary admission with seeded rock paths for $seed", (test) => {
-    const { groupId, seed, status } = test;
-    const galaxy = 2;
-    const world = flightWorldContext({ topology: CURRENT_FLIGHT_TOPOLOGY });
-    const ore = worldOreFieldInCell(world, galaxy, { x: 1, y: -2 })!;
-    expect(ore.guard).toBeNull();
-    const rules = spawnRules(galaxy, world.worldSide);
-    const grid = periodicWorldGrid(world, CONTENT.tuning.chunkSize);
-    const cell = worldCellAt(grid, ore);
-    const span = 18;
-    const query = (span + 1) * grid.pitch * Math.SQRT2 + 3500;
-    const generated = planRegion(
-      rules,
-      { encounter: seed, world: seed },
-      {
-        cell: { x: cell.x - span, y: cell.y - span },
-        columns: 2 * span + 1,
-        exclusions: worldSpawnExclusions(world, galaxy, seed, [], query, ore),
-        rows: 2 * span + 1,
-        sites: worldSpawnSites(world, galaxy, query, ore),
-      },
-    ).placements;
-    const group = generated.filter(({ group }) => group === groupId);
-    expect(group).toHaveLength(4);
-    const id = ambientPackId(group[0]!.chunk);
-    const rocks = generated
-      .filter(({ category }) => category === "rock")
-      .map((rock) => ({
-        ...(rock.moving
-          ? {
-              end: {
-                x: rock.x + rock.moving.velocity.x * MOVING_ROCKS.pathSeconds,
-                y: rock.y + rock.moving.velocity.y * MOVING_ROCKS.pathSeconds,
-              },
-            }
-          : {}),
-        id: rock.moving ? MOVING_ROCK_PREFIX + rock.id : rock.id,
-        radius: rock.radius,
-        start: { x: rock.x, y: rock.y },
-      }));
-    rocks.push(
-      ...ore.rocks.map((rock, index) => ({
-        id: `${ore.id}:${index}`,
-        radius: ASTEROID_SHAPES.get(rock.asteroid)!.radius,
-        start: rock,
-      })),
-    );
-    const packCentre = {
-      x: group.reduce((sum, actor) => sum + actor.x, 0) / group.length,
-      y: group.reduce((sum, actor) => sum + actor.y, 0) / group.length,
-    };
-    const neighbours = generated.flatMap((actor): SpaceObject[] => {
-      if (
-        actor.category !== "enemy" ||
-        actor.group === groupId ||
-        !isEnemyActorKind(actor.archetype)
-      ) {
-        return [];
-      }
-      const identity = {
-        archetype: actor.archetype,
-        id: actor.id,
-        packId: actor.group ?? null,
-        phase: 0,
-      };
-      const enemy = createEnemy(enemyEquipmentDefinition(galaxy, identity), identity, actor);
-      return [
-        {
-          enemy,
-          hp: enemy.hp,
-          id: actor.id,
-          kind: "enemy",
-          radius: actor.radius,
-          x: actor.x,
-          y: actor.y,
-        },
-      ];
-    });
-    const policy = SPAWNER_POLICIES[galaxy];
-    const result = planCartwheelMiningPatrol({
-      ...world,
-      admits: ({ anchor, homes }) =>
-        worldFitsEncounter(
-          world,
-          policy,
-          worldSpawnerStage(world, policy, anchor),
-          ROUTE_POSITION[galaxy],
-          neighbours,
-          anchor,
-          { archetype: "fighter", count: homes.length },
-          Math.max(...homes.map((home) => worldDistance(world, anchor, home) + fighter.radius)),
-        ),
-      allocation: {
-        anchor: packCentre,
-        fighters: group.map(({ radius }) => ({ ...fighter, radius })),
-        id,
-      },
-      fieldIsClear: () => true,
-      fields: [ore],
-      hubKnown: true,
-      rocksNear: () => rocks,
-    });
-    expect(result.status).toBe(status);
-    if (result.status === "no-placement") {
-      expect(result.rejected).toContainEqual({ fieldId: ore.id, reason: "admission" });
-      return;
-    }
-    if (result.status !== "planned") {
-      throw new Error("Unexpected rejection before placement");
-    }
-    const placement = result.plan;
-    expect(placement.allocationId).toBe(id);
-    expect(placement.homes).toHaveLength(group.length);
-    expect(placement.coverIds).toEqual(["moving:rock:7,-16:0", "moving:rock:7,-16:1"]);
-    expect(placement.coverIds.every((id) => rocks.find((rock) => rock.id === id)?.end)).toBe(true);
-    expect(worldDelta(world, ore, placement.anchor).y).toBeGreaterThan(0);
-    expect(placement.bypass.every((point) => worldDelta(world, ore, point).y < -950)).toBe(true);
+const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
+
+function discoverMiningPatrol(knowHub: boolean) {
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
+  Object.assign(model.state, {
+    mode: "space",
+    prologueSeen: true,
+    selectedGalaxy: 2,
+    started: true,
+    unlocked: [...GALAXY_NUMBERS],
   });
+  const progress = model.state.progress[2];
+  progress.opened = true;
+  const flight = createUnpopulatedFlight(CONTENT, 2, 1, model.state.economy, 1);
+  flight.topology = CURRENT_FLIGHT_TOPOLOGY;
+  model.state.flight = flight;
+  planRequiredCartwheelRoute(CONTENT, progress, flight);
+  if (knowHub) {
+    progress.known.push("hub");
+  }
+  const world = flightWorldContext(flight);
+  const ore = worldOreFieldInCell(world, 2, { x: -1, y: 4 })!;
+  expect(ore.guard).toBeNull();
+  flight.player = { x: ore.x, y: ore.y };
+  populateFlight(CONTENT, progress, flight);
+  expect(flight.objects.some(({ id }) => id.startsWith(`${ore.id}:`))).toBe(true);
+  const directions = [
+    { x: 1, y: 0 },
+    { x: 0, y: 1 },
+    { x: -1, y: 0 },
+    { x: 0, y: -1 },
+  ];
+  for (const radius of [850, 1450]) {
+    for (const direction of directions) {
+      flight.player = { x: ore.x + radius * direction.x, y: ore.y + radius * direction.y };
+      populateFlight(CONTENT, progress, flight);
+      if (flight.cartwheelMiningPatrol) {
+        return { flight, model, ore, progress, world };
+      }
+    }
+  }
+  return { flight, model, ore, progress, world };
+}
+
+it("uses a real pending fighter allocation only after discovery and reserves its bypass", () => {
+  const unknown = discoverMiningPatrol(false);
+  expect(unknown.flight.cartwheelMiningPatrol).toBeUndefined();
+
+  const { flight, model, ore, progress, world } = discoverMiningPatrol(true);
+  expect(flight.cartwheelMiningPatrol?.plan.fieldId).toBe(ore.id);
+  const patrol = flight.cartwheelMiningPatrol!;
+  const { actors, plan } = patrol;
+  expect(actors).toHaveLength(4);
+  expect(unknown.flight.combat?.initialPackSizes[plan.allocationId]).toBe(actors.length);
+  expect(flight.combat?.initialPackSizes[plan.allocationId]).toBe(actors.length);
+  const population = stationPopulationObjects(flight);
+  const members = population.filter(({ id }) => actors.includes(id));
+  expect(members.map(({ id }) => id).sort()).toEqual([...actors].sort());
+  expect(
+    members.every((object) => object.persistent && !cartwheelPatrolAdmits(flight, object)),
+  ).toBe(true);
+  expect(plan.coverIds.length).toBeGreaterThanOrEqual(2);
+  for (const id of plan.coverIds) {
+    expect(id.startsWith(MOVING_ROCK_PREFIX)).toBe(true);
+    expect(population.find((object) => object.id === id)?.velocity).toBeDefined();
+  }
+  const count = new Set(population.map(({ id }) => id));
+  const [entry, exit] = plan.bypass;
+  const end = worldPoint(world, entry, exit);
+  const nearest = closestOnSegment(worldPoint(world, entry, ore), entry, end);
+  expect(worldDistance(world, ore, nearest)).toBeGreaterThanOrEqual(
+    950 + CARTWHEEL_MINING_PATROL.bypassWidth / 2,
+  );
+  expect(length([entry, end])).toBeCloseTo(900, 8);
+  for (const amount of [0, 0.5, 1]) {
+    flight.player = {
+      x: entry.x + (end.x - entry.x) * amount,
+      y: entry.y + (end.y - entry.y) * amount,
+    };
+    populateFlight(CONTENT, progress, flight);
+  }
+  const generated = stationPopulationObjects(flight).filter(
+    ({ id, kind }) => !count.has(id) && (kind === "rock" || id.startsWith(MOVING_ROCK_PREFIX)),
+  );
+  expect(generated.length).toBeGreaterThan(0);
+  for (const rock of generated) {
+    const point = worldPoint(world, entry, rock);
+    expect(length([point, closestOnSegment(point, entry, end)])).toBeGreaterThanOrEqual(
+      CARTWHEEL_MINING_PATROL.bypassWidth / 2 + placementRadius(rock) - 1e-6,
+    );
+  }
+  expect(flight.cartwheelMiningPatrol).toBe(patrol);
+  const oldSave = model.save();
+  expect(restoreSave(oldSave)?.flight?.cartwheelMiningPatrol).toEqual(patrol);
+
+  flight.player = { x: plan.anchor.x + 600, y: plan.anchor.y };
+  const events = stepFlight(CONTENT, 0.001, { ...idle, cartwheelHubKnown: true }, flight);
+  expect(events.filter(({ type }) => type === "cartwheelPatrolWarning")).toHaveLength(1);
+  expect(cartwheelPatrolAdmits(flight, { id: actors[0]! })).toBe(false);
+  const saved = model.save();
+  expect(restoreSave(saved)?.flight?.cartwheelMiningPatrol).toEqual(patrol);
+  const restored = relaunch(CONTENT, saved).state.flight!;
+  expect(restored.cartwheelMiningPatrol).toEqual(patrol);
+  expect(
+    stepFlight(CONTENT, 0.001, { ...idle, cartwheelHubKnown: true }, restored).some(
+      ({ type }) => type === "cartwheelPatrolWarning",
+    ),
+  ).toBe(false);
+  expect(cartwheelPatrolAdmits(restored, { id: actors[0]! })).toBe(false);
+
+  const malformed = JSON.parse(saved);
+  malformed.flight.cartwheelMiningPatrol.plan.bypass = [entry];
+  expect(restoreSave(JSON.stringify(malformed))).toBeNull();
 });
