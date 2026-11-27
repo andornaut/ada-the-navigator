@@ -1079,7 +1079,9 @@ try {
       );
       current.looped = true;
     }
-    const choice = panel.locator('[data-action="story-choice"]');
+    const choice = panel.locator(
+      '[data-action="story-choice"]:not(:has([data-dialogue-status="completed"]))',
+    );
     const press = (await choice.count())
       ? choice.first()
       : panel.locator('[data-action="story-next"]');
@@ -1399,7 +1401,7 @@ try {
   events.checks.push(
     "Storybook pages show Art's backgrounds and the glowing room plays the rock glow aboard",
   );
-  // Each optional question's answer returns to the list until Continue.
+  // Each optional question's answer returns to the list until Ada takes the seat.
   for (const { answer } of CONTENT.premise.prologue.find(({ questions }) => questions).questions) {
     assert.ok(
       launchPages.some(({ text }) => text === answer),
