@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
@@ -229,6 +229,7 @@ function discoverMiningPatrol(knowHub: boolean) {
   });
   const progress = model.state.progress[2];
   progress.opened = true;
+  model.state.economy.levels.engine = ECONOMY.engineLevels.maxSpeed.length + 1;
   const flight = createUnpopulatedFlight(CONTENT, 2, 1, model.state.economy, 1);
   flight.topology = CURRENT_FLIGHT_TOPOLOGY;
   model.state.flight = flight;
@@ -259,39 +260,17 @@ function discoverMiningPatrol(knowHub: boolean) {
     flight.player = { x: ore.x + offset.x, y: ore.y + offset.y };
     populateFlight(CONTENT, progress, flight);
   }
-  return { flight, model, ore, progress, world };
+  return { flight, model, progress, world };
 }
 
-it("uses a real pending fighter allocation only after discovery and reserves its bypass", () => {
-  const unknown = discoverMiningPatrol(false);
-  expect(unknown.flight.cartwheelMiningPatrol).toBeUndefined();
-
-  const { flight, model, ore, progress, world } = discoverMiningPatrol(true);
-  expect(flight.cartwheelMiningPatrol?.plan.fieldId).toBe(ore.id);
-  const patrol = flight.cartwheelMiningPatrol!;
-  const { actors, plan } = patrol;
-  expect(actors).toHaveLength(4);
-  expect(unknown.flight.combat?.initialPackSizes[plan.allocationId]).toBe(actors.length);
-  expect(flight.combat?.initialPackSizes[plan.allocationId]).toBe(actors.length);
-  const population = stationPopulationObjects(flight);
-  const members = population.filter(({ id }) => actors.includes(id));
-  expect(members.map(({ id }) => id).sort()).toEqual([...actors].sort());
-  expect(
-    members.every((object) => object.persistent && !cartwheelPatrolAdmits(flight, object)),
-  ).toBe(true);
-  expect(plan.coverIds.length).toBeGreaterThanOrEqual(2);
-  for (const id of plan.coverIds) {
-    expect(id.startsWith(MOVING_ROCK_PREFIX)).toBe(true);
-    expect(population.find((object) => object.id === id)?.velocity).toBeDefined();
-  }
-  const count = new Set(population.map(({ id }) => id));
-  const [entry, exit] = plan.bypass;
+function preparePatrolCheckpoint() {
+  const { flight, model, progress, world } = discoverMiningPatrol(true);
+  const patrol = flight.cartwheelMiningPatrol;
+  expect(patrol).toBeDefined();
+  const pendingSave = model.save();
+  const before = new Set(stationPopulationObjects(flight).map(({ id }) => id));
+  const [entry, exit] = patrol!.plan.bypass;
   const end = worldPoint(world, entry, exit);
-  const nearest = closestOnSegment(worldPoint(world, entry, ore), entry, end);
-  expect(worldDistance(world, ore, nearest)).toBeGreaterThanOrEqual(
-    950 + CARTWHEEL_MINING_PATROL.bypassWidth / 2,
-  );
-  expect(length([entry, end])).toBeCloseTo(900, 8);
   for (const amount of [0, 0.5, 1]) {
     flight.player = {
       x: entry.x + (end.x - entry.x) * amount,
@@ -299,73 +278,146 @@ it("uses a real pending fighter allocation only after discovery and reserves its
     };
     populateFlight(CONTENT, progress, flight);
   }
-  const generated = stationPopulationObjects(flight).filter(
-    ({ id, kind }) => !count.has(id) && (kind === "rock" || id.startsWith(MOVING_ROCK_PREFIX)),
+  const generatedIds = Object.freeze(
+    stationPopulationObjects(flight)
+      .filter(
+        ({ id, kind }) => !before.has(id) && (kind === "rock" || id.startsWith(MOVING_ROCK_PREFIX)),
+      )
+      .map(({ id }) => id),
   );
-  expect(generated.length).toBeGreaterThan(0);
-  for (const rock of generated) {
-    const point = worldPoint(world, entry, rock);
-    expect(length([point, closestOnSegment(point, entry, end)])).toBeGreaterThanOrEqual(
-      CARTWHEEL_MINING_PATROL.bypassWidth / 2 + placementRadius(rock) - 1e-6,
-    );
-  }
   expect(flight.cartwheelMiningPatrol).toBe(patrol);
-  const oldSave = model.save();
-  expect(restoreSave(oldSave)?.flight?.cartwheelMiningPatrol).toEqual(patrol);
+  const bypassSave = model.save();
 
-  flight.player = { x: plan.anchor.x + 600, y: plan.anchor.y };
+  flight.player = { x: patrol!.plan.anchor.x + 600, y: patrol!.plan.anchor.y };
   const events = stepFlight(CONTENT, 0.001, { ...idle, cartwheelHubKnown: true }, flight);
-  expect(events.filter(({ type }) => type === "cartwheelPatrolWarning")).toHaveLength(1);
-  expect(cartwheelPatrolAdmits(flight, { id: actors[0]! })).toBe(false);
-  const saved = model.save();
-  expect(restoreSave(saved)?.flight?.cartwheelMiningPatrol).toEqual(patrol);
-  const restored = relaunch(CONTENT, saved).state.flight!;
-  expect(restored.cartwheelMiningPatrol).toEqual(patrol);
-  expect(
-    stepFlight(CONTENT, 0.001, { ...idle, cartwheelHubKnown: true }, restored).some(
-      ({ type }) => type === "cartwheelPatrolWarning",
-    ),
-  ).toBe(false);
-  expect(cartwheelPatrolAdmits(restored, { id: actors[0]! })).toBe(false);
+  return Object.freeze({
+    bypassSave,
+    generatedIds,
+    pendingSave,
+    warnedSave: model.save(),
+    warningCount: events.filter(({ type }) => type === "cartwheelPatrolWarning").length,
+  });
+}
 
-  const admittedAt = patrol.warnedAt! + CARTWHEEL_MINING_PATROL.warningSeconds;
-  // Jump the idle clock to the boundary, then use real steps on both sides.
-  restored.time = admittedAt - 0.01;
-  for (const [dt, admitted] of [
-    [0.005, false],
-    [0.01, true],
-  ] as const) {
-    const frame = stepFlight(CONTENT, dt, { ...idle, cartwheelHubKnown: true }, restored);
-    expect(frame.some(({ type }) => type === "cartwheelPatrolWarning")).toBe(false);
-    expect(cartwheelPatrolAdmits(restored, { id: actors[0]! })).toBe(admitted);
-  }
-  expect(restored.time).toBeGreaterThan(admittedAt);
-  expect(cartwheelPatrolAdmits(restored, { id: actors[0]! })).toBe(true);
+describe("Cartwheel mining patrol flight", () => {
+  let checkpoint: ReturnType<typeof preparePatrolCheckpoint>;
+  beforeAll(() => {
+    checkpoint = preparePatrolCheckpoint();
+  });
 
-  // Fly the entire marked bypass after the fighters can engage, with real collision and paging.
-  restored.player = { ...entry };
-  const leg = { x: end.x - entry.x, y: end.y - entry.y };
-  const move = { x: leg.x / length([entry, end]), y: leg.y / length([entry, end]) };
-  const speed = shipTuning(ECONOMY, CONTENT, restored.levels).physics.maxSpeed;
-  restored.velocity = { x: move.x * speed, y: move.y * speed };
-  restored.facing = move;
-  const startShield = restored.shield;
-  let along = 0;
-  for (let step = 0; step < 320 && along < length([entry, end]); step++) {
-    const frame = stepFlight(CONTENT, 0.05, { ...idle, cartwheelHubKnown: true, move }, restored);
-    const point = worldPoint(world, entry, restored.player);
-    along = move.x * (point.x - entry.x) + move.y * (point.y - entry.y);
-    expect(Math.abs(move.x * (point.y - entry.y) - move.y * (point.x - entry.x))).toBeLessThan(
-      CARTWHEEL_MINING_PATROL.bypassWidth / 2,
+  it("uses a real pending fighter allocation only after discovery and reserves its bypass", () => {
+    const unknown = discoverMiningPatrol(false);
+    expect(unknown.flight.cartwheelMiningPatrol).toBeUndefined();
+
+    const flight = restoreSave(checkpoint.pendingSave)!.flight!;
+    const patrol = flight.cartwheelMiningPatrol!;
+    const { actors, plan } = patrol;
+    const world = flightWorldContext(flight);
+    const ore = worldOreFieldInCell(world, 2, { x: -1, y: 4 })!;
+    expect(plan.fieldId).toBe(ore.id);
+    expect(actors).toHaveLength(4);
+    expect(unknown.flight.combat?.initialPackSizes[plan.allocationId]).toBe(actors.length);
+    expect(flight.combat?.initialPackSizes[plan.allocationId]).toBe(actors.length);
+    const population = stationPopulationObjects(flight);
+    const members = population.filter(({ id }) => actors.includes(id));
+    expect(members.map(({ id }) => id).sort()).toEqual([...actors].sort());
+    expect(
+      members.every((object) => object.persistent && !cartwheelPatrolAdmits(flight, object)),
+    ).toBe(true);
+    expect(plan.coverIds.length).toBeGreaterThanOrEqual(2);
+    for (const id of plan.coverIds) {
+      expect(id.startsWith(MOVING_ROCK_PREFIX)).toBe(true);
+      expect(population.find((object) => object.id === id)?.velocity).toBeDefined();
+    }
+
+    const [entry, exit] = plan.bypass;
+    const end = worldPoint(world, entry, exit);
+    const nearest = closestOnSegment(worldPoint(world, entry, ore), entry, end);
+    expect(worldDistance(world, ore, nearest)).toBeGreaterThanOrEqual(
+      950 + CARTWHEEL_MINING_PATROL.bypassWidth / 2,
     );
-    expect(frame.some(({ type }) => type === "cartwheelPatrolWarning")).toBe(false);
-  }
-  expect(along).toBeGreaterThanOrEqual(length([entry, end]));
-  expect(restored.shield).toBe(startShield);
-  expect(actors.some((id) => (restored.world.notables[id]?.hp ?? 0) > 0)).toBe(true);
-  expect(restored.objects.some(({ id }) => actors.includes(id))).toBe(false);
+    expect(length([entry, end])).toBeCloseTo(900, 8);
+    const bypass = restoreSave(checkpoint.bypassSave)!.flight!;
+    expect(bypass.cartwheelMiningPatrol).toEqual(patrol);
+    const bypassObjects = new Map(stationPopulationObjects(bypass).map((rock) => [rock.id, rock]));
+    expect(checkpoint.generatedIds.length).toBeGreaterThan(0);
+    for (const id of checkpoint.generatedIds) {
+      const rock = bypassObjects.get(id)!;
+      const point = worldPoint(world, entry, rock);
+      expect(length([point, closestOnSegment(point, entry, end)])).toBeGreaterThanOrEqual(
+        CARTWHEEL_MINING_PATROL.bypassWidth / 2 + placementRadius(rock) - 1e-6,
+      );
+    }
 
-  const malformed = JSON.parse(saved);
-  malformed.flight.cartwheelMiningPatrol.plan.bypass = [entry];
-  expect(restoreSave(JSON.stringify(malformed))).toBeNull();
+    expect(checkpoint.warningCount).toBe(1);
+    const warned = restoreSave(checkpoint.warnedSave)!.flight!;
+    expect(warned.cartwheelMiningPatrol).toEqual({ ...patrol, warnedAt: warned.time });
+    expect(cartwheelPatrolAdmits(warned, { id: actors[0]! })).toBe(false);
+    const restored = relaunch(CONTENT, checkpoint.warnedSave).state.flight!;
+    expect(restored.cartwheelMiningPatrol).toEqual(warned.cartwheelMiningPatrol);
+    expect(
+      stepFlight(CONTENT, 0.001, { ...idle, cartwheelHubKnown: true }, restored).some(
+        ({ type }) => type === "cartwheelPatrolWarning",
+      ),
+    ).toBe(false);
+    expect(cartwheelPatrolAdmits(restored, { id: actors[0]! })).toBe(false);
+
+    const admittedAt =
+      warned.cartwheelMiningPatrol!.warnedAt! + CARTWHEEL_MINING_PATROL.warningSeconds;
+    // Jump the idle clock to the boundary, then use real steps on both sides.
+    restored.time = admittedAt - 0.01;
+    for (const [dt, admitted] of [
+      [0.005, false],
+      [0.01, true],
+    ] as const) {
+      const frame = stepFlight(CONTENT, dt, { ...idle, cartwheelHubKnown: true }, restored);
+      expect(frame.some(({ type }) => type === "cartwheelPatrolWarning")).toBe(false);
+      expect(cartwheelPatrolAdmits(restored, { id: actors[0]! })).toBe(admitted);
+    }
+    expect(restored.time).toBeGreaterThan(admittedAt);
+
+    const malformed = JSON.parse(checkpoint.warnedSave);
+    malformed.flight.cartwheelMiningPatrol.plan.bypass = [entry];
+    expect(restoreSave(JSON.stringify(malformed))).toBeNull();
+  });
+
+  it("flies the entire 900-unit bypass after resuming a warned patrol", () => {
+    const flight = relaunch(CONTENT, checkpoint.warnedSave).state.flight!;
+    const { actors, plan, warnedAt } = flight.cartwheelMiningPatrol!;
+    const world = flightWorldContext(flight);
+    const [entry, exit] = plan.bypass;
+    const end = worldPoint(world, entry, exit);
+    const distance = length([entry, end]);
+    expect(distance).toBeCloseTo(900, 8);
+
+    flight.time = warnedAt! + CARTWHEEL_MINING_PATROL.warningSeconds + 0.005;
+    expect(cartwheelPatrolAdmits(flight, { id: actors[0]! })).toBe(true);
+    flight.player = { ...entry };
+    const move = { x: (end.x - entry.x) / distance, y: (end.y - entry.y) / distance };
+    const speed = shipTuning(ECONOMY, CONTENT, flight.levels).physics.maxSpeed;
+    flight.velocity = { x: move.x * speed, y: move.y * speed };
+    flight.facing = move;
+    const startShield = flight.shield;
+    const lastBump = flight.lastBump;
+    const dt = 0.15;
+    // stepFlight still integrates collisions at 60 Hz. Leave a full step of cruise
+    // distance inside each sampled edge of the lane.
+    const lateralLimit = CARTWHEEL_MINING_PATROL.bypassWidth / 2 - speed * dt;
+    let along = 0;
+    for (let step = 0; step < 60 && along < distance; step++) {
+      const frame = stepFlight(CONTENT, dt, { ...idle, cartwheelHubKnown: true, move }, flight);
+      const point = worldPoint(world, entry, flight.player);
+      along = move.x * (point.x - entry.x) + move.y * (point.y - entry.y);
+      expect(Math.abs(move.x * (point.y - entry.y) - move.y * (point.x - entry.x))).toBeLessThan(
+        lateralLimit,
+      );
+      expect(flight.shield).toBe(startShield);
+      expect(flight.lastBump).toBe(lastBump);
+      expect(frame.some(({ type }) => type === "cartwheelPatrolWarning")).toBe(false);
+    }
+    expect(along).toBeGreaterThanOrEqual(distance);
+    expect(flight.shield).toBe(startShield);
+    expect(actors.some((id) => (flight.world.notables[id]?.hp ?? 0) > 0)).toBe(true);
+    expect(flight.objects.some(({ id }) => actors.includes(id))).toBe(false);
+  });
 });
