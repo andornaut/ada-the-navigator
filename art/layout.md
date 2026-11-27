@@ -900,7 +900,7 @@ token above; strings are Gameplay's.
 | Menu          | Header, close. Equal-size action stack, alphabetical: Achievements, Cheats, Settings; then Back to title (not on the Start screen); then primary Close                                                     | None         |
 | Paused        | Header, close. Two top-aligned action columns of equal width, ending with primary Resume                                                                                                                   | None         |
 | Ship          | Header, close. Cargo, Equipment and Weapons columns. Centred Back ([Ship card](#ship-card))                                                                                                                | None         |
-| Conversation  | Speaker tab, portrait and line. Topic choices and page controls. Skip and close X on the HUD row ([Conversation card](#conversation-card))                                                                 | Text column  |
+| Conversation  | Speaker tab, portrait and line. Topic choices and page controls. Close X and eligible Skip on the HUD row ([Conversation card](#conversation-card))                                                        | Text column  |
 | Station       | Header and close X, shared balances, single keeper greeting when authored, shared footer ([Station pages](#station-pages))                                                                                 | None         |
 | Shop          | Header and close X, shared balances, two fixed stock panes, shared footer                                                                                                                                  | None         |
 | Job board     | Jobs & Projects title and close X, shared balances, fixed Jobs and Community projects panes, shared footer                                                                                                 | None         |
@@ -1018,34 +1018,33 @@ shows its actual speaker and portrait. The speaker tab stays on one line.
 Narration has no portrait or tab. The close X is the only Close control. Mom and Dad keep their authored family
 addresses in text; their tabs and portraits identify Trista and Bin.
 
-| Page   | Choice column                                                                                                             |
-| ------ | ------------------------------------------------------------------------------------------------------------------------- |
-| Line   | Ask more (secondary) and Continue (primary) when topics remain. Otherwise Continue alone.                                 |
-| Topics | Remaining topics as neutral choices above Continue alone. Continue advances without selecting a topic.                    |
-| Brief  | Continue alone when the page has no optional topics. When topics remain, use Ask more (secondary) and Continue (primary). |
+| Page                 | Choice column                                                         |
+| -------------------- | --------------------------------------------------------------------- |
+| Linear line or brief | Next as the primary page control, with Previous when history exists   |
+| Optional topic list  | Selectable topics and the named action that resumes the main dialogue |
+| Authored fork        | The authored choices, with Previous when history exists               |
 
-The card fits the visible groups. Choices and page controls are separate
-groups with a 24 logical px gap when both show. The page-control row has at
-most one primary and fills the choice column when two controls are visible.
-Use equal halves if both labels fit with their padding. Otherwise give the
-wider control its required width and the other the remaining width. Keep 24
-between the controls and the primary on the right. If both widths plus the
-gap exceed the column, put the secondary at the left in the upper row at
-the greater of its required width or half the available button space. The
-primary fills the row below it, 24 apart. A lone primary sits at the right
-edge and takes the greater of half the available button space or its
-required width, capped at the column width. Half the available button space
-is `(column width - 24) / 2`.
+Previous retraces the pages visited in the open dialogue. Topic lists and
+forks use authored options in place of Next. Finishing an optional thread
+returns to its selectable topic list. A topic read through to its end gets a
+checkmark and the accessible cue "Topic completed". It stays selectable. The
+check persists through page turns and station screens during the visit and
+clears on undock or when a standalone conversation closes. Marked quest
+choices use the existing 16 logical px `map-destination` icon and the
+accessible cue "Advances the quest".
 
-At 720×360 with phone insets, Ask more and Continue stack in the 228 logical
-px choice column, with both labels on one line. They sit side by side at
-844×390 with phone insets and at 1280×720.
+Choices and page controls stay separate, with `SPACING.gap` (8 logical px)
+between them on interaction choice pages. The bottom row centres Previous
+and Next together, 16 logical px apart. Previous is secondary and sits left
+of Next. A lone page control is centred. The named topic exit belongs to
+the choice stack. A press stays with the page on which it began.
 
 Talk puts the close X in the Settings slot of the HUD row. Its 48
 press area is `hudButtonTarget(0)`, with the 24 face centred in it. Skip uses
 the compact style at `STORY_SKIP.right.besideSettings` (57 from the HUD rect's
-right). In Talk, Skip can omit optional background topics and leaves
-material decisions pending.
+right). It shows only when this page and the immediate next page both offer
+Next. An unvisited outcome with an unknown successor leaves Skip hidden.
+Skip keeps its existing destination and leaves material decisions pending.
 
 The Interaction material-choice path includes the non-Dock `activityDrop`
 confirmation. Its Cancel and Drop choices require a selection and hide
@@ -1327,9 +1326,8 @@ view height and grows upward as content needs room.
 
 A mandatory Earth Storybook choice in the live story, such as a chapter's
 `opening` page, has no Cancel path. Storybook renders a region and requires
-an explicit choice to advance. Skip and Next are guarded, and Previous only
-retraces the story when a prior page exists. Preserve those guards and
-keep replay's existing navigation.
+an explicit choice to advance. Previous retraces the visited path when one
+exists. The authored choice remains the way forward on a required fork.
 
 Constants: `STORY_PANEL` and `STORY_BACKGROUND`, `storyPage.ts`;
 `TEXT_BUTTON`, `standardTextAction.ts`; `STORY_SKIP` and `STORY_PANEL_TOP`,
@@ -1343,7 +1341,7 @@ Constants: `STORY_PANEL` and `STORY_BACKGROUND`, `storyPage.ts`;
 | Panel rect     | Centre the 720 logical px game width. Each side uses the greater of its centred gutter and its own safe inset. The bottom edge uses the bottom safe inset.                                             | Each side clamps independently when insets are asymmetric. The `ui-settings-card` face sits over the background.                                                                                                      |
 | Panel height   | At least half the view height, growing to fit the taller column and vertical padding                                                                                                                   | The bottom edge stays put. The top moves up as the content grows, subject to the top cap.                                                                                                                             |
 | Panel top cap  | `STORY_PANEL_TOP` clears the HUD controls. Ada's room uses `STORY_ROOM_PANEL_TOP`.                                                                                                                     | The maximum height uses that top edge and the greater of the bottom safe inset and the page inset.                                                                                                                    |
-| Padding        | `STORY_PANEL.padding` = `SPACING.panelPadding` 16, including the 2 frame                                                                                                                               | The left copy inset accounts for the snapped game-area edge. The right padding shares Skip's protected right edge with a right-aligned primary control.                                                               |
+| Padding        | `STORY_PANEL.padding` = `SPACING.panelPadding` 16, including the 2 frame                                                                                                                               | The left copy inset accounts for the snapped game-area edge. The right padding accounts for Skip's protected right edge.                                                                                              |
 | Columns        | Text column, `STORY_PANEL.columnGap` 25, choice column                                                                                                                                                 | The gap holds a 1 rule in card rim `#6b6685`, 12 from each column, over the full inner height                                                                                                                         |
 | Choice column  | `clamp(228, 0.38 * (inner width - 25), 300)` (`STORY_PANEL.choiceColumn` share, min, max)                                                                                                              | The text column takes the remaining width after the 25 px column gap.                                                                                                                                                 |
 | Text content   | The heading if present, the name tab and portrait if present, then the paragraph                                                                                                                       | Its height includes the portrait frame where the frame is taller                                                                                                                                                      |
@@ -1354,9 +1352,9 @@ Constants: `STORY_PANEL` and `STORY_BACKGROUND`, `storyPage.ts`;
 | Portrait       | `STORY_PANEL.portrait`: the 32 storybook frame at 2x (64), nearest neighbour, in a 68 frame (2 ink edge, navy `#262b44` face)                                                                          | Floated on the column top: at the inner right for every speaker but Ada, at the inner left for Ada; never mirrored                                                                                                    |
 | Portrait gap   | `SPACING.gap` to the text, `SPACING.rowGap` below                                                                                                                                                      | The name tab and the paragraph wrap beside the frame, then take the full measure below it                                                                                                                             |
 | Choices        | Standard secondary buttons fill the choice column and stack 16 px apart                                                                                                                                | Measure the full button faces, including the lip. Wrapped labels can add height.                                                                                                                                      |
-| Page controls  | Previous at left and Next or a named action at right, with a 24 px grid column gap                                                                                                                     | A sole visible action is centred. Standard buttons size to their labels within their tracks.                                                                                                                          |
+| Page controls  | The bottom row centres secondary Previous and primary Next together with `STORY_CHOICE_GAP` (16 px) between them.                                                                                      | A sole visible control is centred. Named actions keep the layouts below.                                                                                                                                              |
 | Named action   | Keep it beside Previous when both fit with the 24 px horizontal gap                                                                                                                                    | When the pair needs two rows, each fills its row and the vertical gap is 16 px.                                                                                                                                       |
-| Scroll         | Keep the choices and page controls visible together in the normal layout. At the top cap, text or choices can scroll if they overflow.                                                                 | Either scrolling column reserves 14 logical px at the scrollbar (6 px gap plus 8 px track). Page controls stay outside scrolling choices. Eligible pages can move Previous to the free Skip slot.                     |
+| Scroll         | Keep the choices and page controls visible together in the normal layout. At the top cap, text or choices can scroll if they overflow.                                                                 | Either scrolling column reserves 14 logical px at the scrollbar (6 px gap plus 8 px track). Page controls stay outside scrolling choices.                                                                             |
 | Skip           | `STORY_SKIP` anchors the outer box at the HUD rect top. Its right offset is 0 with Settings hidden and 57 px with Settings shown (33 px disc plus 24 px gap).                                          | In the half-spread the right edge also clears the protected panel edge and frame. The single-line outer height is 48 px.                                                                                              |
 | Settings       | The `HUD_BUTTON` disc with its drawn edges on the top-right corner of the edge rect; the 48 target centred on it (7.5 outside the disc)                                                                | The start screen's Settings disc, at the same place on every story page                                                                                                                                               |
 | Pause          | Ada's room page only: `PAUSE_BUTTON`, its disc's drawn edges on the top-left corner of the edge rect (frame 1 outside), press `hitAround(frame)` 52.5; it opens the room's Menu card, including Cheats | The top-left of the HUD row; Skip and Settings keep the top-right                                                                                                                                                     |
@@ -1383,8 +1381,7 @@ The 1280x544 Astra capture also fits the choices and Previous without one.
 The 1280x544 Outposts capture uses a centred 96 px gutter on each side.
 With safe insets of 112 px left, 120 px right and 18 px bottom, its panel
 edges move independently to x 112 and 1160 and its bottom moves to y 526.
-The art crop is the same in both captures. On the Outposts page with both
-page controls, Next shares Skip's right edge.
+The art crop is the same in both captures.
 
 Gameplay's copy, by group:
 
@@ -1407,9 +1404,14 @@ Page structure:
    prior page exists.
    Generic advancement is Next, and a page's named action keeps its own label.
    A required choice without an accompanying action has no primary button.
-   A page configured with `showActionWithChoices` can show Next or a named
-   action alongside its choices. Narration without choices shows the
+   A page configured with `showActionWithChoices` can show its authored
+   named action alongside its choices. Narration without choices shows the
    available page controls.
+3. Skip: the top-right control shows only when the current and immediate
+   next pages both offer ordinary Next. It stays hidden before a fork, on a
+   choice page, and at a named ending. Skip keeps the story's existing
+   destination and stops at an unresolved required choice. Replay keeps its
+   existing return. Back and Escape keep their existing layer order.
 
 Behaviour:
 
@@ -1820,6 +1822,8 @@ Tests:
   page on that background; a test page longer than the
   column scrolls only the text column, with the choices and page controls in
   place.
-- Every story choice and page control is 36 drawn on one line (56 on two),
-  `SMALL_BUTTON_GAP` 24 from its neighbours in every direction, with
-  a press area of at least 48 per axis; the story text is 18 on 26.
+- Standard story choices and linear page controls have 48 px single-line
+  faces including the lip. Check the centred Previous and Next row with a
+  16 px gap and the centred lone button. Verify Skip on the first, linear,
+  before-fork, fork and final pages against its eligibility rule above. The
+  story text is 18 on 26.
