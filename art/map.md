@@ -59,9 +59,9 @@ galactic center.". Strings are Gameplay's (`gameplay/player-copy.md`).
 | `MAP_SCREEN.header.alpha`    | 0.65  | Ink `#181425` panel, the HUD panel alpha                                                               |
 | `MAP_SCREEN.header.padding`  | 8     | The survey note's inset at each side                                                                   |
 | `MAP_SCREEN.header.divider`  | 1x16  | Supporting `#b8b3c9`, centred on the row                                                               |
-| `MAP_SCREEN.header.pip`      | 6     | Pip diameter                                                                                           |
-| `MAP_SCREEN.header.pipPitch` | 8     | Pip centre to centre (2 apart)                                                                         |
-| `MAP_SCREEN.header.pips`     | 10    | Pips in the row, one per tenth of the survey; the row is 78 wide (`9 * pipPitch + pip`)                |
+| `MAP_SCREEN.header.pip`      | 8     | Pip diameter                                                                                           |
+| `MAP_SCREEN.header.pipPitch` | 11    | Pip centre to centre, with a 3 px gap between discs                                                    |
+| `MAP_SCREEN.header.pips`     | 10    | Pips in the row, one per tenth of the survey; the row is 107 wide (`9 * pipPitch + pip`)               |
 
 - Left: the pause press area's right plus `SPACING.gap`, the status pill's
   rule: 62.75 at the 720 base, 93.75 with phone insets. Without the pause
@@ -87,7 +87,7 @@ galactic center.". Strings are Gameplay's (`gameplay/player-copy.md`).
   (`542 - 8 - 62.75`) and 413.25 with phone insets (`515 - 8 - 93.75`), so it
   always ends `SPACING.gap` left of the tools and clears the pause disc. The
   pips always draw at full size, never scaled: the widest header, the longest
-  galaxy name with "100% mapped" and the 78 pip row, stays under 413.25, and
+  galaxy name with "100% mapped" and the 107 pip row, stays under 413.25, and
   the note sets its minimum width (about 363 before gap rounding).
 - The fit region's top is `SPACING.gap` below the header's 64.
 - The header takes no input. Its accessible text is the name and the percent;
