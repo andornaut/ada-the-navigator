@@ -3430,6 +3430,19 @@ try {
   // Cartwheel's story is resolved before its flight starts, as src/model/hubStation.test.ts does,
   // so the world holds the hub with no capital encounter planned around it.
   const hubInput = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
+  function prepareDockFixture(flight, keep) {
+    // Prepopulate the exact area before clearing fixture combat. Otherwise the first live
+    // step places fresh attackers and docking correctly refuses their danger.
+    populateFlight(CONTENT, { known: [] }, flight);
+    flight.objects = flight.objects.filter(keep);
+    for (const [id, object] of Object.entries(flight.world.notables)) {
+      if (object?.kind === "enemy") {
+        delete flight.world.notables[id];
+      }
+    }
+    flight.shots = [];
+    flight.dangerFor = 0;
+  }
   hubInput.state.unlocked = [1, 2];
   Object.assign(hubInput.state.progress[2], {
     introduced: true,
@@ -3446,17 +3459,7 @@ try {
   const hubAt = ensureDestination(CONTENT, "hub", hubFlight);
   hubFlight.player = { x: hubAt.x + 100, y: hubAt.y };
   hubFlight.velocity = { x: 0, y: 0 };
-  // Generate at the hub before clearing the fixture's ambient combat. The first live step
-  // otherwise generates fresh attackers while Ada leaves the deposit interaction.
-  populateFlight(CONTENT, { known: [] }, hubFlight);
-  hubFlight.objects = hubFlight.objects.filter(({ kind }) => kind !== "enemy");
-  for (const [id, object] of Object.entries(hubFlight.world.notables)) {
-    if (object?.kind === "enemy") {
-      delete hubFlight.world.notables[id];
-    }
-  }
-  hubFlight.shots = [];
-  hubFlight.dangerFor = 0;
+  prepareDockFixture(hubFlight, ({ kind }) => kind !== "enemy");
   hubFlight.cargo = 4;
   hubInput.state.economy.stardust = 600;
   assert.equal(hubInput.contextAction, "deposit", "The hub fixture starts with ore to deposit");
@@ -3626,11 +3629,9 @@ try {
     ...new Set([...keeperInput.state.progress[1].stations, keeperSite.id]),
   ];
   keeperInput.state.progress[1].greetings = {};
-  keeperFlight.objects = keeperFlight.objects.filter(({ kind }) => kind === "station");
-  keeperFlight.shots = [];
   keeperFlight.player = { x: keeperSite.x, y: keeperSite.y };
   keeperFlight.velocity = { x: 0, y: 0 };
-  keeperFlight.dangerFor = 0;
+  prepareDockFixture(keeperFlight, ({ kind }) => kind === "station");
   keeperInput.state.dialogue = null;
   keeperInput.state.docked = null;
   const modelDock = relaunch(CONTENT, keeperInput.save());
