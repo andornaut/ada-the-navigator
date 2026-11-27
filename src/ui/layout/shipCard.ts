@@ -7,6 +7,7 @@ import { BUTTON_FACE, SPACING, TEXT_TOKENS, TYPE, UI_SCOPE } from "./tokens.ts";
 export const SHIP_CARD = {
   icon: TYPE.body.lineHeight,
   row: TYPE.body.lineHeight,
+  rowGap: (SPACING.rowGap + SPACING.gap) / 2,
 } as const;
 
 export const SHIP_CARD_STYLE = `
@@ -32,7 +33,7 @@ ${UI_SCOPE} .ada-ship-section h3{
 }
 ${UI_SCOPE} .ada-ship-grid{
   display:grid;
-  row-gap:${units(SPACING.gap)};
+  row-gap:${units(SHIP_CARD.rowGap)};
   min-width:0;
   align-content:start
 }
