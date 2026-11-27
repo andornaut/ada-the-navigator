@@ -290,9 +290,10 @@ describe("Captain Cadence admission and outcome", () => {
         }
       }
       flight.shield = model.shieldMax;
-      // Newly generated ambient movers can cover a firing lane while the boss turns.
-      // Keep static scenery and isolate both timed firing windows from passing traffic.
-      flight.objects = flight.objects.filter(({ id }) => !id.startsWith(MOVING_ROCK_PREFIX));
+      // Keep the authored course and isolate both timing windows from generated rock cover.
+      flight.objects = flight.objects.filter(
+        ({ id, kind }) => kind !== "rock" && !id.startsWith(MOVING_ROCK_PREFIX),
+      );
       model.step(0.02, idle);
       for (const beam of activeEnemyBeams(flight)) {
         if (beam.kind !== "phaser" || beam.ownerId !== id) {

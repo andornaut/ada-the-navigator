@@ -1119,8 +1119,9 @@ function placeAmbient(
         existing,
         flight,
       );
+      // Keep the selected physical cover through normal paging, without changing how it moves.
       for (const object of flight.objects) {
-        if (actors.includes(object.id)) {
+        if (actors.includes(object.id) || patrol.coverIds.includes(object.id)) {
           object.persistent = true;
         }
       }
