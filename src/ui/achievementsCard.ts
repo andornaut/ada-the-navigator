@@ -1,11 +1,13 @@
 import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
+import { focusTargets } from "@andornaut/game-kit/runtime/web/ui/dom/modalLayer";
 
 import { SCREEN } from "../data/screen.ts";
 import { type AchievementsLayoutSchema, achievementsTree } from "./achievementsTree.ts";
 import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { COMPLETION_INDICATOR, createCompletionIndicator } from "./completionIndicator.ts";
+import { registerForegroundSurface } from "./foregroundInput.ts";
 import { listCardHeader } from "./layout/cardFrame.ts";
 import { CARD_WIDTH_CAPS, cardWidth, SCROLL } from "./layout/contentCard.ts";
 import { TEXT_BUTTON } from "./layout/controls.ts";
@@ -410,10 +412,22 @@ export function createAchievementsCard(
       return;
     }
     leavePressView?.();
-    leavePressView = open
-      ? enterPressView(root, card.frame, [], { backdrop: modal, close: () => setOpen(false) })
-      : undefined;
+    leavePressView = undefined;
     modal.hidden = !open;
+    if (open) {
+      const close = () => setOpen(false);
+      const releasePress = enterPressView(root, card.frame, [], { backdrop: modal, close });
+      const releaseForeground = registerForegroundSurface({
+        dismiss: () => ({ activate: close, available: () => !modal.hidden, element: card.frame }),
+        layer: "modal",
+        root: card.frame,
+        tabTargets: () => focusTargets(card.frame),
+      });
+      leavePressView = () => {
+        releaseForeground();
+        releasePress();
+      };
+    }
     if (open) {
       page = 0;
       render();

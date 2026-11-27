@@ -1,11 +1,17 @@
 import { controlPresentation } from "@andornaut/game-kit/runtime/ui/controlPresentation";
+import type { ForegroundAction } from "@andornaut/game-kit/runtime/web/input/dom/foregroundInput";
 import type {
   HoldAction,
   HoldActionBinding,
 } from "@andornaut/game-kit/runtime/web/input/dom/holdActions";
 
 import { activateAdaAction, type AdaActionBinding } from "./actionActivation.ts";
-import { adaActionHasRoot, adaActionOwnedBy, adaActionRootAllows } from "./actionRegistry.ts";
+import {
+  adaActionHasRoot,
+  adaActionOwnedBy,
+  adaActionOwner,
+  adaActionRootAllows,
+} from "./actionRegistry.ts";
 
 /** Shared with the weapon detail override; duration is independent of display scale. */
 export const ADA_ACTION_HOLD_MS = 500;
@@ -95,16 +101,8 @@ export function bindAdaAction(options: AdaActionOptions, element: HTMLElement) {
   };
 }
 
-/** Only explicitly owned actions enter the dispatcher. Continuous and unregistered controls do not. */
-export function resolveAdaHoldAction(
-  root: HTMLElement,
-  target: EventTarget | null,
-): HoldAction | null {
-  const view = root.ownerDocument.defaultView;
-  if (!view || !(target instanceof view.Node)) {
-    return null;
-  }
-  let element = target instanceof view.HTMLElement ? target : target.parentElement;
+function actionAt(root: HTMLElement, target: Node, start: HTMLElement | null) {
+  let element = start;
   while (element && root.contains(element)) {
     const entry = bindings.get(element);
     if (entry) {
@@ -123,45 +121,96 @@ export function resolveAdaHoldAction(
         owned.closest("[hidden], [inert]") === null &&
         adaActionRootAllows(owned) &&
         entry.options.current();
-      return {
-        activate: () => {
-          if (current()) {
-            entry.activate();
-          }
-        },
-        available: () => {
-          if (!current()) {
-            return false;
-          }
-          const action = entry.options.hold ?? entry.options.click;
-          const availability = action.availability();
-          return (
-            controlPresentation(availability).executable ||
-            (entry.options.ownAriaDisabled === "refusal-feedback" &&
-              availability.kind === "unavailable" &&
-              action.refuse !== undefined)
-          );
-        },
-        element: owned,
-        identity: entry,
-        ...(entry.options.ownAriaDisabled === undefined
-          ? {}
-          : { ownAriaDisabled: entry.options.ownAriaDisabled }),
-        rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: entry.options.slopPx() },
-        ...(entry.options.hold
-          ? {
-              hold: () => {
-                if (current()) {
-                  activateAdaAction(entry.options, "hold");
-                }
-              },
-            }
-          : {}),
-      };
+      return { current, element: owned, entry };
     }
     element = element.parentElement;
   }
   return null;
+}
+
+/** Resolve the click action, since keyboard and secondary release do not invoke hold behavior. */
+export function resolveAdaForegroundAction(
+  surface: HTMLElement,
+  target: EventTarget,
+): ForegroundAction | null {
+  const view = surface.ownerDocument.defaultView;
+  if (!view || !(target instanceof view.Node) || !surface.contains(target)) {
+    return null;
+  }
+  const element = target instanceof view.HTMLElement ? target : target.parentElement;
+  const root = element && adaActionOwner(element);
+  const action = root && actionAt(root, target, element);
+  if (!action || !surface.contains(action.element)) {
+    return null;
+  }
+  const { current, element: control, entry } = action;
+  return {
+    activate: () => {
+      if (current()) {
+        entry.activate();
+      }
+    },
+    available: () =>
+      current() && controlPresentation(entry.options.click.availability()).executable,
+    element: control,
+    identity: entry,
+    ...(control instanceof view.HTMLButtonElement ? { native: true } : {}),
+  };
+}
+
+/** Only explicitly owned actions enter the dispatcher. Continuous and unregistered controls do not. */
+export function resolveAdaHoldAction(
+  root: HTMLElement,
+  target: EventTarget | null,
+): HoldAction | null {
+  const view = root.ownerDocument.defaultView;
+  if (!view || !(target instanceof view.Node)) {
+    return null;
+  }
+  const found = actionAt(
+    root,
+    target,
+    target instanceof view.HTMLElement ? target : target.parentElement,
+  );
+  if (!found) {
+    return null;
+  }
+  const { current, element, entry } = found;
+  return {
+    activate: () => {
+      if (current()) {
+        entry.activate();
+      }
+    },
+    available: () => {
+      if (!current()) {
+        return false;
+      }
+      const action = entry.options.hold ?? entry.options.click;
+      const availability = action.availability();
+      return (
+        controlPresentation(availability).executable ||
+        (entry.options.ownAriaDisabled === "refusal-feedback" &&
+          availability.kind === "unavailable" &&
+          action.refuse !== undefined)
+      );
+    },
+    element,
+    identity: entry,
+    ...(entry.options.ownAriaDisabled === undefined
+      ? {}
+      : { ownAriaDisabled: entry.options.ownAriaDisabled }),
+    rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: entry.options.slopPx() },
+    ...(entry.options.hold
+      ? {
+          hold: () => {
+            if (current()) {
+              activateAdaAction(entry.options, "hold");
+            }
+          },
+        }
+      : {}),
+  };
 }
 
 function livePointerEntry(root: HTMLElement, entry: Entry, element: HTMLElement): boolean {

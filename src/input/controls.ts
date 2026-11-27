@@ -48,7 +48,8 @@ import type { CheatAction } from "../ui/cheatActions.ts";
 import { type CheatLabels, createCheats } from "../ui/cheats.ts";
 import { consumeContextQuestUse, createContextQuestIcon } from "../ui/contextQuestUse.ts";
 import type { DeviceStorage } from "../ui/deviceSettings.ts";
-import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
+import { registerForegroundSurface, registerGameEscape } from "../ui/foregroundInput.ts";
+import { bindAdaActionRoot, foregroundPressGuard } from "../ui/holdActionsAdapter.ts";
 import { createItemNotices, type NoticePlaces, type PaintSwatch } from "../ui/itemNotice.ts";
 import { SCROLL } from "../ui/layout/contentCard.ts";
 import { units, VIEW_HOST_ID } from "../ui/layout/css.ts";
@@ -896,8 +897,37 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     state.reset();
     desktop.reset();
   };
+  const foregroundRoot = settings.root;
+  const foregroundGuard = foregroundPressGuard(foregroundRoot);
+  const leaveForeground = registerForegroundSurface({
+    escape: "pass-through",
+    ...(foregroundGuard === undefined ? {} : { guard: foregroundGuard }),
+    preserveKey: (event) =>
+      state.accepts() &&
+      event.key !== "Escape" &&
+      !(event.target instanceof Node && foregroundRoot.contains(event.target)),
+    ready: requiredReady,
+    root: foregroundRoot.closest<HTMLElement>("#app") ?? foregroundRoot,
+  });
+  const gameEscape = () => {
+    if (
+      disposed ||
+      !foregroundRoot.isConnected ||
+      foregroundRoot.closest("[hidden], [inert]") ||
+      !requiredReady() ||
+      document.hidden
+    ) {
+      return undefined;
+    }
+    return () => {
+      if (!backStack.back()) {
+        openNavigation();
+      }
+    };
+  };
+  const leaveEscape = registerGameEscape(document, gameEscape);
   const keyDown = (event: KeyboardEvent) => {
-    if (!requiredReady()) {
+    if (event.defaultPrevented || !requiredReady()) {
       return;
     }
     // Q exits from the bare start screen, wherever Exit shows.
@@ -914,15 +944,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       exitAction?.activate()
     ) {
       event.preventDefault();
-      return;
-    }
-    if (event.code === "Escape") {
-      event.preventDefault();
-      if (!event.repeat) {
-        if (!backStack.back()) {
-          openNavigation();
-        }
-      }
       return;
     }
     if (!state.accepts() || !CONTROL_KEYS.has(event.code)) {
@@ -1053,6 +1074,8 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
         return;
       }
       disposed = true;
+      leaveForeground();
+      leaveEscape();
       actionRoot.dispose();
       useAction.dispose();
       navigation.dispose();

@@ -12,7 +12,6 @@ import type {
   RequiredLoading,
 } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import { MAX_RENDER_SCALE } from "@andornaut/game-kit/runtime/view/renderScale";
-import { trackInputModality } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { lockGameOrientation } from "@andornaut/game-kit/runtime/web/view/dom/watchFrameTurn";
 import { followFrameTurn } from "@andornaut/game-kit/runtime/web/view/phaser/followFrameTurn";
 import { Core, Game, Scale, Scenes, WEBGL } from "phaser";
@@ -30,6 +29,7 @@ import { startupFence } from "./loading/startup.ts";
 import { launchPhoneApp, requireNewerVersion, setupPhoneApp } from "./pwa/index.ts";
 import { saves } from "./saving/index.ts";
 import { CRASH_SCREEN } from "./ui/crashScreen.ts";
+import { registerForegroundSurface } from "./ui/foregroundInput.ts";
 import { bindAdaActionRoot } from "./ui/holdActionsAdapter.ts";
 import { loadingFailureChrome } from "./ui/loadingFailure.ts";
 import { rootPressGuard } from "./ui/pressScope.ts";
@@ -56,8 +56,16 @@ const appActions = bindAdaActionRoot(
   ui,
 );
 
-// Script focus as screens open shows the focus ring only after keyboard input (focusTarget).
-trackInputModality(document);
+const leaveForeground = registerForegroundSurface({
+  escape: "pass-through",
+  ready: requiredReady,
+  root: ui,
+});
+const disposeAppActions = () => {
+  leaveForeground();
+  appActions.dispose();
+};
+
 lockGameOrientation("landscape", screen);
 // At once: the browser's install prompt can come before the game has drawn anything.
 setupPhoneApp();
@@ -68,11 +76,11 @@ CRASH_SCREEN.stopGameOnCrash(() => {
   saves.blockWrites("game crashed");
   crashed = true;
   startupFence.crashed = true;
-  appActions.dispose();
+  disposeAppActions();
   game?.pause();
 });
 if (crashed) {
-  appActions.dispose();
+  disposeAppActions();
   saves.blockWrites("game crashed");
 }
 let entry: Promise<void> | undefined;
@@ -138,7 +146,7 @@ export function commitGame(): void {
 }
 
 export function disposeGame(): void {
-  appActions.dispose();
+  disposeAppActions();
   cancelGame?.();
   boot?.dispose();
   boot = undefined;

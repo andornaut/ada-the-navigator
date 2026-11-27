@@ -68,16 +68,20 @@ export function registerAdaAncestorActionScope(scope: HTMLElement, root: HTMLEle
 }
 
 /** A nested registered root owns its subtree unless a group explicitly shares an ancestor root. */
-export function adaActionOwnedBy(root: HTMLElement, element: HTMLElement): boolean {
+export function adaActionOwner(element: HTMLElement): HTMLElement | undefined {
   for (let owner: HTMLElement | null = element; owner; owner = owner.parentElement) {
     const ancestor = ancestorScopes.get(owner);
     if (ancestor) {
-      return root === ancestor.root && root.contains(owner) && roots.get(root)?.active === true;
+      return roots.get(ancestor.root)?.active === true ? ancestor.root : undefined;
     }
     const entry = roots.get(owner);
     if (entry) {
-      return owner === root && entry.active;
+      return entry.active ? owner : undefined;
     }
   }
-  return false;
+  return undefined;
+}
+
+export function adaActionOwnedBy(root: HTMLElement, element: HTMLElement): boolean {
+  return root.contains(element) && adaActionOwner(element) === root;
 }

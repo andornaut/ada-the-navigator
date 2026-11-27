@@ -797,15 +797,6 @@ export function createStatusPill(
     action.setAttribute("aria-haspopup", "dialog");
     action.dataset.action = `resource-${kind}`;
     disposeResources.push(() => keyboardBinding.dispose());
-    const keydown = (event: KeyboardEvent) => {
-      if ((event.key === "Enter" || event.key === " ") && !event.repeat) {
-        event.preventDefault();
-        event.stopPropagation();
-        keyboardBinding.activate();
-      }
-    };
-    action.addEventListener("keydown", keydown);
-    leaveInputs.push(() => action.removeEventListener("keydown", keydown));
   };
   if (options.onResource) {
     addResource("stardust", [sparkle, stardust.slot], stardust.count);

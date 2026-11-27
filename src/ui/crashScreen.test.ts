@@ -32,11 +32,16 @@ vi.mock("./holdActionsAdapter.ts", () => ({
 vi.mock("./pressScope.ts", () => ({
   rootPressGuard: () => ({}),
 }));
+function pageWindow() {
+  const window = Object.assign(new EventTarget(), { location: { search: "" } });
+  const document = Object.assign(new EventTarget(), { defaultView: window });
+  return Object.assign(window, { document });
+}
 beforeEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
   host.duringBind = undefined;
-  vi.stubGlobal("window", { location: { search: "" } });
+  vi.stubGlobal("window", pageWindow());
 });
 afterEach(() => vi.unstubAllGlobals());
 
@@ -62,7 +67,7 @@ it("still releases loading resources when another page-owned crash cleanup throw
 });
 
 it("releases a binding retired during construction and audits only the next live instance", async () => {
-  const page = Object.assign(new EventTarget(), { location: { search: "" } });
+  const page = pageWindow();
   vi.stubGlobal("window", page);
   await import("./crashScreen.ts");
 

@@ -59,12 +59,15 @@ function harness(required?: () => boolean) {
     ),
     desktop,
     desktopBinding: { active: () => false, touchActive: () => false },
+    disposed: false,
+    document: { hidden: false },
     exitAction: {
       activate() {
         exit();
         return true;
       },
     },
+    foregroundRoot: { closest: () => null, isConnected: true },
     menuContext: "start",
     modalOpen: () => false,
     openNavigation: navigation,
@@ -79,13 +82,15 @@ function harness(required?: () => boolean) {
     `const ${actual("requiredReady")};`,
     `const ${actual("reset")};`,
     `const ${actual("keyDown")};`,
-    `({keyDown, ${actual("sample", true)}, ${actual("setEnabled", true)}})`,
+    `const ${actual("gameEscape")};`,
+    `({keyDown, gameEscape, ${actual("sample", true)}, ${actual("setEnabled", true)}})`,
   ].join("\n");
   const adapter = runInContext(
     ts.transpileModule(text, { compilerOptions: { target: ts.ScriptTarget.ES2023 } }).outputText,
     sandbox,
   ) as {
     keyDown(event: object): void;
+    gameEscape(): (() => void) | undefined;
     sample(frame?: object): ControlSample;
     setEnabled(value: boolean): void;
   };
@@ -94,7 +99,19 @@ function harness(required?: () => boolean) {
     adapter.keyDown(event);
     return event;
   };
-  return { actionRoot, adapter, back, desktop, editable, exit, key, navigation, state, weapons };
+  return {
+    actionRoot,
+    adapter,
+    back,
+    desktop,
+    editable,
+    escape: adapter.gameEscape,
+    exit,
+    key,
+    navigation,
+    state,
+    weapons,
+  };
 }
 
 describe("required-entry controls fence", () => {
@@ -102,7 +119,7 @@ describe("required-entry controls fence", () => {
     const h = harness(() => false);
     expect(h.state.accepts()).toBe(true);
     expect(h.key("KeyQ").preventDefault).not.toHaveBeenCalled();
-    expect(h.key("Escape").preventDefault).not.toHaveBeenCalled();
+    expect(h.escape()).toBeUndefined();
     expect(h.exit).not.toHaveBeenCalled();
     expect(h.back).not.toHaveBeenCalled();
     expect(h.navigation).not.toHaveBeenCalled();
@@ -111,12 +128,11 @@ describe("required-entry controls fence", () => {
   it.each([false, true])("preserves ready navigation with callback absent=%s", (absent) => {
     const h = harness(absent ? undefined : () => true);
     h.key("KeyQ");
-    h.key("Escape");
+    h.escape()?.();
     expect(h.exit).toHaveBeenCalledTimes(1);
     expect(h.back).toHaveBeenCalledTimes(1);
     expect(h.navigation).toHaveBeenCalledTimes(1);
     h.key("KeyQ", true);
-    h.key("Escape", true);
     h.key("KeyQ", false, h.editable);
     expect(h.exit).toHaveBeenCalledTimes(1);
     expect(h.back).toHaveBeenCalledTimes(1);
@@ -126,10 +142,10 @@ describe("required-entry controls fence", () => {
     let ready = false;
     const h = harness(() => ready);
     h.adapter.setEnabled(false);
-    h.key("Escape");
+    h.escape()?.();
     ready = true;
     expect(h.state.accepts()).toBe(false);
-    h.key("Escape");
+    h.escape()?.();
     expect(h.back).toHaveBeenCalledTimes(1);
   });
 

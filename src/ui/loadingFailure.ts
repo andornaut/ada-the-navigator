@@ -6,6 +6,7 @@ import {
 import { LOADING_LAYER, SCROLL } from "../data/layout.ts";
 import type { MountStartupFailure } from "../loading/startup.ts";
 import { createAdaFactoryHoldBinding } from "./actionBinding.ts";
+import { adaForegroundInput } from "./foregroundInput.ts";
 import { bindAdaRecoveryActionRoot } from "./holdActionsAdapter.ts";
 import { loadingFailureLayout } from "./layout/loadingFailureLayout.ts";
 import { viewScale } from "./layout/playView.ts";
@@ -53,7 +54,12 @@ export const mountStartupFailure: MountStartupFailure = ({ onRetry, subscribeReq
     let view: LoadingFailurePresentationView | undefined;
     try {
       view = mountLoadingFailure(
-        { bindHoldAction, onRetry, presentation: loadingFailureChrome.presentation(root) },
+        {
+          bindHoldAction,
+          foregroundInput: adaForegroundInput(root.ownerDocument),
+          onRetry,
+          presentation: loadingFailureChrome.presentation(root),
+        },
         frame,
       );
       recovery.assertBindings();

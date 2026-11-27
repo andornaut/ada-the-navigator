@@ -20,6 +20,7 @@ import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
+  resolveAdaForegroundAction,
 } from "./actionBinding.ts";
 import { showDialogueChoiceStatus } from "./dialogueChoice.ts";
 import { createDialoguePanel, DIALOGUE_PANEL_STYLE } from "./dialoguePanel.ts";
@@ -723,6 +724,7 @@ export function createInteractionCard(
           backdrop: modal,
           close,
           focus: defaultFocus() ?? card.close,
+          foreground: { skip: () => resolveAdaForegroundAction(card.frame, skip) },
           isolation: "dialog",
           restore: () => returnFocus,
         },

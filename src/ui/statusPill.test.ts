@@ -977,7 +977,7 @@ describe("status pill count", () => {
     expect(onResource).toHaveBeenCalledTimes(aliases.length);
   });
 
-  it("activates each resource once and consumes HUD pointer/key events", () => {
+  it("activates each resource once from its HUD pointer target", () => {
     const onResource = vi.fn();
     const { count, root, slot, status } = pill(true, onResource);
     status.setShown(true);
@@ -1003,12 +1003,8 @@ describe("status pill count", () => {
       const click = new Event("click", { bubbles: true });
       target.dispatchEvent(click);
       expect(onResource).toHaveBeenLastCalledWith(kind, action);
-      const key = new Event("keydown", { cancelable: true });
-      Object.defineProperties(key, { key: { value: "Enter" }, repeat: { value: false } });
-      action.dispatchEvent(key);
-      expect(key.defaultPrevented).toBe(true);
     }
-    expect(onResource).toHaveBeenCalledTimes(6);
+    expect(onResource).toHaveBeenCalledTimes(3);
   });
 
   it("pads the pill 6 at each end, sets each count 4 from its icon and each divider 6 apart", () => {

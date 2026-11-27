@@ -72,10 +72,11 @@ const root = (size = { height: 360, width: 720 }) =>
   ({
     clientHeight: size.height,
     clientWidth: size.width,
-    ownerDocument: {
+    ownerDocument: Object.assign(new EventTarget(), {
       body: { append: vi.fn() },
       createElement: () => ({ className: "", remove: vi.fn(), style: {} }),
-    },
+      defaultView: new EventTarget(),
+    }),
     querySelector: () => ({ remove: vi.fn() }),
   }) as unknown as HTMLElement;
 // Leaves the shared installation presenter out of the failed state for the next test.

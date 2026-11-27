@@ -71,7 +71,7 @@ function actualLeaves(): string {
     (node) =>
       ts.isForOfStatement(node) && node.getText(source).includes("assertAdaActionBindings("),
   );
-  const keys = ["requiredReady", "menuContext", "onBack", "keyDown"].map((name) => {
+  const keys = ["requiredReady", "menuContext", "onBack", "keyDown", "gameEscape"].map((name) => {
     const statement = statements.find((node) => variable(node, name));
     if (!statement) {
       throw Error(`Missing actual Controls declaration ${name}`);
@@ -105,14 +105,14 @@ function actualLeaves(): string {
     throw Error("Missing actual top-button construction, listener or owned disposal");
   }
   return [
-    "let disposed = false;",
+    "let disposed = false; const foregroundRoot = settings.root;",
     ...exit.map((n) => n.getText(source)),
     use.getText(source),
     ...audits.map((n) => n.getText(source)),
     updateBack.getText(source),
     ...keys,
     ...listeners.map((n) => n.getText(source)),
-    `({exitButton, ${updateExit.getText(source)}, updateContext(view) {
+    `({exitButton, gameEscape, ${updateExit.getText(source)}, updateContext(view) {
       ${updateContext.getText(source)}
     }, dispose(){ disposed = true;`,
     ...cleanup.map((n) => n.getText(source)),
@@ -335,6 +335,7 @@ function fixture(
     }),
   ) as {
     exitButton?: Element;
+    gameEscape(): (() => void) | undefined;
     dispose: () => void;
     setExitButton(shown: boolean): void;
     updateContext(view: { menuContext: "start" | "nonplay" }): void;
@@ -479,7 +480,7 @@ it("keeps optional Exit absent and retains the owned Use binding", () => {
   expect(resolveAdaHoldAction(f.host, f.useButton)).toBeNull();
 });
 
-it("routes bare eligible Start Q once and leaves Escape and phone Back with their own listener", () => {
+it("routes Start Q once and guards the game fallback and phone Back through disposal", () => {
   const f = fixture();
   const exit = f.options.exit!.onExit;
   const button = f.exitButton!;
@@ -497,14 +498,15 @@ it("routes bare eligible Start Q once and leaves Escape and phone Back with thei
   expect(f.key("Enter", button).defaultPrevented).toBe(false);
   f.click(button);
   expect(exit).toHaveBeenCalledTimes(2);
-  expect(f.key("Escape").defaultPrevented).toBe(true);
+  expect(f.gameEscape()).toBeTypeOf("function");
+  f.gameEscape()?.();
   f.phoneBack();
   expect(f.openNavigation).toHaveBeenCalledTimes(2);
   expect(exit).toHaveBeenCalledTimes(2);
 
   f.dispose();
   expect(f.key("KeyQ", button).defaultPrevented).toBe(false);
-  expect(f.key("Escape").defaultPrevented).toBe(false);
+  expect(f.gameEscape()).toBeUndefined();
   f.phoneBack();
   expect(f.openNavigation).toHaveBeenCalledTimes(2);
   f.click(button);

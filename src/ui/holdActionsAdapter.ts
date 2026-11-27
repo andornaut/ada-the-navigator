@@ -11,7 +11,7 @@ import {
   resolveAdaHoldAction,
   resolveAdaPointerTarget,
 } from "./actionBinding.ts";
-import { registerAdaActionRoot } from "./actionRegistry.ts";
+import { adaActionOwner, registerAdaActionRoot } from "./actionRegistry.ts";
 import {
   inCurrentView,
   invalidatePressScope,
@@ -59,6 +59,14 @@ export function bindAdaRecoveryActionRoot(
   return bindRoot({ kind: "recovery", options }, root);
 }
 
+const actionGuards = new WeakMap<HTMLElement, PressGuard>();
+
+/** Foreground input shares the current action root's readiness and press revision. */
+export function foregroundPressGuard(element: HTMLElement): PressGuard | undefined {
+  const root = adaActionOwner(element);
+  return root === undefined ? undefined : actionGuards.get(root);
+}
+
 function bindRoot(policy: RootPolicy, root: HTMLElement) {
   const options = policy.options;
   const document = root.ownerDocument;
@@ -96,6 +104,7 @@ function bindRoot(policy: RootPolicy, root: HTMLElement) {
     const action = resolveAdaHoldAction(root, target);
     return action && inCurrentView(root, action.element) ? action : null;
   };
+  actionGuards.set(root, guard);
   const pointer = policy.kind === "game" ? policy.options.pointerRelease : undefined;
   const shared: HoldActionsOptions = {
     ...(options.allowNonPrimaryTouch === undefined
@@ -157,6 +166,7 @@ function bindRoot(policy: RootPolicy, root: HTMLElement) {
       invalidate();
       disposed = true;
       unregister();
+      actionGuards.delete(root);
       stopScope();
       stopRequired?.();
       stopClicks();

@@ -18,6 +18,7 @@ import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
+  resolveAdaForegroundAction,
 } from "./actionBinding.ts";
 import { bedroomBackground, bedroomSideOffset, bedroomTop } from "./bedroom.ts";
 import { showDialogueChoiceStatus } from "./dialogueChoice.ts";
@@ -39,6 +40,7 @@ import {
   storySpeakerName,
   TAB_COLOURS,
 } from "./dialoguePortraits.ts";
+import { registerForegroundSurface } from "./foregroundInput.ts";
 import { COLOURS } from "./layout/colours.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { BUTTON_SLICE } from "./layout/controls.ts";
@@ -1499,8 +1501,15 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       setBackground(shownKey, rendered !== null);
     }
   });
+  const leaveForeground = registerForegroundSurface({
+    active: () => layer.isConnected && !layer.hidden && !panel.hidden,
+    escape: "pass-through",
+    root,
+    skip: () => resolveAdaForegroundAction(root, skip),
+  });
   return {
     dispose(): void {
+      leaveForeground();
       disposed = true;
       forgetSleep();
       forgetChoices();

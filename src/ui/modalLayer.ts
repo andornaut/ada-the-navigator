@@ -3,6 +3,7 @@ import {
   type ModalLayer,
 } from "@andornaut/game-kit/runtime/web/ui/dom/modalLayer";
 
+import { adaForegroundInput } from "./foregroundInput.ts";
 import { enterPressView } from "./pressScope.ts";
 
 interface SharedLayer {
@@ -16,7 +17,10 @@ export function createModalLayer(root: HTMLElement): ModalLayer {
   const parent = root.parentElement ?? root;
   let shared = parents.get(parent);
   if (!shared) {
-    shared = { layer: createPublishedModalLayer(parent), users: 0 };
+    shared = {
+      layer: createPublishedModalLayer(parent, adaForegroundInput(root.ownerDocument)),
+      users: 0,
+    };
     parents.set(parent, shared);
   }
   const owned = shared;

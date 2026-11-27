@@ -24,6 +24,7 @@ import { CRASH_COPY } from "../data/crashCopy.ts";
 import { TEXT_BUTTON } from "../data/layout.ts";
 import { SCREEN } from "../data/screen.ts";
 import { createAdaFactoryHoldBinding } from "./actionBinding.ts";
+import { adaForegroundInput } from "./foregroundInput.ts";
 import { bindAdaRecoveryActionRoot } from "./holdActionsAdapter.ts";
 import { COLOURS } from "./layout/colours.ts";
 import { CARD_WIDTH_CAPS, SCROLL } from "./layout/contentCard.ts";
@@ -210,6 +211,7 @@ const pageCrash = installCrashScreen(
     buildLabel: BUILD_LABEL,
     colours: CRASH_COLOURS,
     dev: new URLSearchParams(window.location.search).get("dev") === "1",
+    foregroundInput: adaForegroundInput(window.document),
     words: CRASH_COPY,
   },
   window,

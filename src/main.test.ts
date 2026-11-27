@@ -15,6 +15,8 @@ const boot = vi.hoisted(() => ({
   construct: vi.fn(),
   constructorThrows: false,
   crash: undefined as (() => void) | undefined,
+  foregroundLeave: vi.fn(),
+  foregroundRegister: vi.fn(),
   game: vi.fn(),
   instances: [] as {
     events: EventEmitter;
@@ -36,6 +38,12 @@ const boot = vi.hoisted(() => ({
   stopVisibility: vi.fn(),
 }));
 vi.mock("virtual:ada-ui.css", () => ({}));
+vi.mock("./ui/foregroundInput.ts", () => ({
+  registerForegroundSurface: (surface: unknown) => {
+    boot.foregroundRegister(surface);
+    return boot.foregroundLeave;
+  },
+}));
 vi.mock("./ui/holdActionsAdapter.ts", () => ({
   bindAdaActionRoot: (options: AdaActionRootOptions, root: HTMLElement) => {
     boot.appRoot(options, root);
@@ -130,9 +138,6 @@ vi.mock("./loading/startup.ts", () => ({ startupFence: boot.startup }));
 vi.mock("./loading/bootReveal.ts", () => ({ prepareBootReveal: () => boot.reveal }));
 vi.mock("./lifecycle.ts", () => ({ followPageVisibility: () => boot.stopVisibility }));
 vi.mock("./view/frameTurn.ts", () => ({ FRAME_TURN: {} }));
-vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
-  trackInputModality: vi.fn(),
-}));
 vi.mock("@andornaut/game-kit/runtime/web/view/dom/watchFrameTurn", () => ({
   lockGameOrientation: vi.fn(),
 }));
@@ -407,6 +412,11 @@ it("owns one App root before game construction with the actual required registry
   const { attempt, module } = await entry();
   const { requiredLoading, requiredReady } = await import("./loading/required.ts");
   expect(boot.appRoot).toHaveBeenCalledOnce();
+  expect(boot.foregroundRegister).toHaveBeenCalledExactlyOnceWith({
+    escape: "pass-through",
+    ready: expect.any(Function),
+    root: boot.app,
+  });
   const [options, root] = boot.appRoot.mock.calls[0] as [AdaActionRootOptions, HTMLElement];
   expect(root).toBe(boot.app);
   expect(options.allowNonPrimaryTouch).toBe(true);
@@ -431,8 +441,10 @@ it("owns one App root before game construction with the actual required registry
 it("revokes App actions on both existing and subsequent crash fences", async () => {
   const module = await import("./main.ts");
   expect(boot.appDispose).not.toHaveBeenCalled();
+  expect(boot.foregroundLeave).not.toHaveBeenCalled();
   boot.crash!();
   expect(boot.appDispose).toHaveBeenCalledOnce();
+  expect(boot.foregroundLeave).toHaveBeenCalledOnce();
   expect(boot.startup.crashed).toBe(true);
   module.disposeGame();
   vi.resetModules();

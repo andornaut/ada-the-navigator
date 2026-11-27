@@ -11,6 +11,7 @@ import {
   assertAdaActionMetadata,
   bindAdaAction,
 } from "./actionBinding.ts";
+import { registerForegroundSurface } from "./foregroundInput.ts";
 import {
   type GalaxyPanelGroup,
   type GalaxyPanelLeaf,
@@ -1101,8 +1102,11 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   register(earth, selectEarth);
   earth.addEventListener("focus", selectEarth);
   leaveFocus.push(() => earth.removeEventListener("focus", selectEarth));
-  // The arrows walk the route wherever focus is; Tab stays on the map, markers in route order,
-  // then Earth, the destination action and the close X when available.
+  // The chart owns horizontal route steps and the unlock cutscene's input.
+  const ownsChartKey = (event: KeyboardEvent) =>
+    event.target instanceof Node &&
+    screen.contains(event.target) &&
+    (unlock !== null || event.key === "ArrowRight" || event.key === "ArrowLeft");
   screen.addEventListener("keydown", (event) => {
     if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
       event.preventDefault();
@@ -1110,20 +1114,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
       options.onStep(event.key === "ArrowRight" ? 1 : -1);
       drawPanel();
       drawChart();
-      return;
     }
-    if (event.key !== "Tab") {
-      return;
-    }
-    const order = [...markers.map(({ button }) => button), earth, jump];
-    if (!closeX.hidden) {
-      order.push(closeX);
-    }
-    event.preventDefault();
-    const at = order.indexOf(document.activeElement as HTMLButtonElement);
-    const step = event.shiftKey ? -1 : 1;
-    const next = at < 0 ? (event.shiftKey ? order.length - 1 : 0) : at + step;
-    focusTarget(order[(next + order.length) % order.length]!);
   });
   const releaseActions = () => {
     for (const binding of bindings) {
@@ -1171,6 +1162,16 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     screen.remove();
     throw error;
   }
+  const leaveForeground = registerForegroundSurface({
+    dismiss: () => ({
+      activate: options.onClose,
+      available: () => !screen.hidden,
+      element: screen,
+    }),
+    preserveKey: ownsChartKey,
+    root: screen,
+    tabTargets: () => [...markers.map(({ button }) => button), earth, jump, closeX],
+  });
   return {
     /** The warp ship now draws over Ada's, which hides until the map closes. */
     coverShip(): void {
@@ -1178,6 +1179,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     },
     dispose(): void {
       disposed = true;
+      leaveForeground();
       releaseActions();
       stop();
       panelLayout.dispose();

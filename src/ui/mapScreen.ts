@@ -27,6 +27,7 @@ import {
   assertAdaActionMetadata,
   bindAdaAction,
 } from "./actionBinding.ts";
+import { registerForegroundSurface } from "./foregroundInput.ts";
 import { CARD_CLOSE } from "./layout/cardFrame.ts";
 import { COLOURS, translucentInk, UNLISTED_COLOURS } from "./layout/colours.ts";
 import { BUTTON_SLICE, CARD_SLICE } from "./layout/controls.ts";
@@ -1863,12 +1864,14 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     },
     { passive: false },
   );
-  // Tab follows the Map order, with a stop before Travel here when the panel can scroll.
-  screen.addEventListener("keydown", (event) => {
-    if (event.key !== "Tab") {
-      return;
-    }
-    const order = [
+  const leaveForeground = registerForegroundSurface({
+    dismiss: () => ({
+      activate: options.onClose,
+      available: () => !screen.hidden,
+      element: screen,
+    }),
+    root: screen,
+    tabTargets: () => [
       ...tools.querySelectorAll<HTMLButtonElement>("button"),
       closeX,
       ...placesLayer.querySelectorAll<HTMLButtonElement>("button"),
@@ -1877,16 +1880,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       questsButton,
       galaxies,
       closeButton,
-    ];
-    const targets = order.filter((button) => !button.closest("[hidden]") && !button.hidden);
-    if (targets.length === 0) {
-      return;
-    }
-    event.preventDefault();
-    const at = targets.findIndex((target) => target === document.activeElement);
-    const step = event.shiftKey ? -1 : 1;
-    const next = at < 0 ? (event.shiftKey ? targets.length - 1 : 0) : at + step;
-    focusTarget(targets[(next + targets.length) % targets.length]!);
+    ],
   });
   const refit = () => {
     cancelFieldAction();
@@ -1916,6 +1910,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       }
       cancelFieldAction();
       disposed = true;
+      leaveForeground();
       pointers.clear();
       press = null;
       pinch = null;

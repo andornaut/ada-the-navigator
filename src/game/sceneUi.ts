@@ -68,6 +68,7 @@ import { createBossHud } from "../ui/bossHud.ts";
 import { createConversationBox, createInteractionCard } from "../ui/conversation.ts";
 import { pageStorage, screenShakes } from "../ui/deviceSettings.ts";
 import { createBannerLayer } from "../ui/disabledBanner.ts";
+import { registerForegroundBlock } from "../ui/foregroundInput.ts";
 import { createFpsCounter } from "../ui/fpsCounter.ts";
 import { createGalaxyMap } from "../ui/galaxyMap.ts";
 import { itemDetailName } from "../ui/itemDetailContent.ts";
@@ -1304,6 +1305,7 @@ export function buildScene(scene: UiContext): void {
     scene.controls.reset();
     flushScene(scene);
   };
+  partial.push(registerForegroundBlock(document, () => scene.emergencyReturn.active));
   const blockReturnInput = (event: Event): void => {
     if (scene.emergencyReturn.active) {
       event.preventDefault();
