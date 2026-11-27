@@ -22,3 +22,4 @@ See [Ships](../../gameplay/ships.md) for physics, rosters and
 | ada-0398 | Toughen heavies and give moving heavies front Lasers                     | [ada-0398.md](../work/ada-0398.md) |
 | ada-0399 | Turn capital ships into authored galaxy boss fights                      | [ada-0399.md](../work/ada-0399.md) |
 | ada-0416 | Diversify encounter difficulty across all six galaxies                   | [ada-0416.md](../work/ada-0416.md) |
+| ada-0424 | Tune enemy mount cadence by galaxy and stagger station fire              | [ada-0424.md](../work/ada-0424.md) |

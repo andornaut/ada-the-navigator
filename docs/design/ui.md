@@ -95,3 +95,4 @@ Reference: [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.
 | ada-0414 | Use one name badge above each boss bar                                          | [ada-0414.md](../work/ada-0414.md) |
 | ada-0418 | Offer travel to every visible Local Map marker                                  | [ada-0418.md](../work/ada-0418.md) |
 | ada-0421 | Centre Shop row icon wells and price badges                                     | [ada-0421.md](../work/ada-0421.md) |
+| ada-0425 | Match the selected Galaxy Map number outline to its fill                        | [ada-0425.md](../work/ada-0425.md) |
