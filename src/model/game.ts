@@ -3883,7 +3883,7 @@ export class GameModel {
           EARLY_ENCOUNTER_CUES[event.encounter],
           () => {
             const boss = capitalBossActor(f, event.id);
-            return this.state.flight === f && Boolean(boss) && boss.hp > 0 && !boss.enemy?.disabled;
+            return this.state.flight === f && (boss?.hp ?? 0) > 0 && !boss?.enemy?.disabled;
           },
         );
       }
