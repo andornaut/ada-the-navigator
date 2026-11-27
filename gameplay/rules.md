@@ -960,7 +960,12 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   successful local map jump. A refused jump leaves Ada and her balance where
   they were.
   Travel here is unavailable while Ada tows a craft or carries a job or activity
-  item, and refuses with the shared refusal feedback. The local
+  item, and refuses with the shared refusal feedback.
+  Selecting a known place with current linked quests shows "Quest" to the right
+  of "Travel here", or by itself when "Travel here" is absent. Quest stays
+  available when travel is blocked. One linked quest opens its details directly.
+  Several open a chooser filtered to that place. Returning to the map with
+  Back or X restores the selected place, map viewport and focus on Quest. The local
   map also has "Galaxies", a labelled secondary button on its top row beside
   the header, on every galaxy's local map, which opens the galaxy map with no
   confirm, as for Travel here. Unlike Travel here it stays available while
