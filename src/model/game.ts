@@ -46,7 +46,7 @@ import { canAffordMapJump, MAP_JUMP_COST, travelState } from "../data/mapJump.ts
 import { isNeedleCourseStart, NEEDLE } from "../data/needle.ts";
 import { NEEDLE_COURSE_COPY, NEEDLE_LEARNING } from "../data/needleCopy.ts";
 import { visualNoticeTiming } from "../data/noticeTiming.ts";
-import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
+import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import {
   poiAmbientLine,
   type PoiApproachKind,
@@ -720,9 +720,13 @@ export class GameModel {
    * a scan receipt's (BOX_PRIORITIES); lower lines wait under it and resume after. A warning or
    * receipt interrupts a notice, which resumes at the same point in its hold or fade.
    */
-  private notify(text: string, timing: "brief" | "reading" = "brief"): void {
+  private notify(
+    text: string,
+    timing: "brief" | "reading" = "brief",
+    rank: NoticeRank = "notice",
+  ): void {
     this.state.notice = text;
-    this.noticeRank = "notice";
+    this.noticeRank = rank;
     this.noticeClock = { elapsedMs: 0, ...visualNoticeTiming(timing, text) };
   }
   /**
@@ -731,8 +735,7 @@ export class GameModel {
    * resumes after it if still relevant (BOX_PRIORITIES).
    */
   private refuse(text: string, timing: "brief" | "reading" = "brief"): void {
-    this.notify(text, timing);
-    this.noticeRank = "refusal";
+    this.notify(text, timing, "refusal");
   }
   /** A tap on a game notice dismisses it at once; lines waiting under it resume. */
   dismissNotice(): void {
@@ -1900,6 +1903,15 @@ export class GameModel {
     const index = p.questComplete ? last - (p.holodisk ? 0 : 1) : (stages[galaxy]?.[p.stage] ?? 0);
     return chapter.objectives[index] ?? "";
   }
+  private protectedUsePlace(flight: FlightState, id: string): boolean {
+    return (
+      routeBlocked(id, flight) ||
+      (flight.galaxy === 6 &&
+        PHANTOM_DESTINATIONS.some((site) => site === id) &&
+        !this.current.phantom?.broken.includes(id))
+    );
+  }
+
   /**
    * The nearest known destination or discovered station within Talk range, its route open
    * (gameplay/rules.md "Talk range").
@@ -1918,7 +1930,7 @@ export class GameModel {
           object.id !== ANDROMEDA_REDACT.relayId &&
           (f.galaxy !== 4 || !isNeedleCourseStart(object.id)) &&
           progress.known.includes(object.id) &&
-          !routeBlocked(object.id, f)) ||
+          !this.protectedUsePlace(f, object.id)) ||
         (object.kind === "station" && progress.stations.includes(object.id))
       )) {
         continue;
@@ -2408,13 +2420,14 @@ export class GameModel {
 
   private availableContextOffer(id: string | undefined): ContextOffer {
     if (
-      this.suspendedInteraction?.galaxy === this.state.flight?.galaxy &&
+      this.suspendedInteraction &&
+      this.suspendedInteraction.galaxy === this.state.flight?.galaxy &&
       !this.state.dialogue &&
       !this.state.docked
     ) {
       return { action: "use" };
     }
-    const job = this.jobUse();
+    const job = this.jobUse(id);
     if (job) {
       return { action: job, id };
     }
@@ -2425,46 +2438,44 @@ export class GameModel {
     if (scan) {
       return { action: "scan", id: scan.id };
     }
-    if (id === undefined) {
-      return {};
-    }
+    return id === undefined ? {} : { action: this.availablePlaceAction(id), id };
+  }
+
+  private availablePlaceAction(id: string): UseAction | undefined {
     const context = this.chapterContext();
-    const action = context && chapterRuntime(context.flight.galaxy)?.action?.(context, id);
-    if (action) {
-      return { action, id };
+    if (!context) {
+      return undefined;
     }
-    if (context?.flight.galaxy === 5 && id === ANDROMEDA_PLACES.pip) {
-      return { action: placeActivity(5, context.progress, id) ? "talk" : undefined, id };
+    const { flight, progress } = context;
+    const action = chapterRuntime(flight.galaxy)?.action?.(context, id);
+    if (action) {
+      return action;
     }
     // At a station an action due there comes before Dock (gameplay/rules.md).
     if (id === HUB_STATION) {
-      if ((this.state.flight?.cargo ?? 0) > 0) {
-        return { action: "deposit", id };
+      if (flight.cargo > 0) {
+        return "deposit";
       }
-      return { action: this.hubSceneDue ? undefined : "dock", id };
+      return this.hubSceneDue ? undefined : "dock";
     }
-    if (this.current.stations.includes(id)) {
-      return { action: this.supplyDue(id) ? "deliver" : "dock", id };
+    if (progress.stations.includes(id)) {
+      return this.supplyDue(id) ? "deliver" : "dock";
     }
-    if (this.state.flight?.galaxy === 1 && id === questItemDestination(this.current)) {
-      return { action: "deliver", id };
+    if (flight.galaxy === 1 && id === questItemDestination(progress)) {
+      return "deliver";
     }
-    return { action: context?.flight.galaxy === 5 ? undefined : "talk", id };
+    const authored = this.chapter.dialogue[dialogueKeys[id] ?? id];
+    return authored || placeActivity(flight.galaxy, progress, id) ? "talk" : undefined;
   }
 
-  /** A known Andromeda place without a current material action still responds to Use. */
-  private andromedaUseHintTarget(place: string | undefined): string | undefined {
+  /** Known, in-range places without an available interaction can answer an explicit press. */
+  private useHintTarget(place: string | undefined): string | undefined {
     const flight = this.state.flight;
-    if (
-      flight?.galaxy !== 5 ||
-      this.screen !== "space" ||
-      this.state.docked ||
-      this.state.dialogue
-    ) {
+    if (!flight || this.screen !== "space" || this.state.docked || this.state.dialogue) {
       return undefined;
     }
     if (place !== undefined) {
-      return place;
+      return place === HUB_STATION && this.hubSceneDue ? undefined : place;
     }
     if (!this.current.charted.length && !this.current.explorationSites) {
       return undefined;
@@ -2474,7 +2485,12 @@ export class GameModel {
     let reach = this.content.tuning.talkRange;
     for (const site of this.scannableSites(flight)) {
       const gap = worldDistance(world, flight.player, site);
-      if (gap <= reach && (nearest === undefined || gap < reach) && this.scannedSite(site.id)) {
+      if (
+        gap <= reach &&
+        (nearest === undefined || gap < reach) &&
+        this.scannedSite(site.id) &&
+        !this.protectedUsePlace(flight, site.id)
+      ) {
         nearest = site.id;
         reach = gap;
       }
@@ -2489,7 +2505,7 @@ export class GameModel {
     if (!flight || offer.action !== undefined) {
       return offer;
     }
-    const id = this.andromedaUseHintTarget(place);
+    const id = this.useHintTarget(place);
     return id !== undefined && !this.inRangeQuestDetails(flight, id)
       ? { action: "use", id }
       : offer;
@@ -2499,7 +2515,8 @@ export class GameModel {
     return this.contextOffer().action;
   }
 
-  private showAndromedaUseHint(id: string): void {
+  /** An explicit press gets the existing immediate feedback slot without a refusal pulse. */
+  private showUseHint(id: string): void {
     const flight = this.state.flight;
     if (!flight) {
       return;
@@ -2511,9 +2528,15 @@ export class GameModel {
           fill(LANDMARK_SCAN_COPY.outcomeRemembered, {
             target: landmarkLabel((key) => this.label(key), site),
           }),
+          "brief",
+          "refusal",
         );
         return;
       }
+    }
+    if (flight.galaxy !== 5) {
+      this.notify(MAPPED_PLACE_RETURN_LINE.text, "brief", "refusal");
+      return;
     }
     const progress = this.state.progress[5];
     const objective = this.objectiveId(5);
@@ -2527,7 +2550,7 @@ export class GameModel {
         : known && objective !== id && !progress.questComplete
           ? this.objectiveFor(5)
           : MAPPED_PLACE_RETURN_LINE.text;
-    this.notify(text ?? MAPPED_PLACE_RETURN_LINE.text);
+    this.notify(text ?? MAPPED_PLACE_RETURN_LINE.text, "brief", "refusal");
   }
   /**
    * The destination or station Use acts on and its action, for the Use callout above it;
@@ -2552,13 +2575,13 @@ export class GameModel {
       return null;
     }
     const place = this.nearest();
-    if (
-      this.availableContextOffer(place).action !== undefined ||
-      (flight.galaxy !== 5 && place !== undefined)
-    ) {
+    if (this.availableContextOffer(place).action !== undefined) {
       return null;
     }
-    return this.inRangeQuestDetails(flight, this.andromedaUseHintTarget(place));
+    const hint = this.useHintTarget(place);
+    return place !== undefined && hint === undefined
+      ? null
+      : this.inRangeQuestDetails(flight, hint);
   }
 
   private inRangeQuestDetails(
@@ -2589,7 +2612,7 @@ export class GameModel {
         (gap === reach && closest !== null) ||
         !context.knownIds.includes(id) ||
         (flight.galaxy === 4 && isNeedleCourseStart(id)) ||
-        routeBlocked(id, flight)
+        this.protectedUsePlace(flight, id)
       ) {
         return;
       }
@@ -5016,7 +5039,8 @@ export class GameModel {
       this.reopenInteraction();
       return;
     }
-    if (this.useJob()) {
+    const id = this.nearest();
+    if (this.useJob(id)) {
       return;
     }
     const chapterContext = this.chapterContext();
@@ -5050,7 +5074,6 @@ export class GameModel {
       }
       return;
     }
-    const id = this.nearest();
     const scan = this.nearestScan(id);
     if (scan) {
       const sites = this.current.explorationSites;
@@ -5061,9 +5084,7 @@ export class GameModel {
           const stations = this.discoveredJobStations(this.state.flight);
           const lead = this.explorationOffer(this.state.flight, "scan", scan, site.kind, stations);
           if (!lead) {
-            if (site.kind === "hunt" && stations.length) {
-              this.notify(this.label("huntScanRetry"));
-            }
+            this.notify(this.label("huntScanRetry"), "brief", "refusal");
             return;
           }
           postExplorationLead(this.state.flight.galaxy, this.state, lead);
@@ -5091,10 +5112,10 @@ export class GameModel {
       return;
     }
     const f = this.state.flight;
-    if (!id) {
-      const hint = this.andromedaUseHintTarget(undefined);
+    if (!id || this.availablePlaceAction(id) === undefined) {
+      const hint = this.useHintTarget(id);
       if (hint !== undefined && !this.inRangeQuestDetails(f, hint)) {
-        this.showAndromedaUseHint(hint);
+        this.showUseHint(hint);
       }
       return;
     }
@@ -5136,12 +5157,6 @@ export class GameModel {
         this.panel("deliver", this.state.notice, "Astra");
       } else {
         this.dock(id, f);
-      }
-      return;
-    }
-    if (f.galaxy === 5) {
-      if (!this.inRangeQuestDetails(f, id)) {
-        this.showAndromedaUseHint(id);
       }
       return;
     }
@@ -5714,7 +5729,7 @@ export class GameModel {
     );
   }
   /** What the Use button does for the held job here, if anything: Tow or Deliver. */
-  private jobUse(): "tow" | "deliver" | null {
+  private jobUse(place: string | undefined): "tow" | "deliver" | null {
     const f = this.state.flight;
     const held = this.held;
     if (!f || this.state.mode !== "space" || this.state.dialogue || this.state.docked) {
@@ -5731,14 +5746,14 @@ export class GameModel {
       return "tow";
     }
     // A delivery bound for a station or an outpost hands over with Use, before Dock.
-    if (held.type === "delivery" && held.carrying && this.nearest() === held.target.id) {
+    if (held.type === "delivery" && held.carrying && place === held.target.id) {
       return "deliver";
     }
     return null;
   }
   /** Use for the held job: attaches the tow line or delivers to a station or an outpost. */
-  private useJob(): boolean {
-    const use = this.jobUse();
+  private useJob(place: string | undefined): boolean {
+    const use = this.jobUse(place);
     const f = this.state.flight;
     const held = this.held;
     if (!use || !f || !held) {

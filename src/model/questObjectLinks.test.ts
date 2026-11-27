@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { createFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { flightLandmarkSites } from "./landmarks.ts";
+import { flightLandmarkSites, landmarkLabel } from "./landmarks.ts";
 import type { QuestEntry } from "./questDetails.ts";
 import { questsForObject, taskMarkerCategory } from "./questObjectLinks.ts";
 import { flightStationContext, HUB_STATION, worldStationsNear } from "./stations.ts";
@@ -99,6 +100,41 @@ describe("contextual Use quest fallback", () => {
     expect(model.state).toEqual(before);
     model.state.flight!.player.x += CONTENT.tuning.talkRange + 1;
     expect(model.contextQuestDetails).toBeNull();
+  });
+
+  it("answers the same charted landmark only when Use is pressed and preserves the real Scan", () => {
+    const { model, site } = landmarkContext();
+    delete model.state.tasks[1];
+    const expected = LANDMARK_SCAN_COPY.outcomeRemembered.replace(
+      "{target}",
+      landmarkLabel((key) => CONTENT.labels[key] ?? "", site),
+    );
+    expect(model.useTarget).toEqual({ action: "scan", id: site.id });
+    expect(model.state.notice).toBe("");
+    model.interact();
+    expect(model.drainScanOutcomes()).toMatchObject([{ target: { id: site.id } }]);
+    expect(model.state.progress[1].charted).toEqual([site.id]);
+    expect(model.state.notice).not.toBe(expected);
+    expect(model.useTarget).toEqual({ action: "use", id: site.id });
+
+    const progress = structuredClone(model.state.progress[1]);
+    const economy = structuredClone(model.state.economy);
+    const refusals = model.useRefusals;
+    for (let press = 0; press < 2; press++) {
+      model.dismissNotice();
+      model.interact();
+      expect(model.state.notice).toBe(expected);
+      expect(model.state.dialogue).toBeNull();
+      expect(model.state.progress[1]).toEqual(progress);
+      expect(model.state.economy).toEqual(economy);
+      expect(model.useRefusals).toBe(refusals);
+      expect(model.drainScanOutcomes()).toEqual([]);
+    }
+    model.state.flight!.player.x += CONTENT.tuning.talkRange + 1;
+    model.dismissNotice();
+    expect(model.useTarget).toBeUndefined();
+    model.interact();
+    expect(model.state.notice).toBe("");
   });
 
   it("offers repeatable Dock on every visit even when the station is linked to a held quest", () => {

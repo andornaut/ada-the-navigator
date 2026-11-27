@@ -772,13 +772,19 @@ function panel(key: string, copyKey = key): DialogueState {
     title: "The Garden Party",
   };
 }
+function settlementTalkCopy(context: ChapterContext, id: string): string | null {
+  const progress = context.progress.phantom;
+  return progress?.broken.includes(id) ? phantomSettlementCopy(progress.freed, id) : null;
+}
+
+/** The settlement offers Talk only when its existing blockade outcome admits an exchange. */
+export function phantomAction(context: ChapterContext, id: string): "talk" | undefined {
+  return settlementTalkCopy(context, id) === null ? undefined : "talk";
+}
+
 export function usePhantom(context: PhantomContext, id: string): ChapterResult | undefined {
-  const progress = progressOf(context);
-  if (PHANTOM_DESTINATIONS.some((settlement) => settlement === id)) {
-    if (!progress.broken.includes(id)) {
-      return {};
-    }
-    const copy = phantomSettlementCopy(progress.freed, id);
+  if (blockadeSite(id)) {
+    const copy = settlementTalkCopy(context, id);
     return copy ? { dialogue: panel(id, copy) } : {};
   }
   const target = salvageTarget(context.content, context.flight);

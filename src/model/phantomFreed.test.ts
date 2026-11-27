@@ -133,6 +133,35 @@ const orders = [
 ].map((order) => order.map((index) => PHANTOM_DESTINATIONS[index]!));
 
 describe("Phantom settlement liberation order through actual interactions", () => {
+  it("keeps a known settlement's protected route out of Use until the blockade is cleared", () => {
+    const model = launch();
+    const flight = model.state.flight!;
+    const id = PHANTOM_DESTINATIONS[0];
+    travel(model, ensureDestination(CONTENT, id, flight));
+    // Seeing the settlement on the map is not the same as clearing its approach.
+    const progress = model.state.progress[6];
+    if (!progress.known.includes(id)) {
+      progress.known.push(id);
+    }
+    model.dismissNotice();
+    const locked = structuredClone(progress);
+    expect(model.useTarget?.id).not.toBe(id);
+    expect(model.contextQuestDetails?.targetId).not.toBe(id);
+    model.interact();
+    expect(model.state.dialogue).toBeNull();
+    expect(model.state.notice).toBe("");
+    expect(progress).toEqual(locked);
+
+    for (const guard of [...flight.phantom!.blockades[id]!]) {
+      defeat(model, guard);
+    }
+    travel(model, ensureDestination(CONTENT, id, flight));
+    expect(model.useTarget).toEqual({ action: "talk", id });
+    model.interact();
+    assertExchange(model, id, 0);
+    expect(progress.phantom!.freed).toEqual([]);
+  });
+
   it.each(orders.map((order) => [order]))("keeps ordinal copy and commits once for %j", (order) => {
     let model = launch();
     for (const [ordinal, id] of order.entries()) {

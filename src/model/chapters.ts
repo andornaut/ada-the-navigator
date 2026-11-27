@@ -19,6 +19,7 @@ import {
   beforeStepPhantom,
   choosePhantom,
   initPhantom,
+  phantomAction,
   phantomObjective,
   phantomObjectiveIndex,
   usePhantom,
@@ -46,6 +47,7 @@ const RUNTIMES: Readonly<Partial<Record<GalaxyNumber, ChapterRuntime>>> = {
     objectiveIndex: ({ progress }) => andromedaObjectiveIndex(progress),
   },
   6: {
+    action: phantomAction,
     afterStep: afterStepPhantom,
     beforeStep: beforeStepPhantom,
     choose: choosePhantom,
