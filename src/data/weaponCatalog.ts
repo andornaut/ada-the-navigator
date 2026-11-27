@@ -99,12 +99,13 @@ const multiLaserBase = {
   intervalSeconds: 0.4,
   projectileKind: "bolt",
   rangeWorld: BOLT_REACH,
+  speedRatio: flies(400),
 } as const;
 const phaserBase = {
   ...projectile,
   anglesDegrees: [0],
   beamRange: PHASER_RANGE,
-  intervalSeconds: 1,
+  intervalSeconds: 2,
   projectileKind: "beam",
 } as const;
 const rapidMissileBase = {
@@ -164,25 +165,22 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
     },
   ],
   // A volley every 0.40 s, with 3, 4 or 5 bolts across the same -8 to 8 fan. Bolts fly
-  // 400, 500 and 600 world units per second, reaching 370 at each level.
+  // at 400 world units per second, reaching 370 at each level.
   multiLaser: [
     {
       ...multiLaserBase,
       anglesDegrees: fan(3, MULTI_LASER_SPREAD),
-      speedRatio: flies(400),
     },
     {
       ...multiLaserBase,
       anglesDegrees: fan(4, MULTI_LASER_SPREAD),
-      speedRatio: flies(500),
     },
     {
       ...multiLaserBase,
       anglesDegrees: fan(5, MULTI_LASER_SPREAD),
-      speedRatio: flies(600),
     },
   ],
-  // Fires once a second with the same range at every level.
+  // Fires every two seconds with the same range at every level.
   phaser: [
     {
       ...phaserBase,

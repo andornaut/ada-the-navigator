@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { type ShopRow, shopRows } from "../model/shop.ts";
+import { type ShopRow, shopRow, shopRows } from "../model/shop.ts";
 import { newEconomy } from "../model/upgrades.ts";
 import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
 import { itemGlyph, shopItemDetail, stationRow } from "./shopView.ts";
@@ -120,6 +120,25 @@ describe("shop rows on the station view", () => {
       level: null,
     } as const;
     expect(shopItemDetail(ECONOMY, labels, ammo)).toMatchObject({ description: "×75" });
+  });
+
+  it("describes the extra bolt for both Multi-Laser upgrades and keeps base weapon copy", () => {
+    const labels = CONTENT.labels;
+    const economy = newEconomy(ECONOMY);
+    const weapon = { kind: "weapon", weapon: "multiLaser" } as const;
+    const upgrade = { kind: "weaponUpgrade", weapon: "multiLaser" } as const;
+    expect(shopItemDetail(ECONOMY, labels, shopRow(ECONOMY, economy, weapon))).toMatchObject({
+      description: ["Fires a fan of 3 laser bolts.", "Each level adds a bolt."],
+    });
+    economy.ownedWeapons.push("multiLaser");
+    for (const level of [1, 2]) {
+      economy.levels.weapons.multiLaser = level;
+      expect(shopItemDetail(ECONOMY, labels, shopRow(ECONOMY, economy, upgrade))).toEqual({
+        description: ["One more bolt."],
+        level: level + 1,
+        name: "Multi-Laser",
+      });
+    }
   });
 
   it("puts paint rows in their own group with levels and prices for the rest", () => {

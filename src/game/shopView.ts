@@ -60,7 +60,10 @@ export function shopItemDetail(
     return {
       name: weaponName(labels, item.weapon),
       ...(offered === undefined ? {} : { level: offered }),
-      description: weaponDetailLines(item.weapon, offered ?? level?.current ?? 1),
+      description:
+        item.kind === "weaponUpgrade" && item.weapon === "multiLaser" && offered !== undefined
+          ? ["One more bolt."]
+          : weaponDetailLines(item.weapon, offered ?? level?.current ?? 1),
     };
   }
   return {

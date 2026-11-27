@@ -40,6 +40,29 @@ function armed(weapon: Weapon, aim: Vec) {
 }
 
 describe("player viewport coverage wiring", () => {
+  it.each([1, 2, 3] as const)("fires level %i Phaser hitscan only every two seconds", (level) => {
+    const aim = fromScreen({ x: 1, y: 0 });
+    const flight = armed("phaser", aim);
+    flight.levels.weapons.phaser = level;
+    const input = { ...idle, aim, fire: true };
+    const initialAmmo = flight.ammo.phaser;
+
+    stepFlight(CONTENT, 0.01, input, flight);
+    expect(activeBeamFlashes(flight)).toHaveLength(1);
+    expect(flight.shots).toHaveLength(0);
+    expect(flight.ammo.phaser).toBe(initialAmmo - 1);
+    expect(flight.fireCooldown).toBeCloseTo(2, 9);
+
+    stepFlight(CONTENT, 1.99, input, flight);
+    expect(activeBeamFlashes(flight)).toHaveLength(0);
+    expect(flight.ammo.phaser).toBe(initialAmmo - 1);
+
+    stepFlight(CONTENT, 0.02, input, flight);
+    expect(activeBeamFlashes(flight)).toHaveLength(1);
+    expect(flight.shots).toHaveLength(0);
+    expect(flight.ammo.phaser).toBe(initialAmmo - 2);
+  });
+
   it.each([1, 2, 3] as const)(
     "samples each level %i Multi-Laser ray independently at its actual muzzle",
     (level) => {

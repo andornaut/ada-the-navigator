@@ -21,7 +21,7 @@ const output = (definition: WeaponDefinition) =>
 describe("weapon levels", () => {
   it.each([
     ["laser", [500, 600, 700], 300],
-    ["multiLaser", [400, 500, 600], 240],
+    ["multiLaser", [400, 400, 400], 240],
     ["rapidMissile", [500, 600, 700], 300],
     ["heavyMissile", [400, 400, 400], 240],
     ["scattershot", [600, 600, 600], 360],
@@ -137,9 +137,9 @@ describe("weapon levels", () => {
     expect([1, 2, 3].map((level) => weaponAt("heavyMissile", level).blastRadius)).toEqual([
       60, 60, 60,
     ]);
-    // The Phaser deals 4, 6 and 8 Laser damage once a second.
+    // The Phaser deals 4, 6 and 8 Laser damage every two seconds.
     const phaser = weaponAt("phaser", 1);
-    expect(phaser).toMatchObject({ beamRange: 370, intervalSeconds: 1, projectileKind: "beam" });
+    expect(phaser).toMatchObject({ beamRange: 370, intervalSeconds: 2, projectileKind: "beam" });
     expect(phaser.damageRatio).toBe(laser.damageRatio * 4);
     expect(WEAPON_CATALOG.phaser.map((level) => level.damageRatio)).toEqual([4, 6, 8]);
     // Scattershot volleys deal 8.8, 14 and 21.6 across 11, 14 and 18 pellets.
@@ -164,12 +164,12 @@ describe("weapon levels", () => {
     expect(changed("laser").sort()).toEqual(["damageRatio", "intervalSeconds", "speedRatio"]);
     expect(changed("rapidMissile").sort()).toEqual(["intervalSeconds", "speedRatio"]);
     expect(changed("heavyMissile").sort()).toEqual(["damageRatio"]);
-    expect(changed("multiLaser").sort()).toEqual(["anglesDegrees", "speedRatio"]);
+    expect(changed("multiLaser").sort()).toEqual(["anglesDegrees"]);
     expect(changed("scattershot").sort()).toEqual(["anglesDegrees", "damageRatio", "pelletDelays"]);
     expect(changed("phaser").sort()).toEqual(["damageRatio"]);
   });
 
-  it("flies Laser bolts at 500, 600 and 700 and Multi-Laser's slower, at 400, 500 and 600", () => {
+  it("flies Laser bolts at 500, 600 and 700 and Multi-Laser bolts at 400 at every level", () => {
     const speeds = (weapon: Weapon) =>
       WEAPON_CATALOG[weapon].map(
         (level) => CONTENT.tuning.flight.projectileSpeed * level.speedRatio,
@@ -178,9 +178,7 @@ describe("weapon levels", () => {
     speeds("laser").forEach((speed, index) =>
       expect(speed).toBeCloseTo([500, 600, 700][index]!, 9),
     );
-    speeds("multiLaser").forEach((speed, index) =>
-      expect(speed).toBeCloseTo([400, 500, 600][index]!, 9),
-    );
+    speeds("multiLaser").forEach((speed) => expect(speed).toBeCloseTo(400, 9));
     // Each bolt reaches 370 at every level; its lifetime follows from its speed.
     for (const weapon of ["laser", "multiLaser"] as const) {
       expect(
@@ -227,7 +225,7 @@ describe("weapon levels", () => {
       perSecond("scattershot"),
       perSecond("phaser"),
     ];
-    [3.33, 1.75, 5, 2.5, 8.8, 4].forEach((value, index) =>
+    [3.33, 1.75, 5, 2.5, 8.8, 2].forEach((value, index) =>
       expect(ladder[index]).toBeCloseTo(value, 1),
     );
     // Multi-Laser's full fan of 3 bolts deals 5.25 a second, more than Laser.
@@ -245,7 +243,7 @@ describe("weapon levels", () => {
       perSecond("scattershot"),
       perSecond("phaser"),
     ];
-    [1.75, 5, 2.5, 8.8, 4].forEach((expected, index) =>
+    [1.75, 5, 2.5, 8.8, 2].forEach((expected, index) =>
       expect(ladder[index]).toBeCloseTo(expected, 9),
     );
     expect(perSecond("laser")).toBeGreaterThan(perSecond("multiLaser", 1));

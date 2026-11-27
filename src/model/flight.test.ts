@@ -132,6 +132,7 @@ describe("flight boundaries", () => {
         const velocity = flight.shots[index]!.velocity;
         const expected = fanHeading(flight.facing, angle);
         expect(degrees(velocity, expected)).toBeLessThan(1e-9);
+        expect(Math.hypot(velocity.x, velocity.y)).toBeCloseTo(400, 9);
       }
       expect(flight.ammo.multiLaser).toBe(0);
       expect(flight.weapon).toBe("laser");
