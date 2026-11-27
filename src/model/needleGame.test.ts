@@ -7,6 +7,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { PHASER_AIM_SECONDS } from "../data/enemyCatalog.ts";
 import { BUILT, GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import { NEEDLE } from "../data/needle.ts";
+import { NEEDLE_LEARNING } from "../data/needleCopy.ts";
 import { SCREEN } from "../data/screen.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import type { GalaxyNumber } from "../data/types.ts";
@@ -613,9 +614,19 @@ describe("mounted Needle interactions", () => {
       expect(model.trackedQuestId).toBe("activity:4:threadNeedle");
       expect(marker()).toMatchObject({ ...race.gates[0]!.point, trackedLabel: "Ring 1" });
       if (run !== "clean") {
+        expect(model.conversation?.speaker).toBe("elderLoom");
+        model.dismissConversation();
         cross(race.gates[run === "speed" ? 0 : 1]!, run === "speed" ? 150 : 20);
         expect(model.state.tasks[4]).toMatchObject({ cleanRun: false, lit: 0 });
         expect(marker()).toMatchObject({ trackedLabel: "Ring 1" });
+        if (run === "speed") {
+          expect(model.conversation).toMatchObject({
+            speaker: "elderLoom",
+            text: NEEDLE_LEARNING.tooFast,
+          });
+        } else {
+          expect(model.conversation?.text).not.toBe(NEEDLE_LEARNING.tooFast);
+        }
       }
       const admitted = new Set<string>();
       for (const [index, gate] of race.gates.entries()) {

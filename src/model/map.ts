@@ -251,7 +251,7 @@ export interface MapContext extends StationPlacementContext {
   /** The galaxy's explored record across flights: chunk ids (GalaxyProgress.explored). */
   readonly explored: readonly string[];
   readonly flight: Pick<FlightState, "facing" | "objects" | "player" | "galaxy">;
-  /** The known holodisk waypoint until its holodisk is recovered, or null. */
+  /** The revealed Whirlpool story waypoint until the holodisk is recovered, or null. */
   readonly holodisk: Vec | null;
   /** An authored chapter waypoint, with the same non-Travel marker as a holodisk. */
   readonly chapterWaypoint?: Vec & {
@@ -343,7 +343,7 @@ export function localMap(context: MapContext): LocalMap {
             job: false,
             kind: "station",
             label: context.label(id, "station"),
-            objective: false,
+            objective: id === objectivePlace,
             symbol: "station",
             x: site.x,
             y: site.y,
@@ -376,7 +376,7 @@ export function localMap(context: MapContext): LocalMap {
           job: false,
           kind: "holodisk",
           label: context.label("holodisk", "holodisk"),
-          objective: false,
+          objective: true,
           symbol: "holodisk",
           x: context.holodisk.x,
           y: context.holodisk.y,

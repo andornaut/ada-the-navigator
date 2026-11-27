@@ -619,11 +619,28 @@ describe("story and persistence", () => {
       const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
       model.startGalaxy(1);
       introduce(model, "growers");
+      arrive(model, "workshop");
+      expect(model.useTarget).toEqual({ action: "deliver", id: "workshop" });
+      expect(model.map?.quests.find(({ kind }) => kind === "story")).toMatchObject({
+        target: "workshop",
+      });
       talk(model, "workshop");
       expect(model.state.progress[1].questItem).toBe("toolkit");
+      expect(model.useTarget).toEqual({ action: "talk", id: "workshop" });
+      expect(model.map?.quests.find(({ kind }) => kind === "story")).toMatchObject({
+        target: null,
+      });
+      arrive(model, "salvagers");
+      expect(model.map?.quests.find(({ kind }) => kind === "story")).toMatchObject({
+        target: "salvagers",
+      });
+      expect(model.useTarget).toEqual({ action: "deliver", id: "salvagers" });
       talk(model, "salvagers");
       expect(model.state.progress[1].questItem).toBe("parts");
       expect(model.state.progress[1].questComplete).toBe(false);
+      expect(model.useTarget).toEqual({ action: "talk", id: "salvagers" });
+      arrive(model, "workshop");
+      expect(model.useTarget).toEqual({ action: "deliver", id: "workshop" });
       talk(model, "workshop");
       expect(model.state.progress[1].questComplete).toBe(true);
       recoverHolodisk(model);

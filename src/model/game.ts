@@ -44,7 +44,7 @@ import { JOB_TUNING, type JobType } from "../data/jobs.ts";
 import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
 import { canAffordMapJump, MAP_JUMP_COST, travelState } from "../data/mapJump.ts";
 import { isNeedleCourseStart, NEEDLE } from "../data/needle.ts";
-import { NEEDLE_COURSE_COPY } from "../data/needleCopy.ts";
+import { NEEDLE_COURSE_COPY, NEEDLE_LEARNING } from "../data/needleCopy.ts";
 import { visualNoticeTiming } from "../data/noticeTiming.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import {
@@ -2437,7 +2437,7 @@ export class GameModel {
     if (this.current.stations.includes(id)) {
       return this.supplyDue(id) ? "deliver" : "dock";
     }
-    if ((id === "workshop" || id === "salvagers") && this.current.questItem) {
+    if (this.state.flight?.galaxy === 1 && id === questItemDestination(this.current)) {
       return "deliver";
     }
     return "talk";
@@ -4172,6 +4172,9 @@ export class GameModel {
           thread.lit!,
         );
         thread.lit = attempt.lit;
+        if (attempt.missed) {
+          this.talk.chapterCue({ speaker: "elderLoom", text: NEEDLE_LEARNING.tooFast });
+        }
         if (thread.cleanRun && (attempt.missed || attempt.outOfOrder)) {
           thread.cleanRun = false;
         }
@@ -4483,6 +4486,7 @@ export class GameModel {
     }
     const landmarks = landmarkSites(f.galaxy);
     const labels = new Map(this.destinations().map(({ id, label }) => [id, label]));
+    const objective = this.objectiveId(f.galaxy);
     const context = this.chapterContext();
     const waypoint = context && f.galaxy === 6 ? phantomWaypoint(context) : null;
     const boss = f.galaxy === 1 ? this.current.capitalBoss : undefined;
@@ -4566,8 +4570,15 @@ export class GameModel {
       holodisk: this.whirlpoolDiskWaypoint(f),
       job: this.jobMapTarget(f),
       knownHostileStationPlaces: hostileStationMapPlaces(f, this.current),
-      label: (id, kind) =>
-        kind === "holodisk" ? this.label("mapHolodiskWaypoint") : (labels.get(id) ?? id),
+      label: (id, kind) => {
+        if (kind === "holodisk") {
+          return this.label("mapHolodiskWaypoint");
+        }
+        if (kind === "station" && id === objective) {
+          return this.keeperStationName(f.galaxy, id);
+        }
+        return labels.get(id) ?? id;
+      },
       landmarks: {
         charted: landmarks
           .filter(({ id }) => this.current.charted.includes(id))
@@ -4581,7 +4592,7 @@ export class GameModel {
         surveyTotal: landmarks.filter(withinChartingRadius).length,
         total: landmarks.length,
       },
-      objective: this.objectiveId(f.galaxy),
+      objective,
       progress: this.current,
       quests: {
         ...questDetails(

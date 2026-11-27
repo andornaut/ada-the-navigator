@@ -111,6 +111,14 @@ function revealSounder() {
   expect(waypoint(model)).toMatchObject({ ...diskSite, travel: true });
   expect(progressOf(model).sounder).toEqual({ phase: "active" });
   model.choose("continue");
+  expect(waypoint(model)).toMatchObject({
+    label: CONTENT.labels.mapHolodiskWaypoint,
+    objective: true,
+  });
+  expect(model.map?.quests.find(({ kind }) => kind === "story")).toMatchObject({
+    target: "holodisk",
+    text: model.objective,
+  });
 
   flyTo(model, waypoint(model)!);
   model.step(0.01, idle);

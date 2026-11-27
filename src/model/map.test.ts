@@ -498,7 +498,7 @@ describe("galaxy map", () => {
       job: false,
       kind: "holodisk",
       label: "Lost holodisk",
-      objective: false,
+      objective: true,
       symbol: "holodisk",
       taskCategory: "story",
       travel: true,

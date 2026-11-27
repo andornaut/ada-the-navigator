@@ -38,6 +38,7 @@ import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationDisplayName } from "./stationIdentity.ts";
 import { flightStationContext, worldStationById } from "./stations.ts";
 import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 
@@ -96,7 +97,17 @@ function acceptCourierLeg(
   continuePanel(model, "andromeda:confession");
   const station = model.state.progress[5].andromeda!.station!;
   visit(model, station);
-  expect(model.contextAction).toBe("talk");
+  expect(model.useTarget).toEqual({ action: "talk", id: station });
+  expect(model.map?.places.find(({ id }) => id === station)).toMatchObject({
+    kind: "station",
+    label: stationDisplayName("Andromeda", station),
+    objective: true,
+    travel: true,
+  });
+  expect(model.map?.quests.find(({ kind }) => kind === "story")).toMatchObject({
+    target: station,
+    text: CONTENT.chapters[5]!.objectives[3],
+  });
   model.interact();
   beforeOwnsUp?.(model.state.flight!, station);
   continuePanel(model, "andromeda:ownsUp");
