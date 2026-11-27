@@ -738,6 +738,7 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
     return share;
   };
   const placements: SpawnPlacement[] = [];
+  const rockSlots = new Map<string, number[]>();
   const stream = (seed: number, kind: string, chunk: Chunk, part: string) =>
     randomStream(seed, `spawn:${kind}:${chunk.key}:${part}`);
   // The first applicable rule a candidate breaks, or undefined when it is accepted.
@@ -758,6 +759,8 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
           target.density * open(chunk, "rock"),
         );
         const next = stream(seeds.world, kind, chunk, "place");
+        const slots = rockSlots.get(chunk.key) ?? [];
+        rockSlots.set(chunk.key, slots);
         tally.request(kind, count);
         for (let spawn = 0; spawn < count; spawn++) {
           const shape = weightedPick(
@@ -790,6 +793,7 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
             ...(crystals ? { crystals } : {}),
           };
           index.add(placement);
+          slots.push(placements.length);
           placements.push(placement);
           tally.deliver(kind);
         }
@@ -804,12 +808,10 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
         if (!target) {
           continue;
         }
-        const sources = placements.filter(
-          (placement) =>
-            placement.chunk === chunk.key &&
-            !placement.moving &&
-            target.from.includes(placement.kind),
-        );
+        const slots = rockSlots.get(chunk.key) ?? [];
+        const sources = slots
+          .map((slot) => placements[slot]!)
+          .filter((placement) => !placement.moving && target.from.includes(placement.kind));
         const blocked = sources.map((placement) => excludedBy(rules, region, "moving", placement));
         const eligible = sources.filter((_, index) => !blocked[index]);
         // Chosen rocks: the density over the rocks one choice here moves on average.
@@ -839,7 +841,8 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
               : undefined;
             if (!rule) {
               for (const rock of rocks) {
-                placements[placements.indexOf(rock)] = {
+                const slot = slots.find((index) => placements[index] === rock)!;
+                placements[slot] = {
                   ...rock,
                   moving: { clustered: rocks.length > 1, kind, velocity: { ...motion } },
                 };
