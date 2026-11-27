@@ -1201,8 +1201,8 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   and restores 5% of maximum shield capacity per second. With enough ore, a
   full refill takes about 20 seconds once recharge begins. Only damage restarts the
   delay.
-- Recharge burns carried ore: 1 ore per 1% of shield capacity restored, so 10
-  ore per 10% and 100 for a full refill at every Shield level. With no ore
+- Each Ore funds 2% of maximum shield capacity. Five Ore funds 10% and 50 Ore
+  funds a full bar. With no ore
   aboard, the shield recharges free only up to 10% of capacity; above that it
   stops until Ada has ore. Asteroids yield ore in every galaxy, and Cartwheel's
   ore fields make it richest,

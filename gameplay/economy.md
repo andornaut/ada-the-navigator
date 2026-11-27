@@ -199,9 +199,8 @@ by its seed so it never changes on Continue. Small asteroids are never crystal
 rocks and keep the ammo roll. A destroyed crystal rock skips the ammo roll and gives at least 1 ore;
 any further ore and Stardust roll as usual. Ore aboard fuels
 shield recharge starting 20 seconds after the last hit, at 5% of maximum
-shield capacity per second. Each ore funds restoration of 1% of maximum shield capacity,
-so fewer than 10 ore are useful: 10 ore funds 10%, and an empty-to-full recharge
-costs 100 ore at every Shield level. Carried ore stays integer-valued; unused
+shield capacity per second. Each Ore funds 2% of maximum shield capacity.
+Five Ore funds 10% and 50 Ore funds a full bar. Carried ore stays integer-valued; unused
 fractions of paid recharge credit survive damage and save interruptions without
 being billed again. The HUD shows −10 for each cumulative 10 ore actually paid,
 not for credit consumed; this adds no resource or player-facing counter.

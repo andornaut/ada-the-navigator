@@ -293,7 +293,7 @@ export const ECONOMY: EconomyCatalog = {
   rockRelease: { releaseSeconds: 0.24, spread: 7.68 },
   // Shield levels 2 and 3 add capacity. All levels share the content's recharge timing.
   shieldLevels: { capacity: [15, 20] },
-  shieldRecharge: { capacityPerOre: 0.01, freeCapacity: 0.1 },
+  shieldRecharge: { capacityPerOre: 0.02, freeCapacity: 0.1 },
   stardustPickupGap: 2,
   stardustPickupRadius: 5,
   station: {
