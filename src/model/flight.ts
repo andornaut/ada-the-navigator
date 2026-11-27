@@ -158,6 +158,11 @@ import { armed, layMine, stepMines, strikeMines } from "./flight/mines.ts";
 import { projectileContact, projectileSceneryContact } from "./flight/projectileContact.ts";
 import { resolveScenery, type SceneryContactOf } from "./flight/sceneryResolution.ts";
 import { bounceShipContact } from "./flight/shipContact.ts";
+import {
+  firePlayerWeapon,
+  releaseFriendlyVolley,
+  releasePendingPellets,
+} from "./flight/weaponRelease.ts";
 import { canonicalPosition, flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
 import {
   createFrigateEscorts,
@@ -233,7 +238,7 @@ import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
 import { routeGuardEvidence } from "./routeGuardEvidence.ts";
 import { discoveryStardustId } from "./stardustPlacement.ts";
 import { stationFormationClear, type StationPlacementContext } from "./stationPlacement.ts";
-import { type ImpactFamily, impactFamily } from "./weaponImpacts.ts";
+import { impactFamily } from "./weaponImpacts.ts";
 import {
   periodicWorldGrid,
   worldCell,
@@ -270,7 +275,6 @@ import {
   needleRimContact,
   needleRims,
 } from "./needleFlight.ts";
-import { nosePoint } from "./nose.ts";
 import {
   ORE_FIELD_CLEAR_RADIUS,
   ORE_FIELD_ROLE,
@@ -278,7 +282,7 @@ import {
   worldOreFieldsNear,
 } from "./oreFields.ts";
 import { pickupOutline, stardustPickupReach } from "./pickupBody.ts";
-import { fanHeading, planPlayerVolley, type PlayerVolley } from "./playerProjectiles.ts";
+import { fanHeading } from "./playerProjectiles.ts";
 import { impactSurface } from "./projectileImpact.ts";
 import { SceneryFrames } from "./sceneryFrames.ts";
 import { sceneryImpact } from "./sceneryImpact.ts";
@@ -323,7 +327,7 @@ import type {
 } from "./types.ts";
 import { leveledValue, noLevels, type ShipTuning, shipTuning } from "./upgrades.ts";
 import { markVisited, visitedChunk } from "./visited.ts";
-import { clampAmmo, ensureOwnedWeapons, grantedAmmo, shotsLeft, spendAmmo } from "./weapons.ts";
+import { clampAmmo, grantedAmmo, shotsLeft } from "./weapons.ts";
 
 export { wreckId };
 export { salvage, salvageTarget } from "./flight/destruction.ts";
@@ -383,6 +387,7 @@ function frameOf(flight: FlightState, object: SpaceObject): number {
 }
 const projectileScenery = { drawnOf, frameOf };
 const debrisMotion = { ...projectileScenery, arrivalPoints, bumpAda };
+const weaponReleaseContact = { fireBeam, strike };
 
 function hash(seed: number, x: number, y: number): number {
   let n = seed ^ Math.imul(x, 374761393) ^ Math.imul(y, 668265263);
@@ -3968,96 +3973,6 @@ export function teleport(content: GameContent, target: string | Vec, flight: Fli
   return true;
 }
 
-function fire(
-  content: GameContent,
-  viewportWidth: number,
-  viewportHeight: number,
-  aim: Vec,
-  flight: FlightState,
-  events: FlightEvent[],
-): void {
-  ensureOwnedWeapons(flight);
-  const weapon = flight.weapon;
-  const definition = weaponAt(weapon, flight.levels.weapons[weapon]);
-  const family = impactFamily(weapon);
-  if ((weapon === "multiLaser" || weapon === "scattershot") && flight.ammo[weapon] === 0) {
-    spendAmmo(flight, 0);
-    events.push({ type: "outOfAmmo" });
-    return;
-  }
-  if (weapon !== "multiLaser" && spendAmmo(flight, 1)) {
-    events.push({ type: "outOfAmmo" });
-  }
-  // Every shot and beam leaves the ship's nose for its heading; ranges run from there.
-  const origin = nosePoint(flight.facing, flight.player);
-  const coverage = { centre: { ...flight.player }, viewportHeight, viewportWidth };
-  if (definition.projectileKind === "beam") {
-    fireBeam(coverage, content, definition, aim, origin, flight, events);
-    flight.fireCooldown += definition.intervalSeconds;
-    return;
-  }
-  const volley = releaseFriendlyVolley(
-    coverage,
-    flight.velocity,
-    family,
-    content,
-    definition,
-    origin,
-    aim,
-    viewportWidth,
-    flight,
-    events,
-  );
-  flight.fireCooldown += volley.interval;
-  // Release the full fan before spending its unit and potentially switching to Laser.
-  if (weapon === "multiLaser" && spendAmmo(flight, 1)) {
-    events.push({ type: "outOfAmmo" });
-  }
-}
-
-/** The player's and an ally's shots share canonical damage, range and collision handling. */
-function releaseFriendlyVolley(
-  coverage: PlayerWeaponCoverageContext | undefined,
-  inheritedVelocity: Vec | undefined,
-  family: ImpactFamily,
-  content: GameContent,
-  definition: WeaponDefinition,
-  origin: Vec,
-  aim: Vec,
-  viewportWidth: number,
-  flight: FlightState,
-  events: FlightEvent[],
-): PlayerVolley {
-  const volley = planPlayerVolley(definition, {
-    ...(coverage === undefined ? {} : { coverage }),
-    ...(inheritedVelocity === undefined ? {} : { inheritedVelocity }),
-    aim,
-    baseDamage: content.tuning.flight.playerShotDamage,
-    baseLifetime: content.tuning.flight.projectileLifetime,
-    baseSpeed: content.tuning.flight.projectileSpeed,
-    origin,
-    viewportWidth,
-  });
-  for (const { delay, ...projectile } of volley.projectiles) {
-    const shot: Shot = {
-      ...projectile,
-      effectFamily: family,
-      enemy: false,
-      hitIds: [],
-      id: `shot:${flight.nextId++}`,
-      piercing: false,
-    };
-    if (delay) {
-      (flight.pendingPellets ??= []).push({ delay, shot });
-    } else {
-      flight.shots.push(shot);
-      // A shot that starts inside an obstacle Ada is touching strikes it at once.
-      strike(content, shot, flight, events);
-    }
-  }
-  return volley;
-}
-
 /** Removes `amount` HP from Ada's shield unless she is protected (adaProtected). */
 function damage(amount: number, flight: FlightState): void {
   if (adaProtected(flight)) {
@@ -4950,36 +4865,6 @@ const SHOT_PARTS: Parts = [
 const shotRadius = (shot: Pick<Shot, "projectile">) =>
   shot.projectile === "missile" ? MISSILE_HIT_RADIUS : 3;
 const mineStrike = { blast, shotParts: SHOT_PARTS, shotRadius };
-
-/** Release committed Scattershot rows on the flight clock, with the rest of their slice to fly. */
-function releasePendingPellets(
-  content: GameContent,
-  dt: number,
-  flight: FlightState,
-  events: FlightEvent[],
-  shotDelays: Map<string, number>,
-): void {
-  if (!flight.pendingPellets) {
-    return;
-  }
-  const waiting = [];
-  for (const { delay, shot } of flight.pendingPellets) {
-    if (delay - dt > 1e-9) {
-      waiting.push({ delay: delay - dt, shot });
-      continue;
-    }
-    flight.shots.push(shot);
-    shotDelays.set(shot.id, Math.min(delay, dt));
-    if (!shot.enemy) {
-      strike(content, shot, flight, events);
-    }
-  }
-  if (waiting.length) {
-    flight.pendingPellets = waiting;
-  } else {
-    delete flight.pendingPellets;
-  }
-}
 
 function shots(
   content: GameContent,
@@ -5916,7 +5801,8 @@ export function stepFlight(
       settleAda(content, flight);
     }
     if ((input.fire ?? aiming) && flight.fireCooldown <= 0) {
-      fire(
+      firePlayerWeapon(
+        weaponReleaseContact,
         content,
         input.viewportWidth ?? SCREEN.width,
         input.viewportHeight ?? SCREEN.height,
@@ -5971,6 +5857,7 @@ export function stepFlight(
       for (const intent of stepPhantomAllies(allyMotion, slice, flight, flight.phantom.allies)) {
         const aim = direction(worldDelta(flightWorldContext(flight), intent.from, intent.target));
         releaseFriendlyVolley(
+          strike,
           undefined,
           undefined,
           impactFamily(intent.weapon),
@@ -5984,7 +5871,7 @@ export function stepFlight(
         );
       }
     }
-    releasePendingPellets(content, slice, flight, events, shotDelays);
+    releasePendingPellets(strike, content, slice, flight, events, shotDelays);
     shots(content, slice, flight, events, shotDelays);
     stepMines(damage, slice, flight);
     stepWrecks(content, slice, input.reducedMotion ?? false, flight);
