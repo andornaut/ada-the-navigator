@@ -36,6 +36,8 @@ function fixture(wrapped: boolean) {
   flight.objects.push(site);
   flight.player = { x: site.x, y: site.y };
   stepFlight(CONTENT, 0.000001, idle, flight);
+  // This synthetic station tests the caller with a clear berth, independent of ambient terrain.
+  flight.objects = [site];
   const guard = spawnChapterEnemy(
     CONTENT,
     "frigate",
@@ -54,6 +56,9 @@ function fixture(wrapped: boolean) {
   const selected = ports.recoveryHome(flightWorldContext(flight), site, guard);
   expect(selected).not.toBeNull();
   const home = wrapped ? wrapPoint(GALAXY_SIDE, selected!) : selected!;
+  if (wrapped) {
+    expect(home.x).toBeLessThan(0);
+  }
   // Fixture input is already placed/recovered; navigation must only read it.
   Object.assign(guard, home);
   guard.enemy!.home = { ...home };

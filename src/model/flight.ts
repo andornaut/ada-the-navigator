@@ -2682,7 +2682,8 @@ function keepClear(
       size > speed / 2
         ? { x: along.x / size, y: along.y / size }
         : { x: -normal.y * side, y: normal.x * side };
-    return { x: course.x * speed, y: course.y * speed };
+    // Canonicalize zero on axis-aligned slides so JSON saves preserve the velocity.
+    return { x: course.x * speed + 0, y: course.y * speed + 0 };
   };
   let next = velocity;
   const ahead = { x: object.x + (next.x + drift.x) * dt, y: object.y + (next.y + drift.y) * dt };
