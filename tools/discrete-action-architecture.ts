@@ -56,6 +56,19 @@ interface ScanContext {
   readonly sources: ReadonlyMap<string, ts.SourceFile>;
 }
 
+function localModule(
+  sources: ScanContext["sources"],
+  source: ts.SourceFile,
+  specifier: string,
+): ts.SourceFile | undefined {
+  if (!specifier.startsWith("./") && !specifier.startsWith("../")) {
+    return undefined;
+  }
+  const path = posix.normalize(posix.join(posix.dirname(source.fileName), specifier));
+  const target = sources.get(path);
+  return target?.isDeclarationFile ? undefined : target;
+}
+
 function localValueImport(
   context: ScanContext,
   node: ts.Identifier,
@@ -75,21 +88,15 @@ function localValueImport(
   ) {
     return undefined;
   }
-  const specifier = statement.moduleSpecifier.text;
-  if (!specifier.startsWith("./") && !specifier.startsWith("../")) {
-    return undefined;
-  }
-  const path = posix.normalize(posix.join(posix.dirname(node.getSourceFile().fileName), specifier));
-  const target = context.sources.get(path);
-  if (!target || target.isDeclarationFile) {
-    return undefined;
-  }
-  return { name: item.propertyName?.text ?? item.name.text, target };
+  const target = localModule(context.sources, node.getSourceFile(), statement.moduleSpecifier.text);
+  return target && { name: item.propertyName?.text ?? item.name.text, target };
 }
 
 // These pinned Phaser exports are library lifecycle notifications, outside the input lifecycle.
 const PHASER_LIFECYCLE_EVENTS = new Map([
+  ["Loader.Events.ADD", "addfile"],
   ["Loader.Events.FILE_COMPLETE", "filecomplete"],
+  ["Renderer.Events.RESTORE_WEBGL", "restorewebgl"],
   ["Scale.Events.RESIZE", "resize"],
   ["Scenes.Events.PRE_RENDER", "prerender"],
 ]);
@@ -122,20 +129,47 @@ function phaserLifecycleEvent(context: ScanContext, node: ts.Expression): string
 
 function importedEventLiteral(context: ScanContext, node: ts.Identifier): string | undefined {
   const imported = localValueImport(context, node);
-  if (!imported) {
+  return (
+    imported && exportedEventLiteral(context.sources, imported.target, imported.name, new Set())
+  );
+}
+
+function exportedEventLiteral(
+  sources: ScanContext["sources"],
+  target: ts.SourceFile,
+  name: string,
+  seen: Set<ts.SourceFile>,
+): string | undefined {
+  if (seen.has(target)) {
     return undefined;
   }
-  const { name, target } = imported;
-  for (const variable of target.statements) {
+  seen.add(target);
+  for (const statement of target.statements) {
     if (
-      !ts.isVariableStatement(variable) ||
-      !(variable.declarationList.flags & ts.NodeFlags.Const) ||
-      !variable.modifiers?.some(({ kind }) => kind === ts.SyntaxKind.ExportKeyword) ||
-      variable.modifiers.some(({ kind }) => kind === ts.SyntaxKind.DeclareKeyword)
+      ts.isExportDeclaration(statement) &&
+      !statement.isTypeOnly &&
+      statement.exportClause &&
+      ts.isNamedExports(statement.exportClause) &&
+      statement.moduleSpecifier &&
+      ts.isStringLiteral(statement.moduleSpecifier)
+    ) {
+      const item = statement.exportClause.elements.find(
+        (element) => !element.isTypeOnly && element.name.text === name,
+      );
+      if (item) {
+        const next = localModule(sources, target, statement.moduleSpecifier.text);
+        return next && exportedEventLiteral(sources, next, item.propertyName?.text ?? name, seen);
+      }
+    }
+    if (
+      !ts.isVariableStatement(statement) ||
+      !(statement.declarationList.flags & ts.NodeFlags.Const) ||
+      !statement.modifiers?.some(({ kind }) => kind === ts.SyntaxKind.ExportKeyword) ||
+      statement.modifiers.some(({ kind }) => kind === ts.SyntaxKind.DeclareKeyword)
     ) {
       continue;
     }
-    for (const declaration of variable.declarationList.declarations) {
+    for (const declaration of statement.declarationList.declarations) {
       if (!ts.isIdentifier(declaration.name) || declaration.name.text !== name) {
         continue;
       }

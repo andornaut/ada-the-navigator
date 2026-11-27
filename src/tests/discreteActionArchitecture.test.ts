@@ -380,7 +380,9 @@ it("resolves only the pinned Phaser lifecycle event exports", () => {
   const require = createRequire(import.meta.url);
   const phaser = dirname(require.resolve("phaser/package.json"));
   for (const [path, name] of [
+    ["loader/events/ADD_EVENT.js", "addfile"],
     ["loader/events/FILE_COMPLETE_EVENT.js", "filecomplete"],
+    ["renderer/events/RESTORE_WEBGL_EVENT.js", "restorewebgl"],
     ["scale/events/RESIZE_EVENT.js", "resize"],
     ["scene/events/PRE_RENDER_EVENT.js", "prerender"],
   ] as const) {
@@ -391,9 +393,11 @@ it("resolves only the pinned Phaser lifecycle event exports", () => {
     {
       path: "src/game/scene.ts",
       text: `
-        import { Loader as AssetLoader, Scale, Scenes, Input, type Loader as Erased } from "phaser";
+        import { Loader as AssetLoader, Renderer, Scale, Scenes, Input, type Loader as Erased } from "phaser";
         import { Loader } from "./fake.ts";
+        scene.load.on(AssetLoader.Events.ADD, refresh);
         scene.load.on(AssetLoader.Events.FILE_COMPLETE, draw);
+        scene.game.renderer.on(Renderer.Events.RESTORE_WEBGL, redraw);
         scene.scale.on(Scale.Events.RESIZE, resize);
         scene.events.on(Scenes.Events.PRE_RENDER, refresh);
         shadow.on(Loader.Events.FILE_COMPLETE, activate);
@@ -413,7 +417,7 @@ it("resolves only the pinned Phaser lifecycle event exports", () => {
   ]);
 });
 
-it("recognizes a direct local layout event and keeps imported click and pointer actions blocking", () => {
+it("resolves immutable named event re-exports and keeps click and pointer actions blocking", () => {
   const eventSource = {
     path: "src/layout/events.ts",
     text: `
@@ -424,9 +428,13 @@ it("recognizes a direct local layout event and keeps imported click and pointer 
   const result = scanDiscreteActionProject([
     eventSource,
     {
+      path: "src/layout/index.ts",
+      text: 'export { VIEW_EVENT as resized, CLICK_EVENT, RELEASE_EVENT } from "./events.ts";',
+    },
+    {
       path: "src/ui/surface.ts",
       text: `
-        import { VIEW_EVENT, CLICK_EVENT as selected, RELEASE_EVENT } from "../layout/events.ts";
+        import { resized as VIEW_EVENT, CLICK_EVENT as selected, RELEASE_EVENT } from "../layout/index.ts";
         window.addEventListener(VIEW_EVENT, resize);
         button.addEventListener((selected), run);
         button.addEventListener(RELEASE_EVENT, select);
@@ -445,7 +453,10 @@ it.each([
   ["private", 'const EVENT = "ada-view-scale";'],
   ["declaration-only", 'export declare const EVENT = "ada-view-scale";'],
   ["cycle", 'import { EVENT as alias } from "./surface.ts"; export const EVENT = alias;'],
-  ["re-export", 'export { EVENT } from "./names.ts";'],
+  ["type-only re-export", 'export type { EVENT } from "./names.ts";'],
+  ["wildcard re-export", 'export * from "./names.ts";'],
+  ["external re-export", 'export { EVENT } from "external";'],
+  ["cyclic named re-export", 'export { EVENT } from "./surface.ts";'],
 ] as const)("leaves a named %s event import unresolved", (_case, text) => {
   const result = scanDiscreteActionProject([
     { path: "src/names.ts", text: 'export const EVENT = "click";' },
