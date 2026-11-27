@@ -11,7 +11,15 @@ import mainData from "../../public/art/ship-jets.json";
 import noseData from "../../public/art/ship-nose.json";
 import retroData from "../../public/art/ship-retro-jets.json";
 import title from "../../public/art/title-screen.json";
-import { hasPlayerHeadingPackage } from "../art/index.ts";
+import {
+  engineJets,
+  hasPlayerHeadingPackage,
+  jetsInFront,
+  jetTriangles,
+  readEngineJets,
+  readJetGeometry,
+  readShipJets,
+} from "../art/index.ts";
 import {
   hasShipHeadings,
   selectPaintedShipAsset,
@@ -34,14 +42,6 @@ import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
 import { readTitleScreen } from "../ui/titleScreen.ts";
 import { ENEMY_HEADINGS } from "./enemyArt.ts";
 import { readQuantumJump } from "./quantumJump.ts";
-import {
-  engineJets,
-  jetsInFront,
-  jetTriangles,
-  readEngineJets,
-  readJetGeometry,
-  readShipJets,
-} from "./shipJets.ts";
 
 const paints = ECONOMY.paintOrder.filter((paint) => paint !== ECONOMY.defaultPaint);
 const forward = readEngineJets(mainData)!;

@@ -6,7 +6,7 @@ import { expect, it, vi } from "vitest";
 
 import { playDepth } from "../art/asteroidArt.ts";
 import { ADA_LAYERS, adaDepth, boxWith, drawnBox } from "../art/drawOrder.ts";
-import { jetsInFront } from "./shipJets.ts";
+import { jetsInFront } from "../art/index.ts";
 
 it("places forward occluded plumes above the hull and the halo below every jet and hull layer", () => {
   const source = ts.createSourceFile(

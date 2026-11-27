@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import data from "../../public/art/ship-jets.json";
-import { AUTHORED_JET_LENGTH } from "../art/index.ts";
+import { AUTHORED_JET_LENGTH, jetTriangles, readEngineJets } from "../art/index.ts";
 import { LIGHT_FIELD } from "./lightField.ts";
-import { jetTriangles, readEngineJets } from "./shipJets.ts";
 import { staticShipJets } from "./staticShipJets.ts";
 
 const main = readEngineJets(data)!;

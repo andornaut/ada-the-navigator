@@ -1,4 +1,4 @@
-import { type JetDisplay, jetOccluderRegions, jetPlumes, type ShipJets } from "../game/shipJets.ts";
+import { type JetDisplay, jetOccluderRegions, jetPlumes, type ShipJets } from "../art/index.ts";
 import type { Vec } from "../model/types.ts";
 import { COLOURS } from "./layout/colours.ts";
 

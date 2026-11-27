@@ -13,6 +13,7 @@ import phantom from "../../public/art/phantom/manifest.json";
 import sunflower from "../../public/art/sunflower/manifest.json";
 import {
   fileFilter,
+  readShipJets,
   SvgRasters,
   type SvgRequest,
   vectorRaster,
@@ -50,7 +51,6 @@ import {
 } from "./enemyArt.ts";
 import type { Asset } from "./sceneShared.ts";
 import { readShardPalettePack } from "./shardPalettePack.ts";
-import { readShipJets } from "./shipJets.ts";
 
 const m1 = ASTEROID_ART.asteroids.find(({ id }) => id === "asteroid-m1")!;
 const claim = GALAXY_FAMILIES.find(({ family }) => family === "claim")!;

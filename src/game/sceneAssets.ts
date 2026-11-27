@@ -21,6 +21,7 @@ import {
   readGalaxyStationArt,
   readJobArt,
   readMarloArt,
+  readShipJets,
   readShipMaterialPalettes,
   readShipMaterials,
   readStreakSpec,
@@ -92,7 +93,6 @@ import { readQuantumJump } from "./quantumJump.ts";
 import type { GameScene } from "./scene.ts";
 import type { Asset } from "./sceneShared.ts";
 import { readShardPalettePack } from "./shardPalettePack.ts";
-import { readShipJets } from "./shipJets.ts";
 import { readStrandedCraft, readTowLine } from "./towArt.ts";
 
 interface MaterialCache {

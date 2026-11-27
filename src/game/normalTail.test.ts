@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ADA_LAYERS } from "../art/drawOrder.ts";
 import { drawShipTail } from "../ui/shipJetCanvas.ts";
-import { jetOccluderRegions, jetTriangles, type ShipJets } from "./shipJets.ts";
+import { jetOccluderRegions, jetTriangles, type ShipJets } from "../art/index.ts";
 
 const region = [
   { x: 40, y: 40 },

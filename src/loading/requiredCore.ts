@@ -1,12 +1,12 @@
 import {
   hasPlayerHeadingPackage,
   readEnemyWeaponsArt,
+  readEngineJets,
   readShipMaterialPalettes,
   readShipMaterials,
 } from "../art/index.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { readQuantumJump } from "../game/quantumJump.ts";
-import { readEngineJets } from "../game/shipJets.ts";
 import { SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 
 /** Decode both required jet files before constructing the first playable scene. */

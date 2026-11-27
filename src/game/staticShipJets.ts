@@ -1,5 +1,10 @@
-import { AUTHORED_JET_LENGTH } from "../art/index.ts";
-import { type EngineJets, type JetLayer, type ShipJets, travelJets } from "./shipJets.ts";
+import {
+  AUTHORED_JET_LENGTH,
+  type EngineJets,
+  type JetLayer,
+  type ShipJets,
+  travelJets,
+} from "../art/index.ts";
 
 /** Static travel cues keep their authored model length and the selected main material object. */
 export function staticShipJets(

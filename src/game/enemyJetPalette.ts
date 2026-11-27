@@ -1,4 +1,4 @@
-import { readShipJets, type ShipJets } from "./shipJets.ts";
+import { readShipJets, type ShipJets } from "../art/index.ts";
 
 const regionalFamilies = ["claim", "garnet", "needle"] as const;
 export type EnemyJetFamily = "coral" | (typeof regionalFamilies)[number];

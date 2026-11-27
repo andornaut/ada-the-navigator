@@ -5,7 +5,7 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 import { GALAXY_COUNT, type RoutePosition } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
 import { TASK_COLORS } from "../data/taskCategories.ts";
-import { jetLayerPass, jetOccluderRegions, jetsInFront, type ShipJets } from "../game/shipJets.ts";
+import { jetLayerPass, jetOccluderRegions, jetsInFront, type ShipJets } from "../art/index.ts";
 import type { RouteFlight } from "../model/game.ts";
 import {
   assertAdaActionBindings,

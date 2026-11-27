@@ -24,6 +24,7 @@ import {
   enemyMissileFlame,
   enemyPellet,
   type EnemyWeaponsArt,
+  type EngineJets,
   FALLBACK_SPACE_PALETTE,
   fanVolley,
   fileFilter,
@@ -36,6 +37,11 @@ import {
   hitFlashAlpha,
   hitFlashBands,
   impactEffect,
+  type JetDisplay,
+  jetOccluderRegions,
+  jetsInFront,
+  type JetTriangle,
+  jetTriangles,
   type JobArt,
   laserBolt,
   type LoopArt,
@@ -52,6 +58,8 @@ import {
   type ProjectArtSet,
   screenAngle,
   selectPaintedShipAsset,
+  shipJetDirection,
+  type ShipJets,
   Silhouettes,
   skipShipPreload,
   type SpacePalette,
@@ -63,6 +71,7 @@ import {
   type StationArt,
   type StreakSpec,
   SvgRasters,
+  travelJets,
   type UpgradePickupArt,
   type WeaponSolids,
   type WhaleArt,
@@ -198,17 +207,6 @@ import {
 } from "./sceneUi.ts";
 import { drawCurrents, drawJobs, drawStoryShips, drawWhirlpoolProjects } from "./sceneWorld.ts";
 import { StoryShell } from "./shell.ts";
-import {
-  type EngineJets,
-  type JetDisplay,
-  jetOccluderRegions,
-  jetsInFront,
-  type JetTriangle,
-  jetTriangles,
-  shipJetDirection,
-  type ShipJets,
-  travelJets,
-} from "./shipJets.ts";
 import { aboardGalaxy, storyCoversScene } from "./storyPresentation.ts";
 import { preloadTouchChrome } from "./touchChrome.ts";
 import type { StrandedCraftArt, TowLine } from "./towArt.ts";

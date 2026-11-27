@@ -1,6 +1,4 @@
-import { type JetProfile, jetShapePolygons, layerAlpha, validJetProfile } from "../art/index.ts";
-export { layerAlpha } from "../art/index.ts";
-
+import { type JetProfile, jetShapePolygons, layerAlpha, validJetProfile } from "./jetGeometry.ts";
 import { readShipHeadingContract, SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import type { Vec } from "../model/types.ts";
 

@@ -5,13 +5,7 @@ import { describe, expect, it } from "vitest";
 import { JET_LENGTH, plumeReach } from "../../art/tools/ship-jet-layers.ts";
 import { FRAME, mouthEdgeJetMouths } from "../../art/tools/ship-model.ts";
 import { plumePolygon } from "../../art/tools/ship-plume.ts";
-import {
-  engineJets,
-  jetLength,
-  layerColor,
-  readEngineJets,
-  readJetMouths,
-} from "../game/shipJets.ts";
+import { engineJets, jetLength, layerColor, readEngineJets, readJetMouths } from "../art/index.ts";
 import { fromAreaLeft, fromAreaTop, units } from "./layout/css.ts";
 import { START_SCREEN } from "./layout/startScreen.ts";
 import { START_SCREEN_CLASS, START_SCREEN_STYLE } from "./startScreen.ts";

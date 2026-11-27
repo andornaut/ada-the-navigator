@@ -1,6 +1,6 @@
 import { readShipHeadingContract, SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import type { Vec } from "../model/types.ts";
-import { type JetGeometry, readJetGeometry } from "./shipJets.ts";
+import { type JetGeometry, readJetGeometry } from "../art/index.ts";
 
 // Art's quantum jump effect (art/quantum-jump.md): the data, its step timeline, the warp ship's
 // poses and the shared canvas fit.

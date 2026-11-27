@@ -7,7 +7,7 @@ import { CONTENT } from "../data/content.ts";
 import type { RoutePosition } from "../data/galaxies.ts";
 import { LIGHT_FIELD } from "../game/lightField.ts";
 import { type QuantumJump, readQuantumJump } from "../game/quantumJump.ts";
-import { type JetGeometry, readEngineJets } from "../game/shipJets.ts";
+import { type JetGeometry, readEngineJets } from "../art/index.ts";
 import { staticShipJets } from "../game/staticShipJets.ts";
 import * as actionBinding from "./actionBinding.ts";
 import { resolveAdaHoldAction } from "./actionBinding.ts";

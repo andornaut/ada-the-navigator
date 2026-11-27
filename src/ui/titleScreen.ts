@@ -4,7 +4,7 @@ import {
   jetsInFront,
   readJetMouths,
   type ShipJets,
-} from "../game/shipJets.ts";
+} from "../art/index.ts";
 import { readShipHeadingContract, SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import type { Vec } from "../model/types.ts";
 import { START_SCREEN } from "./layout/startScreen.ts";

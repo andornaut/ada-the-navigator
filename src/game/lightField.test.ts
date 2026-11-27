@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { blinkRow, readBeaconArt } from "../art/index.ts";
+import { blinkRow, layerColor, readBeaconArt } from "../art/index.ts";
 import { beam, beamKeys, blast, EFFECT_COLOURS, type EffectShape } from "../art/weaponEffects.ts";
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { ART_MANIFEST } from "../testing/publicArt.ts";
@@ -21,7 +21,6 @@ import {
   readLightGalaxies,
   thresholdSilhouette,
 } from "./lightField.ts";
-import { layerColor } from "./shipJets.ts";
 
 const galaxies: unknown = JSON.parse(
   readFileSync(new URL("../../public/art/galaxies.json", import.meta.url), "utf8"),

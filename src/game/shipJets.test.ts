@@ -24,7 +24,7 @@ import {
   readLevelLayers,
   readShipJets,
   type ShipJets,
-} from "./shipJets.ts";
+} from "../art/index.ts";
 
 const ada = readEngineJets(art)!;
 // Engine level 1, the base style the shape tests check.

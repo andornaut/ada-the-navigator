@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ShipJets } from "../game/shipJets.ts";
+import type { ShipJets } from "../art/index.ts";
 import { drawShipJets } from "./shipJetCanvas.ts";
 
 const jets: ShipJets = {

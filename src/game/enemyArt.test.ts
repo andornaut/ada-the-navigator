@@ -45,7 +45,7 @@ import {
   turretMuzzles,
 } from "./enemyArt.ts";
 import { readEnemyJets, selectEnemyJetPalette } from "./enemyJetPalette.ts";
-import { jetLength, readShipJets } from "./shipJets.ts";
+import { jetLength, readShipJets } from "../art/index.ts";
 
 const assets = manifest.assets as EnemyFrame[];
 const json = (path: string | undefined): unknown => {

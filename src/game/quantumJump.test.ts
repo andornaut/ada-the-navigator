@@ -5,7 +5,14 @@ import { plumePolygon } from "../../art/tools/ship-plume.ts";
 import manifest from "../../public/art/manifest.json";
 import data from "../../public/art/quantum-jump.json";
 import jetData from "../../public/art/ship-jets.json";
-import { AUTHORED_JET_LENGTH, jetShapePolygons } from "../art/index.ts";
+import {
+  AUTHORED_JET_LENGTH,
+  engineJets,
+  jetPlumes,
+  jetShapePolygons,
+  jetsInFront,
+  readEngineJets,
+} from "../art/index.ts";
 import { createJumpOverlay, type SheetArt, sheetFrame } from "../ui/jumpOverlay.ts";
 import {
   canvasFit,
@@ -22,7 +29,6 @@ import {
   tunnelScale,
   warpPoseSize,
 } from "./quantumJump.ts";
-import { engineJets, jetPlumes, jetsInFront, readEngineJets } from "./shipJets.ts";
 
 const jump = readQuantumJump(data)!;
 const sheet = (id: string): SheetArt => {

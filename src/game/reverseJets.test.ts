@@ -12,7 +12,7 @@ import {
   jetTriangles,
   readEngineJets,
   shipJetDirection,
-} from "./shipJets.ts";
+} from "../art/index.ts";
 
 const rear = readEngineJets(rearArt)!;
 const retro = readEngineJets(retroArt)!;
