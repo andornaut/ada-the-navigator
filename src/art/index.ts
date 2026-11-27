@@ -174,14 +174,12 @@ export {
   type StationLoop,
   stationLoopFrame,
 } from "./stationArt.ts";
-export { RASTER_SCALE_EVENT, SvgRasters, type SvgRequest, type SvgSize } from "./svgRasters.ts";
+export { RASTER_SCALE_EVENT, SvgRasters, type SvgRequest } from "./svgRasters.ts";
 export {
   chromeAtlasGrid,
-  FILE_FILTERS,
   fileFilter,
   needsRaster,
   RASTER_CAP,
-  RASTER_STEP,
   rasterScale,
   type TextureFilter,
   vectorRaster,
