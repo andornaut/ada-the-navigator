@@ -429,6 +429,11 @@ export function courierAmbushRepresented(flight: FlightState): boolean {
 }
 
 /** Consume only active-flight steps, or end immediately once Pip's delivery leg advances. */
+/** The warning can still be presented before either fighter pair is released. */
+export function courierAmbushWarningActive(attempt: CourierAmbushAttempt | undefined): boolean {
+  return attempt?.state.phase === "warned" && attempt.state.elapsed < FIRST_RELEASE;
+}
+
 export function advanceCourierAmbush(
   context: CourierAmbushStep,
   stage: number,

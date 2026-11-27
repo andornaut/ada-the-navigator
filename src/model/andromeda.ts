@@ -19,6 +19,7 @@ import {
   type CourierAmbushPlan,
   courierAmbushRepresented,
   courierAmbushTerrainCovered,
+  courierAmbushWarningActive,
   planCourierAmbush,
   setCourierSpawnReservation,
   stepCourierAmbush,
@@ -426,6 +427,9 @@ function mountAndromeda(context: ChapterContext): void {
   // A real new flight clears open-space encounters. Continue retains their live or paged actors.
   if (flight.time === 0 && attemptFor(flight) && !courierAmbushRepresented(flight)) {
     finishCourierAmbush(context);
+  }
+  if (courierAmbushWarningActive(attemptFor(flight))) {
+    courierWarnings.add(flight);
   }
   reserveAndromedaCourier(context);
   ensureAndromedaWorld(context);
