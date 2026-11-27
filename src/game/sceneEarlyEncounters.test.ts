@@ -1,21 +1,22 @@
 import { expect, it } from "vitest";
 
-import { FALLBACK_SPACE_PALETTE } from "../art/spacePalette.ts";
+import { FALLBACK_SPACE_PALETTE } from "../art/index.ts";
 import { NEEDLE_CADENCE, WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { toScreen } from "../model/convex.ts";
 import { createUnpopulatedFlight, spawnChapterEnemy } from "../model/flight.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
 import type { Vec } from "../model/types.ts";
 import { drawEarlyEncounters } from "./sceneEarlyEncounters.ts";
 
-function surface() {
+function surface(player: Vec = { x: 0, y: 0 }) {
   const segments: number[][] = [];
   const overlay = {
     lineBetween: (...coords: number[]) => segments.push(coords),
     lineStyle: () => {},
   };
   const project = (point: Vec) => {
-    const screen = toScreen(point);
+    const screen = toScreen({ x: point.x - player.x, y: point.y - player.y });
     return { x: 360 + screen.x, y: 180 + screen.y };
   };
   return { scene: { overlay, palette: FALLBACK_SPACE_PALETTE, project }, segments };
@@ -75,4 +76,43 @@ it("keeps both Crossbow lane rails fixed while the warning and firing sector cha
   expect(next.slice(0, 4)).toEqual(crossing);
   expect(warning.length).toBeGreaterThan(active.length);
   expect(next[4]).not.toEqual(warning[4]);
+});
+
+it("marks the prepared Cartwheel bypass only after warning and keeps one world image at the seam", () => {
+  const flight = createUnpopulatedFlight(CONTENT, 2, 173);
+  flight.topology = CURRENT_FLIGHT_TOPOLOGY;
+  flight.player = { x: 89970, y: 0 };
+  const entry = { x: -89960, y: 0 };
+  const exit = { x: -89830, y: 0 };
+  const actor = spawnChapterEnemy(CONTENT, "fighter", "patrol:0", entry, flight)!;
+  flight.objects = [actor];
+  const patrol = {
+    actors: [actor.id],
+    plan: {
+      allocationId: "patrol",
+      anchor: entry,
+      approach: [entry, exit],
+      bypass: [entry, exit],
+      coverIds: ["moving:a", "moving:b"],
+      fieldId: "ore",
+      homes: [entry],
+    },
+  } as const;
+  flight.cartwheelMiningPatrol = patrol;
+  const { scene, segments } = surface(flight.player);
+  drawEarlyEncounters(scene, flight);
+  expect(segments).toEqual([]);
+
+  flight.cartwheelMiningPatrol = { ...patrol, warnedAt: 0 };
+  drawEarlyEncounters(scene, flight);
+  expect(segments.length).toBeGreaterThan(4);
+  expect(segments.some(([, , x, y]) => x === 560 && y === 280)).toBe(true);
+  expect(segments.every((line) => line.every((coordinate) => Math.abs(coordinate) < 720))).toBe(
+    true,
+  );
+
+  segments.length = 0;
+  actor.hp = 0;
+  drawEarlyEncounters(scene, flight);
+  expect(segments).toEqual([]);
 });
