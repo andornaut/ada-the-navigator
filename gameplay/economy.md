@@ -332,7 +332,7 @@ visible and reports refusal if activated. The Cartwheel hub's story offer
 uses “Holodisk” and “Restores part of Astra's memory.” while available.
 
 Ship paint schemes are Classic (the free white and blue default), Cobalt,
-Seafoam, Crimson, Iris and Amber. Tapping an owned scheme puts it in use at once, with
+Obsidian, Crimson, Iris and Amber. Tapping an owned scheme puts it in use at once, with
 no confirm. The current scheme shows In use instead of Owned. The five paid schemes cost 1500, 2000, 2500, 3000 and 3500 Stardust by
 purchase order, whichever scheme Ada chooses next. Classic stays free and does
 not advance that order. Buy new paints at shops. From Paused → Ship, open
@@ -575,7 +575,7 @@ The shield shop row reuses the existing `shield` label.
 | `inUse`              | In use                                                                    |
 | `paintClassic`       | Classic                                                                   |
 | `paintCobalt`        | Cobalt                                                                    |
-| `paintSeafoam`       | Seafoam                                                                   |
+| `paintSeafoam`       | Obsidian                                                                  |
 | `paintGraphite`      | Crimson                                                                   |
 | `paintIris`          | Iris                                                                      |
 | `aboutHeavyMissile`  | One slow missile with a big blast.                                        |
