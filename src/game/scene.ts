@@ -168,6 +168,7 @@ import {
   startRockLoads,
 } from "./sceneAssets.ts";
 import { drawBackdrop, drawBackdropLayer, drawBackdropLayers } from "./sceneBackdrop.ts";
+import { drawEarlyEncounters } from "./sceneEarlyEncounters.ts";
 import { drawRockBreaks, drawZips, startRockBreaks, startZips } from "./sceneEffects.ts";
 import { drawEffect, drawEnemyWeapons, enemyWeaponsView } from "./sceneEnemies.ts";
 import { ForwardJetComposition } from "./sceneForwardJets.ts";
@@ -1335,6 +1336,7 @@ export class GameScene extends Scene {
         this.light ? inkEdges(LIGHT_FIELD.ink, LIGHT_FIELD.phaser.edge, effect.edged) : [],
       );
     }
+    drawEarlyEncounters(this, flight);
     drawEnemyWeapons(this, enemyWeaponsView(flight));
     this.drawShots(flight);
     drawIndicators(this);
