@@ -1477,6 +1477,16 @@ it.each([
     (node) => node !== modal && node.className === "ada-modal" && !node.hidden,
   )!;
   const kind = item.startsWith("weapon:") ? "weapon-detail" : "resource";
+  if (item === "cargo:holodisks") {
+    const header = detail.querySelector(".ada-detail-header")!;
+    const quantity = detail.querySelector(".ada-detail-quantity")!;
+    const [description, amount] = quantity.parentElement!.children;
+    expect(header.children.at(-1)?.textContent).toBe("Holodisks");
+    expect(description?.textContent).toBe(CONTENT.labels.holodiskAbout);
+    expect(amount).toBe(quantity);
+    expect(quantity.hidden).toBe(false);
+    expect(quantity.children.at(-1)?.textContent).toBe("2 of 6");
+  }
   const dismiss = button(detail, `dismiss-${kind}`);
   expect(dismiss.textContent).toBe("Back");
   expect(detail.querySelector(".ada-actions")?.dataset.footerAction).toBe("back");
