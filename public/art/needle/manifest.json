@@ -17355,15 +17355,15 @@
       "svgSheet": true
     },
     {
-      "id": "enemy-needle-capital-triple-top-0",
-      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
-      "width": 40,
-      "height": 40,
-      "displayWidth": 17.5,
-      "displayHeight": 17.5,
+      "id": "enemy-needle-capital-rail-top-0",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-48-sheet.svg",
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-0",
       "aimIndex": 0,
-      "top": "triple",
+      "top": "rail",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17373,15 +17373,15 @@
       "svgSheet": true
     },
     {
-      "id": "enemy-needle-capital-triple-top-1",
-      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
-      "width": 40,
-      "height": 40,
-      "displayWidth": 17.5,
-      "displayHeight": 17.5,
+      "id": "enemy-needle-capital-rail-top-1",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-48-sheet.svg",
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-1",
       "aimIndex": 1,
-      "top": "triple",
+      "top": "rail",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17391,15 +17391,15 @@
       "svgSheet": true
     },
     {
-      "id": "enemy-needle-capital-triple-top-2",
-      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
-      "width": 40,
-      "height": 40,
-      "displayWidth": 17.5,
-      "displayHeight": 17.5,
+      "id": "enemy-needle-capital-rail-top-2",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-48-sheet.svg",
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-2",
       "aimIndex": 2,
-      "top": "triple",
+      "top": "rail",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17409,15 +17409,15 @@
       "svgSheet": true
     },
     {
-      "id": "enemy-needle-capital-triple-top-3",
-      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
-      "width": 40,
-      "height": 40,
-      "displayWidth": 17.5,
-      "displayHeight": 17.5,
+      "id": "enemy-needle-capital-rail-top-3",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-48-sheet.svg",
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-3",
       "aimIndex": 3,
-      "top": "triple",
+      "top": "rail",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17427,15 +17427,15 @@
       "svgSheet": true
     },
     {
-      "id": "enemy-needle-capital-triple-top-4",
-      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
-      "width": 40,
-      "height": 40,
-      "displayWidth": 17.5,
-      "displayHeight": 17.5,
+      "id": "enemy-needle-capital-rail-top-4",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-48-sheet.svg",
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-4",
       "aimIndex": 4,
-      "top": "triple",
+      "top": "rail",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17445,15 +17445,15 @@
       "svgSheet": true
     },
     {
-      "id": "enemy-needle-capital-triple-top-5",
-      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
-      "width": 40,
-      "height": 40,
-      "displayWidth": 17.5,
-      "displayHeight": 17.5,
+      "id": "enemy-needle-capital-rail-top-5",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-48-sheet.svg",
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-5",
       "aimIndex": 5,
-      "top": "triple",
+      "top": "rail",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17463,15 +17463,15 @@
       "svgSheet": true
     },
     {
-      "id": "enemy-needle-capital-triple-top-6",
-      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
-      "width": 40,
-      "height": 40,
-      "displayWidth": 17.5,
-      "displayHeight": 17.5,
+      "id": "enemy-needle-capital-rail-top-6",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-48-sheet.svg",
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-6",
       "aimIndex": 6,
-      "top": "triple",
+      "top": "rail",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17481,15 +17481,15 @@
       "svgSheet": true
     },
     {
-      "id": "enemy-needle-capital-triple-top-7",
-      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
-      "width": 40,
-      "height": 40,
-      "displayWidth": 17.5,
-      "displayHeight": 17.5,
+      "id": "enemy-needle-capital-rail-top-7",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-48-sheet.svg",
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-7",
       "aimIndex": 7,
-      "top": "triple",
+      "top": "rail",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17499,15 +17499,15 @@
       "svgSheet": true
     },
     {
-      "id": "enemy-needle-capital-triple-top-8",
-      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
-      "width": 40,
-      "height": 40,
-      "displayWidth": 17.5,
-      "displayHeight": 17.5,
+      "id": "enemy-needle-capital-rail-top-8",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-48-sheet.svg",
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-8",
       "aimIndex": 8,
-      "top": "triple",
+      "top": "rail",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17517,15 +17517,15 @@
       "svgSheet": true
     },
     {
-      "id": "enemy-needle-capital-triple-top-9",
-      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
-      "width": 40,
-      "height": 40,
-      "displayWidth": 17.5,
-      "displayHeight": 17.5,
+      "id": "enemy-needle-capital-rail-top-9",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-48-sheet.svg",
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-9",
       "aimIndex": 9,
-      "top": "triple",
+      "top": "rail",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17535,15 +17535,15 @@
       "svgSheet": true
     },
     {
-      "id": "enemy-needle-capital-triple-top-10",
-      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
-      "width": 40,
-      "height": 40,
-      "displayWidth": 17.5,
-      "displayHeight": 17.5,
+      "id": "enemy-needle-capital-rail-top-10",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-48-sheet.svg",
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-10",
       "aimIndex": 10,
-      "top": "triple",
+      "top": "rail",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17553,15 +17553,15 @@
       "svgSheet": true
     },
     {
-      "id": "enemy-needle-capital-triple-top-11",
-      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
-      "width": 40,
-      "height": 40,
-      "displayWidth": 17.5,
-      "displayHeight": 17.5,
+      "id": "enemy-needle-capital-rail-top-11",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-48-sheet.svg",
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-11",
       "aimIndex": 11,
-      "top": "triple",
+      "top": "rail",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17571,15 +17571,15 @@
       "svgSheet": true
     },
     {
-      "id": "enemy-needle-capital-triple-top-12",
-      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
-      "width": 40,
-      "height": 40,
-      "displayWidth": 17.5,
-      "displayHeight": 17.5,
+      "id": "enemy-needle-capital-rail-top-12",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-48-sheet.svg",
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-12",
       "aimIndex": 12,
-      "top": "triple",
+      "top": "rail",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17589,15 +17589,15 @@
       "svgSheet": true
     },
     {
-      "id": "enemy-needle-capital-triple-top-13",
-      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
-      "width": 40,
-      "height": 40,
-      "displayWidth": 17.5,
-      "displayHeight": 17.5,
+      "id": "enemy-needle-capital-rail-top-13",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-48-sheet.svg",
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-13",
       "aimIndex": 13,
-      "top": "triple",
+      "top": "rail",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17607,15 +17607,15 @@
       "svgSheet": true
     },
     {
-      "id": "enemy-needle-capital-triple-top-14",
-      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
-      "width": 40,
-      "height": 40,
-      "displayWidth": 17.5,
-      "displayHeight": 17.5,
+      "id": "enemy-needle-capital-rail-top-14",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-48-sheet.svg",
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-14",
       "aimIndex": 14,
-      "top": "triple",
+      "top": "rail",
       "pivot": {
         "x": 0.5,
         "y": 0.5
@@ -17625,15 +17625,303 @@
       "svgSheet": true
     },
     {
-      "id": "enemy-needle-capital-triple-top-15",
-      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
-      "width": 40,
-      "height": 40,
-      "displayWidth": 17.5,
-      "displayHeight": 17.5,
+      "id": "enemy-needle-capital-rail-top-15",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-48-sheet.svg",
+      "width": 48,
+      "height": 48,
+      "displayWidth": 21,
+      "displayHeight": 21,
       "facing": "world-15",
       "aimIndex": 15,
-      "top": "triple",
+      "top": "rail",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "needle",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-needle-capital-dish-top-0",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-32-sheet.svg",
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-0",
+      "aimIndex": 0,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "needle",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-needle-capital-dish-top-1",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-32-sheet.svg",
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-1",
+      "aimIndex": 1,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "needle",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-needle-capital-dish-top-2",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-32-sheet.svg",
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-2",
+      "aimIndex": 2,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "needle",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-needle-capital-dish-top-3",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-32-sheet.svg",
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-3",
+      "aimIndex": 3,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "needle",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-needle-capital-dish-top-4",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-32-sheet.svg",
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-4",
+      "aimIndex": 4,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "needle",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-needle-capital-dish-top-5",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-32-sheet.svg",
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-5",
+      "aimIndex": 5,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "needle",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-needle-capital-dish-top-6",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-32-sheet.svg",
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-6",
+      "aimIndex": 6,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "needle",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-needle-capital-dish-top-7",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-32-sheet.svg",
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-7",
+      "aimIndex": 7,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "needle",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-needle-capital-dish-top-8",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-32-sheet.svg",
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-8",
+      "aimIndex": 8,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "needle",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-needle-capital-dish-top-9",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-32-sheet.svg",
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-9",
+      "aimIndex": 9,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "needle",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-needle-capital-dish-top-10",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-32-sheet.svg",
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-10",
+      "aimIndex": 10,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "needle",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-needle-capital-dish-top-11",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-32-sheet.svg",
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-11",
+      "aimIndex": 11,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "needle",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-needle-capital-dish-top-12",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-32-sheet.svg",
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-12",
+      "aimIndex": 12,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "needle",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-needle-capital-dish-top-13",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-32-sheet.svg",
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-13",
+      "aimIndex": 13,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "needle",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-needle-capital-dish-top-14",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-32-sheet.svg",
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-14",
+      "aimIndex": 14,
+      "top": "dish",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "needle",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-needle-capital-dish-top-15",
+      "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-32-sheet.svg",
+      "width": 32,
+      "height": 32,
+      "displayWidth": 14,
+      "displayHeight": 14,
+      "facing": "world-15",
+      "aimIndex": 15,
+      "top": "dish",
       "pivot": {
         "x": 0.5,
         "y": 0.5
