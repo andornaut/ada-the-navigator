@@ -118,6 +118,7 @@ export type ObjectsContext = Partial<Pick<GameScene, "fieldLight">> &
     | "craftArt"
     | "debrisArt"
     | "destruction"
+    | "destinationPlaceholderTops"
     | "drawnTops"
     | "edgeMarkerInk"
     | "enemyArt"
@@ -506,7 +507,7 @@ export function drawRevealGroup(
 }
 
 /**
- * A destination: its outpost or holodisk art, else the placeholder rings; nothing for one its
+ * A destination: its authored art or an opaque, outlined placeholder; nothing for one its
  * data marks undrawn (data/destinations.ts), which its buoy and craft stand for.
  */
 export function drawDestination(
@@ -558,41 +559,56 @@ export function drawDestination(
   ) {
     return;
   }
-  scene.ink.fillEllipse(point.x, point.y, radius * 2, radius);
-  scene.ink.strokeEllipse(point.x, point.y, radius * 2, radius);
-  scene.ink.strokeEllipse(point.x, point.y - 7, radius, radius * 0.6);
-  acknowledgePrimitiveTarget(
-    scene,
-    scene.ink,
-    { center: point, filled: true, height: radius, kind: "ellipse", width: radius * 2 },
-    object.id,
-  );
-  acknowledgePrimitiveTarget(
-    scene,
-    scene.ink,
+  if (object.id === "elderLoom") {
+    const flight = scene.model.state.flight;
+    const craft = scene.craftArt.get("glider");
+    if (flight?.galaxy === 4 && craft) {
+      const frame = selectEnemyFrame(
+        craft,
+        worldDelta(flightWorldContext(flight), object, flight.player),
+      );
+      if (scene.textures.exists(frame.id)) {
+        const sprite = objectSprite(scene, object.id, frame.id)
+          .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
+          .setOrigin(frame.pivot.x, frame.pivot.y)
+          .setPosition(point.x, point.y)
+          .setDepth(playDepth(point.y));
+        keylineSprite(scene, "storyCraft", object.id, sprite);
+        scene.passes(sprite);
+        return;
+      }
+    }
+  }
+  // Enlarge only the drawn placeholder. Drawn geometry also owns identification and Talk lift.
+  const strokeWidth = 2;
+  const shapes = [
+    { center: point, height: radius * 1.25, width: radius * 2.5 },
     {
-      center: point,
-      filled: false,
-      height: radius,
-      kind: "ellipse",
-      strokeWidth: 1.5,
-      width: radius * 2,
+      center: { x: point.x, y: point.y - radius * 0.5 },
+      height: radius * 0.75,
+      width: radius * 1.25,
     },
-    object.id,
-  );
-  acknowledgePrimitiveTarget(
-    scene,
-    scene.ink,
-    {
-      center: { x: point.x, y: point.y - 7 },
-      filled: false,
-      height: radius * 0.6,
-      kind: "ellipse",
-      strokeWidth: 1.5,
-      width: radius,
-    },
-    object.id,
-  );
+  ];
+  const ink = LIGHT_FIELD.ink;
+  const signal = scene.palette.pointOfInterest;
+  const lightField = scene.fieldLight ?? scene.light;
+  scene.ink.fillStyle(lightField ? signal : ink);
+  scene.ink.lineStyle(strokeWidth, lightField ? ink : signal);
+  let top = 0;
+  for (const { center, height, width } of shapes) {
+    scene.ink.fillEllipse(center.x, center.y, width, height);
+    scene.ink.strokeEllipse(center.x, center.y, width, height);
+    const ellipse = { center, height, kind: "ellipse" as const, width };
+    acknowledgePrimitiveTarget(scene, scene.ink, { ...ellipse, filled: true }, object.id);
+    acknowledgePrimitiveTarget(
+      scene,
+      scene.ink,
+      { ...ellipse, filled: false, strokeWidth },
+      object.id,
+    );
+    top = Math.max(top, point.y - center.y + (height + strokeWidth) / 2);
+  }
+  scene.destinationPlaceholderTops.set(object.id, top);
 }
 
 /**

@@ -75,6 +75,7 @@ function fixture() {
     visible: true,
   };
   const scene = {
+    destinationPlaceholderTops: new Map(),
     galaxyStations: new Map(),
     ink,
     landmarkSprites: new Map(),
@@ -93,6 +94,7 @@ function fixture() {
   const globals = {
     CONTENT,
     ECONOMY,
+    LIGHT_FIELD: { ink: 0x181425 },
     PHANTOM_FLAGSHIP,
     PhaserMath: {
       Vector2: class {
@@ -307,13 +309,13 @@ describe("emitted primitive marker geometry", () => {
       ).toBe(primitiveTargetInView({ closed: true, filled: true, kind: "path", points: quad }));
     }
   });
-  it("identifies a destination when only its emitted 1.5-pixel ellipse stroke crosses the viewport", () => {
+  it("identifies a destination when only its emitted two-pixel ellipse stroke crosses the viewport", () => {
     const f = fixture();
     const code = production("./sceneObjects.ts", ["drawDestination"], f.globals);
-    code.drawDestination(f.scene, f.target, { x: -20.5, y: 100 }, 20);
+    code.drawDestination(f.scene, f.target, { x: -25.5, y: 100 }, 20);
     expect(f.displayed).toHaveBeenCalledWith("target", f.scene.litCaches);
     f.displayed.mockClear();
-    code.drawDestination(f.scene, f.target, { x: -20.9, y: 100 }, 20);
+    code.drawDestination(f.scene, f.target, { x: -26.1, y: 100 }, 20);
     expect(f.displayed).not.toHaveBeenCalled();
   });
   it("identifies a station from its two-pixel hull stroke only, never its approach ring", () => {

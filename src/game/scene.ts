@@ -263,6 +263,8 @@ export class GameScene extends Scene {
   };
   /** Each destination's drawn top above its pivot over the frames it has shown, by id. */
   drawnTops = new Map<string, number>();
+  /** Visible procedural destination extents for the current render pass. */
+  destinationPlaceholderTops = new Map<string, number>();
   /** Each texture frame's topmost row at alpha 0.5 or more, as a fraction of its height. */
   frameTops = new Map<string, number>();
   /** Enemies drawn as vector placeholders this frame, while their frames load. */
@@ -1095,6 +1097,7 @@ export class GameScene extends Scene {
       this.needleFlight = flight ?? undefined;
     }
     this.ink.clear();
+    this.destinationPlaceholderTops.clear();
     clearPhantomSong(this);
     clearPhantomJump(this);
     this.jets.clear();

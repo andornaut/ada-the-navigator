@@ -100,7 +100,7 @@ export type HudContext = Partial<Pick<GameScene, "fieldLight">> &
  * it fades out.
  */
 export function drawUseCallout(
-  scene: HudContext & Pick<GameScene, "landmarkSprites">,
+  scene: HudContext & Pick<GameScene, "destinationPlaceholderTops" | "landmarkSprites">,
   flight: FlightState | null | undefined,
 ): void {
   scene.useCallout ??= createUseCallout(scene, scene.rasters.scale).setDepth(USE_CALLOUT_DEPTH);
@@ -118,7 +118,8 @@ export function drawUseCallout(
       state.id = target.id;
     }
     const point = scene.project(object);
-    const top = drawnTop(scene, target.id, point);
+    const top =
+      scene.destinationPlaceholderTops.get(target.id) ?? drawnTop(scene, target.id, point);
     state.at = { x: point.x, y: point.y - useCalloutLift(top) };
     scene.useCallout.setFrame(target.action);
   } else if (state.showing) {
