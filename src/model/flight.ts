@@ -164,6 +164,7 @@ import {
 import { armed, layMine, stepMines, strikeMines } from "./flight/mines.ts";
 import { projectileContact, projectileSceneryContact } from "./flight/projectileContact.ts";
 import { resolveScenery, type SceneryContactOf } from "./flight/sceneryResolution.ts";
+import { bounceShipContact } from "./flight/shipContact.ts";
 import { flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
 import {
   createFrigateEscorts,
@@ -293,7 +294,6 @@ import { rechargeShield } from "./shieldRecharge.ts";
 import {
   SHIP_REACH,
   shipBody,
-  shipCircleContact,
   shipNearSegment,
   shipTouches,
   shipTouchesScreenCircle,
@@ -361,6 +361,13 @@ const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
  * no field; a restored or newly pressed stick starts from the velocity heading.
  */
 const movementHeadings = new WeakMap<FlightState, Vec>();
+
+function reflectMovementHeading(flight: FlightState, normal: Vec): void {
+  const heading = movementHeadings.get(flight);
+  if (heading) {
+    movementHeadings.set(flight, reflectDirection(normal, heading));
+  }
+}
 /**
  * Ada's velocity averaged for enemy aim per flight (ENEMY_AIM.velocitySeconds). It is transient
  * like the movement heading: a restored or new flight starts it at her current velocity.
@@ -578,10 +585,7 @@ function adaSceneryContact(
       bumpAda(content, flight, events, object);
     }
     flight.velocity = bounce(sceneryRestitution, sceneryRecoil, normal, surface, flight.velocity);
-    const heading = movementHeadings.get(flight);
-    if (heading) {
-      movementHeadings.set(flight, reflectDirection(normal, heading));
-    }
+    reflectMovementHeading(flight, normal);
   };
 }
 
@@ -606,73 +610,18 @@ function bumpAda(
   }
 }
 
-/**
- * Resolve Ada's contact with an enemy hull and report whether the ships were closing. Each
- * reflects against the other's velocity; Ada takes the share m_enemy / (m_ada + m_enemy) of
- * her reflected change and of the push-out, with mass as size ratio squared, and the enemy
- * the rest. Their relative motion then matches a scenery bounce, so they always separate.
- */
+/** Resolves ship contact, then settles Ada against any scenery reached by the push-out. */
 export function bounceShips(
   content: GameContent,
   flight: FlightState,
   object: SpaceObject,
 ): boolean {
-  const enemy = object.enemy;
-  const { sceneryRecoil, sceneryRestitution } = content.tuning.flight;
-  // The enemy's drawn hull, or its hull circle without Art's outline, against Ada's drawn ship.
-  const outline = enemy && enemyHull(enemy, ROUTE_POSITION[flight.galaxy]);
-  const contact =
-    enemy &&
-    (outline
-      ? outlinesContact(
-          outline,
-          worldPoint(flightWorldContext(flight), flight.player, object),
-          shipBody(flight.facing),
-          flight.player,
-        )
-      : shipCircleContact(
-          flight.facing,
-          flight.player,
-          worldPoint(flightWorldContext(flight), flight.player, object),
-          object.radius,
-        ));
-  if (!enemy || !contact) {
+  const closing = bounceShipContact(reflectMovementHeading, content.tuning.flight, flight, object);
+  if (closing === null) {
     return false;
   }
-  const { normal } = contact;
-  const approach =
-    (flight.velocity.x - enemy.velocity.x) * normal.x +
-    (flight.velocity.y - enemy.velocity.y) * normal.y;
-  const inward = { x: -normal.x, y: -normal.y };
-  const mass = ENEMY_SIZE_RATIOS[enemy.archetype] ** 2;
-  const adaShare = mass / (1 + mass);
-  const enemyShare = 1 - adaShare;
-  const ada = bounce(sceneryRestitution, sceneryRecoil, normal, enemy.velocity, flight.velocity);
-  const hull = bounce(sceneryRestitution, sceneryRecoil, inward, flight.velocity, enemy.velocity);
-  flight.velocity = {
-    x: flight.velocity.x + (ada.x - flight.velocity.x) * adaShare,
-    y: flight.velocity.y + (ada.y - flight.velocity.y) * adaShare,
-  };
-  enemy.velocity = {
-    x: enemy.velocity.x + (hull.x - enemy.velocity.x) * enemyShare,
-    y: enemy.velocity.y + (hull.y - enemy.velocity.y) * enemyShare,
-  };
-  const depth = contact.depth + 0.01;
-  flight.player.x += normal.x * depth * adaShare;
-  flight.player.y += normal.y * depth * adaShare;
-  object.x += inward.x * depth * enemyShare;
-  object.y += inward.y * depth * enemyShare;
-  enemy.position = { x: object.x, y: object.y };
-  const heading = movementHeadings.get(flight);
-  if (heading) {
-    movementHeadings.set(flight, reflectDirection(normal, heading));
-  }
-  if (enemy.heading) {
-    enemy.heading = reflectDirection(inward, enemy.heading);
-  }
-  // Ada's push-out may meet scenery, which bounces her by its own rule.
   settleAda(content, flight);
-  return approach < 0;
+  return closing;
 }
 
 function touchesAda(flight: FlightState, point: Vec, radius: number): boolean {
