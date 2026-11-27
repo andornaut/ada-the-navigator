@@ -2264,7 +2264,70 @@ const conversationScannerSources = [
 
 it("proves the live conversation box and Skip metadata through their actual bindings", () => {
   const { findings } = scanDiscreteActionProject(conversationScannerSources);
-  expect(findings.filter(({ path }) => path === "src/ui/conversation.ts")).toEqual([]);
+  expect(findings.filter(({ path }) => path === "src/ui/conversation.ts")).toEqual([
+    expect.objectContaining({
+      classification: "suppressor",
+      kind: "non-action",
+      source: 'root.addEventListener("click", stopClick)',
+    }),
+  ]);
+});
+
+it.each([
+  ["registry owns click too", 'nativeClickOwner: "factory"', 'nativeClickOwner: "registry"'],
+  [
+    "eager publication",
+    "let action = register();",
+    "document.body.append(root); let action = register();",
+  ],
+  [
+    "eager disposal",
+    "  try {\n    document.getElementById",
+    "  release();\n  try {\n    document.getElementById",
+  ],
+  ["second activation", "event.stopPropagation();", "event.stopPropagation(); onDismiss();"],
+  [
+    "latch can be forged",
+    "  root.addEventListener",
+    "  clickActivated = true;\n  root.addEventListener",
+  ],
+  [
+    "activation result from another owner",
+    "clickActivated = action.activate();",
+    "clickActivated = another.activate();",
+  ],
+  [
+    "fresh button escapes through state",
+    "availability: button.hidden",
+    "availability: publish(button) || button.hidden",
+  ],
+] as const)("keeps Conversation construction open for %s", (_case, original, replacement) => {
+  const path = "src/ui/conversation.ts";
+  const mutated = conversationScannerSources.map((entry) =>
+    entry.path === path ? { ...entry, text: entry.text.replace(original, replacement) } : entry,
+  );
+  expect(mutated.find((entry) => entry.path === path)?.text).not.toBe(
+    conversationScannerSources.find((entry) => entry.path === path)?.text,
+  );
+  expect(scanDiscreteActionProject(mutated).findings).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        kind: "unbound-discrete",
+        path,
+        source: expect.stringContaining("createButton(document"),
+      }),
+      expect.objectContaining({
+        kind: "unbound-discrete",
+        path,
+        source: 'root.dataset.action = "conversation"',
+      }),
+      expect.objectContaining({
+        kind: "raw-discrete",
+        path,
+        source: 'root.addEventListener("click", stopClick)',
+      }),
+    ]),
+  );
 });
 
 function capturedControl(before = "", call = "let action = register();", after = "") {

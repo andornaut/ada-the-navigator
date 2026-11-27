@@ -215,6 +215,7 @@ function localDeclarations(
 function inertRegistrationOptions(
   node: ts.Expression,
   localRead: (node: ts.Identifier) => boolean = () => false,
+  factoryOwned = false,
 ): boolean {
   if (ts.isObjectLiteralExpression(node)) {
     return node.properties.every(
@@ -222,8 +223,11 @@ function inertRegistrationOptions(
         ts.isPropertyAssignment(property) &&
         (ts.isIdentifier(property.name) || ts.isStringLiteral(property.name)) &&
         property.name.text !== "__proto__" &&
-        property.name.text !== "nativeClickOwner" &&
-        inertRegistrationOptions(property.initializer, localRead),
+        (property.name.text === "nativeClickOwner"
+          ? factoryOwned &&
+            ts.isStringLiteral(property.initializer) &&
+            property.initializer.text === "factory"
+          : inertRegistrationOptions(property.initializer, localRead)),
     );
   }
   return (
@@ -1443,7 +1447,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
     );
   };
   // A direct catch that only cleans up and rethrows cannot reach a later publication site.
-  const failureCleanup = (site: ts.Node): boolean => {
+  const failureCleanup = (site: ts.Node, localCleanup?: ts.VariableDeclaration): boolean => {
     const call = ts.isCallExpression(site)
       ? site
       : ts.isCallExpression(site.parent) && site.parent.expression === site
@@ -1475,20 +1479,29 @@ function scanSource(context: ScanContext, path: string, text: string) {
       ts.isThrowStatement(rethrow) &&
       rethrow.expression &&
       lexicalIdentity(rethrow.expression, clause.variableDeclaration) &&
-      block.statements
-        .slice(0, -1)
-        .every(
-          (step) =>
-            ts.isExpressionStatement(step) &&
-            ts.isCallExpression(step.expression) &&
-            !step.expression.questionDotToken &&
-            ts.isPropertyAccessExpression(step.expression.expression) &&
-            !step.expression.expression.questionDotToken &&
-            ts.isIdentifier(step.expression.expression.expression) &&
-            lexicalDeclaration(step.expression.expression.expression) &&
-            ["dispose", "remove"].includes(step.expression.expression.name.text) &&
-            step.expression.arguments.length === 0,
-        ),
+      block.statements.slice(0, -1).every((step) => {
+        if (
+          localCleanup &&
+          ts.isExpressionStatement(step) &&
+          ts.isCallExpression(step.expression) &&
+          !step.expression.questionDotToken &&
+          !step.expression.arguments.length &&
+          lexicalIdentity(step.expression.expression, localCleanup)
+        ) {
+          return true;
+        }
+        return (
+          ts.isExpressionStatement(step) &&
+          ts.isCallExpression(step.expression) &&
+          !step.expression.questionDotToken &&
+          ts.isPropertyAccessExpression(step.expression.expression) &&
+          !step.expression.expression.questionDotToken &&
+          ts.isIdentifier(step.expression.expression.expression) &&
+          lexicalDeclaration(step.expression.expression.expression) &&
+          ["dispose", "remove"].includes(step.expression.expression.name.text) &&
+          step.expression.arguments.length === 0
+        );
+      }),
     );
   };
   for (const call of lifecycleCalls) {
@@ -1662,7 +1675,11 @@ function scanSource(context: ScanContext, path: string, text: string) {
   const isConst = (node: ts.VariableDeclaration): boolean =>
     ts.isVariableDeclarationList(node.parent) && Boolean(node.parent.flags & ts.NodeFlags.Const);
 
-  const capturedRegistrar = (expression: ts.Expression, control: ts.VariableDeclaration) => {
+  const capturedRegistrar = (
+    expression: ts.Expression,
+    control: ts.VariableDeclaration,
+    factoryOwned: boolean,
+  ) => {
     if (
       !ts.isArrowFunction(expression) ||
       !synchronousCallable(expression) ||
@@ -1683,8 +1700,13 @@ function scanSource(context: ScanContext, path: string, text: string) {
       canonicalBindingCall(call) &&
       call.arguments.length === 2 &&
       ts.isObjectLiteralExpression(call.arguments[0]!) &&
+      (!factoryOwned || literal(fields(call.arguments[0]!)?.get("nativeClickOwner"), "factory")) &&
       lexicalIdentity(call.arguments[1]!, control) &&
-      inertRegistrationOptions(call.arguments[0]!, (node) => Boolean(lexicalDeclaration(node))) &&
+      inertRegistrationOptions(
+        call.arguments[0]!,
+        (node) => Boolean(lexicalDeclaration(node)),
+        factoryOwned,
+      ) &&
       (!ts.isBlock(body) ||
         body.statements.slice(0, -1).every((statement) => {
           const local = singleLocal(statement);
@@ -1700,7 +1722,11 @@ function scanSource(context: ScanContext, path: string, text: string) {
     );
   };
 
-  const privateDomEdit = (statement: ts.Statement, privateNodes: ReadonlySet<ts.Declaration>) => {
+  const privateDomEdit = (
+    statement: ts.Statement,
+    privateNodes: ReadonlySet<ts.Declaration>,
+    allowReplace = false,
+  ) => {
     if (!ts.isExpressionStatement(statement)) {
       return false;
     }
@@ -1715,7 +1741,9 @@ function scanSource(context: ScanContext, path: string, text: string) {
         ts.isPropertyAccessExpression(method) &&
         !method.questionDotToken &&
         owns(method.expression) &&
-        ((method.name.text === "append" && expression.arguments.every(owns)) ||
+        (((method.name.text === "append" ||
+          (allowReplace && method.name.text === "replaceChildren")) &&
+          expression.arguments.every(owns)) ||
           (method.name.text === "setAttribute" &&
             expression.arguments.length === 2 &&
             expression.arguments.every(ts.isStringLiteralLike) &&
@@ -1762,6 +1790,215 @@ function scanSource(context: ScanContext, path: string, text: string) {
     );
   };
 
+  const captureCall = (statement: ts.Statement | undefined) => {
+    const expression = statement && ts.isExpressionStatement(statement) && statement.expression;
+    return expression &&
+      ts.isBinaryExpression(expression) &&
+      expression.operatorToken.kind === ts.SyntaxKind.EqualsToken
+      ? expression
+      : undefined;
+  };
+  const capturedKitFactory = (element: ts.VariableDeclaration, block: ts.Block) => {
+    if (!dot(element.initializer, "element") || !unwritten(element.initializer)) {
+      return undefined;
+    }
+    const kit = lexicalDeclaration(element.initializer.expression);
+    const call = kit && ts.isVariableDeclaration(kit) && kit.initializer;
+    if (
+      !kit ||
+      !ts.isVariableDeclaration(kit) ||
+      !isConst(kit) ||
+      !call ||
+      !ts.isCallExpression(call) ||
+      call.questionDotToken ||
+      singleLocal(kit.parent.parent) !== kit ||
+      block.statements[block.statements.indexOf(kit.parent.parent as ts.Statement) + 1] !==
+        element.parent.parent ||
+      kit.parent.parent.parent !== block ||
+      !kitDomImport("createButton", "button", call.expression) ||
+      !unwritten(call.expression) ||
+      call.arguments.length !== 2 ||
+      !nativeDocument(call.arguments[0]!) ||
+      !clean(`${reference(call.arguments[0]!)}.createElement`, false, writesOnly)
+    ) {
+      return undefined;
+    }
+    const options = fields(call.arguments[1]);
+    const content = fields(options?.get("content"));
+    const getAction = options?.get("getAction");
+    if (
+      !literal(fields(options?.get("appearance"))?.get("layout"), "caller") ||
+      !literal(content?.get("kind"), "text") ||
+      content?.size !== 2 ||
+      !ts.isStringLiteral(content.get("label") ?? source) ||
+      !readsButtonAvailability(options?.get("getState")) ||
+      !getAction ||
+      !ts.isArrowFunction(getAction) ||
+      !synchronousCallable(getAction) ||
+      getAction.parameters.length ||
+      !ts.isParenthesizedExpression(getAction.body) ||
+      !ts.isObjectLiteralExpression(getAction.body.expression) ||
+      getAction.body.expression.properties.length !== 1
+    ) {
+      return undefined;
+    }
+    const method = namedProperty(getAction.body.expression, "activate");
+    const assignment =
+      method &&
+      ts.isMethodDeclaration(method) &&
+      synchronousCallable(method) &&
+      !method.parameters.length &&
+      method.body?.statements.length === 1 &&
+      captureCall(method.body.statements[0]);
+    if (
+      !assignment ||
+      !ts.isCallExpression(assignment.right) ||
+      assignment.right.questionDotToken ||
+      assignment.right.arguments.length ||
+      !dot(assignment.right.expression, "activate")
+    ) {
+      return undefined;
+    }
+    const latch = lexicalDeclaration(assignment.left);
+    return latch &&
+      ts.isVariableDeclaration(latch) &&
+      ts.isIdentifier(latch.name) &&
+      latch.parent.flags & ts.NodeFlags.Let &&
+      latch.initializer?.kind === ts.SyntaxKind.FalseKeyword &&
+      latch.parent.parent.parent === block &&
+      latch.end < kit.pos
+      ? { call, kit, latch, set: assignment.left, action: assignment.right.expression.expression }
+      : undefined;
+  };
+  const capturedSuppressors = new Set<ts.CallExpression>();
+  const capturedKitCleanup = (
+    block: ts.Block,
+    element: ts.VariableDeclaration,
+    action: ts.VariableDeclaration,
+    factory: NonNullable<ReturnType<typeof capturedKitFactory>>,
+  ) => {
+    if (!lexicalIdentity(factory.action, action)) {
+      return undefined;
+    }
+    const listenerCall = (call: ts.CallExpression | undefined, method: string) =>
+      call &&
+      !call.questionDotToken &&
+      dot(call.expression, method) &&
+      unwritten(call.expression) &&
+      lexicalIdentity(call.expression.expression, element) &&
+      call.arguments.length === 2 &&
+      literal(call.arguments[0], "click");
+    const listeners = block.statements
+      .map(callStatement)
+      .filter((call): call is ts.CallExpression =>
+        Boolean(call && call.pos > action.end && listenerCall(call, "addEventListener")),
+      );
+    if (listeners.length !== 1) {
+      return undefined;
+    }
+    const [listener] = listeners;
+    const handler = lexicalDeclaration(listener!.arguments[1]!);
+    const fn = handler && ts.isVariableDeclaration(handler) && handler.initializer;
+    if (
+      !handler ||
+      !ts.isVariableDeclaration(handler) ||
+      !isConst(handler) ||
+      handler.parent.parent.parent !== block ||
+      !fn ||
+      !ts.isArrowFunction(fn) ||
+      !synchronousCallable(fn) ||
+      fn.parameters.length !== 1 ||
+      !ts.isIdentifier(fn.parameters[0]!.name) ||
+      fn.parameters[0]!.initializer ||
+      fn.parameters[0]!.dotDotDotToken ||
+      !ts.isBlock(fn.body) ||
+      fn.body.statements.length !== 1
+    ) {
+      return undefined;
+    }
+    const guard = fn.body.statements[0]!;
+    if (
+      !ts.isIfStatement(guard) ||
+      guard.elseStatement ||
+      !ts.isBlock(guard.thenStatement) ||
+      guard.thenStatement.statements.length !== 2 ||
+      !lexicalIdentity(guard.expression, factory.latch)
+    ) {
+      return undefined;
+    }
+    const [reset, stop] = guard.thenStatement.statements;
+    const clear = captureCall(reset);
+    const suppress = callStatement(stop);
+    if (
+      !clear ||
+      !lexicalIdentity(clear.left, factory.latch) ||
+      clear.right.kind !== ts.SyntaxKind.FalseKeyword ||
+      !suppress ||
+      suppress.questionDotToken ||
+      suppress.arguments.length ||
+      !dot(suppress.expression, "stopPropagation") ||
+      !lexicalIdentity(suppress.expression.expression, fn.parameters[0]!)
+    ) {
+      return undefined;
+    }
+    const localUses = (site: ts.Node): true | undefined => {
+      if (ts.isIdentifier(site)) {
+        const local = ts.isShorthandPropertyAssignment(site.parent)
+          ? declaration(site)
+          : lexicalDeclaration(site);
+        if (
+          local === factory.latch &&
+          ![factory.latch.name, factory.set, guard.expression, clear.left].includes(site)
+        ) {
+          return true;
+        }
+      }
+      return ts.forEachChild(site, localUses);
+    };
+    if (localUses(block)) {
+      return undefined;
+    }
+    for (const statement of block.statements) {
+      const cleanup = singleLocal(statement);
+      const fn = cleanup?.initializer;
+      if (
+        !cleanup ||
+        !isConst(cleanup) ||
+        !fn ||
+        !ts.isArrowFunction(fn) ||
+        !synchronousCallable(fn) ||
+        fn.parameters.length ||
+        !ts.isBlock(fn.body) ||
+        fn.body.statements.length !== 3
+      ) {
+        continue;
+      }
+      const [retire, dispose, remove] = fn.body.statements.map(callStatement);
+      const disposes = (call: ts.CallExpression | undefined, declaration: ts.VariableDeclaration) =>
+        call &&
+        !call.questionDotToken &&
+        !call.arguments.length &&
+        dot(call.expression, "dispose") &&
+        lexicalIdentity(call.expression.expression, declaration);
+      if (
+        disposes(retire, action) &&
+        disposes(dispose, factory.kit) &&
+        remove &&
+        listenerCall(remove, "removeEventListener") &&
+        lexicalIdentity(remove.arguments[1]!, handler)
+      ) {
+        return {
+          cleanup,
+          handler,
+          listener: listener!,
+          retire: retire!,
+          dispose: dispose!,
+          remove,
+        };
+      }
+    }
+    return undefined;
+  };
   const capturedProofs = new Map<ts.VariableDeclaration, number>();
   const proveCapturedConstruction = (control: ts.VariableDeclaration): number => {
     const creation = control.parent.parent;
@@ -1770,12 +2007,17 @@ function scanSource(context: ScanContext, path: string, text: string) {
       !isConst(control) ||
       !ts.isIdentifier(control.name) ||
       !control.initializer ||
-      !freshElement(control.initializer) ||
       singleLocal(creation) !== control ||
       !ts.isVariableStatement(creation) ||
       !ts.isBlock(block) ||
-      !ts.isFunctionLike(block.parent) ||
-      !stable(control.name, false, constructionLifetimes)
+      !ts.isFunctionLike(block.parent)
+    ) {
+      return -1;
+    }
+    const factory = capturedKitFactory(control, block);
+    if (
+      (!factory && !freshElement(control.initializer)) ||
+      !stable(control.name, false, factory ? writesOnly : constructionLifetimes)
     ) {
       return -1;
     }
@@ -1792,7 +2034,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
     for (const statement of block.statements.slice(block.statements.indexOf(creation) + 1)) {
       const local = singleLocal(statement);
       if (!local?.initializer || !ts.isIdentifier(local.name)) {
-        if (!privateDomEdit(statement, privateNodes)) {
+        if (!privateDomEdit(statement, privateNodes, Boolean(factory))) {
           return -1;
         }
         continue;
@@ -1800,11 +2042,18 @@ function scanSource(context: ScanContext, path: string, text: string) {
       const value = local.initializer;
       if (invokes(value)) {
         const owner = phase(value);
+        const kit = factory && capturedKitCleanup(block, control, local, factory);
+        if (factory && !kit) {
+          return -1;
+        }
         const reads = (node: ts.Identifier, expected: ts.VariableDeclaration): boolean =>
           lexicalIdentity(node, expected) ||
           (ts.isShorthandPropertyAssignment(node.parent) && declaration(node) === expected);
         const unsafe = (node: ts.Node): true | undefined => {
           if (ts.isIdentifier(node) && node !== local.name && reads(node, local)) {
+            if (factory && (node === factory.action || node.parent.parent === kit?.retire)) {
+              return undefined;
+            }
             const access = node.parent;
             const use = access.parent;
             const dispose =
@@ -1825,6 +2074,36 @@ function scanSource(context: ScanContext, path: string, text: string) {
               ? true
               : undefined;
           }
+          if (ts.isIdentifier(node) && kit && factory) {
+            if (node !== kit.cleanup.name && reads(node, kit.cleanup)) {
+              const use = node.parent;
+              if (
+                !ts.isCallExpression(use) ||
+                use.expression !== node ||
+                use.questionDotToken ||
+                use.arguments.length ||
+                (!returnedMethod(node, owner) && !failureCleanup(use, kit.cleanup))
+              ) {
+                return true;
+              }
+            }
+            if (
+              node !== kit.handler.name &&
+              reads(node, kit.handler) &&
+              node !== kit.listener.arguments[1] &&
+              node !== kit.remove.arguments[1]
+            ) {
+              return true;
+            }
+            if (
+              node !== factory.kit.name &&
+              reads(node, factory.kit) &&
+              node.parent !== control.initializer &&
+              node.parent.parent !== kit.dispose
+            ) {
+              return true;
+            }
+          }
           if (
             ts.isIdentifier(node) &&
             registrar &&
@@ -1838,11 +2117,21 @@ function scanSource(context: ScanContext, path: string, text: string) {
           }
           return ts.forEachChild(node, unsafe);
         };
-        return immediateInvocation(value) && !unsafe(block) ? value.end : -1;
+        if (!immediateInvocation(value) || unsafe(block)) {
+          return -1;
+        }
+        if (kit) {
+          capturedSuppressors.add(kit.listener);
+        }
+        return value.end;
       }
       if (isConst(local) && freshElement(value)) {
         privateNodes.add(local);
-      } else if (!registrar && isConst(local) && capturedRegistrar(value, control)) {
+      } else if (
+        !registrar &&
+        isConst(local) &&
+        capturedRegistrar(value, control, Boolean(factory))
+      ) {
         registrar = local;
       } else if (
         !inertRegistrationOptions(value) ||
@@ -1854,16 +2143,20 @@ function scanSource(context: ScanContext, path: string, text: string) {
     }
     return -1;
   };
-  const capturedConstruction = (node: ts.Expression, metadata?: ts.BinaryExpression): boolean => {
-    const control = lexicalDeclaration(node);
-    if (!control || !ts.isVariableDeclaration(control) || phase(node) !== phase(control)) {
-      return false;
-    }
+  const capturedEnd = (control: ts.VariableDeclaration) => {
     let end = capturedProofs.get(control);
     if (end === undefined) {
       end = proveCapturedConstruction(control);
       capturedProofs.set(control, end);
     }
+    return end;
+  };
+  const capturedConstruction = (node: ts.Expression, metadata?: ts.BinaryExpression): boolean => {
+    const control = lexicalDeclaration(node);
+    if (!control || !ts.isVariableDeclaration(control) || phase(node) !== phase(control)) {
+      return false;
+    }
+    const end = capturedEnd(control);
     return end >= 0 && (!metadata || metadata.end <= end);
   };
 
@@ -2153,20 +2446,6 @@ function scanSource(context: ScanContext, path: string, text: string) {
     if (singleLocal(creation) !== handle || !ts.isBlock(creation.parent)) {
       return false;
     }
-    const options = fields(call.arguments[1]);
-    const content = fields(options?.get("content"));
-    const state = options?.get("getState");
-    const native = nativeDocument(call.arguments[0]!);
-    const stateWithoutElement = !state || (ts.isArrowFunction(state) && !state.parameters.length);
-    if (
-      !literal(fields(options?.get("appearance"))?.get("layout"), "caller") ||
-      !literal(content?.get("kind"), "icon") ||
-      content?.has("icon") ||
-      (!native && !createdHostDocument(call.arguments[0]!)) ||
-      (!stateWithoutElement && !readsButtonAvailability(state))
-    ) {
-      return false;
-    }
     const block = creation.parent;
     const following = block.statements.slice(block.statements.indexOf(creation) + 1);
     const first = following[0];
@@ -2178,6 +2457,23 @@ function scanSource(context: ScanContext, path: string, text: string) {
       !dot(alias.initializer, "element") ||
       !lexicalIdentity(alias.initializer.expression, handle) ||
       !unwritten(alias.initializer)
+    ) {
+      return false;
+    }
+    if (capturedKitFactory(alias, block)?.call === call && capturedEnd(alias) >= 0) {
+      return true;
+    }
+    const options = fields(call.arguments[1]);
+    const content = fields(options?.get("content"));
+    const state = options?.get("getState");
+    const native = nativeDocument(call.arguments[0]!);
+    const stateWithoutElement = !state || (ts.isArrowFunction(state) && !state.parameters.length);
+    if (
+      !literal(fields(options?.get("appearance"))?.get("layout"), "caller") ||
+      !literal(content?.get("kind"), "icon") ||
+      content?.has("icon") ||
+      (!native && !createdHostDocument(call.arguments[0]!)) ||
+      (!stateWithoutElement && !readsButtonAvailability(state))
     ) {
       return false;
     }
@@ -3902,6 +4198,13 @@ function scanSource(context: ScanContext, path: string, text: string) {
             node,
             "suppressor",
             "Capture click only clears a private pointer latch used for suppression and cancels the browser event",
+          );
+        } else if (discrete && capturedSuppressors.has(node)) {
+          record(
+            "non-action",
+            node,
+            "suppressor",
+            "Bubble listener only consumes the factory's accepted click and stops propagation",
           );
         } else if (discrete) {
           if (node !== nativeBridge) {
