@@ -107,6 +107,7 @@ import { settlementsNear } from "./andromedaPlaces.ts";
 import { selectCartwheelClaimField } from "./cartwheelClaimField.ts";
 import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
+import { blastCoversAda, pickupTouched, touchesAda } from "./flight/adaContactQueries.ts";
 import { beamPoint, outlineBeamStrike, rayCircle, sampleBeam } from "./flight/beamContact.ts";
 import { crossbowAttack, crossbowFrame } from "./flight/crossbow.ts";
 import { inBattle, inDanger } from "./flight/danger.ts";
@@ -258,15 +259,7 @@ import {
 import { segmentDistance, worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 
 export { activateRouteEncounter, syncFlightRegion } from "./geography.ts";
-import {
-  inside,
-  outlineContact,
-  outlinesContact,
-  type Parts,
-  partsReach,
-  toScreen,
-  worldParts,
-} from "./convex.ts";
+import { inside, outlineContact, type Parts, partsReach, toScreen, worldParts } from "./convex.ts";
 import { debrisSilhouette } from "./debrisBody.ts";
 import { carriesStardust } from "./drops.ts";
 import { enemyHull, enemyPartOutline, enemyPhysicalBody } from "./enemyBody.ts";
@@ -293,7 +286,7 @@ import { impactSurface } from "./projectileImpact.ts";
 import { SceneryFrames } from "./sceneryFrames.ts";
 import { sceneryImpact } from "./sceneryImpact.ts";
 import { rechargeShield } from "./shieldRecharge.ts";
-import { shipBody, shipTouches, shipTouchesScreenCircle } from "./shipBody.ts";
+import { shipBody } from "./shipBody.ts";
 import { direction, turnToward } from "./shipPhysics.ts";
 import {
   worldFitsEncounter,
@@ -329,6 +322,7 @@ import { leveledValue, type ShipTuning, shipTuning } from "./upgrades.ts";
 import { markVisited, visitedChunk } from "./visited.ts";
 
 export { wreckId };
+export { pickupTouched };
 export { dockFlight, undockFlight } from "./flight/berth.ts";
 export { salvage, salvageTarget } from "./flight/destruction.ts";
 export { activeEnemyBeams, type EnemyBeam } from "./flight/enemyBeams.ts";
@@ -588,23 +582,6 @@ export function bounceShips(
   return closing;
 }
 
-function touchesAda(flight: FlightState, point: Vec, radius: number): boolean {
-  return shipTouches(
-    flight.facing,
-    flight.player,
-    worldPoint(flightWorldContext(flight), flight.player, point),
-    radius,
-  );
-}
-/** Whether a blast circle of screen radius `radius` at `point` overlaps Ada as drawn. */
-function blastCoversAda(flight: FlightState, point: Vec, radius: number): boolean {
-  return shipTouchesScreenCircle(
-    flight.facing,
-    flight.player,
-    worldPoint(flightWorldContext(flight), flight.player, point),
-    radius,
-  );
-}
 function canonicalObject(flight: FlightState, object: SpaceObject): void {
   canonicalPosition(flight, object);
   if (object.enemy) {
@@ -3874,29 +3851,6 @@ function damage(amount: number, flight: FlightState): void {
   }
   flight.shield = Math.max(0, flight.shield - amount);
   flight.sinceDamage = 0;
-}
-/**
- * Whether Ada's drawn ship reaches a pickup at `center`, by the one pickup rule: within the
- * pickup margin, in world units on the world plane, between the ship's drawn body and the
- * pickup's drawn `outline`, or its circle of `radius`.
- */
-export function pickupTouched(
-  content: GameContent,
-  flight: FlightState,
-  center: Vec,
-  radius: number,
-  outline: Parts | null = null,
-): boolean {
-  const margin = content.tuning.flight.pickupMargin;
-  return outline
-    ? outlinesContact(
-        outline,
-        worldPoint(flightWorldContext(flight), flight.player, center),
-        shipBody(flight.facing),
-        flight.player,
-        margin,
-      ) !== null
-    : touchesAda(flight, center, radius + margin);
 }
 /**
  * Whether an enemy presses Ada: engaged, neither returning nor fleeing, within its perception,
