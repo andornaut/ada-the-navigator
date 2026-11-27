@@ -1868,6 +1868,20 @@ function footerRule(css: string, selector: string): string {
   return new RegExp(`(?:^|\\n)${escaped}\\{([^}]+)\\}`, "u").exec(css)?.[1] ?? "";
 }
 
+it("keeps the station dialogue column visible when Talk mounts actions", () => {
+  const panel = ".ada-controls .ada-station-frame > .ada-story-panel.ada-station-page";
+  const actions = `${panel} > .ada-story-choice-column`;
+  const fork = `${panel}:has(> .ada-story-choice-column > .ada-story-choices:not([hidden]))`;
+  expect(footerRule(STATION_STYLE, `${actions}:not(:has(> :not([hidden])))`).trim()).toBe(
+    "display:none",
+  );
+  expect(footerRule(STATION_STYLE, actions)).toContain("flex:none");
+  expect(footerRule(STATION_STYLE, fork)).toContain("grid-template-rows:minmax(0,1fr) auto");
+  expect(footerRule(STATION_STYLE, `${fork} > .ada-station-footer`).trim()).toBe(
+    "grid-column:1 / -1",
+  );
+});
+
 it("pins the station footer's services left and Undock right, BUTTON_GAP apart", () => {
   // art/layout.md "Station" and art/shop.md: the footer pattern with 16 between faces.
   const footer = footerRule(STATION_STYLE, ".ada-controls .ada-station-footer");

@@ -24,6 +24,9 @@ const PRESSED_BOTTOM = `calc(${units(TEXT_BUTTON.lipHeight - TEXT_BUTTON.pressed
   top,
 )} - ${slice(bottom)})`;
 const FLAT_TOP = `calc(${slice(bottom)} - ${slice(top)})`;
+const TALK_PANEL = ".ada-controls .ada-station-frame > .ada-story-panel.ada-station-page";
+const TALK_ACTIONS = `${TALK_PANEL} > .ada-story-choice-column`;
+const TALK_FORK = `${TALK_PANEL}:has(> .ada-story-choice-column > .ada-story-choices:not([hidden]))`;
 const TILE_ROW = ".ada-controls .ada-shop-row";
 const TILE_FACE = `${TILE_ROW}:is([data-state=inUse],:focus-visible):where(
   :not(:active),[data-state=unaffordable]
@@ -52,7 +55,7 @@ export const STATION_STYLE = `
 .ada-controls [data-station] .ada-station-page > .ada-card-body{
   flex:1
 }
-.ada-controls .ada-station-frame > .ada-story-panel.ada-station-page{
+${TALK_PANEL}{
   position:static;
   transform:none;
   width:100%;
@@ -62,8 +65,34 @@ export const STATION_STYLE = `
   flex-direction:column;
   gap:${units(SPACING.gap)}
 }
-.ada-controls .ada-station-frame .ada-story-choice-column{
+/* Keep linear navigation above the footer. Forks reserve a column for each scroll region. */
+${TALK_ACTIONS}{
+  flex:none;
+  min-width:0
+}
+${TALK_ACTIONS}:not(:has(> :not([hidden]))){
   display:none
+}
+${TALK_ACTIONS}::before{
+  content:none
+}
+${TALK_FORK}{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-template-rows:minmax(0,1fr) auto;
+  column-gap:${units(SPACING.panelPadding)}
+}
+${TALK_FORK} > .ada-station-footer{
+  grid-column:1 / -1
+}
+${TALK_ACTIONS} > .ada-story-choices{
+  overflow-x:hidden;
+  overscroll-behavior:contain;
+  padding:${units(SPACING.gap)}
+}
+${TALK_ACTIONS} .ui-control-label{
+  overflow-wrap:anywhere;
+  white-space:normal
 }
 .ada-controls .ada-station-frame .ada-story-heading{
   text-align:center
