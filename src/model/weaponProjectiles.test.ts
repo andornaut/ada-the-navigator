@@ -124,7 +124,7 @@ describe("Phaser hitscan beam", () => {
     expect(hp(flight, "near")).toBe(STURDY - 4);
     expect(hp(flight, "far")).toBe(STURDY);
     expect(flight.shots.filter((shot) => !shot.enemy)).toHaveLength(0);
-    expect(flight.fireCooldown).toBeCloseTo(1, 9);
+    expect(flight.fireCooldown).toBeCloseTo(2, 9);
   });
 
   it("stops at a rock in front, sparing the enemy behind it", () => {
