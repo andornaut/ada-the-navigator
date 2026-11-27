@@ -228,7 +228,7 @@ export function createPennyMarkerLayer(
       node,
     );
     item.dispose = binding.dispose;
-    node.type = "button";
+    node.setAttribute("type", "button");
     return item;
   }
   const view = {
