@@ -510,6 +510,8 @@ export type FlightEvent =
   | { id: string; type: "enemyDisabled" }
   /** An authored boss lost its first working hardpoint without resolving the fight on that hit. */
   | { id: string; type: "enemyFirstHardpointLost" }
+  /** The Outrigger lost a working Mine Layer and is still armed. */
+  | { hardpointId: string; id: string; type: "enemyMineLayerDisabled" }
   | { type: "debrisCleared"; id: string }
   /** A destroyed rock, for the view's break at its pivot; it changes no state. */
   | {

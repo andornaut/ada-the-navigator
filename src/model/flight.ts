@@ -4894,6 +4894,21 @@ function hit(
     ) {
       events.push({ id: object.id, type: "enemyFirstHardpointLost" });
     }
+    if (
+      object.id === CARTWHEEL_CLAIM.id &&
+      part !== null &&
+      object.hp > 0 &&
+      !before.disabled &&
+      !after.disabled &&
+      definition.hardpoints.some(
+        (mount) =>
+          mount.id === part && mount.kind === "weapon" && mount.fire.weapon === "mineLayer",
+      ) &&
+      before.hardpoints.some(({ hp, id }) => id === part && hp > 0) &&
+      after.hardpoints.some(({ hp, id }) => id === part && hp === 0)
+    ) {
+      events.push({ hardpointId: part, id: object.id, type: "enemyMineLayerDisabled" });
+    }
   } else {
     object.hp -= amount;
   }

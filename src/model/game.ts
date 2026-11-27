@@ -3820,16 +3820,23 @@ export class GameModel {
     }
     if (f.galaxy === 2 && this.current.claim?.phase === "active") {
       const claim = this.current.claim;
-      if (
-        events.some((event) => event.type === "enemyDestroyed" && event.id === CARTWHEEL_CLAIM.id)
-      ) {
+      const { id } = CARTWHEEL_CLAIM;
+      if (events.some((event) => event.type === "enemyDestroyed" && event.id === id)) {
         this.resolveCartwheelClaim(f, "defeated");
-      } else if (
-        events.some(
-          (event) => event.type === "enemyFirstHardpointLost" && event.id === CARTWHEEL_CLAIM.id,
-        )
-      ) {
-        this.current.claim = { ...claim, firstHardpointLost: true };
+      } else {
+        if (events.some((event) => event.type === "enemyFirstHardpointLost" && event.id === id)) {
+          this.current.claim = { ...claim, firstHardpointLost: true };
+        }
+        if (!events.some((event) => event.type === "enemyDisabled" && event.id === id)) {
+          for (const event of events) {
+            if (event.type === "enemyMineLayerDisabled" && event.id === id) {
+              this.talk.authoredCue(
+                `${id}:mineLayer:${event.hardpointId}`,
+                CARTWHEEL_CLAIM_CUES.mineLayer,
+              );
+            }
+          }
+        }
       }
     }
     for (const event of events) {
