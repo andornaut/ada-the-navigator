@@ -10,11 +10,32 @@ class Element extends EventTarget {
     this.tag = tag;
   }
 
+  get ownerDocument() {
+    return document;
+  }
+  getAttribute(name: string) {
+    return this.attributes.get(name) ?? null;
+  }
+
   readonly attributes = new Map<string, string>();
   children: Element[] = [];
   parentElement: Element | null = null;
   isConnected = true;
   className = "";
+  readonly classList = {
+    add: (name: string) => {
+      this.className = [...new Set([...this.className.split(/\s+/u).filter(Boolean), name])].join(
+        " ",
+      );
+    },
+    contains: (name: string) => this.className.split(/\s+/u).includes(name),
+    remove: (name: string) => {
+      this.className = this.className
+        .split(/\s+/u)
+        .filter((part) => part !== name)
+        .join(" ");
+    },
+  };
   readonly dataset: Record<string, string> = {};
   hidden = false;
   readonly style = { opacity: "", setProperty: vi.fn() };
@@ -35,14 +56,28 @@ class Element extends EventTarget {
     ]);
   }
   querySelector(selector: string): Element | null {
-    return this.children.find((node) => node.className === selector.slice(1)) ?? null;
+    return this.children.find((node) => node.classList.contains(selector.slice(1))) ?? null;
   }
   remove() {}
   replaceChildren(...nodes: Element[]) {
-    this.children = nodes;
+    for (const child of this.children) {
+      child.parentElement = null;
+    }
+    this.children = [];
+    this.append(...nodes);
   }
   setAttribute(name: string, value: string) {
     this.attributes.set(name, value);
+  }
+  removeAttribute(name: string) {
+    this.attributes.delete(name);
+  }
+  toggleAttribute(name: string, value: boolean) {
+    if (value) {
+      this.setAttribute(name, "");
+    } else {
+      this.removeAttribute(name);
+    }
   }
 }
 const labels: WeaponLabels = {

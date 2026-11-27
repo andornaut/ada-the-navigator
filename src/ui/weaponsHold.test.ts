@@ -46,9 +46,23 @@ class Element extends EventTarget {
   readonly attributes = new Map<string, string>();
   children: Element[] = [];
   className = "";
+  readonly classList = {
+    add: (name: string) => {
+      this.className = [...new Set([...this.className.split(/\s+/u).filter(Boolean), name])].join(
+        " ",
+      );
+    },
+    contains: (name: string) => this.className.split(/\s+/u).includes(name),
+    remove: (name: string) => {
+      this.className = this.className
+        .split(/\s+/u)
+        .filter((part) => part !== name)
+        .join(" ");
+    },
+  };
   readonly dataset: Record<string, string> = {};
   hidden = false;
-  readonly style = { opacity: "", setProperty: vi.fn() };
+  readonly style = { opacity: "", removeProperty: vi.fn(), setProperty: vi.fn() };
   textContent = "";
   append(...nodes: Element[]) {
     for (const node of nodes) {
@@ -63,7 +77,7 @@ class Element extends EventTarget {
     ]);
   }
   querySelector(selector: string): Element | null {
-    return this.children.find((node) => node.className === selector.slice(1)) ?? null;
+    return this.children.find((node) => node.classList.contains(selector.slice(1))) ?? null;
   }
   remove() {
     this.connected = false;
@@ -73,10 +87,24 @@ class Element extends EventTarget {
     this.parentElement = null;
   }
   replaceChildren(...nodes: Element[]) {
-    this.children = nodes;
+    for (const child of this.children) {
+      child.parentElement = null;
+    }
+    this.children = [];
+    this.append(...nodes);
   }
   setAttribute(name: string, value: string) {
     this.attributes.set(name, value);
+  }
+  removeAttribute(name: string) {
+    this.attributes.delete(name);
+  }
+  toggleAttribute(name: string, value: boolean) {
+    if (value) {
+      this.setAttribute(name, "");
+    } else {
+      this.removeAttribute(name);
+    }
   }
 }
 
@@ -112,6 +140,7 @@ afterEach(() => {
   }
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 function setup(withOverride = true) {
   vi.useFakeTimers();
@@ -322,4 +351,33 @@ it("removes a newly constructed weapon when its action root has been retired", (
   expect(f.onHold).not.toHaveBeenCalled();
   expect(f.onSelect).not.toHaveBeenCalled();
   f.selector.dispose();
+});
+
+it("gives the factory one native action and disposes a running refusal with the button", () => {
+  const added = vi.spyOn(Element.prototype, "addEventListener");
+  const f = setup();
+  const registrations = (element: Element) =>
+    added.mock.calls.flatMap(([name, , options], index) =>
+      added.mock.contexts[index] === element ? [[name, options]] : [],
+    );
+  expect(registrations(f.button).filter(([name]) => name === "click")).toEqual([["click", true]]);
+  expect(f.button.classList.contains("ui-standard-button")).toBe(true);
+  expect(f.button.querySelector(".ada-disc")?.classList.contains("ui-button-face")).toBe(true);
+
+  const row = f.button.parentElement!;
+  const click = f.event("click");
+  row.dispatchEvent(click);
+  expect(click.cancelBubble).toBe(true);
+  expect(f.onSelect).not.toHaveBeenCalled();
+
+  f.onSelect.mockReturnValue(true);
+  f.click(0);
+  expect(f.onSelect).toHaveBeenCalledExactlyOnceWith("laser");
+  expect(f.button.getAttribute("data-ui-refusal-red")).toBe("");
+  f.selector.dispose();
+  expect(f.button.getAttribute("data-ui-refusal-red")).toBeNull();
+  f.button.dispatchEvent(f.event("click", { detail: 0 }));
+  expect(f.onSelect).toHaveBeenCalledOnce();
+  f.stop();
+  expect(vi.getTimerCount()).toBe(0);
 });

@@ -1,8 +1,16 @@
+import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
+
 import type { Weapon } from "../data/types.ts";
 import { UPGRADE_TIER_COLOURS } from "../data/upgradeTiers.ts";
 import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
-import { assertAdaActionBindings, bindAdaAction } from "./actionBinding.ts";
+import {
+  ADA_ACTION_HOLD_MS,
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+  resolveAdaHoldAction,
+} from "./actionBinding.ts";
 import { AmmoFeedbackQueue } from "./ammoFeedback.ts";
 import { COLOURS } from "./layout/colours.ts";
 import { SCROLL } from "./layout/contentCard.ts";
@@ -355,11 +363,19 @@ ${([1, 2, 3] as const)
 `;
 
 export function createWeaponSelector(parent: HTMLElement, options: WeaponSelectorOptions) {
+  const document = parent.ownerDocument;
   const root = document.createElement("div");
   root.className = "ada-weapon-selector";
   root.setAttribute("role", "group");
   root.setAttribute("aria-label", options.labels.group);
   root.hidden = true;
+  // The factory owns activation. Keep its successful native clicks inside the HUD.
+  const stopWeaponClick = (event: MouseEvent) => {
+    if (event.target !== root) {
+      event.stopPropagation();
+    }
+  };
+  root.addEventListener("click", stopWeaponClick);
   parent.append(root);
   const buttons = new Map<Weapon, HTMLButtonElement>();
   let choices: readonly WeaponChoice[] = [];
@@ -367,7 +383,7 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
   let shown: boolean | undefined;
   let disposed = false;
   let pressed: HTMLElement | null = null;
-  const actionBindings = new Map<Weapon, ReturnType<typeof bindAdaAction>>();
+  const buttonDisposers = new Map<Weapon, () => void>();
   const feedback = new AmmoFeedbackQueue();
   let lastFeedbackTime: number | undefined;
 
@@ -376,8 +392,8 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
     const ids = new Set(choices.map((choice) => choice.id));
     for (const [id, entry] of buttons) {
       if (!ids.has(id)) {
-        actionBindings.get(id)?.dispose();
-        actionBindings.delete(id);
+        buttonDisposers.get(id)?.();
+        buttonDisposers.delete(id);
         entry.remove();
         buttons.delete(id);
       }
@@ -385,18 +401,32 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
     for (const choice of choices) {
       let entry = buttons.get(choice.id);
       if (!entry) {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "ada-weapon";
+        const current = () => choices.find((item) => item.id === choice.id);
+        const kit = createButton(document, {
+          appearance: {
+            className: "ada-weapon",
+            face: { className: "ada-disc" },
+            layout: "caller",
+          },
+          content: { kind: "icon", name: weaponButtonLabel(options.labels, choice) },
+          getAction: (button) => {
+            const action = resolveAdaHoldAction(parent, button);
+            return action?.available() ? action : null;
+          },
+          getState: () => ({
+            availability: enabled ? { kind: "available" } : { kind: "disabled" },
+            toggled: current()?.selected ?? false,
+          }),
+          rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: SCROLL.dragThreshold },
+        });
+        const button = kit.element;
         button.dataset.weapon = choice.id;
-        const disc = document.createElement("span");
-        disc.className = "ada-disc";
-        disc.style.setProperty("--glyph", `url('${weaponGlyphPath(choice.id)}')`);
-        disc.setAttribute("aria-hidden", "true");
+        kit.face.style.setProperty("--glyph", `url('${weaponGlyphPath(choice.id)}')`);
+        kit.face.setAttribute("aria-hidden", "true");
         const pips = document.createElement("span");
         pips.className = "ada-pips";
         pips.setAttribute("aria-hidden", "true");
-        button.append(disc, pips);
+        button.append(pips);
         if (choice.ammo !== null) {
           const count = document.createElement("span");
           count.className = "ada-ammo";
@@ -410,35 +440,34 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
         gain.setAttribute("aria-atomic", "true");
         button.append(gain);
         const availability = () =>
-          enabled && !disposed && !button.disabled && choices.some((item) => item.id === choice.id)
+          enabled && !disposed && !button.disabled && current()
             ? { kind: "available" as const }
             : { kind: "omitted" as const };
-        button.addEventListener("pointerdown", (event) => event.stopPropagation());
-        button.addEventListener("keydown", () => {
-          if (!disposed) {
-            invalidatePressScope(parent);
-          }
-        });
+        const stopPointerDown = (event: PointerEvent) => event.stopPropagation();
+        const cancelOnKeyDown = () => invalidatePressScope(parent);
+        button.addEventListener("pointerdown", stopPointerDown);
+        button.addEventListener("keydown", cancelOnKeyDown);
+        let cancelRefusal: (() => void) | undefined;
         const binding = bindAdaAction(
           {
-            beforeClick: (event) => event.stopPropagation(),
             click: {
               availability,
               run: () => {
                 if (enabled && !button.disabled && options.onSelect(choice.id)) {
-                  refuse(button, options.reducedMotion());
+                  cancelRefusal = refuse(button, options.reducedMotion());
                 }
               },
             },
             current: () => !disposed,
+            nativeClickOwner: "factory",
             ...(options.onHold
               ? {
                   hold: {
                     availability,
                     run: () => {
-                      const current = choices.find((item) => item.id === choice.id);
-                      if (enabled && !button.disabled && current) {
-                        options.onHold?.(current, button);
+                      const latest = current();
+                      if (enabled && !button.disabled && latest) {
+                        options.onHold?.(latest, button);
                       }
                     },
                   },
@@ -448,15 +477,23 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
           },
           button,
         );
+        const disposeButton = () => {
+          cancelRefusal?.();
+          binding.dispose();
+          kit.dispose();
+          button.removeEventListener("pointerdown", stopPointerDown);
+          button.removeEventListener("keydown", cancelOnKeyDown);
+        };
         try {
+          assertAdaActionMetadata(button);
           root.append(button);
           assertAdaActionBindings(button);
         } catch (error) {
-          binding.dispose();
+          disposeButton();
           button.remove();
           throw error;
         }
-        actionBindings.set(choice.id, binding);
+        buttonDisposers.set(choice.id, disposeButton);
         entry = button;
         buttons.set(choice.id, entry);
       }
@@ -507,10 +544,11 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
     dispose(): void {
       feedback.clear();
       disposed = true;
-      for (const binding of actionBindings.values()) {
-        binding.dispose();
+      for (const disposeButton of buttonDisposers.values()) {
+        disposeButton();
       }
-      actionBindings.clear();
+      buttonDisposers.clear();
+      root.removeEventListener("click", stopWeaponClick);
       root.remove();
     },
     setEnabled(value: boolean): void {
