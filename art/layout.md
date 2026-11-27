@@ -629,16 +629,19 @@ around the game area's perimeter while the view gives its small shake
 
 - Colour `threat` `#FF6B6B` ([Space palette](space-palette.md)), the one red in
   space.
-- A 3 logical px band drawn just inside the game area's edge (the play view
-  rect, not the safe area), square corners.
-- Opacity 1 at the hit, fading linearly to 0 over 200 ms; a new hit restarts it
-  at 1.
+- Draw a solid band with square corners just inside the play view rect. It
+  measures 2 rendered px at the viewport edge and leaves letterbox bars
+  unchanged.
+- Each actual hit restarts the same band at opacity 1. Fade smoothly to 0
+  by 120 ms, passing approximately 0.82, 0.58, 0.37, 0.20 and 0.08 at 20,
+  40, 60, 80 and 100 ms. Rapid hits replace the active fade at its peak.
 - It stays fixed on the play view edge while the view shakes, so the band never
   leaves the edge or uncovers a strip.
 - Draws above the backdrop and the world and below the HUD, the sticks and the
   [edge markers](#edge-markers), so the markers stay readable over it.
 - Reduced motion: not drawn.
-- Constants: `HIT_FLASH` (colour, width 3, duration 200) in `src/data/layout.ts`.
+- Runtime controls: `HIT_FLASH` in `src/data/layout.ts` and the existing
+  hit flash renderer.
 
 ### Item notice
 
