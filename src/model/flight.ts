@@ -334,14 +334,14 @@ import { leveledValue, type ShipTuning, shipTuning } from "./upgrades.ts";
 import { markVisited, visitedChunk } from "./visited.ts";
 
 export { wreckId };
+export { salvage, salvageTarget } from "./flight/destruction.ts";
+export { activeEnemyBeams, type EnemyBeam } from "./flight/enemyBeams.ts";
 export {
   arrivalGraceActive,
   beginArrivalGrace,
   createUnpopulatedFlight,
   type Loadout,
 } from "./flight/lifecycle.ts";
-export { salvage, salvageTarget } from "./flight/destruction.ts";
-export { activeEnemyBeams, type EnemyBeam } from "./flight/enemyBeams.ts";
 export { inBattle, inDanger, movementSpeedFraction, shipSpeedFraction, towing };
 export {
   activeBeamFlashes,
