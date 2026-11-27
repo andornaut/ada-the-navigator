@@ -1,4 +1,5 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
+import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { REFUSAL_ATTRIBUTES } from "@andornaut/game-kit/runtime/web/ui/dom/refusalCue";
 
@@ -17,6 +18,7 @@ import {
   interactionCopy,
 } from "../model/conversations.ts";
 import {
+  ADA_ACTION_HOLD_MS,
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
@@ -325,8 +327,26 @@ export interface ConversationBox {
 
 /** A tap on the box (its name tab included) calls onDismiss, which ends the whole conversation. */
 export function createConversationBox(onDismiss: () => void): ConversationBox {
-  const root = document.createElement("button");
-  root.type = "button";
+  let clickActivated = false;
+  const kit = createButton(document, {
+    appearance: { layout: "caller" },
+    content: { kind: "text", label: "Conversation" },
+    getAction: () => ({
+      activate() {
+        clickActivated = action.activate();
+      },
+    }),
+    getState: (button) => ({
+      availability: button.hidden
+        ? { kind: "omitted" }
+        : button.disabled
+          ? { kind: "disabled" }
+          : { kind: "available" },
+    }),
+    rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: SCROLL.dragThreshold },
+  });
+  const root = kit.element;
+  // The notice supplies its own face and keyboard focus cue.
   root.className = "ada-conversation";
   root.dataset.action = "conversation";
   root.hidden = true;
@@ -344,14 +364,14 @@ export function createConversationBox(onDismiss: () => void): ConversationBox {
   column.append(words);
   const name = document.createElement("span");
   name.className = "ada-conversation-name";
-  root.append(frame, column, name);
+  // The line and speaker provide the accessible name through the button's contents.
+  root.replaceChildren(frame, column, name);
   let disposed = false;
   let lineKey: string | null = null;
   const register = () => {
     const generation = lineKey;
     return bindAdaAction(
       {
-        beforeClick: (event) => event.stopPropagation(),
         click: {
           availability: () =>
             lineKey !== null && !root.closest("[hidden], [inert]")
@@ -360,16 +380,30 @@ export function createConversationBox(onDismiss: () => void): ConversationBox {
           run: onDismiss,
         },
         current: () => !disposed && lineKey === generation && root.isConnected,
+        nativeClickOwner: "factory",
         slopPx: () => SCROLL.dragThreshold * readViewUnit(root),
       },
       root,
     );
   };
   let action = register();
+  // Kit activates in capture. Keep an accepted native click out of flight input.
+  const stopClick = (event: Event) => {
+    if (clickActivated) {
+      clickActivated = false;
+      event.stopPropagation();
+    }
+  };
+  root.addEventListener("click", stopClick);
+  const release = () => {
+    action.dispose();
+    kit.dispose();
+    root.removeEventListener("click", stopClick);
+  };
   try {
     document.getElementById(VIEW_HOST_ID)?.append(root);
   } catch (error) {
-    action.dispose();
+    release();
     root.remove();
     throw error;
   }
@@ -379,7 +413,7 @@ export function createConversationBox(onDismiss: () => void): ConversationBox {
     dispose: () => {
       disposed = true;
       selectPortraitCrop(face, undefined);
-      action.dispose();
+      release();
       root.remove();
     },
     render(line, desktop, reducedMotion) {

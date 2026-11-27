@@ -422,6 +422,8 @@ describe("Interaction card HUD row", () => {
 
 class ConversationElement extends EventTarget {
   className = "";
+  readonly classList = { add() {} };
+  disabled = false;
   hidden = false;
   type = "";
   textContent = "";
@@ -448,6 +450,12 @@ class ConversationElement extends EventTarget {
       this.children.push(child);
     }
   }
+  replaceChildren(...children: ConversationElement[]) {
+    for (const child of [...this.children]) {
+      child.remove();
+    }
+    this.append(...children);
+  }
   remove() {
     const siblings = this.parentElement?.children;
     if (siblings) {
@@ -461,7 +469,11 @@ class ConversationElement extends EventTarget {
   matches(selector: string): boolean {
     return selector.split(",").some((part) => {
       const rule = part.trim();
-      return rule === this.tag || (rule === "[data-action]" && this.dataset.action !== undefined);
+      return (
+        rule === this.tag ||
+        (rule === ":disabled" && this.disabled) ||
+        (rule === "[data-action]" && this.dataset.action !== undefined)
+      );
     });
   }
   querySelectorAll(selector: string): ConversationElement[] {
@@ -484,6 +496,9 @@ class ConversationElement extends EventTarget {
   }
   setAttribute(name: string, value: string) {
     this.attributes.set(name, value);
+  }
+  removeAttribute(name: string) {
+    this.attributes.delete(name);
   }
   toggleAttribute(name: string, enabled: boolean) {
     if (enabled) {
@@ -544,6 +559,13 @@ describe("conversation dismiss publication", () => {
       append(button);
       expect(button.hidden).toBe(true);
       expect(button.dataset.action).toBe("conversation");
+      expect(button.getAttribute("aria-live")).toBe("polite");
+      expect(button.getAttribute("aria-label")).toBeNull();
+      expect(button.children.map(({ className }) => className)).toEqual([
+        "ada-conversation-frame",
+        "ada-conversation-text",
+        "ada-conversation-name",
+      ]);
       assertAdaActionMetadata(asHTMLElement(button));
       assertAdaActionBindings(asHTMLElement(button));
     });
@@ -567,7 +589,10 @@ describe("conversation dismiss publication", () => {
         expect(initial.available()).toBe(false);
         box.render(publicationLine, true, true);
         expect(host.children).toEqual([button]);
-        expect(resolveAdaHoldAction(root, button)!.identity).not.toBe(initial.identity);
+        const visible = resolveAdaHoldAction(root, button)!;
+        expect(visible.identity).not.toBe(initial.identity);
+        box.render({ ...publicationLine, elapsed: 1 }, true, true);
+        expect(resolveAdaHoldAction(root, button)?.identity).toBe(visible.identity);
         initial.activate();
         expect(dismissed).not.toHaveBeenCalled();
         const pointer = (type: string) =>
@@ -595,6 +620,31 @@ describe("conversation dismiss publication", () => {
           button.dispatchEvent(compatibility);
         }
         expect(dismissed).toHaveBeenCalledOnce();
+
+        const pending = pointer("pointerdown");
+        doc.dispatchEvent(pending);
+        host.dispatchEvent(pending);
+        box.render({ ...publicationLine, key: "publication:1", text: "The next line" }, true, true);
+        doc.dispatchEvent(pointer("pointerup"));
+        const staleClick = pointer("click");
+        host.dispatchEvent(staleClick);
+        if (!staleClick.defaultPrevented) {
+          button.dispatchEvent(staleClick);
+        }
+        expect(visible.available()).toBe(false);
+        visible.activate();
+        expect(dismissed).toHaveBeenCalledOnce();
+
+        const nativeClick = new Event("click");
+        const stop = vi.spyOn(nativeClick, "stopPropagation");
+        button.dispatchEvent(nativeClick);
+        expect(stop).toHaveBeenCalledOnce();
+        expect(dismissed).toHaveBeenCalledTimes(2);
+        box.render(null, true, true);
+        button.dispatchEvent(new Event("click"));
+        expect(button.hidden).toBe(true);
+        expect(button.children[1]?.children[0]?.textContent).toBe("The next line");
+        expect(dismissed).toHaveBeenCalledTimes(2);
       } finally {
         box.dispose();
       }
