@@ -757,8 +757,6 @@ export const GALAXY_MAP_MOVE = {
   arrival: { panel: 160 },
   // A reduced-motion unlock: the ship fades out, the markers switch, the ship fades in.
   reduced: { fade: 150 },
-  // A selection move: 360 px/s along the legs, clamped, easeInOutSine on arc length.
-  selection: { max: 0.9, min: 0.3, speed: 360 },
   // The unlock: the markers crossfade and their legs draw over 300 ms, a ring pulses in the
   // farthest new marker's hue over 400 ms, then the ship flies to it at 180 px/s, clamped so
   // the whole unlock takes at most 2.4 s (gameplay/rules.md).
@@ -782,6 +780,7 @@ export const GALAXY_MAP_LAYOUT = {
     backing: { alpha: 0.85, radius: 15 },
     disc: 12,
     edge: 1.5,
+    selectedBackingRadius: 16,
   },
   // The arc between consecutive markers, stamped every 0.5, stopping 15 from each centre; its
   // look is its destination's.

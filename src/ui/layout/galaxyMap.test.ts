@@ -11,7 +11,6 @@ import {
   restingTangent,
   routeDistance,
   routeHeading,
-  selectionSeconds,
   unlockFlightSeconds,
   unlockSeconds,
 } from "./galaxyMap.ts";
@@ -152,11 +151,6 @@ describe("route legs", () => {
 });
 
 describe("route moves", () => {
-  it("moves the ship at 360 px/s, clamped to 0.3 to 0.9 s: one leg in 0.309 s", () => {
-    expect([50, 111.34, 530].map(selectionSeconds)).toEqual([0.3, 111.34 / 360, 0.9]);
-    expect(selectionSeconds(routeDistance(2))).toBeCloseTo(0.309, 3);
-  });
-
   it("flies an unlock's trip at clamp(length / 180, 0.8, 2.0) s by its whole arc length", () => {
     const legs = (count: number) => routeDistance((1 + count) as 2 | 3 | 4 | 5 | 6);
     // One leg flies the 0.8 s floor; two legs, 222.68 px, fly 1.237 s, not two floors.

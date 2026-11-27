@@ -3,6 +3,7 @@ import { expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { GALAXY_MAP_STYLE } from "./galaxyMap.ts";
 import { units } from "./layout/css.ts";
+import { GALAXY_MAP } from "./layout/galaxyMap.ts";
 
 it("leaves the galaxy selector unframed while retaining the information panel frame", () => {
   const outer = GALAXY_MAP_STYLE.match(/\.ada-controls \.ada-route-rules\{([^}]+)\}/u)?.[1];
@@ -39,10 +40,13 @@ it("ties the filled state cues to the marker labels and retains the unlock pulse
   expect(GALAXY_MAP_STYLE).not.toContain(".ada-route-ring");
   expect(GALAXY_MAP_STYLE).not.toContain(".ada-route-frame");
   expect(GALAXY_MAP_STYLE).toContain(".ada-route-pulse{");
-  expect(GALAXY_MAP_STYLE).toContain(
-    ".ada-route-marker[data-selected]:not([data-earth]) > .ada-route-disc{\n" +
-      "  border-color:var(--hue)\n}",
-  );
+  const backing = GALAXY_MAP_STYLE.match(
+    /\.ada-route-marker\[data-selected\]:not\(\[data-earth\]\) > \.ada-route-backing\{([^}]+)\}/u,
+  )?.[1];
+  expect(backing).toContain(`width:${units(32)}`);
+  expect(backing).toContain(`height:${units(32)}`);
+  expect(backing).toContain("background:#65c9bf");
+  expect(GALAXY_MAP.marker.selectedBackingRadius - GALAXY_MAP.marker.disc).toBe(4);
 });
 
 // The destination actions as the scene reads them from content.

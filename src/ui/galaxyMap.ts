@@ -4,6 +4,7 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { GALAXY_COUNT, type RoutePosition } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
+import { TASK_COLORS } from "../data/taskCategories.ts";
 import { jetLayerPass, jetOccluderRegions, jetsInFront, type ShipJets } from "../game/shipJets.ts";
 import type { RouteFlight } from "../model/game.ts";
 import {
@@ -46,7 +47,6 @@ import {
   routeDistance,
   routeHeading,
   routePoint,
-  selectionSeconds,
   type Stamp,
   unlockFlightSeconds,
 } from "./layout/galaxyMap.ts";
@@ -68,7 +68,7 @@ import { setStoryScenePreview, type StoryScenePreview } from "./storySceneView.t
 // marker and the single destination action (Jump to the selected galaxy or Earth, Stay in the
 // galaxy Ada is flying in, or Stay on Earth at boarding). The close X and Escape go one step back.
 // The model holds the ship's galaxy, a locked galaxy viewed in the panel and the unlock flight;
-// this draws them and animates the ship between them.
+// this draws the selected position and animates progression unlocks.
 
 export interface GalaxyMapLabels {
   readonly back?: string;
@@ -149,7 +149,7 @@ export interface GalaxyMapArt {
 
 export interface GalaxyMapOptions {
   readonly labels: GalaxyMapLabels;
-  /** The clock a selection move and the unlock flight start on, in milliseconds. */
+  /** The clock the unlock flight starts on, in milliseconds. */
   readonly now: () => number;
   /** X, Back, Escape and Stay return to where the galaxy map opened from. */
   readonly onClose: () => void;
@@ -310,6 +310,12 @@ ${mapCloseActionStyle(".ada-controls .ada-route > .ada-close")}
   font:${font(TYPE.label)};
   color:${colors.ink};
   transition:background-color ${GALAXY_MAP_MOVE.unlock.fade}s ease-out
+}
+/* The larger backing overlaps the face to avoid a seam at fractional scales. */
+.ada-controls .ada-route-marker[data-selected]:not([data-earth]) > .ada-route-backing{
+  width:${units(2 * marker.selectedBackingRadius)};
+  height:${units(2 * marker.selectedBackingRadius)};
+  background:${TASK_COLORS.story}
 }
 .ada-controls .ada-route-marker[data-selected]:not([data-earth]) > .ada-route-disc{
   border-color:var(--hue)
@@ -524,15 +530,6 @@ function shipPlace(distance: number): { at: Point; tangent: Point } {
   };
 }
 
-/** A move of the ship along the route: from one distance to another over `seconds`. */
-interface Move {
-  readonly from: number;
-  readonly seconds: number;
-  readonly start: number;
-  readonly thrust: boolean;
-  readonly to: number;
-}
-
 export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   const { labels } = options;
   let viewingEarth = false;
@@ -741,9 +738,8 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
   };
 
   let art: GalaxyMapArt | null = null;
-  // Where the ship is along the route, its move under way and its frame.
+  // The ship's route distance, current art frame and optional unlock flight.
   let distance = 0;
-  let move: Move | null = null;
   let frame = -1;
   // The unlock under way, and the positions it opens that still draw locked.
   let unlock: { readonly flight: RouteFlight; readonly start: number } | null = null;
@@ -841,10 +837,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
         "aria-label",
         `${labels.number.replace("{number}", String(position))}, ${open ? galaxy.name : labels.locked}`,
       );
-      button.toggleAttribute(
-        "data-selected",
-        !unlock && !move && !viewingEarth && position === view.panel,
-      );
+      button.toggleAttribute("data-selected", !unlock && !viewingEarth && position === view.panel);
     }
     earth.toggleAttribute("data-selected", viewingEarth);
     for (const [index, group] of legGroups.entries()) {
@@ -893,25 +886,12 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
 
   function frameLoop(now: number): void {
     animation = 0;
-    if (!view) {
+    if (!view || !unlock) {
       return;
     }
+    stepUnlock(now);
     if (unlock) {
-      stepUnlock(now);
-    } else if (move) {
-      const t = (now - move.start) / 1000 / move.seconds;
-      distance = move.from + (move.to - move.from) * easeInOutSine(t);
-      const { tangent } = routePoint(distance);
-      const back = move.to < move.from;
-      drawShip(move.thrust, back ? { x: -tangent.x, y: -tangent.y } : tangent);
-      if (t >= 1) {
-        move = null;
-        restShip(view.ship);
-        drawChart();
-      }
-    }
-    if (unlock || move) {
-      animation = requestAnimationFrame(frameLoop);
+      startLoop();
     }
   }
 
@@ -1210,7 +1190,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
       );
       drawPanel();
       frame = -1;
-      if (view && !unlock && !move) {
+      if (view && !unlock) {
         restShip(view.ship);
       }
     },
@@ -1244,12 +1224,10 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
         closeX.hidden = false;
         delete screen.dataset.shipCovered;
         drawnLocked = new Set();
-        move = null;
         return;
       }
       drawPanel();
       if (!previous) {
-        move = null;
         if (view.flight) {
           beginUnlock(view.flight);
         } else {
@@ -1262,23 +1240,8 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
       if (unlock) {
         return;
       }
-      const to = routeDistance(view.ship);
-      if (previous.ship !== view.ship && Math.abs(to - distance) < path.step) {
+      if (previous.ship !== view.ship) {
         restShip(view.ship);
-      } else if (previous.ship !== view.ship) {
-        if (reduced()) {
-          move = null;
-          restShip(view.ship);
-        } else {
-          move = {
-            from: distance,
-            seconds: selectionSeconds(Math.abs(to - distance)),
-            start: options.now(),
-            thrust: false,
-            to,
-          };
-          startLoop();
-        }
       }
       drawChart();
     },

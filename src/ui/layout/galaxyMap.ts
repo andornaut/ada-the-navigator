@@ -294,12 +294,6 @@ export function easeInOutSine(t: number): number {
   return -(Math.cos(Math.PI * Math.min(1, Math.max(0, t))) - 1) / 2;
 }
 
-/** A selection move's duration in seconds over `length` px of route. */
-export function selectionSeconds(length: number): number {
-  const { max, min, speed } = GALAXY_MAP_MOVE.selection;
-  return Math.min(max, Math.max(min, length / speed));
-}
-
 /** An unlock's flight duration in seconds over `length` px, after the 400 ms departure. */
 export function unlockFlightSeconds(length: number): number {
   const { depart, max, min, speed } = GALAXY_MAP_MOVE.unlock;
