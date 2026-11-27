@@ -29,6 +29,8 @@ export interface SpawnShape {
 /** Static rocks of one kind, as a mean count per chunk. */
 export interface RockTarget {
   readonly density: number;
+  /** Multiplier at the square chart's wrap edge, interpolated from 1 at the centre. */
+  readonly edgeMultiplier?: number;
   readonly kind: string;
   readonly shapes: readonly SpawnShape[];
   /** Candidate positions per rock before it is dropped. */
@@ -55,6 +57,8 @@ export interface MovingTarget {
   readonly cluster?: ClusterTarget;
   readonly density: number;
   readonly from: readonly string[];
+  /** Scale the baseline density by the actual placements of this source kind. */
+  readonly fromPlaced?: { readonly baseline: number; readonly kind: string };
   readonly kind: string;
   /**
    * Seconds of straight travel checked against zones that apply to paths; a velocity whose path
@@ -418,6 +422,7 @@ interface Chunk {
   readonly cell: Vec;
   /** Whether the report counts this chunk's spawns. */
   readonly counted: boolean;
+  readonly edgeShare: number;
   readonly key: string;
   readonly origin: Vec;
 }
@@ -671,10 +676,16 @@ function chunks(rules: SpawnRules, grid: WorldGrid, region: SpawnRegion): Chunk[
           cell.x < report.cell.x + report.columns &&
           cell.y >= report.cell.y &&
           cell.y < report.cell.y + report.rows);
+      const delta = distanceTo(rules, { x: 0, y: 0 }, centre);
+      const edgeShare =
+        rules.worldSide === undefined
+          ? 0
+          : Math.max(Math.abs(delta.x), Math.abs(delta.y)) / (rules.worldSide / 2);
       list.push({
         band: spawnBandAt(rules, centre),
         cell,
         counted,
+        edgeShare,
         key: worldCellKey(grid, cell),
         origin,
       });
@@ -754,22 +765,39 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
         if (!target || !target.shapes.length) {
           continue;
         }
+        const scale = 1 + ((target.edgeMultiplier ?? 1) - 1) * chunk.edgeShare;
         const count = chanceRound(
           stream(seeds.world, kind, chunk, "count"),
-          target.density * open(chunk, "rock"),
+          target.density * scale * open(chunk, "rock"),
         );
         const next = stream(seeds.world, kind, chunk, "place");
         const slots = rockSlots.get(chunk.key) ?? [];
         rockSlots.set(chunk.key, slots);
         tally.request(kind, count);
-        for (let spawn = 0; spawn < count; spawn++) {
-          const shape = weightedPick(
+        const weights = target.shapes.map(({ weight }) => weight);
+        const draw = (random: Random, spawn: number) => ({
+          shape: weightedPick(random, target.shapes, weights),
+          spawn,
+        });
+        // Dense chunks sample the same size weights across the whole request. Larger draws
+        // reserve their space before small rocks can divide the quadrant.
+        const packed = target.edgeMultiplier !== undefined && count > Math.ceil(target.density);
+        const ordered = packed
+          ? Array.from({ length: count }, (_, spawn) =>
+              draw(() => (spawn + next()) / count, spawn),
+            ).sort((a, b) => b.shape.radius - a.shape.radius)
+          : undefined;
+        for (let order = 0; order < count; order++) {
+          const { shape, spawn } = ordered?.[order] ?? draw(next, order);
+          const placed = placeRock(
+            rules,
+            size,
+            chunk,
             next,
-            target.shapes,
-            target.shapes.map((option) => option.weight),
-          );
-          const placed = placeRock(rules, size, chunk, next, target.tries, shape.radius, (at) =>
-            blocked("rock", at),
+            target.tries,
+            shape.radius,
+            packed,
+            (at) => blocked("rock", at),
           );
           if (typeof placed === "string") {
             tally.drop(kind, placed);
@@ -809,17 +837,20 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
           continue;
         }
         const slots = rockSlots.get(chunk.key) ?? [];
-        const sources = slots
-          .map((slot) => placements[slot]!)
-          .filter((placement) => !placement.moving && target.from.includes(placement.kind));
+        const placedRocks = slots.map((slot) => placements[slot]!);
+        const sources = placedRocks.filter(
+          (placement) => !placement.moving && target.from.includes(placement.kind),
+        );
+        const fromPlaced = target.fromPlaced;
         const blocked = sources.map((placement) => excludedBy(rules, region, "moving", placement));
         const eligible = sources.filter((_, index) => !blocked[index]);
-        // Chosen rocks: the density over the rocks one choice here moves on average.
-        const choices = chanceRound(
-          stream(seeds.world, kind, chunk, "count"),
-          (target.density * open(chunk, "moving")) / rocksPerChoice(target, eligible),
-        );
-        if (!choices) {
+        // The placed-rock rule budgets individual movers, including each pulled cluster member.
+        const demand = fromPlaced
+          ? (placedRocks.filter(({ kind }) => kind === fromPlaced.kind).length * target.density) /
+            fromPlaced.baseline
+          : (target.density * open(chunk, "moving")) / rocksPerChoice(target, eligible);
+        let remaining = chanceRound(stream(seeds.world, kind, chunk, "count"), demand);
+        if (!remaining) {
           continue;
         }
         for (const rule of blocked) {
@@ -856,18 +887,17 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
         };
         // Each chosen rock may lead a cluster of the nearest free source rocks; pulled rocks
         // count toward the request, and a choice with no free rock left is dropped.
-        let chosen = 0;
         for (const leader of free) {
-          if (chosen === choices) {
+          if (!remaining) {
             break;
           }
-          chosen++;
           free.delete(leader);
           const next = randomStream(seeds.world, `spawn:${kind}:${leader.id}:motion`);
           const cluster = target.cluster;
           const pulled: SpawnPlacement[] = [];
           if (cluster && next() < cluster.share) {
-            const size = randomInt(next, cluster.size[0], cluster.size[1] + 1);
+            const roll = randomInt(next, cluster.size[0], cluster.size[1] + 1);
+            const size = fromPlaced ? Math.min(roll, remaining - 1) : roll;
             const apart = (rock: SpawnPlacement) =>
               Math.hypot(rock.x - leader.x, rock.y - leader.y);
             pulled.push(
@@ -880,12 +910,14 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
               free.delete(rock);
             }
           }
-          tally.request(kind, 1 + pulled.length);
-          move([leader, ...pulled], next);
+          const group = [leader, ...pulled];
+          tally.request(kind, group.length);
+          remaining -= fromPlaced ? group.length : 1;
+          move(group, next);
         }
-        if (chosen < choices) {
-          tally.request(kind, choices - chosen);
-          tally.drop(kind, SPAWN_RULE.noSourceRock, choices - chosen);
+        if (remaining) {
+          tally.request(kind, remaining);
+          tally.drop(kind, SPAWN_RULE.noSourceRock, remaining);
         }
       }
     }
@@ -1043,10 +1075,24 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
   return { placements, report: reported.report() };
 }
 
+const QUADRANT_CORNERS = [
+  { x: 0, y: 0 },
+  { x: 0, y: 1 },
+  { x: 1, y: 0 },
+  { x: 1, y: 1 },
+] as const;
+const QUADRANT_MIDPOINTS = [
+  { x: 0, y: 0.5 },
+  { x: 0.5, y: 0 },
+  { x: 0.5, y: 0.5 },
+  { x: 0.5, y: 1 },
+  { x: 1, y: 0.5 },
+] as const;
+
 /**
- * A static rock's position: the first of up to `tries` uniform points in a seeded quadrant's
- * lane-free box, or anywhere in the chunk without lanes, that no rule blocks. Returns the
- * corridor rule when the rock cannot fit a quadrant.
+ * A static rock uses the first clear seeded position in its quadrant's lane-free box, or
+ * anywhere in the chunk without lanes. Dense slots check each quadrant's corners and midpoints
+ * before using the remaining uniform draws. An oversized rock reports the corridor rule.
  */
 function placeRock(
   rules: SpawnRules,
@@ -1055,6 +1101,7 @@ function placeRock(
   next: Random,
   tries: number,
   radius: number,
+  packed: boolean,
   blocked: (at: Footprint) => string | undefined,
 ): { at?: Vec; rejected: string[] } | string {
   const lane = rules.corridor;
@@ -1064,11 +1111,31 @@ function placeRock(
     return SPAWN_RULE.corridor;
   }
   const rejected: string[] = [];
+  const scan = packed && lane !== undefined;
+  const corners = scan ? 4 * QUADRANT_CORNERS.length : 0;
+  const midpoints = scan ? 4 * QUADRANT_MIDPOINTS.length : 0;
+  const start = scan ? randomInt(next, 0, corners * midpoints) : 0;
+  const jitter = Math.min(span, rules.gap / 20);
   for (let attempt = 0; attempt < tries; attempt++) {
-    const quadrant = lane === undefined ? 0 : Math.floor(next() * 4);
+    let quadrant: number;
+    let x: number;
+    let y: number;
+    if (attempt < corners + midpoints) {
+      const offsets = attempt < corners ? QUADRANT_CORNERS : QUADRANT_MIDPOINTS;
+      // Seven is coprime to both candidate counts (16 corners and 20 midpoints).
+      const candidate = (start + attempt * 7) % (4 * offsets.length);
+      const offset = offsets[candidate % offsets.length]!;
+      quadrant = Math.floor(candidate / offsets.length);
+      x = offset.x * (span - jitter) + next() * jitter;
+      y = offset.y * (span - jitter) + next() * jitter;
+    } else {
+      quadrant = lane === undefined ? 0 : Math.floor(next() * 4);
+      x = next() * span;
+      y = next() * span;
+    }
     const at = {
-      x: chunk.origin.x + (quadrant % 2) * (size / 2) + inset + next() * span,
-      y: chunk.origin.y + Math.floor(quadrant / 2) * (size / 2) + inset + next() * span,
+      x: chunk.origin.x + (quadrant % 2) * (size / 2) + inset + x,
+      y: chunk.origin.y + Math.floor(quadrant / 2) * (size / 2) + inset + y,
     };
     const rule = blocked({ ...at, radius });
     if (!rule) {

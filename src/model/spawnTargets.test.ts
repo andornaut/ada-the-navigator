@@ -1,3 +1,4 @@
+import { chanceRound, randomStream } from "@andornaut/game-kit/runtime/random";
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
@@ -162,6 +163,64 @@ describe("spawn target catalog", () => {
   });
 });
 
+describe("ordinary slot density and moving-rock demand", () => {
+  const rules = spawnRules(6, GALAXY_SIDE);
+  const grid = periodicWorldGrid(rules, rules.chunkSize);
+  const seed = 31;
+  const half = GALAXY_SIDE / 2;
+  const cellPlan = (point: Vec, exclusions: readonly ExclusionZone[] = []) =>
+    planRegion(
+      rules,
+      { encounter: seed, world: seed },
+      { cell: worldCellAt(grid, point), columns: 1, exclusions, rows: 1 },
+    );
+
+  it("ramps across the square and uses the same requests for wrapped copies of a cell", () => {
+    const at = (x: number, y: number) => cellPlan({ x, y }).report.kinds.rock!.requested;
+    expect([4, 5]).toContain(at(0, 0));
+    expect([8, 9]).toContain(at(half / 2, 0));
+    expect([8, 9]).toContain(at(half / 2, half / 2));
+    expect([12, 13]).toContain(at(half, 0));
+    expect([12, 13]).toContain(at(half, half));
+    expect(at(half / 2, 0)).toBe(at(half / 2 + GALAXY_SIDE, 0));
+    expect(at(half, half)).toBe(at(-half, -half));
+  });
+
+  it("budgets individual movers from admitted ordinary rocks even when movement is excluded", () => {
+    const point = { x: -half, y: 0 };
+    const key = worldCellKey(grid, worldCellAt(grid, point));
+    const share = SPAWN_TARGETS[6][0].moving / SLOT_ROCKS_PER_AREA;
+    const movingRequest = (ordinary: number) =>
+      chanceRound(randomStream(seed, `spawn:moving-rock:${key}:count`), ordinary * share);
+    const open = cellPlan(point);
+    const openings = open.report.kinds;
+    const expected = movingRequest(openings.rock!.delivered);
+    expect(expected).toBeGreaterThan(0);
+    expect(openings["moving-rock"]).toMatchObject({ delivered: expected, requested: expected });
+    const restricted = cellPlan(point, [
+      {
+        applies: ["moving"],
+        rule: "protected",
+        shape: { ...point, kind: "disc", radius: rules.chunkSize * 2 },
+      },
+    ]).report.kinds;
+    expect(restricted.rock!.delivered).toBe(openings.rock!.delivered);
+    expect(restricted["moving-rock"]).toMatchObject({
+      delivered: 0,
+      dropped: expected,
+      requested: expected,
+    });
+    const blockedSlots = cellPlan(point, [
+      {
+        applies: ["rock"],
+        rule: "protected",
+        shape: { ...point, kind: "disc", radius: rules.chunkSize * 2 },
+      },
+    ]);
+    expect(blockedSlots.placements.some(({ moving }) => moving)).toBe(false);
+  });
+});
+
 describe("moving rock values", () => {
   it("come from one table: clusters, path seconds, speeds and the ricochet cap", () => {
     for (const galaxy of GALAXY_NUMBERS) {
@@ -171,6 +230,8 @@ describe("moving rock values", () => {
         expect(target.speed).toBe(MOVING_ROCKS.speed);
       }
     }
+    expect(MOVING_ROCKS.speed).toEqual([25, 125]);
+    expect(MOVING_ROCKS.pathSeconds * MOVING_ROCKS.speed[1]).toBe(3750);
     expect(CONTENT.tuning.flight.rockRicochet.maxSpeed).toBe(MOVING_ROCKS.speed[1]);
   });
 });

@@ -18,8 +18,10 @@ export interface RegionSpawnTargets {
 
 /** Chunks in the 3x3-chunk area every target counts over. */
 export const SPAWN_AREA_CHUNKS = 9;
-/** Slot rocks per area in every galaxy and region. */
+/** Ordinary slot rocks per area at the centre of every galaxy. */
 export const SLOT_ROCKS_PER_AREA = 44.76;
+/** Ordinary slot-rock density at the edge, relative to the centre. */
+export const SLOT_ROCK_EDGE_MULTIPLIER = 2.5;
 /**
  * Moving rocks (gameplay/rules.md "Space encounters and feedback"): the share of chosen rocks
  * that lead a cluster, how many placed rocks each leader pulls (equal weight, inclusive) and the
@@ -30,7 +32,7 @@ export const SLOT_ROCKS_PER_AREA = 44.76;
 export const MOVING_ROCKS = {
   cluster: { radius: 300, share: 0.5, size: [1, 3] },
   pathSeconds: 30,
-  speed: [10, 100],
+  speed: [25, 125],
 } as const;
 /**
  * Each galaxy's enemy density factor: the share of encounter lattice cells that hold a group is

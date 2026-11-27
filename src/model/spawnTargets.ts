@@ -24,6 +24,7 @@ import {
   type EnemyGroupTargets,
   LATTICE_OCCUPANCY,
   MOVING_ROCKS,
+  SLOT_ROCK_EDGE_MULTIPLIER,
   SLOT_ROCKS_PER_AREA,
   SPAWN_AREA_CHUNKS,
   SPAWN_BLEND_WIDTH,
@@ -187,16 +188,18 @@ function enemyTargets(
 /**
  * The spawn target catalog as planner rules (gameplay/rules.md "Spawn targets"): enemy groups
  * first, then feature and slot rocks, all ordinary asteroids, then moving rocks chosen from them.
- * Slot rocks follow their rule in every region; Large-only features, moving rocks and enemy groups
- * follow the table. Enemy groups sit on the encounter lattice, one seeded anchor per occupied
- * cell (at the galaxy's cell occupancy) with the kind drawn by the table's densities, and keep the
- * quiet distance over the root of the encounter rate apart. Salvage sites, among the world's
- * exclusion zones, come first. Densities count per open area and blend across the region
+ * Slot rocks scale toward the chart edge. Movers take their share from admitted slot rocks.
+ * Large-only features and enemy groups follow the table. Enemy groups sit on the encounter
+ * lattice, one seeded anchor per occupied cell with the kind drawn by the table's densities.
+ * Groups keep the quiet distance over the root of the encounter rate apart. Salvage sites come
+ * first. Densities count per open area and blend across the region
  * boundaries; budgets and archetype limits switch at the boundaries.
  */
 export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules {
   const field = byPosition(ASTEROID_FIELDS, galaxy);
   const policy = SPAWNER_POLICIES[galaxy];
+  const centreSlots = SLOT_ROCKS_PER_AREA / SPAWN_AREA_CHUNKS;
+  const centreMovers = SPAWN_TARGETS[galaxy][0].moving / SPAWN_AREA_CHUNKS;
   const bands: SpawnBand[] = policy.stages.map((stage, index) => {
     const targets = SPAWN_TARGETS[galaxy][index]!;
     return {
@@ -206,8 +209,9 @@ export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules
       moving: [
         {
           cluster: MOVING_ROCKS.cluster,
-          density: targets.moving / SPAWN_AREA_CHUNKS,
+          density: centreMovers,
           from: ["rock-feature", "rock"],
+          fromPlaced: { baseline: centreSlots, kind: "rock" },
           kind: MOVING_KIND,
           path: MOVING_ROCKS.pathSeconds,
           speed: MOVING_ROCKS.speed,
@@ -222,7 +226,8 @@ export function spawnRules(galaxy: GalaxyNumber, worldSide?: number): SpawnRules
           tries: PLACEMENT_TRIES.rocks,
         },
         {
-          density: SLOT_ROCKS_PER_AREA / SPAWN_AREA_CHUNKS,
+          density: centreSlots,
+          edgeMultiplier: SLOT_ROCK_EDGE_MULTIPLIER,
           kind: "rock",
           shapes: sized(field.slotSizes),
           tries: PLACEMENT_TRIES.rocks,
