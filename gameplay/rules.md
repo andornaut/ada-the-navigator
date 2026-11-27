@@ -570,7 +570,12 @@ While the carrier is engaged, its hull meter carries the "Captain Claim"
 badge. It clears on disengagement and returns with current hull health on
 re-entry. [Claim's exchange](player-copy.md#captain-claim-and-outrigger-carrier)
 covers the approach, first hardpoint loss while the carrier remains active,
-and resolution.
+and resolution. When Ada disables a Mine Layer while the carrier remains
+active, that mount stops laying mines. Astra says “That side won't lay new
+mines. Watch for the ones already there.” Existing mines expire or can be
+cleared as usual. Use the disabled mount's actual side, keep the other
+launchers active, and retain the existing damage and mine cap. If the same
+hit resolves the encounter, use the resolution cue.
 
 Destroy the hull or disable and Salvage the carrier to open the same seeded
 field for ordinary mining and replace the boss's map waypoint with "Ore field".
