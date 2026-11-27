@@ -45,7 +45,7 @@ describe("Ship card", () => {
 
   it("fills canonical upgrade, weapon and chapter totals in parameterized labels", () => {
     const sections = shipSections(
-      { ...LABELS, shipHolodisks: "Holodisks: {n} of {total}", shipLevel: "Level {n} of {max}" },
+      { ...LABELS, shipHolodiskCount: "{n} of {total}", shipLevel: "Level {n} of {max}" },
       VIEW,
     );
     expect(sections.equipment[0].slice(0, 3).map((row) => row.level)).toEqual([
@@ -54,7 +54,7 @@ describe("Ship card", () => {
       "Level 3 of 3",
     ]);
     expect(sections.equipment[1][0]!.level).toBe("Level 2 of 3");
-    expect(sections.cargo[2]!.label).toBe("Holodisks: 3 of 6");
+    expect(sections.cargo[2]).toMatchObject({ count: "3 of 6", label: "Holodisks" });
   });
 
   it("lists Stardust and ore with exact grouped counts, then the holodisks, under Cargo", () => {
@@ -62,14 +62,14 @@ describe("Ship card", () => {
     expect(labels(cargo)).toEqual([
       "Stardust",
       "Ore",
-      "Holodisks: 3 of 6",
+      "Holodisks",
       "Carrying: Nothing",
       "Towing: Nothing",
     ]);
     expect(cargo.map((row) => row.count)).toEqual([
       "1,234,567",
       "12,500",
-      undefined,
+      "3 of 6",
       undefined,
       undefined,
     ]);
@@ -162,7 +162,7 @@ describe("Ship card", () => {
 
   it("keeps the systems and paint data with Engine first, and weapons in HUD order", () => {
     const [left, right] = shipSections(LABELS, VIEW).equipment;
-    expect(labels(left)).toEqual(["Engine", LABELS.shield, LABELS.tractorBeam, "Sky blue"]);
+    expect(labels(left)).toEqual(["Engine", LABELS.shield, LABELS.tractorBeam, "Sky blue paint"]);
     expect(left.map((row) => row.level)).toEqual([
       "Level 2 of 3",
       "Level 1 of 3",
@@ -184,10 +184,10 @@ describe("Ship card", () => {
     const view = { ...VIEW, paint: "Obsidian", paintSwatch: swatch };
     const paint = shipSections(LABELS, view).equipment[0].at(-1);
     expect(paint).toEqual({
-      actionLabel: "Change paint",
+      actionLabel: "(Click to change)",
       icon: { vector: swatch },
       item: { id: "paint", kind: "equipment" },
-      label: "Obsidian",
+      label: "Obsidian paint",
     });
     expect(shipSections(LABELS, VIEW).equipment[0].at(-1)?.icon).toEqual({
       vector: uiIconUrl("icon-shop-ship-paint"),

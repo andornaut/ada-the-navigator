@@ -80,7 +80,7 @@ export interface ShipRow {
   readonly interactive?: boolean;
   readonly icon: ShipIcon;
   readonly label: string;
-  /** A second visible line naming the action of the existing row button. */
+  /** An inline hint naming the action of the existing row button. */
   readonly actionLabel?: string;
   readonly count?: string;
   readonly level?: string;
@@ -131,9 +131,10 @@ export function shipSections(labels: Labels, view: ShipView): ShipSections {
       label: labels.ore ?? "",
     },
     {
+      count: fill(labels.shipHolodiskCount ?? "", { n: view.holodisks, total: GALAXY_COUNT }),
       icon: sprite("icon-holodisk-20"),
       item: { id: "holodisks", kind: "cargo" },
-      label: fill(labels.shipHolodisks ?? "", { n: view.holodisks, total: GALAXY_COUNT }),
+      label: labels.shipHolodisks ?? "",
     },
   ];
   const legacy = view.aboard
@@ -196,7 +197,7 @@ export function shipSections(labels: Labels, view: ShipView): ShipSections {
       actionLabel: labels.shipChangePaint ?? "",
       icon: view.paintSwatch ? { vector: view.paintSwatch } : equipmentIcon("ship-paint"),
       item: { id: "paint", kind: "equipment" },
-      label: view.paint,
+      label: fill(labels.shipPaintName ?? "{paint}", { paint: view.paint }),
     },
   ];
   const right: ShipRow[] = view.weapons.map((weapon): ShipRow => ({
@@ -256,9 +257,10 @@ function rowPart(onItem: (row: ShipRow, origin: HTMLButtonElement) => void, init
     const label = document.createElement("span");
     label.className = "ada-ship-label";
     label.textContent = compactLevelName(row.tier, row.label);
+    const name = row.actionLabel ? `${row.label} ${row.actionLabel}` : row.label;
     line.setAttribute(
       "aria-label",
-      [row.actionLabel, row.label, row.level, row.count, row.ammo].filter(Boolean).join(", "),
+      [name, row.level, row.count, row.ammo].filter(Boolean).join(", "),
     );
     if (row.tier !== undefined) {
       line.dataset.level = String(row.tier);
@@ -269,8 +271,8 @@ function rowPart(onItem: (row: ShipRow, origin: HTMLButtonElement) => void, init
     if (row.actionLabel) {
       const action = document.createElement("span");
       action.className = "ada-ship-action-label";
-      action.textContent = row.actionLabel;
-      content.append(action);
+      action.textContent = ` ${row.actionLabel}`;
+      label.append(action);
     }
     line.append(shipIconNode(row.icon), content);
     for (const [part, text] of [

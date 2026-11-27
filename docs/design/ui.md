@@ -80,6 +80,7 @@ Reference: [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.
 | ada-0359 | Give Pause two equal columns and an Achievements entry                          | [ada-0359.md](../work/ada-0359.md) |
 | ada-0360 | Unify modal header and footer dismissal                                         | [ada-0360.md](../work/ada-0360.md) |
 | ada-0445 | Use Back from Ship details and review other dismissals                          | [ada-0445.md](../work/ada-0445.md) |
+| ada-0446 | Clarify the paint and Holodisks rows in Ship                                    | [ada-0446.md](../work/ada-0446.md) |
 | ada-0361 | Move FPS counter setting into Settings                                          | [ada-0361.md](../work/ada-0361.md) |
 | ada-0374 | Keep all Settings preferences across runs and updates                           | [ada-0374.md](../work/ada-0374.md) |
 | ada-0377 | Use the shared refusal cue for disabled buttons                                 | [ada-0377.md](../work/ada-0377.md) |

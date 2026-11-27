@@ -99,10 +99,11 @@ ${UI_SCOPE} .ada-ship-label{
   overflow-wrap:anywhere
 }
 ${UI_SCOPE} .ada-ship-action-label{
-  flex:0 0 100%;
-  min-width:0;
-  overflow-wrap:anywhere;
   font:${font(TYPE.label)}
+}
+${UI_SCOPE} .ada-ship-count{
+  margin-inline-start:auto;
+  text-align:end
 }
 ${UI_SCOPE} .ada-ship-count,
 ${UI_SCOPE} .ada-ship-ammo{
