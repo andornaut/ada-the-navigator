@@ -506,7 +506,13 @@ describe("mounted Andromeda chapter", () => {
         visit(model, relayId);
         expect(model.useTarget).toBeUndefined();
         const arrivals = [];
-        // Leave the restored reveal in the normal queue and isolate it from passing patrols.
+        // Let the real reveal queue run without unrelated ambient asteroid physics.
+        flight.objects = flight.objects.filter(
+          (object) =>
+            object.persistent ||
+            (object.kind !== "rock" && !(object.kind === "debris" && object.asteroid)),
+        );
+        // Isolate the quiet window from passing patrols as well.
         const quietLimit = CONVERSATION_TUNING.cooldownSeconds * 2 + 5;
         for (let elapsed = 0; elapsed < quietLimit; elapsed += 0.5) {
           flight.objects = flight.objects.filter(({ kind }) => kind !== "enemy");
