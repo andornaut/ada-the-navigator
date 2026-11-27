@@ -1,3 +1,4 @@
+import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 import {
   type LayoutComponentPorts,
   mountLayout,
@@ -11,7 +12,7 @@ import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { fill, weaponName } from "../model/shop.ts";
 import type { Aboard, ShipItemFact } from "../model/types.ts";
-import { assertAdaActionMetadata, bindAdaAction } from "./actionBinding.ts";
+import { ADA_ACTION_HOLD_MS, assertAdaActionMetadata, bindAdaAction } from "./actionBinding.ts";
 import { applyAdaControlTheme, createAdaPageDivider } from "./buttonPresentation.ts";
 import { compactLevelName } from "./compactLevelName.ts";
 import { SCROLL } from "./layout/contentCard.ts";
@@ -232,8 +233,16 @@ export function shipIconNode(icon: ShipIcon): HTMLSpanElement {
 function rowPart(onItem: (row: ShipRow, origin: HTMLButtonElement) => void, initial: ShipRow) {
   let row = initial;
   let disposed = false;
-  const line = document.createElement("button");
-  line.type = "button";
+  const kit = createButton(document, {
+    appearance: { layout: "caller" },
+    content: { kind: "icon", name: initial.label.trim() || "Ship" },
+    getAction: () => binding,
+    getState: () => ({
+      availability: { kind: row.interactive === false ? "disabled" : "available" },
+    }),
+    rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: SCROLL.dragThreshold },
+  });
+  const line = kit.element;
   const binding = bindAdaAction(
     {
       click: {
@@ -241,6 +250,7 @@ function rowPart(onItem: (row: ShipRow, origin: HTMLButtonElement) => void, init
         run: () => onItem(row, line),
       },
       current: () => !disposed,
+      nativeClickOwner: "factory",
       slopPx: () => SCROLL.dragThreshold * readViewUnit(line),
     },
     line,
@@ -248,8 +258,9 @@ function rowPart(onItem: (row: ShipRow, origin: HTMLButtonElement) => void, init
   const update = (next: ShipRow) => {
     row = next;
     line.dataset.item = shipItemKey(row.item);
-    line.disabled = row.interactive === false;
+    kit.refresh();
     line.tabIndex = row.interactive === false ? -1 : 0;
+    // Keep the row's own icon and text as direct children for its existing flex layout.
     line.replaceChildren();
     if (row.tier === undefined) {
       delete line.dataset.level;
@@ -293,6 +304,7 @@ function rowPart(onItem: (row: ShipRow, origin: HTMLButtonElement) => void, init
     dispose() {
       disposed = true;
       binding.dispose();
+      kit.dispose();
     },
     element: line,
     slots: {},

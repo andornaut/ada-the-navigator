@@ -243,7 +243,7 @@ class ShipElement extends EventTarget {
         this.contains(target.parentElement))
     );
   }
-  readonly classList = { add: vi.fn() };
+  readonly classList = { add: vi.fn(), remove: vi.fn() };
   get parentNode() {
     return this.parentElement;
   }
@@ -276,6 +276,16 @@ class ShipElement extends EventTarget {
   }
   removeAttribute(name: string) {
     this.attributes.delete(name);
+  }
+  getAttribute(name: string): string | null {
+    return this.attributes.get(name) ?? null;
+  }
+  toggleAttribute(name: string, enabled: boolean): void {
+    if (enabled) {
+      this.setAttribute(name, "");
+    } else {
+      this.removeAttribute(name);
+    }
   }
   children: ShipElement[] = [];
   className = "";
@@ -466,19 +476,22 @@ it("routes clickable inventory identities without reading labels", () => {
   const row = root.children[4]!.children[1]!.children[0]!;
   expect(row.children).toHaveLength(2);
   expect(row.attributes.get("aria-label")).toContain("Laser");
-  resolveAdaHoldAction(root as unknown as HTMLElement, row)?.activate();
-  expect(onItem).toHaveBeenCalledExactlyOnceWith(
-    expect.objectContaining({ item: { id: "laser", kind: "weapon" } }),
-    row,
-  );
+  const click = () => row.dispatchEvent(new Event("click", { cancelable: true }));
+  click();
+  expect(onItem).toHaveBeenCalledExactlyOnceWith(sections.equipment[1][0], row);
+  expect(onItem.mock.calls[0]?.[0]).toBe(sections.equipment[1][0]);
   const paint = root.children[2]!.children[1]!.children.at(-1)!;
-  resolveAdaHoldAction(root as unknown as HTMLElement, paint)?.activate();
+  const hold = resolveAdaHoldAction(root as unknown as HTMLElement, paint);
+  expect(hold?.available()).toBe(true);
+  hold!.activate();
   expect(onItem).toHaveBeenLastCalledWith(
     expect.objectContaining({ item: { id: "paint", kind: "equipment" } }),
     paint,
   );
   disposeShipSections(root as unknown as HTMLElement);
-  row.dispatchEvent(new Event("click"));
+  click();
+  expect(hold?.available()).toBe(false);
+  hold!.activate();
   expect(onItem).toHaveBeenCalledTimes(2);
 });
 
