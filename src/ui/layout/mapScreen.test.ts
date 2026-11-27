@@ -150,12 +150,12 @@ describe("map projection and fit", () => {
     expect([base.fit.width, base.fit.height]).toEqual([688, 200]);
     expect([base.inner.width, base.inner.height]).toEqual([644, 156]);
     const limits = scaleLimits(base.inner, base.field, SIDE);
-    expect(round(limits.max, 5)).toBe(0.01402);
+    expect(round(limits.max, 5)).toBe(0.02104);
     expect(round(limits.min, 5)).toBe(0.003);
-    expect(round(Math.log(limits.max / limits.min) / Math.log(MAP_SCREEN.zoomStep), 2)).toBe(3.8);
+    expect(round(Math.log(limits.max / limits.min) / Math.log(MAP_SCREEN.zoomStep), 2)).toBe(4.8);
     const wide = regionsAt({ height: 720, width: 1280 });
     expect([wide.fit.width, round(wide.fit.height, 2)]).toEqual([688, 245]);
-    expect(round(scaleLimits(wide.inner, wide.field, SIDE).max, 5)).toBe(0.0159);
+    expect(round(scaleLimits(wide.inner, wide.field, SIDE).max, 5)).toBe(0.02385);
   });
 
   it("anchors Quests, Galaxies and the sole primary Close at the bottom right", () => {
@@ -320,7 +320,7 @@ describe("close places", () => {
     expect(pressedArea(areas, { x: 111, y: 100 })).toBe("b");
   });
 
-  it("keeps 1020-apart places selectable at the reduced maximum zoom", () => {
+  it("keeps 1020-apart places selectable at the closest zoom", () => {
     const { field, inner } = regionsAt(
       { height: 390, width: 844 },
       { bottom: 21, left: 47, right: 47, top: 0 },
@@ -330,8 +330,7 @@ describe("close places", () => {
       inner.width / MAP_SCREEN.minBox.width,
       inner.zoomHeight! / MAP_SCREEN.minBox.height,
     );
-    const previousMax = fullPageLimit / MAP_SCREEN.zoomStep;
-    expect(max).toBeCloseTo(previousMax / MAP_SCREEN.zoomStep ** 2, 9);
+    expect(max).toBeCloseTo(fullPageLimit / MAP_SCREEN.zoomStep ** 2, 9);
     const anchor = { x: inner.x + inner.width / 2, y: inner.y + inner.height / 2 };
     const view = { centre: { x: 0, y: 0 }, scale: max, worldSide: SIDE };
     expect(zoomView(inner, field, MAP_SCREEN.zoomStep, anchor, view).refused).toBe(true);
