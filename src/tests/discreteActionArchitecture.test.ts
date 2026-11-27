@@ -649,6 +649,29 @@ it("accepts the actual Ship row's pre-bind metadata and catches a native click b
   ]);
 });
 
+it.each([
+  'line.className = "ada-ship-row ada-button"',
+  'line.classList.add("ada-button")',
+  'line.setAttribute("class", "ada-button")',
+])("reports a bound raw standard button when a native Ship row uses %s", (replacement) => {
+  const path = "src/ui/shipCard.ts";
+  const source = readFileSync(new URL("../ui/shipCard.ts", import.meta.url), "utf8");
+  expect(constructionFindings(path, source)).toEqual([]);
+  const bypass = source.replace('line.className = "ada-ship-row"', replacement);
+  expect(bypass).not.toBe(source);
+  expect(constructionFindings(path, bypass)).toEqual([
+    expect.objectContaining({ kind: "raw-standard-button", path, source: replacement }),
+  ]);
+});
+
+it("keeps the published text-button factory outside the raw standard findings", () => {
+  const path = "src/ui/standardTextAction.ts";
+  const source = readFileSync(new URL("../ui/standardTextAction.ts", import.meta.url), "utf8");
+  expect(
+    constructionFindings(path, source).filter(({ kind }) => kind === "raw-standard-button"),
+  ).toEqual([]);
+});
+
 function constructWith(
   prelude = "",
   between = "",
@@ -719,6 +742,12 @@ it("does not exempt a callback because it is named continuous, drag, or editing"
 it.each([
   ['const button = createButton("Run"); bindAdaAction(options, button);', 0, true],
   ['const button = createButton("Run"); bindAdaAction(options, button);', 1, false],
+  [
+    'const control = document.createElement("button"); control.className = "ada-button";' +
+      "bindAdaAction(options, control);",
+    1,
+    true,
+  ],
   ['node.addEventListener("click", run);', 1, false],
   ['node.addEventListener("pointerup", select);', 1, false],
   ['node.addEventListener("lostpointercapture", select);', 1, false],

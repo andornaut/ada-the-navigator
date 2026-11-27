@@ -7,6 +7,7 @@ import { guardedRecoveryAssertion } from "./discrete-action-architecture-recover
 export interface ActionBindingFinding {
   readonly kind:
     | "raw-discrete"
+    | "raw-standard-button"
     | "gesture-review"
     | "unresolved-event"
     | "legacy-root"
@@ -3221,6 +3222,37 @@ function scanSource(context: ScanContext, path: string, text: string) {
       source: node.getText(source),
     });
   };
+  // Registration proves input ownership. The standard skin also needs Kit construction.
+  const checkStandardButtonClass = (
+    site: ts.Node,
+    target: ts.Expression,
+    classes: readonly ts.Expression[],
+  ) => {
+    if (
+      !classes.some((value) =>
+        strings(value).some((text) => text.split(/\s+/u).includes("ada-button")),
+      )
+    ) {
+      return;
+    }
+    const control = origin(target);
+    if (
+      control &&
+      ts.isVariableDeclaration(control) &&
+      ts.isIdentifier(control.name) &&
+      unwritten(target) &&
+      unwritten(control.name) &&
+      createsNative(control.initializer, "button")
+    ) {
+      record(
+        "raw-standard-button",
+        site,
+        undefined,
+        "A native button uses the Ada standard text skin without Kit construction",
+      );
+    }
+  };
+
   // Only eager construction in the handle's own block can precede its teardown.
   const recoveryAssertion = (call: ts.CallExpression, member: ts.PropertyAccessExpression) => {
     const handle = member.expression;
@@ -3564,6 +3596,12 @@ function scanSource(context: ScanContext, path: string, text: string) {
           record("unresolved-event", node);
         }
       }
+      if (dot(callee, "add") && dot(callee.expression, "classList")) {
+        checkStandardButtonClass(node, callee.expression.expression, node.arguments);
+      }
+      if (dot(callee, "setAttribute") && literal(node.arguments[0], "class") && node.arguments[1]) {
+        checkStandardButtonClass(node, callee.expression, [node.arguments[1]]);
+      }
       const kitButton = kitButtonFactory(callee);
       if (kitButton || createsButton(node)) {
         const target =
@@ -3638,6 +3676,9 @@ function scanSource(context: ScanContext, path: string, text: string) {
           : undefined;
       if (ts.isPropertyAccessExpression(node.left)) {
         const left = node.left;
+        if (left.name.text === "className") {
+          checkStandardButtonClass(node, left.expression, [node.right]);
+        }
         const isActionType =
           left.name.text === "type" &&
           strings(node.right).some((value) => ["button", "submit", "reset"].includes(value));

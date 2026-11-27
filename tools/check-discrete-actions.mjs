@@ -28,6 +28,7 @@ const { factoryAssociations, findings, runtimeAssertions, unresolvedRuntimeAsser
 const counts = Object.fromEntries(
   [
     "raw-discrete",
+    "raw-standard-button",
     "gesture-review",
     "unresolved-event",
     "legacy-root",
