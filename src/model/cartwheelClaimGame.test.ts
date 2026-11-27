@@ -2,18 +2,21 @@ import { expect, it } from "vitest";
 
 import { CARTWHEEL_CLAIM, CARTWHEEL_CLAIM_CUES } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
-import type { ConversationLine } from "../data/conversations.ts";
+import { type ConversationLine, CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
+import { poiDiscoveryPool } from "../data/poiDiscoveryLore.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { visitCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
+import { pennyInstance, pennyPoints } from "./conversations.ts";
 import { outlineContact, worldParts } from "./convex.ts";
 import { enemyStardust } from "./drops.ts";
+import { GAME_AREA } from "./edgeMarkers.ts";
 import { damageEnemy } from "./enemyAi.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
@@ -21,6 +24,7 @@ import { ensureStation } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
+import { flightLandmarkSites } from "./landmarks.ts";
 import { ORE_FIELD_ROLE, worldOreFieldsNear } from "./oreFields.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
@@ -425,7 +429,7 @@ it("hosts the authored docking exchange in station Talk through replay and Conti
   model.interact();
   expect(model.state.docked).toBeNull();
   model.step(0.001, idle);
-  const replay = flight.storyScene!;
+  let replay = flight.storyScene!;
   expect(replay).toEqual({ at: flight.time, id: "docking", lineDue: true });
   expect(model.state.progress[2].replayScene).toBeUndefined();
 
@@ -449,7 +453,33 @@ it("hosts the authored docking exchange in station Talk through replay and Conti
   )!;
   const station = ensureStation(CONTENT, other.id, flight)!;
   model.state.progress[2].stations.push(other.id);
-  flyTo(model, station);
+  flyTo(model, { x: station.x + 1200, y: station.y });
+  // Continue clears transient chatter from the Hub; keep unrelated lessons spent.
+  model.state.seenConversations.push(...CONVERSATIONS.map(({ id }) => id));
+  model = relaunch(CONTENT, model.save());
+  flight = model.state.flight!;
+  replay = flight.storyScene!;
+  const marker = model.targetMarkers(GAME_AREA).find(({ id }) => id === other.id);
+  expect(marker?.id).toBe(other.id);
+  model.flightMarkerShown(marker!);
+  flyTo(model, { x: station.x + 100, y: station.y });
+  const sensed = pennyPoints(
+    model.state.progress[2],
+    false,
+    flightLandmarkSites(flight),
+    flight,
+    flight.topology?.side,
+  );
+  model.state.seenConversations.push(...sensed.map((id) => pennyInstance(2, id)));
+  const arrivalKey = `poi:arrival:2:${other.id}:0`;
+  model.step(0.05, idle);
+  expect(model.conversation).toMatchObject({
+    ...poiDiscoveryPool(2, { id: other.id, kind: "station" })[0]!.lines[0],
+    key: arrivalKey,
+  });
+  expect(replay.lineDue).toBe(true);
+  expect(model.state.dialogue).toBeNull();
+  expect(model.state.docked).toBeNull();
   flight.dangerFor = 0;
   expect(model.contextAction).toBe("dock");
   model.interact();

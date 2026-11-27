@@ -933,7 +933,7 @@ export class GameModel {
         this.screen !== "space" ||
         this.state.dialogue ||
         this.state.docked ||
-        flight.storyScene?.lineDue
+        this.hubSceneCoversFlightDialogue
       ) {
         return Infinity;
       }
@@ -1103,7 +1103,7 @@ export class GameModel {
       this.screen === "space" &&
       !this.state.dialogue &&
       !this.state.docked &&
-      !flight.storyScene?.lineDue &&
+      !this.hubSceneCoversFlightDialogue &&
       this.suspendedInteraction?.galaxy !== flight.galaxy;
     const currentPoint = (id: string) => {
       const point = this.markerPoint(flight, id);
@@ -3391,6 +3391,10 @@ export class GameModel {
       held.carrying = true;
     }
   }
+  /** Pending docked Talk is separate from an active scene or its blocked-approach reaction. */
+  private get hubSceneCoversFlightDialogue(): boolean {
+    return this.state.flight?.storyScene?.lineDue === true && !this.readyHubDockingScene;
+  }
   /** Dock waits for the hub scene and its dialogue, including a docking replay yet to start. */
   private get hubSceneDue(): boolean {
     const flight = this.state.flight;
@@ -4613,7 +4617,7 @@ export class GameModel {
           this.screen !== "space" ||
           this.state.dialogue ||
           this.state.docked ||
-          f.storyScene?.lineDue
+          this.hubSceneCoversFlightDialogue
         ) {
           return undefined;
         }
