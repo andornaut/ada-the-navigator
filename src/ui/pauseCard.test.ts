@@ -1095,7 +1095,7 @@ describe("Ship card", () => {
     shield.click();
 
     const dismiss = button(root, "dismiss-resource");
-    expect(dismiss.textContent).toBe("Close");
+    expect(dismiss.textContent).toBe("Back");
     const shown = texts(root);
     expect(shown).toContain("8 / 15 HP");
     expect(shown.some((text) => text.includes("Absorbs damage and recharges"))).toBe(true);
@@ -1479,7 +1479,7 @@ it.each([
   const kind = item.startsWith("weapon:") ? "weapon-detail" : "resource";
   const dismiss = button(detail, `dismiss-${kind}`);
   expect(dismiss.textContent).toBe("Back");
-  expect(dismiss.parentElement?.dataset.footerAction).toBe("back");
+  expect(dismiss.closest(".ada-actions")?.dataset.footerAction).toBe("back");
   dismiss.click();
   expect(pause.shipOpen()).toBe(true);
   expect(modal.hidden).toBe(false);
@@ -1519,7 +1519,7 @@ it.each(["dismiss-ship-paint", "close-ship-paint"])(
     )!;
     const dismiss = button(detail, "dismiss-ship-paint");
     expect(dismiss.textContent).toBe("Back");
-    expect(dismiss.parentElement?.dataset.footerAction).toBe("back");
+    expect(dismiss.closest(".ada-actions")?.dataset.footerAction).toBe("back");
     button(detail, action).click();
     expect(detail.hidden).toBe(true);
     expect(modal.hidden).toBe(false);
