@@ -250,13 +250,23 @@ function finishAndromeda(model: GameModel): void {
   if (!model.state.dialogue) {
     model.interact();
   }
-  continuePanel("arrival");
+  expect(model.state.dialogue).toBeNull();
+  const arrival = model.stationTalk?.panel;
+  expect(arrival?.context).toBe("andromeda:arrival");
+  expect(arrival?.choices.map(({ id }) => id)).toEqual(["continue"]);
+  model.chooseStationTalk(arrival!, "continue");
+  model.undock();
   visit("pip");
   model.interact();
   continuePanel("confession");
   visit(model.state.progress[5].andromeda!.station!);
   model.interact();
-  continuePanel("ownsUp");
+  expect(model.state.dialogue).toBeNull();
+  const ownsUp = model.stationTalk?.panel;
+  expect(ownsUp?.context).toBe("andromeda:ownsUp");
+  expect(ownsUp?.choices.map(({ id }) => id)).toEqual(["continue"]);
+  model.chooseStationTalk(ownsUp!, "continue");
+  model.undock();
   visit(model.state.progress[5].andromeda!.settlement!);
   model.interact();
   continuePanel("parts");

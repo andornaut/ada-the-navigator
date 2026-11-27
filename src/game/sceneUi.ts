@@ -1063,6 +1063,25 @@ export function buildScene(scene: UiContext): void {
       return groups ? [shopGroup(groups[0]), shopGroup(groups[1])] : undefined;
     },
     stationTitle: () => scene.model.dockedStationName,
+    talk: () => {
+      const visit = scene.model.stationTalk;
+      const { flight, progress } = scene.model.state;
+      return visit && flight
+        ? {
+            ...visit,
+            choose: (panel, id) =>
+              apply(() => {
+                scene.model.chooseStationTalk(panel, id);
+                scene.station.refreshTalk();
+              }),
+            context: {
+              docked: visit.stationId,
+              galaxy: flight.galaxy,
+              progress: progress[flight.galaxy],
+            },
+          }
+        : null;
+    },
     undock: () => apply(() => scene.model.undock()),
   });
   partial.push(() => scene.station.dispose());

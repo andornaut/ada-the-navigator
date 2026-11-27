@@ -75,6 +75,17 @@ function continuePanel(model: GameModel, context: string): void {
   expect(model.state.dialogue?.choices.map(({ id }) => id)).toEqual(["continue"]);
   model.choose("continue");
 }
+function continueStationTalk(model: GameModel, station: string, context: string): void {
+  expect(model.state.docked).toBe(station);
+  expect(model.state.dialogue).toBeNull();
+  const panel = model.stationTalk?.panel;
+  expect(panel?.context).toBe(context);
+  expect(panel?.choices.map(({ id }) => id)).toEqual(["continue"]);
+  model.chooseStationTalk(panel!, "continue");
+  expect(model.stationTalk).toEqual({ panel: null, stationId: station });
+  model.undock();
+}
+
 function arrival(model: GameModel): void {
   const flight = model.state.flight!;
   const station = worldNearestSettlerStation(flightStationContext(flight), ECONOMY, flight.player);
@@ -83,7 +94,7 @@ function arrival(model: GameModel): void {
   expect(model.state.dialogue).toBeNull();
   expect(model.state.progress[5].stage).toBe(0);
   model.interact();
-  continuePanel(model, "andromeda:arrival");
+  continueStationTalk(model, station.id, "andromeda:arrival");
   expect(model.state.docked).toBeNull();
 }
 
@@ -110,7 +121,7 @@ function acceptCourierLeg(
   });
   model.interact();
   beforeOwnsUp?.(model.state.flight!, station);
-  continuePanel(model, "andromeda:ownsUp");
+  continueStationTalk(model, station, "andromeda:ownsUp");
   return model;
 }
 
@@ -253,6 +264,67 @@ describe("repaired Andromeda lane", () => {
 });
 
 describe("mounted Andromeda chapter", () => {
+  it("owns due Wick Talk in the real berth through Continue while Exchange stays live", () => {
+    const model = launch(173);
+    const flight = model.state.flight!;
+    const station = worldNearestSettlerStation(
+      flightStationContext(flight),
+      ECONOMY,
+      flight.player,
+    );
+    ensureStation(CONTENT, station.id, flight);
+    visit(model, station.id);
+    expect(model.stationTalk).toBeNull();
+    expect(model.state.dialogue).toBeNull();
+    expect(model.state.progress[5].stage).toBe(0);
+    flight.dangerFor = 1;
+    model.interact();
+    expect(model.stationTalk).toBeNull();
+    expect(model.useRefusals).toBe(1);
+    flight.dangerFor = 0;
+    model.interact();
+    expect(model.state.docked).toBe(station.id);
+    expect(model.state.dialogue).toBeNull();
+    expect(model.stationServices?.exchange).toBe(true);
+    const panel = model.stationTalk!.panel!;
+    expect(panel.context).toBe("andromeda:arrival");
+    expect(model.stationTalk?.panel).toBe(panel);
+    model.choose("continue");
+    expect(model.state.progress[5].stage).toBe(0);
+
+    const saved = model.save();
+    expect(restoreSave(saved)).toMatchObject({ dialogue: null, docked: station.id });
+    const resumed = relaunch(CONTENT, saved);
+    const current = resumed.stationTalk!.panel!;
+    expect(current).toEqual(panel);
+    expect(current).not.toBe(panel);
+    resumed.chooseStationTalk(panel, "continue");
+    resumed.chooseStationTalk(current, "missing");
+    expect(resumed.state.progress[5].stage).toBe(0);
+
+    const cargo = resumed.state.flight!;
+    cargo.cargo = 20;
+    expect(resumed.exchangeImmediately({ amount: 1, resource: "stardust" }).kind).toBe("exchanged");
+    expect(cargo.cargo).toBe(18);
+    expect(resumed.stationTalk?.panel).toBe(current);
+    resumed.undock();
+    resumed.chooseStationTalk(current, "continue");
+    expect(resumed.state.progress[5].stage).toBe(0);
+    resumed.interact();
+    expect(resumed.state.docked).toBe(station.id);
+    const next = resumed.stationTalk!.panel!;
+    expect(next).not.toBe(current);
+    resumed.chooseStationTalk(current, "continue");
+    expect(resumed.state.progress[5].stage).toBe(0);
+    resumed.chooseStationTalk(next, "continue");
+    expect(resumed.state.progress[5].stage).toBe(1);
+    expect(resumed.state.dialogue).toBeNull();
+    expect(resumed.stationTalk).toEqual({ panel: null, stationId: station.id });
+    resumed.chooseStationTalk(next, "continue");
+    expect(resumed.state.progress[5].stage).toBe(1);
+    expect(relaunch(CONTENT, resumed.save()).stationTalk).toEqual(resumed.stationTalk);
+  });
+
   it.each([0, 3, 4, 5, 6])(
     "answers Use at Pip without advancing an unavailable stage %s",
     (stage) => {
@@ -825,7 +897,9 @@ it("keeps a blocked seeded leg open and refuses to spend another attempt after C
     const plan = planCourierAmbush(world, { settlement, station })!;
     const represented = new Set(stationPopulationObjects(flight).map(({ id }) => id));
     // Visit during normal flight before accepting Pip's delivery or reserving its terrain.
-    launched.closeInteraction();
+    const prior = launched.stationTalk?.panel;
+    expect(prior?.context).toBe("andromeda:ownsUp");
+    launched.undock();
     flight.player = { ...plan.warning };
     flight.velocity = { x: 0, y: 0 };
     launched.step(0.001, idle);
@@ -846,7 +920,13 @@ it("keeps a blocked seeded leg open and refuses to spend another attempt after C
     }
     expect(previsitedBlockers.size).toBeGreaterThan(0);
     flight.player = player;
-    expect(launched.reopenInteraction()).toBe(true);
+    // Restore the real berth while keeping the surveyed terrain loaded for admission.
+    ensureStation(CONTENT, stationId, flight);
+    expect(launched.useTarget).toEqual({ action: "talk", id: stationId });
+    launched.interact();
+    expect(launched.state.docked).toBe(stationId);
+    expect(launched.stationTalk?.panel).toEqual(prior);
+    expect(launched.stationTalk?.panel).not.toBe(prior);
   });
   const route = routeBeforeWarning(model);
   expect(courierAmbushTerrainCovered({ content: CONTENT, flight: route.flight }, route.plan)).toBe(

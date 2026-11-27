@@ -10,7 +10,6 @@ import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
 import { stationSpecialty } from "./stationServices.ts";
-import type { DialogueState } from "./types.ts";
 
 /** A flight docked at the nearest seeded station offering jobs. */
 function dockedIn(galaxy: GalaxyNumber): GameModel {
@@ -34,13 +33,13 @@ function dockedIn(galaxy: GalaxyNumber): GameModel {
   flight.dangerFor = 0;
   model.interact();
   if (galaxy === 5) {
-    expect(model.state.docked).toBeNull();
-    const arrival = model.state.dialogue as DialogueState | null;
+    expect(model.state.docked).toBe(site.id);
+    expect(model.state.dialogue).toBeNull();
+    const arrival = model.stationTalk?.panel;
     expect(arrival?.context).toBe("andromeda:arrival");
     expect(arrival?.choices.map(({ id }) => id)).toEqual(["continue"]);
-    model.choose("continue");
+    model.chooseStationTalk(arrival!, "continue");
     expect(model.state.progress[5].introduced).toBe(true);
-    model.interact();
   }
   expect(model.state.docked).toBe(site.id);
   expect(model.stationServices?.jobs).toBe(true);

@@ -219,6 +219,23 @@ export function andromedaAction(
   return undefined;
 }
 
+/** The Wick exchanges that belong to a real station visit. */
+export function andromedaStationTopic(
+  { flight, progress }: ChapterContext,
+  destination: string,
+): "arrival" | "ownsUp" | undefined {
+  if (flight.galaxy !== 5) {
+    return undefined;
+  }
+  if (
+    relevant(progress, "arrival") &&
+    worldStationById(flightStationContext(flight), ECONOMY, 5, destination)
+  ) {
+    return "arrival";
+  }
+  return progress.stage === 3 && destination === memory(progress)?.station ? "ownsUp" : undefined;
+}
+
 /** Talk never charges for the chapter or introduces an optional-task prerequisite. */
 export function useAndromeda(
   context: ChapterContext,
@@ -228,21 +245,16 @@ export function useAndromeda(
   if (flight.galaxy !== 5) {
     return undefined;
   }
-  const target = memory(progress);
-  if (
-    progress.stage === 0 &&
-    worldStationById(flightStationContext(flight), ECONOMY, 5, destination)
-  ) {
-    return { dialogue: dialogue(context, "arrival") };
+  const topic = andromedaStationTopic(context, destination);
+  if (topic) {
+    return { dialogue: dialogue(context, topic) };
   }
+  const target = memory(progress);
   if (destination === ANDROMEDA_PLACES.beacon && relevant(progress, "dent")) {
     return { dialogue: dialogue(context, "dent") };
   }
   if (destination === ANDROMEDA_PLACES.pip && relevant(progress, "confession")) {
     return { dialogue: dialogue(context, "confession") };
-  }
-  if (progress.stage === 3 && destination === target?.station) {
-    return { dialogue: dialogue(context, "ownsUp") };
   }
   if (progress.stage === 4 && destination === target?.settlement) {
     return { dialogue: dialogue(context, "parts") };

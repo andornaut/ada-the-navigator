@@ -12,7 +12,7 @@ import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { greetingLines, stationKeeper, stationRank, worldStationKeeper } from "./keepers.ts";
 import { flightStationContext, HUB_STATION, namesStation, worldStationsNear } from "./stations.ts";
-import type { DialogueState, FlightState } from "./types.ts";
+import type { FlightState } from "./types.ts";
 
 const COPY = readFileSync(new URL("../../gameplay/player-copy.md", import.meta.url), "utf8");
 
@@ -306,13 +306,13 @@ describe("a keeper's greeting at the station card", () => {
         const arrivalDue = galaxy === 5 && !model.state.progress[5].introduced;
         model.interact();
         if (arrivalDue) {
-          expect(model.state.docked).toBeNull();
-          const arrival = model.state.dialogue as DialogueState | null;
+          expect(model.state.docked).toBe(station.id);
+          expect(model.state.dialogue).toBeNull();
+          const arrival = model.stationTalk?.panel;
           expect(arrival?.context).toBe("andromeda:arrival");
           expect(arrival?.choices.map(({ id }) => id)).toEqual(["continue"]);
-          model.choose("continue");
+          model.chooseStationTalk(arrival!, "continue");
           expect(model.state.progress[5].introduced).toBe(true);
-          model.interact();
         }
         expect(model.state.docked).toBe(station.id);
         const keeper = worldStationKeeper(

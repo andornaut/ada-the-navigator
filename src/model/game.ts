@@ -81,7 +81,13 @@ import {
   resetCourier,
   supplyTerms,
 } from "./activities.ts";
-import { andromedaCourierActor, takeAndromedaCourierWarning } from "./andromeda.ts";
+import {
+  andromedaCourierActor,
+  andromedaStationTopic,
+  chooseAndromeda,
+  takeAndromedaCourierWarning,
+  useAndromeda,
+} from "./andromeda.ts";
 import {
   ANDROMEDA_REDACT,
   ANDROMEDA_REDACT_CUES,
@@ -590,6 +596,11 @@ export class GameModel {
   // screen shows so nothing in flight runs or shows; save() writes it back unchanged and
   // Continue restores it.
   private heldFlight: HeldFlight | null = null;
+  private wickVisit: {
+    readonly flight: FlightState;
+    readonly stationId: string;
+    readonly panel: DialogueState;
+  } | null = null;
   private story: StoryPosition | null = null;
   private choosingReplay = false;
   private heldStory: { position: StoryPosition; slept: number } | null = null;
@@ -3092,6 +3103,56 @@ export class GameModel {
   selectPaint(scheme: string): boolean {
     return selectPaint(ECONOMY, scheme, this.state.economy);
   }
+  /** Eligible docked Talk stays separate from flight dialogue. The saved berth and stage
+   * reconstruct any due Wick panel when Continue restores the visit. */
+  get stationTalk(): { readonly stationId: string; readonly panel: DialogueState | null } | null {
+    const { docked, flight } = this.state;
+    if (
+      !docked ||
+      !flight ||
+      this.screen !== "space" ||
+      this.state.dialogue ||
+      !this.stationServices
+    ) {
+      return null;
+    }
+    if (flight.galaxy !== 5) {
+      return { panel: null, stationId: docked };
+    }
+    const context = { content: this.content, flight, progress: this.current };
+    const topic = andromedaStationTopic(context, docked);
+    if (!topic) {
+      this.wickVisit = null;
+      return { panel: null, stationId: docked };
+    }
+    if (
+      this.wickVisit?.flight !== flight ||
+      this.wickVisit.stationId !== docked ||
+      this.wickVisit.panel.context !== `andromeda:${topic}`
+    ) {
+      const panel = useAndromeda(context, docked)?.dialogue;
+      this.wickVisit = panel ? { flight, panel, stationId: docked } : null;
+    }
+    return { panel: this.wickVisit?.panel ?? null, stationId: docked };
+  }
+
+  chooseStationTalk(panel: DialogueState, id: string): void {
+    if (
+      this.stationTalk?.panel !== panel ||
+      !panel.choices.some((choice) => choice.id === id && !choice.refused)
+    ) {
+      return;
+    }
+    const flight = this.state.flight;
+    const result =
+      flight &&
+      chooseAndromeda({ content: this.content, flight, progress: this.current }, panel, id);
+    if (result) {
+      this.wickVisit = null;
+      this.applyChapterResult(result);
+    }
+  }
+
   /** Undocking leaves Ada at rest where she docked (gameplay/economy.md). */
   undock(): void {
     if (this.state.docked && this.state.flight) {
@@ -3099,6 +3160,7 @@ export class GameModel {
     }
     this.state.docked = null;
     this.greeting = null;
+    this.wickVisit = null;
   }
   /**
    * A docking's keeper greeting (gameplay/rules.md "Species and greeters"): the full greeting the
@@ -3212,6 +3274,7 @@ export class GameModel {
       return;
     }
     this.state.docked = id;
+    this.wickVisit = null;
     if (this.state.stationRestock) {
       const supply = this.shopSupply();
       if (supply?.visit) {
@@ -5051,6 +5114,10 @@ export class GameModel {
       this.talkAt(id, id);
       return;
     }
+    if (chapterContext && andromedaStationTopic(chapterContext, id) && this.stationSite(f, id)) {
+      this.dock(id, f);
+      return;
+    }
     if (chapterContext) {
       const result = chapterRuntime(f.galaxy)?.use?.(chapterContext, id);
       if (result !== undefined) {
@@ -5963,6 +6030,7 @@ export class GameModel {
     if (this.heldFlight) {
       Object.assign(this.state, this.heldFlight);
       this.heldFlight = null;
+      this.wickVisit = null;
       const { docked, flight } = this.state;
       if (flight) {
         const claim = this.current.claim;

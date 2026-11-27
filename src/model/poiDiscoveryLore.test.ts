@@ -607,8 +607,12 @@ it("guides a sensed Pip arrival before introduction and inspection without takin
   expect(model.state.progress[5].stage).toBe(0);
   expect(hear(model)).toContain("A traveler! Be careful. One of our guide beacons has gone dark.");
   model.interact();
-  expect(model.state.dialogue?.context).toBe("andromeda:arrival");
-  model.choose("continue");
+  expect(model.state.dialogue).toBeNull();
+  expect(model.state.docked).toBe(station.id);
+  const wick = model.stationTalk?.panel;
+  expect(wick?.context).toBe("andromeda:arrival");
+  model.chooseStationTalk(wick!, "continue");
+  model.undock();
   expect(model.state.progress[5]).toMatchObject({ introduced: true, stage: 1 });
 
   moveTo(model, { x: pip.x - 1200, y: pip.y });
