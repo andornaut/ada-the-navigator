@@ -831,6 +831,9 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
                   chunk.origin,
                 )
               : undefined;
+          // Seven rotates successive Small requests through both the 16 corners and 20
+          // midpoints while leaving the earlier, more constrained placements unchanged.
+          const rotation = kind === "rock" && variant.size === "small" ? 7 * order : 0;
           const placed = placeRock(
             rules,
             size,
@@ -839,6 +842,7 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
             target.tries,
             variant,
             layout,
+            rotation,
             (at) =>
               rockBlocked(at) ??
               (leavesRoom && !leavesRoom(at) ? { rule: SPAWN_RULE.capacity } : undefined),
@@ -1221,6 +1225,7 @@ function placeRock(
   tries: number,
   shape: SpawnShape,
   layout: number | undefined,
+  rotation: number,
   blocked: (at: Footprint) => { obstacle?: Footprint; rule: string } | undefined,
 ): { at?: Vec; rejected: string[] } | string {
   const { radius } = shape;
@@ -1257,7 +1262,9 @@ function placeRock(
     let y: number;
     if (attempt < boundaryTries) {
       const offsets = attempt < corners ? QUADRANT_CORNERS : QUADRANT_MIDPOINTS;
-      const candidate = attempt < corners ? attempt : attempt - corners;
+      const candidate =
+        ((attempt < corners ? attempt : attempt - corners) + rotation) %
+        (sections * offsets.length);
       const offset = offsets[(candidate + start) % offsets.length]!;
       quadrant = (Math.floor(candidate / offsets.length) + start) % sections;
       x = offset.x * (span - jitter) + next() * jitter;
