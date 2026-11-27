@@ -294,13 +294,22 @@ it("posts an admitted near-route hunt on Scan, then accepts and pays through the
     const [outcome] = model.drainScanOutcomes();
     expect(outcome).toMatchObject({ completions: [], targetId: site.id });
     expect(scanOutcomeLines(outcome!).at(-1)?.text).toBe(
-      `Someone needs help. The job is at ${outcome!.leadStation}.`,
+      `A job is waiting at ${outcome!.leadStation}. Look for its marker on the map.`,
     );
     const [offer] = model.state.jobs.boards[1]![issuer.id]!;
     expect(offer).toMatchObject({ id, station: issuer.id, type: "hunt" });
+    const issuerMarker = (game: GameModel) =>
+      game.map!.places.find((place) => place.id === issuer.id);
+    expect(issuerMarker(model)).toMatchObject({ pendingJobLead: true, travel: true });
+    expect(model.map!.places.filter((place) => place.pendingJobLead).map(({ id }) => id)).toEqual([
+      issuer.id,
+    ]);
     expect(worldDistance(world, issuer, offer!.target)).toBeGreaterThanOrEqual(JOB_TUNING.hunt.min);
     expect(worldDistance(world, issuer, offer!.target)).toBeLessThanOrEqual(JOB_TUNING.hunt.max);
     expect(restoreSave(model.save())?.jobs.boards[1]![issuer.id]).toEqual([offer]);
+    const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, model.save());
+    resumed.continueGame();
+    expect(issuerMarker(resumed)).toMatchObject({ pendingJobLead: true });
     rerollBoards(1, model.state);
     expect(model.state.jobs.boards[1]![issuer.id]).toEqual([offer]);
 
@@ -338,6 +347,7 @@ it("posts an admitted near-route hunt on Scan, then accepts and pays through the
     expect(displayed()[0]).toMatchObject({ id, state: "held" });
     expect(model.acceptJob(ordinary[0]!.id)).toBe("busy");
     model.undock();
+    expect(issuerMarker(model)?.pendingJobLead).toBeUndefined();
     const balance = model.state.economy.stardust;
     flight.player = { ...offer!.spot! };
     flight.velocity = { x: 0, y: 0 };
@@ -439,7 +449,7 @@ it("admits and posts the seed-125 hunt when every seeded centre is blocked", () 
   const [receipt] = model.drainScanOutcomes();
   expect(receipt).toMatchObject({ completions: [], targetId: site.id });
   expect(scanOutcomeLines(receipt!).at(-1)?.text).toBe(
-    `Someone needs help. The job is at ${receipt!.leadStation}.`,
+    `A job is waiting at ${receipt!.leadStation}. Look for its marker on the map.`,
   );
   const posted = [{ id, station: issuer!.id, target: { id: "", ...centres[17]! }, type: "hunt" }];
   expect(model.state.jobs.boards[1]?.[issuer!.id]).toMatchObject(posted);

@@ -120,11 +120,13 @@ export interface MapScreenLabels {
   readonly distanceOne: string;
   /** "Job: {objective}", under the held job's target's type line. */
   readonly jobObjective: string;
+  readonly jobsProjects: string;
   readonly map: string;
   /** "{percent}% mapped". */
   readonly galaxies: string;
   readonly mapPercent: string;
   readonly mapSurveyInfo?: string;
+  readonly optionalEncounter: string;
   readonly quests: string;
   readonly previous: string;
   readonly next: string;
@@ -191,10 +193,12 @@ export function mapScreenLabels(strings: Readonly<Record<string, string>>): MapS
     distanceOne: label("mapDistanceOne"),
     galaxies: label("galaxies"),
     jobObjective: label("jobObjective"),
+    jobsProjects: label("jobsProjects"),
     map: label("map"),
     mapPercent: label("mapPercent"),
     ...(strings.mapSurveyInfo ? { mapSurveyInfo: strings.mapSurveyInfo } : {}),
     next: label("next"),
+    optionalEncounter: label("mapOptionalEncounter"),
     page: label("achievementsPage"),
     previous: label("previous"),
 
@@ -281,7 +285,16 @@ export function mapDistance(
  * has neither.
  */
 export function placeLines(
-  labels: Pick<MapScreenLabels, "distance" | "distanceOne" | "jobObjective" | "typeLine" | "types">,
+  labels: Pick<
+    MapScreenLabels,
+    | "distance"
+    | "distanceOne"
+    | "jobObjective"
+    | "jobsProjects"
+    | "optionalEncounter"
+    | "typeLine"
+    | "types"
+  >,
   from: Vec,
   job: string | null,
   place: MapPlace,
@@ -296,6 +309,12 @@ export function placeLines(
   ];
   if (place.job && job !== null) {
     lines.push(labels.jobObjective.replace("{objective}", job));
+  }
+  if (place.pendingJobLead) {
+    lines.push(labels.jobsProjects);
+  }
+  if (place.optionalEncounter) {
+    lines.push(labels.optionalEncounter.replace("{ship}", place.label));
   }
   return lines;
 }
@@ -828,11 +847,13 @@ export function createMapShipMarker(
 // A place's chip node: its face, glyph, kind and marks.
 /** A chip's face colour: main's orange for a held job's target or spot, else its symbol's face. */
 export function chipFace(
-  place: Pick<MapPlace, "job" | "taskCategory"> & { readonly symbol: keyof typeof MAP_FACES },
+  place: Pick<MapPlace, "job" | "pendingJobLead" | "taskCategory"> & {
+    readonly symbol: keyof typeof MAP_FACES;
+  },
 ): string {
   return place.taskCategory
     ? TASK_COLORS[place.taskCategory]
-    : place.job
+    : place.job || place.pendingJobLead
       ? MAP_JOB_FACE
       : MAP_FACES[place.symbol];
 }
@@ -1571,7 +1592,10 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     for (const { place, x, y } of shown) {
       const chip = chips.get(place.id)!;
       dressChip(chip, place);
-      chip.setAttribute("aria-label", place.label);
+      chip.setAttribute(
+        "aria-label",
+        place.pendingJobLead ? `${place.label}. ${labels.jobsProjects}` : place.label,
+      );
       chip.setAttribute("aria-pressed", String(place.id === selected));
       chip.style.left = units(x - MAP_SYMBOL.chip / 2);
       chip.style.top = units(y - MAP_SYMBOL.chip / 2);

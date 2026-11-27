@@ -129,6 +129,23 @@ describe("map place type lines", () => {
     const spot = place("job", { job: true, kind: "job", label: "Find a lost toolbox" });
     expect(placeLines(LABELS, ADA, "Find a lost toolbox", spot)).toEqual([]);
   });
+
+  it("labels a pending lead and an optional boss without replacing the place name", () => {
+    const lead = place("station", { pendingJobLead: true });
+    expect(placeLines(LABELS, ADA, null, lead)).toEqual([
+      "Station · 0.4 light-years",
+      "Jobs & Projects",
+    ]);
+    expect(chipFace(lead)).toBe("#feae34");
+    expect(
+      placeLines(
+        LABELS,
+        ADA,
+        null,
+        place("destination", { label: "Crossbow", optionalEncounter: true }),
+      ),
+    ).toEqual(["Story place · 0.4 light-years", "Optional encounter: Crossbow"]);
+  });
 });
 
 describe("map screen place panel", () => {

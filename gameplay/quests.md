@@ -104,6 +104,15 @@ and the craft parks there. Leaving the galaxy (Earth or Jump from the galaxy map
 jump returns the craft to where it was stranded, still marked. Closing the game
 or Back to title keeps the tow, and Continue resumes it exactly.
 
+### Optional quest guidance
+
+- After a job lead is posted, mark the known issuing station on the local map
+  with its Jobs & Projects cue. Astra says “A job is waiting at {station}.
+  Look for its marker on the map.” Keep the cue while that lead awaits acceptance.
+- Label each revealed detour boss “Optional encounter: {ship}” in its Map
+  details. Keep the actual ship name on the marker and the usual Travel here
+  guards. The chapter continues while the detour remains unresolved.
+
 ### Rewards
 
 A job pays Stardust and a lore line, on top of ordinary earnings from asteroids

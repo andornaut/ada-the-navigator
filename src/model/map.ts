@@ -167,6 +167,8 @@ export interface MapPlace {
   readonly label: string;
   /** Whether it is the current objective's destination. */
   readonly objective: boolean;
+  readonly optionalEncounter?: true;
+  readonly pendingJobLead?: true;
   readonly symbol: MapSymbol;
   readonly taskCategory?: TaskCategory;
   readonly travel: boolean;
@@ -256,6 +258,7 @@ export interface MapContext extends StationPlacementContext {
     readonly id: string;
     readonly label: string;
     readonly objective?: boolean;
+    readonly optionalEncounter?: true;
     readonly symbol?: MapSymbol;
   };
   /**
@@ -381,13 +384,14 @@ export function localMap(context: MapContext): LocalMap {
       ]
     : [];
   if (context.chapterWaypoint) {
-    const { id, label, x, y } = context.chapterWaypoint;
+    const { id, label, optionalEncounter, x, y } = context.chapterWaypoint;
     waypoint.push({
       id,
       job: false,
       kind: "destination",
       label,
       objective: context.chapterWaypoint.objective ?? true,
+      ...(optionalEncounter ? { optionalEncounter } : {}),
       symbol: context.chapterWaypoint.symbol ?? "holodisk",
       x,
       y,

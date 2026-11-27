@@ -109,6 +109,7 @@ function completeEye(seed: number): GameModel {
     ...progress.capitalBoss!.site,
     label: "Crossbow",
     objective: false,
+    optionalEncounter: true,
     travel: true,
   });
   endArrivalGrace(flight);

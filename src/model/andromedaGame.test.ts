@@ -193,6 +193,7 @@ describe("mounted Andromeda chapter", () => {
         ...active.site,
         label: "Broad Wing",
         objective: false,
+        optionalEncounter: true,
         travel: true,
       });
       expect(flight.objects.some((object) => object.id === relayId)).toBe(false);

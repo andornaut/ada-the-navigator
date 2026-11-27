@@ -549,6 +549,7 @@ export const CONTENT: GameContent = {
     mapKindStation: "Station",
     mapKindStory: "Story place",
     mapKindWreck: "Wreck",
+    mapOptionalEncounter: "Optional encounter: {ship}",
     mapPercent: "{percent}% mapped",
     mapSurveyInfo: "Mapping progress only tracks the galactic center.",
     mapTypeLine: "{type} · {distance}",

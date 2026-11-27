@@ -3966,6 +3966,7 @@ export class GameModel {
               id: SUNFLOWER_CAPITAL_BOSS.id,
               label: SUNFLOWER_CAPITAL_BOSS.ship,
               objective: false,
+              optionalEncounter: true as const,
               symbol: "destination" as const,
             }
           : undefined;
@@ -3978,6 +3979,7 @@ export class GameModel {
             id: ANDROMEDA_REDACT.id,
             label: ANDROMEDA_REDACT.ship,
             objective: false,
+            optionalEncounter: true as const,
             symbol: "destination" as const,
           }
         : needle?.phase === "active"
@@ -3986,6 +3988,7 @@ export class GameModel {
               id: NEEDLE_CADENCE.id,
               label: NEEDLE_CADENCE.ship,
               objective: false,
+              optionalEncounter: true as const,
               symbol: "destination" as const,
             }
           : sunflowerWaypoint;
@@ -3997,6 +4000,7 @@ export class GameModel {
             id: claim.phase === "active" ? CARTWHEEL_CLAIM.id : claim.fieldId,
             label: claim.phase === "active" ? CARTWHEEL_CLAIM.ship : CARTWHEEL_CLAIM.fieldLabel,
             objective: false,
+            ...(claim.phase === "active" ? { optionalEncounter: true as const } : {}),
             symbol: "destination" as const,
           }
         : otherWaypoint;
@@ -4069,16 +4073,25 @@ export class GameModel {
         line.kind === "job" || line.kind === "story" ? [{ galaxy: f.galaxy, line }] : [],
       ),
     );
+    const boards = this.state.jobs.boards[f.galaxy];
+    const held = heldJob(f.galaxy, this.state)?.id;
     return {
       ...map,
       places: map.places.map((place) => {
+        const pendingJobLead =
+          place.kind === "station" &&
+          boards?.[place.id]?.some((offer) => isPostedLead(offer) && offer.id !== held);
         const category = tasks.category(
           place.id,
           tasks.links(place.id),
           place.objective || place.kind === "holodisk",
           place.job,
         );
-        return { ...place, taskCategory: category };
+        return {
+          ...place,
+          ...(pendingJobLead ? { pendingJobLead: true as const } : {}),
+          taskCategory: category,
+        };
       }),
     };
   }

@@ -76,6 +76,7 @@ function beginClaim(): GameModel {
     ...progress.claim!.site,
     label: "Outrigger Carrier",
     objective: false,
+    optionalEncounter: true,
     travel: true,
   });
   return model;
