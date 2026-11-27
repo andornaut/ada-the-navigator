@@ -14,7 +14,12 @@ export function sceneryBlocksFlightSegment(
   scenery: SceneryResolution,
   world: WorldContext,
   flight: FlightState,
-  segment: { readonly from: Vec; readonly to: Vec; readonly clearance: number; readonly excludedId?: string },
+  segment: {
+    readonly from: Vec;
+    readonly to: Vec;
+    readonly clearance: number;
+    readonly excludedId?: string;
+  },
 ): boolean {
   return flight.objects.some(
     (object) =>

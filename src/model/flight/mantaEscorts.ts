@@ -2,7 +2,11 @@ import { escortTuning } from "../../data/enemyCatalog.ts";
 import { spacingRadius } from "../../data/enemySpacing.ts";
 import { ROUTE_POSITION } from "../../data/galaxies.ts";
 import { worldFlowAt } from "../currents.ts";
-import { mantaEscortCourse, type MantaEscortIndex, type MantaEscortState } from "../earlyEncounterPatterns.ts";
+import {
+  mantaEscortCourse,
+  type MantaEscortIndex,
+  type MantaEscortState,
+} from "../earlyEncounterPatterns.ts";
 import { flightWorldContext } from "../flightTopology.ts";
 import { direction } from "../shipPhysics.ts";
 import type { FlightState, SpaceObject, Vec } from "../types.ts";
