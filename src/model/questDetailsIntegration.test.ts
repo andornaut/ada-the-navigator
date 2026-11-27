@@ -5,6 +5,7 @@ import { CONTENT } from "../data/content.ts";
 import { carriedItemName } from "../data/itemNames.ts";
 import { questReward } from "../data/questRewards.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
+import { visitCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { questRoute } from "../ui/questsScreen.ts";
 import { ensureDestination } from "./flight.ts";
@@ -130,6 +131,36 @@ describe("GameModel map quest detail integration", () => {
       { kind: "source", location: null, place: null },
       { kind: "target", location: null, place: null },
     ]);
+  });
+
+  it("names Cartwheel's hub on the map and in the linked quest while keeping its sentence name", () => {
+    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
+    Object.assign(model.state, { prologueSeen: true, started: true, unlocked: [1, 2] });
+    model.state.progress[2].opened = true;
+    model.startGalaxy(2);
+    const hub = visitCartwheelHubFixture(CONTENT, model);
+    model.choose("continue");
+    model.state.progress[2].stage = 4;
+
+    const name = CONTENT.chapters[2]!.name;
+    const map = model.map!;
+    const place = map.places.find(({ id }) => id === hub.id)!;
+    const quest = model.quests.find(({ galaxy, line }) => galaxy === 2 && line.kind === "story")!;
+    expect(place).toMatchObject({ label: name, objective: true, symbol: "station" });
+    expect(quest.locations).toContainEqual({ id: hub.id, label: name, symbol: "station" });
+    expect(questRoute(quest, map.places)).toEqual([
+      { kind: "target", location: { id: hub.id, label: name, symbol: "station" }, place },
+    ]);
+    expect(
+      model.jobText({
+        id: "hub-delivery",
+        item: "a parcel",
+        reward: 50,
+        station: "station:0,0",
+        target: { id: hub.id, x: hub.x, y: hub.y },
+        type: "delivery",
+      }).title,
+    ).toBe("Deliver a parcel to the mining hub");
   });
 
   it("uses current mining cargo and deposits through the public map getter", () => {

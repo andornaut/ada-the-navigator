@@ -2526,12 +2526,18 @@ export class GameModel {
         .map((id) => ({ id, label: this.label("station") })),
     ];
   }
+  private cartwheelHubName(galaxy: GalaxyNumber, id: string): string | undefined {
+    return galaxy === CARTWHEEL_STORY_SHIPS.galaxy && id === HUB_STATION
+      ? this.content.chapters[galaxy]?.name
+      : undefined;
+  }
   private destinationLabel(id: string): string {
     return (
-      this.label(id) ||
-      (id.startsWith("settlement:")
-        ? this.label("settlement")
-        : (this.chapter.dialogue[dialogueKeys[id] ?? id]?.speaker ?? this.chapter.name))
+      this.cartwheelHubName(this.state.selectedGalaxy, id) ??
+      (this.label(id) ||
+        (id.startsWith("settlement:")
+          ? this.label("settlement")
+          : (this.chapter.dialogue[dialogueKeys[id] ?? id]?.speaker ?? this.chapter.name)))
     );
   }
   /** Ada's shield capacity with bought upgrades. */
@@ -5415,7 +5421,7 @@ export class GameModel {
           id,
           label: landmark
             ? landmarkLabel((key) => this.label(key), landmark)
-            : this.placeLabelIn(galaxy, id),
+            : (this.cartwheelHubName(galaxy, id) ?? this.placeLabelIn(galaxy, id)),
           ...(symbol ? { symbol } : {}),
         };
       });
