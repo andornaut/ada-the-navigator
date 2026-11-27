@@ -118,7 +118,7 @@ it.each([
   ["/art/asteroids/asteroid-m1-sheet.svg", "asteroid-m1", 24, 236, 145],
 ] as const)("retains every shipped member in %s", (path, prefix, count, width, height) => {
   recordExtractedAttributes();
-  const art = readFileSync(new URL(`../../public${path}`, import.meta.url), "utf8");
+  const art = readFileSync(new URL(`../../../public${path}`, import.meta.url), "utf8");
   const members = Array.from(art.matchAll(/<svg ([^>]*\bid="[^"]+"[^>]*)>/gu), ([, tag]) => {
     const attrs = Object.fromEntries(
       Array.from(tag!.matchAll(/([\w:-]+)="([^"]*)"/gu), ([, key, value]) => [key, value]),
