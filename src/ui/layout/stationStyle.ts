@@ -106,7 +106,7 @@ export const STATION_STYLE = `
 }
 /* Station text actions already paint focus on the native button face. */
 .ada-controls :is(.ada-station-footer,[data-station-confirm])
-  :is([data-action=open-shop],[data-action=open-jobs],[data-action=open-exchange],
+  :is([data-action=open-talk],[data-action=open-shop],[data-action=open-jobs],[data-action=open-exchange],
     [data-action=undock],[data-action=confirm-cancel],[data-action=confirm-buy]):focus-visible
   > .ui-button-face{
   background-color:transparent;

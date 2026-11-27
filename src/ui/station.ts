@@ -41,6 +41,7 @@ import {
   stationMenuTree,
 } from "./stationMenuTree.ts";
 import { type StationShopRowSchema, stationShopRowTree } from "./stationShopTree.ts";
+import { createStationTalk, type StationTalkVisit } from "./stationTalk.ts";
 import { applyButtonSkin } from "./uiSkin.ts";
 
 // The station card, the shop, the job board and their confirms (art/shop.md,
@@ -196,6 +197,8 @@ export interface StationOptions {
   /** The docked station’s ordered Shop panes, or undefined when it offers no Shop. */
   readonly shopGroups: () => StationShopGroups | undefined;
   readonly stationTitle: () => string | undefined;
+  /** Supplies the eligible current dock visit, including any due dialogue. */
+  readonly talk?: () => StationTalkVisit | null;
   readonly undock: () => void;
 }
 
@@ -359,6 +362,13 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
   });
   stationCard.card.dataset.dialog = "station";
   stationCard.frame.classList.add("ada-station-frame");
+  const showWelcome = () => {
+    const welcome = stationWelcome(options.stationTitle() ?? labels.station, options.greeting());
+    stationCard.showLine(welcome.speaker, welcome.text);
+  };
+  const readTalk = () => (options.talk && options.services() ? options.talk() : null);
+  const talk =
+    options.talk && createStationTalk(parent, stationCard, readTalk, canUse, audit, showWelcome);
   const balances = document.createElement("div");
   balances.className = "ada-station-balances";
   const balanceParts = {
@@ -376,6 +386,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     exchange: () => showExchange(),
     jobs: () => showJobs(),
     shop: () => showShop(),
+    talk: () => showTalk(),
     undock: options.undock,
   };
   const menuButtons = new Map<StationMenuButton, HTMLButtonElement>();
@@ -417,14 +428,27 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       },
       host: document.createElement("div"),
     },
-    stationMenuTree({ ...labels, exchange: EXCHANGE_COPY.title }),
+    stationMenuTree({
+      ...labels,
+      exchange: EXCHANGE_COPY.title,
+      ...(talk && { talk: CONTENT.labels.talk ?? "" }),
+    }),
   );
   const undock = menuButtons.get("undock")!;
   const openShop = menuButtons.get("shop")!;
   const openJobs = menuButtons.get("jobs")!;
   const openExchange = menuButtons.get("exchange")!;
+  const openTalk = menuButtons.get("talk");
   const focusWelcome = () =>
-    focusTarget(!openShop.hidden ? openShop : !openJobs.hidden ? openJobs : openExchange);
+    focusTarget(
+      openTalk && !openTalk.hidden
+        ? openTalk
+        : !openShop.hidden
+          ? openShop
+          : !openJobs.hidden
+            ? openJobs
+            : openExchange,
+    );
 
   const shopCard = createCard({
     close: closeControl("shop-back"),
@@ -883,25 +907,37 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     );
   };
 
+  const refreshTalk = (): void => {
+    const visit = readTalk();
+    if (openTalk) {
+      openTalk.hidden = visit === null;
+    }
+    if (view === "card" && !talk?.render(visit)) {
+      showWelcome();
+    }
+  };
   const render = (): void => {
     const groups = configuredStock();
-    const welcome = stationWelcome(options.stationTitle() ?? labels.station, options.greeting());
-    stationCard.title.textContent = welcome.title;
+    const title = options.stationTitle() ?? labels.station;
+    stationCard.title.textContent = title;
     stationCard.title.hidden = false;
-    stationCard.frame.setAttribute("aria-label", welcome.title);
-    stationCard.showLine(welcome.speaker, welcome.text);
+    stationCard.frame.setAttribute("aria-label", title);
     openShop.hidden = !groups;
     openJobs.hidden = !stationJobsShown(options.services());
     if ((view === "shop" && openShop.hidden) || (view === "jobs" && openJobs.hidden)) {
       closeConfirm();
       view = "card";
     }
+    refreshTalk();
     renderBalances();
     for (const [id, parts] of Object.entries(views)) {
       parts.frame.hidden = id !== view;
     }
     for (const [id, button] of menuButtons) {
-      button.setAttribute("aria-current", id === view ? "page" : "false");
+      button.setAttribute(
+        "aria-current",
+        (id === "talk" ? "card" : id) === view ? "page" : "false",
+      );
     }
     const parts = views[view];
     if (footer.parentElement !== parts.card) {
@@ -1147,6 +1183,14 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     }
   };
 
+  const showTalk = (): void => {
+    if (!openTalk || !readTalk()) {
+      return;
+    }
+    view = "card";
+    render();
+    focusTarget(openTalk);
+  };
   const showJobs = (): void => {
     if (!stationJobsShown(options.services())) {
       return;
@@ -1285,6 +1329,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       clearBindings(bindings);
       clearBindings(shopBindings);
       clearBindings(jobBindings);
+      talk?.reset();
       exchange.dispose();
       for (const layout of jobLayouts) {
         layout.dispose();
@@ -1314,6 +1359,12 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       card: { back, isOpen: () => open && view === "card" && confirm === null },
       inner: { back, isOpen: () => open && (view !== "card" || confirm !== null) },
     },
+    /** Refreshes the caller's Talk projection after a model change. Hidden tabs keep their cursor. */
+    refreshTalk(): void {
+      if (open && !disposed && talk) {
+        refreshTalk();
+      }
+    },
     /** Opens on the station card when docking and closes on undocking. */
     setOpen(value: boolean): void {
       if (value === open) {
@@ -1326,6 +1377,7 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
         render();
         focusWelcome();
       } else {
+        talk?.reset();
         closeConfirm();
       }
     },

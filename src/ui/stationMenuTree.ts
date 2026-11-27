@@ -2,14 +2,15 @@ import type { ComponentNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
 import type { StationLabels } from "./station.ts";
 
-export type StationMenuButton = "shop" | "jobs" | "exchange" | "undock";
+export type StationMenuButton = "talk" | "shop" | "jobs" | "exchange" | "undock";
 export type StationMenuLabels = Pick<StationLabels, "jobsProjects" | "shop" | "undock"> & {
   readonly exchange: string;
+  readonly talk?: string;
 };
 export type StationMenuSchema = {
   button: {
     props: {
-      readonly actionId: "open-jobs" | "open-shop" | "open-exchange" | "undock";
+      readonly actionId: "open-talk" | "open-jobs" | "open-shop" | "open-exchange" | "undock";
       readonly id: StationMenuButton;
       readonly label: string;
       readonly role: "primary" | "secondary";
@@ -30,6 +31,21 @@ export function stationMenuTree(
     props: {},
     slots: {
       controls: [
+        ...(labels.talk === undefined
+          ? []
+          : [
+              {
+                component: "button",
+                key: "talk",
+                kind: "component",
+                props: {
+                  actionId: "open-talk",
+                  id: "talk",
+                  label: labels.talk,
+                  role: "secondary",
+                },
+              } as const,
+            ]),
         {
           component: "button",
           key: "shop",

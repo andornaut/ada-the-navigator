@@ -12,6 +12,7 @@ import { TASK_COLORS } from "../data/taskCategories.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { fill } from "../model/shop.ts";
 import type { StationServices } from "../model/stationServices.ts";
+import type { DialogueState } from "../model/types.ts";
 import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
@@ -43,6 +44,7 @@ import {
 import { stationJobRowTree } from "./stationJobsTree.ts";
 import { stationMenuTree } from "./stationMenuTree.ts";
 import { stationShopRowTree } from "./stationShopTree.ts";
+import { createStationTalk, type StationTalkVisit } from "./stationTalk.ts";
 import { buttonProperty } from "./uiSkin.ts";
 
 describe("station card back steps", () => {
@@ -652,6 +654,8 @@ function constructedStation(
   projectOnly = false,
   beforeCreate?: (parent: StationFixtureNode) => void,
   shopGroups?: () => stationSource.StationShopGroups | undefined,
+  talk?: stationSource.StationOptions["talk"],
+  services?: stationSource.StationOptions["services"],
 ) {
   const f = strictStation();
   const { Node } = f;
@@ -838,14 +842,16 @@ function constructedStation(
     request,
     rows: () => [{ ...rows[0]!, key: "project:orchard", project: true }],
     select,
-    services: () => ({
-      equipment: !projectOnly,
-      exchange: true,
-      heldTask: false,
-      jobs: !projectOnly,
-      projects: projectOnly,
-      weaponsAmmo: !projectOnly,
-    }),
+    services:
+      services ??
+      (() => ({
+        equipment: !projectOnly,
+        exchange: true,
+        heldTask: false,
+        jobs: !projectOnly,
+        projects: projectOnly,
+        weaponsAmmo: !projectOnly,
+      })),
     shopGroups:
       shopGroups ??
       (() =>
@@ -856,6 +862,7 @@ function constructedStation(
               { category: "equipment", label: "Equipment", offers: rows.slice(4) },
             ]),
     stationTitle: () => "Actual Station",
+    ...(talk && { talk }),
     undock,
   };
   beforeCreate?.(parent);
@@ -887,6 +894,7 @@ function constructedStation(
     createStandardCloseAction,
     createStandardTextAction,
     createStationItemIcon: () => new Node("span", false),
+    createStationTalk,
     document: doc,
     fill,
     focusTarget: (node: InstanceType<typeof Node>) => node.focus(),
@@ -1348,6 +1356,148 @@ it("keeps the same Station footer and balances on welcome, Shop, Jobs and Exchan
   f.station.layers.inner.back();
   expect(f.doc.activeElement).toBe(f.action("open-exchange"));
   expect(f.native.get("station-back")!.frame.contains(footer)).toBe(true);
+});
+
+function stationWithTalk(
+  readTalk: () => StationTalkVisit | null,
+  services?: stationSource.StationOptions["services"],
+) {
+  const f = constructedStation(
+    "",
+    true,
+    true,
+    undefined,
+    false,
+    undefined,
+    undefined,
+    readTalk,
+    services,
+  );
+  const panel = f.native.get("station-back")!;
+  const press = (button: StationFixtureNode) => button.dispatchEvent(new Event("click"));
+  const button = (label: string) =>
+    [...panel.controls.children, ...panel.choices.children].find(
+      (control) => control.querySelector(".ui-control-label")?.textContent === label,
+    )!;
+  return { ...f, button, panel, press };
+}
+
+it("opens eligible Talk on the left and preserves the Wick page, history and read topic across all services", () => {
+  const arrival: DialogueState = {
+    choices: [{ id: "continue", label: "Continue" }],
+    context: "andromeda:arrival",
+    text: "Wick",
+    title: "Wick",
+  };
+  const dent: DialogueState = { ...arrival, context: "andromeda:dent" };
+  let live: DialogueState | null = arrival;
+  const choose = vi.fn((panel: DialogueState) => {
+    live = panel === arrival ? dent : null;
+  });
+  const f = stationWithTalk(() => ({
+    choose,
+    context: { galaxy: 5, progress: { stage: 0 } },
+    panel: live,
+    stationId: "station:0,0",
+  }));
+  f.station.setOpen(true);
+  const talk = f.action("open-talk");
+  const footer = f.parent.querySelector(".ada-station-footer")!;
+  expect(footer.children.map((button) => button.dataset.action)).toEqual([
+    "open-talk",
+    "open-shop",
+    "open-jobs",
+    "open-exchange",
+    "undock",
+  ]);
+  expect(talk.getAttribute("aria-current")).toBe("page");
+  expect(f.doc.activeElement).toBe(talk);
+  expect(f.panel.showLine).toHaveBeenLastCalledWith(
+    "Wick",
+    "A traveler! Be careful. One of our guide beacons has gone dark.",
+  );
+  f.press(f.button("Next"));
+  f.press(f.button("What do beacons do?"));
+  f.press(f.button("Next"));
+  const completed = f.button("What do beacons do?");
+  expect(completed.getAttribute("aria-label")).toBe("What do beacons do?, Topic completed");
+
+  for (const service of ["open-shop", "open-jobs", "open-exchange"]) {
+    f.press(f.action(service));
+    expect(talk.getAttribute("aria-current")).toBe("false");
+    expect(f.action(service).getAttribute("aria-current")).toBe("page");
+    f.press(completed);
+    f.press(talk);
+    expect(f.button("What do beacons do?")).toBe(completed);
+    expect(f.button("Previous")).toBeDefined();
+    expect(completed.getAttribute("aria-label")).toBe("What do beacons do?, Topic completed");
+    expect(f.doc.activeElement).toBe(talk);
+    expect(choose).not.toHaveBeenCalled();
+  }
+
+  f.press(f.button("What's happening to the ships?"));
+  expect(f.panel.showLine).toHaveBeenLastCalledWith(
+    "Wick",
+    "They keep getting lost. It must be Archie's drones. Everyone is scared to fly.",
+  );
+  f.press(f.button("Next"));
+  f.press(f.button("Next"));
+  f.press(f.button("Next"));
+  expect(choose).toHaveBeenCalledExactlyOnceWith(arrival, "continue");
+  expect(f.panel.showLine).toHaveBeenLastCalledWith(
+    "Ada",
+    "This beacon isn't shot. It's dented, like something bumped into it.",
+  );
+  f.press(f.button("Previous"));
+  expect(f.panel.showLine).toHaveBeenLastCalledWith("Ada", "I'll look at the beacon.");
+  f.press(f.button("Next"));
+  expect(choose).toHaveBeenCalledOnce();
+
+  const previousVisit = f.button("Next");
+  f.press(f.action("undock"));
+  expect(f.undock).toHaveBeenCalledOnce();
+  f.station.setOpen(false);
+  live = arrival;
+  f.station.setOpen(true);
+  f.press(previousVisit);
+  expect(choose).toHaveBeenCalledOnce();
+  expect(f.button("Previous")).toBeUndefined();
+  f.press(f.button("Next"));
+  expect(f.button("What do beacons do?").getAttribute("aria-label")).toBeNull();
+});
+
+it("keeps the keeper name on the Talk pane and removes Talk eligibility when the caller withdraws it", () => {
+  let eligible = true;
+  const f = stationWithTalk(() =>
+    eligible ? { choose: vi.fn(), context: 5, panel: null, stationId: "station:0,0" } : null,
+  );
+  f.station.setOpen(true);
+  const talk = f.action("open-talk");
+  expect(talk.hidden).toBe(false);
+  expect(f.panel.showLine).toHaveBeenLastCalledWith(
+    { displayName: "Slate", portraitName: "Slate" },
+    "Greeting",
+  );
+  eligible = false;
+  f.station.refreshTalk();
+  expect(talk.hidden).toBe(true);
+  f.press(f.action("open-shop"));
+  expect(f.action("open-shop").getAttribute("aria-current")).toBe("page");
+});
+
+it("requires actual docked services before reading a Talk offer", () => {
+  const readTalk = vi.fn(() => ({
+    choose: vi.fn(),
+    context: 5,
+    panel: null,
+    stationId: "station:0,0",
+  }));
+  const f = stationWithTalk(readTalk, () => null);
+  f.station.setOpen(true);
+  expect(f.action("open-talk").hidden).toBe(true);
+  expect(readTalk).not.toHaveBeenCalled();
+  f.press(f.action("open-talk"));
+  expect(readTalk).not.toHaveBeenCalled();
 });
 
 it("keeps the standard Station Close scoped to the welcome card", () => {
