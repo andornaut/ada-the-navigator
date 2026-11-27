@@ -810,10 +810,11 @@ shapes touch, and coverage changes only within a texel of each edge.
 | Held        | The band and symbol white at the rest radii until release, then return to the applicable rest or focus pose                                                                                                |
 | Refused     | The shared [refusal cue](#refusal-cue): band and symbol tint `#e4574e` on its beats and the whole disc shakes 3 px; reduced motion holds the tint for 320 ms with no shake. The refusal notice still shows |
 
-Every symbol's drawn bounds, ink included, are centred on the ring centre: each
-is authored, measured, and moved by a whole-px shift, leaving at most 0.5 px.
-The coordinates below already include the shift, which the ring's 1 px growth
-on press never moves.
+Each symbol is measured with its ink and placed on the ring centre with a
+whole-pixel shift. Bounds centre within 0.5 px for all actions except Dock.
+In the Use disc, Dock's arch and ship sit 2 frame px above their geometric
+placement for optical balance. The table lists final coordinates. A press
+grows the ring by 1 px while the symbol stays in place.
 
 | Action  | Layers (cores; frame px)                                                                                                                                                                                                                                                        | Shift  | Bounds after the shift   | Offset       |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------------------------ | ------------ |
@@ -823,11 +824,11 @@ on press never moves.
 | Tow     | The eye: a ring from radius 2.5 to 4 at (42.5, 24). Stroke 3: the shank (42.5, 28.5) to (42.5, 48), the hook's arc about (36.5, 48), radius 6, from 0 to 180 degrees through (36.5, 54), then up to (30.5, 43)                                                                  | +5, +7 | 28, 19 to 47.5, 56.5     | +0.25, +0.25 |
 | Salvage | Stroke 4: the magnet (29, 27) to (29, 40), the arc about (37.5, 40), radius 8.5, from 180 to 0 degrees through (37.5, 48.5), then up to (46, 27); the pole gaps: ink rects 25 to 33 and 42 to 50 across, 31.5 to 33 down                                                        | 0, +4  | 25, 24 to 50, 51.5       | 0, +0.25     |
 | Use     | A ring from radius 6 to 10 and a disc of radius 3, both at (37.5, 37.5)                                                                                                                                                                                                         | 0, 0   | 26.5, 26.5 to 48.5, 48.5 | 0, 0         |
-| Dock    | Stroke 3: the hangar arch (24, 53) up to (24, 36), the arc about (37.5, 36), radius 13.5, from 180 to 360 degrees through (37.5, 22.5), then down to (51, 53). The ship: a filled polygon (37.5, 31), (45, 49), (37.5, 44.5), (30, 49), its ink the polygon's outline stroked 2 | 0, -2  | 21.5, 20 to 53.5, 55.5   | 0, +0.25     |
+| Dock    | Stroke 3: the hangar arch (24, 51) up to (24, 34), the arc about (37.5, 34), radius 13.5, from 180 to 360 degrees through (37.5, 20.5), then down to (51, 51). The ship: a filled polygon (37.5, 29), (45, 47), (37.5, 42.5), (30, 47), its ink the polygon's outline stroked 2 | 0, -4  | 21.5, 18 to 53.5, 53.5   | 0, -1.75     |
 
 Arcs are 24 segments, angles clockwise from the +x axis with y down. Every
 symbol fits inside the ring's 31.5 inner edge with room to spare (the farthest
-bounds corner, at Dock's, is 24.08 from the centre). Dock, the station's
+bounds corner, at Dock's, is 25.22 from the centre). Dock, the station's
 action, reads as flying into a hangar: a filled ship under a round arch, apart
 from Deposit's line arrow into a square hopper. The ink edges carry each mark on any
 field, Sunflower's light one included, as Chibi's do: no light-field outline is
