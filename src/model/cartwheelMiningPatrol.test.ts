@@ -135,6 +135,16 @@ describe("Cartwheel mining patrol placement", () => {
     expect(admits).not.toHaveBeenCalled();
   });
 
+  it("does not rely on predicted rocks as cover for the patrol", () => {
+    const result = planCartwheelMiningPatrol(
+      context([moving("live", 850), { ...moving("future", 1050), unspawned: true }]),
+    );
+    expect(result).toEqual({
+      rejected: [{ fieldId: field.id, reason: "cover" }],
+      status: "no-placement",
+    });
+  });
+
   it("refuses when moving rocks sweep the opposite search band from clear starting positions", () => {
     const tracks = Array.from({ length: 61 }, (_, index) => {
       const y = (index - 30) * 100;
@@ -164,6 +174,19 @@ describe("Cartwheel mining patrol placement", () => {
         homes: expect.arrayContaining([...plan(input).homes]),
       }),
     );
+  });
+
+  it("tries an outward formation on the same approach if admission rejects the first", () => {
+    const first = plan();
+    const admits = vi.fn(
+      ({ anchor, approach }: typeof first) =>
+        anchor.x > first.anchor.x && approach[0].x === first.approach[0].x,
+    );
+    const alternate = plan({ ...context(), admits });
+    expect(alternate.approach).toEqual(first.approach);
+    expect(alternate.coverIds).toEqual(first.coverIds);
+    expect(alternate.anchor.x).toBeGreaterThan(first.anchor.x);
+    expect(admits).toHaveBeenCalledWith(first);
   });
 
   it("uses shortest wrapped paths for cover and normalises the returned placements", () => {

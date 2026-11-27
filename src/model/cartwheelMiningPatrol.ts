@@ -1,9 +1,12 @@
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
+import { MOVING_ROCKS } from "../data/spawnTargets.ts";
 import { closestOnSegment } from "./convex.ts";
+import { flightWorldContext } from "./flightTopology.ts";
 import { ORE_FIELD_CLEAR_RADIUS, type OreField } from "./oreFields.ts";
+import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
 import { SPAWN_GAP } from "./spawner.ts";
-import type { Vec } from "./types.ts";
-import { type WorldContext, worldDelta } from "./worldContacts.ts";
+import type { FlightState, SpaceObject, Vec } from "./types.ts";
+import { type WorldContext, worldDelta, worldDistance } from "./worldContacts.ts";
 import { wrapPoint } from "./worldGeometry.ts";
 
 export const CARTWHEEL_MINING_PATROL = {
@@ -25,6 +28,8 @@ export interface CartwheelMiningRockPath {
   readonly id: string;
   readonly radius: number;
   readonly start: Vec;
+  /** A future footprint may block a path but cannot supply cover on approach. */
+  readonly unspawned?: true;
 }
 
 export type CartwheelMiningField = Readonly<Pick<OreField, "guard" | "id" | "x" | "y">>;
@@ -53,6 +58,74 @@ export interface CartwheelMiningPatrolPlan {
   readonly fieldId: string;
   /** Each actor's placement and pursuit home, in the allocation's member order. */
   readonly homes: readonly Vec[];
+}
+
+/** One already-allocated patrol, with its warning recorded in active flight time. */
+export interface CartwheelMiningPatrol {
+  readonly actors: readonly string[];
+  readonly plan: CartwheelMiningPatrolPlan;
+  warnedAt?: number;
+}
+
+export function cartwheelPatrolAdmits(
+  flight: Pick<FlightState, "cartwheelMiningPatrol" | "time">,
+  actor: Pick<SpaceObject, "id">,
+): boolean {
+  const patrol = flight.cartwheelMiningPatrol;
+  return (
+    !patrol?.actors.includes(actor.id) ||
+    (patrol.warnedAt !== undefined &&
+      flight.time >= patrol.warnedAt + CARTWHEEL_MINING_PATROL.warningSeconds)
+  );
+}
+
+/** Returns true once, when flight enters the patrol's warning radius. */
+export function warnCartwheelPatrol(flight: FlightState): boolean {
+  const patrol = flight.cartwheelMiningPatrol;
+  if (
+    !patrol ||
+    patrol.warnedAt !== undefined ||
+    worldDistance(flightWorldContext(flight), flight.player, patrol.plan.anchor) >
+      CARTWHEEL_MINING_PATROL.warningRange ||
+    !flight.objects.some((actor) => actor.hp > 0 && patrol.actors.includes(actor.id))
+  ) {
+    return false;
+  }
+  patrol.warnedAt = flight.time;
+  return true;
+}
+
+/** Read the represented rocks and the planner's normal straight moving-rock horizon. */
+export function cartwheelPatrolRockPaths(
+  radiusOf: (object: SpaceObject) => number,
+  field: Vec,
+  reach: number,
+  flight: Pick<FlightState, "objects" | "topology">,
+): CartwheelMiningRockPath[] {
+  const world = flightWorldContext(flight);
+  const result: CartwheelMiningRockPath[] = [];
+  for (const object of flight.objects) {
+    const moving = object.kind === "debris" && object.id.startsWith(MOVING_ROCK_PREFIX);
+    if (object.hp <= 0 || (!moving && object.kind !== "rock")) {
+      continue;
+    }
+    const radius = radiusOf(object) + (object.orbit?.radius ?? 0);
+    const start = object.orbit ?? object;
+    const velocity = moving ? object.velocity : undefined;
+    const distance = velocity ? Math.hypot(velocity.x, velocity.y) * MOVING_ROCKS.pathSeconds : 0;
+    if (worldDistance(world, start, field) > reach + radius + distance) {
+      continue;
+    }
+    const end =
+      distance && velocity
+        ? {
+            x: start.x + velocity.x * MOVING_ROCKS.pathSeconds,
+            y: start.y + velocity.y * MOVING_ROCKS.pathSeconds,
+          }
+        : undefined;
+    result.push({ id: object.id, radius, start, ...(end ? { end } : {}) });
+  }
+  return result;
 }
 
 export interface CartwheelMiningPatrolContext extends WorldContext {
@@ -179,12 +252,14 @@ export function planCartwheelMiningPatrol(
       rejected.push({ fieldId: field.id, reason: "required-site" });
       continue;
     }
-    const rocks = context.rocksNear(field, sampleRadius).map(({ end, id, radius, start }) => {
-      const from = worldDelta(context, field, start);
-      const to = end ? add(from, worldDelta(context, start, end)) : from;
-      const path: Segment = [from, to];
-      return { id, path, radius };
-    });
+    const rocks = context
+      .rocksNear(field, sampleRadius)
+      .map(({ end, id, radius, start, unspawned }) => {
+        const from = worldDelta(context, field, start);
+        const to = end ? add(from, worldDelta(context, start, end)) : from;
+        const path: Segment = [from, to];
+        return { id, path, radius, unspawned };
+      });
     const towardPack = worldDelta(context, field, allocation.anchor);
     const bearing = Math.atan2(towardPack.y, towardPack.x);
     const reasons = new Set<Rejection>();
@@ -206,7 +281,8 @@ export function planCartwheelMiningPatrol(
         ...new Set(
           rocks
             .filter(
-              ({ path, radius }) => distance(...path) > 0 && pathsWithin(approach, path, radius),
+              ({ path, radius, unspawned }) =>
+                !unspawned && distance(...path) > 0 && pathsWithin(approach, path, radius),
             )
             .map(({ id }) => id),
         ),
@@ -215,8 +291,8 @@ export function planCartwheelMiningPatrol(
         reasons.add("cover");
         continue;
       }
-      // Keep the same approach and slide the staggered formation outward if its first homes hit rock.
-      const formation = [0, MIN_MEMBER_SPACING, 2 * MIN_MEMBER_SPACING]
+      // Keep the same approach while trying every clear staggered formation.
+      const formations = [0, MIN_MEMBER_SPACING, 2 * MIN_MEMBER_SPACING]
         .map((offset) => {
           const centre = add(anchor, times(axis, offset));
           return {
@@ -229,7 +305,7 @@ export function planCartwheelMiningPatrol(
             ),
           };
         })
-        .find(
+        .filter(
           ({ homes }) =>
             !homes.some((home, member) =>
               rocks.some(
@@ -238,32 +314,35 @@ export function planCartwheelMiningPatrol(
               ),
             ),
         );
-      if (!formation) {
+      if (formations.length === 0) {
         reasons.add("occupied");
         continue;
       }
-      const { centre, homes } = formation;
-      for (const bypass of bypassCandidates(angle, homes, threats, fieldRadius, halfWidth)) {
-        if (
-          homes.some((home, member) => fromSegment(home, bypass) < threats[member]! + halfWidth) ||
-          rocks.some(({ path, radius }) => pathsWithin(bypass, path, halfWidth + radius))
-        ) {
-          reasons.add("bypass");
-          continue;
+      for (const { centre, homes } of formations) {
+        for (const bypass of bypassCandidates(angle, homes, threats, fieldRadius, halfWidth)) {
+          if (
+            homes.some(
+              (home, member) => fromSegment(home, bypass) < threats[member]! + halfWidth,
+            ) ||
+            rocks.some(({ path, radius }) => pathsWithin(bypass, path, halfWidth + radius))
+          ) {
+            reasons.add("bypass");
+            continue;
+          }
+          const plan: CartwheelMiningPatrolPlan = {
+            allocationId: allocation.id,
+            anchor: world(centre),
+            approach: [world(approach[0]), world(approach[1])],
+            bypass: [world(bypass[0]), world(bypass[1])],
+            coverIds,
+            fieldId: field.id,
+            homes: homes.map(world),
+          };
+          if (context.admits(plan)) {
+            return { plan, status: "planned" };
+          }
+          reasons.add("admission");
         }
-        const plan: CartwheelMiningPatrolPlan = {
-          allocationId: allocation.id,
-          anchor: world(centre),
-          approach: [world(approach[0]), world(approach[1])],
-          bypass: [world(bypass[0]), world(bypass[1])],
-          coverIds,
-          fieldId: field.id,
-          homes: homes.map(world),
-        };
-        if (context.admits(plan)) {
-          return { plan, status: "planned" };
-        }
-        reasons.add("admission");
       }
     }
     for (const reason of reasons) {

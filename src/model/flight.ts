@@ -47,6 +47,7 @@ import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../data/
 import { SCREEN } from "../data/screen.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
+import { MOVING_ROCKS } from "../data/spawnTargets.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
@@ -73,6 +74,14 @@ import {
   worldSceneryBodyContact,
   worldSceneryContact,
 } from "./asteroids.ts";
+import {
+  type CartwheelMiningPatrolPlan,
+  type CartwheelMiningRockPath,
+  cartwheelPatrolAdmits,
+  cartwheelPatrolRockPaths,
+  planCartwheelMiningPatrol,
+  warnCartwheelPatrol,
+} from "./cartwheelMiningPatrol.ts";
 import { planChunkCaches } from "./chunkCaches.ts";
 import { onScreen } from "./conversations.ts";
 import {
@@ -268,7 +277,12 @@ import {
   needleRims,
 } from "./needleFlight.ts";
 import { nosePoint } from "./nose.ts";
-import { ORE_FIELD_ROLE, type OreField, worldOreFieldsNear } from "./oreFields.ts";
+import {
+  ORE_FIELD_CLEAR_RADIUS,
+  ORE_FIELD_ROLE,
+  type OreField,
+  worldOreFieldsNear,
+} from "./oreFields.ts";
 import { pickupOutline, stardustPickupReach } from "./pickupBody.ts";
 import { fanHeading, planPlayerVolley, type PlayerVolley } from "./playerProjectiles.ts";
 import { impactSurface } from "./projectileImpact.ts";
@@ -878,7 +892,12 @@ function generatedChunks(flight: FlightState): Set<string> {
 const planningRequiredWorld = new WeakSet<FlightState>();
 const initializingRequiredChapter = new WeakSet<FlightState>();
 
-function generate(content: GameContent, point: Vec, flight: FlightState): void {
+function generate(
+  content: GameContent,
+  point: Vec,
+  cartwheelHubKnown: boolean,
+  flight: FlightState,
+): void {
   if (
     planningRequiredWorld.has(flight) ||
     initializingRequiredChapter.has(flight) ||
@@ -905,7 +924,7 @@ function generate(content: GameContent, point: Vec, flight: FlightState): void {
     flight.chunks.push(key);
     generated.add(key);
     chunkIndexes.get(flight)!.length = flight.chunks.length;
-    placeAmbient(content, grid, worldCell(grid, cell), existing, flight);
+    placeAmbient(content, grid, worldCell(grid, cell), existing, cartwheelHubKnown, flight);
     placeCaches(content, cell, existing, flight);
     placeOreFields(content, grid, cell, existing, flight);
   }
@@ -1035,6 +1054,7 @@ function placeAmbient(
   grid: WorldGrid,
   cell: Vec,
   existing: Set<string>,
+  cartwheelHubKnown: boolean,
   flight: FlightState,
 ): void {
   const rules = flightSpawnRules(flight);
@@ -1071,8 +1091,210 @@ function placeAmbient(
     placeRock(placement, existing, flight);
   }
   for (const group of groups.values()) {
-    placeGroup(content, ambientPackId(key), group, existing, flight);
+    const pack = ambientPackId(key);
+    const patrol =
+      cartwheelHubKnown && flight.galaxy === 2 && !flight.cartwheelMiningPatrol
+        ? planAmbientCartwheelPatrol(content, pack, group, existing, flight)
+        : undefined;
+    if (patrol) {
+      const actors = group.map((_, index) => packMemberId(pack, index));
+      placeGroup(
+        content,
+        pack,
+        group.map((placement, index) => ({ ...placement, ...patrol.homes[index]! })),
+        existing,
+        flight,
+      );
+      for (const object of flight.objects) {
+        if (actors.includes(object.id)) {
+          object.persistent = true;
+        }
+      }
+      flight.cartwheelMiningPatrol = { actors, plan: patrol };
+    } else {
+      placeGroup(content, pack, group, existing, flight);
+    }
   }
+}
+
+/** Redirect one unspent, already-selected ordinary fighter pack in place of its usual spawn. */
+function planAmbientCartwheelPatrol(
+  content: GameContent,
+  pack: string,
+  group: readonly SpawnPlacement[],
+  existing: ReadonlySet<string>,
+  flight: FlightState,
+): CartwheelMiningPatrolPlan | undefined {
+  const anchor = group[0];
+  if (
+    !anchor ||
+    group.length > 4 ||
+    Object.hasOwn(combat(flight).initialPackSizes, pack) ||
+    group.some(({ archetype, leader }, index) => {
+      const id = packMemberId(pack, index);
+      return (
+        archetype !== "fighter" ||
+        leader !== undefined ||
+        existing.has(id) ||
+        Object.hasOwn(flight.world.notables, id)
+      );
+    })
+  ) {
+    return undefined;
+  }
+  const world = flightWorldContext(flight);
+  const fields = worldOreFieldsNear(world, flight.galaxy, content.tuning.chunkSize * 2, anchor)
+    .filter((field) =>
+      flight.objects.some(
+        (object) => object.role === ORE_FIELD_ROLE && object.id.startsWith(`${field.id}:`),
+      ),
+    )
+    .sort((a, b) => worldDistance(world, anchor, a) - worldDistance(world, anchor, b));
+  if (!fields.length) {
+    return undefined;
+  }
+  const actors = group.map((point, index) =>
+    spawnEnemy(content, flight, "fighter", packMemberId(pack, index), point, pack),
+  );
+  const population = requiredWorldPopulation(flight, pendingRequiredRoutes(flight));
+  const policy = SPAWNER_POLICIES[flight.galaxy];
+  const route = requiredRouteGeometry(content, flight);
+  const requiredSites = [
+    ...route.map(({ site }) => site),
+    ...requiredOccupants(content, flight).sites,
+    ...flight.objects.filter((object) => object.kind === "destination" && object.id === "hub"),
+  ];
+  const result = planCartwheelMiningPatrol({
+    ...world,
+    admits: (plan) => {
+      const placed = actors.map((actor, index) => ({ ...actor, ...plan.homes[index]! }));
+      const reach = Math.max(
+        ...placed.map(
+          (actor) => worldDistance(world, actor, plan.anchor) + actorFootprint(flight, actor),
+        ),
+      );
+      return (
+        worldFitsEncounter(
+          hostileStationContext(flight),
+          policy,
+          worldSpawnerStage(world, policy, plan.anchor),
+          ROUTE_POSITION[flight.galaxy],
+          population,
+          plan.anchor,
+          { archetype: "fighter", count: placed.length },
+          reach,
+        ) && stationFormationClear(questGuardPlacementContext(content, flight), placed)
+      );
+    },
+    allocation: {
+      anchor,
+      fighters: actors.map((actor) => {
+        const definition = enemyEquipmentDefinition(flight.galaxy, actor.enemy!);
+        // The rounded bolt coverage fits within the per-axis play view. Allow the full screen
+        // diagonal transformed to world units, plus the launcher's inherited motion.
+        const coverage = Math.hypot(SCREEN.width, SCREEN.height) * Math.SQRT2;
+        return {
+          pursuitRadius: definition.pursuit.homeRadius,
+          radius: actorFootprint(flight, actor),
+          weaponReach:
+            coverage * (1 + definition.physics.maxSpeed / definition.fire.projectileSpeed),
+        };
+      }),
+      id: pack,
+    },
+    fieldIsClear: (field) =>
+      claimedOreFields.get(flight) !== field.id &&
+      requiredSites.every(
+        (site) =>
+          worldDistance(world, field, site) >= ORE_FIELDS.clearance + ORE_FIELDS.diameter / 2,
+      ),
+    fields,
+    hubKnown: true,
+    rocksNear: (field, reach) => cartwheelPatrolTerrain(content, field, reach, flight),
+  });
+  return result.status === "planned" ? result.plan : undefined;
+}
+
+/** Check the seeded terrain beyond the active chunks before choosing a bypass. */
+function cartwheelPatrolTerrain(
+  content: GameContent,
+  field: Vec,
+  reach: number,
+  flight: FlightState,
+): CartwheelMiningRockPath[] {
+  const rocks = cartwheelPatrolRockPaths(placementRadius, field, reach, flight);
+  const rules = flightSpawnRules(flight);
+  const grid = periodicWorldGrid(flightWorldContext(flight), rules.chunkSize);
+  const cell = worldCellAt(grid, field);
+  const chunkReach = chunkSpawnReach(rules);
+  const span = Math.ceil((reach + chunkReach) / grid.pitch);
+  const radius = (span + 1) * grid.pitch * Math.SQRT2 + chunkReach;
+  const generated = generatedChunks(flight);
+  const { placements } = planRegion(
+    rules,
+    { encounter: flightEncounterSeed(flight), world: flight.seed },
+    {
+      cell: { x: cell.x - span, y: cell.y - span },
+      columns: span * 2 + 1,
+      exclusions: flightSpawnExclusions(content, flight, radius, field),
+      rows: span * 2 + 1,
+      sites: worldSpawnSites(grid, flight.galaxy, radius + spawnGatherReach(rules), field),
+    },
+  );
+  for (const placement of placements) {
+    if (placement.category !== "rock" || generated.has(placement.chunk)) {
+      continue;
+    }
+    const asteroid = ASTEROID_SHAPES.get(placement.shape!)!;
+    const movement = placement.moving?.velocity;
+    const footprint = placementRadius({
+      asteroid: asteroid.id,
+      kind: movement ? "debris" : "rock",
+      radius: asteroid.radius,
+    });
+    if (
+      worldDistance(grid, field, placement) >
+      reach +
+        footprint +
+        (movement ? Math.hypot(movement.x, movement.y) * MOVING_ROCKS.pathSeconds : 0)
+    ) {
+      continue;
+    }
+    const start = { x: placement.x, y: placement.y };
+    const end = movement
+      ? {
+          x: start.x + movement.x * MOVING_ROCKS.pathSeconds,
+          y: start.y + movement.y * MOVING_ROCKS.pathSeconds,
+        }
+      : undefined;
+    rocks.push({
+      id: movement ? MOVING_ROCK_PREFIX + placement.id : placement.id,
+      radius: footprint,
+      start,
+      unspawned: true,
+      ...(end ? { end } : {}),
+    });
+  }
+  for (const ore of worldOreFieldsNear(
+    grid,
+    flight.galaxy,
+    reach + ORE_FIELD_CLEAR_RADIUS,
+    field,
+  )) {
+    if (generated.has(worldCellKey(grid, worldCellAt(grid, ore)))) {
+      continue;
+    }
+    for (const [index, rock] of ore.rocks.entries()) {
+      const shape = ASTEROID_SHAPES.get(rock.asteroid)!;
+      rocks.push({
+        id: `${ore.id}:${index}`,
+        radius: placementRadius({ asteroid: shape.id, kind: "rock", radius: shape.radius }),
+        start: rock,
+        unspawned: true,
+      });
+    }
+  }
+  return rocks;
 }
 
 /** A planned rock as a static asteroid, or as moving debris with its planned velocity. */
@@ -3237,7 +3459,7 @@ export function ensureDestinationAt(
   if (existing) {
     return existing;
   }
-  generate(content, point, flight);
+  generate(content, point, false, flight);
   const object: SpaceObject = { ...point, hp: 1, id, kind: "destination", radius: 30, role: id };
   canonicalObject(flight, object);
   flight.objects.push(object);
@@ -3269,7 +3491,7 @@ function heldDestination(
   }
   const hub = ensureDestination(content, CARTWHEEL_STORY_SHIPS.station, flight);
   const target = { x: hub.x + offset.x, y: hub.y + offset.y };
-  generate(content, target, flight);
+  generate(content, target, false, flight);
   const object: SpaceObject = { ...target, hp: 1, id, kind: "destination", radius: 30, role: id };
   canonicalObject(flight, object);
   flight.objects.push(object);
@@ -3376,7 +3598,7 @@ export function populateFlight(
   progress: Pick<GalaxyProgress, "known" | "requiredSites">,
   flight: FlightState,
 ): void {
-  generate(content, flight.player, flight);
+  generate(content, flight.player, flight.galaxy === 2 && progress.known.includes("hub"), flight);
   for (const id of progress.known) {
     const point = progress.requiredSites?.[id];
     if (point) {
@@ -3831,7 +4053,7 @@ export function teleport(content: GameContent, target: string | Vec, flight: Fli
       flight,
     );
   }
-  generate(content, arrival, flight);
+  generate(content, arrival, false, flight);
   flight.player = arrival;
   flight.velocity = { x: 0, y: 0 };
   flight.freshChunk = null;
@@ -5872,7 +6094,12 @@ export function stepFlight(
   worldSyncFlightRegion(flightWorldContext(flight), content, flight);
   // Settle capitals that the region sync just paged in from dormant chunks.
   settleResumedCapitals(content, flight);
-  clearLocalGuardSummons(input.admitEnemy, flight);
+  const admitEnemy: FlightInput["admitEnemy"] =
+    flight.galaxy === 2 && (input.cartwheelHubKnown || flight.cartwheelMiningPatrol)
+      ? (state, actor) =>
+          cartwheelPatrolAdmits(state, actor) && input.admitEnemy?.(state, actor) !== false
+      : input.admitEnemy;
+  clearLocalGuardSummons(admitEnemy, flight);
   const ship = shipTuning(ECONOMY, content, flight.levels);
   const oreBefore = flight.shieldOreSpent ?? 0;
   let remaining = dt;
@@ -5881,10 +6108,13 @@ export function stepFlight(
     remaining -= slice;
     flight.time += slice;
     flight.sinceDamage += slice;
-    generate(content, flight.player, flight);
+    generate(content, flight.player, input.cartwheelHubKnown === true, flight);
     moveDebris(content, slice, events, flight);
     const playerBeforeMove = move(content, slice, input, events, flight, freshTravel);
     worldSyncFlightRegion(flightWorldContext(flight), content, flight);
+    if (warnCartwheelPatrol(flight)) {
+      events.push({ type: "cartwheelPatrolWarning" });
+    }
     const aiming = length(input.aim) > 0.01;
     if (aiming) {
       flight.facing = turnToward(slice, ship.physics.aimTurnSeconds, input.aim, flight.facing);
@@ -5919,7 +6149,7 @@ export function stepFlight(
       content,
       slice,
       worldDelta(flightWorldContext(flight), playerBeforeMove, flight.player),
-      input.admitEnemy,
+      admitEnemy,
       flight,
       events,
       shotDelays,
@@ -6030,7 +6260,7 @@ export function stepFlight(
   }
   worldSyncFlightRegion(flightWorldContext(flight), content, flight);
   releaseSummonedGuards(input.viewportWidth ?? SCREEN.width, flight);
-  cueGuards(content, input.admitEnemy, flight, events);
+  cueGuards(content, admitEnemy, flight, events);
   for (const object of flight.objects) {
     if (
       object.kind === "destination" &&

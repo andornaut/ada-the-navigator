@@ -262,7 +262,7 @@ describe("Captain Cadence admission and outcome", () => {
       place(heading);
       const enemy = boss.enemy!;
       const phaser = definition.hardpoints.find(
-        ({ kind, weapon }) => kind === "weapon" && weapon === "phaser",
+        (part) => part.kind === "weapon" && part.fire.weapon === "phaser",
       );
       expect(phaser).toBeDefined();
       const mount = enemy.hardpoints.find(({ id }) => id === phaser!.id)!;

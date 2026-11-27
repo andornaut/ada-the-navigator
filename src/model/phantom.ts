@@ -16,13 +16,13 @@ import {
   activateRouteEncounter,
   ensureDestination,
   questGuardPlacementContext,
-  rayCircle,
   rollEncounter,
   salvage,
   salvageTarget,
   spawnChapterEnemy,
   syncFlightRegion,
 } from "./flight.ts";
+import { rayCircle } from "./flight/beamContact.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import { type PhantomAlly, type PhantomAllySpec, rotatePhantomAllies } from "./phantomAllies.ts";

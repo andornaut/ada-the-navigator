@@ -3733,10 +3733,14 @@ export class GameModel {
             );
           }
         : undefined;
+    const combatInput =
+      f.galaxy === 2 && this.current.known.includes(HUB_STATION)
+        ? { ...input, cartwheelHubKnown: true }
+        : input;
     const events = stepFlight(
       this.content,
       dt,
-      admitEnemy ? { ...input, admitEnemy } : input,
+      admitEnemy ? { ...combatInput, admitEnemy } : combatInput,
       f,
       pacingActive
         ? (distance, seconds, point) => {
@@ -3872,6 +3876,12 @@ export class GameModel {
       }
     }
     for (const event of events) {
+      if (event.type === "cartwheelPatrolWarning") {
+        this.talk.chapterCue({
+          speaker: "astra",
+          text: "Patrol ahead. Use the rocks for cover or take the marked route around.",
+        });
+      }
       if (event.type === "guardCue") {
         const store = this.markerStore(f);
         for (const guard of f.objects) {

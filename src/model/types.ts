@@ -14,6 +14,7 @@ import type {
   CartwheelClaimProgress,
   RequiredCapitalBossProgress,
 } from "./capitalBossEncounter.ts";
+import type { CartwheelMiningPatrol } from "./cartwheelMiningPatrol.ts";
 import type { EnemyState } from "./enemyAi.ts";
 import type { ExplorationSites, ExplorationState } from "./explorationState.ts";
 import type { FlightTopology } from "./flightTopology.ts";
@@ -35,6 +36,8 @@ export type { Vec };
 export interface FlightInput {
   /** Model-owned combat admission for authored phases. Withheld ships still move and collide. */
   admitEnemy?: (flight: FlightState, enemy: SpaceObject) => boolean;
+  /** Cartwheel may reassign one new ordinary fighter allocation after Ada knows its hub. */
+  cartwheelHubKnown?: boolean;
   /** Explicit fire request; absent preserves the legacy aim-to-fire control. */
   fire?: boolean;
   /** Explicit hull steering; absent preserves automatic facing along movement. */
@@ -179,6 +182,7 @@ export interface HostileStationEncounterState {
   rewarded: boolean;
 }
 export interface FlightState {
+  cartwheelMiningPatrol?: CartwheelMiningPatrol;
   exploration?: ExplorationState;
   hostileStations?: Record<string, HostileStationEncounterState>;
   requiredPlans?: Record<string, AnyRequiredEncounterPlan>;
@@ -498,6 +502,7 @@ export interface FlightLogEntry {
 
 export type FlightEvent =
   | { type: "depleted" }
+  | { type: "cartwheelPatrolWarning" }
   /** The equipped weapon ran out of ammunition and Ada switched to Laser. */
   | { type: "outOfAmmo" }
   | { type: "stardust"; amount: number }
