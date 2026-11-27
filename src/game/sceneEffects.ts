@@ -2,10 +2,9 @@
 // Functions over the scene's EffectsContext.
 import type { Scene } from "phaser";
 
-import { drawnRockId, playDepth, rockArt, zipAt } from "../art/index.ts";
+import { drawnRockId, playDepth, reducedAt, rockArt, zipAt } from "../art/index.ts";
 import { CONTENT } from "../data/content.ts";
 import { rockFrame } from "../model/asteroids.ts";
-import { reducedAt } from "./destructionArt.ts";
 import type { GameScene } from "./scene.ts";
 import { rockFrameTexture } from "./sceneAssets.ts";
 import { keylineSprite } from "./sceneHud.ts";

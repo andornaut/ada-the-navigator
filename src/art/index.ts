@@ -52,6 +52,20 @@ export {
   readDebrisArt,
 } from "./debrisArt.ts";
 export {
+  type DestructionData,
+  flashAt,
+  hexColor,
+  mixColor,
+  readDestruction,
+  readShards,
+  reducedAt,
+  shardAlpha,
+  type ShardData,
+  shardFamily,
+  shardPolygons,
+  wreckFlashAt,
+} from "./destructionArt.ts";
+export {
   ADA_LAYERS,
   adaDepth,
   BACKDROP_DEPTH,
@@ -195,6 +209,7 @@ export {
 export { decorationRasterSize, viewDecorations } from "./rareDecorations.ts";
 export { RockFrames } from "./rockFrames.ts";
 export { sceneryDetail } from "./scenery.ts";
+export { readShardPalettePack } from "./shardPalettePack.ts";
 export {
   hasShipHeadings,
   paintFrames,

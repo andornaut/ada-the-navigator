@@ -22,6 +22,7 @@ import {
   RASTER_SCALE_EVENT,
   readBeaconArt,
   readCacheArt,
+  readDestruction,
   readEnemyWeaponsArt,
   readGalaxyFields,
   readGalaxyManifest,
@@ -103,7 +104,6 @@ import { stardustCount } from "../ui/statusPill.ts";
 import { loadStoryArt } from "../ui/storyArt.ts";
 import { createStorybook, storyPageView } from "../ui/storybook.ts";
 import { readTitleScreen, type TitleScreenArt } from "../ui/titleScreen.ts";
-import { readDestruction } from "./destructionArt.ts";
 import { LIGHT_FIELD, lightGalaxy, readLightGalaxies } from "./lightField.ts";
 import { fitPlayCamera, sceneFit, shakeIntensity } from "./playCamera.ts";
 import { readQuantumJump } from "./quantumJump.ts";

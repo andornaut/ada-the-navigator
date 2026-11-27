@@ -2,20 +2,20 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { CORE_MANIFEST, publicJson } from "../testing/publicArt.ts";
 import {
   flashAt,
   hexColor,
   mixColor,
   readDestruction,
+  readShardPalettePack,
   readShards,
   reducedAt,
   shardAlpha,
   shardFamily,
   shardPolygons,
   wreckFlashAt,
-} from "./destructionArt.ts";
-import { readShardPalettePack } from "./shardPalettePack.ts";
+} from "../art/index.ts";
+import { CORE_MANIFEST, publicJson } from "../testing/publicArt.ts";
 
 const read = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public/art/enemies/${path}`, import.meta.url), "utf8"));

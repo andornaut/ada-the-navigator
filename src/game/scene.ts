@@ -16,6 +16,7 @@ import {
   clipBehind,
   type CoreManifest,
   type DebrisArt,
+  type DestructionData,
   type DrawnBox,
   drawnBox,
   effectBox,
@@ -65,10 +66,13 @@ import {
   type Placed,
   playDepth,
   type ProjectArtSet,
+  readDestruction,
   readGalaxyManifest,
+  readShards,
   readSidecars,
   screenAngle,
   selectPaintedShipAsset,
+  type ShardData,
   shipJetDirection,
   type ShipJets,
   type Sidecars,
@@ -129,12 +133,6 @@ import { createRestartCard } from "../ui/restartCard.ts";
 import { createStationView } from "../ui/station.ts";
 import { createStorybook } from "../ui/storybook.ts";
 import { craftFrameSets, type HubArt } from "./cartwheelArt.ts";
-import {
-  type DestructionData,
-  readDestruction,
-  readShards,
-  type ShardData,
-} from "./destructionArt.ts";
 import { EmergencyReturn, returnedOnDepletion } from "./emergencyReturn.ts";
 import {
   FORWARD_FLIGHT_KEY,

@@ -31,6 +31,8 @@ import {
   galaxyTowKey,
   mergeEnemyAssets,
   readGalaxyManifest,
+  readShardPalettePack,
+  readShards,
   readShipJets,
   readSidecars,
   SvgRasters,
@@ -44,9 +46,7 @@ import { enemyAssetKey, hullDesign, INDUSTRIAL_BODY_KEYS } from "../data/enemyId
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { publicJson } from "../testing/publicArt.ts";
 import { craftFrameSets, readCraftNose } from "./cartwheelArt.ts";
-import { readShards } from "./destructionArt.ts";
 import type { Asset } from "./sceneShared.ts";
-import { readShardPalettePack } from "./shardPalettePack.ts";
 
 const m1 = ASTEROID_ART.asteroids.find(({ id }) => id === "asteroid-m1")!;
 const claim = GALAXY_FAMILIES.find(({ family }) => family === "claim")!;

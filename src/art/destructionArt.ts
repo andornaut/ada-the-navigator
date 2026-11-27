@@ -2,7 +2,7 @@
 // shrink, cool toward their family's own tone and fade in held steps behind a brief flash;
 // under reduced motion the idle frame tints, shrinks and fades instead.
 
-import { ENEMY_HEADINGS } from "../art/index.ts";
+import { ENEMY_HEADINGS } from "./enemyArt.ts";
 
 export interface DestructionTiming {
   readonly durationMs: number;

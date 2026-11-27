@@ -33,10 +33,13 @@ import {
   playDepth,
   PULL_STREAK,
   pullStreakWedges,
+  reducedAt,
   revealAlpha,
   rockArt,
   sceneryDetail,
   selectEnemyFrame,
+  shardFamily,
+  shardPolygons,
   shipDirection,
   spaceObjectColor,
   stardustDrawn,
@@ -52,6 +55,7 @@ import {
   type WhaleKind,
   whaleLoopFrame,
   whalePhase,
+  wreckFlashAt,
 } from "../art/index.ts";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { CONTENT } from "../data/content.ts";
@@ -77,7 +81,6 @@ import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
 import { shipTuning } from "../model/upgrades.ts";
 import { worldDelta } from "../model/worldContacts.ts";
 import { hubLayers } from "./cartwheelArt.ts";
-import { reducedAt, shardFamily, shardPolygons, wreckFlashAt } from "./destructionArt.ts";
 import { inkEdges, keylineOffsets, LIGHT_FIELD } from "./lightField.ts";
 import type { GameScene } from "./scene.ts";
 import {

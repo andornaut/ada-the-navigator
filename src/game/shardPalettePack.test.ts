@@ -2,9 +2,8 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { readDestruction, readShardPalettePack, readShards, shardPolygons } from "../art/index.ts";
 import { CORE_MANIFEST, publicJson } from "../testing/publicArt.ts";
-import { readDestruction, readShards, shardPolygons } from "./destructionArt.ts";
-import { readShardPalettePack } from "./shardPalettePack.ts";
 
 const BODIES = [
   "fighter",

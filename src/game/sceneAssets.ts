@@ -41,6 +41,8 @@ import {
   readGalaxyStationArt,
   readJobArt,
   readMarloArt,
+  readShardPalettePack,
+  readShards,
   readShipJets,
   readShipMaterialPalettes,
   readShipMaterials,
@@ -50,6 +52,7 @@ import {
   readWhirlpoolProjects,
   rockArt,
   RockFrames,
+  type ShardData,
   ShipMaterialSources,
   type Sidecars,
   type SvgRequest,
@@ -83,12 +86,10 @@ import {
   storyCraftSets,
   storyNoses,
 } from "./cartwheelArt.ts";
-import { readShards, type ShardData } from "./destructionArt.ts";
 import { sceneFit } from "./playCamera.ts";
 import { readQuantumJump } from "./quantumJump.ts";
 import type { GameScene } from "./scene.ts";
 import type { Asset } from "./sceneShared.ts";
-import { readShardPalettePack } from "./shardPalettePack.ts";
 import { readStrandedCraft, readTowLine } from "./towArt.ts";
 
 interface MaterialCache {
