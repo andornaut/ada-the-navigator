@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { ModelFeedback } from "../art/index.ts";
 import { CONTENT } from "../data/content.ts";
 import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { BEAM, MISSILE_HIT_RADIUS, WEAPON_CATALOG } from "../data/weaponCatalog.ts";
-import { ModelFeedback } from "../art/index.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { ASTEROID_SHAPES, worldSceneryContact } from "./asteroids.ts";
