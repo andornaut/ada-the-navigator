@@ -159,8 +159,8 @@ describe("holodisk objectives", () => {
   it("come after each space quest and before the return home", () => {
     for (const [id, objective] of [
       [1, "Collect the holodisk from the outposts."],
-      [2, "Buy the holodisk at the hub."],
-      [3, "Fight your way to the holodisk."],
+      [2, "Buy the holodisk in the Mining Hub’s Shop."],
+      [3, "Defeat the guard, then collect the holodisk."],
     ] as const) {
       expect(CONTENT.chapters[id]!.objectives.slice(-2)).toEqual([
         objective,
@@ -354,7 +354,7 @@ describe("galaxy two's holodisk", () => {
   it("reserves an Equipment slot at the hub once the space quest is complete", () => {
     expect(HOLODISKS.hubPrice).toBe(500);
     const model = questDone(2, ["hub", "miner", "visitors"]);
-    expect(model.objective).toBe("Buy the holodisk at the hub.");
+    expect(model.objective).toBe("Buy the holodisk in the Mining Hub’s Shop.");
     arrive(model, "hub");
     // Acknowledge the deposit card before Dock opens the station shop.
     model.state.flight!.cargo = 5;
@@ -435,7 +435,7 @@ describe("galaxy three's holodisk", () => {
   it("waits behind Sounder and the formation after the family reveals the waypoint", () => {
     // Whirlpool's holodisk is the second on the route, after Sunflower's.
     const model = questDone(3, ["whale", "family"], [1]);
-    expect(model.objective).toBe("Fight your way to the holodisk.");
+    expect(model.objective).toBe("Defeat the guard, then collect the holodisk.");
     model.step(0.01, idle);
     const f = model.state.flight!;
     const site = model.state.progress[3].requiredSites!.holodisk!;

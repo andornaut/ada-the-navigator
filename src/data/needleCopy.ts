@@ -9,8 +9,8 @@ export const NEEDLE_CHAPTER: ChapterContent = {
   objectives: [
     "Explore the galaxy.",
     "Meet Elder Loom.",
-    "Light the practice gates.",
-    "Light the Eye's gates.",
+    "Start at the Practice Channel’s green flag and clear its three rings.",
+    "Start at the Eye’s green flag and clear its eight rings.",
     "Collect the holodisk.",
     "Go home to Earth when ready.",
   ],

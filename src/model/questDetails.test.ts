@@ -416,13 +416,30 @@ describe("revealed objective checklist facts", () => {
     expect(calf.map((row) => row.checked)).toEqual([true, false]);
   });
 
-  it("does not include a hidden survey target identity", () => {
-    const state = snapshot(flight(), job("survey"));
-    const hidden = questDetails(context(), state).jobDetails!.objectives![0]!;
-    expect(hidden).not.toHaveProperty("location");
-    const known = { ...state, progress: { ...state.progress, known: [job("survey").target.id] } };
-    expect(questDetails(context(), known).jobDetails!.objectives![0]!.location).toBe(
-      job("survey").target.id,
-    );
+  it("names the survey landmark exactly while hiding its unrevealed location", () => {
+    const model = flight();
+    const task = job("survey");
+    const target = landmarkSites(1).find(({ nameWords }) => nameWords !== undefined)!;
+    task.target = target;
+    const jobCopy = model.jobText(task);
+    const detailsContext = {
+      ...context(),
+      jobText: () => jobCopy,
+      label: (key: string) => CONTENT.labels[key] ?? "",
+    };
+    const state = snapshot(model, task);
+    const before = structuredClone(state.progress);
+    const hidden = questDetails(detailsContext, state).jobDetails!;
+    const name = jobCopy.title.replace(/^Chart the /u, "");
+    expect(name).toContain(target.nameWords);
+    expect(hidden.description).toBe(`Fly close to ${name}, then use Scan to chart it.`);
+    expect(hidden.objectives![0]).not.toHaveProperty("location");
+
+    const known = { ...state, progress: { ...state.progress, known: [target.id] } };
+    const visible = questDetails(detailsContext, known).jobDetails!;
+    expect(visible.description).toBe(hidden.description);
+    expect(visible.objectives![0]!.location).toBe(target.id);
+    expect(visible.reward).toBe(hidden.reward);
+    expect(state.progress).toEqual(before);
   });
 });

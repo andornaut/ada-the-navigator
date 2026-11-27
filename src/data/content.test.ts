@@ -19,6 +19,22 @@ describe("player text", () => {
     ]);
   });
 
+  it("uses the approved quest handoff lines at their existing chapter steps", () => {
+    for (const [galaxy, step, label] of [
+      [2, 5, "Buy the holodisk in the Mining Hub’s Shop."],
+      [3, 1, "Shoot the three rocks trapping Marlo."],
+      [3, 5, "Defeat the guard, then collect the holodisk."],
+      [4, 2, "Start at the Practice Channel’s green flag and clear its three rings."],
+      [4, 3, "Start at the Eye’s green flag and clear its eight rings."],
+      [5, 3, "Follow Pip to the settlers’ station."],
+      [5, 4, "Follow Pip to the outpost to pick up the beacon parts."],
+      [6, 4, "Destroy the flagship’s weapon hardpoints to disable it."],
+      [6, 5, "Use Salvage at the flagship to recover the last holodisk."],
+    ] as const) {
+      expect(CONTENT.chapters[galaxy]!.objectives[step]).toBe(label);
+    }
+  });
+
   it("calls Ada's home home or Earth and never names her city", () => {
     expect(playerText).not.toMatch(/toronto/i);
   });

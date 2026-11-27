@@ -13,8 +13,8 @@ export const ANDROMEDA_CHAPTER: ChapterContent = {
     "Explore the galaxy.",
     "Find out why ships are getting lost.",
     "Talk with Pip.",
-    "Go with Pip to the settlers.",
-    "Get beacon parts at the settlement with Pip.",
+    "Follow Pip to the settlers’ station.",
+    "Follow Pip to the outpost to pick up the beacon parts.",
     "Bring beacon parts to the dark beacon.",
     "Take the holodisk from Pip.",
     "Go home to Earth when ready.",
@@ -160,7 +160,7 @@ export const ANDROMEDA_CONVERSATIONS = {
     ],
   },
   parts: {
-    lines: [{ text: carriedItemName("beacon parts") }, { text: ANDROMEDA_CHAPTER.objectives[5]! }],
+    lines: [{ text: carriedItemName("beacon parts") }, { text: ANDROMEDA_CHAPTER.objectives[6]! }],
     party: "Astra",
   },
   repaired: {

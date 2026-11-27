@@ -146,7 +146,7 @@ describe("Needle contextual Use and automatic guidance", () => {
     controls.requestUse();
     model.step(0.001, controls.sample());
     expect(model.useRefusals).toBe(before + 1);
-    expect(model.state.notice).toBe("Light the Eye's gates.");
+    expect(model.state.notice).toBe("Start at the Eye’s green flag and clear its eight rings.");
     expect(model.state.dialogue).toBeNull();
     expect(progress).toMatchObject({
       holodisk: false,

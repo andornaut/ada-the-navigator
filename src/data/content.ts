@@ -155,7 +155,7 @@ export const CONTENT: GameContent = {
         "Keep depositing ore and talk with the miner.",
         "Speak with regular visitors about approaching together.",
         "Join the miner's approach at the hub.",
-        "Buy the holodisk at the hub.",
+        "Buy the holodisk in the Mining Hub’s Shop.",
         "Go home to Earth when ready.",
       ],
       opening: [
@@ -260,11 +260,11 @@ export const CONTENT: GameContent = {
       name: "The Whale Family",
       objectives: [
         "Explore the galaxy.",
-        "Shoot the debris blocking the whale.",
+        "Shoot the three rocks trapping Marlo.",
         "Talk with the freed whale.",
         "Explore to find the whale's family.",
         "Return to the whale and share the coordinates.",
-        "Fight your way to the holodisk.",
+        "Defeat the guard, then collect the holodisk.",
         "Go home to Earth when ready.",
       ],
       opening: [
@@ -656,7 +656,7 @@ export const CONTENT: GameContent = {
     questStoryProgress: "Story progress",
     questSupplyDetail:
       "Carry {item} from {source} to {destination}. The station is waiting for these supplies.",
-    questSurveyDetail: "Help Astra fill a gap in the map. Fly close to {landmark} to chart it.",
+    questSurveyDetail: "Fly close to {landmark}, then use Scan to chart it.",
     questTo: "To",
     questToolkitDelivered: "Toolkit delivered",
     questToolkitDetail:

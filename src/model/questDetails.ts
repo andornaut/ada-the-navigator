@@ -5,7 +5,7 @@ import type { JobType } from "../data/jobs.ts";
 import { questReward } from "../data/questRewards.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { questItemDestination } from "./indicators.ts";
-import { landmarkById } from "./landmarks.ts";
+import { landmarkById, landmarkLabel } from "./landmarks.ts";
 import type { QuestDetails, QuestLine } from "./map.ts";
 import { fill } from "./shop.ts";
 import type { GalaxyProgress, HeldJob, OptionalTask, Vec } from "./types.ts";
@@ -198,7 +198,9 @@ export function questDetails(
         text(key, {
           craft: task.item.replace(/^(?:a|an)\s+/iu, ""),
           item: task.item,
-          landmark: landmark ? context.label(landmark.name) : context.label("questExplore"),
+          landmark: landmark
+            ? landmarkLabel(context.label, landmark)
+            : context.label("questExplore"),
           // The sentence name, as in the title; only the endpoint lines withhold unmapped places.
           place: task.type === "delivery" ? context.placeLabel(task.target.id) : "",
         }) || context.jobText(task).detail;

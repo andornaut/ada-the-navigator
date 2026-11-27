@@ -197,7 +197,7 @@ describe("Andromeda chapter runtime", () => {
     expect(pickup.context).toBe("andromeda:parts");
     expect(pickup.title).toBe("Astra");
     expect(pickup.text).toBe(
-      [carriedItemName("beacon parts"), ANDROMEDA_CHAPTER.objectives[5]].join("\n\n"),
+      [carriedItemName("beacon parts"), ANDROMEDA_CHAPTER.objectives[6]].join("\n\n"),
     );
     expect(pickup.choices).toEqual([{ id: "continue", label: CONTENT.labels.next }]);
     expect(JSON.stringify(context.progress)).toBe(before);
