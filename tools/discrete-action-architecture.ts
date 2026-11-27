@@ -211,7 +211,10 @@ function localDeclarations(
 }
 
 /** An options literal may close over the node, but evaluating it must not publish the node. */
-function inertRegistrationOptions(node: ts.Expression): boolean {
+function inertRegistrationOptions(
+  node: ts.Expression,
+  localRead: (node: ts.Identifier) => boolean = () => false,
+): boolean {
   if (ts.isObjectLiteralExpression(node)) {
     return node.properties.every(
       (property) =>
@@ -219,10 +222,11 @@ function inertRegistrationOptions(node: ts.Expression): boolean {
         (ts.isIdentifier(property.name) || ts.isStringLiteral(property.name)) &&
         property.name.text !== "__proto__" &&
         property.name.text !== "nativeClickOwner" &&
-        inertRegistrationOptions(property.initializer),
+        inertRegistrationOptions(property.initializer, localRead),
     );
   }
   return (
+    (ts.isIdentifier(node) && localRead(node)) ||
     ts.isArrowFunction(node) ||
     ts.isFunctionExpression(node) ||
     ts.isStringLiteralLike(node) ||
@@ -767,7 +771,12 @@ function scanSource(context: ScanContext, path: string, text: string) {
   };
   const writes = new Set<string>();
   const invalidLifetimes = new Set<string>();
-  const lifecycleCalls: { readonly key: string; readonly phase: ts.Node }[] = [];
+  const constructionLifetimes = new Set<string>();
+  const lifecycleCalls: {
+    readonly key: string;
+    readonly phase: ts.Node;
+    readonly site: ts.Node;
+  }[] = [];
   const effects = (node: ts.Node): void => {
     let target: ts.Expression | undefined;
     if (
@@ -805,13 +814,17 @@ function scanSource(context: ScanContext, path: string, text: string) {
     if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
       const key = reference(node.expression);
       if (/\.(dispose|remove)$/.test(key)) {
-        lifecycleCalls.push({ key: key.replace(/\.(dispose|remove)$/, ""), phase: phase(node) });
+        lifecycleCalls.push({
+          key: key.replace(/\.(dispose|remove)$/, ""),
+          phase: phase(node),
+          site: node,
+        });
       }
     }
     if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
       const callee = node.expression;
       if (["dispose", "remove"].includes(callee.name.text)) {
-        lifecycleCalls.push({ key: reference(callee.expression), phase: phase(node) });
+        lifecycleCalls.push({ key: reference(callee.expression), phase: phase(node), site: node });
       }
       if (
         ts.isIdentifier(callee.expression) &&
@@ -829,8 +842,8 @@ function scanSource(context: ScanContext, path: string, text: string) {
     key === changed ||
     key.startsWith(`${changed}.`) ||
     (descendants && changed.startsWith(`${key}.`));
-  const clean = (key: string, descendants = false): boolean =>
-    ![...writes, ...invalidLifetimes].some((changed) => overlaps(key, changed, descendants));
+  const clean = (key: string, descendants = false, lifetimes = invalidLifetimes): boolean =>
+    ![...writes, ...lifetimes].some((changed) => overlaps(key, changed, descendants));
   const origin = (
     node: ts.Expression,
     seen = new Set<ts.Node>(),
@@ -852,12 +865,16 @@ function scanSource(context: ScanContext, path: string, text: string) {
     }
     return value;
   };
-  const stable = (node: ts.Expression, descendants = false): boolean => {
-    if (!clean(reference(node), descendants)) {
+  const stable = (
+    node: ts.Expression,
+    descendants = false,
+    lifetimes = invalidLifetimes,
+  ): boolean => {
+    if (!clean(reference(node), descendants, lifetimes)) {
       return false;
     }
     if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) {
-      return stable(node.expression);
+      return stable(node.expression, false, lifetimes);
     }
     if (ts.isIdentifier(node)) {
       const alias = declaration(node);
@@ -866,7 +883,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
         ts.isVariableDeclaration(alias) &&
         alias.initializer &&
         ts.isPropertyAccessExpression(alias.initializer) &&
-        !stable(alias.initializer)
+        !stable(alias.initializer, false, lifetimes)
       ) {
         return false;
       }
@@ -1317,8 +1334,10 @@ function scanSource(context: ScanContext, path: string, text: string) {
   for (const [entry, controls] of bindingControls) {
     if (controls.length && escaped(entry)) {
       invalidLifetimes.add(entry);
+      constructionLifetimes.add(entry);
       for (const control of controls) {
         invalidLifetimes.add(control);
+        constructionLifetimes.add(control);
       }
     }
   }
@@ -1376,7 +1395,11 @@ function scanSource(context: ScanContext, path: string, text: string) {
     }
     const key = reference(expression);
     if (/\.(dispose|remove)$/.test(key)) {
-      lifecycleCalls.push({ key: key.replace(/\.(dispose|remove)$/, ""), phase: parent });
+      lifecycleCalls.push({
+        key: key.replace(/\.(dispose|remove)$/, ""),
+        phase: parent,
+        site: expression,
+      });
     }
     if (ts.isObjectLiteralExpression(expression)) {
       for (const property of expression.properties) {
@@ -1417,6 +1440,55 @@ function scanSource(context: ScanContext, path: string, text: string) {
       reaches(parent, to, new Set([...seen, from])),
     );
   };
+  // A direct catch that only cleans up and rethrows cannot reach a later publication site.
+  const failureCleanup = (site: ts.Node): boolean => {
+    const call = ts.isCallExpression(site)
+      ? site
+      : ts.isCallExpression(site.parent) && site.parent.expression === site
+        ? site.parent
+        : undefined;
+    const statement = call?.parent;
+    const block = statement?.parent;
+    const clause = block?.parent;
+    const attempt = clause?.parent;
+    if (
+      !statement ||
+      !ts.isExpressionStatement(statement) ||
+      !block ||
+      !ts.isBlock(block) ||
+      !clause ||
+      !ts.isCatchClause(clause) ||
+      !attempt ||
+      !ts.isTryStatement(attempt) ||
+      attempt.finallyBlock ||
+      !ts.isBlock(attempt.parent) ||
+      attempt.parent.parent !== phase(site)
+    ) {
+      return false;
+    }
+    const rethrow = block.statements.at(-1);
+    return Boolean(
+      clause.variableDeclaration &&
+      rethrow &&
+      ts.isThrowStatement(rethrow) &&
+      rethrow.expression &&
+      lexicalIdentity(rethrow.expression, clause.variableDeclaration) &&
+      block.statements
+        .slice(0, -1)
+        .every(
+          (step) =>
+            ts.isExpressionStatement(step) &&
+            ts.isCallExpression(step.expression) &&
+            !step.expression.questionDotToken &&
+            ts.isPropertyAccessExpression(step.expression.expression) &&
+            !step.expression.expression.questionDotToken &&
+            ts.isIdentifier(step.expression.expression.expression) &&
+            lexicalDeclaration(step.expression.expression.expression) &&
+            ["dispose", "remove"].includes(step.expression.expression.name.text) &&
+            step.expression.arguments.length === 0,
+        ),
+    );
+  };
   for (const call of lifecycleCalls) {
     const position = /^(-?\d+):/.exec(call.key)?.[1];
     const owner =
@@ -1424,9 +1496,11 @@ function scanSource(context: ScanContext, path: string, text: string) {
         ? undefined
         : declarations.find((value) => value.pos === Number(position));
     if (!owner || reaches(call.phase, phase(owner))) {
-      invalidLifetimes.add(call.key);
-      for (const control of bindingControls.get(call.key) ?? []) {
-        invalidLifetimes.add(control);
+      for (const key of [call.key, ...(bindingControls.get(call.key) ?? [])]) {
+        invalidLifetimes.add(key);
+        if (!failureCleanup(call.site)) {
+          constructionLifetimes.add(key);
+        }
       }
     }
   }
@@ -1565,6 +1639,273 @@ function scanSource(context: ScanContext, path: string, text: string) {
     ts.forEachChild(node, inheritFactoryBindings);
   };
   inheritFactoryBindings(source);
+  // A constructor may configure a detached native subtree before binding its root.
+  const freshElement = (node: ts.Expression): boolean =>
+    ts.isCallExpression(node) &&
+    !node.questionDotToken &&
+    node.arguments.length === 1 &&
+    ts.isStringLiteralLike(node.arguments[0]!) &&
+    ["button", "div", "span"].includes(node.arguments[0]!.text) &&
+    ts.isPropertyAccessExpression(node.expression) &&
+    !node.expression.questionDotToken &&
+    node.expression.name.text === "createElement" &&
+    ts.isIdentifier(node.expression.expression) &&
+    node.expression.expression.text === "document" &&
+    !context.lexicalDeclarations(node.expression.expression)?.length;
+
+  const singleLocal = (statement: ts.Node): ts.VariableDeclaration | undefined =>
+    ts.isVariableStatement(statement) && statement.declarationList.declarations.length === 1
+      ? statement.declarationList.declarations[0]
+      : undefined;
+  const isConst = (node: ts.VariableDeclaration): boolean =>
+    ts.isVariableDeclarationList(node.parent) && Boolean(node.parent.flags & ts.NodeFlags.Const);
+
+  const capturedRegistrar = (expression: ts.Expression, control: ts.VariableDeclaration) => {
+    if (
+      !ts.isArrowFunction(expression) ||
+      !synchronousCallable(expression) ||
+      expression.parameters.length
+    ) {
+      return false;
+    }
+    const body = expression.body;
+    const tail = ts.isBlock(body) ? body.statements.at(-1) : undefined;
+    const call = ts.isBlock(body)
+      ? tail && ts.isReturnStatement(tail)
+        ? tail.expression
+        : undefined
+      : body;
+    return Boolean(
+      call &&
+      ts.isCallExpression(call) &&
+      canonicalBindingCall(call) &&
+      call.arguments.length === 2 &&
+      ts.isObjectLiteralExpression(call.arguments[0]!) &&
+      lexicalIdentity(call.arguments[1]!, control) &&
+      inertRegistrationOptions(call.arguments[0]!, (node) => Boolean(lexicalDeclaration(node))) &&
+      (!ts.isBlock(body) ||
+        body.statements.slice(0, -1).every((statement) => {
+          const local = singleLocal(statement);
+          return Boolean(
+            local &&
+            isConst(local) &&
+            ts.isIdentifier(local.name) &&
+            local.initializer &&
+            ts.isIdentifier(local.initializer) &&
+            lexicalDeclaration(local.initializer),
+          );
+        })),
+    );
+  };
+
+  const privateDomEdit = (statement: ts.Statement, privateNodes: ReadonlySet<ts.Declaration>) => {
+    if (!ts.isExpressionStatement(statement)) {
+      return false;
+    }
+    const owns = (node: ts.Expression) => {
+      const value = lexicalDeclaration(node);
+      return value !== undefined && privateNodes.has(value);
+    };
+    const expression = statement.expression;
+    if (ts.isCallExpression(expression) && !expression.questionDotToken) {
+      const method = expression.expression;
+      return (
+        ts.isPropertyAccessExpression(method) &&
+        !method.questionDotToken &&
+        owns(method.expression) &&
+        ((method.name.text === "append" && expression.arguments.every(owns)) ||
+          (method.name.text === "setAttribute" &&
+            expression.arguments.length === 2 &&
+            expression.arguments.every(ts.isStringLiteralLike) &&
+            !/^on/i.test((expression.arguments[0] as ts.StringLiteralLike).text)))
+      );
+    }
+    if (
+      !ts.isBinaryExpression(expression) ||
+      expression.operatorToken.kind !== ts.SyntaxKind.EqualsToken ||
+      !ts.isPropertyAccessExpression(expression.left)
+    ) {
+      return false;
+    }
+    const { left, right } = expression;
+    return (
+      (owns(left.expression) &&
+        ((["type", "className"].includes(left.name.text) && ts.isStringLiteralLike(right)) ||
+          (left.name.text === "hidden" &&
+            [ts.SyntaxKind.TrueKeyword, ts.SyntaxKind.FalseKeyword].includes(right.kind)))) ||
+      (left.name.text === "action" &&
+        ts.isStringLiteralLike(right) &&
+        ts.isPropertyAccessExpression(left.expression) &&
+        left.expression.name.text === "dataset" &&
+        owns(left.expression.expression))
+    );
+  };
+
+  // A method on the directly returned object cannot execute during construction.
+  const returnedMethod = (site: ts.Node, owner: ts.Node): boolean => {
+    const method = phase(site);
+    const property = method.parent;
+    const object = ts.isMethodDeclaration(method)
+      ? property
+      : (ts.isArrowFunction(method) || ts.isFunctionExpression(method)) &&
+          ts.isPropertyAssignment(property) &&
+          property.initializer === method
+        ? property.parent
+        : undefined;
+    return Boolean(
+      object &&
+      ts.isObjectLiteralExpression(object) &&
+      ts.isReturnStatement(object.parent) &&
+      phase(object.parent) === owner,
+    );
+  };
+
+  const capturedProofs = new Map<ts.VariableDeclaration, number>();
+  const proveCapturedConstruction = (control: ts.VariableDeclaration): number => {
+    const creation = control.parent.parent;
+    const block = creation.parent;
+    if (
+      !isConst(control) ||
+      !ts.isIdentifier(control.name) ||
+      !control.initializer ||
+      !freshElement(control.initializer) ||
+      singleLocal(creation) !== control ||
+      !ts.isVariableStatement(creation) ||
+      !ts.isBlock(block) ||
+      !ts.isFunctionLike(block.parent) ||
+      !stable(control.name, false, constructionLifetimes)
+    ) {
+      return -1;
+    }
+    const privateNodes = new Set<ts.Declaration>([control]);
+    let registrar: ts.VariableDeclaration | undefined;
+    const invokes = (node: ts.Node): node is ts.CallExpression =>
+      Boolean(
+        registrar &&
+        ts.isCallExpression(node) &&
+        !node.questionDotToken &&
+        node.arguments.length === 0 &&
+        lexicalIdentity(node.expression, registrar),
+      );
+    for (const statement of block.statements.slice(block.statements.indexOf(creation) + 1)) {
+      const local = singleLocal(statement);
+      if (!local?.initializer || !ts.isIdentifier(local.name)) {
+        if (!privateDomEdit(statement, privateNodes)) {
+          return -1;
+        }
+        continue;
+      }
+      const value = local.initializer;
+      if (invokes(value)) {
+        const owner = phase(value);
+        const reads = (node: ts.Identifier, expected: ts.VariableDeclaration): boolean =>
+          lexicalIdentity(node, expected) ||
+          (ts.isShorthandPropertyAssignment(node.parent) && declaration(node) === expected);
+        const unsafe = (node: ts.Node): true | undefined => {
+          if (ts.isIdentifier(node) && node !== local.name && reads(node, local)) {
+            const access = node.parent;
+            const use = access.parent;
+            const dispose =
+              ts.isPropertyAccessExpression(access) &&
+              access.expression === node &&
+              access.name.text === "dispose" &&
+              !access.questionDotToken &&
+              ts.isCallExpression(use) &&
+              use.expression === access &&
+              !use.questionDotToken &&
+              use.arguments.length === 0;
+            const replace =
+              ts.isBinaryExpression(access) &&
+              access.left === node &&
+              access.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+              invokes(access.right);
+            return (!dispose && !replace) || (!returnedMethod(node, owner) && !failureCleanup(use))
+              ? true
+              : undefined;
+          }
+          if (
+            ts.isIdentifier(node) &&
+            registrar &&
+            node !== registrar.name &&
+            reads(node, registrar) &&
+            (!invokes(node.parent) ||
+              node.parent.expression !== node ||
+              (node.parent !== value && !returnedMethod(node, owner)))
+          ) {
+            return true;
+          }
+          return ts.forEachChild(node, unsafe);
+        };
+        return immediateInvocation(value) && !unsafe(block) ? value.end : -1;
+      }
+      if (isConst(local) && freshElement(value)) {
+        privateNodes.add(local);
+      } else if (!registrar && isConst(local) && capturedRegistrar(value, control)) {
+        registrar = local;
+      } else if (
+        !inertRegistrationOptions(value) ||
+        ts.isFunctionLike(value) ||
+        ts.isObjectLiteralExpression(value)
+      ) {
+        return -1;
+      }
+    }
+    return -1;
+  };
+  const capturedConstruction = (node: ts.Expression, metadata?: ts.BinaryExpression): boolean => {
+    const control = lexicalDeclaration(node);
+    if (!control || !ts.isVariableDeclaration(control) || phase(node) !== phase(control)) {
+      return false;
+    }
+    let end = capturedProofs.get(control);
+    if (end === undefined) {
+      end = proveCapturedConstruction(control);
+      capturedProofs.set(control, end);
+    }
+    return end >= 0 && (!metadata || metadata.end <= end);
+  };
+
+  const certifiedMemberMetadata = (node: ts.Expression): boolean => {
+    const alias = lexicalDeclaration(node);
+    if (
+      !alias ||
+      !ts.isVariableDeclaration(alias) ||
+      !isConst(alias) ||
+      !alias.initializer ||
+      !ts.isPropertyAccessExpression(alias.initializer) ||
+      alias.initializer.questionDotToken ||
+      alias.end > node.pos ||
+      !stable(node, false, constructionLifetimes)
+    ) {
+      return false;
+    }
+    const { expression, name } = alias.initializer;
+    const factoryResult = origin(expression);
+    if (
+      !factoryResult ||
+      !ts.isVariableDeclaration(factoryResult) ||
+      !isConst(factoryResult) ||
+      !factoryResult.initializer ||
+      !ts.isCallExpression(factoryResult.initializer) ||
+      !ts.isIdentifier(factoryResult.initializer.expression) ||
+      !factoryFor(factoryResult.initializer.expression)?.has(name.text) ||
+      escaped(reference(expression))
+    ) {
+      return false;
+    }
+    const owner = phase(node);
+    const key = reference(node);
+    if (
+      lifecycleCalls.some(
+        ({ key: disposed, site }) =>
+          overlaps(key, disposed) && !returnedMethod(site, owner) && !failureCleanup(site),
+      )
+    ) {
+      return false;
+    }
+    return (bound.get(key) ?? []).some((proof) => proof.owner === owner && proof.end <= alias.pos);
+  };
+
   const factoryAssociations: FactoryAssociation[] = [];
   for (const statement of source.statements) {
     if (
@@ -2814,7 +3155,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
           ts.isVariableDeclaration(node.parent) && ts.isIdentifier(node.parent.name)
             ? node.parent.name
             : node;
-        if (!hasBinding(target, true)) {
+        if (!hasBinding(target, true) && !capturedConstruction(target)) {
           record(
             "unbound-discrete",
             node,
@@ -2892,7 +3233,9 @@ function scanSource(context: ScanContext, path: string, text: string) {
         if (
           (isActionType || isActionId) &&
           !hasBinding(target) &&
-          !immediateButtonRegistration(node, target)
+          !immediateButtonRegistration(node, target) &&
+          !capturedConstruction(target, node) &&
+          !(isActionId && certifiedMemberMetadata(target))
         ) {
           record(
             "unbound-discrete",

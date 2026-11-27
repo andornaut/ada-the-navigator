@@ -2117,3 +2117,156 @@ it.each([
   );
   expect(result.map(({ kind }) => kind)).toEqual(open ? ["unbound-discrete"] : []);
 });
+const conversationScannerSources = [
+  canonicalRegistry,
+  ...["conversation", "standardTextAction", "modalClose"].map((name) => ({
+    path: `src/ui/${name}.ts`,
+    text: readFileSync(new URL(`../ui/${name}.ts`, import.meta.url), "utf8"),
+  })),
+];
+
+it("proves the live conversation box and Skip metadata through their actual bindings", () => {
+  const { findings } = scanDiscreteActionProject(conversationScannerSources);
+  expect(findings.filter(({ path }) => path === "src/ui/conversation.ts")).toEqual([]);
+});
+
+function capturedControl(before = "", call = "let action = register();", after = "") {
+  return `
+    function create(onDismiss) {
+      const root = document.createElement("button");
+      root.type = "button";
+      root.dataset.action = "dismiss";
+      root.setAttribute("aria-live", "polite");
+      const label = document.createElement("span");
+      label.className = "caption";
+      root.append(label);
+      let lineKey = null;
+      const register = () => {
+        const generation = lineKey;
+        return bindAdaAction({
+          click: { run: onDismiss }, current: () => generation === lineKey,
+        }, root);
+      };
+      ${before}
+      ${call}
+      ${after}
+      try { document.body.append(root); }
+      catch (error) { action.dispose(); root.remove(); throw error; }
+      return {
+        refresh() { action.dispose(); action = register(); },
+        dispose() { action.dispose(); root.remove(); },
+      };
+    }
+  `;
+}
+
+it("accepts a synchronous captured registration before native subtree publication", () => {
+  expect(scanWithRegistry("src/capture.ts", capturedControl())).toEqual([]);
+});
+
+it.each([
+  ["root publication", capturedControl("document.body.append(root);")],
+  ["subtree publication", capturedControl("publish(label);")],
+  ["conditional registration", capturedControl("", "let action = ready && register();")],
+  [
+    "deferred registration",
+    capturedControl("", "let action; queueMicrotask(() => { action = register(); });"),
+  ],
+  [
+    "conditional closure",
+    capturedControl().replace("return bindAdaAction", "if (ready) return bindAdaAction"),
+  ],
+  ["async closure", capturedControl().replace("register = ()", "register = async ()")],
+  ["eager replacement", capturedControl("", undefined, "action = foreign;")],
+  ["eager disposal", capturedControl("", undefined, "action.dispose();")],
+  ["extracted disposal", capturedControl("", undefined, "const stop = action.dispose; stop();")],
+  [
+    "recovering disposal",
+    capturedControl("", undefined, "try { mount(); } catch { action.dispose(); }"),
+  ],
+  ["registration called twice", capturedControl("", undefined, "register();")],
+  ["shorthand escape of the lifetime", capturedControl("", undefined, "mutate({action});")],
+  [
+    "callback passed before publish",
+    capturedControl("", undefined, "mount({ close() { action.dispose(); } });"),
+  ],
+] as const)("keeps construction findings for captured registration with %s", (_name, source) => {
+  expect(scanWithRegistry("src/capture.ts", source)).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        kind: "unbound-discrete",
+        source: 'document.createElement("button")',
+      }),
+      expect.objectContaining({
+        kind: "unbound-discrete",
+        source: 'root.dataset.action = "dismiss"',
+      }),
+    ]),
+  );
+});
+
+it("still catches a second click owner on a proven captured control", () => {
+  expect(
+    scanWithRegistry(
+      "src/capture.ts",
+      capturedControl("", undefined, 'root.addEventListener("click", onDismiss);'),
+    ),
+  ).toContainEqual(expect.objectContaining({ kind: "raw-discrete" }));
+});
+
+const certifiedMember = {
+  path: "src/factory.ts",
+  text: `export function make() {
+    const element = document.createElement("button");
+    const binding = bindAdaAction({ click: { run: () => act() } }, element);
+    return { element, dispose() { binding.dispose(); } };
+  }`,
+};
+
+function memberUse(before = "", after = "") {
+  return `
+    import {make} from "./factory.ts";
+    function build() {
+      const made = make();
+      const alias = made.element;
+      ${before}
+      alias.dataset.action = "skip";
+      ${after}
+      try { mount(alias); } catch (error) { made.dispose(); throw error; }
+    }`;
+}
+
+it("certifies a const element alias when its factory is disposed only on a rethrow path", () => {
+  expect(
+    scanRegistryFixtures([certifiedMember, { path: "src/use.ts", text: memberUse() }]).findings,
+  ).toEqual([]);
+});
+
+it.each([
+  ["element replacement", memberUse("made.element = other;")],
+  ["direct disposal", memberUse("made.dispose();")],
+  ["callback escape", memberUse("mount({ close() { made.dispose(); } });")],
+  ["deferred disposal invoked eagerly", memberUse("const stop = () => made.dispose(); stop();")],
+  ["continuing catch", memberUse("try { prep(); } catch (error) { made.dispose(); }")],
+  [
+    "nested caught rethrow",
+    memberUse("try { try { prep(); } catch (error) { made.dispose(); throw error; } } catch {}"),
+  ],
+  [
+    "publication after catch disposal",
+    memberUse().replace(
+      "made.dispose(); throw error;",
+      "made.dispose(); mount(alias); throw error;",
+    ),
+  ],
+] as const)("keeps member metadata open with %s", (_name, text) => {
+  expect(
+    scanRegistryFixtures([certifiedMember, { path: "src/use.ts", text }]).findings,
+  ).toContainEqual(
+    expect.objectContaining({
+      kind: "unbound-discrete",
+      path: "src/use.ts",
+      source: 'alias.dataset.action = "skip"',
+    }),
+  );
+});
