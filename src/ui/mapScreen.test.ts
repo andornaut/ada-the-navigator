@@ -235,16 +235,19 @@ describe("map screen place panel", () => {
         existsSync(new URL(`../../public${uiIconUrl(`map-job-${type}`)}`, import.meta.url)),
       ).toBe(true);
     }
-    // The round job spot uses the same in-chip cues as other places.
     expect(MAP_SCREEN_STYLE).not.toContain("rotate(45deg)");
-    expect(MAP_SCREEN_STYLE).not.toContain('.ada-map-place[aria-pressed="true"]::after');
-    expect(MAP_SCREEN_STYLE).toMatch(/\.ada-map-place:focus-visible\{\s*outline:none;/u);
+    const ringSelectors = [
+      ...MAP_SCREEN_STYLE.matchAll(/([^{}]*\.ada-map-place[^{}]*::after)\{([^}]*)\}/gu),
+    ];
+    expect(ringSelectors).toHaveLength(1);
+    const [, selected, ring] = ringSelectors[0]!;
+    expect(selected).toContain('.ada-map-places .ada-map-place[aria-pressed="true"]');
+    expect(ring).toContain("var(--map-selection-band,#65c9bf)");
+    expect(ring).toContain("pointer-events:none");
     expect(MAP_SCREEN_STYLE).toMatch(
-      /\.ada-map-place\[aria-pressed="true"\]\{[^}]+background:color-mix[^}]+z-index:2/u,
+      /\.ada-map-place:focus-visible\{\s*outline:none;[^}]+background:color-mix/u,
     );
-    expect(MAP_SCREEN_STYLE).toMatch(
-      /\.ada-map-place\[aria-pressed="true"\]:focus-visible\{[^}]+background:color-mix/u,
-    );
+    expect(MAP_SCREEN_STYLE).toMatch(/\.ada-map-place\[aria-pressed="true"\]\{\s*z-index:2\s*\}/u);
     expect(MAP_SCREEN_STYLE).toContain("var(--map-place-rim,#181425)");
     expect(MAP_SCREEN_STYLE).toContain("--map-place-rim:ButtonText;");
   });

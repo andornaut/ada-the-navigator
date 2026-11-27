@@ -420,38 +420,49 @@ export const MAP_SCREEN_STYLE = `
 .ada-controls .ada-map-screen .ada-map-place[data-kind="job"]:not([data-job-type])::before{
   content:none
 }
-/* Keep the place hue in all states, including a job spot with no glyph. */
-.ada-controls .ada-map-screen .ada-map-place[aria-pressed="true"]{
-  background:color-mix(in srgb,var(--face) 35%,${MAP_COLORS.ink});
-  color:${MAP_COLORS.cream};
+/* Landmarks draw under their peers. Selection raises one chip inside the places layer. */
+.ada-controls .ada-map-screen .ada-map-places .ada-map-place{
+  z-index:1
+}
+.ada-controls .ada-map-screen .ada-map-places .ada-map-place[data-kind="landmark"]{
+  z-index:0
+}
+.ada-controls .ada-map-screen .ada-map-places .ada-map-place[aria-pressed="true"]{
   z-index:2
+}
+.ada-controls .ada-map-screen .ada-map-places .ada-map-place[aria-pressed="true"]::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:${units(2 * (MAP_SYMBOL.ring.radius - MAP_SYMBOL.ring.band / 2))};
+  height:${units(2 * (MAP_SYMBOL.ring.radius - MAP_SYMBOL.ring.band / 2))};
+  box-sizing:border-box;
+  transform:translate(-50%, -50%);
+  border-radius:50%;
+  box-shadow:0 0 0 ${units(MAP_SYMBOL.ring.band)} var(--map-selection-band,${TASK_COLORS.story}),
+    0 0 0 ${units(MAP_SYMBOL.ring.band + MAP_SYMBOL.ring.fringe)} var(--map-selection-fringe,${MAP_COLORS.ink}),
+    inset 0 0 0 ${units(MAP_SYMBOL.ring.fringe)} var(--map-selection-fringe,${MAP_COLORS.ink});
+  pointer-events:none
 }
 .ada-controls .ada-map-screen .ada-map-place:focus-visible{
   outline:none;
   background:color-mix(in srgb,var(--face) 65%,${MAP_COLORS.hull})
 }
-.ada-controls .ada-map-screen .ada-map-place[aria-pressed="true"]:focus-visible{
-  background:color-mix(in srgb,var(--face) 48%,${MAP_COLORS.ink});
-  color:${MAP_COLORS.hull}
-}
 @media (forced-colors:active){
   .ada-controls .ada-map-screen button.ada-map-place{
     forced-color-adjust:none;
     --map-place-rim:ButtonText;
+    --map-selection-band:ButtonText;
+    --map-selection-fringe:ButtonFace;
     background:ButtonFace;
     color:ButtonText
   }
-  .ada-controls .ada-map-screen button.ada-map-place[aria-pressed="true"]{
-    background:ButtonText;
-    color:ButtonFace
-  }
   .ada-controls .ada-map-screen button.ada-map-place:focus-visible{
+    --map-selection-band:HighlightText;
+    --map-selection-fringe:Highlight;
     background:Highlight;
     color:HighlightText
-  }
-  .ada-controls .ada-map-screen button.ada-map-place[aria-pressed="true"]:focus-visible{
-    background:color-mix(in srgb,ButtonFace 55%,Highlight);
-    color:ButtonText
   }
 }
 .ada-controls .ada-map-screen .ada-map-objective{
@@ -1622,8 +1633,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       chip.setAttribute("aria-pressed", String(place.id === selected));
       chip.style.left = units(x - MAP_SYMBOL.chip / 2);
       chip.style.top = units(y - MAP_SYMBOL.chip / 2);
-      // Landmarks draw under the other chips; later places in the map's order draw on top.
-      chip.style.zIndex = place.kind === "landmark" ? "0" : "1";
       const indicator = chip.querySelector(".ada-map-objective");
       if (place.objective && !indicator) {
         chip.append(objectiveIndicator());
