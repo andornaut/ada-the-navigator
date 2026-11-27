@@ -6,13 +6,15 @@ import {
   silhouetteWorldReach,
   worldSceneryBodyContact,
 } from "../asteroids.ts";
-import { pointOnCurrent, worldCurrentInCell } from "../currents.ts";
+import { pointOnCurrent, worldCurrentInCell, worldCurrentsNear } from "../currents.ts";
 import { stepDebris } from "../enemyAi.ts";
 import { exclusionZoneRadius } from "../exclusionZones.ts";
 import { canonicalPosition, flightWorldContext } from "../flightTopology.ts";
+import { ACTIVE_CHUNK_RADIUS } from "../geography.ts";
 import { MOVING_ROCK_PREFIX, ricochetRocks } from "../rockRicochet.ts";
 import { SHIP_REACH, shipBody, shipNearSegment } from "../shipBody.ts";
 import type { FlightEvent, FlightState, SpaceObject, Vec } from "../types.ts";
+import { periodicWorldGrid } from "../worldCells.ts";
 import { segmentDistance, type WorldContext, worldPoint } from "../worldContacts.ts";
 
 interface DebrisMotion {
@@ -27,11 +29,70 @@ interface DebrisMotion {
   readonly frameOf: (flight: FlightState, object: SpaceObject) => number;
 }
 
+interface DebrisRiverGeneration {
+  readonly canonicalObject: (flight: FlightState, object: SpaceObject) => void;
+  readonly hash: (seed: number, x: number, y: number) => number;
+  readonly random: (seed: number) => () => number;
+}
+
+/**
+ * A debris river's rocks for each current within the active region that carries one: evenly
+ * spaced along the current, each at a seeded offset across it.
+ */
+export function ensureDebrisRivers(
+  { canonicalObject, hash, random }: DebrisRiverGeneration,
+  content: GameContent,
+  point: Vec,
+  flight: FlightState,
+): void {
+  if (!CURRENTS.galaxies.includes(flight.galaxy)) {
+    return;
+  }
+  const grid = periodicWorldGrid(flightWorldContext(flight), content.tuning.chunkSize);
+  const reach = (ACTIVE_CHUNK_RADIUS + 1) * grid.pitch;
+  const ids = new Set(flight.objects.map((object) => object.id));
+  for (const current of worldCurrentsNear(
+    flightWorldContext(flight),
+    flight.galaxy,
+    reach,
+    point,
+  )) {
+    if (!current.debris) {
+      continue;
+    }
+    const count = Math.max(1, Math.round((current.length / 1000) * CURRENTS.debrisPerThousand));
+    const next = random(hash(flight.seed ^ 0x51e7, current.points[0]!.x, current.points[0]!.y));
+    for (let index = 0; index < count; index++) {
+      const id = `river:${current.id}:${index}`;
+      if (ids.has(id) || Object.hasOwn(flight.world.notables, id)) {
+        continue;
+      }
+      const river = {
+        arc: ((index + next() * 0.6) / count) * current.length,
+        current: current.id,
+      };
+      const object: SpaceObject = {
+        hp: content.tuning.flight.rockHp,
+        id,
+        kind: "debris",
+        radius: content.tuning.flight.rockRadius,
+        river,
+        x: 0,
+        y: 0,
+      };
+      placeRiverRock(flight, object);
+      canonicalObject(flight, object);
+      flight.objects.push(object);
+      ids.add(id);
+    }
+  }
+}
+
 /**
  * A debris river rock's place: it follows its current's centre line at the peak flow speed,
  * entering at one end and leaving at the other, then re-entering at the start.
  */
-export function placeRiverRock(flight: FlightState, object: SpaceObject): void {
+function placeRiverRock(flight: FlightState, object: SpaceObject): void {
   const river = object.river!;
   const match = /^current:(-?\d+),(-?\d+)$/.exec(river.current);
   const current = match
