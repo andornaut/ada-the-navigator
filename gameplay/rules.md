@@ -392,14 +392,28 @@ the Eye. Elder Loom is an older Avi with silver feathers, a lavender
 tunic and pilot goggles, and has no pronoun: player text and these documents
 always use the name.
 
-A gate run is a chain of ring gates along a narrow channel. A gate lights only
-when Ada passes through it below 40% of her top speed, and each gate glows while
-her speed is slow enough to light it. A gate passed too fast stays dark, and
-Elder Loom calls her back to the last gate she lit, or to the first gate when
-she has lit none. Debris in the channel drifts slowly and bumps the ship aside,
-dealing bump damage like all scenery. The practice run has 3 gates; the Eye has 8, with the holodisk
-beyond the last. No enemies enter a gate run. Archie's drones wait outside the
-Eye's exit, so Ada leaves with the holodisk and fights her way clear.
+A gate run is a chain of ring gates along a narrow channel. Ada clears the gates
+in order by crossing their openings below 50% of her current engine's top
+speed. For the next uncleared gate on screen, the rim immediately shows red at
+75% or faster, yellow from 50% to below 75%, and green below 50%. These colors
+reflect current speed. Ada can stop in front of the ring or glide through while
+it is green. A gate passed too fast stays uncleared, and Elder Loom guides her
+back to the last gate she cleared, or the first gate when she has cleared none.
+
+Use wide, high-contrast color bands along the ring's circumference. The band
+and the ring's guide detail are visible when the gate first appears. Later
+gates stay inactive until they are next, and cleared gates keep a distinct
+state.
+
+At the green-flag start of the current unfinished course, Elder Loom gives
+an in-flight instruction on approach. Use restarts that course's attempt at
+its first gate and repeats how to cross. Restart preserves completed courses,
+story, and earned rewards. See [Needle dialogue](player-copy.md#needle-copy-anchor-course-start-party-elder-loom).
+
+Debris in the channel drifts slowly and deals bump damage. The practice run
+has 3 gates and the Eye has 8, with the holodisk beyond the last. No enemies
+enter a gate run. Archie's drones wait outside the Eye's exit, so Ada leaves
+with the holodisk and fights her way clear.
 
 Objectives: explore; meet Elder Loom; light the practice gates; light the Eye's
 gates; collect the holodisk; return to Earth.
