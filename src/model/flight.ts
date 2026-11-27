@@ -4452,7 +4452,24 @@ function crossbowAttack(
       ],
     });
   }
-  if (profile.projectile !== "bolt" || enemyOnly(profile.weapon)) {
+  if (profile.weapon === "phaser") {
+    const heading = direction(aim);
+    const range = enemyBeamReach(coverage, { aim: heading, origin });
+    return (
+      range > 0 &&
+      crossbowAllowsAttack(world, sector, {
+        fireBy: BEAM_TIMING.phaser.fires,
+        paths: [
+          {
+            from: origin,
+            screenRadius: BEAM.halfWidth,
+            travel: { x: heading.x * range, y: heading.y * range },
+          },
+        ],
+      })
+    );
+  }
+  if (profile.projectile === "mine" || profile.projectile === "beam" || enemyOnly(profile.weapon)) {
     return false;
   }
   const definition = weaponAt(profile.weapon, profile.level);
@@ -4470,7 +4487,7 @@ function crossbowAttack(
     });
     return {
       from: origin,
-      screenRadius: shotRadius({ projectile: "bolt" }),
+      screenRadius: Math.max(shotRadius({ projectile: profile.projectile }), launch.blast ?? 0),
       travel: { x: launch.velocity.x * launch.life, y: launch.velocity.y * launch.life },
     };
   });

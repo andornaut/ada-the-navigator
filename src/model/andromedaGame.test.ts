@@ -5,6 +5,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { BUILT, GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { GALAXY_SIDE } from "../data/world.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
@@ -458,7 +459,7 @@ function routeBeforeWarning(model: GameModel) {
   const world = flightWorldContext(flight);
   const leg = courierAmbushLeg(flight, progress)!;
   expect(leg.settlement.id).toBe(progress.andromeda?.settlement);
-  expect(world.worldSide).toBe(200_000);
+  expect(world.worldSide).toBe(GALAXY_SIDE);
   const plan = planCourierAmbush(world, leg)!;
   const { forward, warning } = plan;
   Object.assign(flight, {
