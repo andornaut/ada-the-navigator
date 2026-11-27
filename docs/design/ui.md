@@ -106,3 +106,4 @@ Reference: [UI layout tree](ui/ui-layout-tree.md), [ship screen](ui/ship-screen.
 | ada-0436 | Open details from flight markers                                                | [ada-0436.md](../work/ada-0436.md) |
 | ada-0450 | Align the homepage structure and list flight and menu controls                  | [ada-0450.md](../work/ada-0450.md) |
 | ada-0454 | Put Play first and remove the homepage footer                                   | [ada-0454.md](../work/ada-0454.md) |
+| ada-0455 | Remap desktop flight controls                                                   | [ada-0455.md](../work/ada-0455.md) |
