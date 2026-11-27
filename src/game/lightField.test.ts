@@ -189,10 +189,33 @@ describe("light-field rule", () => {
     const pixels = new Uint8ClampedArray([
       255, 255, 255, 0, 10, 200, 30, 127, 10, 200, 30, 128, 1, 2, 3, 255,
     ]);
-    thresholdSilhouette(INK, KEYLINE_ALPHA, pixels);
+    expect(thresholdSilhouette(INK, KEYLINE_ALPHA, { data: pixels, height: 1, width: 4 })).toEqual({
+      height: 1,
+      width: 3,
+      x: 1,
+      y: 0,
+    });
     expect([...pixels]).toEqual([
       0x18, 0x14, 0x25, 0, 0x18, 0x14, 0x25, 0, 0x18, 0x14, 0x25, 255, 0x18, 0x14, 0x25, 255,
     ]);
+  });
+
+  it("keeps one transparent texel around a solid pixel and handles an empty mask", () => {
+    const data = new Uint8ClampedArray(7 * 5 * 4);
+    const image = { data, height: 5, width: 7 };
+    expect(thresholdSilhouette(INK, KEYLINE_ALPHA, image)).toEqual({
+      height: 1,
+      width: 1,
+      x: 0,
+      y: 0,
+    });
+    data[(2 * 7 + 4) * 4 + 3] = 255;
+    expect(thresholdSilhouette(INK, KEYLINE_ALPHA, image)).toEqual({
+      height: 3,
+      width: 3,
+      x: 3,
+      y: 1,
+    });
   });
 
   it("edges a blast's ring stroke and its outer flash burst in ink, never the debris", () => {

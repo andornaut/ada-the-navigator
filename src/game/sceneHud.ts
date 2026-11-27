@@ -347,6 +347,9 @@ export function drawKeylines(
   );
 }
 
+// Scratch pixels are needed only while building one silhouette, before Phaser owns its texture.
+let silhouetteRaster: CanvasRenderingContext2D | null | undefined;
+
 /**
  * A sprite frame's keyline source: opaque ink where the frame's alpha is
  * at least KEYLINE_ALPHA, clear elsewhere, so the grown edge is crisp.
@@ -375,11 +378,15 @@ export function keylineSilhouette(
   }
   const width = Math.max(1, frame.cutWidth);
   const height = Math.max(1, frame.cutHeight);
-  const canvas = scene.textures.createCanvas(key, width, height);
-  if (!canvas) {
+  silhouetteRaster ??= document
+    .createElement("canvas")
+    .getContext("2d", { willReadFrequently: true });
+  const context = silhouetteRaster;
+  if (!context) {
     return undefined;
   }
-  const context = canvas.getContext();
+  context.canvas.width = width;
+  context.canvas.height = height;
   context.drawImage(
     frame.source.image as CanvasImageSource,
     frame.cutX,
@@ -392,8 +399,16 @@ export function keylineSilhouette(
     height,
   );
   const pixels = context.getImageData(0, 0, width, height);
-  thresholdSilhouette(LIGHT_FIELD.ink, KEYLINE_ALPHA, pixels.data);
-  context.putImageData(pixels, 0, 0);
+  const bounds = thresholdSilhouette(LIGHT_FIELD.ink, KEYLINE_ALPHA, pixels);
+  const canvas = scene.textures.createCanvas(key, bounds.width, bounds.height);
+  if (!canvas) {
+    return undefined;
+  }
+  canvas.getContext().putImageData(pixels, -bounds.x, -bounds.y);
+  // Keep the source frame's full dimensions and origin for both sprites and offscreen stamps.
+  if (bounds.width !== width || bounds.height !== height) {
+    canvas.get().setTrim(width, height, bounds.x, bounds.y, bounds.width, bounds.height);
+  }
   canvas.refresh();
   // The silhouette samples as its source does.
   filterTexture(scene, key, frame.source.scaleMode === ScaleModes.NEAREST ? "nearest" : "linear");

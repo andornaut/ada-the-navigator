@@ -177,22 +177,44 @@ export function foregroundEdge(galaxy: GalaxyNumber | null | undefined): number 
 export const KEYLINE_ALPHA = 0.5;
 
 /**
- * Turns RGBA pixels into the keyline's source silhouette in place: opaque ink where alpha is at
- * least `threshold`, clear elsewhere.
+ * Threshold the ink mask in place and bound it with one clear texel for linear filtering.
+ * An empty mask needs only a single transparent texel.
  */
 export function thresholdSilhouette(
   ink: number,
   threshold: number,
-  pixels: Uint8ClampedArray,
-): void {
+  { data, height, width }: Pick<ImageData, "data" | "height" | "width">,
+): { height: number; width: number; x: number; y: number } {
   const cut = threshold * 255;
-  for (let index = 0; index + 3 < pixels.length; index += 4) {
-    const solid = pixels[index + 3]! >= cut;
-    pixels[index] = (ink >> 16) & 255;
-    pixels[index + 1] = (ink >> 8) & 255;
-    pixels[index + 2] = ink & 255;
-    pixels[index + 3] = solid ? 255 : 0;
+  const red = (ink >> 16) & 255;
+  const green = (ink >> 8) & 255;
+  const blue = ink & 255;
+  let left = width;
+  let top = height;
+  let right = 0;
+  let bottom = 0;
+  let index = 0;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++, index += 4) {
+      const solid = data[index + 3]! >= cut;
+      data[index] = red;
+      data[index + 1] = green;
+      data[index + 2] = blue;
+      data[index + 3] = solid ? 255 : 0;
+      if (solid) {
+        left = Math.min(left, x);
+        top = Math.min(top, y);
+        right = Math.max(right, x + 1);
+        bottom = y + 1;
+      }
+    }
   }
+  if (bottom === 0) {
+    return { height: 1, width: 1, x: 0, y: 0 };
+  }
+  const x = Math.max(0, left - 1);
+  const y = Math.max(0, top - 1);
+  return { height: Math.min(height, bottom + 1) - y, width: Math.min(width, right + 1) - x, x, y };
 }
 
 /**
