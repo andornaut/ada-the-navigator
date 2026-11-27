@@ -112,7 +112,13 @@ it("marks the prepared Cartwheel bypass only after warning and keeps one world i
   );
 
   segments.length = 0;
-  actor.hp = 0;
+  flight.objects = [];
+  flight.world.notables[actor.id] = actor;
+  drawEarlyEncounters(scene, flight);
+  expect(segments.length).toBeGreaterThan(4);
+
+  segments.length = 0;
+  delete flight.world.notables[actor.id];
   drawEarlyEncounters(scene, flight);
   expect(segments).toEqual([]);
 });
