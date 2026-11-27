@@ -1582,7 +1582,10 @@ A marked approach can offer a short line on entering Talk range of a known or
 visually identified station, landmark or story destination. Stations use their
 galaxy's station lore. Landmarks use authored lore or available Scan guidance.
 Story destinations speak where arrival copy exists, including Astra's current
-guidance at Pip.
+guidance at Pip. For a physical destination without authored arrival copy,
+Astra can say "Saved to the map. We can come back any time." once the place is
+recorded as known and eligible for its own destination entry on the map.
+Visual identification alone does not qualify.
 
 Identification, discovery, approach and station-return lines tied to the visit
 count when first shown. A queued line alone leaves the visit unheard. Automatic
