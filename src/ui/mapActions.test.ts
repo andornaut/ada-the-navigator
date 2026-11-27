@@ -682,10 +682,17 @@ function expectInSquare(view: MapView) {
   const reach = { x: FIELD.width / 2 / view.scale, y: FIELD.height / 2 / view.scale };
   expect(view.worldSide).toBe(SIDE);
   expect(middle).toEqual({ x: 50, y: 50 });
-  expect(view.centre.x - reach.x).toBeGreaterThanOrEqual(-SIDE - tolerance);
-  expect(view.centre.x + reach.x).toBeLessThanOrEqual(SIDE + tolerance);
-  expect(view.centre.y - reach.y).toBeGreaterThanOrEqual(-SIDE / 2 - tolerance);
-  expect(view.centre.y + reach.y).toBeLessThanOrEqual(SIDE / 2 + tolerance);
+  for (const [axis, half] of [
+    ["x", SIDE],
+    ["y", SIDE / 2],
+  ] as const) {
+    if (reach[axis] > half) {
+      expect(view.centre[axis]).toBeCloseTo(0, 3);
+    } else {
+      expect(view.centre[axis] - reach[axis]).toBeGreaterThanOrEqual(-half - tolerance);
+      expect(view.centre[axis] + reach[axis]).toBeLessThanOrEqual(half + tolerance);
+    }
+  }
   expect(Math.abs(view.centre.x) / 2 + Math.abs(view.centre.y)).toBeLessThanOrEqual(
     SIDE / 2 + tolerance,
   );

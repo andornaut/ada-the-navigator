@@ -48,18 +48,19 @@ function cornerMap(galaxy: GalaxyNumber) {
 function expectInSquare(view: MapView) {
   const side = view.worldSide;
   const middle = { x: INNER.x + INNER.width / 2, y: INNER.y + INNER.height / 2 };
-  expect(view.centre.x + (FIELD.x - middle.x) / view.scale).toBeGreaterThanOrEqual(
-    -side - TOLERANCE,
-  );
-  expect(view.centre.x + (FIELD.x + FIELD.width - middle.x) / view.scale).toBeLessThanOrEqual(
-    side + TOLERANCE,
-  );
-  expect(view.centre.y + (FIELD.y - middle.y) / view.scale).toBeGreaterThanOrEqual(
-    -side / 2 - TOLERANCE,
-  );
-  expect(view.centre.y + (FIELD.y + FIELD.height - middle.y) / view.scale).toBeLessThanOrEqual(
-    side / 2 + TOLERANCE,
-  );
+  for (const [axis, size, half] of [
+    ["x", "width", side],
+    ["y", "height", side / 2],
+  ] as const) {
+    const low = view.centre[axis] + (FIELD[axis] - middle[axis]) / view.scale;
+    const high = low + FIELD[size] / view.scale;
+    if (high - low > 2 * half) {
+      expect((low + high) / 2).toBeCloseTo(0, 3);
+    } else {
+      expect(low).toBeGreaterThanOrEqual(-half - TOLERANCE);
+      expect(high).toBeLessThanOrEqual(half + TOLERANCE);
+    }
+  }
   expect(Math.abs(view.centre.x) / 2 + Math.abs(view.centre.y)).toBeLessThanOrEqual(
     side / 2 + TOLERANCE,
   );

@@ -679,9 +679,11 @@ export const MAP_SCREEN_LAYOUT = {
   /** Wheel deltaY px per zoom step. */
   wheelStep: 100,
   /** Steps removed from the closest view. */
-  zoomInStepsRemoved: 1,
-  /** Additional outward steps, up to the playable world boundary. */
-  zoomOutStepsAdded: 2,
+  zoomInStepsRemoved: 3,
+  /** Additional outward steps from the charting-circle fit. */
+  zoomOutStepsAdded: 4,
+  /** Outward steps allowed beyond the playable world extent filling the field. */
+  zoomOutStepsBeyondWorldFit: 2,
   /** One zoom step. */
   zoomStep: 1.5,
 } as const;

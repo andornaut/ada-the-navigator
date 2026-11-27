@@ -923,10 +923,10 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   Flight crosses to the opposite edge with its direction and speed intact.
   Flight, placement and distance queries use the same wrap geometry, so
   distances run the short way across the seam. The local map shows one wrap
-  period: pan and zoom stay within that square, panning stops
-  at the seam, and every position draws at its canonical point. At maximum
-  zoom-out, pan and zoom keep part of the survey oval visible, even if Ada
-  goes off screen near a seam. Before v1, loading a version-14 save with an
+  period. Panning stops at the seam, and every position draws at its canonical
+  point. The widest views can show near-black space around the playable world.
+  When the world fits on an axis, it stays centered on that axis. At maximum
+  zoom-out, pan and zoom keep part of the survey oval visible. Before v1, loading a version-14 save with an
   in-progress flight on the former 200000-unit chart triggers the existing save
   repair. It backs up the original save and starts a new game on the
   180000-unit chart. This size check applies to the saved flight's topology.

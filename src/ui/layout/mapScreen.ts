@@ -271,15 +271,22 @@ function squareExtent(side: number): Size {
 }
 
 /**
- * Shift the close and far scale limits by their configured steps. The field
- * still stays within one wrap period when it reaches the playable bounds.
+ * Shift the close and far scale limits by their configured steps. The far views
+ * can show space around the single playable world.
  */
 export function scaleLimits(
   inner: MapRegion,
   field: Size,
   side: number,
 ): { readonly max: number; readonly min: number } {
-  const { chartRadius, minBox, zoomInStepsRemoved, zoomOutStepsAdded, zoomStep } = MAP_SCREEN;
+  const {
+    chartRadius,
+    minBox,
+    zoomInStepsRemoved,
+    zoomOutStepsAdded,
+    zoomOutStepsBeyondWorldFit,
+    zoomStep,
+  } = MAP_SCREEN;
   const square = squareExtent(side);
   const closeFit = Math.min(
     inner.width / minBox.width,
@@ -292,7 +299,10 @@ export function scaleLimits(
   const worldFit = Math.max(field.width / square.width, field.height / square.height);
   return {
     max: closeFit / zoomStep ** zoomInStepsRemoved,
-    min: Math.max(discFit / zoomStep ** zoomOutStepsAdded, worldFit),
+    min: Math.max(
+      discFit / zoomStep ** zoomOutStepsAdded,
+      worldFit / zoomStep ** zoomOutStepsBeyondWorldFit,
+    ),
   };
 }
 
@@ -399,14 +409,13 @@ interface CentreRegion {
 }
 
 /**
- * The centres a view may take at its scale: the view's edge stays inside the square's projected
- * extent, so it stops at each of the diamond's tips, and its centre stays inside the diamond, so
- * it stops at each seam.
+ * Pan stops at each tip of the projected world and at each seam. When an axis is wider than
+ * the projected world, centre the world on that axis.
  */
 function centreRegion(inner: Rect, field: Rect, side: number, scale: number): CentreRegion {
   const middle = centreOf(inner);
   const { height, width } = squareExtent(side);
-  // Within rounding at minScale the field spans the extent exactly: hold the axis' midpoint.
+  // Hold the midpoint when the field is as large as the projected axis.
   const span = (low: number, high: number): [number, number] =>
     low <= high ? [low, high] : [(low + high) / 2, (low + high) / 2];
   const [x0, x1] = span(
