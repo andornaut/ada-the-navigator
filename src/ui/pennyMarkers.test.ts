@@ -225,7 +225,6 @@ class ElementFixture extends EventTarget {
   dataset: Record<string, string> = {};
   parent: ElementFixture | null = null;
   style = {
-    background: "",
     left: "",
     removeProperty: (key: string) => this.properties.delete(key),
     setProperty: (key: string, value: string) => this.properties.set(key, value),
@@ -311,10 +310,10 @@ it("keeps the same marker node while identifying it and clearing its identity ag
     expect(chip.firstElementChild?.attributes.size).toBe(0);
   };
   expectUnknown();
-  expect(chip.style.background).toBe("#ead4aa");
+  expect(chip.properties.get("--marker-face")).toBe("#ead4aa");
   ui.place({ x: 0, y: 0 }, area, undefined, [{ ...target, taskCategory: "story" }]);
   expectUnknown();
-  expect(chip.style.background).toBe("#65c9bf");
+  expect(chip.properties.get("--marker-face")).toBe("#65c9bf");
   ui.place({ x: 0, y: 0 }, area, { color: "#65c9bf", light: true }, [
     { ...target, identified: true, item: "stardust" },
   ]);
@@ -327,13 +326,13 @@ it("keeps the same marker node while identifying it and clearing its identity ag
     target: "workshop",
   });
   expect(chip.properties.get("--glyph")).toContain(uiIconUrl("icon-stardust-20"));
-  expect(chip.style.background).toBe(TASK_COLORS.generic);
+  expect(chip.properties.get("--marker-face")).toBe(TASK_COLORS.generic);
   for (const [category, symbol] of [
     ["station", "station"],
     ["objective", "destination"],
   ] as const) {
     ui.place({ x: 0, y: 0 }, area, undefined, [{ ...target, category, identified: true, symbol }]);
-    expect(chip.style.background).toBe(TASK_COLORS.generic);
+    expect(chip.properties.get("--marker-face")).toBe(TASK_COLORS.generic);
   }
   expect(PENNY_MARKER.size).toBe(24);
   expect(PENNY_MARKERS_STYLE).toContain("border-radius:50%");
@@ -416,8 +415,7 @@ describe("enemy marker colour and outline in every galaxy", () => {
           ui.place({ x: 0, y: 0 }, area, style, [target]);
           const node = root.children[0]!.children[0]!;
           expect(node.dataset.symbol).toBe(symbol);
-          expect(node.style.background).toBe(style.threat);
-          expect(node.properties.get("--marker-threat")).toBe(style.threat);
+          expect(node.properties.get("--marker-face")).toBe(style.threat);
         }
       }
       ui.destroy();
@@ -456,7 +454,7 @@ describe("enemy marker colour and outline in every galaxy", () => {
           const node = root.children[0]!.children[0]!;
           expect(node.dataset.identified).toBe("false");
           expect(node.dataset).not.toHaveProperty("symbol");
-          expect(node.style.background).toBe(colour);
+          expect(node.properties.get("--marker-face")).toBe(colour);
         }
       }
       ui.destroy();

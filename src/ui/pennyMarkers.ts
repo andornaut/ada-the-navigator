@@ -25,7 +25,6 @@ import {
 import { SPACING } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { chipGlyph } from "./mapScreen.ts";
-import { FOCUS_STYLE } from "./modal.ts";
 const { question: BODY_QUESTION, size: SIZE } = PENNY_MARKER;
 /** The enemy markers, each a filled threat disc; a hostile station draws the heavy disc. */
 const THREAT_SYMBOLS = ["enemy", "guard", "heavy", "hostileStation"] as const;
@@ -34,17 +33,19 @@ export const PENNY_MARKERS_STYLE = `
 .ada-penny-markers{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
 .ada-penny-marker{position:absolute;box-sizing:border-box;width:${units(SIZE)};
 height:${units(SIZE)};border:${units(MAP_SYMBOL.edge)} solid ${MAP_COLORS.ink};
-border-radius:50%;display:grid;place-items:center}
+border-radius:50%;display:grid;place-items:center;color:${MAP_COLORS.ink};
+background:var(--marker-face)}
 button.ada-penny-marker{appearance:none;padding:0;pointer-events:auto;cursor:pointer}
-button.ada-penny-marker:focus-visible{${FOCUS_STYLE}}
+button.ada-penny-marker:focus-visible{
+outline:none;background:color-mix(in srgb,var(--marker-face) 65%,${MAP_COLORS.hull})}
 .ada-penny-glyph{width:${units(MAP_SYMBOL.glyph)};height:${units(MAP_SYMBOL.glyph)};
-background:${MAP_COLORS.ink};mask:var(--glyph) center / contain no-repeat;
+background:currentColor;mask:var(--glyph) center / contain no-repeat;
 -webkit-mask:var(--glyph) center / contain no-repeat}
 ${THREAT_SYMBOLS.map(
   (kind) => `
 .ada-penny-marker[data-identified="true"][data-symbol="${kind}"]{
 width:${units(EDGE_MARKER_GLYPHS[kind].disc)};height:${units(EDGE_MARKER_GLYPHS[kind].disc)};
-border:0;background:var(--marker-threat)}
+border:0}
 .ada-penny-marker[data-identified="true"][data-symbol="${kind}"][data-light="true"]{
 box-shadow:0 0 0 ${units(LIGHT_FIELD.markerOutline)} ${MAP_COLORS.ink}}
 .ada-penny-marker[data-identified="true"][data-symbol="${kind}"] .ada-penny-glyph{display:none}
@@ -52,15 +53,19 @@ box-shadow:0 0 0 ${units(LIGHT_FIELD.markerOutline)} ${MAP_COLORS.ink}}
 ).join("")}
 .ada-penny-marker[data-identified="true"][data-symbol="guard"] .ada-penny-glyph{
 display:block;width:${units(EDGE_MARKER_GLYPHS.guard.bar.width)};height:${units(EDGE_MARKER_GLYPHS.guard.bar.height)};
-mask:none;-webkit-mask:none;background:${MAP_COLORS.ink}}
+mask:none;-webkit-mask:none}
 .ada-penny-marker[data-identified="false"] .ada-penny-glyph{
 width:${units(BODY_QUESTION.width)};height:${units(BODY_QUESTION.height)};
-background:${MAP_COLORS.ink};mask-image:url('/art/ui/fonts/font-body.png');
+mask-image:url('/art/ui/fonts/font-body.png');
 -webkit-mask-image:url('/art/ui/fonts/font-body.png');
 mask-size:${units(BODY_QUESTION.atlasWidth)} ${units(BODY_QUESTION.atlasHeight)};
 -webkit-mask-size:${units(BODY_QUESTION.atlasWidth)} ${units(BODY_QUESTION.atlasHeight)};
 mask-position:${units(-BODY_QUESTION.x)} ${units(-BODY_QUESTION.y)};
 -webkit-mask-position:${units(-BODY_QUESTION.x)} ${units(-BODY_QUESTION.y)}}
+@media (forced-colors:active){
+  button.ada-penny-marker:focus-visible{
+    forced-color-adjust:none;background:Highlight;color:HighlightText;border-color:ButtonText}
+}
 
 `;
 const threatSymbol = (symbol: PennyMarker["symbol"]): symbol is ThreatSymbol =>
@@ -287,9 +292,10 @@ export function createPennyMarkerLayer(
         const tint = marker.taskCategory && TASK_COLORS[marker.taskCategory];
         // An identified enemy or hostile station is threat red even as a task target.
         const threat = style.threat ?? style.color;
-        node.style.setProperty("--marker-threat", threat);
-        node.style.background =
-          marker.identified && threatSymbol(marker.symbol) ? threat : (tint ?? TASK_COLORS.generic);
+        node.style.setProperty(
+          "--marker-face",
+          marker.identified && threatSymbol(marker.symbol) ? threat : (tint ?? TASK_COLORS.generic),
+        );
         const glyph = pennyGlyph(marker);
         if (glyph) {
           node.style.setProperty("--glyph", `url('${glyph}')`);
