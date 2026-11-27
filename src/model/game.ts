@@ -38,7 +38,6 @@ import {
   unlockedBy,
 } from "../data/galaxies.ts";
 import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
-import { HOLODISKS } from "../data/holodisks.ts";
 import { carriedItemName, STORY_ITEM_NAMES } from "../data/itemNames.ts";
 import { JOB_TUNING, type JobType } from "../data/jobs.ts";
 import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
@@ -190,6 +189,7 @@ import {
   flightWorldContext,
 } from "./flightTopology.ts";
 import { initializeGalaxyGeography } from "./galaxyGeography.ts";
+import { dockedShopGroups, dockedShopOffers, dockedShopSupply } from "./game/dockedShop.ts";
 import { encounterCues, stationsInRange } from "./game/encounterCues.ts";
 import { jobIndicator, jobMapTarget, type JobNavigationContext } from "./game/jobNavigation.ts";
 import {
@@ -323,9 +323,6 @@ import {
   type ShopItem,
   type ShopRow,
   type ShopTab,
-  stationShopRows,
-  stationStock,
-  stationStocks,
 } from "./shop.ts";
 import { discoveryCacheGroup } from "./stardustPlacement.ts";
 import { stationDisplayName } from "./stationIdentity.ts";
@@ -337,12 +334,7 @@ import {
   type StationSite,
   worldStationById,
 } from "./stations.ts";
-import {
-  type StationServices,
-  stationShopCategories,
-  stationSpecialty,
-  type StationStockCategory,
-} from "./stationServices.ts";
+import { type StationServices, stationSpecialty } from "./stationServices.ts";
 import {
   advance,
   atRunEnd,
@@ -2617,52 +2609,15 @@ export class GameModel {
     };
   }
   private shopSupply() {
-    const services = this.stationServices;
-    const id = this.state.docked;
-    const galaxy = this.state.flight?.galaxy;
-    const categories = services && id ? stationShopCategories(services, id) : undefined;
-    if (!id || !galaxy || !categories) {
-      return undefined;
-    }
-    const holodisk = this.holodiskRow();
-    const eligible = stationStock(ECONOMY, this.shopPosition, id);
-    const stock = {
-      ammo: categories.includes("ammo") ? eligible.ammo : [],
-      equipment: categories.includes("equipment")
-        ? holodisk
-          ? eligible.equipment.slice(0, 3)
-          : eligible.equipment
-        : [],
-      weapons: categories.includes("weapons") ? eligible.weapons : [],
-    };
-    const station = { galaxy, stationId: id };
-    const state = this.state.stationRestock;
-    const visit = state && { ...station, state, stock };
-    return { categories, holodisk, station, stock, visit };
-  }
-  private stationSells(
-    supply: NonNullable<ReturnType<GameModel["shopSupply"]>>,
-    item: ShopItem,
-  ): boolean {
-    return item.kind === "holodisk"
-      ? supply.holodisk !== null
-      : stationStocks(supply.stock, item, supply.visit);
+    return dockedShopSupply(this.stationServices, this.shopPosition, this.state);
   }
   shopGroups() {
     const supply = this.shopSupply();
     if (!supply) {
       return undefined;
     }
-    const { categories, holodisk, stock, visit } = supply;
     this.pullLoadout();
-    const group = (category: StationStockCategory) => {
-      const rows = stationShopRows(ECONOMY, this.state.economy, stock, category, visit);
-      if (category === "equipment" && holodisk) {
-        rows.unshift(holodisk);
-      }
-      return { category, rows };
-    };
-    return [group(categories[0]), group(categories[1])] as const;
+    return dockedShopGroups(this.state.economy, supply);
   }
   shopRows(tab: ShopTab): ShopRow[] {
     return (
@@ -2675,35 +2630,14 @@ export class GameModel {
   private get shopPosition(): RoutePosition {
     return ROUTE_POSITION[this.state.flight?.galaxy ?? this.state.selectedGalaxy];
   }
-  /**
-   * The hub's holodisk row, first in Equipment once Cartwheel's space quest is complete:
-   * Owned once bought (gameplay/economy.md). Null at any other station or before then.
-   */
-  private holodiskRow(): ShopRow | null {
-    const galaxy = this.state.flight?.galaxy;
-    if (this.state.docked !== HUB_STATION || galaxy !== 2) {
-      return null;
-    }
-    const progress = this.state.progress[galaxy];
-    if (!progress.questComplete) {
-      return null;
-    }
-    return {
-      inUse: false,
-      item: { kind: "holodisk" },
-      level: null,
-      owned: progress.holodisk,
-      price: progress.holodisk ? null : HOLODISKS.hubPrice,
-    };
-  }
   requestPurchase(item: ShopItem): PurchaseRequest {
     const supply = this.shopSupply();
-    if (!supply || !this.stationSells(supply, item)) {
+    if (!supply || !dockedShopOffers(supply, item)) {
       return { kind: "refused", reason: "notForSale" };
     }
     this.pullLoadout();
     if (item.kind === "holodisk") {
-      const row = this.holodiskRow();
+      const row = supply.holodisk;
       const stardust = this.state.economy.stardust;
       return row?.price == null
         ? { kind: "refused", reason: "notForSale" }
@@ -2722,7 +2656,7 @@ export class GameModel {
    */
   buy(item: ShopItem): PurchaseResult {
     const supply = this.shopSupply();
-    if (!supply || !this.stationSells(supply, item)) {
+    if (!supply || !dockedShopOffers(supply, item)) {
       return { kind: "refused", reason: "notForSale" };
     }
     if (item.kind === "holodisk") {
