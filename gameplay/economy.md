@@ -434,7 +434,7 @@ it shows `detailMaxed` instead.
 | Upgrade       | Level 2 adds                           | Level 3 adds                         |
 | ------------- | -------------------------------------- | ------------------------------------ |
 | Laser         | "Fires faster and hits harder."        | Same as level 2                      |
-| Multi-Laser   | "One more bolt, and faster bolts."     | Same as level 2                      |
+| Multi-Laser   | "One more bolt."                       | Same as level 2                      |
 | Rapid Missile | "Fires faster."                        | Same as level 2                      |
 | Heavy Missile | "Hits harder."                         | Same as level 2                      |
 | Scattershot   | "Three more pellets that hit harder."  | "Four more pellets that hit harder." |

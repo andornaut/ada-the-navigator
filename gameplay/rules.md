@@ -1028,7 +1028,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   - Phaser: the long-range weapon, a hitscan beam. Each shot hits instantly
     along the aim to the fire-time rounded coverage boundary at every level,
     stopping at the first enemy or obstacle it meets. The hit and contact
-    effects stay where the shot resolved. It fires once every 1.0 s and
+    effects stay where the shot resolved. It fires once every 2.0 s and
     deals 4, 6 or 8 damage at levels 1, 2 and 3.
 - Rapid and Heavy Missiles have a full collision width of 12 world units
   (radius 6). Phaser also has a full hit width of 12 world units (radius 6),
@@ -1057,7 +1057,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   fires only while it is inside the visible game area. An enemy Heavy Missile
   hit removes 5, 6 or 7 HP at levels 1, 2 and 3.
 - Laser bolts travel at 500, 600 and 700 world units per second at weapon
-  levels 1, 2 and 3; Multi-Laser bolts at 400, 500 and 600. Laser and Multi-Laser bolts and Phaser
+  levels 1, 2 and 3; Multi-Laser bolts at 400 at every level. Laser and Multi-Laser bolts and Phaser
   beams, Ada's and enemies' alike, use the same fire-time rounded coverage
   envelope centred on the firing ship, half-width 380 and half-height 260 at the
   720 x 360 base view, measured from the true muzzle. The canonical shape scales
