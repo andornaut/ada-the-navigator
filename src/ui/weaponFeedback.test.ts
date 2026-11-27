@@ -1,17 +1,36 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { createWeaponSelector, type WeaponLabels } from "./weapons.ts";
 
 class Element extends EventTarget {
+  constructor(readonly tag = "div") {
+    super();
+  }
+
   readonly attributes = new Map<string, string>();
   children: Element[] = [];
+  parentElement: Element | null = null;
+  isConnected = true;
   className = "";
   readonly dataset: Record<string, string> = {};
   hidden = false;
   readonly style = { opacity: "", setProperty: vi.fn() };
   textContent = "";
   append(...nodes: Element[]) {
+    for (const node of nodes) {
+      node.parentElement = this;
+    }
     this.children.push(...nodes);
+  }
+  matches(selector: string) {
+    return selector.split(",").some((part) => part.trim() === this.tag);
+  }
+  querySelectorAll(selector: string): Element[] {
+    return this.children.flatMap((node) => [
+      ...(node.matches(selector) ? [node] : []),
+      ...node.querySelectorAll(selector),
+    ]);
   }
   querySelector(selector: string): Element | null {
     return this.children.find((node) => node.className === selector.slice(1)) ?? null;
@@ -45,8 +64,8 @@ describe("weapon refill presentation", () => {
   ])(
     "shows the actual gain, pauses and fades with reduced motion %s",
     (reduced, hold, halfFade) => {
-      vi.stubGlobal("document", { createElement: () => new Element() });
-      const host = new Element();
+      vi.stubGlobal("document", { createElement: (tag: string) => new Element(tag) });
+      const host = fixtureActionRoot(new Element());
       const selector = createWeaponSelector(host as unknown as HTMLElement, {
         labels,
         onSelect: () => false,

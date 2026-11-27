@@ -2,7 +2,7 @@ import type { Weapon } from "../data/types.ts";
 import { UPGRADE_TIER_COLOURS } from "../data/upgradeTiers.ts";
 import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
-import { bindAdaAction } from "./actionBinding.ts";
+import { assertAdaActionBindings, bindAdaAction } from "./actionBinding.ts";
 import { AmmoFeedbackQueue } from "./ammoFeedback.ts";
 import { COLOURS } from "./layout/colours.ts";
 import { SCROLL } from "./layout/contentCard.ts";
@@ -419,39 +419,44 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
             invalidatePressScope(parent);
           }
         });
-        actionBindings.set(
-          choice.id,
-          bindAdaAction(
-            {
-              beforeClick: (event) => event.stopPropagation(),
-              click: {
-                availability,
-                run: () => {
-                  if (enabled && !button.disabled && options.onSelect(choice.id)) {
-                    refuse(button, options.reducedMotion());
-                  }
-                },
+        const binding = bindAdaAction(
+          {
+            beforeClick: (event) => event.stopPropagation(),
+            click: {
+              availability,
+              run: () => {
+                if (enabled && !button.disabled && options.onSelect(choice.id)) {
+                  refuse(button, options.reducedMotion());
+                }
               },
-              current: () => !disposed,
-              ...(options.onHold
-                ? {
-                    hold: {
-                      availability,
-                      run: () => {
-                        const current = choices.find((item) => item.id === choice.id);
-                        if (enabled && !button.disabled && current) {
-                          options.onHold?.(current, button);
-                        }
-                      },
-                    },
-                  }
-                : {}),
-              slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
             },
-            button,
-          ),
+            current: () => !disposed,
+            ...(options.onHold
+              ? {
+                  hold: {
+                    availability,
+                    run: () => {
+                      const current = choices.find((item) => item.id === choice.id);
+                      if (enabled && !button.disabled && current) {
+                        options.onHold?.(current, button);
+                      }
+                    },
+                  },
+                }
+              : {}),
+            slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
+          },
+          button,
         );
-        root.append(button);
+        try {
+          root.append(button);
+          assertAdaActionBindings(button);
+        } catch (error) {
+          binding.dispose();
+          button.remove();
+          throw error;
+        }
+        actionBindings.set(choice.id, binding);
         entry = button;
         buttons.set(choice.id, entry);
       }

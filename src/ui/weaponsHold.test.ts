@@ -7,6 +7,10 @@ import { createWeaponSelector, type WeaponLabels } from "./weapons.ts";
 let activeDocument: FixtureDocument;
 const disposers: (() => void)[] = [];
 class Element extends EventTarget {
+  constructor(readonly tag = "div") {
+    super();
+  }
+
   parentElement: Element | null = null;
   connected = true;
   inert = false;
@@ -28,7 +32,10 @@ class Element extends EventTarget {
     return this.attributes.get(name) ?? null;
   }
   matches(selector: string) {
-    return selector === ":disabled" && this.disabled;
+    return selector.split(",").some((part) => {
+      const value = part.trim();
+      return value === this.tag || (value === ":disabled" && this.disabled);
+    });
   }
   closest(): Element | null {
     return this.hidden || this.inert ? this : (this.parentElement?.closest() ?? null);
@@ -46,6 +53,12 @@ class Element extends EventTarget {
       node.parentElement = this;
     }
     this.children.push(...nodes);
+  }
+  querySelectorAll(selector: string): Element[] {
+    return this.children.flatMap((node) => [
+      ...(node.matches(selector) ? [node] : []),
+      ...node.querySelectorAll(selector),
+    ]);
   }
   querySelector(selector: string): Element | null {
     return this.children.find((node) => node.className === selector.slice(1)) ?? null;
@@ -66,8 +79,8 @@ class Element extends EventTarget {
 }
 
 class FixtureDocument extends EventTarget {
-  createElement() {
-    return new Element();
+  createElement(tag: string) {
+    return new Element(tag);
   }
   defaultView = Object.assign(new EventTarget(), {
     HTMLElement: Element,
@@ -292,4 +305,19 @@ it("keeps the covered weapon group painted without accepting a held or released 
   f.up();
   f.click();
   expect(f.onSelect).toHaveBeenCalledOnce();
+});
+
+it("removes a newly constructed weapon when its action root has been retired", () => {
+  const f = setup();
+  f.stop();
+  expect(() =>
+    f.selector.setWeapons([
+      ...f.choices,
+      { ammo: 10, id: "rapidMissile", level: 1, selected: false },
+    ]),
+  ).toThrow("Discrete action control has no live action root");
+  expect(f.host.children[0]!.children).toEqual([f.button]);
+  expect(f.onHold).not.toHaveBeenCalled();
+  expect(f.onSelect).not.toHaveBeenCalled();
+  f.selector.dispose();
 });
