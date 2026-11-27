@@ -101,7 +101,7 @@ ${UI_SCOPE} .ada-ship-label{
 }
 ${UI_SCOPE} .ada-ship-action-label{
   display:block;
-  font:${font(TYPE.label)}
+  font:${font(TYPE.body)}
 }
 ${UI_SCOPE} .ada-ship-count{
   margin-inline-start:auto;
