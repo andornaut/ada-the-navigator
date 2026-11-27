@@ -860,20 +860,24 @@ try {
     return row;
   }
   // Follow linear pages and skip when offered. Closing at a fork leaves any material choice alone.
-  async function leaveInteraction() {
+  async function leaveInteraction(remaining = 24) {
     const card = interactionCard();
+    if (!(await card.isVisible())) {
+      return;
+    }
+    assert.ok(remaining > 0, "Interaction should reach its outcome or close");
     const skip = card.locator('[data-action="dialogue-skip"]:visible');
     const next = card.getByRole("button", { name: CONTENT.labels.next, exact: true });
-    for (let step = 0; step < 24 && (await card.isVisible()); step += 1) {
-      if (await skip.isVisible()) {
-        await skip.click();
-      } else if (await next.isVisible()) {
-        await next.click();
-      } else {
-        await card.locator('[data-action="conversation-close"]').click();
-      }
+    if (await skip.isVisible()) {
+      await skip.click();
+    } else if (await next.isVisible()) {
+      await next.click();
+    } else {
+      await card.locator('[data-action="conversation-close"]').click();
+      await card.waitFor({ state: "hidden" });
+      return;
     }
-    await card.waitFor({ state: "hidden" });
+    await leaveInteraction(remaining - 1);
   }
   async function tapUse(name) {
     const use = page.getByRole("button", { name, exact: true });
