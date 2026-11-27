@@ -33,6 +33,8 @@ export type UseAction =
 export type { Vec };
 
 export interface FlightInput {
+  /** Model-owned combat admission for authored phases. Withheld ships still move and collide. */
+  admitEnemy?: (flight: FlightState, enemy: SpaceObject) => boolean;
   /** Explicit fire request; absent preserves the legacy aim-to-fire control. */
   fire?: boolean;
   /** Explicit hull steering; absent preserves automatic facing along movement. */

@@ -79,6 +79,7 @@ import {
   resetCourier,
   supplyTerms,
 } from "./activities.ts";
+import { andromedaCourierActor } from "./andromeda.ts";
 import {
   ANDROMEDA_REDACT,
   ANDROMEDA_REDACT_CUES,
@@ -268,8 +269,14 @@ import {
   needleTrackedObjective,
 } from "./needleRuntime.ts";
 import type { MarkerDetails, PennyMarker, PennyPoint } from "./pennyMarkers.ts";
-import { phantomBossHud, type PhantomContext, phantomWaypoint } from "./phantom.ts";
+import {
+  phantomBlockadeAdmits,
+  phantomBossHud,
+  type PhantomContext,
+  phantomWaypoint,
+} from "./phantom.ts";
 import { phantomAllyRoster, type PhantomAllySpec } from "./phantomAllies.ts";
+import { queuePhantomBlockadeCue } from "./phantomBlockadeCue.ts";
 import { HUNT_GLINT } from "./pickupBody.ts";
 import { ambientSecondThread } from "./poiDiscourse.ts";
 import { newProgress } from "./progress.ts";
@@ -779,9 +786,19 @@ export class GameModel {
       this.state.mode !== "space" ||
       this.state.dialogue ||
       this.state.docked ||
-      this.screen !== "space" ||
-      (this.noticeShowing && !this.talk.showsOver(this.noticeRank))
+      this.screen !== "space"
     ) {
+      return null;
+    }
+    const flight = this.state.flight;
+    if (flight?.phantom?.blockadePhases) {
+      queuePhantomBlockadeCue(this.talk, this.state.seenConversations, {
+        content: this.content,
+        flight,
+        progress: this.current,
+      });
+    }
+    if (this.noticeShowing && !this.talk.showsOver(this.noticeRank)) {
       return null;
     }
     const showing = this.talk.showing;
@@ -3701,10 +3718,25 @@ export class GameModel {
     const cellOf = (point: Vec) => worldCellKey(grid, worldCellAt(grid, point));
     const pacingActive = f.topology && this.current.geography?.seed === f.seed;
     const flightTimeBeforeStep = f.time;
+    const admitEnemy: FlightInput["admitEnemy"] =
+      f.phantom?.blockadePhases || f.galaxy === 5
+        ? (flight, enemy) => {
+            if (flight.phantom?.blockadePhases && !phantomBlockadeAdmits(flight, enemy)) {
+              return false;
+            }
+            const courier =
+              flight.galaxy === 5 ? andromedaCourierActor(flight, enemy.id) : undefined;
+            return (
+              courier !== "held" &&
+              courier !== "ended" &&
+              input.admitEnemy?.(flight, enemy) !== false
+            );
+          }
+        : undefined;
     const events = stepFlight(
       this.content,
       dt,
-      input,
+      admitEnemy ? { ...input, admitEnemy } : input,
       f,
       pacingActive
         ? (distance, seconds, point) => {

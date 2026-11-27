@@ -19,6 +19,7 @@ import { createEnemy, damageEnemy } from "./enemyAi.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import {
   activateRequiredRoute,
+  activeEnemyBeams,
   ensureDestination,
   ensureHuntingPacks,
   ensureRouteEncounter,
@@ -410,6 +411,40 @@ describe("Captain Tally in Sunflower", () => {
     expect(flight.world.notables).not.toHaveProperty(id);
     expect(model.conversation?.text).not.toBe(SUNFLOWER_BOSS_CUES.approach.text);
     expect(model.conversation?.text).not.toBe(SUNFLOWER_BOSS_CUES.hardpoint.text);
+  });
+
+  it("holds Hammer's mounts during a real tell and restores its lock before firing once", () => {
+    let model = traded();
+    approach(model);
+    const beam = () =>
+      activeEnemyBeams(flightOf(model)).find(({ authored, ownerId }) => ownerId === id && authored);
+    expect(beam()).toMatchObject({ fired: false, hardpointId: "weapon-left" });
+    const flight = flightOf(model);
+    const before = flight.shots.length;
+    for (let frame = 0; frame < 40; frame++) {
+      model.step(0.02, idle);
+    }
+    const locked = beam()!;
+    const line = { direction: { ...locked.direction }, muzzle: { ...locked.muzzle } };
+    expect(locked.age).toBeGreaterThan(0.7);
+    expect(locked.fired).toBe(false);
+    expect(flight.shots).toHaveLength(before);
+    model = relaunch(CONTENT, model.save());
+    expect(actorOf(model).enemy?.earlyEncounter).toMatchObject({
+      kind: "hammer",
+      phase: "telling",
+      tell: line,
+    });
+    model.step(0.02, idle);
+    expect(beam()).toMatchObject({ ...line, fired: false });
+    model.step(0.2, idle);
+    expect(beam()).toMatchObject({ ...line, fired: true });
+    expect(actorOf(model).enemy?.earlyEncounter).toEqual({ kind: "hammer", phase: "complete" });
+    expect(
+      activeEnemyBeams(flightOf(model)).filter(
+        ({ authored, ownerId }) => ownerId === id && authored,
+      ),
+    ).toHaveLength(1);
   });
 
   it("salvages via Use, marks a normal-flight route and allows exactly one Ore claim across flights", () => {

@@ -9,32 +9,61 @@ import {
 } from "../data/andromeda.ts";
 import { ECONOMY } from "../data/economy.ts";
 import {
+  admitCourierAmbush,
+  advanceCourierAmbush,
+  courierAmbushActor,
+  type CourierAmbushAttempt,
+  type CourierAmbushLeg,
+  courierAmbushLeg,
+  courierAmbushMarkers,
+  type CourierAmbushPlan,
+  courierAmbushRepresented,
+  courierAmbushTerrainCovered,
+  planCourierAmbush,
+  setCourierSpawnReservation,
+  stepCourierAmbush,
+  validCourierAmbushAttempt,
+} from "./andromedaCourierAmbush.ts";
+import {
   nearestSettlement,
   settlementById,
   settlementsNear,
   worldNearestSettlerStation,
 } from "./andromedaPlaces.ts";
 import type { ChapterContext, ChapterResult, ChapterRuntime } from "./chapterProtocol.ts";
-import { ensureDestination, ensureDestinationAt, ensureStation } from "./flight.ts";
+import {
+  ensureDestination,
+  ensureDestinationAt,
+  ensureStation,
+  questGuardPlacementContext,
+} from "./flight.ts";
+import { flightWorldContext } from "./flightTopology.ts";
 import { guideBeaconSlotAt, storyGuideBeaconSlot } from "./guideBeacons.ts";
 import { flightStationContext, namesSavedStation, worldStationById } from "./stations.ts";
-import type { DialogueState, GalaxyProgress, UseAction, Vec } from "./types.ts";
+import type { DialogueState, FlightState, GalaxyProgress, UseAction, Vec } from "./types.ts";
 
 export const ANDROMEDA_PARTS = "beaconParts";
 
-type Progress = GalaxyProgress & { andromeda?: AndromedaProgress };
+type AndromedaChapterProgress = AndromedaProgress & { courierAmbush?: CourierAmbushAttempt };
+type Progress = GalaxyProgress & { andromeda?: AndromedaChapterProgress };
 const memory = (progress: GalaxyProgress) => (progress as Progress).andromeda;
 const remember = (progress: GalaxyProgress) => ((progress as Progress).andromeda ??= {});
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
 
 /** Only real seeded destination ids enter saved story targets. */
-export function validAndromedaProgress(value: unknown): value is AndromedaProgress {
+export function validAndromedaProgress(value: unknown): value is AndromedaChapterProgress {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return false;
   }
   const state = value as Record<string, unknown>;
   return (
-    Object.keys(state).every((key) => key === "station" || key === "settlement") &&
+    Object.keys(state).every(
+      (key) => key === "station" || key === "settlement" || key === "courierAmbush",
+    ) &&
+    (state.courierAmbush === undefined ||
+      (validCourierAmbushAttempt(state.courierAmbush) &&
+        state.courierAmbush.station === state.station &&
+        state.courierAmbush.settlement === state.settlement)) &&
     (state.station === undefined ||
       (typeof state.station === "string" && namesSavedStation(ECONOMY, 5, state.station))) &&
     (state.settlement === undefined ||
@@ -250,11 +279,13 @@ function finish(context: ChapterContext, id: AndromedaConversationId): ChapterRe
       }
       remember(progress).settlement = nearestSettlement(ECONOMY, station).id;
       progress.stage = 4;
+      reserveAndromedaCourier(context);
       break;
     }
     case "parts":
       progress.questItem = ANDROMEDA_PARTS;
       progress.stage = 5;
+      finishCourierAmbush(context);
       break;
     case "repaired":
       if (progress.stage === 5) {
@@ -312,11 +343,162 @@ export function chooseAndromeda(
   return relevant(context.progress, id) ? finishAndPrepare(context, id) : undefined;
 }
 
+const courierProgress = new WeakMap<FlightState, GalaxyProgress>();
+const courierPlans = new WeakMap<
+  FlightState,
+  { readonly leg: CourierAmbushLeg; readonly plan: CourierAmbushPlan | null }
+>();
+const courierWarnings = new WeakSet<FlightState>();
+
+/** Playback belongs to GameModel's flight conversation director. The save stores the phase. */
+export function takeAndromedaCourierWarning(flight: FlightState) {
+  return courierWarnings.delete(flight)
+    ? {
+        speaker: "astra" as const,
+        text: "Fighters on both sides. Keep going toward the settlement.",
+      }
+    : undefined;
+}
+
+export function andromedaCourierAttempt(
+  progress: GalaxyProgress,
+): CourierAmbushAttempt | undefined {
+  return memory(progress)?.courierAmbush;
+}
+
+function attemptFor(flight: FlightState): CourierAmbushAttempt | undefined {
+  const progress = courierProgress.get(flight);
+  return progress && andromedaCourierAttempt(progress);
+}
+
+export function andromedaCourierActor(flight: FlightState, id: string) {
+  return courierAmbushActor(attemptFor(flight), id);
+}
+
+export function andromedaCourierMarkers(flight: FlightState) {
+  return courierAmbushMarkers(attemptFor(flight));
+}
+
+function finishCourierAmbush({ flight, progress }: ChapterContext): void {
+  const attempt = memory(progress)?.courierAmbush;
+  if (attempt && "plan" in attempt && attempt.state.phase !== "ended") {
+    remember(progress).courierAmbush = { ...attempt, state: { phase: "ended" } };
+  }
+  courierWarnings.delete(flight);
+  setCourierSpawnReservation(flight, undefined);
+}
+
+function reserveAndromedaCourier(context: ChapterContext): void {
+  const { content, flight, progress } = context;
+  if (progress.stage !== 4) {
+    return;
+  }
+  const attempt = andromedaCourierAttempt(progress);
+  if (attempt) {
+    if ("plan" in attempt && attempt.state.phase !== "ended") {
+      setCourierSpawnReservation(flight, attempt.plan);
+    }
+    return;
+  }
+  const leg = courierAmbushLeg(flight, progress);
+  if (!leg) {
+    return;
+  }
+  // Test the ordinary allocation and existing objects before protecting future seeded space.
+  const candidate = admitCourierAmbush(
+    {
+      ...questGuardPlacementContext(content, flight),
+      checkPlayer: false,
+      plannedClear: () => true,
+      stage: progress.stage,
+    },
+    leg,
+    undefined,
+  );
+  if (candidate && "packs" in candidate) {
+    setCourierSpawnReservation(flight, candidate.attempt.plan);
+  }
+}
+
+function mountAndromeda(context: ChapterContext): void {
+  const { flight, progress } = context;
+  courierProgress.set(flight, progress);
+  // A real new flight clears open-space encounters. Continue retains their live or paged actors.
+  if (flight.time === 0 && attemptFor(flight) && !courierAmbushRepresented(flight)) {
+    finishCourierAmbush(context);
+  }
+  reserveAndromedaCourier(context);
+  ensureAndromedaWorld(context);
+}
+
+function stepCourierAmbushLeg(context: ChapterContext, seconds: number, previous: Vec): void {
+  const { content, flight, progress } = context;
+  if (progress.stage !== 4) {
+    return;
+  }
+  courierProgress.set(flight, progress);
+  const clock = { ...flightWorldContext(flight), player: flight.player, previous, seconds };
+  let attempt = andromedaCourierAttempt(progress);
+  if (attempt?.state.phase === "ended" || attempt?.state.phase === "skipped") {
+    return;
+  }
+  if (!attempt) {
+    let geometry = courierPlans.get(flight);
+    if (!geometry) {
+      const leg = courierAmbushLeg(flight, progress);
+      if (!leg) {
+        return;
+      }
+      geometry = { leg, plan: planCourierAmbush(flightWorldContext(flight), leg) };
+      courierPlans.set(flight, geometry);
+    }
+    const { leg, plan } = geometry;
+    if (plan && stepCourierAmbush(clock, plan, { phase: "armed" }).phase === "armed") {
+      return;
+    }
+    const allocation = admitCourierAmbush(
+      {
+        ...questGuardPlacementContext(content, flight),
+        plannedClear: (plan) => courierAmbushTerrainCovered(context, plan),
+        stage: progress.stage,
+      },
+      leg,
+      undefined,
+    );
+    if (!allocation) {
+      return;
+    }
+    attempt = allocation.attempt;
+    if ("packs" in allocation) {
+      const combat = (flight.combat ??= { initialPackSizes: {}, routeEncounters: [] });
+      for (const pack of allocation.packs) {
+        combat.initialPackSizes[pack] = 2;
+      }
+      flight.objects.push(...allocation.actors);
+    }
+  }
+  const next = advanceCourierAmbush(clock, progress.stage, attempt);
+  remember(progress).courierAmbush = next.attempt;
+  if (next.attempt.state.phase === "skipped" || next.attempt.state.phase === "ended") {
+    setCourierSpawnReservation(flight, undefined);
+  }
+  if (next.warning) {
+    courierWarnings.add(flight);
+  }
+}
+
 /** First contact uses an actual station; inspecting the dent is useful but never an extra gate. */
-export function stepAndromeda(context: ChapterContext): ChapterResult | undefined {
+export function stepAndromeda(
+  context: ChapterContext,
+  seconds = 0,
+  previous = context.flight.player,
+): ChapterResult | undefined {
   const { content, flight, progress } = context;
   if (flight.galaxy !== 5) {
     return undefined;
+  }
+  if (seconds > 0) {
+    stepCourierAmbushLeg(context, seconds, previous);
   }
   if (!progress.introduced && progress.stage === 0) {
     const station = flight.objects.find(
@@ -343,7 +525,7 @@ export const ANDROMEDA_RUNTIME: ChapterRuntime = {
   beforeStep: pageAndromedaWorld,
   choose: chooseAndromeda,
   galaxy: 5,
-  init: ensureAndromedaWorld,
+  init: mountAndromeda,
   objective: andromedaObjective,
   route: [ANDROMEDA_PLACES.beacon, ANDROMEDA_PLACES.pip],
   use: useAndromeda,

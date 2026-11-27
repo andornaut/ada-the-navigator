@@ -16,12 +16,14 @@ import {
   activateRouteEncounter,
   ensureDestination,
   questGuardPlacementContext,
+  rayCircle,
   rollEncounter,
   salvage,
   salvageTarget,
   spawnChapterEnemy,
   syncFlightRegion,
 } from "./flight.ts";
+import { flightWorldContext } from "./flightTopology.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import { type PhantomAlly, type PhantomAllySpec, rotatePhantomAllies } from "./phantomAllies.ts";
 import { placePhantomEncounter } from "./phantomEncounterPlacement/index.ts";
@@ -43,6 +45,9 @@ import type {
   SpaceObject,
   Vec,
 } from "./types.ts";
+import { worldDelta, worldPoint } from "./worldContacts.ts";
+import { wrapPoint } from "./worldGeometry.ts";
+
 export interface PhantomProgress {
   broken: string[];
   freed: string[];
@@ -68,7 +73,28 @@ export interface PhantomDeparture extends Vec {
   age: number;
   facing?: Vec;
 }
+type PhantomSettlement = (typeof PHANTOM_DESTINATIONS)[number];
+
+export type PhantomBlockadePhase =
+  | { readonly phase: "warning"; readonly until: number; readonly withdrawal: Vec }
+  | { readonly phase: "fighters"; readonly withdrawal: Vec }
+  | {
+      readonly phase: "recovery";
+      readonly until: number;
+      readonly withdrawal: Vec;
+      cuePending?: true;
+    }
+  | { readonly phase: "frigate" }
+  | { readonly phase: "clear" };
+
+const BLOCKADE_WARNING_RANGE = 1_000;
+const BLOCKADE_WARNING_SECONDS = 2.5;
+const BLOCKADE_RECOVERY_RANGE = 500;
+const BLOCKADE_RECOVERY_SECONDS = 4;
+
 export interface PhantomFlight {
+  /** Absent on old flights, which keep their existing combat and progress. */
+  blockadePhases?: Partial<Record<PhantomSettlement, PhantomBlockadePhase>>;
   pendingEncounter?: PendingPhantomEncounter;
   departures?: PhantomDeparture[];
   phase: "blockades" | "approach" | "waves" | "flagship" | "salvaged";
@@ -187,6 +213,7 @@ export function initPhantom(context: PhantomContext): void {
   const state: PhantomFlight = {
     allies: [],
     allyTurn: 0,
+    blockadePhases: {},
     blockades: {},
     chatter: [],
     disabledCued: false,
@@ -282,6 +309,152 @@ function finished(
   }
   return ids.every((id) => state.resolvedIds.includes(id));
 }
+const blockadeFrigate = (site: PhantomSettlement): string => `phantom:blockade:${site}:0:0`;
+
+function blockadeSite(id: string): id is PhantomSettlement {
+  return PHANTOM_DESTINATIONS.some((known) => known === id);
+}
+
+/** Only existing chapter members are gated, including the frigate's actual attached escorts. */
+export function phantomBlockadeAdmits(flight: FlightState, actor: SpaceObject): boolean {
+  const state = flight.galaxy === 6 ? flight.phantom : undefined;
+  if (!state?.blockadePhases) {
+    return true;
+  }
+  for (const site of PHANTOM_DESTINATIONS) {
+    const ids = state.blockades[site];
+    const leader = blockadeFrigate(site);
+    const primary = ids?.includes(actor.id);
+    const escort = actor.enemy?.escortOf === leader && ids?.includes(leader);
+    if (!primary && !escort) {
+      continue;
+    }
+    const phase = state.blockadePhases[site]?.phase;
+    if (actor.id === leader || escort) {
+      return phase === "frigate" || phase === "clear";
+    }
+    return !state.resolvedIds.includes(actor.id) && (phase === "fighters" || phase === "frigate");
+  }
+  return true;
+}
+
+export function phantomBlockadeSignal(context: PhantomContext, id: string) {
+  const phase = blockadeSite(id) ? stateOf(context)?.blockadePhases?.[id] : undefined;
+  const site = retained(context, id);
+  if (!phase || !site) {
+    return null;
+  }
+  if (phase.phase === "warning") {
+    return { phase: "warning" as const, site: { x: site.x, y: site.y } };
+  }
+  if (phase.phase === "recovery") {
+    return {
+      cuePending: phase.cuePending === true,
+      phase: "recovery" as const,
+      site: { x: site.x, y: site.y },
+      withdrawal: phase.withdrawal,
+    };
+  }
+  return null;
+}
+
+/** The display owner acknowledges only after the recovery cue actually shows. */
+export function acknowledgePhantomBlockadeRecovery(context: PhantomContext, id: string): void {
+  const phase = blockadeSite(id) ? stateOf(context)?.blockadePhases?.[id] : undefined;
+  if (phase?.phase === "recovery") {
+    delete phase.cuePending;
+  }
+}
+
+/** The first inbound intersection, using the same wrapped image for the whole step. */
+function crossedRecoveryLine(
+  flight: FlightState,
+  site: Vec,
+  previous: Vec,
+  seconds: number,
+  until: number,
+): boolean {
+  const world = flightWorldContext(flight);
+  const centre = worldPoint(world, previous, site);
+  const travel = worldDelta(world, previous, flight.player);
+  const range = Math.hypot(travel.x, travel.y);
+  if (
+    range === 0 ||
+    distance(previous, centre) <= BLOCKADE_RECOVERY_RANGE ||
+    Math.hypot(previous.x + travel.x - centre.x, previous.y + travel.y - centre.y) >
+      BLOCKADE_RECOVERY_RANGE
+  ) {
+    return false;
+  }
+  const entry = rayCircle(
+    previous,
+    { x: travel.x / range, y: travel.y / range },
+    range,
+    centre,
+    BLOCKADE_RECOVERY_RANGE,
+  );
+  return entry !== null && flight.time - seconds * (1 - entry / range) + 1e-9 >= until;
+}
+
+function stepBlockade(
+  context: PhantomContext,
+  seconds: number,
+  previous: Vec,
+  site: SpaceObject,
+  id: PhantomSettlement,
+  ids: readonly string[],
+): void {
+  const flight = context.flight;
+  const phases = stateOf(context)?.blockadePhases;
+  if (!phases) {
+    return;
+  }
+  const phase = phases[id];
+  if (!phase) {
+    const world = flightWorldContext(flight);
+    const approach = worldDelta(world, site, previous);
+    const before = Math.hypot(approach.x, approach.y);
+    const now = worldDelta(world, site, flight.player);
+    const gap = Math.hypot(now.x, now.y);
+    if (gap <= BLOCKADE_WARNING_RANGE && gap < before) {
+      const withdrawal = {
+        x: site.x + (approach.x / before) * BLOCKADE_WARNING_RANGE,
+        y: site.y + (approach.y / before) * BLOCKADE_WARNING_RANGE,
+      };
+      phases[id] = {
+        phase: "warning",
+        until: flight.time + BLOCKADE_WARNING_SECONDS,
+        withdrawal:
+          world.worldSide === undefined ? withdrawal : wrapPoint(world.worldSide, withdrawal),
+      };
+    }
+    return;
+  }
+  if (phase.phase === "warning" && flight.time + 1e-9 >= phase.until) {
+    phases[id] = { phase: "fighters", withdrawal: phase.withdrawal };
+  } else if (
+    phase.phase === "fighters" &&
+    finished(
+      context,
+      ids.filter((actor) => actor !== blockadeFrigate(id)),
+      site,
+      T.blockadeReach,
+    )
+  ) {
+    phases[id] = {
+      cuePending: true,
+      phase: "recovery",
+      until: flight.time + BLOCKADE_RECOVERY_SECONDS,
+      withdrawal: phase.withdrawal,
+    };
+  } else if (
+    phase.phase === "recovery" &&
+    crossedRecoveryLine(flight, site, previous, seconds, phase.until)
+  ) {
+    phases[id] = { phase: "frigate" };
+  }
+}
+
 function departAllies(state: PhantomFlight): void {
   const leaving = new Set(state.allies.map((ally) => ally.id));
   state.departures = [
@@ -473,8 +646,8 @@ export function beforeStepPhantom(context: PhantomContext, seconds = 0): void {
 }
 export function afterStepPhantom(
   context: PhantomContext,
-  _seconds?: number,
-  _previous?: Vec,
+  seconds?: number,
+  previous?: Vec,
   events: readonly (FlightEvent | PhantomHardpointEvent)[] = [],
 ): ChapterResult | undefined {
   const state = stateOf(context);
@@ -494,12 +667,22 @@ export function afterStepPhantom(
   const progress = progressOf(context);
   for (const [id, ids] of Object.entries(state.blockades)) {
     const settlement = retained(context, id);
-    if (
-      settlement &&
-      !progress.broken.includes(id) &&
-      finished(context, ids, settlement, T.blockadeReach)
-    ) {
-      progress.broken.push(id);
+    if (settlement && !progress.broken.includes(id)) {
+      if (
+        blockadeSite(id) &&
+        previous &&
+        seconds !== undefined &&
+        Number.isFinite(seconds) &&
+        seconds > 0
+      ) {
+        stepBlockade(context, seconds, previous, settlement, id, ids);
+      }
+      if (finished(context, ids, settlement, T.blockadeReach)) {
+        progress.broken.push(id);
+        if (blockadeSite(id) && state.blockadePhases) {
+          state.blockadePhases[id] = { phase: "clear" };
+        }
+      }
     }
     if (progress.broken.includes(id)) {
       // Unindex dormant guards before clearing their route membership. Survivors keep their AI and identity.
@@ -671,6 +854,60 @@ export function validPhantomProgress(value: unknown): value is PhantomProgress {
     (!state.flagshipKnown || state.freed.length === PHANTOM_DESTINATIONS.length)
   );
 }
+function validBlockadePhases(state: PhantomFlight): boolean {
+  const phases = state.blockadePhases;
+  if (phases === undefined) {
+    return true;
+  }
+  if (!phases || typeof phases !== "object" || Array.isArray(phases)) {
+    return false;
+  }
+  return Object.entries(phases).every(([id, phase]) => {
+    if (
+      !blockadeSite(id) ||
+      !Object.hasOwn(state.blockades, id) ||
+      !phase ||
+      typeof phase !== "object"
+    ) {
+      return false;
+    }
+    const members = state.blockades[id]!;
+    const fightersResolved = () =>
+      members.every((actor) => actor === blockadeFrigate(id) || state.resolvedIds.includes(actor));
+    const keys = Object.keys(phase).length;
+    switch (phase.phase) {
+      case "clear":
+        return keys === 1 && members.every((actor) => state.resolvedIds.includes(actor));
+      case "frigate":
+        return keys === 1 && fightersResolved();
+      case "warning":
+      case "fighters":
+      case "recovery": {
+        const point = phase.withdrawal;
+        if (
+          !point ||
+          typeof point !== "object" ||
+          !Number.isFinite(point.x) ||
+          !Number.isFinite(point.y)
+        ) {
+          return false;
+        }
+        if (phase.phase === "fighters") {
+          return keys === 2;
+        }
+        if (!Number.isFinite(phase.until) || phase.until < 0) {
+          return false;
+        }
+        return phase.phase === "warning"
+          ? keys === 3
+          : (keys === 3 || (keys === 4 && phase.cuePending === true)) && fightersResolved();
+      }
+      default:
+        return false;
+    }
+  });
+}
+
 /** Chapter-local state is finite and references only its authored encounters. */
 export function validPhantomFlight(value: unknown): value is PhantomFlight {
   if (!value || typeof value !== "object") {
@@ -726,6 +963,7 @@ export function validPhantomFlight(value: unknown): value is PhantomFlight {
     Object.entries(state.blockades).every(
       ([key, members]) => PHANTOM_DESTINATIONS.some((id) => id === key) && ids(members),
     ) &&
+    validBlockadePhases(state) &&
     typeof state.disabledCued === "boolean" &&
     Array.isArray(state.chatter) &&
     state.chatter.length <= 4 &&

@@ -5,6 +5,7 @@ import { CONTENT } from "../data/content.ts";
 import type { Vec } from "../data/types.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
+import { mantaEscortMayFire, mantaEscortPhase } from "./earlyEncounterPatterns.ts";
 import { damageEnemy } from "./enemyAi.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import { routeBlocked, syncFlightRegion } from "./flight.ts";
@@ -131,6 +132,45 @@ it("keeps the family's disk blocked by Sounder and collectible once after resolu
     id: boss.id,
     ship: "Manta Dreadnought",
   });
+  const escortId = (index: number) => `${boss.id}:escort:${index}`;
+  const escort = (index: number) =>
+    stationPopulationObjects(flight).find(({ id }) => id === escortId(index))!;
+  const first = escort(0);
+  const second = escort(1);
+  const beforeCrossing = { x: first.x, y: first.y };
+  const clock = () => {
+    const current = boss.enemy?.earlyEncounter;
+    expect(current?.kind).toBe("manta");
+    return current?.kind === "manta" ? current : undefined;
+  };
+  expect(mantaEscortPhase(clock()!.elapsed)).toMatchObject({ escort: 0, kind: "approach" });
+  expect(first.enemy!.tactic.volleys).toBe(0);
+  expect(second.enemy!.tactic.volleys).toBe(0);
+  const emitted = new Set<number>();
+  for (let frame = 0; frame < 350; frame++) {
+    const time = clock()!.elapsed;
+    const phase = mantaEscortPhase(time);
+    const active = phase.escort === 1 ? second : first;
+    flight.player = { x: active.x + 125, y: active.y };
+    flight.velocity = { x: 0, y: 0 };
+    flight.shield = model.shieldMax;
+    const volleys = [first.enemy!.tactic.volleys, second.enemy!.tactic.volleys];
+    model.step(0.02, idle);
+    for (const [index, actor] of [first, second].entries()) {
+      if (actor.enemy!.tactic.volleys > volleys[index]!) {
+        expect(
+          mantaEscortMayFire(time + 0.02, index === 0 ? 0 : 1) ||
+            mantaEscortMayFire(time, index === 0 ? 0 : 1),
+        ).toBe(true);
+        emitted.add(index);
+      }
+    }
+  }
+  expect(first).not.toMatchObject(beforeCrossing);
+  expect(emitted).toEqual(new Set([0, 1]));
+  const resumed = relaunch(CONTENT, model.save());
+  const resumedBoss = stationPopulationObjects(flightOf(resumed)).find(({ id }) => id === boss.id);
+  expect(resumedBoss?.enemy?.earlyEncounter).toEqual(clock());
   disableWeapons(boss);
   model.step(0.01, idle);
   expect(progressOf(model).sounder).toEqual({ outcome: "disabled", phase: "resolved" });

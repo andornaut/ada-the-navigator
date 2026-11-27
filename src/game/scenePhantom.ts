@@ -25,6 +25,7 @@ import { familyArt, loadEnemyParts } from "./sceneAssets.ts";
 import { drawEnemySprite } from "./sceneEnemies.ts";
 import { drawCraftJets, keylineSprite } from "./sceneHud.ts";
 import { drawOutpost, drawWhale, type ObjectsContext } from "./sceneObjects.ts";
+import { drawPhantomBlockades } from "./scenePhantomBlockade.ts";
 import {
   allyJumpDuration,
   type AllyPresentation,
@@ -288,6 +289,13 @@ export function drawPhantomAllies(scene: ObjectsContext): void {
   const state = stateOf(flight);
   if (!state) {
     return;
+  }
+  if (state.blockadePhases) {
+    drawPhantomBlockades(scene, {
+      content: CONTENT,
+      flight,
+      progress: scene.model.state.progress[6],
+    });
   }
   const authored = readAllyArt(scene);
   const depthLimit = playDepth(scene.project(flight.player).y) - 0.00001;

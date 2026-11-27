@@ -603,6 +603,37 @@ describe("enemy rules", () => {
     expect(speedOf("heavyMissile")).toBeCloseTo(320, 9);
   });
 
+  it("withholds a whole attack fan while keeping its next scheduled opportunity", () => {
+    const definition = mixedMechanismDefinition();
+    const state = { ...spawn("capital", definition), firePhasesInitialized: true as const };
+    const context = observation(state);
+    const unrestricted = stepEnemy(definition, context, state);
+    const launchVelocities: EnemyState["velocity"][] = [];
+    const withheld = stepEnemy(
+      definition,
+      {
+        ...context,
+        allowAttack: ({ launchVelocity, profile }) => {
+          launchVelocities.push(launchVelocity);
+          return profile.weapon !== "multiLaser";
+        },
+      },
+      state,
+    );
+    expect(launchVelocities.length).toBeGreaterThan(0);
+    expect(launchVelocities.every((velocity) => velocity === withheld.velocity)).toBe(true);
+    expect(unrestricted.fire.some(({ weapon }) => weapon === "multiLaser")).toBe(true);
+    expect(withheld.fire).toEqual(
+      unrestricted.fire.filter(({ weapon }) => weapon !== "multiLaser"),
+    );
+    expect(withheld.state.hardpoints).toEqual(unrestricted.state.hardpoints);
+    const resumed = stepEnemy(definition, observation(withheld.state), withheld.state);
+    expect(resumed.fire).toEqual(
+      stepEnemy(definition, observation(unrestricted.state), unrestricted.state).fire,
+    );
+    expect(resumed.fire).toEqual([]);
+  });
+
   it.each(["capital"] as const)(
     "aims every %s bolt and missile from its own muzzle before applying spread",
     (archetype) => {

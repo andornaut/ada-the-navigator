@@ -8,8 +8,20 @@ import type { GalaxyNumber } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
+import {
+  andromedaCourierActor,
+  andromedaCourierAttempt,
+  andromedaCourierMarkers,
+  takeAndromedaCourierWarning,
+} from "./andromeda.ts";
+import {
+  COURIER_AMBUSH_ID,
+  courierAmbushLeg,
+  courierAmbushTerrainCovered,
+  planCourierAmbush,
+} from "./andromedaCourierAmbush.ts";
 import { andromedaLaneCourier } from "./andromedaLane.ts";
-import { worldNearestSettlerStation } from "./andromedaPlaces.ts";
+import { nearestSettlement, worldNearestSettlerStation } from "./andromedaPlaces.ts";
 import { ANDROMEDA_REDACT, andromedaRedactEligible } from "./andromedaRedact.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { interactionCopy } from "./conversations.ts";
@@ -17,10 +29,11 @@ import { outlineContact, worldParts } from "./convex.ts";
 import { damageEnemy } from "./enemyAi.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
-import { ensureStation } from "./flight.ts";
+import { ensureStation, populateFlight } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
-import { worldSyncFlightRegion } from "./geography.ts";
+import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
+import { stationPopulationObjects } from "./hostileStations.ts";
 import { flightStationContext, worldStationById } from "./stations.ts";
 import { worldDelta, worldPoint } from "./worldContacts.ts";
 
@@ -69,8 +82,10 @@ function arrival(model: GameModel): void {
   expect(model.state.docked).toBeNull();
 }
 
-function repairBeacon(initial: GameModel): GameModel {
-  let model = initial;
+function acceptCourierLeg(
+  model: GameModel,
+  beforeOwnsUp?: (flight: NonNullable<GameModel["state"]["flight"]>, stationId: string) => void,
+): GameModel {
   arrival(model);
   visit(model, "pip");
   model.interact();
@@ -79,11 +94,17 @@ function repairBeacon(initial: GameModel): GameModel {
   visit(model, station);
   expect(model.contextAction).toBe("talk");
   model.interact();
+  beforeOwnsUp?.(model.state.flight!, station);
   continuePanel(model, "andromeda:ownsUp");
-  const settlement = model.state.progress[5].andromeda!.settlement!;
+  return model;
+}
+
+function repairBeacon(initial: GameModel): GameModel {
+  let model = acceptCourierLeg(initial);
+  const { settlement, station } = model.state.progress[5].andromeda!;
   expect(settlement).toMatch(/^settlement:/u);
   expect(settlement).not.toBe(station);
-  visit(model, settlement);
+  visit(model, settlement!);
   expect(model.contextAction).toBe("deliver");
   model.interact();
   expect(model.state.progress[5]).toMatchObject({ questItem: null, stage: 4 });
@@ -429,4 +450,201 @@ describe("mounted Andromeda chapter", () => {
     saved.progress[1]!.questItem = "beaconParts";
     expect(restoreSave(saved)).toBeNull();
   });
+});
+
+function routeBeforeWarning(model: GameModel) {
+  const flight = model.state.flight!;
+  const progress = model.state.progress[5];
+  const world = flightWorldContext(flight);
+  const leg = courierAmbushLeg(flight, progress)!;
+  expect(leg.settlement.id).toBe(progress.andromeda?.settlement);
+  expect(world.worldSide).toBe(200_000);
+  const plan = planCourierAmbush(world, leg)!;
+  const { forward, warning } = plan;
+  Object.assign(flight, {
+    facing: forward,
+    player: { x: warning.x - forward.x, y: warning.y - forward.y },
+    velocity: { x: 0, y: 0 },
+  });
+  worldSyncFlightRegion(world, CONTENT, flight);
+  endArrivalGrace(flight);
+  model.step(0.001, idle);
+  expect(andromedaCourierAttempt(progress)).toBeUndefined();
+  return { flight, leg, plan, progress, world };
+}
+
+function crossCourierLine(
+  model: GameModel,
+  plan: ReturnType<typeof routeBeforeWarning>["plan"],
+  line = plan.warning,
+) {
+  const flight = model.state.flight!;
+  const { forward } = plan;
+  const world = flightWorldContext(flight);
+  const offset = () => {
+    const { x, y } = worldDelta(world, line, flight.player);
+    return x * forward.x + y * forward.y;
+  };
+  expect(model.state.dialogue).toBeNull();
+  expect(offset()).toBeLessThan(0);
+  flight.velocity = { x: forward.x * 240, y: forward.y * 240 };
+  for (let step = 0; step < 10 && offset() < 0; step++) {
+    model.step(1 / 60, { ...idle, move: forward });
+  }
+  expect(
+    offset(),
+    JSON.stringify({ player: flight.player, velocity: flight.velocity, warning: line }),
+  ).toBeGreaterThanOrEqual(0);
+}
+
+function courierActors(model: GameModel) {
+  return stationPopulationObjects(model.state.flight!).filter(({ id }) =>
+    id.startsWith(`${COURIER_AMBUSH_ID}:fighter:`),
+  );
+}
+
+it("reserves Pip's unmodified seeded route and gates the real fighter pairs through Continue", () => {
+  let model = acceptCourierLeg(launch(173));
+  model.step(0.001, idle);
+  const beforeWarning = model.save();
+  expect(restoreSave(beforeWarning)).not.toBeNull();
+  model = relaunch(CONTENT, beforeWarning);
+  const route = routeBeforeWarning(model);
+  expect(courierAmbushTerrainCovered({ content: CONTENT, flight: route.flight }, route.plan)).toBe(
+    true,
+  );
+  crossCourierLine(model, route.plan);
+  expect(andromedaCourierAttempt(route.progress)?.state).toEqual({ elapsed: 0, phase: "warned" });
+  expect(takeAndromedaCourierWarning(route.flight)).toEqual({
+    speaker: "astra",
+    text: "Fighters on both sides. Keep going toward the settlement.",
+  });
+  expect(takeAndromedaCourierWarning(route.flight)).toBeUndefined();
+  expect(andromedaCourierMarkers(route.flight)?.escape).toEqual(route.plan.escape);
+  const actors = courierActors(model);
+  const ids = actors.map(({ id }) => id);
+  expect(actors).toHaveLength(4);
+  expect(new Set(actors.map(({ enemy }) => enemy?.packId)).size).toBe(2);
+  expect(ids.map((id) => andromedaCourierActor(route.flight, id))).toEqual([
+    "held",
+    "held",
+    "held",
+    "held",
+  ]);
+
+  const hit = actors[0]!;
+  hit.enemy = damageEnemy(
+    enemyEquipmentDefinition(5, hit.enemy!),
+    { amount: 1, hardpointId: null },
+    hit.enemy!,
+  );
+  hit.hp = hit.enemy.hp;
+  const { forward, warning } = route.plan;
+  route.flight.player = { x: warning.x + 525 * forward.x, y: warning.y + 525 * forward.y };
+  route.flight.velocity = { x: 0, y: 0 };
+  worldSyncFlightRegion(route.world, CONTENT, route.flight);
+  model.step(0.1, idle);
+  expect(courierActors(model).every(({ enemy }) => !enemy?.engaged)).toBe(true);
+  expect(route.flight.shots.some(({ enemy }) => enemy)).toBe(false);
+  expect(hit.enemy.hp).toBe(hit.hp);
+  model.step(2.91, idle);
+  model.step(0.02, idle);
+  expect(courierActors(model).map(({ enemy }) => enemy?.engaged)).toEqual([
+    true,
+    true,
+    false,
+    false,
+  ]);
+  const casualty = actors[1]!;
+  worldRecordObjectRemoval(route.world, CONTENT, casualty, route.flight);
+  route.flight.objects = route.flight.objects.filter(({ id }) => id !== casualty.id);
+  // Fly out of active cells while keeping the normal persistent records for this flight.
+  route.flight.player = { x: 70_000, y: 80_000 };
+  route.flight.velocity = { x: 0, y: 0 };
+  worldSyncFlightRegion(route.world, CONTENT, route.flight);
+  expect(route.flight.objects.some(({ id }) => ids.includes(id))).toBe(false);
+  expect(ids.map((id) => andromedaCourierActor(route.flight, id))).toEqual([
+    "released",
+    "released",
+    "held",
+    "held",
+  ]);
+
+  const saved = model.save();
+  expect(restoreSave(saved)).not.toBeNull();
+  model = relaunch(CONTENT, saved);
+  const resumed = model.state.flight!;
+  expect(takeAndromedaCourierWarning(resumed)).toBeUndefined();
+  expect(andromedaCourierMarkers(resumed)?.escape).toEqual(route.plan.escape);
+  expect(resumed.world.notables[casualty.id]).toBeNull();
+  expect(courierActors(model).map(({ id }) => id)).toEqual([ids[0], ids[2], ids[3]]);
+  expect(resumed.world.notables[hit.id]?.enemy?.hp).toBe(hit.hp);
+  model.step(1.21, idle);
+  expect(ids.map((id) => andromedaCourierActor(resumed, id))).toEqual([
+    "released",
+    "released",
+    "released",
+    "released",
+  ]);
+
+  const { escape } = route.plan;
+  resumed.player = { x: escape.to.x - forward.x, y: escape.to.y - forward.y };
+  worldSyncFlightRegion(route.world, CONTENT, resumed);
+  crossCourierLine(model, route.plan, escape.to);
+  expect(andromedaCourierMarkers(resumed)).toBeNull();
+  expect(ids.map((id) => andromedaCourierActor(resumed, id))).toEqual([
+    "ended",
+    "ended",
+    "ended",
+    "ended",
+  ]);
+  const returned = resumed.objects.find(({ id }) => id === hit.id)!;
+  expect(returned.enemy?.hp).toBe(hit.hp);
+  returned.enemy!.engaged = true;
+  returned.enemy!.lastSeen = { ...resumed.player };
+  model.step(0.03, idle);
+  expect(returned.enemy?.engaged).toBe(false);
+  expect(returned.enemy?.lastSeen).toBeNull();
+  visit(model, route.leg.settlement.id);
+  expect(model.contextAction).toBe("deliver");
+  model.interact();
+  continuePanel(model, "andromeda:parts");
+  expect(model.state.progress[5]).toMatchObject({ questItem: "beaconParts", stage: 5 });
+  expect(andromedaCourierMarkers(resumed)).toBeNull();
+  expect(ids.map((id) => andromedaCourierActor(resumed, id))).toEqual([
+    "ended",
+    "ended",
+    "ended",
+    "ended",
+  ]);
+});
+
+it("keeps a blocked seeded leg open and refuses to spend another attempt after Continue", () => {
+  const blockerId = "rock:-4,-17:0";
+  let model = acceptCourierLeg(launch(173), (flight, stationId) => {
+    const player = flight.player;
+    const station = flight.objects.find(({ id }) => id === stationId)!;
+    const settlement = nearestSettlement(ECONOMY, station);
+    const plan = planCourierAmbush(flightWorldContext(flight), { settlement, station })!;
+    // The same seeded corridor was already visited before Pip offered the delivery.
+    flight.player = { ...plan.warning };
+    populateFlight(CONTENT, { known: [] }, flight);
+    expect(flight.objects.some(({ id }) => id === blockerId)).toBe(true);
+    flight.player = player;
+  });
+  const route = routeBeforeWarning(model);
+  crossCourierLine(model, route.plan);
+  expect(route.flight.objects.some(({ id }) => id === blockerId)).toBe(true);
+  expect(andromedaCourierAttempt(route.progress)?.state.phase).toBe("skipped");
+  expect(courierActors(model)).toEqual([]);
+  expect(takeAndromedaCourierWarning(route.flight)).toBeUndefined();
+  model = relaunch(CONTENT, model.save());
+  const retry = model.state.flight!;
+  const { forward, warning } = route.plan;
+  retry.player = { x: warning.x - forward.x, y: warning.y - forward.y };
+  crossCourierLine(model, route.plan);
+  expect(andromedaCourierAttempt(model.state.progress[5])?.state.phase).toBe("skipped");
+  expect(courierActors(model)).toEqual([]);
+  visit(model, route.leg.settlement.id);
+  expect(model.contextAction).toBe("deliver");
 });

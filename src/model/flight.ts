@@ -25,6 +25,7 @@ import {
   type EnemyArchetype,
   enemyCatalog,
   enemyOnly,
+  escortTuning,
   FRIGATE_ESCORT_COUNT,
   LANCE_TELL,
   PHASER_AIM_SECONDS,
@@ -82,10 +83,29 @@ import {
   worldInCurrent,
 } from "./currents.ts";
 import {
+  advanceHammerTutorial,
+  authoredLanceAction,
+  crossbowAllowsAttack,
+  crossbowSector,
+  hammerAllowsMount,
+  mantaEscortCommand,
+  mantaEscortCourse,
+  type MantaEscortIndex,
+  mantaEscortMayFire,
+  type MantaEscortState,
+} from "./earlyEncounterPatterns.ts";
+import {
+  EARLY_LANCE_MOUNT,
+  EARLY_LANCE_SECONDS,
+  earlyEncounterKind,
+  pendingEarlyLance,
+} from "./earlyEncounterRuntime.ts";
+import {
   averageVelocity,
   circlingSide,
   createEnemy,
   damageEnemy,
+  type EnemyAttackOpportunity,
   type EnemyContext,
   enemyDefeated,
   enemyFireLine,
@@ -102,6 +122,7 @@ import {
   proceduralPoisNear,
 } from "./proceduralPois.ts";
 export { rollEncounter } from "./encounterRoll.ts";
+import { courierSpawnExclusions } from "./andromedaCourierAmbush.ts";
 import { settlementsNear } from "./andromedaPlaces.ts";
 import { selectCartwheelClaimField } from "./cartwheelClaimField.ts";
 import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
@@ -237,7 +258,7 @@ import { enemyHull, enemyPartOutline, enemyPhysicalBody } from "./enemyBody.ts";
 import { enemyBeamReach, planEnemyProjectile } from "./enemyProjectiles.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { MINE_PARTS } from "./mineShape.ts";
-import { activeNeedleCourses } from "./needle.ts";
+import { activeNeedleCourses, needleCourses } from "./needle.ts";
 import {
   clearNeedleEnemies,
   ensureNeedleDebris,
@@ -249,7 +270,7 @@ import {
 import { nosePoint } from "./nose.ts";
 import { ORE_FIELD_ROLE, type OreField, worldOreFieldsNear } from "./oreFields.ts";
 import { pickupOutline, stardustPickupReach } from "./pickupBody.ts";
-import { planPlayerVolley, type PlayerVolley } from "./playerProjectiles.ts";
+import { fanHeading, planPlayerVolley, type PlayerVolley } from "./playerProjectiles.ts";
 import { impactSurface } from "./projectileImpact.ts";
 import { SceneryFrames } from "./sceneryFrames.ts";
 import { sceneryImpact } from "./sceneryImpact.ts";
@@ -995,6 +1016,7 @@ function flightSpawnExclusions(
         2 * SPAWNER_POLICIES[flight.galaxy].localRadius + actorFootprint(flight, actor),
       ),
     ]),
+    ...courierSpawnExclusions(flight, radius, point),
     ...activeNeedleCourses(flight).map((course) => ({
       applies: ["rock", "moving", "enemy"] as const,
       rule: "needle-channel",
@@ -2510,13 +2532,15 @@ function localGuardMember(flight: FlightState, guard: SpaceObject): boolean {
   return leader?.enemy?.archetype === "frigate" && leader.routeId !== undefined;
 }
 
-function clearLocalGuardSummons(flight: FlightState): void {
+function clearLocalGuardSummons(admitEnemy: FlightInput["admitEnemy"], flight: FlightState): void {
   if (!flight.summonedGuards) {
     return;
   }
   flight.summonedGuards = flight.summonedGuards.filter((id) => {
     const guard = flight.objects.find((object) => object.id === id) ?? flight.world.notables[id];
-    return guard == null || !localGuardMember(flight, guard);
+    return (
+      guard == null || (!localGuardMember(flight, guard) && admitEnemy?.(flight, guard) !== false)
+    );
   });
   if (!flight.summonedGuards.length) {
     delete flight.summonedGuards;
@@ -2746,7 +2770,12 @@ function keepClear(
  * Other blocking encounters retain their existing summon and play-view handoff.
  * The cue event and stable marker identity are unchanged.
  */
-function cueGuards(content: GameContent, flight: FlightState, events: FlightEvent[]): void {
+function cueGuards(
+  content: GameContent,
+  admitEnemy: FlightInput["admitEnemy"],
+  flight: FlightState,
+  events: FlightEvent[],
+): void {
   const cued = flight.objects.filter(
     (object) =>
       object.kind === "destination" &&
@@ -2756,9 +2785,24 @@ function cueGuards(content: GameContent, flight: FlightState, events: FlightEven
       routeBlocked(object.id, flight),
   );
   for (const destination of cued) {
-    (flight.guardCues ??= []).push(destination.id);
-    worldActivateRouteEncounter(flightWorldContext(flight), content, destination.id, flight);
-    const leaders = flight.objects.filter((guard) => guard.routeId === destination.id);
+    const id = destination.id;
+    if (
+      admitEnemy &&
+      !stationPopulationObjects(flight).some(
+        (guard) =>
+          guard.routeId === id &&
+          liveEnemy(guard) &&
+          !guard.enemy?.disabled &&
+          admitEnemy(flight, guard),
+      )
+    ) {
+      continue;
+    }
+    (flight.guardCues ??= []).push(id);
+    worldActivateRouteEncounter(flightWorldContext(flight), content, id, flight);
+    const leaders = flight.objects.filter(
+      (guard) => guard.routeId === id && admitEnemy?.(flight, guard) !== false,
+    );
     leaders.forEach((leader) => activateFrigateEscorts(content, flight, leader));
     const ids = new Set(leaders.map((leader) => leader.id));
     for (const guard of flight.objects) {
@@ -2769,7 +2813,8 @@ function cueGuards(content: GameContent, flight: FlightState, events: FlightEven
           (guard.enemy?.escortOf != null && ids.has(guard.enemy.escortOf))) &&
         guard.hp > 0 &&
         !guard.enemy?.disabled &&
-        !flight.summonedGuards?.includes(guard.id)
+        !flight.summonedGuards?.includes(guard.id) &&
+        admitEnemy?.(flight, guard) !== false
       ) {
         (flight.summonedGuards ??= []).push(guard.id);
       }
@@ -4080,15 +4125,149 @@ export function dronesNear(flight: FlightState): boolean {
   );
 }
 
+/** Use existing escort berth and hull distances for the two opposite crossing paths. */
+function planMantaEscorts(flight: FlightState, leader: SpaceObject): MantaEscortState | undefined {
+  const world = flightWorldContext(flight);
+  const home = leader.enemy!.home;
+  const toward = worldDelta(world, home, FLIGHT_START);
+  const forward = length(toward) > 0 ? direction(toward) : { x: 1, y: 0 };
+  const gap = spacingRadius(ROUTE_POSITION[flight.galaxy], leader.enemy!) + escortTuning.stationGap;
+  const clear = (from: Vec, to: Vec) =>
+    !flight.objects.some(
+      (object) =>
+        SCENERY.includes(object.kind) &&
+        object.hp > 0 &&
+        worldSceneryBlocksSegment(
+          world,
+          object,
+          from,
+          to,
+          0,
+          frameOf(flight, object),
+          drawnOf(flight, object),
+        ),
+    );
+  const course = (escort: MantaEscortIndex) => {
+    const side = escort === 0 ? 1 : -1;
+    const station = { x: -forward.y * gap * side, y: forward.x * gap * side };
+    const point = (offset: Vec) => ({ x: home.x + offset.x, y: home.y + offset.y });
+    for (const span of [escortTuning.stationGap, escortTuning.stationGap / 2]) {
+      const entry = {
+        x: station.x - forward.x * span * side,
+        y: station.y - forward.y * span * side,
+      };
+      const exit = {
+        x: station.x + forward.x * span * side,
+        y: station.y + forward.y * span * side,
+      };
+      if (
+        clear(point(entry), point(exit)) &&
+        clear(point(station), point(entry)) &&
+        clear(point(exit), point(station))
+      ) {
+        return mantaEscortCourse(
+          {
+            current: worldFlowAt(world, flight.galaxy, point(station)),
+            reverseIsClear: true,
+          },
+          { entry, exit, station },
+        );
+      }
+    }
+    return undefined;
+  };
+  const first = course(0);
+  const second = course(1);
+  return first && second ? { courses: [first, second], elapsed: 0 } : undefined;
+}
+
+function crossbowFrame(flight: FlightState, actor: SpaceObject, elapsed: number) {
+  const exit = needleCourses(flight)?.eye.path.at(-1);
+  return exit && actor.enemy
+    ? crossbowSector(
+        flightWorldContext(flight),
+        { elapsed },
+        { exit, home: actor.enemy.home, vertex: { x: actor.x, y: actor.y } },
+      )
+    : undefined;
+}
+
+function crossbowAttack(
+  context: {
+    readonly content: GameContent;
+    readonly coverage: PlayerWeaponCoverageContext;
+    readonly flight: FlightState;
+  },
+  actor: SpaceObject,
+  opportunity: EnemyAttackOpportunity,
+): boolean {
+  const { content, coverage, flight } = context;
+  const state = actor.enemy?.earlyEncounter;
+  if (state?.kind !== "crossbow") {
+    return false;
+  }
+  const { aim, delay, launchVelocity, origin, profile } = opportunity;
+  const sector = crossbowFrame(flight, actor, state.elapsed + delay);
+  if (!sector) {
+    return false;
+  }
+  const world = flightWorldContext(flight);
+  if (profile.weapon === "chargedLance") {
+    const heading = direction(aim);
+    const projection = projectedLength(heading);
+    if (state.pendingLance || !projection) {
+      return false;
+    }
+    const range = coverage.viewportWidth / projection;
+    return crossbowAllowsAttack(world, sector, {
+      fireBy: EARLY_LANCE_SECONDS,
+      paths: [
+        {
+          from: origin,
+          screenRadius: LANCE_HIT_RADIUS,
+          travel: { x: heading.x * range, y: heading.y * range },
+        },
+      ],
+    });
+  }
+  if (profile.projectile !== "bolt" || enemyOnly(profile.weapon)) {
+    return false;
+  }
+  const definition = weaponAt(profile.weapon, profile.level);
+  const launchContext = {
+    baseLifetime: content.tuning.flight.enemyProjectileLifetime,
+    coverage,
+    definition,
+    inheritedVelocity: launchVelocity,
+  };
+  const paths = profile.angles.map((degrees) => {
+    const launch = planEnemyProjectile(launchContext, {
+      aim: fanHeading(aim, degrees),
+      origin,
+      speed: profile.projectileSpeed,
+    });
+    return {
+      from: origin,
+      screenRadius: shotRadius({ projectile: "bolt" }),
+      travel: { x: launch.velocity.x * launch.life, y: launch.velocity.y * launch.life },
+    };
+  });
+  return crossbowAllowsAttack(world, sector, {
+    fireBy: Math.max(0, ...(profile.pelletDelays ?? [])),
+    paths,
+  });
+}
+
 function enemies(
   viewport: Readonly<Pick<PlayerWeaponCoverageContext, "viewportHeight" | "viewportWidth">>,
   content: GameContent,
   dt: number,
   playerDisplacement: Vec,
+  admitEnemy: FlightInput["admitEnemy"],
   flight: FlightState,
   events: FlightEvent[],
   shotDelays: Map<string, number>,
-): void {
+): ReadonlySet<SpaceObject> | undefined {
   // Once the flagship is salvaged Phantom's drones stand down: they patrol home and never fire.
   const standDown = flight.galaxy === 6 && flight.phantom?.phase === "salvaged";
   if (standDown) {
@@ -4108,6 +4287,7 @@ function enemies(
   const objects = flight.objects.filter(
     (object) => object.kind === "enemy" && object.hp > 0 && !object.enemy?.salvaged,
   );
+  let withheld: Set<SpaceObject> | undefined;
   for (const object of objects) {
     // Legacy saved ships gain canonical state without resetting their damage or identity.
     if (!object.enemy) {
@@ -4119,6 +4299,12 @@ function enemies(
       object.enemy.hp = object.hp;
       // Its saved damage is not a fresh hit.
       object.enemy.tactic.integrity = enemyIntegrity(object.enemy);
+    }
+    if (admitEnemy?.(flight, object) === false) {
+      (withheld ??= new Set()).add(object);
+      // A previously engaged actor must also forget its last target or it can keep investigating.
+      object.enemy.engaged = false;
+      object.enemy.lastSeen = null;
     }
     // Hit circles follow the catalog, so saves from earlier sizes adopt the current ones.
     object.radius = enemyRadiusForFlight(
@@ -4160,6 +4346,7 @@ function enemies(
       .filter((object) => {
         const definition = enemyEquipmentDefinition(flight.galaxy, object.enemy!);
         return (
+          !withheld?.has(object) &&
           definition.aggression === "sight" &&
           visibility.get(object.id) &&
           !adaProtected(flight) &&
@@ -4186,7 +4373,9 @@ function enemies(
       song === 1
         ? base
         : { ...base, physics: { ...base.physics, maxSpeed: base.physics.maxSpeed * song } };
-    const targetable = !standDown && !adaProtected(flight);
+    const combatAllowed = !standDown && !withheld?.has(object);
+    const targetable = combatAllowed && !adaProtected(flight);
+    const summoned = combatAllowed && flight.summonedGuards?.includes(object.id) === true;
     const visible = visibility.get(object.id)!;
     const before = { x: object.x, y: object.y };
     const escortLeader =
@@ -4244,15 +4433,92 @@ function enemies(
     const drift = DRIFT_PROOF.includes(state.archetype)
       ? { x: 0, y: 0 }
       : worldFlowAt(flightWorldContext(flight), flight.galaxy, object);
+    const kind = earlyEncounterKind(flight.galaxy, object.id);
+    if (kind === "hammer" && !state.earlyEncounter) {
+      state.earlyEncounter = { kind, phase: "ready" };
+    }
+    if (
+      kind === "crossbow" &&
+      !state.earlyEncounter &&
+      (state.engaged || admissions.has(object.id))
+    ) {
+      state.earlyEncounter = { elapsed: 0, kind };
+    }
+    const early = state.earlyEncounter;
+    const lanceAvailable =
+      early?.kind === "hammer" &&
+      !state.disabled &&
+      definition.hardpoints.some(
+        (part) =>
+          part.id === EARLY_LANCE_MOUNT &&
+          part.kind === "weapon" &&
+          part.fire.weapon === "chargedLance",
+      ) &&
+      state.hardpoints.some((part) => part.id === EARLY_LANCE_MOUNT && part.hp > 0);
+    if (early?.kind === "hammer" && early.phase === "ready" && !lanceAvailable) {
+      state.earlyEncounter = { kind: "hammer", phase: "complete" };
+    }
+    const manta = escortLeader?.id === WHIRLPOOL_CAPITAL_BOSS.id ? escortLeader : undefined;
+    if (
+      manta?.enemy &&
+      !manta.enemy.earlyEncounter &&
+      (manta.enemy.engaged || admissions.has(manta.id))
+    ) {
+      const escortPlan = planMantaEscorts(flight, manta);
+      if (escortPlan) {
+        manta.enemy.earlyEncounter = { ...escortPlan, kind: "manta" };
+      }
+    }
+    const mantaState = manta?.enemy?.earlyEncounter;
+    const escort =
+      manta && state.id === requiredFrigateEscortId(manta.id, 0)
+        ? 0
+        : manta && state.id === requiredFrigateEscortId(manta.id, 1)
+          ? 1
+          : undefined;
+    const command =
+      escort !== undefined && mantaState?.kind === "manta"
+        ? mantaEscortCommand(mantaState, { escort, leader: manta! })
+        : undefined;
+    let firstTellDue = false;
+    let lanceFailed = false;
+    const allowAttack =
+      kind === "crossbow"
+        ? (attack: EnemyAttackOpportunity) =>
+            crossbowAttack(
+              { content, coverage: { ...viewport, centre: before }, flight },
+              object,
+              attack,
+            )
+        : early?.kind === "hammer" && early.phase !== "complete"
+          ? (attack: EnemyAttackOpportunity) => {
+              const allowed =
+                !firstTellDue &&
+                hammerAllowsMount({ lanceAvailable, phase: early.phase }, attack.hardpointId);
+              if (allowed && lanceAvailable && attack.hardpointId === EARLY_LANCE_MOUNT) {
+                if (!length(attack.aim)) {
+                  lanceFailed = true;
+                  return false;
+                }
+                firstTellDue = true;
+              }
+              return allowed;
+            }
+          : escort !== undefined && mantaState?.kind === "manta"
+            ? (attack: EnemyAttackOpportunity) =>
+                mantaEscortMayFire(mantaState.elapsed + attack.delay, escort)
+            : undefined;
     const intent = stepEnemy(
       definition,
       {
         ...flightWorldContext(flight),
         adaWidth: content.tuning.flight.shipRadius * 2,
+        ...(allowAttack ? { allowAttack } : {}),
         dormantPackMembers: worldRetainedPackMembers(flightWorldContext(flight), content, flight),
         dt,
         enemyDrift: drift,
         engagementAdmitted: admissions.has(object.id),
+        ...(command ? { escortTarget: command.target } : {}),
         // An enemy fires only while it is inside the visible game area.
         inPlayView: insidePlayView(viewport.viewportWidth, flight, object),
         initialPackSizes: combat(flight).initialPackSizes,
@@ -4274,8 +4540,8 @@ function enemies(
         routePosition: ROUTE_POSITION[flight.galaxy],
         ...(industrialInput ? { retaliatorNavigation: industrialInput } : {}),
         ...(stationGuardAnchor ? { stationGuardAnchor } : {}),
-        summoned: (!standDown && flight.summonedGuards?.includes(object.id)) ?? false,
-        ...(!standDown && flight.summonedGuards?.includes(object.id)
+        summoned,
+        ...(summoned
           ? {
               summonTarget: guardApproach(
                 flightWorldContext(flight),
@@ -4295,6 +4561,9 @@ function enemies(
     );
     const launchVelocity = { ...intent.velocity };
     object.enemy = intent.state;
+    if (lanceFailed) {
+      object.enemy.earlyEncounter = { kind: "hammer", phase: "complete" };
+    }
     if (intent.effects.defeated) {
       queueHostileStationReward(flight, events, object);
       destroyEnemy(object, flight);
@@ -4431,7 +4700,7 @@ function enemies(
       const amount = content.tuning.flight.playerShotDamage * fire.damageRatio;
       const shared = enemyOnly(fire.weapon) ? null : weaponAt(fire.weapon, fire.level);
       if (fire.projectile === "beam") {
-        chargeEnemyBeam(
+        const beam = chargeEnemyBeam(
           amount,
           shared ? enemyBeamReach(coverage, fire) : 0,
           before,
@@ -4439,6 +4708,14 @@ function enemies(
           object.id,
           flight,
         );
+        if (
+          beam &&
+          beam.kind === "lance" &&
+          beam.hardpointId === EARLY_LANCE_MOUNT &&
+          (firstTellDue || early?.kind === "crossbow")
+        ) {
+          rememberEarlyLance(object, beam, "started");
+        }
         continue;
       }
       if (fire.projectile === "mine") {
@@ -4493,6 +4770,7 @@ function enemies(
       ringEmissions.set(flight, emissions);
     }
   }
+  return withheld;
 }
 
 /** A ring burst's emission at its hull, view-only and never saved. */
@@ -4521,7 +4799,8 @@ const SHOT_PARTS: Parts = [
   ],
 ];
 
-const shotRadius = (shot: Shot) => (shot.projectile === "missile" ? MISSILE_HIT_RADIUS : 3);
+const shotRadius = (shot: Pick<Shot, "projectile">) =>
+  shot.projectile === "missile" ? MISSILE_HIT_RADIUS : 3;
 const mineStrike = { blast, shotParts: SHOT_PARTS, shotRadius };
 
 function segmentDistance(point: Vec, start: Vec, end: Vec): number {
@@ -5175,7 +5454,7 @@ function fireBeam(
  * An enemy Phaser or charged lance shot and its tell: a Phaser's aim line is fixed where it
  * started; a lance's line follows its ship and tracks Ada, then holds still. The beam fires
  * along the line. Only the lance can stop early. A Phaser keeps its impact separate.
- * View-only timing, never saved: a restored flight drops a shot still in its tell.
+ * Ordinary enemy beams are transient. Named encounter tells restore from their actor state.
  */
 export interface EnemyBeam {
   /** Seconds since the tell appeared. */
@@ -5200,6 +5479,8 @@ export interface EnemyBeam {
   range: number;
   /** Whether an obstacle, or Ada on firing, stopped the line short of its range. */
   stopped: boolean;
+  /** The named encounter owns this pending tell across Continue. */
+  authored?: true;
   /** The volley that picked the drawn barrel it fired from. */
   volley: number;
 }
@@ -5219,7 +5500,81 @@ function projectedLength(heading: Vec): number {
 }
 const enemyBeams = new WeakMap<FlightState, EnemyBeam[]>();
 
-/** The flight's enemy Phaser shots still aiming or showing. */
+function earlyLeader(flight: FlightState): SpaceObject | undefined {
+  const id =
+    flight.galaxy === 1
+      ? SUNFLOWER_CAPITAL_BOSS.id
+      : flight.galaxy === 3
+        ? WHIRLPOOL_CAPITAL_BOSS.id
+        : flight.galaxy === 4
+          ? NEEDLE_CADENCE.id
+          : undefined;
+  return id ? flight.objects.find((object) => object.id === id) : undefined;
+}
+
+export function activeCrossbowSector(flight: FlightState) {
+  const owner = flight.galaxy === 4 ? earlyLeader(flight) : undefined;
+  const state = owner?.enemy?.earlyEncounter;
+  return owner && state?.kind === "crossbow" && !owner.enemy?.disabled
+    ? crossbowFrame(flight, owner, state.elapsed)
+    : undefined;
+}
+
+function rememberEarlyLance(
+  owner: SpaceObject,
+  beam: EnemyBeam,
+  kind: "started" | "updated" | "fired" | "cancelled",
+): void {
+  const enemy = owner.enemy;
+  const state = enemy?.earlyEncounter;
+  if (!enemy || (state?.kind !== "hammer" && state?.kind !== "crossbow")) {
+    return;
+  }
+  if (kind === "fired" || kind === "cancelled") {
+    enemy.earlyEncounter =
+      state.kind === "hammer"
+        ? { ...advanceHammerTutorial(state, { kind }).state, kind: "hammer" }
+        : { elapsed: state.elapsed, kind: state.kind };
+    return;
+  }
+  beam.authored = true;
+  const tell = {
+    age: beam.age,
+    damage: beam.damage,
+    direction: { ...beam.direction },
+    muzzle: { ...beam.muzzle },
+    offset: { ...beam.offset },
+    volley: beam.volley,
+  };
+  enemy.earlyEncounter =
+    state.kind === "hammer"
+      ? { ...advanceHammerTutorial(state, { kind, tell }).state, kind: "hammer" }
+      : { ...state, pendingLance: tell };
+}
+
+function restoreEarlyLance(flight: FlightState, owner: SpaceObject | undefined): void {
+  const tell = pendingEarlyLance(owner?.enemy?.earlyEncounter);
+  if (!owner || !tell) {
+    return;
+  }
+  const beams = enemyBeams.get(flight) ?? [];
+  if (!beams.some((beam) => beam.ownerId === owner.id && beam.authored && !beam.fired)) {
+    beams.push({
+      ...tell,
+      authored: true,
+      drawn: null,
+      end: { ...tell.muzzle },
+      fired: false,
+      hardpointId: EARLY_LANCE_MOUNT,
+      kind: "lance",
+      ownerId: owner.id,
+      range: 0,
+      stopped: false,
+    });
+    enemyBeams.set(flight, beams);
+  }
+}
+
 export function activeEnemyBeams(flight: FlightState): readonly EnemyBeam[] {
   return enemyBeams.get(flight) ?? [];
 }
@@ -5262,14 +5617,14 @@ function chargeEnemyBeam(
   fire: Pick<FireIntent, "aim" | "delay" | "hardpointId" | "origin" | "volley" | "weapon">,
   ownerId: string,
   flight: FlightState,
-): void {
+): EnemyBeam | undefined {
   const span = length(fire.aim);
   const kind = fire.weapon === "chargedLance" ? "lance" : "phaser";
   if (!span || (kind === "phaser" && range <= 0)) {
-    return;
+    return undefined;
   }
   const beams = enemyBeams.get(flight) ?? [];
-  beams.push({
+  const beam: EnemyBeam = {
     age: -fire.delay,
     damage,
     direction: { x: fire.aim.x / span, y: fire.aim.y / span },
@@ -5284,8 +5639,10 @@ function chargeEnemyBeam(
     range,
     stopped: false,
     volley: fire.volley,
-  });
+  };
+  beams.push(beam);
   enemyBeams.set(flight, beams);
+  return beam;
 }
 
 /**
@@ -5356,6 +5713,13 @@ function stepEnemyBeams(
     if (beam.kind === "lance") {
       const owner = lanceHolds(beam, flight);
       if (!owner) {
+        const retained = beam.authored
+          ? (flight.objects.find(({ id }) => id === beam.ownerId) ??
+            flight.world.notables[beam.ownerId])
+          : undefined;
+        if (retained) {
+          rememberEarlyLance(retained, beam, "cancelled");
+        }
         out.add(beam);
         continue;
       }
@@ -5368,6 +5732,45 @@ function stepEnemyBeams(
         }
       }
       beam.range = viewportWidth / projectedLength(beam.direction);
+      if (beam.authored) {
+        const enemy = owner.enemy!;
+        const early = enemy.earlyEncounter;
+        // A due beam can fire before the end of this slice, even when the sector closes later in it.
+        const at = dt - Math.max(0, beam.age - EARLY_LANCE_SECONDS);
+        const sector =
+          early?.kind === "crossbow" ? crossbowFrame(flight, owner, early.elapsed + at) : undefined;
+        const action = authoredLanceAction(
+          {
+            age: beam.age,
+            owner: {
+              disabled: enemy.disabled,
+              hp: owner.hp,
+              mountHp: enemy.hardpoints.find(({ id }) => id === beam.hardpointId)?.hp ?? null,
+              salvaged: enemy.salvaged,
+            },
+          },
+          early?.kind !== "crossbow" ||
+            Boolean(
+              sector &&
+              crossbowAllowsAttack(flightWorldContext(flight), sector, {
+                fireBy: 0,
+                paths: [
+                  {
+                    from: beam.muzzle,
+                    screenRadius: LANCE_HIT_RADIUS,
+                    travel: { x: beam.direction.x * beam.range, y: beam.direction.y * beam.range },
+                  },
+                ],
+              }),
+            ),
+        );
+        if (action === "cancel") {
+          rememberEarlyLance(owner, beam, "cancelled");
+          out.add(beam);
+          continue;
+        }
+        rememberEarlyLance(owner, beam, action === "fire" ? "fired" : "updated");
+      }
     }
     const halfWidth = beam.kind === "lance" ? LANCE_HIT_RADIUS : BEAM.halfWidth;
     const stop =
@@ -5469,7 +5872,7 @@ export function stepFlight(
   worldSyncFlightRegion(flightWorldContext(flight), content, flight);
   // Settle capitals that the region sync just paged in from dormant chunks.
   settleResumedCapitals(content, flight);
-  clearLocalGuardSummons(flight);
+  clearLocalGuardSummons(input.admitEnemy, flight);
   const ship = shipTuning(ECONOMY, content, flight.levels);
   const oreBefore = flight.shieldOreSpent ?? 0;
   let remaining = dt;
@@ -5511,19 +5914,26 @@ export function stepFlight(
     }
     const shotDelays = new Map<string, number>();
     const viewportWidth = input.viewportWidth ?? SCREEN.width;
-    enemies(
+    const withheld = enemies(
       { viewportHeight: input.viewportHeight ?? SCREEN.height, viewportWidth },
       content,
       slice,
       worldDelta(flightWorldContext(flight), playerBeforeMove, flight.player),
+      input.admitEnemy,
       flight,
       events,
       shotDelays,
     );
     clearNeedleEnemies(flight);
+    const earlyOwner = earlyLeader(flight);
+    restoreEarlyLance(flight, earlyOwner);
     if (flight.phantom?.phase !== "salvaged") {
       stepEnemyBeams(content, slice, viewportWidth, flight);
       stepRingEmissions(slice, flight);
+    }
+    const earlyTiming = earlyOwner?.enemy?.earlyEncounter;
+    if (earlyOwner?.enemy && (earlyTiming?.kind === "manta" || earlyTiming?.kind === "crossbow")) {
+      earlyOwner.enemy.earlyEncounter = { ...earlyTiming, elapsed: earlyTiming.elapsed + slice };
     }
     if (flight.phantom?.allies.length) {
       const allyMotion = {
@@ -5591,6 +6001,14 @@ export function stepFlight(
       }
     }
     flight.objects = flight.objects.filter((o) => o.hp > 0);
+    // A hit can wake an enemy after its AI step. Keep damage, but do not admit reserve combat.
+    if (withheld) {
+      for (const object of withheld) {
+        if (object.enemy?.engaged) {
+          object.enemy.engaged = false;
+        }
+      }
+    }
     flight.dangerFor = inDanger(content, viewportWidth, flight) ? flight.dangerFor + slice : 0;
     rechargeShield(ship, slice, flight);
     if (flight.shield <= 0) {
@@ -5612,7 +6030,7 @@ export function stepFlight(
   }
   worldSyncFlightRegion(flightWorldContext(flight), content, flight);
   releaseSummonedGuards(input.viewportWidth ?? SCREEN.width, flight);
-  cueGuards(content, flight, events);
+  cueGuards(content, input.admitEnemy, flight, events);
   for (const object of flight.objects) {
     if (
       object.kind === "destination" &&

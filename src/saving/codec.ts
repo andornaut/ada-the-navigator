@@ -32,6 +32,7 @@ import { validAndromedaProgress } from "../model/andromeda.ts";
 import { settlementById } from "../model/andromedaPlaces.ts";
 import { ASTEROID_SHAPES } from "../model/asteroids.ts";
 import { holodisksHeld } from "../model/conversations.ts";
+import { EARLY_LANCE_SECONDS, earlyEncounterKind } from "../model/earlyEncounterRuntime.ts";
 import { enemyDefeated } from "../model/enemyAi.ts";
 import { validExplorationSites, validExplorationState } from "../model/explorationState.ts";
 import { flightWorldContext, validFlightTopology } from "../model/flightTopology.ts";
@@ -157,12 +158,61 @@ function achievementState(value: unknown): boolean {
 function nonnegative(value: unknown): boolean {
   return finite(value) && value >= 0;
 }
+function pendingEarlyLance(value: unknown): boolean {
+  return (
+    record(value) &&
+    finite(value.age) &&
+    value.age >= 0 &&
+    value.age < EARLY_LANCE_SECONDS &&
+    nonnegative(value.damage) &&
+    Number.isSafeInteger(value.volley) &&
+    nonnegative(value.volley) &&
+    record(value.direction) &&
+    finite(value.direction.x) &&
+    finite(value.direction.y) &&
+    Math.abs(Math.hypot(value.direction.x, value.direction.y) - 1) < 1e-6 &&
+    vector(value.muzzle) &&
+    vector(value.offset)
+  );
+}
+function earlyEncounter(galaxy: GalaxyNumber, id: string, value: unknown): boolean {
+  if (value === undefined) {
+    return true;
+  }
+  if (!record(value) || value.kind !== earlyEncounterKind(galaxy, id)) {
+    return false;
+  }
+  switch (value.kind) {
+    case "hammer":
+      return value.phase === "telling"
+        ? pendingEarlyLance(value.tell)
+        : (value.phase === "ready" || value.phase === "complete") && value.tell === undefined;
+    case "manta":
+      return (
+        nonnegative(value.elapsed) &&
+        Array.isArray(value.courses) &&
+        value.courses.length === 2 &&
+        Array.from(value.courses).every(
+          (course) =>
+            record(course) && ["entry", "exit", "station"].every((key) => vector(course[key])),
+        )
+      );
+    case "crossbow":
+      return (
+        nonnegative(value.elapsed) &&
+        (value.pendingLance === undefined || pendingEarlyLance(value.pendingLance))
+      );
+    default:
+      return false;
+  }
+}
 function enemyState(galaxy: GalaxyNumber, value: unknown): boolean {
   if (
     !record(value) ||
     !isEnemyActorKind(value.archetype) ||
     !enemyActorAvailable(galaxy, value.archetype) ||
     typeof value.id !== "string" ||
+    !earlyEncounter(galaxy, value.id, value.earlyEncounter) ||
     (value.hullProfile !== undefined &&
       !isHeavyHullProfile({ archetype: value.archetype, id: value.id }, value.hullProfile)) ||
     (value.weaponLevel !== undefined &&

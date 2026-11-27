@@ -582,8 +582,12 @@ export class ConversationDirector {
   }
 
   /** A stable authored event retries until exposed, then uses the existing saved seen list. */
-  authoredCue(id: string, line: ConversationLine): void {
-    this.eventCue([line], id, false, "never");
+  authoredCue(
+    id: string,
+    line: ConversationLine,
+    presentation?: Pick<Request, "onFirstShowing" | "relevant">,
+  ): void {
+    this.eventCue([line], id, false, "never", presentation);
   }
 
   /**
@@ -614,6 +618,7 @@ export class ConversationDirector {
     id: string,
     notice = false,
     repeat: "always" | "never" = "always",
+    presentation?: Pick<Request, "onFirstShowing" | "relevant">,
   ): void {
     const galaxy = this.galaxy;
     if (galaxy === null) {
@@ -630,6 +635,7 @@ export class ConversationDirector {
       holds: always,
       instance: id,
       ...(notice ? { notice: true as const } : {}),
+      ...presentation,
     });
   }
 

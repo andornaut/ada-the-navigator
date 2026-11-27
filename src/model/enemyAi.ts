@@ -43,6 +43,7 @@ import {
   stationGuardPatrol,
   stationGuardPatrolRadius,
 } from "./ai/stationGuardPatrol.ts";
+import type { EarlyEncounterState } from "./earlyEncounterRuntime.ts";
 import { fixedMuzzleOffset, hardpointAnchorOffset, muzzleOffset } from "./muzzles.ts";
 import { fanHeading } from "./playerProjectiles.ts";
 import {
@@ -85,6 +86,7 @@ export interface RetreatState {
   startedAt: number;
 }
 export interface EnemyState {
+  earlyEncounter?: EarlyEncounterState;
   age: number;
   /** Smoothed hull-weapon aim; null until the ship first has a target direction. */
   aim: Point | null;
@@ -142,7 +144,20 @@ export interface EnemyState {
   /** Equipped level resolved at spawn; legacy absence is interpreted by the loadout owner. */
   weaponLevel?: WeaponLevel;
 }
+export interface EnemyAttackOpportunity {
+  readonly aim: Readonly<Point>;
+  readonly delay: number;
+  readonly hardpointId: string | null;
+  readonly launchVelocity: Readonly<Point>;
+  readonly origin: Readonly<Point>;
+  readonly profile: Readonly<FireProfile>;
+}
+
 export interface EnemyContext extends WorldContext {
+  /** An authored encounter can withhold a due attack without changing its cadence. */
+  allowAttack?: (opportunity: EnemyAttackOpportunity) => boolean;
+  /** A living escort follows its authored course with ordinary movement and avoidance. */
+  escortTarget?: Point;
   /** Validated exact route-site frame for local guard home patrol and return only. */
   stationGuardAnchor?: StationGuardAnchor;
   /** The industrial body's physical reach, present for industrial idle routes only. */
@@ -1375,7 +1390,9 @@ export function stepEnemy(
     ? { x: 0, y: 0 }
     : summoned
       ? unit(worldDelta(context, state.position, context.summonTarget ?? context.player))
-      : steering(acting, context, speed, aim, distance, next);
+      : context.escortTarget && !next.returning && !next.fleeing
+        ? follow(definition, context, speed, context.escortTarget, { x: 0, y: 0 }, state)
+        : steering(acting, context, speed, aim, distance, next);
   // A tracing miner turns with its own turnSeconds, so it holds the edge's curve.
   const tracing =
     mining(next) &&
@@ -1605,41 +1622,52 @@ export function stepEnemy(
     let delay = Math.max(0, cooldown);
     let bolt = Math.min(burst, count - 1);
     while (delay < context.dt) {
-      if (bolt === 0) {
-        volleys++;
-      }
       const volley = Math.floor((state.age + delay) / interval) * count + bolt;
       const from = spawn(origin, hardpointId, muzzleAim, volley);
-      const shot = {
-        damageRatio: fireDamageRatio(profile),
-        delay,
-        hardpointId,
-        level: profile.level,
-        projectile: profile.projectile,
-        speed: profile.projectileSpeed,
-        volley,
-        weapon: profile.weapon,
-      };
-      if (profile.weapon === "ringBurst") {
-        // Bolts outward from the hull's edge, evenly around it, whatever the aim.
-        const radius = (definition.sizeRatio * context.adaWidth) / 2;
-        for (let index = 0; index < RING_BOLTS; index++) {
-          const turn = (index / RING_BOLTS) * Math.PI * 2;
-          const aim = { x: Math.cos(turn), y: Math.sin(turn) };
-          const origin = {
-            x: state.position.x + aim.x * radius,
-            y: state.position.y + aim.y * radius,
-          };
-          fire.push({ ...shot, aim, origin });
+      const allowed =
+        context.allowAttack?.({
+          aim: muzzleAim,
+          delay,
+          hardpointId,
+          launchVelocity: next.velocity,
+          origin: from,
+          profile,
+        }) ?? true;
+      if (allowed) {
+        if (bolt === 0) {
+          volleys++;
         }
-      } else {
-        for (const [index, degrees] of profile.angles.entries()) {
-          fire.push({
-            ...shot,
-            aim: fanHeading(muzzleAim, degrees),
-            delay: delay + (profile.pelletDelays?.[index] ?? 0),
-            origin: { ...from },
-          });
+        const shot = {
+          damageRatio: fireDamageRatio(profile),
+          delay,
+          hardpointId,
+          level: profile.level,
+          projectile: profile.projectile,
+          speed: profile.projectileSpeed,
+          volley,
+          weapon: profile.weapon,
+        };
+        if (profile.weapon === "ringBurst") {
+          // Bolts outward from the hull's edge, evenly around it, whatever the aim.
+          const radius = (definition.sizeRatio * context.adaWidth) / 2;
+          for (let index = 0; index < RING_BOLTS; index++) {
+            const turn = (index / RING_BOLTS) * Math.PI * 2;
+            const aim = { x: Math.cos(turn), y: Math.sin(turn) };
+            const origin = {
+              x: state.position.x + aim.x * radius,
+              y: state.position.y + aim.y * radius,
+            };
+            fire.push({ ...shot, aim, origin });
+          }
+        } else {
+          for (const [index, degrees] of profile.angles.entries()) {
+            fire.push({
+              ...shot,
+              aim: fanHeading(muzzleAim, degrees),
+              delay: delay + (profile.pelletDelays?.[index] ?? 0),
+              origin: { ...from },
+            });
+          }
         }
       }
       bolt++;

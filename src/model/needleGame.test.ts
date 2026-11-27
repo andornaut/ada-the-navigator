@@ -14,11 +14,12 @@ import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { interactionCopy } from "./conversations.ts";
 import { partsReach, worldParts } from "./convex.ts";
+import { crossbowContainsAttack } from "./earlyEncounterPatterns.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
-import { damageEnemy } from "./enemyAi.ts";
+import { damageEnemy, enemyFireLine } from "./enemyAi.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
-import { activeEnemyBeams, ensureStation } from "./flight.ts";
+import { activeCrossbowSector, activeEnemyBeams, ensureStation } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
@@ -27,7 +28,7 @@ import { inNeedleChannel, needleCourses, type NeedleGate } from "./needle.ts";
 import { NEEDLE_ACTIVITY_TARGET } from "./needleActivity.ts";
 import { NEEDLE_CADENCE, needleTrackedObjective } from "./needleRuntime.ts";
 import { stationsNear } from "./stations.ts";
-import { worldDistance, worldPoint } from "./worldContacts.ts";
+import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 import { wrapPoint } from "./worldGeometry.ts";
 
 const built = BUILT as Set<GalaxyNumber>;
@@ -243,20 +244,74 @@ describe("Captain Cadence admission and outcome", () => {
     const { id } = NEEDLE_CADENCE;
     const boss = nearCrossbow(model, 265);
     const definition = enemyEquipmentDefinition(4, boss.enemy!);
-    boss.enemy!.facing = { x: -1, y: 0 };
+    const world = flightWorldContext(flight);
+    const into = (angle: number) => ({ x: Math.cos(angle), y: Math.sin(angle) });
+    const place = (heading: number) => {
+      const direction = into(heading);
+      flight.player = { x: boss.x + direction.x * 245, y: boss.y + direction.y * 245 };
+      flight.velocity = { x: 0, y: 0 };
+    };
     const tells = new Set<number>();
-    const fired = new Set<number>();
-    for (let frame = 0; frame < 400 && fired.size < 2; frame++) {
+    const fired = new Map<number, number>();
+    let cancelled = false;
+    model.step(0.02, idle);
+    expect(activeCrossbowSector(flight)?.phase).toBe("warning");
+    for (let frame = 0; frame < 1300 && new Set(fired.values()).size < 2; frame++) {
+      const sector = activeCrossbowSector(flight)!;
+      const heading = sector.bearing + (sector.sector[0] + sector.sector[1]) / 2;
+      place(heading);
+      const enemy = boss.enemy!;
+      const phaser = definition.hardpoints.find(
+        ({ kind, weapon }) => kind === "weapon" && weapon === "phaser",
+      );
+      expect(phaser).toBeDefined();
+      const mount = enemy.hardpoints.find(({ id }) => id === phaser!.id)!;
+      // Select a drawn approach angle with the checked mount on the firing side of the hull.
+      mount.aim = into(heading);
+      for (let slot = 0; slot < 24; slot++) {
+        enemy.facing = into(heading + (slot * Math.PI) / 12);
+        const line = enemyFireLine(
+          definition,
+          CONTENT.tuning.flight.shipRadius * 2,
+          mount.id,
+          0,
+          enemy,
+        );
+        if (
+          line &&
+          crossbowContainsAttack(world, sector, {
+            from: line.origin,
+            screenRadius: 4,
+            travel: worldDelta(world, line.origin, flight.player),
+          })
+        ) {
+          break;
+        }
+      }
       flight.shield = model.shieldMax;
       model.step(0.02, idle);
       for (const beam of activeEnemyBeams(flight)) {
-        if (beam.kind === "phaser" && beam.ownerId === id) {
-          (beam.fired ? fired : tells).add(beam.volley);
+        if (beam.kind !== "phaser" || beam.ownerId !== id) {
+          continue;
+        }
+        if (beam.fired) {
+          fired.set(beam.volley, Math.sign(sector.sector[0]));
+        } else if (!cancelled && beam.age > 0.05) {
+          const volley = beam.volley;
+          place(sector.bearing);
+          model.step(0.02, idle);
+          expect(
+            activeEnemyBeams(flight).some((next) => next.ownerId === id && next.volley === volley),
+          ).toBe(false);
+          cancelled = true;
+        } else {
+          tells.add(beam.volley);
         }
       }
     }
-    expect([...fired]).toHaveLength(2);
-    expect([...fired].every((volley) => tells.has(volley))).toBe(true);
+    expect(cancelled).toBe(true);
+    expect(new Set(fired.values())).toEqual(new Set([1, -1]));
+    expect([...fired.keys()].every((volley) => tells.has(volley))).toBe(true);
     expect(model.bossHud()).toMatchObject({
       captain: "Captain Cadence",
       hull: definition.hp,
