@@ -15,6 +15,8 @@ import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { foregroundEdge, LIGHT_FIELD, lightGalaxy, readLightGalaxies } from "../game/lightField.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
 import { ART_MANIFEST, publicJson } from "../testing/publicArt.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
+import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { units } from "./layout/css.ts";
 import { MAP_COLORS, MAP_SYMBOL } from "./layout/mapScreen.ts";
 import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
@@ -132,7 +134,20 @@ describe("Penny's existing marker art", () => {
     );
   });
 });
-class ElementFixture {
+class ElementFixture extends EventTarget {
+  connected = false;
+  get isConnected(): boolean {
+    return this.connected || this.parent?.isConnected === true;
+  }
+  get parentElement() {
+    return this.parent;
+  }
+  matches(selector: string): boolean {
+    return selector.includes("button") && this.attributes.get("type") === "button";
+  }
+  querySelectorAll() {
+    return [];
+  }
   complete = true;
   naturalWidth = 24;
   naturalHeight = 24;
@@ -234,9 +249,42 @@ class ElementFixture {
   remove() {
     if (this.parent) {
       this.parent.children = this.parent.children.filter((entry) => entry !== this);
+      this.parent = null;
     }
   }
 }
+it("binds a marker before publication and rolls back a failed append", () => {
+  const root = fixtureActionRoot(new ElementFixture());
+  root.connected = true;
+  const doc = {
+    createElement: () => new ElementFixture(),
+    createElementNS: () => new ElementFixture(),
+  } as unknown as Document;
+  const ui = createPennyMarkerLayer(doc, root as unknown as HTMLElement, {
+    available: () => true,
+    open: () => {},
+  });
+  const layer = root.children[0]!;
+  const append = layer.append.bind(layer);
+  let original: HTMLElement | undefined;
+  const failure = vi.spyOn(layer, "append").mockImplementationOnce((node) => {
+    original = node as unknown as HTMLElement;
+    assertAdaActionMetadata(original);
+    append(node);
+    throw new Error("Marker append failed");
+  });
+  const player = { x: 0, y: 0 };
+  const area = { height: 360, width: 720, x: 0, y: 0 };
+  expect(() => ui.place(player, area, undefined, [marker])).toThrow("Marker append failed");
+  expect(layer.children).toEqual([]);
+  expect(() => assertAdaActionMetadata(original!)).toThrow("no registered action binding");
+  failure.mockRestore();
+  ui.place(player, area, undefined, [marker]);
+  expect(layer.children).toHaveLength(1);
+  assertAdaActionBindings(layer.children[0] as unknown as HTMLElement);
+  ui.destroy();
+});
+
 it("keeps the same marker node while identifying it and clearing its identity again", () => {
   const root = new ElementFixture();
   const doc = {

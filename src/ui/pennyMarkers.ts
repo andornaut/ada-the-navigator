@@ -7,7 +7,11 @@ import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { LIGHT_FIELD } from "../game/lightField.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
 import type { Vec } from "../model/types.ts";
-import { bindAdaAction } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  bindAdaAction,
+} from "./actionBinding.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { pixels, units, VIEW_PROPERTIES } from "./layout/css.ts";
 import { frameDeviceOrigin, frameRect, turnOf } from "./layout/frameBox.ts";
@@ -230,7 +234,6 @@ export function createPennyMarkerLayer(
           const glyph = doc.createElement("span");
           glyph.className = "ada-penny-glyph";
           node.append(glyph);
-          layer.append(node);
           const item: Entry = { element: node, marker };
           if (actions) {
             node.setAttribute("type", "button");
@@ -246,6 +249,19 @@ export function createPennyMarkerLayer(
               node,
             );
             item.dispose = binding.dispose;
+          }
+          try {
+            if (actions) {
+              assertAdaActionMetadata(node);
+            }
+            layer.append(node);
+            if (actions) {
+              assertAdaActionBindings(node);
+            }
+          } catch (error) {
+            item.dispose?.();
+            node.remove();
+            throw error;
           }
           entry = item;
           nodes.set(marker.id, entry);
