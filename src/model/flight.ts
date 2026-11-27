@@ -106,6 +106,7 @@ import {
 import {
   EARLY_LANCE_MOUNT,
   EARLY_LANCE_SECONDS,
+  earlyEncounterCueDue,
   earlyEncounterKind,
   pendingEarlyLance,
 } from "./earlyEncounterRuntime.ts";
@@ -4690,7 +4691,6 @@ function enemies(
       (state.engaged || admissions.has(object.id))
     ) {
       state.earlyEncounter = { elapsed: 0, kind };
-      events.push({ encounter: "crossbow", type: "earlyEncounterCue" });
     }
     const early = state.earlyEncounter;
     const lanceAvailable =
@@ -4715,7 +4715,6 @@ function enemies(
       const escortPlan = planMantaEscorts(flight, manta);
       if (escortPlan) {
         manta.enemy.earlyEncounter = { ...escortPlan, kind: "manta" };
-        events.push({ encounter: "manta", type: "earlyEncounterCue" });
       }
     }
     const mantaState = manta?.enemy?.earlyEncounter;
@@ -4964,9 +4963,6 @@ function enemies(
           (firstTellDue || early?.kind === "crossbow")
         ) {
           rememberEarlyLance(object, beam, "started");
-          if (firstTellDue) {
-            events.push({ encounter: "hammer", type: "earlyEncounterCue" });
-          }
         }
         continue;
       }
@@ -5751,6 +5747,7 @@ function projectedLength(heading: Vec): number {
   return Math.hypot(heading.x - heading.y, (heading.x + heading.y) / 2);
 }
 const enemyBeams = new WeakMap<FlightState, EnemyBeam[]>();
+const offeredEarlyEncounterCue = new WeakSet<FlightState>();
 
 function earlyLeader(flight: FlightState): SpaceObject | undefined {
   const id =
@@ -6186,6 +6183,18 @@ export function stepFlight(
     );
     clearNeedleEnemies(flight);
     const earlyOwner = earlyLeader(flight);
+    const earlyCue = earlyOwner?.enemy?.earlyEncounter;
+    if (
+      earlyOwner &&
+      earlyCue &&
+      earlyOwner.hp > 0 &&
+      !earlyOwner.enemy?.disabled &&
+      !offeredEarlyEncounterCue.has(flight) &&
+      earlyEncounterCueDue(earlyCue)
+    ) {
+      offeredEarlyEncounterCue.add(flight);
+      events.push({ encounter: earlyCue.kind, id: earlyOwner.id, type: "earlyEncounterCue" });
+    }
     restoreEarlyLance(flight, earlyOwner);
     if (flight.phantom?.phase !== "salvaged") {
       stepEnemyBeams(content, slice, viewportWidth, flight);

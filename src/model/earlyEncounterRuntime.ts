@@ -6,11 +6,13 @@ import {
 import { LANCE_TELL } from "../data/enemyCatalog.ts";
 import { HEAVY_SIGNATURES } from "../data/enemySignatures.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import type {
-  CrossbowTimingState,
-  HammerTutorialState,
-  MantaEscortState,
-  PendingAuthoredLance,
+import {
+  CROSSBOW_WARNING,
+  type CrossbowTimingState,
+  type HammerTutorialState,
+  MANTA_FIRST_APPROACH_SECONDS,
+  type MantaEscortState,
+  type PendingAuthoredLance,
 } from "./earlyEncounterPatterns.ts";
 
 export type EarlyEncounterState =
@@ -50,6 +52,15 @@ export function earlyEncounterKind(
     return "crossbow";
   }
   return undefined;
+}
+
+/** Continue can resume a still-open first warning that never reached the box. */
+export function earlyEncounterCueDue(state: EarlyEncounterState): boolean {
+  if (state.kind === "hammer") {
+    return state.phase === "telling";
+  }
+  const stop = state.kind === "manta" ? MANTA_FIRST_APPROACH_SECONDS : CROSSBOW_WARNING;
+  return state.elapsed < stop;
 }
 
 export function pendingEarlyLance(

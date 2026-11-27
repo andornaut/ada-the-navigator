@@ -372,6 +372,9 @@ describe("Captain Tally in Sunflower", () => {
       maxHull: definition.hp,
       ship: "Hammer",
     });
+    expect(model.conversation?.speaker).toBe("astra");
+    model.dismissConversation();
+    model.step(0.01, idle);
     expect(model.conversation).toMatchObject({
       ...SUNFLOWER_BOSS_CUES.approach,
       name: "Captain Tally",
@@ -518,6 +521,9 @@ describe("Captain Tally in Sunflower", () => {
   it("uses the destruction reward once and selects the resolution cue over a hardpoint beat", () => {
     const model = traded();
     approach(model);
+    expect(model.conversation?.speaker).toBe("astra");
+    model.dismissConversation();
+    model.step(0.01, idle);
     expect(model.conversation).toMatchObject(SUNFLOWER_BOSS_CUES.approach);
     model.dismissConversation();
     const flight = flightOf(model);

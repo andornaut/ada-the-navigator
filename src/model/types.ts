@@ -504,7 +504,7 @@ export interface FlightLogEntry {
 export type FlightEvent =
   | { type: "depleted" }
   | { type: "cartwheelPatrolWarning" }
-  | { type: "earlyEncounterCue"; encounter: EarlyEncounterState["kind"] }
+  | { type: "earlyEncounterCue"; encounter: EarlyEncounterState["kind"]; id: string }
   /** The equipped weapon ran out of ammunition and Ada switched to Laser. */
   | { type: "outOfAmmo" }
   | { type: "stardust"; amount: number }

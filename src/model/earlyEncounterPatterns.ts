@@ -73,6 +73,7 @@ const MANTA_BEATS = [
   { escort: 1, kind: "pass", seconds: 2 },
   { escort: null, kind: "reposition", seconds: 2 },
 ] as const satisfies readonly (MantaEscortPhase & { readonly seconds: number })[];
+export const MANTA_FIRST_APPROACH_SECONDS = MANTA_BEATS[0].seconds;
 const MANTA_PERIOD = MANTA_BEATS.reduce((total, beat) => total + beat.seconds, 0);
 
 /** Indices identify the originally placed escorts, even when one no longer survives. */
@@ -131,7 +132,7 @@ export function mantaEscortMayFire(elapsed: number, escort: MantaEscortIndex): b
   return phase.kind === "pass" && phase.escort === escort;
 }
 
-const CROSSBOW_WARNING = 1;
+export const CROSSBOW_WARNING = 1;
 const CROSSBOW_FIRE_END = CROSSBOW_WARNING + 3;
 const CROSSBOW_SIDE_SECONDS = CROSSBOW_FIRE_END + 1;
 const CROSSBOW_LANE_HALF_ANGLE = (20 * Math.PI) / 180;

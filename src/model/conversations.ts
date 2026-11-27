@@ -595,8 +595,8 @@ export class ConversationDirector {
   }
 
   /** A one-time live combat instruction can interrupt ordinary battle chatter. */
-  encounterCue(id: string, line: ConversationLine): void {
-    this.eventCue([line], id, false, "never", { timedWarning: true });
+  encounterCue(id: string, line: ConversationLine, relevant?: () => boolean): void {
+    this.eventCue([line], id, false, "never", { relevant, timedWarning: true });
   }
 
   /**

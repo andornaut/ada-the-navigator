@@ -3881,6 +3881,10 @@ export class GameModel {
         this.talk.encounterCue(
           `chapter:encounter:${event.encounter}`,
           EARLY_ENCOUNTER_CUES[event.encounter],
+          () => {
+            const boss = capitalBossActor(f, event.id);
+            return this.state.flight === f && Boolean(boss) && boss.hp > 0 && !boss.enemy?.disabled;
+          },
         );
       }
       if (event.type === "cartwheelPatrolWarning") {
@@ -3989,7 +3993,11 @@ export class GameModel {
       if (f.galaxy === 5) {
         const warning = takeAndromedaCourierWarning(f);
         if (warning) {
-          this.talk.encounterCue("chapter:encounter:andromedaCourier", warning);
+          this.talk.encounterCue(
+            "chapter:encounter:andromedaCourier",
+            warning,
+            () => this.state.flight === f && this.current.stage === 4,
+          );
         }
       }
       if (f.galaxy === 4) {
