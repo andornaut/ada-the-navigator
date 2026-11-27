@@ -1159,17 +1159,20 @@ Labels and values wrap, including within long unbroken words, without
 shrinking type.
 
 1. Cargo: Stardust (`icon-stardust-20`) and Ore (`icon-ore-20`) with exact
-   grouped counts, "Holodisks: {n} of 6" (`icon-holodisk-20`), one
-   "Carrying: {item}" row per carried item or "Carrying: Nothing"
+   grouped counts, "Holodisks" (`icon-holodisk-20`) with `{n} of {total}` in
+   the shared right-aligned value slot, one "Carrying: {item}" row per carried
+   item or "Carrying: Nothing"
    (`icon-cargo-20`), then "Towing: {craft}" or "Towing: Nothing"
    (`icon-tow-20`). Carrying and Towing rows are always present and
    independent: each carried item keeps its own row, and a towed craft never
    hides them. A "Nothing" row is a disabled button out of the Tab order
    (`tabIndex` -1) and opens nothing.
 2. Equipment: Engine (`icon-shop-engine-tuning`), Shield (`icon-shop-shield`),
-   Tractor beam (`icon-shop-tractor-beam`), then "Paint: {paint}"
-   (`icon-shop-ship-paint`), each with its compact level suffix where it has
-   a level.
+   and Tractor beam (`icon-shop-tractor-beam`), each with its compact level
+   suffix where it has a level. The paint row keeps the current swatch, with
+   `icon-shop-ship-paint` as its fallback. It shows the current paint name
+   followed by "paint" and the inline cue, as in "Classic paint (Click to
+   change)". The whole row opens the existing paint picker detail.
 3. Weapons: every owned weapon in HUD order, with its weapon glyph, compact
    level suffix and ammunition as a grouped count; the Laser's ammunition is
    blank. With no owned weapons the heading remains and no empty-state copy is
