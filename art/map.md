@@ -187,14 +187,13 @@ rect's bottom-left corner.
 | Token                 | Value | Rule                                                   |
 | --------------------- | ----- | ------------------------------------------------------ |
 | `MAP_PANEL.padding`   | 16    | `SPACING.panelPadding`, including the 2 frame          |
-| `MAP_PANEL.minWidth`  | 360   | The card floor: half the 720 base width                |
-| `MAP_PANEL.markGap`   | 8     | Chip to the text block, and text block to the button   |
-| `MAP_PANEL.actionGap` | 16    | Text block to Travel here: an 8 margin plus `markGap`  |
-| `MAP_PANEL.row`       | 48    | The row's minimum height (`TEXT_BUTTON.height`)        |
+| `MAP_PANEL.markGap`   | 8     | Chip to the text block                                 |
+| `SPACING.gap`         | 8     | Vertical gap from the chip and text to Travel here     |
+| `MAP_PANEL.row`       | 48    | Chip and text row minimum (`TEXT_BUTTON.height`)       |
 | `MAP_PANEL.textTop`   | 4     | Padding above and below the text block's 20 line pitch |
-| `MAP_PANEL.reasonGap` | 8     | Row to the reason line (`SPACING.gap`)                 |
+| `MAP_PANEL.reasonGap` | 8     | Content block to the reason (`SPACING.gap`)            |
 
-The row, left to right, every part centred on it:
+The first row, left to right, with both parts vertically centred:
 
 1. The place's chip, 28, drawn as on the field without the selection ring or
    objective indicator.
@@ -203,37 +202,29 @@ The row, left to right, every part centred on it:
    "{type} · {distance}" (`TYPE.body`, supporting `#b8b3c9`), then, when the
    place is the held job's target, "Job: {objective}" (`TYPE.body`,
    supporting). A job's own spot shows its name only.
-3. Travel here: a secondary `TEXT_BUTTON`, 48 high, label width plus
-   `2 * TEXT_BUTTON.inset`, at the row's right end. Only destinations and
-   stations offer it (`MapPlace.travel`); a landmark, the holodisk waypoint or
-   a job's own spot shows the chip and text block only.
 
-Below the row, `reasonGap` apart, one reason line (`TYPE.body`, supporting,
+Travel here is a secondary `TEXT_BUTTON`, 48 high, on its own left-aligned row
+below the chip and text. The label, Stardust icon and price stay on one line,
+with `TEXT_BUTTON.inset` on each side. Only destinations and stations offer it
+(`MapPlace.travel`). A landmark, the holodisk waypoint or a job's own spot
+shows the chip and text block only.
+
+Below the block, `reasonGap` apart, one reason (`TYPE.body`, supporting,
 left-aligned at the inner left) shows while Travel here or Galaxies is
-unavailable.
+unavailable. Inactive reasons take no space.
 
-- Row height: `max(row, 2 * textTop + 20 * lines)` for `lines` counting the
-  name: 48 with one or two lines, 68 with the job line. Travel here and the
-  chip stay centred, so in a 68 row the button's top is 10 below the row's
-  top and the chip's 20.
-- Height: `2 * padding + row height`, plus `reasonGap + 20` with the reason
-  line: 80 or 108 with two lines, 100 or 128 with the job line.
-- Width: the panel sizes to its content,
-  `clamp(floor, maxWidth, 2 * padding + max(row, reason))`. `row` is
-  `28 + markGap + text + 8`, plus `markGap + button` when Travel here shows;
-  `text` is the widest of its lines. `reason` is the widest reason string
-  while a reason shows (both share one cell), and absent otherwise. Text
-  wraps inside `maxWidth` and the panel's measured height grows with it.
+- With unwrapped text, the chip and text row is 48 high with one or two lines
+  and 68 with the job line.
+- Width: the panel takes the `max-content` width of its widest visible row,
+  plus panel padding, up to `maxWidth`. The header sizes independently. Detail
+  and reason text can wrap inside the cap and increase the measured height.
 - `maxWidth` (`panelMaxWidth`) is `Quests left - SPACING.gap - page left`,
   using the measured footer row. The panel ends at least `SPACING.gap`
-  left of the footer. In the 720x360 example above, the cap is 373.88
-  (`397.875 - 8 - 16`). `floor` remains `min(minWidth, maxWidth)`.
+  left of the footer.
 - Empty panel, while the map has no places: one centred `TYPE.body` supporting
-  line, "No destinations mapped yet." (Gameplay), height `16 + 20 + 16` = 52,
-  width `clamp(floor, maxWidth, text + 32)`.
+  line, "No destinations mapped yet." (Gameplay), height `16 + 20 + 16` = 52.
 - Reason-only panel, in danger with nothing selected: the danger line alone,
-  left-aligned, height `16 + 20 + 16` = 52, width
-  `clamp(floor, maxWidth, reason + 32)`. With no places the empty note comes
+  left-aligned, height `16 + 20 + 16` = 52. With no places the empty note comes
   first and the danger line follows it, `reasonGap` apart, both centred: 80
   high.
 - Travel here unavailable: the disabled face, focusable; activation plays the
