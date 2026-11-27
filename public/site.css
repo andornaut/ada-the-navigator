@@ -27,14 +27,10 @@ body.site {
   box-sizing: border-box;
 }
 
-.site .site-home,
-.site .site-footer {
+.site .site-home {
   width: 100%;
   max-width: 720px;
   margin-inline: auto;
-}
-
-.site .site-home {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 32px;
@@ -159,8 +155,7 @@ body.site {
   text-wrap: pretty;
 }
 
-/* Install (secondary) on the left and Play (primary) on the right, one shared width, as in
-   art/controls.md. inline-grid with 1fr columns sizes both to the widest label. */
+/* Equal-width action columns follow document order. */
 .site .site-actions {
   display: inline-grid;
   grid-auto-columns: 1fr;
@@ -337,25 +332,6 @@ body.site {
 .site .site-controls kbd {
   font-family: inherit;
   font-weight: 600;
-}
-
-.site .site-footer {
-  border-top: 1px solid #514c62;
-}
-
-.site .site-footer a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 48px;
-  padding: 8px 0;
-  color: #c7bdc9;
-  font-size: 13px;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 4px;
-}
-
-.site .site-footer a:hover {
-  color: #ead4aa;
 }
 
 @media (max-width: 600px) {
