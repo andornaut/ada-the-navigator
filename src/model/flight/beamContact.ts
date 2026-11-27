@@ -1,6 +1,10 @@
+import { BEAM } from "../../data/weaponCatalog.ts";
+import { sceneryBound, type Silhouette, worldSceneryContact } from "../asteroids.ts";
 import { outlineContact, type Parts, partsReach, worldParts } from "../convex.ts";
+import { flightWorldContext } from "../flightTopology.ts";
 import { impactSurface } from "../projectileImpact.ts";
-import type { Vec } from "../types.ts";
+import type { FlightState, SpaceObject, Vec } from "../types.ts";
+import { worldPoint } from "../worldContacts.ts";
 
 export function beamPoint(origin: Vec, direction: Vec, at: number): Vec {
   return { x: origin.x + direction.x * at, y: origin.y + direction.y * at };
@@ -46,6 +50,45 @@ export function rayCircle(
   }
   const entry = Math.max(0, along - half);
   return entry <= range ? entry : null;
+}
+
+/**
+ * Where a beam first meets a scenery object where it is drawn (its silhouette, else its circle),
+ * within the beam half-width: the bounding circle's entry, refined in 2-unit steps.
+ */
+export function sceneryEntry(
+  flight: FlightState,
+  origin: Vec,
+  direction: Vec,
+  range: number,
+  frame: number,
+  drawn: Silhouette | null,
+  object: SpaceObject,
+  halfWidth: number = BEAM.halfWidth,
+): number | null {
+  const imageObject = flight.topology
+    ? { ...object, ...worldPoint(flightWorldContext(flight), origin, object) }
+    : object;
+  const bound = sceneryBound(imageObject, halfWidth, drawn);
+  const entry = rayCircle(origin, direction, range, imageObject, bound);
+  if (entry === null || !drawn) {
+    return entry;
+  }
+  const exit = Math.min(range, entry + 2 * bound);
+  return (
+    sampleBeam(origin, direction, entry, exit, (point) =>
+      halfWidth === BEAM.halfWidth
+        ? outlineContact(drawn.frames[frame] ?? drawn.frames[0]!, imageObject, point, halfWidth)
+        : worldSceneryContact(
+            flightWorldContext(flight),
+            imageObject,
+            point,
+            halfWidth,
+            frame,
+            drawn,
+          ),
+    )?.at ?? null
+  );
 }
 
 /** Locate the first sampled contact and its actual drawn surface. */

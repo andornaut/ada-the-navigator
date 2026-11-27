@@ -55,7 +55,6 @@ import {
   ASTEROID_SHAPES,
   bounce,
   placementRadius,
-  sceneryBound,
   scenerySilhouette,
   type Silhouette,
   worldSceneryBodyContact,
@@ -108,7 +107,7 @@ import { selectCartwheelClaimField } from "./cartwheelClaimField.ts";
 import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
 import { blastCoversAda, pickupTouched, touchesAda } from "./flight/adaContactQueries.ts";
-import { beamPoint, outlineBeamStrike, rayCircle, sampleBeam } from "./flight/beamContact.ts";
+import { beamPoint, outlineBeamStrike, rayCircle, sceneryEntry } from "./flight/beamContact.ts";
 import { crossbowAttack, crossbowFrame } from "./flight/crossbow.ts";
 import { inBattle, inDanger } from "./flight/danger.ts";
 import { moveDebris, placeRiverRock } from "./flight/debrisMotion.ts";
@@ -4589,45 +4588,6 @@ function blast(
   if (struck) {
     markBlasted(struck, flight);
   }
-}
-
-/**
- * Where a beam first meets a scenery object where it is drawn (its silhouette, else its circle),
- * within the beam half-width: the bounding circle's entry, refined in 2-unit steps.
- */
-function sceneryEntry(
-  flight: FlightState,
-  origin: Vec,
-  direction: Vec,
-  range: number,
-  frame: number,
-  drawn: Silhouette | null,
-  object: SpaceObject,
-  halfWidth: number = BEAM.halfWidth,
-): number | null {
-  const imageObject = flight.topology
-    ? { ...object, ...worldPoint(flightWorldContext(flight), origin, object) }
-    : object;
-  const bound = sceneryBound(imageObject, halfWidth, drawn);
-  const entry = rayCircle(origin, direction, range, imageObject, bound);
-  if (entry === null || !drawn) {
-    return entry;
-  }
-  const exit = Math.min(range, entry + 2 * bound);
-  return (
-    sampleBeam(origin, direction, entry, exit, (point) =>
-      halfWidth === BEAM.halfWidth
-        ? outlineContact(drawn.frames[frame] ?? drawn.frames[0]!, imageObject, point, halfWidth)
-        : worldSceneryContact(
-            flightWorldContext(flight),
-            imageObject,
-            point,
-            halfWidth,
-            frame,
-            drawn,
-          ),
-    )?.at ?? null
-  );
 }
 
 function fireBeam(
