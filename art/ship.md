@@ -371,16 +371,23 @@ There are no animated jet frames.
 - Each colour pair is the value at `f = 0` and `f = 1`, interpolated linearly
   in sRGB. All layers are opaque. The core draws at every display size.
 
-| Engine level | Halo, both fields | Dark field outer     | Dark field core      | Light field outer | Light field core     |
-| -----------: | ----------------- | -------------------- | -------------------- | ----------------- | -------------------- |
-|            1 | `#101a2e`         | `#5b93cc`, `#b9ecff` | `#8cc4f0`, `#ffffff` | `#1767b3`         | `#2585d0`, `#64caff` |
-|            2 | `#583036`         | `#a62c22`, `#e74b35` | `#f0895d`, `#ffcab0` | `#9e3027`         | `#cf4935`, `#ee7960` |
-|            3 | `#584a37`         | `#b77d22`, `#e8ba3c` | `#f3d46c`, `#fff0a6` | `#91620e`         | `#d49b22`, `#f2cf62` |
+| Engine level | Authored halo | Authored outer       | Authored core        | Light-field outer | Light-field core     |
+| -----------: | ------------- | -------------------- | -------------------- | ----------------- | -------------------- |
+|            1 | `#101a2e`     | `#5b93cc`, `#b9ecff` | `#8cc4f0`, `#ffffff` | `#1767b3`         | `#2585d0`, `#64caff` |
+|            2 | `#583036`     | `#a62c22`, `#e74b35` | `#f0895d`, `#ffcab0` | `#9e3027`         | `#cf4935`, `#ee7960` |
+|            3 | `#584a37`     | `#b77d22`, `#e8ba3c` | `#f3d46c`, `#fff0a6` | `#91620e`         | `#d49b22`, `#f2cf62` |
 
-- Dark field values are `ship-jets.json` `engineLevels`. Light field values
-  are `lightField.jets.shipLevels` in [galaxies.json](../public/art/galaxies.json)
-  ([Light fields](galaxies.md#light-fields)): the same three layers and shape
-  in their own colours.
+- The authored ramps come from `engineLevels`. Flight uses the same fill
+  palette in every galaxy. `travelJets` selects `ship-jets.json` for forward
+  travel and `ship-retro-jets.json` for reverse travel. At Engine 2 and 3 it
+  uses the selected file's authored layer colours. At Engine 1 the flight
+  override sets both outer endpoints to `#2585d0` and both core endpoints to
+  `#64caff`, forward and reverse. The halo keeps its authored `#101a2e`.
+- The light-field variants are `lightField.jets.shipLevels` in
+  [galaxies.json](../public/art/galaxies.json) ([Light fields](galaxies.md#light-fields)).
+  They remain available to callers that request them, including the Galaxy
+  Map's static ship and the Art contact sheet. Flight applies its light-field
+  silhouette treatment separately from the fill palette.
 - `headings` holds all 64 headings, two mouths each, port then starboard.
   `anchor` is the plume root in frame px: the mouth centre, local
   `(+-12.25, 17.563, 2.2)`, 0.1 behind the rear wall and 1 unit above the
@@ -416,9 +423,9 @@ with all 64 headings in the same 96 px frame and pivot as the ship.
 
 - The same `profile` and three layers at half the forward widths: halo 2.9,
   outer 2.1 and core 0.8 units, at the forward lengths 1.1, 1 and 0.55.
-  `engineLevels` carries the same colours as `ship-jets.json`; light fields
-  use `lightField.jets.shipLevels` colours on these widths. At game scale they
-  match the earlier reverse plumes' reach, 3 px reach and pixel area.
+  `engineLevels` carries the same authored colours as `ship-jets.json`.
+  At game scale they match the earlier reverse plumes' reach, 3 px reach and
+  pixel area.
 - Jet length is `14.85 + 23.1 f` ship units, `length`
   `{ base: 14.85, scale: 23.1, exponent: 1 }`, so the reverse plumes outreach
   the forward ones, which matters because the wings hide part of them. Zero
