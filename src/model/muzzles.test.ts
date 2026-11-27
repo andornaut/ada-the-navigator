@@ -3,6 +3,7 @@ import { readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import capitalFile from "../../public/art/enemies/fleetCapital-hardpoints.json";
+import outriggerFile from "../../public/art/enemies/fleetCapitalOutrigger-hardpoints.json";
 import frigateFile from "../../public/art/enemies/fleetFrigate-hardpoints.json";
 import cargoFile from "../../public/art/enemies/fleetRetaliatorCargoHauler-hardpoints.json";
 import {
@@ -105,24 +106,24 @@ describe("drawn muzzles", () => {
   it("fires each weapon from the top it draws on its mount, the mine layer's held aft", () => {
     const layout = muzzleLayout(
       armed({
-        "claw-left": "scattershot",
         "stern-right": "mineLayer",
         "weapon-rear-left": "scattershot",
+        "weapon-rear-right": "scattershot",
       }),
-      MUZZLE_ART.capital,
+      MUZZLE_ART.capitalOutrigger,
     )!;
     const tips = (top: string, aim: number) =>
       capitalFile.tops[top as keyof typeof capitalFile.tops][aim]!.muzzles.length;
-    expect(layout.turrets.get("claw-left")!.tips[4]).toHaveLength(tips("spread", 4));
+    expect(layout.turrets.get("weapon-rear-right")!.tips[4]).toHaveLength(tips("spread", 4));
     expect(layout.turrets.get("weapon-rear-left")!.tips[4]).toHaveLength(tips("spread", 4));
     expect(layout.turrets.get("stern-right")!.aft).toBe(true);
     // Whatever the aim, the hopper's chute is the aim frame opposite the hull heading.
     const heading = 3;
-    const pivot = capitalFile.headings[heading]!.hardpoints.find(
+    const pivot = outriggerFile.headings[heading]!.hardpoints.find(
       (part) => part.id === "stern-right",
     )!.pivot!;
-    const [tip] = capitalFile.tops.hopper[(heading + 8) % 16]!.muzzles;
-    const half = capitalFile.frame / 2;
+    const [tip] = outriggerFile.tops.hopper[(heading + 8) % 16]!.muzzles;
+    const half = outriggerFile.frame / 2;
     const expected = world(
       (pivot[0]! + tip![0]! - half) * ENEMY_DISPLAY_SCALE,
       (pivot[1]! + tip![1]! - half) * ENEMY_DISPLAY_SCALE,

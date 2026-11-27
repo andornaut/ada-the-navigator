@@ -513,7 +513,16 @@ const LOADOUT: Readonly<Record<string, string>> = {
   "weapon-rear-right": "scattershot",
   "weapon-right": "scattershot",
 };
-const MINE_LOADOUT = { ...LOADOUT, "stern-right": "mineLayer", "weapon-left": "scattershot" };
+const FLAGSHIP_LOADOUT = {
+  "claw-left": "laser",
+  "claw-right": "chargedLance",
+  "stern-left": "mineLayer",
+  "stern-right": "mineLayer",
+  "weapon-left": "chargedLance",
+  "weapon-rear-left": "heavyMissile",
+  "weapon-rear-right": "heavyMissile",
+  "weapon-right": "laser",
+};
 const pose = (
   destroyed: readonly string[] = [],
   aim = world(0),
@@ -612,23 +621,24 @@ describe("composed heavies", () => {
   });
 
   it("draws each tier's tops, the mine layer's hopper held aft of the hull heading", () => {
+    const flagship = galaxy("archie");
     for (const heading of [0, 5, 12]) {
       const sprites = composeEnemy(
-        capital,
-        pose([], world(22.5 * 9), 5, MINE_LOADOUT),
-        capital.frames[heading]!,
+        flagship,
+        pose([], world(22.5 * 9), 6, FLAGSHIP_LOADOUT),
+        flagship.frames[heading]!,
       );
       const top = (id: string) =>
         sprites.find((part) => part.hardpoint === id && part.layer === "top")?.frame.id;
-      expect(Object.fromEntries(capitalHardpoints.fill.map((id) => [id, top(id)]))).toEqual({
-        "claw-left": "enemy-capital-spread-top-9",
-        "claw-right": "enemy-capital-spread-top-9",
-        "stern-left": "enemy-capital-spread-top-9",
-        "stern-right": `enemy-capital-hopper-top-${(heading + 8) % 16}`,
-        "weapon-left": "enemy-capital-spread-top-9",
-        "weapon-rear-left": "enemy-capital-spread-top-9",
-        "weapon-rear-right": "enemy-capital-spread-top-9",
-        "weapon-right": "enemy-capital-spread-top-9",
+      expect(Object.fromEntries(archieHardpoints.fill.map((id) => [id, top(id)]))).toEqual({
+        "claw-left": "enemy-archie-gun-top-9",
+        "claw-right": "enemy-archie-lance-top-9",
+        "stern-left": `enemy-archie-hopper-top-${(heading + 8) % 16}`,
+        "stern-right": `enemy-archie-hopper-top-${(heading + 8) % 16}`,
+        "weapon-left": "enemy-archie-lance-top-9",
+        "weapon-rear-left": "enemy-archie-rail-top-9",
+        "weapon-rear-right": "enemy-archie-rail-top-9",
+        "weapon-right": "enemy-archie-gun-top-9",
       });
     }
     // A capped plate never draws a top, whatever its hardpoint state.
@@ -668,14 +678,15 @@ describe("composed heavies", () => {
     expect(turretMuzzles(capital, pose(), hull, "command")).toEqual([]);
     // Tier tops: the claw's capped plate has none, the rear mount's pod has its own.
     expect(turretMuzzles(capital, pose(), hull, "claw-left")).toEqual([]);
-    const pod = capitalHardpoints.tops.hopper[3]!.muzzles;
+    const flagship = galaxy("archie");
+    const hopper = archieHardpoints.tops.hopper[10]!.muzzles;
     const rear = turretMuzzles(
-      capital,
-      pose([], world(22.5 * 3), 5, { "weapon-rear-left": "mineLayer" }),
-      hull,
-      "weapon-rear-left",
+      flagship,
+      pose([], world(22.5 * 3), 6, FLAGSHIP_LOADOUT),
+      flagship.frames[2]!,
+      "stern-right",
     );
-    expect(rear).toHaveLength(pod.length);
+    expect(rear).toHaveLength(hopper.length);
   });
 
   it("draws each jet mouth only while its engine is intact", () => {
