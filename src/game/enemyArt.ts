@@ -855,6 +855,10 @@ export class HitFlashes {
     return nowMs - at < HIT_FLASH_MS;
   }
 
+  clear(): void {
+    this.parts.clear();
+  }
+
   /** Forgets every key whose owner is no longer present. */
   retain(owners: ReadonlySet<string>, owner: (key: string) => string): void {
     for (const key of this.parts.keys()) {

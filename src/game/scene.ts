@@ -439,6 +439,7 @@ export class GameScene extends Scene {
   jumping = false;
   readonly emergencyReturn = new EmergencyReturn();
   private holdSource = false;
+  private displayedFlight: FlightState | null = null;
   private readonly drawGuideLights = createGuideLights();
   private needleFlight: FlightState | undefined;
   private needleRenderer: ReturnType<typeof createNeedleRenderer> | undefined;
@@ -783,6 +784,12 @@ export class GameScene extends Scene {
       return;
     }
     const state = this.model.state;
+    if (!this.holdSource && state.flight !== this.displayedFlight) {
+      if (this.displayedFlight) {
+        this.releaseFlightDisplay();
+      }
+      this.displayedFlight = state.flight;
+    }
     this.feedback.advance(Math.min(milliseconds / 1000, 0.05));
     const wasInSpace = state.mode === "space";
     const returnHeading = state.flight ? shipHeading(state.flight.facing) : null;
@@ -1084,6 +1091,50 @@ export class GameScene extends Scene {
       });
     }
     return true;
+  }
+
+  /** Drops display instances for the old flight. Their shared textures stay registered. */
+  private releaseFlightDisplay(): void {
+    for (const objects of [
+      this.buoySprites,
+      this.craftJets,
+      this.enemySprites,
+      this.landmarkSprites,
+      this.mineInk,
+      this.mineSprites,
+      this.missileSprites,
+      this.revealGroups,
+      this.salvagedGroups,
+    ]) {
+      for (const object of objects.values()) {
+        object.destroy();
+      }
+      objects.clear();
+    }
+    for (const copies of this.keylines.values()) {
+      for (const copy of copies) {
+        copy.destroy();
+      }
+    }
+    for (const zip of this.zips) {
+      zip.sprite.destroy();
+    }
+    for (const rock of this.rockBreaks) {
+      rock.sprite?.destroy();
+    }
+    this.keylines.clear();
+    this.zips = [];
+    this.rockBreaks = [];
+    this.drawnTops.clear();
+    this.pickupSeen.clear();
+    this.reveals.clear();
+    this.litCaches.clear();
+    this.hitFlashes.clear();
+    this.hitAt = -Infinity;
+    this.calloutState = { at: { x: 0, y: 0 }, edge: -Infinity, id: "", showing: false };
+    this.useCallout?.setVisible(false);
+    this.whalesCurrentFor = undefined;
+    this.calfHeading = 0;
   }
 
   private draw(): void {
