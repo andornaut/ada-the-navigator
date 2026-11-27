@@ -687,6 +687,16 @@ export function buildScene(scene: UiContext): void {
         select: (id) => apply(() => scene.model.selectPaint(id), { preserveInput: true }),
         title: CONTENT.labels.shipPaintPicker ?? "",
       },
+      questTracking: {
+        canTrack: (id) => scene.model.canTrackQuest(id),
+        track: (id) => {
+          if (!scene.model.trackQuest(id)) {
+            return false;
+          }
+          flushScene(scene);
+          return true;
+        },
+      },
       shipFrame: (heading) => materialClassicShipFrame(scene, heading),
     },
     rasterScale: scene.rasters.scale,

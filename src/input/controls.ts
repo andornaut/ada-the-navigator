@@ -133,6 +133,7 @@ export interface ControlsOptions {
     /** Return to Earth, which the Map offers. */
     readonly onGalaxies: () => void;
     readonly onTravel: (destination: string) => void;
+    readonly questTracking?: PauseOptions["questTracking"];
   };
   // The scene's SVG raster scale when the controls are made; the scene emits
   // RASTER_SCALE_EVENT with each new one, and the touch chrome paints again at it.
@@ -386,6 +387,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
     onTravel: (destination) => options.pause.onTravel(destination),
     ...(options.pause.paint ? { paint: options.pause.paint } : {}),
+    ...(options.pause.questTracking ? { questTracking: options.pause.questTracking } : {}),
     reducedMotion: () => reducedMotion,
     shipFrame: (heading) => options.pause.shipFrame?.(heading),
   });

@@ -73,6 +73,7 @@ export interface PauseOptions {
   readonly onGalaxies: () => void;
   readonly onSettings: () => void;
   readonly onTravel: (destination: string) => void;
+  readonly questTracking?: Parameters<typeof createQuestsScreen>[1]["tracking"];
   // Whether the player chose Reduced motion, which keeps the refusal cue still.
   readonly reducedMotion: () => boolean;
 }
@@ -332,6 +333,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       mapScreen.locate(id);
     },
     reducedMotion: options.reducedMotion,
+    ...(options.questTracking ? { tracking: options.questTracking } : {}),
   });
   let open = false;
   let mapOpener: "map" | "quests" = "map";
