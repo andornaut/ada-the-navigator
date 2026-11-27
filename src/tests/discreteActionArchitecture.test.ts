@@ -649,6 +649,53 @@ function constructionFindings(path: string, text: string) {
   );
 }
 
+const mappedFocusSource = readFileSync(new URL("../ui/galaxyMap.ts", import.meta.url), "utf8");
+const mappedFocusFinding = expect.objectContaining({
+  kind: "unbound-discrete",
+  source: expect.stringContaining("createButton(document,"),
+});
+const mappedFocusFixture = "src/ui/mappedFocusFixture.ts";
+
+it.each(["src/ui/galaxyMap.ts", mappedFocusFixture])(
+  "proves the bound mapped button and shared focus callback in %s",
+  (path) => {
+    expect(constructionFindings(path, mappedFocusSource)).not.toContainEqual(mappedFocusFinding);
+  },
+);
+
+it.each([
+  ["unregistered element", "const binding = bindAdaAction(", "const binding = anotherBind("],
+  [
+    "early mounting",
+    "const binding = bindAdaAction(",
+    "chart.append(button); const binding = bindAdaAction(",
+  ],
+  [
+    "eager disposal",
+    'button.addEventListener("focus", selectGalaxy);',
+    'binding.dispose(); button.addEventListener("focus", selectGalaxy);',
+  ],
+  [
+    "unrelated focus action",
+    'button.addEventListener("focus", selectGalaxy);',
+    'button.addEventListener("focus", selectEarth);',
+  ],
+  [
+    "cleanup escapes",
+    "    bindings.push({\n      dispose()",
+    "    expose(bindings);\n    bindings.push({\n      dispose()",
+  ],
+  [
+    "eager state leak",
+    "availability: button.hidden",
+    "availability: publish(button) || button.hidden",
+  ],
+] as const)("retains the mapped construction finding for %s", (_case, original, replacement) => {
+  const source = mappedFocusSource.replace(original, replacement);
+  expect(source).not.toBe(mappedFocusSource);
+  expect(constructionFindings(mappedFocusFixture, source)).toContainEqual(mappedFocusFinding);
+});
+
 const detachedClickSource = readFileSync(new URL("../ui/statusPill.ts", import.meta.url), "utf8");
 const detachedClickPath = "src/ui/detachedClickFixture.ts";
 const detachedClickListener = 'button.addEventListener("click", click)';

@@ -2554,6 +2554,287 @@ function scanSource(context: ScanContext, path: string, text: string) {
     return Boolean(visit(source));
   };
 
+  // A mapped button is first published by its return record. Its focus listener reuses
+  // the action callback and its two cleanup ports are stored in private arrays.
+  const mappedFocusPublication = (
+    block: ts.Block,
+    handle: ts.VariableDeclaration,
+    element: ts.VariableDeclaration,
+    binding: ts.VariableDeclaration,
+    factoryOptions: ReturnType<typeof fields>,
+    actionOptions: ts.ObjectLiteralExpression,
+  ): boolean => {
+    const builder = block.parent;
+    const map = builder.parent;
+    const collection = map.parent;
+    const port = factoryOptions?.get("getAction");
+    const label = fields(factoryOptions?.get("content"))?.get("label");
+    if (
+      !ts.isArrowFunction(builder) ||
+      !synchronousCallable(builder) ||
+      !ts.isCallExpression(map) ||
+      map.questionDotToken ||
+      !dot(map.expression, "map") ||
+      !unwritten(map.expression) ||
+      map.arguments.length !== 1 ||
+      map.arguments[0] !== builder ||
+      !ts.isVariableDeclaration(collection) ||
+      !isConst(collection) ||
+      !port ||
+      !ts.isArrowFunction(port) ||
+      !synchronousCallable(port) ||
+      port.parameters.length ||
+      !ts.isIdentifier(port.body) ||
+      !lexicalIdentity(port.body, binding) ||
+      !label ||
+      !ts.isCallExpression(label) ||
+      label.questionDotToken ||
+      !ts.isIdentifier(label.expression) ||
+      label.expression.text !== "String" ||
+      lexicalDeclaration(label.expression) ||
+      label.arguments.length !== 1 ||
+      !builder.parameters.some((parameter) => lexicalIdentity(label.arguments[0]!, parameter))
+    ) {
+      return false;
+    }
+    const run = fields(fields(actionOptions)?.get("click"))?.get("run");
+    const select =
+      run &&
+      ts.isArrowFunction(run) &&
+      synchronousCallable(run) &&
+      !run.parameters.length &&
+      ts.isCallExpression(run.body) &&
+      !run.body.questionDotToken &&
+      !run.body.arguments.length &&
+      lexicalDeclaration(run.body.expression);
+    if (
+      !select ||
+      !ts.isVariableDeclaration(select) ||
+      !isConst(select) ||
+      !select.initializer ||
+      !ts.isArrowFunction(select.initializer) ||
+      !synchronousCallable(select.initializer) ||
+      select.parent.parent.parent !== block ||
+      select.end > handle.pos
+    ) {
+      return false;
+    }
+    const listener = (step: ts.CallExpression | undefined, method: string) =>
+      step &&
+      !step.questionDotToken &&
+      dot(step.expression, method) &&
+      unwritten(step.expression) &&
+      lexicalIdentity(step.expression.expression, element) &&
+      step.arguments.length === 2 &&
+      literal(step.arguments[0], "focus") &&
+      lexicalIdentity(step.arguments[1]!, select);
+    const returned = block.statements.at(-1);
+    if (
+      !returned ||
+      !ts.isReturnStatement(returned) ||
+      !returned.expression ||
+      !ts.isObjectLiteralExpression(returned.expression)
+    ) {
+      return false;
+    }
+    const record = returned.expression;
+    const shallowSpan = (local: ts.Declaration | undefined) =>
+      local &&
+      ts.isVariableDeclaration(local) &&
+      isConst(local) &&
+      local.parent.parent.parent === block &&
+      createsNative(local.initializer, "span");
+    const published = record.properties.filter(
+      (property) =>
+        ts.isShorthandPropertyAssignment(property) && declaration(property.name) === element,
+    );
+    if (
+      published.length !== 1 ||
+      !record.properties.every(
+        (property) =>
+          ts.isShorthandPropertyAssignment(property) &&
+          !property.objectAssignmentInitializer &&
+          property.name.text !== "__proto__" &&
+          (declaration(property.name) === element || shallowSpan(declaration(property.name))),
+      ) ||
+      new Set(record.properties.map((property) => property.name!.getText(source))).size !==
+        record.properties.length
+    ) {
+      return false;
+    }
+    const calls = block.statements
+      .map(callStatement)
+      .filter((step): step is ts.CallExpression => Boolean(step && step.pos > binding.end));
+    const focus = calls.filter((step) => listener(step, "addEventListener"));
+    if (focus.length !== 1) {
+      return false;
+    }
+    const read = (node: ts.Identifier, local: ts.Declaration) =>
+      (ts.isShorthandPropertyAssignment(node.parent)
+        ? declaration(node)
+        : lexicalDeclaration(node)) === local;
+    const privatePush = (step: ts.CallExpression) => {
+      if (
+        step.questionDotToken ||
+        !dot(step.expression, "push") ||
+        step.arguments.length !== 1 ||
+        !storedWithoutInvocation(step)
+      ) {
+        return false;
+      }
+      const array = lexicalDeclaration(step.expression.expression);
+      if (
+        !array ||
+        !ts.isVariableDeclaration(array) ||
+        !isConst(array) ||
+        !array.initializer ||
+        !ts.isArrayLiteralExpression(array.initializer) ||
+        array.initializer.elements.length ||
+        array.end > collection.pos
+      ) {
+        return false;
+      }
+      // Permit pushes and deferred iteration only. An eager pop or alias could run cleanup
+      // while the mapped element is still being constructed.
+      const unsafeArray = (node: ts.Node): true | undefined => {
+        if (ts.isIdentifier(node) && node !== array.name && read(node, array)) {
+          const member = node.parent;
+          if (
+            ts.isPropertyAccessExpression(member) &&
+            member.expression === node &&
+            member.name.text === "push" &&
+            ts.isCallExpression(member.parent) &&
+            member.parent.expression === member &&
+            storedWithoutInvocation(member.parent)
+          ) {
+            return undefined;
+          }
+          const owner = phase(node);
+          if (!(
+            ts.isForOfStatement(member) &&
+            member.expression === node &&
+            ts.isArrowFunction(owner) &&
+            owner.pos > collection.end &&
+            ts.isVariableDeclaration(owner.parent) &&
+            isConst(owner.parent)
+          )) {
+            return true;
+          }
+        }
+        return ts.forEachChild(node, unsafeArray);
+      };
+      return !unsafeArray(source);
+    };
+    const pushes = calls.filter(privatePush);
+    const discharges = (step: ts.CallExpression | undefined, local: ts.VariableDeclaration) =>
+      step &&
+      !step.questionDotToken &&
+      dot(step.expression, "dispose") &&
+      lexicalIdentity(step.expression.expression, local) &&
+      !step.arguments.length;
+    const cleanup = pushes.find((step) => {
+      const entry = step.arguments[0]!;
+      if (!ts.isObjectLiteralExpression(entry) || entry.properties.length !== 1) {
+        return false;
+      }
+      const dispose = namedProperty(entry, "dispose");
+      return (
+        dispose &&
+        ts.isMethodDeclaration(dispose) &&
+        synchronousCallable(dispose) &&
+        !dispose.parameters.length &&
+        dispose.body?.statements.length === 2 &&
+        discharges(callStatement(dispose.body.statements[0]), binding) &&
+        discharges(callStatement(dispose.body.statements[1]), handle)
+      );
+    });
+    const unlisten = pushes.find((step) => {
+      const fn = step.arguments[0]!;
+      return (
+        ts.isArrowFunction(fn) &&
+        synchronousCallable(fn) &&
+        !fn.parameters.length &&
+        ts.isCallExpression(fn.body) &&
+        listener(fn.body, "removeEventListener")
+      );
+    });
+    if (!cleanup || !unlisten) {
+      return false;
+    }
+    const remove = (unlisten.arguments[0] as ts.ArrowFunction).body;
+    const within = (site: ts.Node, boundary: ts.Node) =>
+      site.pos >= boundary.pos && site.end <= boundary.end;
+    const unsafe = (site: ts.Node): true | undefined => {
+      if (ts.isIdentifier(site)) {
+        if (site.text === "eval") {
+          return true;
+        }
+        if (
+          read(site, handle) &&
+          site !== handle.name &&
+          site.parent !== element.initializer &&
+          !within(site, cleanup)
+        ) {
+          return true;
+        }
+        if (
+          read(site, binding) &&
+          site !== binding.name &&
+          site !== port.body &&
+          !within(site, cleanup)
+        ) {
+          return true;
+        }
+        if (
+          read(site, element) &&
+          site !== element.name &&
+          site !== (binding.initializer as ts.CallExpression).arguments[1] &&
+          !within(site, actionOptions) &&
+          !within(site, focus[0]!) &&
+          !within(site, remove) &&
+          !published.includes(site.parent as ts.ObjectLiteralElementLike)
+        ) {
+          const member = site.parent;
+          if (
+            !ts.isPropertyAccessExpression(member) ||
+            member.expression !== site ||
+            member.questionDotToken
+          ) {
+            return true;
+          }
+          const use = member.parent;
+          const placement =
+            member.name.text === "className"
+              ? member
+              : ["dataset", "style"].includes(member.name.text) &&
+                  ts.isPropertyAccessExpression(use) &&
+                  use.expression === member &&
+                  !use.questionDotToken
+                ? use
+                : undefined;
+          const assign = placement?.parent;
+          const presents =
+            assign &&
+            ts.isBinaryExpression(assign) &&
+            assign.left === placement &&
+            assign.operatorToken.kind === ts.SyntaxKind.EqualsToken;
+          const children =
+            dot(member, "replaceChildren") &&
+            unwritten(member) &&
+            ts.isCallExpression(use) &&
+            use.expression === member &&
+            !use.questionDotToken &&
+            use.arguments.every((child) => shallowSpan(lexicalDeclaration(child)));
+          if (!presents && !children) {
+            return true;
+          }
+        }
+      }
+      return ts.forEachChild(site, unsafe);
+    };
+    return !unsafe(block);
+  };
+
   // Prove first publication within the construction block, independently of when it runs.
   // The Kit caller-layout icon factory calls getState with the fresh element while creating it.
   const registeredKitElement = (call: ts.CallExpression): boolean => {
@@ -2593,9 +2874,14 @@ function scanSource(context: ScanContext, path: string, text: string) {
     const state = options?.get("getState");
     const native = nativeDocument(call.arguments[0]!);
     const stateWithoutElement = !state || (ts.isArrowFunction(state) && !state.parameters.length);
+    const mappedText =
+      native &&
+      literal(content?.get("kind"), "text") &&
+      content?.size === 2 &&
+      readsButtonAvailability(state);
     if (
       !literal(fields(options?.get("appearance"))?.get("layout"), "caller") ||
-      !literal(content?.get("kind"), "icon") ||
+      (!mappedText && !literal(content?.get("kind"), "icon")) ||
       content?.has("icon") ||
       (!native && !createdHostDocument(call.arguments[0]!)) ||
       (!stateWithoutElement && !readsButtonAvailability(state))
@@ -2784,6 +3070,9 @@ function scanSource(context: ScanContext, path: string, text: string) {
     }
 
     const tail = following.slice(index + 1);
+    if (mappedText) {
+      return mappedFocusPublication(block, handle, alias, binding, options, action);
+    }
     // A synchronous detached factory first gives its button away in this returned record.
     // Its cleanup is deferred to the record's consumer and can only dispose the local handles.
     const [makeRecord, returnRecord] = tail;
