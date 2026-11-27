@@ -108,6 +108,26 @@ and asks Ada to be her navigator. Ada straps Penny in and chooses Sunflower. The
 prologue plays once. Later, Ada boards from her room with "Pick up the rock." and
 a brief boarding line, then chooses a galaxy.
 
+### Dialogue navigation
+
+On Earth and in space, Next advances a linear page with a single forward choice.
+Show Previous only when a preceding page exists, including at topic lists and
+internal forks reached from that page. Previous retraces the actual path and
+leaves applied outcomes intact. Center the navigation row at the bottom. Next
+is primary and Previous is secondary. When both appear, place Previous on the
+left with a 16 px gap. Center a lone navigation button in the same row.
+
+Show Skip separately at the top right only when both the current page and its
+immediate next page show Next. Skip can pass optional dialogue and stops at an
+unresolved material choice for the player to answer.
+
+On pages with multiple options, show descriptive authored questions, responses
+or actions in place of Next. Reserve Next, Previous and Skip for navigation.
+Use descriptive option labels in place of Continue and the generic Ask more.
+When topics are optional, offer a named action to resume the main conversation.
+A completed optional thread returns to its original topic list with every topic
+still selectable. Players reach internal forks by following their thread.
+
 ### Earth scenes
 
 Earth scenes are storybook pages. Each page has a full background of a place,
@@ -117,21 +137,16 @@ text or dialogue in a readable panel at the bottom.
 A story run is every Earth and aboard page shown in a row between two points of
 play: it starts when Ada leaves the start screen, a flight or the galaxy map,
 or with Ada's room page's named action, and ends at the galaxy map or on Ada's
-room page with its named action. Next
-turns one page. Previous returns to the page shown before, across scene
-boundaries within the run, and is hidden when no earlier page exists. The
-run that starts with Ada's room page's named action counts that room page as
-its first, so Previous on the boarding page that follows returns to it. The
-"Welcome back, Navigator." page always follows the rock, so its Previous always
-returns to Ada's room page. A page
-that ends in a named action, such as "Pick up the rock.", shows that action in
-place of Next. Skip follows the continuation across pages and scenes in the same
-run, leaving optional questions unasked. It stops at an unresolved choice and
-never selects an answer; material choices require the player's explicit answer.
-With no unresolved choice ahead, it stops where play resumes: the galaxy map
-when the run leads aboard, or Ada's room page with its named action. Every page
-with Next also offers Skip. Skip sits in the top-right corner, apart from
-Previous and Next, so tapping quickly through pages cannot skip a run. A scene's effects (a chapter opened or resolved, the prologue
+room page with its named action. Previous follows the run across scene
+boundaries. The run that starts with Ada's room page's named action counts that
+room page as its first, so Previous on the boarding page that follows returns
+to it. The "Welcome back, Navigator." page always follows the rock, so its
+Previous always returns to Ada's room page. A page that ends in a named action,
+such as "Pick up the rock.", shows that action in place of Next. Skip follows the
+continuation across pages and scenes in the same run, leaving optional questions
+unasked. With no unresolved material choice ahead, it stops where play resumes,
+on the galaxy map when the run leads aboard or on Ada's room page with its named
+action. A scene's effects (a chapter opened or resolved, the prologue
 seen) apply as the scene ends; Previous back into an ended scene does not undo
 them. Choice buttons are
 all secondary, with focus on the first. A choice page offers
@@ -153,13 +168,12 @@ invitations on the desk, its boarding pages included, resolves at the
 community garden lot in the rain and closes in Ada's room at night with the rock
 glowing; the prologue moves from the park to Ada's room. Narration
 pages show no name tab; dialogue pages show the speaker's. Back on a storybook
-page acts as Previous where available. A completed optional thread returns to
-its original question list with every topic still available;
-a named boarding action leaves that list and resumes Astra's boarding lines
-before the galaxy map. Back to title and Continue, or closing and reopening the
-game, retain the exact story page, unanswered choice, questions already asked,
-cross-scene Previous trail and elapsed sleep time. Resume does not select an
-answer, repeat completed scene effects or restart the sleep scene. Saves keep
+page acts as Previous where available. A named boarding action leaves the topic
+list and resumes Astra's boarding lines before the galaxy map. Back to title
+and Continue, or closing and reopening the game, retain the exact story page,
+unanswered choice, questions already asked, cross-scene Previous trail and
+elapsed sleep time. Resume does not select an answer, repeat completed scene
+effects or restart the sleep scene. Saves keep
 canonical scene, page and question references and navigation state, not embedded
 authored text; the runtime resolves those references against its current story
 content under the existing save compatibility guards.
@@ -269,22 +283,16 @@ immediate exit from space.
 Story and quest interactions in space (Talk, Deliver, Tow, Salvage and Deposit)
 open the conversation card: the storybook's story panel over the
 paused, dimmed space view. Each line shows its actual speaker's name tab and
-portrait. An interaction with no person to address uses Astra. The card offers
-Next and Previous on linear pages. A topic list or internal fork shows the
-authored questions, responses or actions, with Previous when there is a page
-to return to. Next is absent while a choice is required. Previous retraces the
-actual path within the open conversation without applying or undoing outcomes.
-A completed optional thread returns to its original topic list, including
-topics already read. Internal forks are reached only by entering their thread
-and following its choices. A topic list offers a named action to resume the
-main conversation when its topics are optional.
+portrait. An interaction with no person to address uses Astra. Previous retraces
+the path within the open conversation without applying outcomes. In active
+activity dialogue, "Keep activity" closes the dialogue and retains the activity.
 
 A quest icon identifies a choice that advances the quest. A checkmark identifies
 a thread read to its end during this visit. Backing out partway leaves it
 unchecked. Checked threads remain selectable. Checkmarks persist across page
 turns and station screens, and reset on undock or when Ada closes a standalone
-conversation. X is the Close control. Skip can pass optional dialogue and
-leaves a material choice for the player to answer.
+conversation. X is the Close control. Skip reaches the existing outcome once
+when no material choice remains pending.
 The card's outer edges stay inside the actual game viewport intersected with
 device-safe insets, including on wide phones. Backgrounds and dimming may bleed
 beyond it.

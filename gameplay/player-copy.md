@@ -5,19 +5,17 @@ pages keep their chapter panel title. A story page's text is at most 220
 characters and a page offers at most three choices. On a page with three choices
 every label fits one line, at most 23 characters; labels up to 36 characters,
 which wrap to two lines, appear only on pages with two choices or fewer.
-Choices converge. The choice column scrolls if needed. Previous is hidden when there is no earlier page. Every page with Next
-also offers Skip. Skip follows the whole continuation across scene boundaries
-and stops for an unresolved choice.
+Choices converge. The choice column scrolls if needed. Top-right Skip appears
+only when both the current page and its immediate next page show Next. Skip
+follows the whole continuation across scene boundaries and stops for an
+unresolved material choice.
 
 Every space Use interaction, Dock included, opens the conversation card. The conversation's PARTY heading names the person or group Ada is
 addressing. Each line has its own speaker name and portrait, including Ada,
 Astra and Penny when they speak. A PARTY heading never attributes every line to
-that party. Narration remains unattributed. Next advances a linear page.
-Previous follows the actual path back and is available at a fork when an
-earlier page exists. A choice page shows its questions, responses or named
-actions in place of Next. A completed optional thread returns to its original
-topic list, where every topic remains available. Skip reaches the existing
-outcome once, preserving any pending material choice for the player to answer.
+that party. Narration remains unattributed. A completed optional thread returns
+to its original topic list, where every topic remains available. Skip reaches
+the existing outcome once when no material choice remains pending.
 
 In-flight chatter and drone/Admiral broadcasts remain in the small conversation
 box with touch dismissal. Automatic gate and battle reactions below stay chatter;
@@ -44,10 +42,8 @@ availability and play verification are separate:
 - Rivet's "Spare parts really help!", Quartz's "There's docking space for
   everyone." and Mica's "I'd like some company next time. That would help."
   responses are present in runtime copy.
-- Approved Skip behavior remains a runtime follow-up: every page with Next also
-  offers Skip; Skip follows the continuation across scene boundaries and stops
-  for an unresolved choice without selecting an answer. Unavailable Previous is
-  hidden.
+- The approved [Skip behavior](rules.md#dialogue-navigation) remains a runtime
+  follow-up.
 
 Normal-route availability does not establish complete source/model, browser,
 ambient, rendering or final-polish acceptance. Those checks remain open until
@@ -954,7 +950,7 @@ PARTY is Astra when the interaction has no person to address. Show Astra's
 name and portrait as guide, never a new NPC or an object portrait. Ada and Penny
 keep their own speaker names and portraits if they have a line. These short
 exchanges describe existing actions; they add no quest stage, reward or choice.
-Skip dialogue reaches the same existing action outcome once and leaves any
+When available, Skip reaches the same existing action outcome once and leaves any
 pending choice for the player. Named-person deliveries use that person's PARTY.
 
 ### Salvage: PARTY Astra
@@ -1360,13 +1356,17 @@ or replay rewards.
 - Use actions, each the disc's accessible name and drawn as a symbol: Talk,
   Deliver, Deposit, Tow, Salvage, Dock, Scan, Quest details, and Use for any other
   interaction. Available real actions, including repeatable Dock, take priority.
-- Dialogue buttons: Next advances linear pages. On a choice page, use authored
-  questions, responses and named actions. Previous returns to the page just
-  left when history exists, including from a choice page. A topic list's exit
-  names the next beat, such as taking the pilot's seat or asking how to reach
-  the Eye. Questions never gate the exit. A quest icon identifies a choice that
-  advances the quest. A checkmark identifies a fully read thread during this
-  visit. Keep the question text and communicate both meanings accessibly.
+- Dialogue buttons follow the shared [navigation rules](rules.md#dialogue-navigation).
+  Next advances a linear page with a single forward choice. For multiple options,
+  write descriptive questions, responses or actions. Reserve Next, Previous
+  and Skip for navigation and use a descriptive label in place of Continue.
+  A topic list's exit names the next beat, such as taking the pilot's seat or
+  asking how to reach the Eye. Questions never gate the exit. A quest icon
+  identifies a choice that advances the quest. A checkmark identifies a fully
+  read thread during this visit. Keep the question text and communicate both
+  meanings accessibly.
+- In active activity dialogue, "Keep activity" closes the dialogue and retains
+  the activity.
 - Shop ammunition lock reason: key `requiresWeapon`, exact text
   "Requires {weapon}". Substitute the canonical current weapon display name for
   `ShopRow.requiresWeapon`, without an inferred level or alternate nickname.
@@ -1436,7 +1436,7 @@ or replay rewards.
   - Sound: "Controls gameplay sound effects."
   - Reduced motion: "Reduces animation and disables screen shake and flashes."
   - Install: "Full screen, offline", with an Install button
-- Storybook pages: Previous, Next, Skip. Ada's room page, before boarding:
+- Storybook pages use the shared dialogue buttons. Ada's room page, before boarding:
   Narration: "Ada's rock glows softly on her desk." then Pick up the rock.
   When at least one Earth chapter is finished, Ada's room also offers "Replay
   chapter". The chapter picker uses the same title and shows finished chapters
