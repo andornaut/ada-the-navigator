@@ -305,13 +305,12 @@ body.site {
   padding-right: 12px;
 }
 
-.site .site-controls thead,
-.site .site-controls tbody tr + tr {
+.site .site-controls thead {
   border-bottom: 1px solid #514c62;
 }
 
-.site .site-controls tbody tr:last-child {
-  border-bottom: 0;
+.site .site-controls tbody tr + tr {
+  border-top: 1px solid #514c62;
 }
 
 .site .site-controls tbody th {
@@ -368,6 +367,17 @@ body.site {
 
   .site h1 {
     font-size: 56px;
+  }
+}
+
+@media (max-width: 376px) {
+  .site .site-actions {
+    width: 100%;
+    grid-auto-columns: minmax(0, 1fr);
+  }
+
+  .site .site-actions > * {
+    min-width: 0;
   }
 }
 
