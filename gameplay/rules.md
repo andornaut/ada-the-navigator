@@ -389,6 +389,11 @@ Eye's exit, so Ada leaves with the holodisk and fights her way clear.
 Objectives: explore; meet Elder Loom; light the practice gates; light the Eye's
 gates; collect the holodisk; return to Earth.
 
+If a visible Use press targets Practice Channel, the Eye, or the holodisk while
+its collection is locked, give the standard refusal cue and show the current
+authored objective once per press. Eligible holodisk collection keeps its
+usual interaction and quest requirements.
+
 Channels are 210 world units wide, 150 in the Eye, and each ring gate's opening
 is 66. A gate counts as passed when Ada's centre crosses it inside the opening;
 its rim bumps the ship aside like scenery but deals no damage. Every gate stands at least 30 degrees
