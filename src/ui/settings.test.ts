@@ -7,6 +7,7 @@ import { resolveAdaHoldAction } from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { DEVICE_STORAGE_KEYS } from "./deviceSettings.ts";
 import { PAGE_DIVIDER_STYLE } from "./layout/controlPresentation.ts";
+import * as modal from "./modal.ts";
 import { currentView, rootPressGuard } from "./pressScope.ts";
 import { createSettings, SETTINGS_STYLE, type SettingsLabels } from "./settings.ts";
 
@@ -833,8 +834,18 @@ it.each(["move", "close-settings", "close-install-steps"])(
   (id) => {
     const original = actionBinding.bindAdaAction;
     const disposals: (() => void)[] = [];
+    const createSwitchRow = modal.createSwitchRow;
+    let omitSwitchBinding = false;
+    vi.spyOn(modal, "createSwitchRow").mockImplementation((options) => {
+      omitSwitchBinding = options.id === id;
+      try {
+        return createSwitchRow(options);
+      } finally {
+        omitSwitchBinding = false;
+      }
+    });
     vi.spyOn(actionBinding, "bindAdaAction").mockImplementation((options, element) => {
-      if ((element.dataset.action ?? element.dataset.setting) === id) {
+      if (omitSwitchBinding || element.dataset.action === id) {
         return { activate: () => false, dispose() {}, update() {} };
       }
       const binding = original(options, element);
