@@ -87,6 +87,18 @@ export {
   TELEPORT_DISTANCE,
 } from "./feedback.ts";
 export {
+  AUTHORED_JET_LENGTH,
+  type JetPoint,
+  type JetProfile,
+  type JetShapeLayer,
+  type JetShapeMouth,
+  type JetShapePolygon,
+  jetShapePolygons,
+  type JetShapeTriangle,
+  layerAlpha,
+  validJetProfile,
+} from "./jetGeometry.ts";
+export {
   beaconLandmarkFrame,
   dashes,
   glintFrame,
