@@ -8,10 +8,11 @@ import { COLOURS, UNLISTED_COLOURS } from "./colours.ts";
 // Every DOM UI size reads src/ui/layout (art/layout.md "Verification"): outside it, src/ui writes
 // no raw CSS px and assigns no numeric literal to a geometry property. The style modules inside
 // it (those exporting a *_STYLE stylesheet, and its .css files) and src/style.css follow the same
-// rules, so every size in a stylesheet is a named token. Every UI colour reads the colour module
-// (colours.ts): no other source in src/ui or src/style.css writes a literal hex or RGB colour.
+// rules, so every size in a stylesheet is a named token. Literal colours belong in the shared
+// palette, including colours used by the authored layout.
 
 const UI = new URL("../", import.meta.url).pathname;
+const AUTHORED_LAYOUT = new URL("../../data/layout.ts", import.meta.url).pathname;
 const PAGE_STYLE = new URL("../../style.css", import.meta.url).pathname;
 
 interface Allowed {
@@ -113,9 +114,7 @@ function sources(directory: string): string[] {
 
 const UI_SOURCES = [...sources(UI), PAGE_STYLE];
 
-// Every source in src/ui, layout data modules included, and the page stylesheet, but the colour
-// module itself.
-const COLOUR_MODULE = "layout/colours.ts";
+// Every source in src/ui plus the authored layout and page stylesheet.
 function allSources(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const path = join(directory, entry.name);
@@ -125,9 +124,7 @@ function allSources(directory: string): string[] {
     return /\.(?:css|ts)$/u.test(entry.name) && !entry.name.endsWith(".test.ts") ? [path] : [];
   });
 }
-const COLOUR_SOURCES = [...allSources(UI), PAGE_STYLE].filter(
-  (path) => relative(UI, path) !== COLOUR_MODULE,
-);
+const COLOUR_SOURCES = [...allSources(UI), AUTHORED_LAYOUT, PAGE_STYLE];
 const HEX_COLOUR = /#[\da-f]{3,8}\b/giu;
 const RAW_RGB_COLOUR = /\brgba?\(\s*(?:\d|\.\d)[^\n)]*\)/giu;
 
@@ -215,6 +212,7 @@ describe("DOM UI sizes", () => {
     expect(findings).toEqual([]);
     expect(COLOUR_SOURCES.map((path) => relative(UI, path))).toEqual(
       expect.arrayContaining([
+        "../data/layout.ts",
         "../style.css",
         "layout/bootSplash.css",
         "layout/bootSplashColours.ts",

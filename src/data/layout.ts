@@ -8,6 +8,7 @@ import {
 } from "@andornaut/game-kit/runtime/ui/spacing";
 
 import { SCREEN } from "./screen.ts";
+import { COLOURS, UNLISTED_COLOURS } from "./uiColours.ts";
 
 // The in-game interface's authored layout, in logical px of the 720x360 base view unless stated
 // (art/layout.md). src/ui/layout derives positions, rects and measured sizes from these values and
@@ -409,12 +410,12 @@ export const CONVERSATION_BOX = {
   noticeInset: SPACING.gap,
   padding: CONVERSATION_PADDING,
   // The ink panel, translucent so space shows through; text, tab and portrait stay opaque.
-  panel: { alpha: 0.65, ink: "#181425" },
+  panel: { alpha: 0.65, ink: COLOURS.ink },
   // A 22 compact frame at 2x, centred in the navy slot inside the 2 ink frame edge.
   portrait: {
     art: 44,
     edge: CONVERSATION_FRAME_EDGE,
-    face: "#262b44",
+    face: COLOURS.navy,
     frame: CONVERSATION_FRAME,
     slot: CONVERSATION_PORTRAIT_SLOT,
   },
@@ -450,7 +451,7 @@ export const STORY_PANEL = {
   padding: SPACING.panelPadding,
   pageControls: ["previous", "next"],
   portrait: { frame: 68, image: 64, inset: 2 },
-  rule: { colour: "#6b6685", width: 1 },
+  rule: { colour: COLOURS.cardRim, width: 1 },
 } as const;
 
 // A storybook background's canvas in logical px (art/storybook.md), centred across the view and
@@ -547,7 +548,7 @@ export const USE_DISC = {
 // width logical px wide just inside the game area's edge in the space palette's threat red, its
 // opacity falling linearly from 1 to 0 over duration ms, and shakes the view by about offset
 // logical px for duration ms. Reduced motion skips both.
-export const HIT_FLASH = { colour: "#FF6B6B", duration: 200, width: 3 } as const;
+export const HIT_FLASH = { colour: UNLISTED_COLOURS.alertRed, duration: 200, width: 3 } as const;
 export const HIT_SHAKE = { duration: 100, offset: 2 } as const;
 
 // stationCard (src/ui/layout/stationCard.ts)
@@ -701,19 +702,13 @@ export const GALAXY_MAP_ARC_POINTS = {
   top: { x: 360, y: 46 },
 };
 
-export const GALAXY_MAP_CREAM = "#EAD4AA";
-
-export const GALAXY_MAP_INK = "#181425";
-
-export const GALAXY_MAP_GREY = "#B8B3C9";
-
 // The route sky (top-centre on the play view's top-centre) and ground (bottom on the view's
 // bottom), at 2 image px per logical px; the figures on the ground at their canvas points.
 export const GALAXY_MAP_SKY = {
   ground: { height: 120, width: 960 },
   sky: { height: 540, width: 960 },
   // Past the sky, the view shows its top colour.
-  top: "#1F1A38",
+  top: UNLISTED_COLOURS.galaxyRouteSky,
 } as const;
 
 /** The sky and ground's left edge in play-view px: centred on the play view. */
@@ -726,13 +721,13 @@ export const GALAXY_MAP_PANEL_PADDING = SPACING.gap;
 export const GALAXY_MAP_CAPTURE_GAP = 12;
 
 export const GALAXY_MAP_PANEL = {
-  capture: { ...GALAXY_MAP_CAPTURE, frameColor: GALAXY_MAP_INK },
+  capture: { ...GALAXY_MAP_CAPTURE, frameColor: COLOURS.ink },
   // The supporting colour for "Galaxy {number}", locked text and the development line.
   colors: {
-    development: GALAXY_MAP_GREY,
-    flavor: GALAXY_MAP_CREAM,
-    name: "#FFFFFF",
-    number: GALAXY_MAP_GREY,
+    development: COLOURS.supporting,
+    flavor: COLOURS.cream,
+    name: COLOURS.white,
+    number: COLOURS.supporting,
   },
   height: 112,
   // SPACING.gap with the 2 px frame inside it (art/layout.md "Exceptions").
@@ -779,7 +774,7 @@ export const GALAXY_MAP_MOVE = {
 
 // GALAXY_MAP's authored parts; src/ui/layout/galaxyMap.ts adds centres.
 export const GALAXY_MAP_LAYOUT = {
-  colors: { cream: GALAXY_MAP_CREAM, grey: GALAXY_MAP_GREY, ink: GALAXY_MAP_INK },
+  colors: { cream: COLOURS.cream, grey: COLOURS.supporting, ink: COLOURS.ink },
   // Each name on an ink pill: 20 high, the label plus 8 wide, its top 19 below the centre.
   label: { alpha: 0.85, height: 20, lockedInkLift: 4.4, padding: 4, radius: 4, top: 19 },
   // A radius 12 disc with a 1.5 ink edge over an ink backing disc, radius 15 at 0.85.
@@ -791,15 +786,20 @@ export const GALAXY_MAP_LAYOUT = {
   // The arc between consecutive markers, stamped every 0.5, stopping 15 from each centre; its
   // look is its destination's.
   path: {
-    locked: { color: GALAXY_MAP_GREY, kind: "dashes", off: 4, on: 6, width: 2 },
-    open: { color: GALAXY_MAP_CREAM, kind: "solid", width: 4 },
+    locked: { color: COLOURS.supporting, kind: "dashes", off: 4, on: 6, width: 2 },
+    open: { color: COLOURS.cream, kind: "solid", width: 4 },
     step: 0.5,
     trim: 15,
   },
   // A 48 press area centred on each marker.
   press: 48,
   // The available rect's inset rules: 1 px, the inner 3 inside the outer.
-  rules: { inner: "#4A4660", inset: 3, outer: "#6B6685", width: FRAME_LINE },
+  rules: {
+    inner: UNLISTED_COLOURS.galaxyRouteInnerRule,
+    inset: 3,
+    outer: COLOURS.cardRim,
+    width: FRAME_LINE,
+  },
   // The ship frame drawn 42, the game area's in-flight size, on (centre x, centre y - 33).
   ship: { lift: 33, size: 42 },
 } as const;
