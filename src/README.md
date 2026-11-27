@@ -12,7 +12,7 @@
 Vite builds the HTML inputs in [`pages/`](../pages/) and serves the landing page at
 `/` and the game at `/play/`. [`vite.config.ts`](../vite.config.ts) uses game-kit's
 `gameViteConfig` (`@andornaut/game-kit/build/gameConfig`) with the plugin
-inputs in [`src/build/viteConfigModules.ts`](build/viteConfigModules.ts): the
+inputs in [`src/build/index.ts`](build/index.ts): the
 dev server's `/play` redirect (`sitePages`), hashed icons and the service worker's
 precache. Build and deployment commands are in the [root README](../README.md).
 
@@ -81,7 +81,7 @@ owns tap/hold gestures; factory callbacks retain native click ownership. See the
 - **Shared kits:** game-kit, art-kit and delivery-kit are installed from their
   version-pinned GitHub release tarballs in `package.json`, with checksum integrity
   in `package-lock.json`.
-- **Icons:** the build writes each icon in [`src/build/icons.ts`](build/icons.ts) again
+- **Icons:** the build writes each icon in [`src/build/pages/icons.ts`](build/pages/icons.ts) again
   under a content-hashed name in `/assets/` and points the built pages and manifest
   there.
 - **Build label:** `gameViteConfig` defines `__APP_VERSION__` and `__COMMIT__`;
@@ -121,7 +121,7 @@ The production build writes `/sw.js`, the kit's router service worker scoped to
 every file with its SHA-256 and size: the game page at `/play/`, the build output
 it loads, the web app manifest and its icons, every file under `public/art/`
 except `app-icon/`.
-Each update group ([`src/build/precachePlugin.ts`](build/precachePlugin.ts)) ships
+Each update group ([`src/build/precache/precachePlugin.ts`](build/precache/precachePlugin.ts)) ships
 as a gzip archive at `/.game-kit/group-<sha256>.bin`, served as emitted without
 HTTP coding, and as a decoded copy at `/.game-kit/archive-<sha256>-0.bin` for
 installed builds on GameKit 0.72.0 or earlier. `/.game-kit/build.json` is served
@@ -170,7 +170,7 @@ waited for there is no bar. Its cream fill and ink track sit on a 1 px ink rule,
 so it reads on every galaxy's field.
 
 Both pages link `/manifest.webmanifest`, which installs the game at `/play/`.
-The build writes each icon in `src/build/icons.ts` again under a content-hashed
+The build writes each icon in `src/build/pages/icons.ts` again under a content-hashed
 name in `/assets/` and points the built pages and manifest there, so a redrawn
 icon reaches an installed app; the source pages and manifest keep plain URLs.
 `src/pwa/index.ts` exposes the install state, its change listener, the install

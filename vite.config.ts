@@ -4,7 +4,7 @@
 import { gameViteConfig } from "@andornaut/game-kit/build/gameConfig";
 import type { ConfigEnv } from "vite";
 
-import type * as ConfigModules from "./src/build/viteConfigModules.ts";
+import type * as ConfigModules from "./src/build/index.ts";
 import { downloadSizeAssetsPlugin } from "./tools/download-size-assets.mjs";
 
 // The landing page at / and the game at /play/, from pages/.
@@ -15,7 +15,7 @@ import { downloadSizeAssetsPlugin } from "./tools/download-size-assets.mjs";
 // uiStylePlugin serves the HTML interface's stylesheet as the CSS module virtual:ada-ui.css, so
 // the build links it as a file the CSP's style-src 'self' allows.
 // hashedIconsPlugin writes each icon under a content-hashed name in /assets/ and points the built
-// pages and /manifest.webmanifest there (ICONS in src/build/icons.ts); webManifestPlugin then fills
+// pages and /manifest.webmanifest there (ICONS in src/build/pages/icons.ts); webManifestPlugin then fills
 // the manifest's description, before precachePlugin reads it.
 // precachePlugin writes /sw.js, the router service worker, and the build manifest and pointer
 // under /.game-kit/ that the page installs from.
@@ -25,7 +25,7 @@ export default ({ command }: ConfigEnv) =>
     // The trimmed Phaser chunk alone is about 1 MB minified, so the 500 kB default always warns.
     // Set just above it so that growth in Phaser or game code still warns.
     chunkSizeWarningLimit: 1100,
-    configModules: "src/build/viteConfigModules.ts",
+    configModules: "src/build/index.ts",
     pages: {
       main: "pages/index.html",
       play: "pages/play/index.html",

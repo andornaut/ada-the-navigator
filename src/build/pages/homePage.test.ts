@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
+import { SHIPPED_SHIP_SOURCES } from "../../testing/shippedShipSources.ts";
 import { homePageHtml, prebootShipHtml, webManifestJson } from "./homePage.ts";
 
 const copy = { description: 'Ada & Penny "fly" <far>', mobile: "Tap {use} & go." } as const;

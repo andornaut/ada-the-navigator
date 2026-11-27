@@ -2,16 +2,16 @@ import { readFile } from "node:fs/promises";
 
 import type { Plugin } from "vite";
 
-import { CONTROL_WORDS } from "../data/controlWords.ts";
-import { ECONOMY } from "../data/economy.ts";
-import { HOME_COPY } from "../data/homeCopy.ts";
-import { readQuantumJump } from "../game/quantumJump.ts";
+import { CONTROL_WORDS } from "../../data/controlWords.ts";
+import { ECONOMY } from "../../data/economy.ts";
+import { HOME_COPY } from "../../data/homeCopy.ts";
+import { readQuantumJump } from "../../game/quantumJump.ts";
 import {
   readShipMaterialPalettes,
   readShipMaterials,
   ShipMaterialSources,
-} from "../game/shipMaterials.ts";
-import { controlHelpMarkup, escaped } from "../ui/controlHelp.ts";
+} from "../../game/shipMaterials.ts";
+import { controlHelpMarkup, escaped } from "../../ui/controlHelp.ts";
 
 interface HomeCopy {
   readonly description: string;
@@ -48,7 +48,7 @@ export function prebootShipHtml(html: string, sources: ShipMaterialSources): str
 }
 
 async function prebootShipSources(): Promise<ShipMaterialSources> {
-  const art = new URL("../../public/art/", import.meta.url);
+  const art = new URL("../../../public/art/", import.meta.url);
   const json = async (path: string): Promise<unknown> =>
     JSON.parse(await readFile(new URL(path, art), "utf8"));
   const [payload, colors, jumpData] = await Promise.all([

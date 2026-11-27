@@ -4,10 +4,10 @@ import { fileURLToPath } from "node:url";
 
 import { expect, it } from "vitest";
 
-import { HOME_COPY } from "../data/homeCopy.ts";
+import { HOME_COPY } from "../../data/homeCopy.ts";
 import { homePageHtml, webManifestJson } from "./homePage.ts";
 
-const root = fileURLToPath(new URL("../..", import.meta.url));
+const root = fileURLToPath(new URL("../../..", import.meta.url));
 
 // The manifest and the pages as the build writes them, with the landing page's copy filled in.
 const manifestJson = () =>
