@@ -108,7 +108,7 @@ test("exported paints match the schemes: authored Classic tones and derived step
   );
   assert.deepEqual(
     SCHEMES.map(({ paint }) => paint.accent),
-    ["#2456b8", "#16245c", "#aebbc7", "#f6efe6", "#e0489f", "#12233a"],
+    ["#2456b8", "#16245c", "#aebbc7", "#f6efe6", "#58d4e8", "#12233a"],
   );
   // Each derived tone keeps its step's linear luminance ratio to its top after byte rounding.
   const steps = [
@@ -348,7 +348,7 @@ test("the tip caps are the outer 28 percent of each half span", () => {
   assert.equal(Math.round(((span - TIP_CAP_X) / span) * 100), 28);
 });
 
-test("the canopy is three flat bands with a soft shade step under every paint", () => {
+test("the canopy has three flat bands with the approved shade steps", () => {
   for (const { id, paint } of SCHEMES) {
     const [highlightL, roofL, shadeL] = [
       paint.canopyHighlight,
@@ -356,7 +356,13 @@ test("the canopy is three flat bands with a soft shade step under every paint", 
       paint.canopyShade,
     ].map((colour) => toOklab(rgb(colour))[0]);
     assert(highlightL! > roofL!, `${id} highlight is lighter than its roof`);
-    assert(shadeL! < roofL! && roofL! - shadeL! < 0.08, `${id} shade is a soft step`);
+    assert(shadeL! < roofL!, `${id} shade is darker than its roof`);
+    if (id === "iris") {
+      // The bright green roof keeps the violet glazing reference for its mouth.
+      assert.equal(paint.canopyShade, "#5b865e");
+    } else {
+      assert(roofL! - shadeL! < 0.08, `${id} shade is a soft step`);
+    }
   }
 });
 

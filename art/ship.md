@@ -244,7 +244,7 @@ between.
 | Cobalt   | `#16245c`  | `#142257`     | `#0e1a46`   | `#091236`    | `#314a73`        | `#20314f`   | `#d4e1f4`    | `#b4c8e6`         |
 | Obsidian | `#aebbc7`  | `#a5b1bd`     | `#87919b`   | `#6a737a`    | `#f3d89d`        | `#eab84d`   | `#d3a042`    | `#b68334`         |
 | Crimson  | `#f6efe6`  | `#eae3da`     | `#c0bab3`   | `#98948e`    | `#672f33`        | `#461e21`   | `#2f242c`    | `#251d24`         |
-| Iris     | `#e0489f`  | `#d54497`     | `#ae367b`   | `#8a2961`    | `#938ac0`        | `#3a2b8c`   | `#31247b`    | `#271c66`         |
+| Iris     | `#58d4e8`  | `#53c9dc`     | `#43a5b5`   | `#33838f`    | `#bceca3`        | `#86dc57`   | `#5b865e`    | `#271c66`         |
 | Amber    | `#12233a`  | `#102137`     | `#0b192b`   | `#071120`    | `#75552c`        | `#503a1c`   | `#1e4a6b`    | `#173a57`         |
 
 - Classic's hull and tail tones are authored. Every other tone is its top
