@@ -93,7 +93,6 @@ import { type Entropy, GameModel } from "../model/game.ts";
 import type { GainSnapshot } from "../model/itemGains.ts";
 import { nosePoint, shipHeading, shipSilhouette } from "../model/nose.ts";
 import { projectileOpacity } from "../model/playerProjectiles.ts";
-import { direction } from "../model/shipPhysics.ts";
 import type { StoryNoses } from "../model/storyShips.ts";
 import type { FlightInput, FlightState, GameSave, Vec } from "../model/types.ts";
 import { shipTuning } from "../model/upgrades.ts";
@@ -805,10 +804,6 @@ export class GameScene extends Scene {
       const point = this.project(flight.player);
       const shift = viewShift(sceneFit(this));
       const sampled = this.controls.sample({
-        facing: direction({
-          x: flight.facing.x - flight.facing.y,
-          y: (flight.facing.x + flight.facing.y) / 2,
-        }),
         ship: { x: point.x + shift.x, y: point.y + shift.y },
       });
       const input: FlightInput = {

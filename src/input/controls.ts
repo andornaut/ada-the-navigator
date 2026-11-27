@@ -74,7 +74,12 @@ import {
   type PauseOptions,
   type PauseState,
 } from "../ui/pauseCard.ts";
-import { inCurrentView, rootPressGuard } from "../ui/pressScope.ts";
+import {
+  currentView,
+  inCurrentView,
+  rootPressGuard,
+  subscribePressScope,
+} from "../ui/pressScope.ts";
 import { refusalPose } from "../ui/refusal.ts";
 import { createResourceCard } from "../ui/resourceCard.ts";
 import {
@@ -240,7 +245,13 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   canvas.style.touchAction = "none";
   const state = new ControlState();
   const requiredReady = () => options.requiredReady?.() ?? true;
-  const desktop = new DesktopControlState(() => requiredReady() && state.accepts());
+  const acceptsDesktop = () =>
+    requiredReady() &&
+    state.accepts() &&
+    !document.hidden &&
+    canvas.closest("[hidden], [inert]") === null &&
+    currentView(settings.root) === settings.root;
+  const desktop = new DesktopControlState(acceptsDesktop);
   let enabled = true;
   // Whether the current gameplay view permits the Paused card (PauseState.place).
   let pausable = false;
@@ -800,8 +811,8 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   };
   const desktopBinding = bindDesktopInput(
     {
-      accepts: () => state.accepts(),
-      acceptsPointer: (event) => resolveUsePointer(event) !== useButton,
+      accepts: acceptsDesktop,
+      acceptsPointer: (event) => event.button === 2 || resolveUsePointer(event) !== useButton,
       onModeChange: () => state.reset(),
       onUse: () => state.requestUse(),
       point,
@@ -809,6 +820,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
     desktop,
   );
+  const stopDesktopScope = subscribePressScope(() => desktop.reset(), settings.root);
   for (const button of [exitButton, useButton]) {
     if (button) {
       assertAdaActionBindings(button);
@@ -1080,6 +1092,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       useAction.dispose();
       navigation.dispose();
       stopPointers();
+      stopDesktopScope();
       desktopBinding.dispose();
       state.setEnabled(false);
       returnToMenu = undefined;

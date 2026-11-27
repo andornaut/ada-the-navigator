@@ -5959,7 +5959,7 @@ try {
     await canvas.waitFor({ state: "visible" });
     await pauseClock(proof);
     await proof.keyboard.down("KeyW");
-    await proof.keyboard.down("KeyD");
+    await proof.keyboard.down("KeyL");
     await proof.keyboard.down("Space");
     await proof.clock.runFor(20);
     await proof.keyboard.up("Space");
@@ -5975,7 +5975,7 @@ try {
     await frame("phaser-follow-mid.png", 55);
     await frame("phaser-follow-late.png", 55);
     await proof.keyboard.up("KeyW");
-    await proof.keyboard.up("KeyD");
+    await proof.keyboard.up("KeyL");
     // Ada moves and turns between the frames, so each differs from the last.
     const changed = await proof.evaluate(
       async (encoded) => {

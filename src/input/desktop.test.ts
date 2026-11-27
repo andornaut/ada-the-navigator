@@ -1,95 +1,96 @@
 import { describe, expect, it, onTestFinished, vi } from "vitest";
 
 import { bindDesktopInput, DesktopControlState } from "./desktop.ts";
-import { ControlState, MOVE_STICK_GEOMETRY } from "./state.ts";
+import { ControlState } from "./state.ts";
 
-const frame = { facing: { x: 0, y: -1 }, ship: { x: 310, y: 170 } };
-const neutral = { aim: { x: 0, y: 0 }, fire: false, move: { x: 0, y: -0 }, turn: 0 };
+const frame = { ship: { x: 310, y: 170 } };
+const neutral = { aim: { x: 0, y: 0 }, fire: false, move: { x: 0, y: 0 }, turn: 0 };
 
 function fresh() {
   return new DesktopControlState(() => true);
 }
 
 describe("desktop flight controls", () => {
-  it("measures mouse throttle from the current projected ship, using the canonical stick curve", () => {
+  it.each([
+    ["KeyW", "ArrowUp", { x: 0, y: -1 }],
+    ["KeyA", "ArrowLeft", { x: -1, y: 0 }],
+    ["KeyS", "ArrowDown", { x: 0, y: 1 }],
+    ["KeyD", "ArrowRight", { x: 1, y: 0 }],
+  ])("makes %s and %s equivalent screen-relative movement without steering", (key, arrow, move) => {
     const state = fresh();
-    const { deadZone, reach } = MOVE_STICK_GEOMETRY;
-    state.down(0, 1, { x: frame.ship.x + deadZone, y: frame.ship.y });
-    expect(state.sample(frame).move).toEqual({ x: 0, y: 0 });
-    state.move(1, { x: frame.ship.x + (deadZone + reach) / 2, y: frame.ship.y });
-    expect(state.sample(frame).move.x).toBeCloseTo(0.5);
-    expect(state.sample(frame).move.y).toBe(0);
-    expect(
-      state.sample({
-        ...frame,
-        ship: { x: frame.ship.x + (deadZone + reach) / 2, y: frame.ship.y },
-      }).move,
-    ).toEqual({ x: 0, y: 0 });
-    state.move(1, { x: frame.ship.x + reach * 3, y: frame.ship.y });
-    expect(state.sample(frame).move).toEqual({ x: 1, y: 0 });
-    expect(state.sample(frame).fire).toBe(false);
-    state.up(0, 1);
-    expect(state.sample(frame).move).toEqual(neutral.move);
+    state.keyDown(key);
+    expect(state.sample(frame)).toEqual({ ...neutral, move });
+    state.keyDown(arrow);
+    state.keyUp(key);
+    expect(state.sample(frame)).toEqual({ ...neutral, move });
+    state.keyUp(arrow);
+    expect(state.sample(frame)).toEqual(neutral);
   });
 
-  it("thrusts along the actual facing, with Shift limiting keyboard thrust to twenty percent only", () => {
+  it("keeps diagonals normalized and preserves the keyboard throttle modifier", () => {
     const state = fresh();
     state.keyDown("KeyW");
-    expect(state.sample(frame).move).toEqual({ x: 0, y: -1 });
+    state.keyDown("KeyD");
+    const diagonal = state.sample(frame).move;
+    expect(diagonal.x).toBeCloseTo(Math.SQRT1_2);
+    expect(diagonal.y).toBeCloseTo(-Math.SQRT1_2);
     state.keyDown("ShiftLeft");
-    expect(state.sample(frame).move).toEqual({ x: 0, y: -0.2 });
-    expect(state.sample({ ...frame, facing: { x: 1, y: 0 } }).move).toEqual({ x: 0.2, y: 0 });
-    state.down(0, 1, { x: frame.ship.x + MOVE_STICK_GEOMETRY.reach, y: frame.ship.y });
-    expect(state.sample(frame).move).toEqual({ x: 1, y: 0 });
-    state.up(0, 1);
-    expect(state.sample(frame).move).toEqual({ x: 0, y: -0.2 });
-  });
-
-  it("maps A/D and Left/Right to turning, keeps S/Down unbound and never fires from steering", () => {
-    const state = fresh();
+    expect(Math.hypot(...Object.values(state.sample(frame).move))).toBeCloseTo(0.2);
     state.keyDown("KeyA");
-    expect(state.sample(frame)).toEqual({ ...neutral, turn: -1 });
-    state.keyDown("ArrowRight");
-    expect(state.sample(frame).turn).toBe(0);
-    state.keyUp("KeyA");
-    expect(state.sample(frame).turn).toBe(1);
-    state.keyUp("ArrowRight");
-    state.keyDown("KeyS");
-    state.keyDown("ArrowDown");
-    expect(state.sample(frame)).toEqual(neutral);
-    state.keyDown("ArrowUp");
-    expect(state.sample(frame).move).toEqual({ x: 0, y: -1 });
+    expect(state.sample(frame).move).toEqual({ x: 0, y: -0.2 });
   });
 
-  it("fires from either Space or RMB and releases each held mouse button independently", () => {
+  it("uses H/L for opposed hull turns without movement or fire", () => {
     const state = fresh();
-    state.down(0, 1, { x: frame.ship.x + MOVE_STICK_GEOMETRY.reach, y: frame.ship.y });
-    state.down(2, 1, { x: frame.ship.x + MOVE_STICK_GEOMETRY.reach, y: frame.ship.y });
-    expect(state.sample(frame)).toMatchObject({
+    state.keyDown("KeyH");
+    expect(state.sample(frame)).toEqual({ ...neutral, turn: -1 });
+    state.keyDown("KeyL");
+    expect(state.sample(frame)).toEqual(neutral);
+    state.keyUp("KeyH");
+    expect(state.sample(frame)).toEqual({ ...neutral, turn: 1 });
+    state.keyUp("KeyL");
+    expect(state.keyDown("KeyJ")).toBe(false);
+    expect(state.keyDown("KeyK")).toBe(false);
+    expect(state.sample(frame)).toEqual(neutral);
+  });
+
+  it("retains a complete left click for exactly one sample and tracks the held pointer", () => {
+    const state = fresh();
+    const east = { x: frame.ship.x + 15, y: frame.ship.y };
+    state.down(0, 1, east);
+    state.up(0, 1);
+    expect(state.sample(frame)).toEqual({ ...neutral, aim: { x: 1, y: 0 }, fire: true });
+    expect(state.sample(frame)).toEqual(neutral);
+
+    state.down(0, 1, east);
+    state.keyDown("KeyW");
+    expect(state.sample(frame)).toEqual({
+      ...neutral,
       aim: { x: 1, y: 0 },
       fire: true,
-      move: { x: 1, y: 0 },
+      move: { x: 0, y: -1 },
     });
+    state.move(1, { x: frame.ship.x, y: frame.ship.y - 20 });
+    expect(state.sample(frame)).toMatchObject({ aim: { x: 0, y: -1 }, fire: true });
+    expect(state.sample(frame)).toMatchObject({ aim: { x: 0, y: -1 }, fire: true });
     state.up(0, 1);
-    expect(state.sample(frame)).toMatchObject({ fire: true, move: neutral.move });
-    state.keyDown("Space");
-    state.up(2, 1);
-    expect(state.sample(frame).fire).toBe(true);
-    state.keyUp("Space");
-    expect(state.sample(frame).fire).toBe(false);
+    expect(state.sample(frame)).toEqual({ ...neutral, move: { x: 0, y: -1 } });
   });
 
-  it("admits each E and Enter press once without turning either Use key into firing", () => {
+  it("fires with Space on the nose and right presses never aim or fire", () => {
     const state = fresh();
-    expect(state.keyDown("KeyE")).toBe(true);
-    expect(state.keyDown("KeyE", true)).toBe(false);
-    expect(state.keyDown("KeyE")).toBe(false);
+    state.down(2, 1, { x: 400, y: 100 });
     expect(state.sample(frame)).toEqual(neutral);
-    state.keyUp("KeyE");
-    expect(state.keyDown("KeyE")).toBe(true);
-    expect(state.keyDown("Enter")).toBe(true);
-    expect(state.keyDown("Enter", true)).toBe(false);
-    expect(state.sample(frame).fire).toBe(false);
+    state.keyDown("Space");
+    state.up(2, 1);
+    expect(state.sample(frame)).toEqual({ ...neutral, fire: true });
+    expect(state.sample(frame)).toEqual({ ...neutral, fire: true });
+    state.keyUp("Space");
+    expect(state.sample(frame)).toEqual(neutral);
+    state.keyDown("Space");
+    state.keyUp("Space");
+    expect(state.sample(frame)).toEqual({ ...neutral, fire: true });
+    expect(state.sample(frame)).toEqual(neutral);
   });
 
   it("rejects blocked input and requires fresh presses after modal, blur or mode reset", () => {
@@ -171,6 +172,7 @@ describe("desktop input listeners", () => {
       code: string,
       target: FixtureElement = surface,
       repeat = false,
+      consumed = false,
     ) => {
       const event = new Event(type, { cancelable: true });
       Object.defineProperties(event, {
@@ -178,13 +180,22 @@ describe("desktop input listeners", () => {
         repeat: { value: repeat },
         target: { value: target },
       });
+      if (consumed) {
+        event.preventDefault();
+      }
       host.dispatchEvent(event);
       return event;
     };
-    return { binding, controls, document, host, key, onUse, state, surface };
+    const mouse = (type: "mousedown" | "mouseup", button: number, target = surface) => {
+      const event = new Event(type, { cancelable: true });
+      Object.defineProperties(event, { button: { value: button }, target: { value: target } });
+      host.dispatchEvent(event);
+      return event;
+    };
+    return { binding, controls, document, host, key, mouse, onUse, state, surface };
   }
 
-  it.each(["KeyE", "Enter"])("routes a fresh %s press through Use exactly once", (code) => {
+  it.each(["KeyE", "KeyF", "Enter"])("routes a fresh %s press through Use exactly once", (code) => {
     const { controls, key, onUse, state, surface } = bind();
     expect(key("keydown", code).defaultPrevented).toBe(true);
     expect(onUse).toHaveBeenCalledOnce();
@@ -210,7 +221,7 @@ describe("desktop input listeners", () => {
     const down = (clientX: number) => {
       const event = new Event("mousedown", { cancelable: true });
       Object.defineProperties(event, {
-        button: { value: 2 },
+        button: { value: 0 },
         clientX: { value: clientX },
         target: { value: surface },
       });
@@ -223,6 +234,37 @@ describe("desktop input listeners", () => {
     expect(down(100)).toBe(true);
     expect(binding.active()).toBe(true);
     expect(state.sample(frame).fire).toBe(true);
+  });
+
+  it("requests Use on fresh right presses only, independent of a held left press", () => {
+    const { controls, mouse, onUse, state } = bind();
+    mouse("mousedown", 0);
+    expect(mouse("mousedown", 2).defaultPrevented).toBe(true);
+    expect(controls.sample().use).toBe(true);
+    mouse("mousedown", 2);
+    expect(onUse).toHaveBeenCalledOnce();
+    expect(controls.sample().use).toBe(false);
+    expect(state.sample(frame).fire).toBe(true);
+    mouse("mouseup", 0);
+    expect(state.sample(frame)).toEqual(neutral);
+    mouse("mouseup", 2);
+    mouse("mousedown", 2);
+    expect(onUse).toHaveBeenCalledTimes(2);
+    expect(controls.sample().use).toBe(true);
+    expect(state.sample(frame)).toEqual(neutral);
+  });
+
+  it("does not reroute a foreground-owned key and drops a pending click on cancellation", () => {
+    const { controls, host, key, mouse, onUse, state, surface } = bind();
+    for (const code of ["Enter", "KeyE", "KeyF", "KeyH", "KeyL", "Space"]) {
+      key("keydown", code, surface, false, true);
+    }
+    mouse("mousedown", 0);
+    mouse("mouseup", 0);
+    host.dispatchEvent(new Event("pointercancel"));
+    expect(state.sample(frame)).toEqual(neutral);
+    expect(controls.sample().use).toBe(false);
+    expect(onUse).not.toHaveBeenCalled();
   });
 
   it("leaves focused native buttons and editable elements alone and rejects modal input", () => {
@@ -252,7 +294,7 @@ describe("desktop input listeners", () => {
   it("retains continuous keyboard flight through Use and clears held input on reset and disposal", () => {
     const { binding, controls, document, host, key, onUse, state, surface } = bind();
     const flying = { ...neutral, fire: true, move: { x: 0, y: -0.2 }, turn: -1 };
-    for (const code of ["KeyW", "ShiftLeft", "KeyA", "Space"]) {
+    for (const code of ["KeyW", "ShiftLeft", "KeyH", "Space"]) {
       expect(key("keydown", code).defaultPrevented).toBe(true);
     }
     expect(state.sample(frame)).toEqual(flying);
