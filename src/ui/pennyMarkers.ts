@@ -1,5 +1,6 @@
 import { opaqueBoundsOfRgba } from "@andornaut/game-kit/runtime/opaqueBounds";
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
+import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 
 import { EDGE_MARKER_GLYPHS } from "../data/edgeMarkers.ts";
 import { TASK_COLORS } from "../data/taskCategories.ts";
@@ -8,6 +9,7 @@ import { LIGHT_FIELD } from "../game/lightField.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
 import type { Vec } from "../model/types.ts";
 import {
+  ADA_ACTION_HOLD_MS,
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
@@ -213,7 +215,20 @@ export function createPennyMarkerLayer(
     }
   });
   function createActionEntry({ available, open }: MarkerActions, marker: PennyMarker): Entry {
-    const node = doc.createElement("button");
+    const kit = createButton(layer.ownerDocument, {
+      appearance: { layout: "caller" },
+      content: { kind: "icon", name: markerName(marker) },
+      getAction: () => binding,
+      getState: (button) => ({
+        availability: button.hidden
+          ? { kind: "omitted" }
+          : button.disabled
+            ? { kind: "disabled" }
+            : { kind: "available" },
+      }),
+      rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: SCROLL.dragThreshold },
+    });
+    const node = kit.element;
     const binding = bindAdaAction(
       {
         click: {
@@ -221,12 +236,19 @@ export function createPennyMarkerLayer(
           run: () => open(item.marker, node),
         },
         current: () => available(),
+        nativeClickOwner: "factory",
         slopPx: () => SCROLL.dragThreshold * readViewUnit(node),
       },
       node,
     );
-    node.setAttribute("type", "button");
-    const item: Entry = { dispose: binding.dispose, element: node, marker };
+    const item: Entry = {
+      dispose() {
+        binding.dispose();
+        kit.dispose();
+      },
+      element: node,
+      marker,
+    };
     return item;
   }
   const view = {
@@ -262,10 +284,11 @@ export function createPennyMarkerLayer(
             : { element: doc.createElement("div"), marker };
           const node = item.element;
           try {
+            // Penny markers paint their own face and focus cue.
             node.className = "ada-penny-marker";
             const glyph = doc.createElement("span");
             glyph.className = "ada-penny-glyph";
-            node.append(glyph);
+            node.replaceChildren(glyph);
             if (actions) {
               assertAdaActionMetadata(node);
             }

@@ -15,7 +15,11 @@ import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { foregroundEdge, LIGHT_FIELD, lightGalaxy, readLightGalaxies } from "../game/lightField.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
 import { ART_MANIFEST, publicJson } from "../testing/publicArt.ts";
-import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  resolveAdaHoldAction,
+} from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { units } from "./layout/css.ts";
 import { MAP_COLORS, MAP_SYMBOL } from "./layout/mapScreen.ts";
@@ -135,7 +139,14 @@ describe("Penny's existing marker art", () => {
   });
 });
 class ElementFixture extends EventTarget {
+  readonly ownerDocument: Document | undefined;
+  constructor(ownerDocument?: Document) {
+    super();
+    this.ownerDocument = ownerDocument;
+  }
   connected = false;
+  disabled = false;
+  hidden = false;
   get isConnected(): boolean {
     return this.connected || this.parent?.isConnected === true;
   }
@@ -143,7 +154,17 @@ class ElementFixture extends EventTarget {
     return this.parent;
   }
   matches(selector: string): boolean {
-    return selector.includes("button") && this.attributes.get("type") === "button";
+    return selector === ":disabled"
+      ? this.disabled
+      : selector.includes("button") && this.attributes.get("type") === "button";
+  }
+  closest(selector: string): ElementFixture | null {
+    return selector.includes("[hidden]") && this.hidden
+      ? this
+      : (this.parent?.closest(selector) ?? null);
+  }
+  contains(node: ElementFixture): boolean {
+    return node === this || (node.parent !== null && this.contains(node.parent));
   }
   querySelectorAll() {
     return [];
@@ -222,6 +243,7 @@ class ElementFixture extends EventTarget {
   }
   children: ElementFixture[] = [];
   className = "";
+  readonly classList = { add() {}, remove() {} };
   dataset: Record<string, string> = {};
   parent: ElementFixture | null = null;
   style = {
@@ -242,11 +264,30 @@ class ElementFixture extends EventTarget {
       this.children.push(child);
     }
   }
+  replaceChildren(...children: ElementFixture[]) {
+    for (const child of [...this.children]) {
+      child.remove();
+    }
+    this.append(...children);
+  }
   getAttribute(key: string) {
     return this.attributes.get(key) ?? null;
   }
   setAttribute(key: string, value: string) {
     this.attributes.set(key, value);
+  }
+  removeAttribute(key: string) {
+    this.attributes.delete(key);
+  }
+  toggleAttribute(key: string, force: boolean) {
+    if (force) {
+      this.setAttribute(key, "");
+    } else {
+      this.removeAttribute(key);
+    }
+  }
+  set type(value: string) {
+    this.setAttribute("type", value);
   }
   remove() {
     if (this.parent) {
@@ -255,18 +296,22 @@ class ElementFixture extends EventTarget {
     }
   }
 }
-it("binds a marker before publication and rolls back a failed append", () => {
-  const root = fixtureActionRoot(new ElementFixture());
-  root.connected = true;
-  const doc = {
-    createElement: () => new ElementFixture(),
-    createElementNS: () => new ElementFixture(),
+function interactiveMarkerLayer(
+  actions: NonNullable<Parameters<typeof createPennyMarkerLayer>[2]>,
+) {
+  const doc: Document = {
+    createElement: () => new ElementFixture(doc),
+    createElementNS: () => new ElementFixture(doc),
+    defaultView: { HTMLElement: ElementFixture, Node: ElementFixture },
   } as unknown as Document;
-  const ui = createPennyMarkerLayer(doc, root as unknown as HTMLElement, {
-    available: () => true,
-    open: () => {},
-  });
-  const layer = root.children[0]!;
+  const root = fixtureActionRoot(new ElementFixture(doc));
+  root.connected = true;
+  const ui = createPennyMarkerLayer(doc, root as unknown as HTMLElement, actions);
+  return { layer: root.children[0]!, root, ui };
+}
+
+it("binds a marker before publication and rolls back a failed append", () => {
+  const { layer, ui } = interactiveMarkerLayer({ available: () => true, open() {} });
   const append = layer.append.bind(layer);
   let original: HTMLElement | undefined;
   const failure = vi.spyOn(layer, "append").mockImplementationOnce((node) => {
@@ -288,6 +333,50 @@ it("binds a marker before publication and rolls back a failed append", () => {
   expect(shown).toHaveBeenCalledExactlyOnceWith(marker);
   expect(layer.children).toHaveLength(1);
   assertAdaActionBindings(layer.children[0] as unknown as HTMLElement);
+  ui.destroy();
+});
+
+it("activates the latest marker once and gates hidden, unavailable, and removed entries", () => {
+  const open = vi.fn();
+  let available = true;
+  const { layer, root, ui } = interactiveMarkerLayer({ available: () => available, open });
+  const place = (markers: readonly PennyMarker[]) =>
+    ui.place({ x: 0, y: 0 }, { height: 360, width: 720, x: 0, y: 0 }, undefined, markers);
+  place([marker]);
+  const button = layer.children[0]!;
+  expect(button.children.map(({ className }) => className)).toEqual(["ada-penny-glyph"]);
+  const held = resolveAdaHoldAction(root as unknown as HTMLElement, button);
+  expect(held?.rule.holdMs).toBe(500);
+
+  const latest = { ...marker, identified: true };
+  place([latest]);
+  expect(layer.children).toEqual([button]);
+  button.dispatchEvent(new Event("click"));
+  expect(open).toHaveBeenCalledExactlyOnceWith(latest, button);
+  held?.activate();
+  expect(open.mock.calls).toEqual([
+    [latest, button],
+    [latest, button],
+  ]);
+
+  available = false;
+  button.dispatchEvent(new Event("click"));
+  held?.activate();
+  available = true;
+  button.hidden = true;
+  button.dispatchEvent(new Event("click"));
+  held?.activate();
+  expect(button.hidden).toBe(true);
+  expect(open).toHaveBeenCalledTimes(2);
+
+  button.hidden = false;
+  place([]);
+  place([marker]);
+  expect(layer.children[0]).not.toBe(button);
+  expect(held?.available()).toBe(false);
+  held?.activate();
+  button.dispatchEvent(new Event("click"));
+  expect(open).toHaveBeenCalledTimes(2);
   ui.destroy();
 });
 
