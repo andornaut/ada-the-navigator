@@ -2,11 +2,11 @@ import { existsSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { markerHue, readRouteArt, readRouteMarkers, routePreviews } from "../art/index.ts";
 import { GALAXIES } from "../data/storybook.ts";
 import { ART_MANIFEST, CORE_MANIFEST, publicJson } from "../testing/publicArt.ts";
 import { storyBackgrounds, storyComposites } from "../ui/storyArt.ts";
 import { readStoryCompositionAssets } from "../ui/storyCompositions.ts";
-import { markerHue, readRouteArt, readRouteMarkers, routePreviews } from "./routeArt.ts";
 
 const markers = readRouteMarkers(publicJson(ART_MANIFEST.galaxyFields));
 

@@ -222,6 +222,13 @@ export {
 } from "./projectArt.ts";
 export { decorationRasterSize, viewDecorations } from "./rareDecorations.ts";
 export { RockFrames } from "./rockFrames.ts";
+export {
+  type GalaxyMapArt,
+  markerHue,
+  readRouteArt,
+  readRouteMarkers,
+  routePreviews,
+} from "./routeArt.ts";
 export { sceneryDetail } from "./scenery.ts";
 export { readShardPalettePack } from "./shardPalettePack.ts";
 export {
@@ -313,6 +320,13 @@ export {
   type StationLoop,
   stationLoopFrame,
 } from "./stationArt.ts";
+export type {
+  CanvasBox,
+  StoryBackgroundArt,
+  StoryOverlay,
+  StoryScenePreview,
+  StorySourceRect,
+} from "./storyPreview.ts";
 export { RASTER_SCALE_EVENT, SvgRasters, type SvgRequest } from "./svg/rasters.ts";
 export { vectorSheetKey, vectorSheetSource } from "./svg/sheet.ts";
 export {

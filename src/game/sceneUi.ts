@@ -19,6 +19,7 @@ import {
   HIT_FLASH_DEPTH,
   HIT_SHAKE_SHARE,
   HOLODISK_FRAMES,
+  markerHue,
   RASTER_SCALE_EVENT,
   readBeaconArt,
   readCacheArt,
@@ -29,11 +30,14 @@ import {
   readLoopArt,
   readOutpostArt,
   readProjectArt,
+  readRouteArt,
+  readRouteMarkers,
   readSpacePalette,
   readStardustArt,
   readStationArt,
   readUpgradePickup,
   readWeaponSolids,
+  routePreviews,
   shakeCounter,
   TELEPORT_DISTANCE,
 } from "../art/index.ts";
@@ -107,7 +111,6 @@ import { readTitleScreen, type TitleScreenArt } from "../ui/titleScreen.ts";
 import { LIGHT_FIELD, lightGalaxy, readLightGalaxies } from "./lightField.ts";
 import { fitPlayCamera, sceneFit, shakeIntensity } from "./playCamera.ts";
 import { readQuantumJump } from "./quantumJump.ts";
-import { markerHue, readRouteArt, readRouteMarkers, routePreviews } from "./routeArt.ts";
 import type { GameScene } from "./scene.ts";
 import {
   arrivalLoads,

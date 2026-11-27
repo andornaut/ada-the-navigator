@@ -1,19 +1,15 @@
+import type { CanvasBox, StoryBackgroundArt, StoryOverlay, StorySourceRect } from "../art/index.ts";
 import { type Background, BACKGROUND_ART } from "../data/storybook.ts";
 import { STORY_BACKGROUND, type SubjectBand } from "./layout/storyPage.ts";
 import { readStoryCompositionAssets, validStorySourceRect } from "./storyCompositions.ts";
+
+export type { CanvasBox, StoryOverlay, StorySourceRect } from "../art/index.ts";
 
 // Art's storybook environments, their compatibility aliases, the rock glow transitions, the overnight
 // sequence (art/storybook.md) and the holodisk moment aboard (art/aboard.md), read from the root
 // manifest and the files it links as storyTransition, storyOvernight and aboardHolodisk.
 
 export const ART_MANIFEST_URL = "/art/manifest.json";
-
-export interface StorySourceRect {
-  readonly height: number;
-  readonly width: number;
-  readonly x: number;
-  readonly y: number;
-}
 
 export interface ArtAsset {
   /** A composite background's base: the background its pages are placed as. */
@@ -39,26 +35,6 @@ export interface StoryArtManifest {
   readonly storyCompositions?: string;
   readonly storyOvernight?: string;
   readonly storyTransition?: string;
-}
-
-/** A box on the background canvas, as percentages of its width and height. */
-export interface CanvasBox {
-  readonly height: number;
-  readonly left: number;
-  readonly top: number;
-  readonly width: number;
-}
-
-/** An image drawn over a background at its manifest `at`, such as the sleep scene's figures. */
-export interface StoryOverlay {
-  readonly box: CanvasBox;
-  readonly id: string;
-  readonly url: string;
-  readonly source?: {
-    readonly height: number;
-    readonly rect: StorySourceRect;
-    readonly width: number;
-  };
 }
 
 /**
@@ -128,12 +104,9 @@ export interface StoryTransition {
   readonly toId: string;
 }
 
-export interface StoryArt {
-  readonly backgrounds: Partial<Record<Background, string>>;
+export interface StoryArt extends StoryBackgroundArt {
   /** Each composite background's base, by key, for the keys whose base the game names. */
   readonly bases: Partial<Record<Background, Background>>;
-  /** Each composite background's overlays, drawn over its image. */
-  readonly composites: Partial<Record<Background, readonly StoryOverlay[]>>;
   readonly holodisk: Holodisk | null;
   readonly overnight: Overnight | null;
   /** Each background's subject band, for the keys whose entry gives one. */

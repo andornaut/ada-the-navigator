@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { isHashedAssetUrl } from "@andornaut/game-kit/runtime/web/pwa/cachePolicy";
 import { describe, expect, it } from "vitest";
 
+import { routePreviews } from "../../art/index.ts";
 import { ASTEROID_ART } from "../../data/asteroidCatalog.ts";
 import { ECONOMY } from "../../data/economy.ts";
 import { GALAXY_ID } from "../../data/galaxies.ts";
@@ -12,7 +13,6 @@ import { JOB_TYPES } from "../../data/jobs.ts";
 import { PROJECTS } from "../../data/projects.ts";
 import { GALAXIES } from "../../data/storybook.ts";
 import { uiIconUrl } from "../../data/uiIconUrl.ts";
-import { routePreviews } from "../../game/routeArt.ts";
 import { SHIP_HEADINGS } from "../../model/nose.ts";
 import { CACHE_POLICY } from "../../pwa/cachePolicy.ts";
 import { SHIPPED_SHIP_SOURCES } from "../../testing/shippedShipSources.ts";

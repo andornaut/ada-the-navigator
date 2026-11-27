@@ -3,7 +3,7 @@ import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayo
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { jetLayerPass, jetOccluderRegions, jetsInFront, type ShipJets } from "../art/index.ts";
+import { type GalaxyMapArt, jetLayerPass, jetOccluderRegions, jetsInFront } from "../art/index.ts";
 import { GALAXY_COUNT, type RoutePosition } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
 import { TASK_COLORS } from "../data/taskCategories.ts";
@@ -63,7 +63,7 @@ import { refuse } from "./refusal.ts";
 import { drawShipJets } from "./shipJetCanvas.ts";
 import { createShipTailView } from "./shipTailView.ts";
 import { createStandardTextAction } from "./standardTextAction.ts";
-import { setStoryScenePreview, type StoryScenePreview } from "./storySceneView.ts";
+import { setStoryScenePreview } from "./storySceneView.ts";
 
 // The galaxy map (art/layout.md "Galaxy selector"), after Chibi's MapScene: the route sky and
 // ground, the chart's legs, markers, labels and Ada's ship, the panel for the chosen galaxy, Earth's
@@ -128,26 +128,7 @@ export interface GalaxyMapView {
   readonly stay: boolean;
 }
 
-/** The route sky, its ground and figures, and Ada's ship frames by heading. */
-export interface GalaxyMapArt {
-  readonly homePreview?: string;
-  readonly homeScene?: StoryScenePreview;
-  /** Current selected main material and fixed-length static travel geometry. */
-  readonly jets?: () => ShipJets | undefined;
-  readonly figures: readonly {
-    readonly height: number;
-    readonly url: string;
-    readonly width: number;
-    readonly x: number;
-    readonly y: number;
-  }[];
-  readonly ground: string;
-  /** The shared locked grey (galaxies.json `marker.locked`). */
-  readonly locked: string;
-  /** The ship's 64 heading frames, idle or on thrust; empty strings where none loaded. */
-  readonly ship: (thrust: boolean) => readonly string[];
-  readonly sky: string;
-}
+export type { GalaxyMapArt } from "../art/index.ts";
 
 export interface GalaxyMapOptions {
   readonly labels: GalaxyMapLabels;

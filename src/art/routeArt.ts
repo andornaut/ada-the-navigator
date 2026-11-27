@@ -1,8 +1,8 @@
 import { byGalaxy } from "../data/galaxies.ts";
 import type { GalaxyCard } from "../data/storybook.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import type { GalaxyMapArt } from "../ui/galaxyMap.ts";
-import type { StoryArt } from "../ui/storyArt.ts";
+import type { ShipJets } from "./shipJets.ts";
+import type { StoryBackgroundArt, StoryScenePreview } from "./storyPreview.ts";
 
 // The route map's art from Art's manifests (art/route-sky.md, art/galaxies.md "Markers"): the
 // sky and ground with their figures, each galaxy's marker hue and the shared locked grey, each
@@ -15,6 +15,27 @@ export interface RouteAsset {
   readonly id: string;
   readonly overlays?: readonly string[];
   readonly path: string;
+}
+
+/** The route sky, its ground and figures, and Ada's ship frames by heading. */
+export interface GalaxyMapArt {
+  readonly homePreview?: string;
+  readonly homeScene?: StoryScenePreview;
+  /** Current selected main material and fixed-length static travel geometry. */
+  readonly jets?: () => ShipJets | undefined;
+  readonly figures: readonly {
+    readonly height: number;
+    readonly url: string;
+    readonly width: number;
+    readonly x: number;
+    readonly y: number;
+  }[];
+  readonly ground: string;
+  /** The shared locked grey (galaxies.json `marker.locked`). */
+  readonly locked: string;
+  /** The ship's 64 heading frames, idle or on thrust; empty strings where none loaded. */
+  readonly ship: (thrust: boolean) => readonly string[];
+  readonly sky: string;
 }
 
 const HEX = /^#[0-9a-f]{6}$/iu;
@@ -49,7 +70,7 @@ export function readRouteArt(
   assets: readonly RouteAsset[],
   markers: ReturnType<typeof readRouteMarkers>,
   ship: GalaxyMapArt["ship"],
-  home?: Pick<StoryArt, "backgrounds" | "composites">,
+  home?: StoryBackgroundArt,
 ): GalaxyMapArt | null {
   const sky = assets.find(({ id }) => id === "route-sky");
   const ground = assets.find(({ id }) => id === "route-ground");
