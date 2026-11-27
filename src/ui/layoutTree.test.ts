@@ -309,6 +309,9 @@ it("retains actual label/root identity while dispatch resolves the current actio
   expect(root.hidden).toBe(true);
   f.setState({ kind: "available" });
   part.dispose();
+  part.update({ actionId: "second", label: "Disposed", role: "primary" });
+  expect(f.button().dataset.action).toBe("first");
+  expect(root.hidden).toBe(true);
   f.button().click();
   expect(f.first).toHaveBeenCalledOnce();
   expect(f.dispose).toHaveBeenCalledOnce();
@@ -370,6 +373,9 @@ it("retains native title and sibling body/footer slots without fitting before de
   expect(f.second).toHaveBeenCalledTimes(2);
   expect(f.first).not.toHaveBeenCalled();
   card.dispose();
+  card.update(initial);
+  expect(close.dataset.action).toBe("second");
+  expect(close.getAttribute("aria-label")).toBe("Back");
   f.ports.fit();
   expect(factories.fit).toHaveBeenCalledOnce();
   expect(resolve()).toBeNull();

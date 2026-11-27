@@ -649,6 +649,60 @@ function constructionFindings(path: string, text: string) {
   );
 }
 
+const layoutMetadataSources = [
+  canonicalRegistry,
+  ...["standardTextAction", "modalClose"].map((name) => ({
+    path: `src/ui/${name}.ts`,
+    text: readFileSync(new URL(`../ui/${name}.ts`, import.meta.url), "utf8"),
+  })),
+];
+const layoutMetadataPath = "src/ui/layoutTree.ts";
+const layoutMetadataSource = readFileSync(new URL("../ui/layoutTree.ts", import.meta.url), "utf8");
+const textMetadata = "button.dataset.action = next.actionId";
+const closeMetadata = "closeButton.dataset.action = next.closeAction";
+const layoutMetadataFindings = (source: string) =>
+  scanDiscreteActionProject([
+    ...layoutMetadataSources,
+    { path: layoutMetadataPath, text: source },
+  ]).findings.filter(({ path }) => path === layoutMetadataPath);
+
+it("proves retained text and close metadata through their existing factory associations", () => {
+  expect(layoutMetadataFindings(layoutMetadataSource)).toEqual([]);
+});
+
+it.each([
+  [
+    "text update guard removed",
+    "    if (disposed) {\n      return;\n    }\n    current = next;",
+    "    current = next;",
+    textMetadata,
+  ],
+  [
+    "close released before its lifetime guard",
+    "            disposed = true;\n            close.dispose();",
+    "            close.dispose();\n            disposed = true;",
+    closeMetadata,
+  ],
+  [
+    "disposed text lifetime reopens",
+    "    kit.dispose();\n    presentation.dispose();",
+    "    kit.dispose();\n    disposed = false;\n    presentation.dispose();",
+    textMetadata,
+  ],
+  [
+    "close target is substituted",
+    "const closeButton = close.element;",
+    "const closeButton = unrelated;",
+    closeMetadata,
+  ],
+] as const)("retains the metadata finding when %s", (_case, original, replacement, metadata) => {
+  const source = layoutMetadataSource.replace(original, replacement);
+  expect(source).not.toBe(layoutMetadataSource);
+  expect(layoutMetadataFindings(source)).toContainEqual(
+    expect.objectContaining({ kind: "unbound-discrete", source: metadata }),
+  );
+});
+
 const rootCloseSource = readFileSync(new URL("../ui/modalClose.ts", import.meta.url), "utf8");
 const rootCloseFixture = "src/ui/rootCloseFixture.ts";
 const rootCloseConstructor = expect.objectContaining({

@@ -3568,6 +3568,253 @@ function scanSource(context: ScanContext, path: string, text: string) {
     return failed.block.statements.slice(0, -1).every((step) => rollback(step, true));
   };
 
+  // A retained component may write metadata in its own update callback if the same
+  // lifetime guard closes every path that disposes the associated factory.
+  const retainedMemberUpdate = (
+    node: ts.Expression,
+    alias: ts.VariableDeclaration,
+    factory: ts.VariableDeclaration,
+  ): boolean => {
+    const update = phase(node);
+    const owner = phase(alias);
+    if (
+      !ts.isArrowFunction(update) ||
+      !synchronousCallable(update) ||
+      !ts.isBlock(update.body) ||
+      !ts.isVariableDeclaration(update.parent) ||
+      !isConst(update.parent) ||
+      (!ts.isFunctionDeclaration(owner) && !ts.isMethodDeclaration(owner)) ||
+      !synchronousCallable(owner) ||
+      !owner.body ||
+      update.parent.parent.parent.parent !== owner.body
+    ) {
+      return false;
+    }
+    const local = update.parent;
+    const guard = update.body.statements[0];
+    if (
+      !guard ||
+      !ts.isIfStatement(guard) ||
+      guard.elseStatement ||
+      !ts.isBlock(guard.thenStatement) ||
+      guard.thenStatement.statements.length !== 1 ||
+      !ts.isReturnStatement(guard.thenStatement.statements[0]!) ||
+      guard.thenStatement.statements[0]!.expression
+    ) {
+      return false;
+    }
+    const slot = lexicalDeclaration(guard.expression);
+    if (
+      !slot ||
+      !ts.isVariableDeclaration(slot) ||
+      !(slot.parent.flags & ts.NodeFlags.Let) ||
+      slot.initializer?.kind !== ts.SyntaxKind.FalseKeyword ||
+      slot.parent.parent.parent !== owner.body ||
+      slot.end > alias.pos
+    ) {
+      return false;
+    }
+    const publication = owner.body.statements.at(-1);
+    if (
+      !publication ||
+      !ts.isReturnStatement(publication) ||
+      !publication.expression ||
+      !ts.isObjectLiteralExpression(publication.expression) ||
+      publication.expression.properties.length !== 4
+    ) {
+      return false;
+    }
+    const view = publication.expression;
+    const updatePort = namedProperty(view, "update");
+    const disposePort = namedProperty(view, "dispose");
+    if (
+      !updatePort ||
+      !ts.isShorthandPropertyAssignment(updatePort) ||
+      declaration(updatePort.name) !== local ||
+      !disposePort ||
+      !namedProperty(view, "element") ||
+      !namedProperty(view, "slots")
+    ) {
+      return false;
+    }
+    const namedDisposer = ts.isShorthandPropertyAssignment(disposePort)
+      ? declaration(disposePort.name)
+      : undefined;
+    const dispose = ts.isMethodDeclaration(disposePort)
+      ? disposePort
+      : namedDisposer &&
+          ts.isVariableDeclaration(namedDisposer) &&
+          isConst(namedDisposer) &&
+          namedDisposer.initializer &&
+          ts.isArrowFunction(namedDisposer.initializer)
+        ? namedDisposer.initializer
+        : undefined;
+    if (
+      !dispose ||
+      !synchronousCallable(dispose) ||
+      dispose.parameters.length ||
+      !dispose.body ||
+      !ts.isBlock(dispose.body)
+    ) {
+      return false;
+    }
+    const matches = (site: ts.Identifier, target: ts.Declaration) =>
+      (ts.isShorthandPropertyAssignment(site.parent)
+        ? declaration(site)
+        : lexicalDeclaration(site)) === target;
+    const rollsBack = (call: ts.CallExpression): boolean => {
+      const step = call.parent;
+      const body = step.parent;
+      const clause = body.parent;
+      const attempt = clause.parent;
+      if (
+        !ts.isExpressionStatement(step) ||
+        !ts.isBlock(body) ||
+        !ts.isCatchClause(clause) ||
+        !clause.variableDeclaration ||
+        !ts.isTryStatement(attempt) ||
+        attempt.finallyBlock ||
+        attempt.parent !== owner.body
+      ) {
+        return false;
+      }
+      const last = body.statements.at(-1);
+      return Boolean(
+        last &&
+        ts.isThrowStatement(last) &&
+        last.expression &&
+        lexicalIdentity(last.expression, clause.variableDeclaration),
+      );
+    };
+    const guardedCleanup = (call: ts.CallExpression) => {
+      const step = call.parent;
+      const body = step.parent;
+      if (
+        !ts.isExpressionStatement(step) ||
+        !ts.isBlock(body) ||
+        (body !== dispose.body && !rollsBack(call))
+      ) {
+        return undefined;
+      }
+      const previous = body.statements[body.statements.indexOf(step) - 1];
+      const set = previous && ts.isExpressionStatement(previous) && previous.expression;
+      return set &&
+        ts.isBinaryExpression(set) &&
+        set.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+        lexicalIdentity(set.left, slot) &&
+        set.right.kind === ts.SyntaxKind.TrueKeyword
+        ? set
+        : undefined;
+    };
+    // Each disposal must close the guard before touching the factory. The initializer and
+    // the returned port are the only ways to invoke update.
+    const updates: ts.CallExpression[] = [];
+    const writes = new Set<ts.BinaryExpression>();
+    const allowedWrites = new Set<ts.BinaryExpression>();
+    let returnedCleanup = false;
+    const unsafe = (site: ts.Node): true | undefined => {
+      if (ts.isIdentifier(site)) {
+        const use = site.parent;
+        if (site.text === "eval") {
+          return true;
+        }
+        if (site !== local.name && site !== updatePort.name && matches(site, local)) {
+          if (
+            !ts.isCallExpression(use) ||
+            use.expression !== site ||
+            use.questionDotToken ||
+            phase(use) !== owner ||
+            use.pos < local.end ||
+            use.arguments.length !== 1 ||
+            !owner.parameters.some((parameter) => lexicalIdentity(use.arguments[0]!, parameter))
+          ) {
+            return true;
+          }
+          const step = use.parent;
+          const container = step.parent;
+          if (
+            !ts.isExpressionStatement(step) ||
+            (container !== owner.body &&
+              !(
+                ts.isTryStatement(container.parent) &&
+                container.parent.tryBlock === container &&
+                container.parent.parent === owner.body
+              ))
+          ) {
+            return true;
+          }
+          updates.push(use);
+        }
+        if (
+          namedDisposer &&
+          ts.isVariableDeclaration(namedDisposer) &&
+          site !== namedDisposer.name &&
+          ts.isShorthandPropertyAssignment(disposePort) &&
+          site !== disposePort.name &&
+          matches(site, namedDisposer) &&
+          (!ts.isCallExpression(use) ||
+            use.expression !== site ||
+            use.questionDotToken ||
+            use.arguments.length ||
+            !rollsBack(use))
+        ) {
+          return true;
+        }
+        if (site !== factory.name && matches(site, factory)) {
+          if (
+            !ts.isPropertyAccessExpression(use) ||
+            use.expression !== site ||
+            use.questionDotToken
+          ) {
+            return true;
+          }
+          if (use.name.text !== "dispose") {
+            return undefined;
+          }
+          const call = use.parent;
+          if (
+            use.questionDotToken ||
+            !ts.isCallExpression(call) ||
+            call.expression !== use ||
+            call.questionDotToken ||
+            call.arguments.length
+          ) {
+            return true;
+          }
+          const set = guardedCleanup(call);
+          if (!set) {
+            return true;
+          }
+          allowedWrites.add(set);
+          returnedCleanup ||= phase(call) === dispose;
+        }
+        if (matches(site, slot)) {
+          if (
+            ts.isBinaryExpression(use) &&
+            use.left === site &&
+            use.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+            use.operatorToken.kind <= ts.SyntaxKind.LastAssignment
+          ) {
+            writes.add(use);
+          } else if (
+            (ts.isPrefixUnaryExpression(use) && use.operator !== ts.SyntaxKind.ExclamationToken) ||
+            ts.isPostfixUnaryExpression(use) ||
+            ts.isShorthandPropertyAssignment(use)
+          ) {
+            return true;
+          }
+        }
+      }
+      return ts.forEachChild(site, unsafe);
+    };
+    return (
+      !unsafe(owner.body) &&
+      returnedCleanup &&
+      updates.length === 1 &&
+      [...writes].every((write) => allowedWrites.has(write))
+    );
+  };
+
   const certifiedMemberMetadata = (node: ts.Expression): boolean => {
     const alias = lexicalDeclaration(node);
     if (
@@ -3578,7 +3825,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
       !ts.isPropertyAccessExpression(alias.initializer) ||
       alias.initializer.questionDotToken ||
       alias.end > node.pos ||
-      !stable(node, false, constructionLifetimes)
+      !stable(node, false, writesOnly)
     ) {
       return false;
     }
@@ -3596,9 +3843,16 @@ function scanSource(context: ScanContext, path: string, text: string) {
     ) {
       return false;
     }
-    const owner = phase(node);
+    const owner = phase(alias);
     const key = reference(node);
+    if (!(bound.get(key) ?? []).some((proof) => proof.owner === owner && proof.end <= alias.pos)) {
+      return false;
+    }
+    if (phase(node) !== owner) {
+      return retainedMemberUpdate(node, alias, factoryResult);
+    }
     if (
+      !stable(node, false, constructionLifetimes) ||
       lifecycleCalls.some(
         ({ key: disposed, site }) =>
           overlaps(key, disposed) && !returnedMethod(site, owner) && !failureCleanup(site),
@@ -3606,7 +3860,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
     ) {
       return false;
     }
-    return (bound.get(key) ?? []).some((proof) => proof.owner === owner && proof.end <= alias.pos);
+    return true;
   };
 
   const factoryAssociations: FactoryAssociation[] = [];

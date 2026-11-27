@@ -84,6 +84,9 @@ function standardButton<A extends string>(
   const button = kit.element;
   const presentation = presentAdaButtonContent<A>(button, kit.setLabel, reason);
   const update = (next: AdaButtonProps<A>) => {
+    if (disposed) {
+      return;
+    }
     current = next;
     button.dataset.action = next.actionId;
     presentation.update(next);
@@ -138,8 +141,9 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
             slopThreshold: SCROLL.dragThreshold,
           },
         );
+        const closeButton = close.element;
         const parts = createCard({
-          close: close.element,
+          close: closeButton,
           size: initial.size,
           title: initial.title,
         });
@@ -152,13 +156,16 @@ export function createAdaLayoutPorts<A extends string>(context: AdaLayoutContext
         parts.body.append(body, footer);
         fits.add(parts.fit);
         const update = (next: AdaCardProps<A>) => {
+          if (disposed) {
+            return;
+          }
           current = next;
           body.hidden = next.body === false;
           parts.title.textContent = next.title;
           parts.frame.setAttribute("aria-label", next.title);
           parts.frame.dataset.cardSize = next.size;
-          parts.close.setAttribute("aria-label", next.closeLabel);
-          parts.close.dataset.action = next.closeAction;
+          closeButton.setAttribute("aria-label", next.closeLabel);
+          closeButton.dataset.action = next.closeAction;
           setFooterAction(next.footerAction, footer);
         };
         update(initial);
