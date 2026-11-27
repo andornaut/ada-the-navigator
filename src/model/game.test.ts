@@ -317,7 +317,7 @@ function recoverHolodisk(model: GameModel) {
 }
 function introduce(model: GameModel, id: string) {
   arrive(model, id);
-  model.step(0.01, idle);
+  model.step(0.01, { ...idle, use: id === "growers" });
   expect(model.state.dialogue).not.toBeNull();
   model.choose("continue");
 }
@@ -1013,7 +1013,7 @@ it("discovers a cleared required approach at its fixed canonical site", () => {
   expect(flight.player.x - point.x).toBeGreaterThan(content.tuning.chunkSize);
   expect(model.state.progress[1].known).toEqual([]);
   expect(model.state.dialogue).toBeNull();
-  for (let i = 0; i < 300 && !model.state.dialogue; i++) {
+  for (let i = 0; i < 300 && model.contextAction !== "talk"; i++) {
     const delta = { x: point.x - flight.player.x, y: point.y - flight.player.y };
     const gap = Math.hypot(delta.x, delta.y);
     model.step(0.1, { ...idle, move: { x: delta.x / gap, y: delta.y / gap } });
@@ -1023,7 +1023,11 @@ it("discovers a cleared required approach at its fixed canonical site", () => {
   expect(model.state.progress[1].requiredSites?.growers).toEqual(point);
   expect(model.state.progress[1].known).toEqual(["growers"]);
   expect(model.state.progress[1].discoveries).toBe(1);
-  expect(model.state.progress[1].introduced).toBe(true);
+  expect(model.contextAction).toBe("talk");
+  expect(model.state.progress[1]).toMatchObject({ introduced: false, questItem: null, stage: 0 });
+  expect(model.state.dialogue).toBeNull();
+  model.interact();
+  expect(model.state.progress[1]).toMatchObject({ introduced: true, questItem: "food", stage: 1 });
   expect(model.state.dialogue).not.toBeNull();
   expect(model.state.dialogue?.text).toBe(content.chapters[1]!.dialogue.grower?.text);
   expect(model.state.dialogue?.context).toBe("grower");

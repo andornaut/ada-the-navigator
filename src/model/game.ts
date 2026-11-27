@@ -439,6 +439,9 @@ const NAMED_CAPITAL_IDS: Partial<Record<GalaxyNumber, string>> = {
   5: ANDROMEDA_REDACT.id,
   6: PHANTOM_FLAGSHIP,
 };
+const GROWERS_APPROACH_CUE = "chapter:sunflower:growers:approach";
+const GROWERS_APPROACH_LINE = poiDiscoveryPool(1, { id: "growers", kind: "storyPlace" })[0]
+  ?.lines[0];
 const NEEDLE_PRELUDE = ["arrival:4", "meeting:4:avi"] as const;
 
 /** What the home half shows: the start screen, a storybook page or galaxy selection. */
@@ -1125,7 +1128,11 @@ export class GameModel {
         continue;
       }
       visit.arrived = true;
-      if (visit.heard || !coversFlight()) {
+      if (
+        visit.heard ||
+        !coversFlight() ||
+        (flight.galaxy === 1 && id === "growers" && !this.current.introduced)
+      ) {
         continue;
       }
       const point = currentPoint(id);
@@ -1147,6 +1154,32 @@ export class GameModel {
       if (presentation) {
         this.talk.poiArrival(id, line, presentation);
       }
+    }
+  }
+
+  private cueGrowersApproach(flight: FlightState): void {
+    if (
+      flight.galaxy !== 1 ||
+      !GROWERS_APPROACH_LINE ||
+      this.current.introduced ||
+      !this.current.known.includes("growers") ||
+      this.state.seenConversations.includes(GROWERS_APPROACH_CUE) ||
+      this.talk.pending(GROWERS_APPROACH_CUE)
+    ) {
+      return;
+    }
+    const relevant = () =>
+      this.state.flight === flight &&
+      !this.current.introduced &&
+      this.suspendedInteraction === null &&
+      !this.state.docked &&
+      this.screen === "space" &&
+      this.nearest() === "growers";
+    if (relevant()) {
+      this.talk.authoredCue(GROWERS_APPROACH_CUE, GROWERS_APPROACH_LINE, {
+        onFirstShowing: () => this.coverPoiArrival(flight, "growers"),
+        relevant,
+      });
     }
   }
 
@@ -4316,7 +4349,10 @@ export class GameModel {
       if (event.type === "discovered" && !this.current.known.includes(event.id)) {
         this.current.known.push(event.id);
         this.current.discoveries++;
-        if (event.id !== "holodisk" || f.galaxy !== 4) {
+        if (
+          (event.id !== "holodisk" || f.galaxy !== 4) &&
+          (f.galaxy !== 1 || event.id !== "growers" || this.current.introduced)
+        ) {
           const place = f.objects.find(({ id }) => id === event.id);
           const role =
             f.galaxy === 5 && place?.role === ANDROMEDA_PLACES.settlement ? place.role : undefined;
@@ -4454,6 +4490,7 @@ export class GameModel {
       flightWorldContext(f).worldSide,
     );
     const approach = this.poiApproach(f, unknownPoi, landmarks);
+    this.cueGrowersApproach(f);
     this.cueMarkedPoiArrivals(f);
     this.sunflowerBossCues(f);
     this.sounderCues(f);
@@ -4634,6 +4671,7 @@ export class GameModel {
     }
     const intro = first(f.galaxy);
     if (
+      f.galaxy !== 1 &&
       intro !== undefined &&
       !this.current.introduced &&
       this.current.known.includes(intro) &&
@@ -4642,15 +4680,12 @@ export class GameModel {
       this.coverPoiArrival(f, intro);
       this.current.introduced = true;
       this.current.stage = Math.max(1, this.current.stage);
-      if (f.galaxy === 1) {
-        this.current.questItem = "food";
-      }
       this.ensureWhaleDebris();
       if (f.galaxy === 3 && this.current.stage === 2) {
         this.current.stage = 3;
         this.exchange("freed");
       } else {
-        this.exchange(f.galaxy === 1 ? "grower" : intro);
+        this.exchange(intro);
       }
     } else if (input.use) {
       this.interact();
@@ -5201,7 +5236,12 @@ export class GameModel {
       // Once their exchange is running, any outpost gives Ada the holodisk.
       if (p.questComplete && !p.holodisk) {
         this.recoverHolodisk(this.chapter.dialogue[dialogueKeys[id] ?? id]?.speaker);
-      } else if (id === "growers" && p.stage === 1) {
+      } else if (id === "growers" && (!p.introduced || p.stage === 1)) {
+        if (!p.introduced) {
+          this.coverPoiArrival(f, id);
+          p.introduced = true;
+          p.stage = Math.max(1, p.stage);
+        }
         p.questItem = "food";
         this.exchange("grower");
       } else if (id === "workshop" && p.stage === 1 && p.questItem === "food") {

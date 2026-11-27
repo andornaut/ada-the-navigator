@@ -709,11 +709,14 @@ it("reuses station discovery and non-Pip destination dialogue for shown physical
   showMarker(model, growers.id);
   moveTo(model, { x: growers.x + 100, y: growers.y });
   const words = deck[1].storyPlace.growers.map(({ text }) => text);
-  model.step(0.05, idle);
-  expect(model.state.dialogue?.context).toBe("grower");
-  expect(model.conversation).toBeNull();
-  model.choose("continue");
+  expect(hear(model).filter((line) => words.includes(line))).toHaveLength(1);
+  expect(model.state.dialogue).toBeNull();
+  expect(model.state.progress[1]).toMatchObject({ introduced: false, questItem: null, stage: 0 });
+  expect(model.contextAction).toBe("talk");
   expect(hear(model).filter((line) => words.includes(line))).toEqual([]);
+  model.interact();
+  expect(model.state.dialogue?.context).toBe("grower");
+  model.choose("continue");
 
   moveTo(model, { x: growers.x - 1200, y: growers.y });
   model.step(0.05, idle);

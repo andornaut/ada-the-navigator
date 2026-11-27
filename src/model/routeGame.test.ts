@@ -54,6 +54,40 @@ describe("required route approach encounters", () => {
       const restoredGuard = next.objects.find((object) => object.routeId === target.id)!;
       restoredGuard.enemy!.hp = 0;
       resumed.step(1 / 60, idle);
+      if (galaxy === 1) {
+        const beforeTalk = { introduced: false, questItem: null, stage: 0 };
+        const time = next.time;
+        resumed.step(1 / 60, idle);
+        expect(next.time).toBeGreaterThan(time);
+        expect(resumed.contextAction).toBe("talk");
+        expect(resumed.state.dialogue).toBeNull();
+        expect(resumed.state.progress[1]).toMatchObject(beforeTalk);
+        const continued = relaunch(CONTENT, resumed.save());
+        expect(continued.state.dialogue).toBeNull();
+        expect(continued.state.progress[1]).toMatchObject(beforeTalk);
+        expect(continued.contextAction).toBe("talk");
+        continued.interact();
+        expect(continued.state.dialogue?.context).toBe("grower");
+        expect(continued.state.progress[1]).toMatchObject({
+          introduced: true,
+          questItem: "food",
+          stage: 1,
+        });
+        const pending = relaunch(CONTENT, continued.save());
+        const progress = structuredClone(pending.state.progress[1]);
+        const dialogue = pending.state.dialogue;
+        expect(dialogue?.context).toBe("grower");
+        pending.closeInteraction();
+        pending.interact();
+        expect(pending.state.dialogue).toBe(dialogue);
+        pending.choose("continue");
+        expect(pending.state.dialogue).toBeNull();
+        expect(pending.state.progress[1]).toEqual(progress);
+        expect(pending.state.flight!.objects.some((object) => object.routeId === target.id)).toBe(
+          false,
+        );
+        return;
+      }
       expect(resumed.state.progress[galaxy].introduced).toBe(true);
       expect(resumed.state.progress[galaxy].known).toContain(target.id);
       expect(resumed.state.dialogue).not.toBeNull();
