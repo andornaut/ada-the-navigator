@@ -2896,7 +2896,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
     }
     return !handlers.size && listeners.includes(click.listener) ? listeners : undefined;
   };
-  const registeredDetachedMetadata = new Map<ts.Declaration, number>();
+  const registeredDetachedMetadata = new Set<ts.BinaryExpression>();
 
   // Prove first publication within the construction block, independently of when it runs.
   // The Kit caller-layout icon factory calls getState with the fresh element while creating it.
@@ -2957,6 +2957,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
 
     const children = new Set<ts.Declaration>();
     const deferred = new Set<ts.Declaration>();
+    const actionMetadata = new Set<ts.BinaryExpression>();
     const reads = (node: ts.Identifier) =>
       ts.isShorthandPropertyAssignment(node.parent) ? declaration(node) : lexicalDeclaration(node);
     const isDeferred = (node: ts.Expression) => {
@@ -3006,9 +3007,6 @@ function scanSource(context: ScanContext, path: string, text: string) {
         }
         return !local.initializer;
       }
-      if (privateDomEdit(statement, children)) {
-        return true;
-      }
       const edit = ts.isExpressionStatement(statement) && statement.expression;
       if (!edit) {
         return false;
@@ -3019,7 +3017,16 @@ function scanSource(context: ScanContext, path: string, text: string) {
         ts.isPropertyAccessExpression(edit.left) &&
         dot(edit.left.expression, "dataset")
       ) {
-        return lexicalIdentity(edit.left.expression.expression, alias) && !readsPrivate(edit.right);
+        if (!lexicalIdentity(edit.left.expression.expression, alias) || readsPrivate(edit.right)) {
+          return false;
+        }
+        if (edit.left.name.text === "action") {
+          actionMetadata.add(edit);
+        }
+        return true;
+      }
+      if (privateDomEdit(statement, children)) {
+        return true;
       }
       const invocation = callStatement(statement);
       const method = invocation?.expression;
@@ -3225,8 +3232,8 @@ function scanSource(context: ScanContext, path: string, text: string) {
               owner.parameters.some((parameter) => declaration(property.name) === parameter)),
         )
       ) {
-        if (listeners) {
-          registeredDetachedMetadata.set(alias, registration.end);
+        for (const metadata of actionMetadata) {
+          registeredDetachedMetadata.add(metadata);
         }
         return true;
       }
@@ -4854,13 +4861,12 @@ function scanSource(context: ScanContext, path: string, text: string) {
           isActionId && ts.isPropertyAccessExpression(left.expression)
             ? left.expression.expression
             : left.expression;
-        const constructor = isActionId && lexicalDeclaration(target);
         if (
           (isActionType || isActionId) &&
           !hasBinding(target) &&
           !immediateButtonRegistration(node, target) &&
           !capturedConstruction(target, node) &&
-          !(constructor && node.end <= (registeredDetachedMetadata.get(constructor) ?? -1)) &&
+          !registeredDetachedMetadata.has(node) &&
           !(isActionId && certifiedMemberMetadata(target))
         ) {
           record(

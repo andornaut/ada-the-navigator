@@ -699,6 +699,44 @@ it.each([
   expect(constructionFindings(returnedButtonFixture, source)).toContainEqual(returnedButtonFinding);
 });
 
+const returnedActionMetadata = `button.dataset.action = \`row-\${labels.shop}\``;
+const returnedActionSource = returnedButtonSource.replace(
+  "button.replaceChildren();",
+  `${returnedActionMetadata};
+    button.replaceChildren();`,
+);
+const returnedMetadataFinding = expect.objectContaining({
+  kind: "unbound-discrete",
+  source: returnedActionMetadata,
+});
+
+it("proves the detached button's staged action metadata with its native owner", () => {
+  expect(returnedActionSource).toContain(returnedActionMetadata);
+  expect(constructionFindings(returnedButtonFixture, returnedActionSource)).not.toContainEqual(
+    returnedMetadataFinding,
+  );
+});
+
+it.each([
+  [
+    "publication before binding",
+    returnedActionMetadata,
+    `parent.append(button); ${returnedActionMetadata}`,
+  ],
+  ["registry click ownership", 'nativeClickOwner: "factory"', 'nativeClickOwner: "registry"'],
+  [
+    "metadata in a deferred callback",
+    `${returnedActionMetadata};`,
+    `const stamp = () => { ${returnedActionMetadata}; };`,
+  ],
+] as const)("retains unproved detached action metadata with %s", (_case, original, replacement) => {
+  const source = returnedActionSource.replace(original, replacement);
+  expect(source).not.toBe(returnedActionSource);
+  expect(constructionFindings(returnedButtonFixture, source)).toContainEqual(
+    returnedMetadataFinding,
+  );
+});
+
 const mappedFocusSource = readFileSync(new URL("../ui/galaxyMap.ts", import.meta.url), "utf8");
 const mappedFocusFinding = expect.objectContaining({
   kind: "unbound-discrete",

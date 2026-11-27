@@ -6,6 +6,7 @@ import {
   type PressArea,
   pressedArea,
 } from "@andornaut/game-kit/runtime/ui/hitAreas";
+import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
@@ -22,6 +23,7 @@ import { shipHeading } from "../model/nose.ts";
 import type { Vec } from "../model/types.ts";
 import { nearestImage } from "../model/worldGeometry.ts";
 import {
+  ADA_ACTION_HOLD_MS,
   type AdaActionOptions,
   assertAdaActionBindings,
   assertAdaActionMetadata,
@@ -1086,17 +1088,54 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     zoomIn: (button) => zoom(MAP_SCREEN.zoomStep, fitCentre(), button),
     zoomOut: (button) => zoom(1 / MAP_SCREEN.zoomStep, fitCentre(), button),
   };
+  const createToolButton = (id: MapTool) => {
+    const kit = createButton(document, {
+      appearance: { layout: "caller" },
+      content: { kind: "icon", name: toolLabels[id] },
+      getAction: () => binding,
+      getState: (button) => ({
+        availability: button.hidden
+          ? { kind: "omitted" }
+          : button.disabled
+            ? { kind: "disabled" }
+            : { kind: "available" },
+      }),
+      rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: MAP_SCREEN.dragThreshold },
+    });
+    const button = kit.element;
+    button.dataset.action = `map-${id}`;
+    const binding = bindAdaAction(
+      {
+        click: {
+          availability: () => buttonAvailability(button),
+          run: () => toolActions[id](button),
+        },
+        current: () => actionCurrent(button),
+        nativeClickOwner: "factory",
+        slopPx: actionSlop,
+      },
+      button,
+    );
+    return {
+      button,
+      dispose() {
+        binding.dispose();
+        kit.dispose();
+      },
+    };
+  };
   const toolButtons = new Map<MapTool, HTMLButtonElement>();
   for (const { glyph, id } of MAP_TOOLS) {
-    const { binding, button } = createMapButton({ actionId: `map-${id}`, run: toolActions[id] });
-    actionBindings.add(binding);
+    const control = createToolButton(id);
+    const { button } = control;
+    actionBindings.add(control);
+    // The toolbar supplies its own disc faces and focus cues.
     button.className = "ada-map-tool";
     button.dataset.tool = id;
-    button.setAttribute("aria-label", toolLabels[id]);
     const disc = document.createElement("span");
     disc.className = "ada-disc";
     disc.style.setProperty("--glyph", `url('${uiIconUrl(glyph)}')`);
-    button.append(disc);
+    button.replaceChildren(disc);
     toolButtons.set(id, button);
   }
   // The place panel.

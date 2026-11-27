@@ -635,6 +635,44 @@ function mapMeasurement() {
   vi.stubGlobal("devicePixelRatio", 1);
 }
 
+it("keeps the Local Map tools named, registered once and revoked when the map closes", () => {
+  mapMeasurement();
+  const { map, root } = standaloneMap();
+  const tools = [
+    ["zoomOut", LABELS.mapScreen.zoomOut],
+    ["zoomIn", LABELS.mapScreen.zoomIn],
+    ["recentre", LABELS.mapScreen.centerOnAda],
+  ] as const;
+  try {
+    map.setState(mapState([STATION]));
+    map.open();
+    const actions = tools.map(([id, label]) => {
+      const tool = button(root, `map-${id}`);
+      expect(tool.getAttribute("aria-label")).toBe(label);
+      expect(tool.children.map(({ className }) => className)).toEqual(["ada-disc"]);
+      expect(tool.listeners.get("click")).toHaveLength(1);
+      const action = actionBinding.resolveAdaHoldAction(
+        root as unknown as HTMLElement,
+        tool as unknown as HTMLElement,
+      )!;
+      expect(action.available()).toBe(true);
+      expect(action.rule.holdMs).toBe(500);
+      return { action, tool };
+    });
+    map.close();
+    for (const { action } of actions) {
+      expect(action.available()).toBe(false);
+    }
+    map.dispose();
+    for (const { action, tool } of actions) {
+      expect(action.available()).toBe(false);
+      expect(tool.listeners.get("click")).toHaveLength(0);
+    }
+  } finally {
+    map.dispose();
+  }
+});
+
 it("keeps the priced Travel here button visible and disabled below 50 Stardust", () => {
   mapMeasurement();
   const { map, root } = standaloneMap();
