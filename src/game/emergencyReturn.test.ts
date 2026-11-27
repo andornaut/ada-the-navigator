@@ -163,7 +163,6 @@ describe("emergency return presentation", () => {
     }
     expect(scene.model.state.mode).toBe("space");
     expect(scene.controls.sample).toHaveBeenCalledWith({
-      facing: direction({ x: 1, y: 0.5 }),
       ship: { x: SCREEN.width / 2, y: SCREEN.height / 2 },
     });
     expect(snapshotSource).not.toHaveBeenCalled();
