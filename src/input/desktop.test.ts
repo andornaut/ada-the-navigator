@@ -1,6 +1,11 @@
 import { describe, expect, it, onTestFinished, vi } from "vitest";
 
-import { bindDesktopInput, DesktopControlState } from "./desktop.ts";
+import {
+  bindDesktopInput,
+  DESKTOP_FLIGHT_BINDINGS,
+  DesktopControlState,
+  indexFlightBindings,
+} from "./desktop.ts";
 import { ControlState } from "./state.ts";
 
 const frame = { ship: { x: 310, y: 170 } };
@@ -9,6 +14,32 @@ const neutral = { aim: { x: 0, y: 0 }, fire: false, move: { x: 0, y: 0 }, turn: 
 function fresh() {
   return new DesktopControlState(() => true);
 }
+
+describe("desktop flight binding registration", () => {
+  it("resolves keyboard and mouse aliases to the same Use declaration", () => {
+    const { keys, mouseButtons } = indexFlightBindings(DESKTOP_FLIGHT_BINDINGS);
+    for (const code of ["Enter", "KeyE", "KeyF"]) {
+      expect(keys.get(code)).toBe(DESKTOP_FLIGHT_BINDINGS.use);
+    }
+    expect(mouseButtons.get(2)).toBe(DESKTOP_FLIGHT_BINDINGS.use);
+    expect(mouseButtons.has(1)).toBe(false);
+  });
+
+  it("rejects overlapping physical keys and mouse buttons before binding listeners", () => {
+    expect(() =>
+      indexFlightBindings({
+        ...DESKTOP_FLIGHT_BINDINGS,
+        other: { keys: ["ArrowUp"], trigger: "press" },
+      }),
+    ).toThrow("Duplicate flight key: ArrowUp");
+    expect(() =>
+      indexFlightBindings({
+        ...DESKTOP_FLIGHT_BINDINGS,
+        other: { mouseButtons: [0], trigger: "press" },
+      }),
+    ).toThrow("Duplicate flight mouse button: 0");
+  });
+});
 
 describe("desktop flight controls", () => {
   it.each([
@@ -173,6 +204,7 @@ describe("desktop input listeners", () => {
       target: FixtureElement = surface,
       repeat = false,
       consumed = false,
+      flags: Pick<KeyboardEventInit, "altKey" | "ctrlKey" | "metaKey" | "isComposing"> = {},
     ) => {
       const event = new Event(type, { cancelable: true });
       Object.defineProperties(event, {
@@ -180,6 +212,7 @@ describe("desktop input listeners", () => {
         repeat: { value: repeat },
         target: { value: target },
       });
+      Object.assign(event, flags);
       if (consumed) {
         event.preventDefault();
       }
@@ -289,6 +322,25 @@ describe("desktop input listeners", () => {
     key("keydown", "Enter");
     expect(onUse).toHaveBeenCalledOnce();
     expect(controls.sample().use).toBe(true);
+  });
+
+  it("leaves modified shortcuts and composition native while still releasing held keys", () => {
+    const { binding, key, onUse, state, surface } = bind();
+    for (const flags of [
+      { altKey: true },
+      { ctrlKey: true },
+      { metaKey: true },
+      { isComposing: true },
+    ]) {
+      expect(key("keydown", "KeyF", surface, false, false, flags).defaultPrevented).toBe(false);
+    }
+    expect(binding.active()).toBe(false);
+    expect(onUse).not.toHaveBeenCalled();
+
+    key("keydown", "KeyW");
+    expect(state.sample(frame).move).toEqual({ x: 0, y: -1 });
+    key("keyup", "KeyW", new FixtureElement("input"), false, false, { ctrlKey: true });
+    expect(state.sample(frame)).toEqual(neutral);
   });
 
   it("retains continuous keyboard flight through Use and clears held input on reset and disposal", () => {

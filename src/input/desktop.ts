@@ -14,25 +14,56 @@ export interface DesktopSample {
   readonly turn: -1 | 0 | 1;
 }
 
-export const DESKTOP_KEYS = new Set([
-  "ArrowDown",
-  "ArrowLeft",
-  "ArrowRight",
-  "ArrowUp",
-  "Enter",
-  "KeyA",
-  "KeyD",
-  "KeyE",
-  "KeyF",
-  "KeyH",
-  "KeyL",
-  "KeyS",
-  "KeyW",
-  "ShiftLeft",
-  "ShiftRight",
-  "Space",
-]);
-const USE_KEYS = new Set(["Enter", "KeyE", "KeyF"]);
+type FlightTrigger = "held" | "held-and-press" | "press";
+
+interface FlightBinding {
+  readonly keys?: readonly string[];
+  readonly mouseButtons?: readonly number[];
+  readonly trigger: FlightTrigger;
+}
+
+/** Physical inputs in the flight context. Foreground menu aliases belong to their own router. */
+export const DESKTOP_FLIGHT_BINDINGS = {
+  aimFire: { mouseButtons: [0], trigger: "held-and-press" },
+  moveEast: { keys: ["KeyD", "ArrowRight"], trigger: "held" },
+  moveNorth: { keys: ["KeyW", "ArrowUp"], trigger: "held" },
+  moveSouth: { keys: ["KeyS", "ArrowDown"], trigger: "held" },
+  moveWest: { keys: ["KeyA", "ArrowLeft"], trigger: "held" },
+  noseFire: { keys: ["Space"], trigger: "held-and-press" },
+  slow: { keys: ["ShiftLeft", "ShiftRight"], trigger: "held" },
+  turnLeft: { keys: ["KeyH"], trigger: "held" },
+  turnRight: { keys: ["KeyL"], trigger: "held" },
+  use: { keys: ["Enter", "KeyE", "KeyF"], mouseButtons: [2], trigger: "press" },
+} as const satisfies Readonly<Record<string, FlightBinding>>;
+
+function register<Input extends string | number>(
+  index: Map<Input, FlightBinding>,
+  inputs: readonly Input[] | undefined,
+  binding: FlightBinding,
+  source: "key" | "mouse button",
+): void {
+  for (const input of inputs ?? []) {
+    if (index.has(input)) {
+      throw new Error(`Duplicate flight ${source}: ${input}`);
+    }
+    index.set(input, binding);
+  }
+}
+
+export function indexFlightBindings(bindings: Readonly<Record<string, FlightBinding>>): {
+  readonly keys: ReadonlyMap<string, FlightBinding>;
+  readonly mouseButtons: ReadonlyMap<number, FlightBinding>;
+} {
+  const keys = new Map<string, FlightBinding>();
+  const mouseButtons = new Map<number, FlightBinding>();
+  for (const binding of Object.values(bindings)) {
+    register(keys, binding.keys, binding, "key");
+    register(mouseButtons, binding.mouseButtons, binding, "mouse button");
+  }
+  return { keys, mouseButtons };
+}
+
+const flightBindings = indexFlightBindings(DESKTOP_FLIGHT_BINDINGS);
 
 const zero = (): Vector => ({ x: 0, y: 0 });
 const unit = (vector: Vector): Vector => {
@@ -54,11 +85,12 @@ export class DesktopControlState {
   }
 
   keyDown(code: string, repeat = false): boolean {
-    if (!this.accepts() || !DESKTOP_KEYS.has(code) || this.keys.has(code) || repeat) {
+    const binding = flightBindings.keys.get(code);
+    if (!this.accepts() || binding === undefined || this.keys.has(code) || repeat) {
       return false;
     }
     this.keys.add(code);
-    if (code === "Space") {
+    if (binding.trigger === "held-and-press") {
       this.pendingNoseFire = true;
     }
     return true;
@@ -69,9 +101,10 @@ export class DesktopControlState {
   }
 
   down(button: number, pointerId: number, point: Vector): boolean {
+    const binding = flightBindings.mouseButtons.get(button);
     if (
       !this.accepts() ||
-      (button !== 0 && button !== 2) ||
+      binding === undefined ||
       this.buttons.has(button) ||
       (this.pointer && this.pointer.id !== pointerId)
     ) {
@@ -80,7 +113,7 @@ export class DesktopControlState {
     const position = { ...point };
     this.pointer = { id: pointerId, position };
     this.buttons.add(button);
-    if (button === 0) {
+    if (binding.trigger === "held-and-press") {
       this.pendingAim = position;
     }
     return true;
@@ -110,26 +143,34 @@ export class DesktopControlState {
     this.pendingNoseFire = false;
   }
 
+  private held(binding: { readonly keys: readonly string[] }): boolean {
+    return binding.keys.some((code) => this.keys.has(code));
+  }
+
   sample(frame: DesktopFrame): DesktopSample {
     if (!this.accepts()) {
       return { aim: zero(), fire: false, move: zero(), turn: 0 };
     }
     // A press released before sampling retains its target for one update. Held fire follows
     // the latest pointer and uses the same equipped-weapon cadence as a short press.
-    const pointer = this.buttons.has(0) ? this.pointer?.position : this.pendingAim;
-    const fire = pointer !== undefined || this.keys.has("Space") || this.pendingNoseFire;
+    const aimHeld = DESKTOP_FLIGHT_BINDINGS.aimFire.mouseButtons.some((button) =>
+      this.buttons.has(button),
+    );
+    const pointer = aimHeld ? this.pointer?.position : this.pendingAim;
+    const fire =
+      pointer !== undefined || this.held(DESKTOP_FLIGHT_BINDINGS.noseFire) || this.pendingNoseFire;
     this.pendingAim = undefined;
     this.pendingNoseFire = false;
     const offset = pointer ? { x: pointer.x - frame.ship.x, y: pointer.y - frame.ship.y } : zero();
-    const slow = this.keys.has("ShiftLeft") || this.keys.has("ShiftRight");
+    const slow = this.held(DESKTOP_FLIGHT_BINDINGS.slow);
     const speed = slow ? DESKTOP_SHIFT_THROTTLE : 1;
-    const west = this.keys.has("KeyA") || this.keys.has("ArrowLeft");
-    const east = this.keys.has("KeyD") || this.keys.has("ArrowRight");
-    const north = this.keys.has("KeyW") || this.keys.has("ArrowUp");
-    const south = this.keys.has("KeyS") || this.keys.has("ArrowDown");
+    const west = this.held(DESKTOP_FLIGHT_BINDINGS.moveWest);
+    const east = this.held(DESKTOP_FLIGHT_BINDINGS.moveEast);
+    const north = this.held(DESKTOP_FLIGHT_BINDINGS.moveNorth);
+    const south = this.held(DESKTOP_FLIGHT_BINDINGS.moveSouth);
     const move = unit({ x: Number(east) - Number(west), y: Number(south) - Number(north) });
-    const left = this.keys.has("KeyH");
-    const right = this.keys.has("KeyL");
+    const left = this.held(DESKTOP_FLIGHT_BINDINGS.turnLeft);
+    const right = this.held(DESKTOP_FLIGHT_BINDINGS.turnRight);
     const turn = left === right ? 0 : right ? 1 : -1;
     return {
       aim: unit(offset),
@@ -196,18 +237,22 @@ export function bindDesktopInput(
   };
   const down = (event: MouseEvent) => {
     // Phaser prevents the canvas mousedown default before it reaches the window.
+    const binding = flightBindings.mouseButtons.get(event.button);
     if (
       pointerType !== "mouse" ||
       !onSurface(event) ||
       !options.accepts() ||
-      (event.button !== 0 && event.button !== 2) ||
+      binding === undefined ||
       options.acceptsPointer?.(event) === false
     ) {
       return;
     }
     event.preventDefault();
     mode(true);
-    if (state.down(event.button, 0, options.point(event)) && event.button === 2) {
+    if (
+      state.down(event.button, 0, options.point(event)) &&
+      binding === DESKTOP_FLIGHT_BINDINGS.use
+    ) {
       options.onUse?.();
     }
   };
@@ -218,6 +263,7 @@ export function bindDesktopInput(
   };
   const up = (event: MouseEvent) => state.up(event.button, 0);
   const keyDown = (event: KeyboardEvent) => {
+    const binding = flightBindings.keys.get(event.code);
     if (
       event.defaultPrevented ||
       event.altKey ||
@@ -225,7 +271,7 @@ export function bindDesktopInput(
       event.metaKey ||
       event.isComposing ||
       !options.accepts() ||
-      !DESKTOP_KEYS.has(event.code) ||
+      binding === undefined ||
       onControl(event.target)
     ) {
       return;
@@ -233,7 +279,7 @@ export function bindDesktopInput(
     event.preventDefault();
     mode(true);
     const fresh = state.keyDown(event.code, event.repeat);
-    if (fresh && USE_KEYS.has(event.code)) {
+    if (fresh && binding === DESKTOP_FLIGHT_BINDINGS.use) {
       options.onUse?.();
     }
   };
