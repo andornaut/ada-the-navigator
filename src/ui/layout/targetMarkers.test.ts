@@ -184,3 +184,53 @@ describe("displayed marker bearing", () => {
     }
   });
 });
+
+describe("tracked objective placement", () => {
+  const extent = { height: 48, offset: { x: 0, y: -12 }, width: 120 };
+  const trackedContext = { ...context, extent: () => extent };
+  const track = (target: TargetMarker, onScreen = false) => ({
+    ...target,
+    onScreen,
+    trackedLabel: "Practice Channel",
+  });
+
+  it("clears the HUD along the same bearing with the measured tag included", () => {
+    const target = track(marker("tracked", 2000, 2000));
+    const ordinary = marker("ordinary", 2000, 2000);
+    const blocked = [{ height: 18, width: 104, x: 308, y: 326 }];
+    const [unchanged, result] = layoutTargetMarkers(
+      {
+        ...trackedContext,
+        blocked,
+        extent: (entry) => (entry.id === target.id ? extent : size),
+      },
+      [target, ordinary],
+    );
+    expect(unchanged!.at).toEqual({ x: 360, y: 347 });
+    expect(result!.anchor).toEqual({ x: 360, y: 347 });
+    expect(result!.at).toEqual({ x: 360, y: 310 });
+    expect(result!.crowded).toBe(false);
+    bearing(result!.at, { x: 0, y: 1 });
+  });
+
+  it("puts the whole marker above the projected target and slides around measured HUD ink", () => {
+    const target = track(marker("tracked", 80, 80), true);
+    const [clear] = layoutTargetMarkers(trackedContext, [target]);
+    expect(clear!.at).toEqual({ x: 360, y: 244 });
+    const blocked = [{ height: 12, width: 80, x: 320, y: 237 }];
+    const [avoided] = layoutTargetMarkers({ ...trackedContext, blocked }, [target]);
+    expect(avoided!.anchor).toEqual(clear!.at);
+    expect(avoided!.at).toEqual({ x: 360, y: 221 });
+    expect(avoided!.crowded).toBe(false);
+  });
+
+  it("keeps all the tracked ink inside the inset near the top corner", () => {
+    const target = track(marker("near-corner", -310, 40), true);
+    const [result] = layoutTargetMarkers(trackedContext, [target]);
+    expect(result!.at).toEqual({ x: 61, y: 37 });
+    const [hidden] = layoutTargetMarkers(trackedContext, [{ ...target, identified: false }]);
+    expect(hidden!.at).toEqual(
+      layoutTargetMarkers(trackedContext, [marker("plain", -310, 40)])[0]!.at,
+    );
+  });
+});

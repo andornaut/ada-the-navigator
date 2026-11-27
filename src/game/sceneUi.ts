@@ -1402,6 +1402,7 @@ export function renderConversation(scene: UiContext): void {
         markers.length > 0 ? markerFootprints(document, document.getElementById(VIEW_HOST_ID)) : [],
       color: `#${scene.palette.pointOfInterest.toString(16).padStart(6, "0")}`,
       light: scene.light,
+      reducedMotion: scene.reducedMotion,
       threat: `#${scene.palette.threat.toString(16).padStart(6, "0")}`,
     },
     markers,

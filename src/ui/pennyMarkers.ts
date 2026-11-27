@@ -2,17 +2,22 @@ import { opaqueBoundsOfRgba } from "@andornaut/game-kit/runtime/opaqueBounds";
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { EDGE_MARKER_GLYPHS } from "../data/edgeMarkers.ts";
+import { SCREEN } from "../data/screen.ts";
 import { TASK_COLORS } from "../data/taskCategories.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { LIGHT_FIELD } from "../game/lightField.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
 import type { Vec } from "../model/types.ts";
-import { pixels, units, VIEW_PROPERTIES } from "./layout/css.ts";
+import { font, pixels, units, VIEW_PROPERTIES } from "./layout/css.ts";
 import { frameDeviceOrigin, frameRect, turnOf } from "./layout/frameBox.ts";
 import { MAP_COLORS, MAP_FACES, MAP_SYMBOL } from "./layout/mapScreen.ts";
 import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
-import { layoutTargetMarkers, type TargetMarkerExtent } from "./layout/targetMarkers.ts";
-import { SPACING } from "./layout/tokens.ts";
+import {
+  layoutTargetMarkers,
+  type PresentedTargetMarker,
+  type TargetMarkerExtent,
+} from "./layout/targetMarkers.ts";
+import { SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { chipGlyph } from "./mapScreen.ts";
 const { question: BODY_QUESTION, size: SIZE } = PENNY_MARKER;
@@ -48,6 +53,18 @@ mask-size:${units(BODY_QUESTION.atlasWidth)} ${units(BODY_QUESTION.atlasHeight)}
 -webkit-mask-size:${units(BODY_QUESTION.atlasWidth)} ${units(BODY_QUESTION.atlasHeight)};
 mask-position:${units(-BODY_QUESTION.x)} ${units(-BODY_QUESTION.y)};
 -webkit-mask-position:${units(-BODY_QUESTION.x)} ${units(-BODY_QUESTION.y)}}
+.ada-penny-tracked-tag{position:absolute;left:50%;bottom:calc(100% + ${units(SPACING.rowGap)});
+transform:translateX(-50%);display:flex;align-items:center;gap:${units(SPACING.markGap)};
+width:max-content;max-width:${units(SCREEN.width / 3)};box-sizing:border-box;
+padding:0 ${units(SPACING.rowGap)};border-radius:${units(SPACING.rowGap)};
+color:${MAP_COLORS.cream};background:${MAP_COLORS.ink};font:${font(TYPE.label)};white-space:nowrap}
+.ada-penny-quest-badge{width:${units(TYPE.count.size)};height:${units(TYPE.count.size)};
+flex:none;background:currentColor;mask:url('${uiIconUrl("map-job")}') center / contain no-repeat;
+-webkit-mask:url('${uiIconUrl("map-job")}') center / contain no-repeat}
+.ada-penny-tracked-label{overflow:hidden;text-overflow:ellipsis}
+@media (forced-colors:active){
+.ada-penny-tracked-tag{forced-color-adjust:none;color:Canvas;background:CanvasText;
+border:${units(MAP_SYMBOL.edge)} solid Canvas}}
 `;
 const threatSymbol = (symbol: PennyMarker["symbol"]): symbol is ThreatSymbol =>
   (THREAT_SYMBOLS as readonly string[]).includes(symbol);
@@ -125,11 +142,46 @@ function maskInk(doc: Pick<Document, "createElement">, redraw: () => void) {
     },
   };
 }
+type PresentedPennyMarker = PennyMarker & Pick<PresentedTargetMarker, "onScreen" | "trackedLabel">;
+
+function setTrackedTag(
+  doc: Pick<Document, "createElement">,
+  node: HTMLElement,
+  label: string | undefined,
+): Element | undefined {
+  const old = node.lastElementChild;
+  const present = old !== node.firstElementChild ? old : null;
+  if (!label) {
+    present?.remove();
+    delete node.dataset.tracked;
+    return undefined;
+  }
+  node.dataset.tracked = "true";
+  if (present) {
+    const text = present.lastElementChild;
+    if (text && text.textContent !== label) {
+      text.textContent = label;
+    }
+    return present;
+  }
+  const tag = doc.createElement("span");
+  const badge = doc.createElement("span");
+  const text = doc.createElement("span");
+  tag.className = "ada-penny-tracked-tag";
+  badge.className = "ada-penny-quest-badge";
+  text.className = "ada-penny-tracked-label";
+  text.textContent = label;
+  tag.append(badge, text);
+  node.append(tag);
+  return tag;
+}
+
 interface DirectionStyle {
   readonly blocked?: readonly Rect[];
   readonly color: string;
   /** Whether the field draws foreground edges, so each enemy marker draws over its outline. */
   readonly light: boolean;
+  readonly reducedMotion?: boolean;
   readonly threat?: string;
 }
 /** Reuses the existing atlas question mark and approved category glyphs. */
@@ -142,11 +194,13 @@ export function createPennyMarkerLayer(
   layer.setAttribute("aria-hidden", "true");
   parent.append(layer);
   const nodes = new Map<string, HTMLElement>();
+  let previousObjective: { id: string; label: string } | undefined;
+  let pulse: Animation | undefined;
   let latest:
     | {
         area: Rect;
         directionStyle: DirectionStyle | undefined;
-        markers: readonly PennyMarker[];
+        markers: readonly PresentedPennyMarker[];
         player: Vec;
       }
     | undefined;
@@ -158,6 +212,7 @@ export function createPennyMarkerLayer(
   const view = {
     destroy() {
       latest = undefined;
+      pulse?.cancel();
       layer.remove();
       nodes.clear();
       assets.clear();
@@ -166,7 +221,7 @@ export function createPennyMarkerLayer(
       player: Vec,
       area: Rect,
       directionStyle: DirectionStyle | undefined,
-      markers: readonly PennyMarker[],
+      markers: readonly PresentedPennyMarker[],
     ) {
       latest = { area, directionStyle, markers, player };
       const style: DirectionStyle = directionStyle ?? {
@@ -174,6 +229,7 @@ export function createPennyMarkerLayer(
         light: false,
       };
       const shown = new Set<string>();
+      let tracked: { id: string; label: string; node: HTMLElement; tag: Element } | undefined;
       for (const marker of markers) {
         let node = nodes.get(marker.id);
         if (!node) {
@@ -206,7 +262,31 @@ export function createPennyMarkerLayer(
         } else {
           node.style.removeProperty("--glyph");
         }
+        const label = marker.identified ? marker.trackedLabel : undefined;
+        const tag = setTrackedTag(doc, node, label);
+        if (label && tag) {
+          tracked = { id: marker.id, label, node, tag };
+        }
         shown.add(marker.id);
+      }
+      if (style.reducedMotion || !tracked) {
+        pulse?.cancel();
+        pulse = undefined;
+      }
+      if (tracked) {
+        const { id, label, node } = tracked;
+        if (previousObjective?.id !== id || previousObjective.label !== label) {
+          pulse?.cancel();
+          pulse = style.reducedMotion
+            ? undefined
+            : node.animate?.(
+                [{ opacity: 0.55 }, { opacity: 1 }, { opacity: 0.72 }, { opacity: 1 }],
+                { duration: 360 },
+              );
+          previousObjective = { id, label };
+        }
+      } else if (shown.size > 0) {
+        previousObjective = undefined;
       }
       const unit = readViewUnit(layer);
       const dpr = globalThis.devicePixelRatio || 1;
@@ -264,6 +344,16 @@ export function createPennyMarkerLayer(
             right = Math.max(right, x + ink.width / scale);
             bottom = Math.max(bottom, y + ink.height / scale);
           }
+        }
+        // The opaque tag contains the badge and label. Measure just this one added region.
+        if (tracked?.id === marker.id) {
+          const tag = frameRect(turn, page, tracked.tag.getBoundingClientRect());
+          const x = tag.x / unit - paint.width / 2;
+          const y = tag.y / unit - paint.height / 2;
+          left = Math.min(left, x);
+          top = Math.min(top, y);
+          right = Math.max(right, x + tag.width / unit);
+          bottom = Math.max(bottom, y + tag.height / unit);
         }
         extents.set(marker.id, {
           height: bottom - top,

@@ -1,11 +1,18 @@
+import { clamp } from "@andornaut/game-kit/runtime/numbers";
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { EDGE_MARKERS } from "../../data/edgeMarkers.ts";
 import { edgePoint, gameAreaPoint } from "../../model/edgeMarkers.ts";
 import type { TargetMarker } from "../../model/targetMarkers.ts";
 import type { Vec } from "../../model/types.ts";
+/** Optional presentation fields on the same registry marker. */
+export interface PresentedTargetMarker extends TargetMarker {
+  readonly onScreen?: boolean;
+  readonly trackedLabel?: string;
+}
+
 export interface TargetMarkerPlacement<T extends TargetMarker = TargetMarker> {
-  /** The displayed centre is the ship-to-target ray intersection, including under the HUD. */
+  /** The preferred centre before tracked-only HUD clearance. */
   readonly anchor: Vec;
   readonly at: Vec;
   readonly crowded: boolean;
@@ -43,8 +50,82 @@ const bounds = (size: TargetMarkerExtent, at: Vec): Rect => ({
 });
 const overlaps = (a: Rect, b: Rect): boolean =>
   a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
-/** Overlap is diagnostic only: it never changes a target's displayed bearing. */
-export function layoutTargetMarkers<T extends TargetMarker>(
+/** Translate occupied HUD ink to the range of marker centres it rules out. */
+function blockedCentres(size: TargetMarkerExtent, gap: number, blocked: readonly Rect[]): Rect[] {
+  const offset = size.offset ?? { x: 0, y: 0 };
+  return blocked.map((box) => ({
+    height: box.height + size.height + 2 * gap,
+    width: box.width + size.width + 2 * gap,
+    x: box.x - offset.x - size.width / 2 - gap,
+    y: box.y - offset.y - size.height / 2 - gap,
+  }));
+}
+
+function rayInterval(start: number, delta: number, low: number, high: number): [number, number] {
+  if (delta === 0) {
+    return start > low && start < high ? [-Infinity, Infinity] : [Infinity, -Infinity];
+  }
+  const a = (low - start) / delta;
+  const b = (high - start) / delta;
+  return [Math.min(a, b), Math.max(a, b)];
+}
+
+/** Keep the tracked glyph on the bearing when the ink at its edge anchor meets the HUD. */
+function clearEdge(anchor: Vec, centre: Vec, blocked: readonly Rect[]): Vec {
+  const delta = { x: centre.x - anchor.x, y: centre.y - anchor.y };
+  const spans = blocked.map((box) => {
+    const [nearX, farX] = rayInterval(anchor.x, delta.x, box.x, box.x + box.width);
+    const [nearY, farY] = rayInterval(anchor.y, delta.y, box.y, box.y + box.height);
+    return { end: Math.min(farX, farY), start: Math.max(nearX, nearY) };
+  });
+  spans.sort((a, b) => a.start - b.start);
+  let at = 0;
+  for (const { end, start } of spans) {
+    if (start < at && end > at) {
+      at = end;
+    }
+  }
+  return at <= 1 ? { x: anchor.x + delta.x * at, y: anchor.y + delta.y * at } : anchor;
+}
+
+/** Prefer directly above the target, using the nearest clear position at or above that height. */
+function clearAbove(anchor: Vec, rect: Rect, blocked: readonly Rect[]): Vec {
+  const clear = (point: Vec) =>
+    !blocked.some(
+      (box) =>
+        point.x > box.x &&
+        point.x < box.x + box.width &&
+        point.y > box.y &&
+        point.y < box.y + box.height,
+    );
+  if (clear(anchor)) {
+    return anchor;
+  }
+  const xs = [anchor.x, ...blocked.flatMap((box) => [box.x, box.x + box.width])];
+  const ys = [anchor.y, ...blocked.map((box) => box.y)];
+  let best = anchor;
+  let distance = Infinity;
+  for (const x of xs) {
+    for (const y of ys) {
+      const next = (x - anchor.x) ** 2 + (y - anchor.y) ** 2;
+      if (
+        next < distance &&
+        x >= rect.x &&
+        x <= rect.x + rect.width &&
+        y >= rect.y &&
+        y <= anchor.y &&
+        clear({ x, y })
+      ) {
+        best = { x, y };
+        distance = next;
+      }
+    }
+  }
+  return best;
+}
+
+/** Ordinary marker overlap remains diagnostic. Tracked ink also clears the known HUD. */
+export function layoutTargetMarkers<T extends PresentedTargetMarker>(
   context: TargetMarkerLayout<T>,
   markers: readonly T[],
 ): TargetMarkerPlacement<T>[] {
@@ -81,10 +162,27 @@ export function layoutTargetMarkers<T extends TargetMarker>(
         y: top + size.height / 2 - offset.y,
       };
       const destination = gameAreaPoint(context.player, target);
-      const anchor = edgePoint(rect, 0, centre, destination);
-      const box = bounds(size, anchor);
+      const tracked = target.identified && Boolean(target.trackedLabel);
+      const inWorld = tracked && target.onScreen === true;
+      const anchor = inWorld
+        ? {
+            x: clamp(rect.x, rect.x + rect.width, destination.x),
+            y: clamp(
+              rect.y,
+              rect.y + rect.height,
+              destination.y - context.gap - size.height / 2 - offset.y,
+            ),
+          }
+        : edgePoint(rect, 0, centre, destination);
+      const blocked = tracked ? blockedCentres(size, context.gap, context.blocked) : [];
+      const at = !blocked.length
+        ? anchor
+        : inWorld
+          ? clearAbove(anchor, rect, blocked)
+          : clearEdge(anchor, centre, blocked);
+      const box = bounds(size, at);
       const crowded = [...context.blocked, ...placed].some((other) => overlaps(box, other));
       placed.push(box);
-      return { anchor, at: anchor, crowded, target };
+      return { anchor, at, crowded, target };
     });
 }
