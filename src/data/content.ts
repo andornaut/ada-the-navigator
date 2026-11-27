@@ -371,11 +371,11 @@ export const CONTENT: GameContent = {
     activityFamily:
       "One of our young ones swam off to play. Could you guide them home? Stay close. They follow friends.",
     activityGrower: "Fresh food for the station traders. Would you carry it?",
+    activityKeep: "Keep activity",
     activityLoom: "The long course is open. Ten rings. Slow down before each one.",
     activityPip:
       "I've got a parcel for the far settlement. Fly with me? It's less scary with company.",
     activityPipChoice: "Drones patrol the way to the outpost. How should we get past them?",
-    activityKeep: "Keep activity",
     activityPipScout: "Scout ahead",
     activityPipStay: "Stay with Pip",
     activityPipUnavailable: "I don't have a route ready yet. Check back later.",

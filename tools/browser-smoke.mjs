@@ -790,9 +790,7 @@ try {
     assert.ok(canvas, "The game surface has a box");
     await page.touchscreen.tap(canvas.x + canvas.width * 0.3, canvas.y + canvas.height * 0.55);
   }
-  // Talk opens the Interaction card (src/ui/conversation.ts) in its own modal, Skip and the close X
-  // in its frame. Skip goes to its outcome, which ends the exchange where Continue is its only
-  // choice; otherwise Continue is taken there.
+  // Talk opens the Interaction card with its own close X. Skip is present only on eligible pages.
   const interactionCard = () => page.locator(".ada-interaction-modal");
   // The Interaction card's HUD row (art/layout.md "Storybook page"): the close X in the Settings
   // slot and Skip beside it. Their press areas do not overlap, and a press at each one's centre
@@ -818,7 +816,7 @@ try {
           at(rect.right - 1, rect.top + rect.height / 2),
         ];
       };
-      const skip = modal.querySelector('[data-action="dialogue-skip"]');
+      const skip = modal.querySelector('[data-action="dialogue-skip"]:not([hidden])');
       const close = modal.querySelector('[data-action="conversation-close"]');
       // The inputs the HUD rect comes from, as the view-scale bridge set them.
       const property = (element, name) => getComputedStyle(element).getPropertyValue(name).trim();
@@ -849,39 +847,33 @@ try {
         close: box(close),
         closeHits: hits(close),
         inputs,
-        skip: box(skip),
-        skipHits: hits(skip),
+        skip: skip ? box(skip) : null,
+        skipHits: skip ? hits(skip) : [],
       };
     });
     await page.screenshot({ path: `${output}/${name}.png` });
     assert.ok(
-      row.skip[1] <= row.close[0] && row.skipHits.every(Boolean) && row.closeHits.every(Boolean),
-      `${name}: Skip and the close X do not overlap and each takes its own press: ${JSON.stringify(row)}`,
+      row.closeHits.every(Boolean) &&
+        (row.skip === null || (row.skip[1] <= row.close[0] && row.skipHits.every(Boolean))),
+      `${name}: the close X and any eligible Skip take distinct presses: ${JSON.stringify(row)}`,
     );
     return row;
   }
-  // Skip ends the exchange, or reaches its last page, which Continue closes. Either can take a
-  // while under load, so this waits for one or the other rather than for a fixed time.
+  // Follow linear pages and skip when offered. Closing at a fork leaves any material choice alone.
   async function leaveInteraction() {
-    await interactionCard().locator('[data-action="dialogue-skip"]').click();
-    const continueButton = interactionCard().getByRole("button", {
-      name: CONTENT.labels.continue,
-      exact: true,
-    });
-    // Each wait settles either way, so the one that loses the race cannot reject unhandled.
-    const settles = (wait) =>
-      wait.then(
-        () => true,
-        () => false,
-      );
-    await Promise.race([
-      settles(interactionCard().waitFor({ state: "hidden" })),
-      settles(continueButton.waitFor({ state: "visible" })),
-    ]);
-    if (await continueButton.isVisible()) {
-      await continueButton.click();
+    const card = interactionCard();
+    const skip = card.locator('[data-action="dialogue-skip"]:visible');
+    const next = card.getByRole("button", { name: CONTENT.labels.next, exact: true });
+    for (let step = 0; step < 24 && (await card.isVisible()); step += 1) {
+      if (await skip.isVisible()) {
+        await skip.click();
+      } else if (await next.isVisible()) {
+        await next.click();
+      } else {
+        await card.locator('[data-action="conversation-close"]').click();
+      }
     }
-    await interactionCard().waitFor({ state: "hidden" });
+    await card.waitFor({ state: "hidden" });
   }
   async function tapUse(name) {
     const use = page.getByRole("button", { name, exact: true });
@@ -2393,6 +2385,11 @@ try {
     ).y - insetLayout.hudRect(PHONE_INSETS, interactionInsets.view).y;
   for (const part of ["close", "skip"]) {
     const [plain, inset] = [interactionRows["1280x720"], interactionRows["720x360-insets"]];
+    if (plain[part] === null) {
+      assert.equal(inset[part], null, "Insets do not alter Skip eligibility");
+      continue;
+    }
+    assert.ok(inset[part]);
     assert.ok(
       near(
         inset[part],
@@ -2413,8 +2410,8 @@ try {
   await page.waitForTimeout(250);
   save("interaction-hud-proof.json", interactionRows);
   events.checks.push(
-    "The Interaction card's close X takes the Settings slot with Skip beside it, their press " +
-      "areas apart, at 1280x720, 844x390 and 720x360 with insets",
+    "The Interaction card's close X and any eligible Skip retain distinct press areas across " +
+      "1280x720, 844x390 and 720x360 with insets",
   );
   await leaveInteraction();
   events.checks.push(
