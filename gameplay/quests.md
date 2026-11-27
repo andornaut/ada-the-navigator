@@ -680,7 +680,7 @@ the final delivery rewards. Stored base rewards use the same one-time
 | --------- | ----------------- | ------------------- | ----------------------------------------------------------------- | ---------: |
 | Sunflower | Supply run        | Any of the outposts | Carry supplies to a station 3000 or more away.                    | 200 or 300 |
 | Whirlpool | Guide a calf      | The whale family    | Lead a whale calf 5000 to 8000 world units home to them.          |        450 |
-| Needle    | Thread the needle | Elder Loom          | Light the 8 gates of a practice channel.                          |        600 |
+| Needle    | Thread the needle | Elder Loom          | Clear the 10 rings of the long course.                            |        200 |
 | Andromeda | Courier run       | Pip                 | Fly a parcel with Pip to a settlement, keeping within 600 of him. |        700 |
 | Cartwheel | Mining contract   | The hub             | Deposit 30 ore at the hub; partial loads count.                   |        750 |
 
@@ -713,11 +713,30 @@ the final delivery rewards. Stored base rewards use the same one-time
   Pip takes no damage, and drones ignore him; one drone patrol waits along the
   way. Pip reaching the settlement completes the activity. Leaving the galaxy or a
   shield-depletion jump returns Pip to his start; closing the game or Back to
-  title keeps the run for Continue.
+  title keeps the run for Continue. Before accepting, Pip names the route's
+  existing patrol complication: “Drones patrol the way to the outpost. How
+  should we get past them?” Offer “Scout ahead”, “Stay with Pip” and “Not now”
+  once valid route terms exist. Both approaches use the same destination and
+  reward. The escort keeps the existing 600-unit follow rule. On Scout ahead,
+  Pip waits at the start while Ada approaches the marked patrol area. Once she
+  reaches the area, Astra says “That's the patrol. Head back to Pip and he'll
+  follow you.” Returning within the follow range resumes the ordinary escort.
+  After leaving follow range, returning early also resumes the escort. Neither route
+  requires defeating the patrol. Continue retains the selected approach and
+  route state. A missing route shows “I don't have a route ready yet. Check back
+  later.” and offers no acceptance.
 - **Thread the needle**: a gate run (see [Needle](rules.md#galaxy-three-needle-threading-the-needle))
-  through a seeded practice channel of 8 gates near Elder Loom. A gate passed too
-  fast sends Ada back to the last lit gate, or the first if none is lit. Lighting the last gate completes the
-  activity.
+  through a seeded ten-ring channel near Elder Loom. Consecutive rings are
+  30% farther apart than in the original repeatable course. Enemies may appear
+  alongside it, with ring openings kept clear. A fast crossing points back to
+  the missed ring and keeps the earlier progress. Clearing the last ring
+  completes the activity and pays the usual 200 Stardust. The optional
+  “Clean run” goal means clearing every ring without a crossing rejected for
+  speed or order. Show it in Quest Details, and on a clean finish say
+  “Clean run! Every ring on the first try.” Keep the result through Continue
+  for the current attempt. A new run starts a new attempt. A missed ring
+  clears the clean-run goal for this attempt and leaves completion and payout
+  available.
 
 Activity lines:
 
@@ -728,7 +747,7 @@ Activity lines:
   home? Stay close. They follow friends."
 - Pip: "I've got a parcel for the far settlement. Fly with me? It's less scary
   with company."
-- Elder Loom: "The practice channel is open. Thread it again, slowly."
+- Elder Loom: "The long course is open. Ten rings. Slow down before each one."
 
 | Key                 | Text                                                                                    |
 | ------------------- | --------------------------------------------------------------------------------------- |

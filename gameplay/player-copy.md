@@ -506,12 +506,12 @@ Optional topics:
 - Ada: "Can I try a shorter channel first?"
 - Elder Loom: "Follow the green flag to the Practice Channel. That's where the
   first ring is."
-- Ada: "Three gates first. I'll take my time."
+- Ada: "Four gates first. I'll take my time."
 
 Optional topics:
 
 - "Why practice?" Elder Loom: "The Eye is our narrowest channel. Learn the gates here first."
-- "How many practice gates?" Elder Loom: "Three. One gate at a time."
+- "How many practice gates?" Elder Loom: "Four. One gate at a time."
 
 ### Needle copy anchor: practice complete: PARTY Elder Loom
 
@@ -528,7 +528,7 @@ Optional topics:
 Automatic reactions remain short:
 
 - Elder Loom, in response to a gate passed too fast: "Slow down before the ring. Then try again."
-- Ada, lighting the Eye's last gate: "Eight gates! I did it, one at a time."
+- Ada, lighting the Eye's last gate: "Ten gates! I did it, one at a time."
 - Astra, at the Eye's exit: "Drones ahead, Navigator. They've been waiting for us."
 
 Practice feedback responds to attempts. Independent mode has no unsolicited
@@ -559,8 +559,8 @@ Objectives, in order:
 
 1. Explore the galaxy.
 2. Meet Elder Loom.
-3. Start at the Practice Channel’s green flag and clear its three rings.
-4. Start at the Eye’s green flag and clear its eight rings.
+3. Start at the Practice Channel’s green flag and clear its four rings.
+4. Start at the Eye’s green flag and clear its ten rings.
 5. Collect the holodisk.
 6. Go home to Earth when ready.
 

@@ -412,7 +412,9 @@ Returning to it preserves cleared rings and can repeat the instruction on a
 new approach. See [Needle dialogue](player-copy.md#needle-copy-anchor-course-start-party-elder-loom).
 
 Debris in the channel drifts slowly and deals bump damage. The practice run
-has 3 gates and the Eye has 8, with the holodisk beyond the last. No enemies
+has four gates at the original practice spacing. The Eye has ten gates spaced
+30% farther apart than in its previous layout, with the holodisk beyond the
+last. No enemies
 enter a gate run. Archie's drones wait outside the Eye's exit, so Ada leaves
 with the holodisk and fights her way clear.
 
@@ -428,7 +430,7 @@ Channels are 210 world units wide, 150 in the Eye, and each ring gate's opening
 is 66. A gate counts as passed when Ada's centre crosses it inside the opening;
 its rim bumps the ship aside like scenery but deals no damage. Every gate stands at least 30 degrees
 off screen horizontal, so the upright hoop never reads edge-on. The Eye is an
-almond of drifting debris around its channel, with the 8 gates along it and the
+almond of drifting debris around its channel, with the ten gates along it and the
 holodisk past the last. The drone pack waits beyond the exit, outside the
 channel.
 
