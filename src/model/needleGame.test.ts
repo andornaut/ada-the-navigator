@@ -4,9 +4,12 @@ import { ACTIVITIES } from "../data/activities.ts";
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { PHASER_AIM_SECONDS } from "../data/enemyCatalog.ts";
 import { BUILT, GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import { NEEDLE } from "../data/needle.ts";
+import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { BEAM } from "../data/weaponCatalog.ts";
 import { ControlState } from "../input/state.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
@@ -19,6 +22,7 @@ import { GAME_AREA } from "./edgeMarkers.ts";
 import { damageEnemy, enemyFireLine } from "./enemyAi.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
+import { enemyBeamReach } from "./enemyProjectiles.ts";
 import { activeCrossbowSector, activeEnemyBeams, ensureStation } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
@@ -27,7 +31,6 @@ import { stationPopulationObjects } from "./hostileStations.ts";
 import { inNeedleChannel, needleCourses, type NeedleGate } from "./needle.ts";
 import { NEEDLE_ACTIVITY_TARGET } from "./needleActivity.ts";
 import { NEEDLE_CADENCE, needleTrackedObjective } from "./needleRuntime.ts";
-import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
 import { stationsNear } from "./stations.ts";
 import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 import { wrapPoint } from "./worldGeometry.ts";
@@ -252,74 +255,114 @@ describe("Captain Cadence admission and outcome", () => {
       flight.player = { x: boss.x + direction.x * 245, y: boss.y + direction.y * 245 };
       flight.velocity = { x: 0, y: 0 };
     };
-    const tells = new Set<number>();
-    const fired = new Map<number, number>();
-    let aimStayedFixed = false;
+    const phaser = definition.hardpoints.find(
+      (part) => part.kind === "weapon" && part.fire.weapon === "phaser",
+    );
+    if (!phaser || phaser.kind !== "weapon") {
+      throw new Error("Crossbow must have a Phaser hardpoint");
+    }
+    const tells = new Map<
+      number,
+      {
+        beam: ReturnType<typeof activeEnemyBeams>[number];
+        side: number;
+      }
+    >();
+    const fired = new Set<number>();
     model.step(0.02, idle);
     expect(activeCrossbowSector(flight)?.phase).toBe("warning");
-    for (let frame = 0; frame < 1300 && new Set(fired.values()).size < 2; frame++) {
+    for (let frame = 0; frame < 1300 && fired.size < 2; frame++) {
       const sector = activeCrossbowSector(flight)!;
-      const heading = sector.bearing + (sector.sector[0] + sector.sector[1]) / 2;
-      place(heading);
-      const enemy = boss.enemy!;
-      const phaser = definition.hardpoints.find(
-        (part) => part.kind === "weapon" && part.fire.weapon === "phaser",
+      const side = Math.sign(sector.sector[0]);
+      const pending = activeEnemyBeams(flight).find(
+        (beam) => beam.ownerId === id && beam.kind === "phaser" && !beam.fired,
       );
-      expect(phaser).toBeDefined();
-      const mount = enemy.hardpoints.find(({ id }) => id === phaser!.id)!;
-      // Select a drawn approach angle with the checked mount on the firing side of the hull.
-      mount.aim = into(heading);
-      for (let slot = 0; slot < 24; slot++) {
-        enemy.facing = into(heading + (slot * Math.PI) / 12);
-        const line = enemyFireLine(
-          definition,
-          CONTENT.tuning.flight.shipRadius * 2,
-          mount.id,
-          0,
-          enemy,
-        );
-        if (
-          line &&
-          crossbowContainsAttack(world, sector, {
-            from: line.origin,
-            screenRadius: 4,
-            travel: worldDelta(world, line.origin, flight.player),
-          })
-        ) {
-          break;
+      const heading = pending
+        ? sector.bearing
+        : sector.bearing + (sector.sector[0] + sector.sector[1]) / 2;
+      place(heading);
+      if (!pending) {
+        const enemy = boss.enemy!;
+        const mount = enemy.hardpoints.find(({ id }) => id === phaser.id)!;
+        mount.aim = into(heading);
+        const volley = Math.floor((enemy.age + mount.cooldown) / phaser.fire.interval);
+        // Set up a legal drawn muzzle with enough room for the entire Phaser beam.
+        for (let slot = 0; slot < 24; slot++) {
+          const facing = into(heading + (slot * Math.PI) / 12);
+          const line = enemyFireLine(
+            definition,
+            CONTENT.tuning.flight.shipRadius * 2,
+            mount.id,
+            volley,
+            { ...enemy, facing },
+          );
+          if (!line) {
+            continue;
+          }
+          const range = enemyBeamReach(
+            { centre: sector.vertex, viewportHeight: SCREEN.height, viewportWidth: SCREEN.width },
+            line,
+          );
+          if (
+            range > 0 &&
+            crossbowContainsAttack(world, sector, {
+              from: line.origin,
+              screenRadius: BEAM.halfWidth,
+              travel: { x: line.aim.x * range, y: line.aim.y * range },
+            })
+          ) {
+            enemy.facing = facing;
+            break;
+          }
         }
       }
       flight.shield = model.shieldMax;
-      // Keep the authored course and isolate both timing windows from generated rock cover.
-      flight.objects = flight.objects.filter(
-        ({ id, kind }) => kind !== "rock" && !id.startsWith(MOVING_ROCK_PREFIX),
-      );
+      const centre = sector.vertex;
       model.step(0.02, idle);
       for (const beam of activeEnemyBeams(flight)) {
         if (beam.kind !== "phaser" || beam.ownerId !== id) {
           continue;
         }
-        if (beam.fired) {
-          fired.set(beam.volley, Math.sign(sector.sector[0]));
-        } else {
-          tells.add(beam.volley);
-          if (!aimStayedFixed && beam.age > 0.05) {
-            const { direction, muzzle, volley } = structuredClone(beam);
-            place(sector.bearing);
-            model.step(0.02, idle);
-            expect(
-              activeEnemyBeams(flight).find(
-                (next) => next.ownerId === id && next.volley === volley,
-              ),
-            ).toMatchObject({ direction, muzzle });
-            aimStayedFixed = true;
-          }
+        const tell = tells.get(beam.volley);
+        if (!tell) {
+          expect(beam.fired).toBe(false);
+          expect(beam.age).toBeLessThan(PHASER_AIM_SECONDS);
+          expect(sector.phase).toBe("active");
+          expect(sector.fireRemaining).toBeGreaterThan(PHASER_AIM_SECONDS);
+          expect(beam.range).toBeCloseTo(
+            enemyBeamReach(
+              { centre, viewportHeight: SCREEN.height, viewportWidth: SCREEN.width },
+              { aim: beam.direction, origin: beam.muzzle },
+            ),
+          );
+          expect(
+            crossbowContainsAttack(world, sector, {
+              from: beam.muzzle,
+              screenRadius: BEAM.halfWidth,
+              travel: { x: beam.direction.x * beam.range, y: beam.direction.y * beam.range },
+            }),
+          ).toBe(true);
+          tells.set(beam.volley, { beam: structuredClone(beam), side });
+          continue;
+        }
+        const { direction, end, muzzle, range } = tell.beam;
+        expect(beam).toMatchObject({ direction, end, muzzle, range });
+        if (beam.fired && pending?.volley === beam.volley) {
+          expect(side).toBe(tell.side);
+          expect(sector.phase).toBe("active");
+          expect(beam.age).toBeGreaterThanOrEqual(PHASER_AIM_SECONDS);
+          const currentSector = activeCrossbowSector(flight)!;
+          const offset = worldDelta(world, currentSector.vertex, flight.player);
+          const lane = into(currentSector.bearing);
+          expect(offset.x * lane.x + offset.y * lane.y).toBeGreaterThan(
+            Math.hypot(offset.x, offset.y) * Math.cos(currentSector.laneHalfAngle),
+          );
+          expect(beam.impact).toBeUndefined();
+          fired.add(side);
         }
       }
     }
-    expect(aimStayedFixed).toBe(true);
-    expect(new Set(fired.values())).toEqual(new Set([1, -1]));
-    expect([...fired.keys()].every((volley) => tells.has(volley))).toBe(true);
+    expect(fired).toEqual(new Set([1, -1]));
     expect(model.bossHud()).toMatchObject({
       captain: "Captain Cadence",
       hull: definition.hp,
@@ -328,6 +371,7 @@ describe("Captain Cadence admission and outcome", () => {
       ship: "Crossbow",
     });
     const clocks = structuredClone(boss.enemy!.hardpoints);
+    expect(clocks.find(({ id }) => id === phaser.id)!.cooldown).toBeGreaterThan(0);
     model = relaunch(CONTENT, model.save());
     flight = model.state.flight!;
     expect(capitalBossActor(flight, id)?.enemy?.hardpoints).toEqual(clocks);
