@@ -5,6 +5,7 @@ import {
   ENEMY_ONLY_DAMAGE,
   enemyDefinition,
   enemyFire,
+  enemyOnly,
   fireDamageRatio,
   PHANTOM_FLAGSHIP_ID,
 } from "./enemyCatalog.ts";
@@ -75,33 +76,19 @@ it.each([
       const capitalIds = galaxy === 6 ? ["", PHANTOM_FLAGSHIP_ID] : [""];
       for (const id of capitalIds) {
         const capital = enemyDefinition(galaxy, "capital", id, level);
-        const shared = capital.hardpoints.flatMap((part) =>
-          part.kind === "weapon" &&
-          (part.fire.weapon === "laser" || part.fire.weapon === "scattershot")
-            ? [part.fire]
-            : [],
-        );
-        expect(shared.map(({ weapon }) => weapon)).toEqual(
-          expect.arrayContaining(["laser", "scattershot"]),
-        );
-        for (const fire of shared) {
-          check(
-            fire,
-            fire.weapon as "laser" | "scattershot",
-            fire.weapon === "laser" ? standard : faster,
-          );
-        }
-        const special = capital.hardpoints.find(
-          (part) =>
-            part.kind === "weapon" &&
-            (part.fire.weapon === "chargedLance" || part.fire.weapon === "mineLayer"),
-        );
-        expect(special?.kind).toBe("weapon");
-        if (special?.kind === "weapon") {
-          expect(special.fire.level).toBe(1);
-          expect(special.fire.interval).toBe(
-            special.fire.weapon === "mineLayer" ? 2 : lanceSeconds,
-          );
+        const parts = capital.hardpoints.filter((part) => part.kind === "weapon");
+        expect(parts.filter((part) => part.fixed).map((part) => part.fire.weapon)).toEqual([
+          "laser",
+          "laser",
+        ]);
+        expect(parts.some(({ fire }) => enemyOnly(fire.weapon))).toBe(true);
+        for (const { fire, fixed } of parts) {
+          if (enemyOnly(fire.weapon)) {
+            expect(fire.level).toBe(1);
+            expect(fire.interval).toBe(fire.weapon === "mineLayer" ? 2 : lanceSeconds);
+          } else {
+            check(fire, fire.weapon, fixed ? standard : faster);
+          }
         }
       }
 

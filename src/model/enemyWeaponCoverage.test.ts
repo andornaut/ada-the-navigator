@@ -19,12 +19,13 @@ import {
 import { GameModel } from "./game.ts";
 import type { SpaceObject } from "./types.ts";
 
-it("materializes the signature roster and both exclusive capital profiles through admitted production actors", () => {
+it("materializes signature and boss weapons through admitted production actors", () => {
   const witnessed = new Set<EnemyWeapon>();
   const observe = (
     galaxy: GalaxyNumber,
     object: SpaceObject,
     sharedRates: Partial<Record<Weapon, number>> = {},
+    fixedLaserRate?: number,
   ) => {
     const enemy = object.enemy!;
     const definition = enemyEquipmentDefinition(galaxy, enemy);
@@ -32,14 +33,17 @@ it("materializes the signature roster and both exclusive capital profiles throug
       ? definition.hardpoints.flatMap((part) =>
           part.kind === "weapon" &&
           enemy.hardpoints.some((state) => state.id === part.id && state.hp > 0)
-            ? [part.fire]
+            ? [{ fire: part.fire, fixed: part.fixed === true }]
             : [],
         )
-      : [definition.fire];
+      : [{ fire: definition.fire, fixed: false }];
     const weapons = new Set<EnemyWeapon>();
-    for (const { interval, level, weapon } of profiles) {
+    for (const {
+      fire: { interval, level, weapon },
+      fixed,
+    } of profiles) {
       const shared = weapon as Weapon;
-      const rate = sharedRates[shared];
+      const rate = weapon === "laser" && fixed ? fixedLaserRate : sharedRates[shared];
       if (rate !== undefined) {
         expect(interval).toBeCloseTo(weaponAt(shared, level).intervalSeconds / rate, 12);
       }
@@ -76,8 +80,8 @@ it("materializes the signature roster and both exclusive capital profiles throug
   admitRedactEncounter(CONTENT, andromeda, { x: 1000, y: 0 }, { x: 2000, y: 0 });
   const redact = capitalBossActor(andromeda, ANDROMEDA_REDACT.id);
   expect(redact?.enemy?.archetype).toBe("capital");
-  expect(observe(5, redact!, { laser: 0.35, scattershot: 0.5 })).toEqual(
-    new Set(["laser", "scattershot", "chargedLance"]),
+  expect(observe(5, redact!, { heavyMissile: 0.5, scattershot: 0.5 }, 0.35)).toEqual(
+    new Set(["laser", "scattershot", "chargedLance", "heavyMissile"]),
   );
 
   const seeds = [173, 301];
@@ -91,7 +95,7 @@ it("materializes the signature roster and both exclusive capital profiles throug
   expect(placeCartwheelClaim(CONTENT, cartwheel, hub)).not.toBeNull();
   const claim = capitalBossActor(cartwheel, CARTWHEEL_CLAIM.id);
   expect(claim?.enemy?.archetype).toBe("capital");
-  expect(observe(2, claim!, { laser: 0.45, scattershot: 0.6 })).toEqual(
+  expect(observe(2, claim!, { laser: 0.6, scattershot: 0.6 }, 0.45)).toEqual(
     new Set(["laser", "scattershot", "mineLayer"]),
   );
 

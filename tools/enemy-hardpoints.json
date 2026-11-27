@@ -65,7 +65,7 @@
           "role": "turret"
         },
         {
-          "fire": "dot",
+          "fire": "bolt",
           "id": "weapon-right",
           "offset": [0.34740740740740744, -0.2977777777777778],
           "order": 4,

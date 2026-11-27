@@ -22,14 +22,15 @@ export const HEAVY_SIGNATURES = {
   capital: {
     lance: { mount: "weapon-left", weapon: "chargedLance" },
     mine: { mount: "stern-right", weapon: "mineLayer" },
+    pointDefense: "scattershot",
     remaining: "laser",
   },
   frigate: { mount: "port", remaining: "laser", weapon: "heavyMissile" },
 } as const;
 
 const POINT_DEFENSE_MOUNTS = {
-  "weapon-rear-left": "scattershot",
-  "weapon-rear-right": "scattershot",
+  "weapon-rear-left": HEAVY_SIGNATURES.capital.pointDefense,
+  "weapon-rear-right": HEAVY_SIGNATURES.capital.pointDefense,
 } as const;
 
 /** Named capital turret overrides in route order. Other active mounts carry Laser. */
