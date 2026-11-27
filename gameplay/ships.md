@@ -244,9 +244,9 @@ pace by buying shield, weapon and engine upgrades, and by flying better. The
 target is that a fully upgraded Ada at position 6 meets about the same pressure as
 a new Ada at position 1.
 
-One tuning value, `difficultyScale` (1), multiplies every enemy hit point, the
-enemy-only weapon fire rate and the encounter rate at every position, so the whole curve can be
-tuned at once. Small-craft Stardust drops use unscaled hull hit points. Heavy rewards are fixed
+One tuning value, `difficultyScale` (1), multiplies every enemy hit point and the
+encounter rate at every position. Weapon cadence uses the explicit intervals
+and shares in [Enemy weapons](#enemy-weapons). Small-craft Stardust drops use unscaled hull hit points. Heavy rewards are fixed
 independently of hull HP, part HP and mount counts, so tuning them leaves
 the economy unchanged. It is not a player setting: there is one forgiving difficulty.
 
@@ -255,14 +255,14 @@ deals 1 damage.
 
 Small craft:
 
-| Position | `swarm` | `fighter` | `interceptor` | `retaliator` | Group bonus | Lead | Notice |  Fire |
-| -------: | ------: | --------: | ------------: | -----------: | ----------: | ---: | -----: | ----: |
-|        1 |       2 |         4 |             3 |            8 |          +1 |  20% |   +20% |  +44% |
-|        2 |       2 |         5 |             3 |            9 |          +1 |  40% |   +30% |  +63% |
-|        3 |       3 |         5 |             4 |           10 |          +2 |  60% |   +40% |  +81% |
-|        4 |       3 |         6 |             4 |           11 |          +2 |  80% |   +45% |  +88% |
-|        5 |       3 |         6 |             5 |           11 |          +3 |  90% |   +50% |  +94% |
-|        6 |       3 |         6 |             5 |           12 |          +3 | 100% |   +50% | +100% |
+| Position | `swarm` | `fighter` | `interceptor` | `retaliator` | Group bonus | Lead | Notice |
+| -------: | ------: | --------: | ------------: | -----------: | ----------: | ---: | -----: |
+|        1 |       2 |         4 |             3 |            8 |          +1 |  20% |   +20% |
+|        2 |       2 |         5 |             3 |            9 |          +1 |  40% |   +30% |
+|        3 |       3 |         5 |             4 |           10 |          +2 |  60% |   +40% |
+|        4 |       3 |         6 |             4 |           11 |          +2 |  80% |   +45% |
+|        5 |       3 |         6 |             5 |           11 |          +3 |  90% |   +50% |
+|        6 |       3 |         6 |             5 |           12 |          +3 | 100% |   +50% |
 
 Heavies:
 
@@ -323,30 +323,37 @@ retain the result within the flight; a fresh galaxy entry resets enemies and
 rolls new loadouts. Rolls use a dedicated stream independent of geography,
 encounter composition, ship identity/profile selection and loot.
 
-| Galaxy    | Level 1 | Level 2 | Level 3 | Shared fire-rate share |
-| --------- | ------: | ------: | ------: | ---------------------: |
-| Sunflower |    100% |      0% |      0% |                    25% |
-| Whirlpool |     75% |     25% |      0% |                    25% |
-| Needle    |     50% |     50% |      0% |                    30% |
-| Andromeda |     25% |     75% |      0% |                    30% |
-| Cartwheel |      0% |     75% |     25% |                    35% |
-| Phantom   |      0% |     50% |     50% |                    35% |
+| Galaxy    | Level 1 | Level 2 | Level 3 |
+| --------- | ------: | ------: | ------: |
+| Sunflower |    100% |      0% |      0% |
+| Whirlpool |     75% |     25% |      0% |
+| Needle    |     50% |     50% |      0% |
+| Andromeda |     25% |     75% |      0% |
+| Cartwheel |      0% |     75% |     25% |
+| Phantom   |      0% |     50% |     50% |
 
-Shared weapon intervals are the player's interval at the equipped level divided
-by the galaxy's fire-rate share and existing ship rate modifiers. A frigate's
-Heavy Missile uses 2 and its Laser mounts use 1, capitals including the flagship
-use 1.5, and platforms use 1.5; other ships and hostile stations use 1. Swarm Laser retains its 7/9 relative rate and industrial
-Rapid Missile its 5/4 relative rate. These shares replace the shared weapons'
-absolute enemy intervals and position fire curve; the old values do not stack.
-Platform bursts retain two shots 0.15 seconds apart. Warning times are unchanged.
-Enemy-only weapons retain their own base intervals and position fire curve.
+Each shared-weapon mount fires at the listed fraction of Ada's rate for the
+same weapon at the same level. Divide Ada's interval by the listed fraction
+to get the enemy mount's interval. Fixed front Lasers on frigates, capitals and
+the flagship always use 25%, 35% and 45% by route pair. Other shared weapons on
+capitals and the flagship use the higher band.
 
-Frigate and capital weapon clocks initialize on their first eligible firing
-step, in stable mount fill order excluding engine, command and capped mounts.
+| Enemy weapon or mount                                                                                | Sunflower / Whirlpool | Needle / Andromeda | Cartwheel / Phantom |
+| ---------------------------------------------------------------------------------------------------- | --------------------: | -----------------: | ------------------: |
+| Fighter Multi-Laser, Swarm Laser, Interceptor Phaser, Frigate Laser, Hostile Station Rapid Missile   |                   25% |                35% |                 45% |
+| Retaliator Rapid Missile, frigate Heavy Missile, capital and flagship shared weapons, platform Laser |                   40% |                50% |                 60% |
+
+Platform bursts fire two shots 0.15 seconds apart. Warning times are unchanged.
+Enemy-only attacks use the fixed intervals below in the galaxies where they
+appear.
+
+Frigate, capital and hostile-station weapon clocks initialize on their first
+eligible firing step, in stable mount fill order excluding engine, command and
+capped mounts. This includes the flagship and the station's Ring Burst mount.
 Mount index i of N starts after (i / N) times its own final interval. Ineligible
 time pauses cooldowns and burst positions. Disabling a mount never reindexes
 the others. Initialized clocks and burst state persist through saves; later
-coincident shots are allowed. Platforms and stations do not use these phases.
+coincident shots are allowed. Turret platforms use continuous clocks.
 
 Shared weapon damage is 100% of the player's damage at the equipped level.
 Blast, spread and reach use that level's canonical weapon definition; more fan
@@ -397,16 +404,18 @@ is centred on its facing.
 
 Projectile speeds are world units per second. The three enemy-only weapons:
 
-- **Ring burst:** 8 bolts outward in a ring, 1.5 damage each, every 3.5 seconds,
-  at 320 world units per second, raised by the same 0.8 to 0.6 ratio as
-  heavies' shared weapons.
-- **Mine layer:** drops a stationary mine behind the ship every 5 seconds, at most
-  4 at a time. A mine deals 3 damage when Ada's drawn ship touches its drawn
+- **Ring burst:** 8 bolts outward in a ring at 320 world units per second,
+  1.5 damage each. Hostile stations fire every 3 seconds in Andromeda and
+  every 2 seconds in Cartwheel and Phantom.
+- **Mine layer:** drops a stationary mine behind the ship every 2 seconds in
+  Cartwheel and Phantom, at most 4 at a time. A mine deals 3 damage when Ada's drawn ship touches its drawn
   silhouette, then is gone; Ada's shots
   destroy mines (1 HP), and mines vanish after 20 seconds.
-- **Charged lance:** every 6 seconds, a beam as long as the game area is wide.
-  A thin line tracks Ada for 0.7 seconds, then holds still for 0.3 seconds, then
-  the beam fires along it for 6 damage per hit. It stops at the first obstacle, like the Phaser.
+- **Charged lance:** a beam as long as the game area is wide. Each attack cycle
+  lasts 4 seconds in Sunflower and Whirlpool, 3 seconds in Needle and Andromeda,
+  and 2 seconds in Cartwheel and Phantom. The warning is part of that interval.
+  A thin line tracks Ada for 0.7 seconds, then holds still for 0.3 seconds. The
+  beam fires along it for 6 damage per hit and stops at the first obstacle.
 
 Tell lines (the lance's tracking and locked lines and the Phaser's aim line) stop
 at the first obstacle, as their beams do, so cover reads. The ring burst has no
@@ -686,8 +695,8 @@ turrets fire while it advances, with no speed to advance.
   Hit areas, turret mounts and muzzles come from Art's drawn hardpoints, as for
   the frigate and capital, and hull hits test its drawn outline ([Hulls](#hulls)).
 - **Fire:** each live turret aims independently with `aimTurnSeconds` and fires
-  a two-shot burst of the position's Laser, 0.15 seconds between shots, every 1.4
-  seconds before the position's fire rate while Ada is within 520 world units.
+  a two-shot Laser burst with 0.15 seconds between shots while Ada is within
+  520 world units. Burst frequency follows [Enemy weapons](#enemy-weapons).
   It stops firing beyond 520 and never pursues.
 - **State:** retained like a frigate within one flight and across Continue, so
   destroyed turrets and a disabled, salvaged or destroyed platform remain exact.
@@ -906,12 +915,12 @@ rejected. There is no pathfinder or reachability oracle.
 Fire intents contain world-space origin, normalized aim, projectile speed, weapon
 ID, equipped level, damage ratio, projectile kind and delay within the slice.
 Hardpoint ID identifies the emitting weapon; a null ID identifies the hull
-weapon. `fireClockPolicy` is `staggered-and-paused` for frigates and capitals:
-weapon clocks initialize on first firing eligibility in stable active-mount fill
-order, with phase `(i / N) * ownInterval`. Ineligible time preserves cooldowns and
-burst positions; disabling a mount never reindexes survivors. Other actors,
-including platforms and hostile stations, use `continuous` clocks. Initialized
-phases, cooldowns and burst positions survive Continue.
+weapon. `fireClockPolicy` is `staggered-and-paused` for frigates, capitals and
+hostile stations. Weapon clocks initialize on first firing eligibility in stable
+active-mount fill order, with phase `(i / N) * ownInterval`. Ineligible time
+preserves cooldowns and burst positions. Disabling a mount leaves survivor
+phases intact. Other actors, including platforms, use `continuous` clocks.
+Initialized phases, cooldowns and burst positions survive Continue.
 
 Catch-up shots have explicit delays; advance each new projectile for only
 `dt - delay`, or schedule it at that offset. Fixed small slices bound work and
