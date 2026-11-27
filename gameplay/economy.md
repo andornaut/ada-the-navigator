@@ -172,8 +172,8 @@ moment. Its notice names what it gave:
 
 Each destroyed fighter, fighter escort, swarm ship, interceptor and retaliator
 rolls a 10% chance to drop an ammo pack in addition to its Stardust.
-Destroyed asteroids other than crystal rocks roll by size: 0.5% for small, 1%
-for medium, 2% for large and 4% for huge. Ammo drops require owning a weapon
+Destroyed asteroids other than crystal rocks roll by size: 1% for small, 2%
+for medium, 4% for large and 8% for huge. Ammo drops require owning a weapon
 other than Laser. The pack's contents are chosen when Ada collects it, using the
 weights Multi-Laser 16, Rapid Missile 12, Heavy Missile 9, Scattershot 7 and
 Phaser 5 among eligible weapons. A world pickup gives exactly one third of its

@@ -221,12 +221,12 @@ describe("ammo pack drops", () => {
     expect(rolls(["scattershot"], "frigate")).toBe(0);
   });
 
-  it("retains the existing seeded huge rock odds while Ada owns an upgrade weapon", () => {
+  it("uses the seeded 8% huge rock odds while Ada owns an upgrade weapon", () => {
     const rolls = (owned: readonly Weapon[]) =>
       Array.from({ length: 100000 }, (_, index) =>
         rollRockAmmoDrop(ECONOMY, owned, "huge", dropRandom(9, `ammo:rock:${index}`)),
       ).filter(Boolean).length / 100000;
-    expect(Math.abs(rolls(["phaser"]) - 0.04)).toBeLessThan(0.0015);
+    expect(Math.abs(rolls(["phaser"]) - 0.08)).toBeLessThan(0.0015);
     expect(rolls([])).toBe(0);
     expect(rolls(["laser"])).toBe(0);
   });

@@ -833,10 +833,10 @@ describe("Stardust drops", () => {
   });
 
   it.each([
-    ["rock", "small", 0, 0.005, 0.01],
-    ["rock", "medium", 0.005, 0.01, 0.02],
-    ["rock", "large", 0.01, 0.02, 0.04],
-    ["rock", "huge", 0.02, 0.04, 0.05],
+    ["rock", "small", 0, 0.01, 0.02],
+    ["rock", "medium", 0.01, 0.02, 0.04],
+    ["rock", "large", 0.02, 0.04, 0.08],
+    ["rock", "huge", 0.04, 0.08, 0.1],
   ] as const)(
     "uses the canonical %s %s shot-destruction cutoff and releases a single outcome",
     (kind, size, previousChance, chance, nextChance) => {

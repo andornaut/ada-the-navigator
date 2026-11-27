@@ -213,7 +213,7 @@ export const ECONOMY: EconomyCatalog = {
     grant: { heavyMissile: 120, multiLaser: 270, phaser: 120, rapidMissile: 780, scattershot: 180 },
     pack: SHOP_AMMO_PACK,
     packPrice: 25,
-    rockDropChance: { huge: 0.04, large: 0.02, medium: 0.01, small: 0.005 },
+    rockDropChance: { huge: 0.08, large: 0.04, medium: 0.02, small: 0.01 },
     worldPack: {
       heavyMissile: SHOP_AMMO_PACK.heavyMissile / 3,
       multiLaser: SHOP_AMMO_PACK.multiLaser / 3,

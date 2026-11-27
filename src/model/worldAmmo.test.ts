@@ -171,10 +171,10 @@ describe("world ammunition odds", () => {
   );
 
   it.each([
-    ["small", 0.005],
-    ["medium", 0.01],
-    ["large", 0.02],
-    ["huge", 0.04],
+    ["small", 0.01],
+    ["medium", 0.02],
+    ["large", 0.04],
+    ["huge", 0.08],
   ] as const)("uses the strict %s asteroid boundary at %f", (size, chance) => {
     expect(ECONOMY.ammo.rockDropChance[size]).toBe(chance);
     expect(rollRockAmmoDrop(ECONOMY, ["phaser"], size, () => chance - Number.EPSILON)).toBe(true);
