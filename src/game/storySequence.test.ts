@@ -68,7 +68,7 @@ describe("depletion story navigation", () => {
   });
 
   it.each(["jumpHome", "morning", "room"])(
-    "Skip from %s crosses internal scenes to the galaxy map once",
+    "hides Skip at %s and preserves the programmatic continuation outcome",
     (start) => {
       const model = depleted();
       if (start !== "jumpHome") {
@@ -78,7 +78,7 @@ describe("depletion story navigation", () => {
         model.storyNext();
       }
       const economy = structuredClone(model.state.economy);
-      expect(model.storyView?.canSkip).toBe(true);
+      expect(model.storyView?.canSkip).toBe(false);
       model.storySkip();
       expect(model.screen).toBe("selector");
       expect(model.state.economy).toEqual(economy);
@@ -102,7 +102,7 @@ describe("depletion story navigation", () => {
     expect(loaded.state.economy.stardust).toBe(17);
   });
 
-  it("shows Skip wherever Next shows and stops at a meaningful choice without selecting it", () => {
+  it("stops a programmatic Skip at a meaningful choice without selecting it", () => {
     const model = depleted();
     model.state.progress[1].questComplete = true;
     model.state.progress[1].holodisk = true;
