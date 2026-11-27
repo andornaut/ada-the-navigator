@@ -306,7 +306,7 @@ describe("new galaxy announcement", () => {
       const disk = f.objects.find((o) => o.id === "holodisk")!;
       f.player = { x: disk.x, y: disk.y };
       model.step(0.01, idle);
-      insertion(model);
+      expect(model.screen).toBe("space");
       expect(model.state.progress[3].holodisk).toBe(true);
       expect(model.state.unlocked).toEqual(mounted ? [1, 2, 3, 4] : [1, 2, 3, 4, 5]);
       expect(model.state.announceGalaxy).toBe(mounted);
@@ -477,15 +477,43 @@ describe("galaxy three's holodisk", () => {
     f.player = { ...site };
     f.dangerFor = 0;
     model.step(0.01, idle);
-    expect(insertion(model)).toEqual([
-      ["", inserted[0]],
-      ["Astra", inserted[1]],
-      ["Astra", memories[1]],
-    ]);
+    expect(model.screen).toBe("space");
+    expect(model.storyView).toBeNull();
+    expect(model.state.dialogue).toBeNull();
     expect(model.state.progress[3].holodisk).toBe(true);
     expect(model.state.progress[3].known).not.toContain("holodisk");
     expect(f.objects.some((o) => o.id === "holodisk")).toBe(false);
     expect(model.objective).toBe("Go home to Earth when ready.");
+    const collected = model.save();
+    const continued = relaunch(CONTENT, collected);
+    const time = continued.state.flight!.time;
+    continued.step(0.01, idle);
+    expect(continued.state.flight!.time).toBeGreaterThan(time);
+    expect(continued.conversation).toMatchObject({ speaker: "astra", text: inserted[1] });
+
+    // Saving between the two lines keeps the pending memory, without replaying the first line.
+    const afterRestored = relaunch(CONTENT, continued.save());
+    afterRestored.step(0.01, idle);
+    expect(afterRestored.screen).toBe("space");
+    expect(afterRestored.conversation).toMatchObject({ speaker: "astra", text: memories[1] });
+    expect(afterRestored.state.progress[3]).toEqual(model.state.progress[3]);
+    expect(afterRestored.state.flight!.objects.some(({ id }) => id === "holodisk")).toBe(false);
+
+    const afterMemory = relaunch(CONTENT, afterRestored.save());
+    afterMemory.step(0.01, idle);
+    expect(afterMemory.conversation?.text).not.toBe(inserted[1]);
+    expect(afterMemory.conversation?.text).not.toBe(memories[1]);
+
+    // Older saved pickups already in the insertion still resume their held story.
+    const legacySave = JSON.parse(collected);
+    legacySave.seenConversations = [];
+    legacySave.dialogue = { choices: [], context: "holodiskMoment", text: "", title: "" };
+    const legacy = relaunch(CONTENT, legacySave);
+    expect(insertion(legacy)).toEqual([
+      ["", inserted[0]],
+      ["Astra", inserted[1]],
+      ["Astra", memories[1]],
+    ]);
     model.step(0.01, idle);
     expect(f.objects.some((o) => o.id === "holodisk")).toBe(false);
   });
@@ -523,7 +551,7 @@ describe("galaxy three's holodisk", () => {
     f.player = { x: disk.x + contact - 1, y: disk.y };
     f.velocity = { x: 0, y: 0 };
     model.step(0.01, idle);
-    insertion(model);
+    expect(model.screen).toBe("space");
     expect(model.state.progress[3].holodisk).toBe(true);
   });
 

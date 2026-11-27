@@ -1647,6 +1647,13 @@ export class GameModel {
       { stardust: this.state.economy.stardust > 0 },
       randomStream(this.state.flight?.seed ?? 1, "line-pools"),
     );
+    const flight = this.state.flight;
+    if (flight?.galaxy === 3 && this.current.holodisk) {
+      const pickup = this.whirlpoolDiskPickupId(flight);
+      if (this.state.seenConversations.includes(pickup)) {
+        this.queueWhirlpoolDiskLines(pickup);
+      }
+    }
     const courier = ANDROMEDA_LANE_COURIER;
     if (
       this.state.flight?.galaxy === 5 &&
@@ -3932,12 +3939,11 @@ export class GameModel {
       (id) => BUILT.has(id) && Object.hasOwn(this.content.chapters, id),
     );
   }
-  /**
-   * Ada inserts a recovered holodisk into Astra's drive at once; `giver` names the outpost
-   * that hands it over first.
-   */
-  private recoverHolodisk(giver?: string): void {
+  private takeHolodisk(): boolean {
     const p = this.current;
+    if (p.holodisk) {
+      return false;
+    }
     p.holodisk = true;
     const f = this.state.flight;
     if (f?.galaxy === 4) {
@@ -3953,10 +3959,40 @@ export class GameModel {
     if (p.questComplete) {
       this.notify(this.label("chapterComplete"), "reading");
     }
+    return true;
+  }
+  private recoverHolodisk(giver?: string): void {
+    if (!this.takeHolodisk()) {
+      return;
+    }
     if (giver) {
       this.panel("holodiskHandover", this.content.premise.holodisk.handover, giver);
     } else {
       this.holodiskMoment();
+    }
+  }
+  private whirlpoolDiskPickupId(flight: FlightState): string {
+    return `chapter:3:holodisk:pickup:${flightEncounterSeed(flight)}`;
+  }
+  private pickUpWhirlpoolDisk(flight: FlightState): void {
+    if (!this.takeHolodisk()) {
+      return;
+    }
+    const pickup = this.whirlpoolDiskPickupId(flight);
+    // Resume unheard lines on Continue in the pickup flight. Older saves already have a story.
+    this.state.seenConversations.push(pickup);
+    this.queueWhirlpoolDiskLines(pickup);
+  }
+  private queueWhirlpoolDiskLines(pickup: string): void {
+    const { inserted, memories } = this.content.premise.holodisk;
+    const held = holodisksHeld(this.state.progress);
+    const restored = holodiskInsertion(held, inserted).at(-1);
+    if (restored?.speaker === "Astra") {
+      this.talk.authoredCue(`${pickup}:restored`, { speaker: "astra", text: restored.text });
+    }
+    const memory = memories[held - 1];
+    if (memory) {
+      this.talk.authoredCue(`${pickup}:memory`, { speaker: "astra", text: memory });
     }
   }
   /**
@@ -4279,7 +4315,7 @@ export class GameModel {
       // destination.
       if (event.type === "discovered" && event.id === "holodisk" && f.galaxy === 3) {
         if (this.holodiskWaypoint && this.holodiskTouched(f)) {
-          this.recoverHolodisk();
+          this.pickUpWhirlpoolDisk(f);
         }
         continue;
       }
