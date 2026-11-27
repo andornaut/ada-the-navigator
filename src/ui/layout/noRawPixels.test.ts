@@ -9,7 +9,7 @@ import { COLOURS, UNLISTED_COLOURS } from "./colours.ts";
 // no raw CSS px and assigns no numeric literal to a geometry property. The style modules inside
 // it (those exporting a *_STYLE stylesheet, and its .css files) and src/style.css follow the same
 // rules, so every size in a stylesheet is a named token. Every UI colour reads the colour module
-// (colours.ts): no other source in src/ui, and not src/style.css, writes a hex colour.
+// (colours.ts): no other source in src/ui or src/style.css writes a literal hex or RGB colour.
 
 const UI = new URL("../", import.meta.url).pathname;
 const PAGE_STYLE = new URL("../../style.css", import.meta.url).pathname;
@@ -129,7 +129,6 @@ const COLOUR_SOURCES = [...allSources(UI), PAGE_STYLE].filter(
   (path) => relative(UI, path) !== COLOUR_MODULE,
 );
 const HEX_COLOUR = /#[\da-f]{3,8}\b/giu;
-const BOOT_COLOUR_SOURCES = new Set(["layout/bootSplash.css", "layout/bootSplashColours.ts"]);
 const RAW_RGB_COLOUR = /\brgba?\(\s*(?:\d|\.\d)[^\n)]*\)/giu;
 
 function isSizeAllowed(file: string, selector: string): boolean {
@@ -150,7 +149,7 @@ export function colourFindings(file: string, text: string): string[] {
     });
   return [
     ...findings("hex colour", HEX_COLOUR),
-    ...(BOOT_COLOUR_SOURCES.has(file) ? findings("raw RGB colour", RAW_RGB_COLOUR) : []),
+    ...findings("raw RGB colour", RAW_RGB_COLOUR),
   ];
 }
 
@@ -238,6 +237,9 @@ describe("DOM UI sizes", () => {
       ["const ok = `#app .y{color:$", "{COLOURS.ink}}`; // #181425"].join(""),
     ].join("\n");
     expect(colourFindings("example.ts", text)).toEqual(["example.ts:1 hex colour: #ead4aa in .x"]);
+    expect(colourFindings("statusPill.ts", 'const ink = "rgba(24,20,37,0.65)";')).toEqual([
+      "statusPill.ts:1 raw RGB colour: rgba(24,20,37,0.65)",
+    ]);
     expect(colourFindings("example.ts", 'const face = "#FF6B6B", mask = "#000";')).toEqual([
       "example.ts:1 hex colour: #FF6B6B",
       "example.ts:1 hex colour: #000",

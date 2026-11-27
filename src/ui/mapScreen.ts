@@ -28,7 +28,7 @@ import {
   bindAdaAction,
 } from "./actionBinding.ts";
 import { CARD_CLOSE } from "./layout/cardFrame.ts";
-import { COLOURS, UNLISTED_COLOURS } from "./layout/colours.ts";
+import { COLOURS, translucentInk, UNLISTED_COLOURS } from "./layout/colours.ts";
 import { BUTTON_SLICE, CARD_SLICE } from "./layout/controls.ts";
 import {
   COMPACT_VIEWPORT,
@@ -527,7 +527,7 @@ export const MAP_SCREEN_STYLE = `
   grid-template-rows:${units(MAP_SCREEN.header.rowHeight)} ${units(TYPE.body.lineHeight)};
   padding-bottom:${units(SPACING.gap)};
   border-radius:${units(MAP_SCREEN.header.radius)};
-  background:rgba(24,20,37,${MAP_SCREEN.header.alpha});
+  background:${translucentInk(MAP_SCREEN.header.alpha)};
   pointer-events:none;
   white-space:nowrap;
   z-index:2

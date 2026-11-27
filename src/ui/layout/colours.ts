@@ -81,6 +81,14 @@ export const COLOURS = {
   white: "#ffffff",
 } as const;
 
+const inkChannels = [1, 3, 5]
+  .map((index) => Number.parseInt(COLOURS.ink.slice(index, index + 2), 16))
+  .join(" ");
+
+export function translucentInk(alpha: number): string {
+  return `rgb(${inkChannels} / ${alpha})`;
+}
+
 export const UNLISTED_COLOURS = {
   /** The controls overlay's inherited text colour. */
   controlsText: "#172335",

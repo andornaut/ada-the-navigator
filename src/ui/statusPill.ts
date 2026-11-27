@@ -7,7 +7,7 @@ import {
   assertAdaActionMetadata,
   bindAdaAction,
 } from "./actionBinding.ts";
-import { COLOURS } from "./layout/colours.ts";
+import { COLOURS, translucentInk } from "./layout/colours.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { font, fromHudEdge, hudCentreX, pixels, units } from "./layout/css.ts";
 import { frameGridOrigin } from "./layout/frameBox.ts";
@@ -43,7 +43,7 @@ export const STATUS_COLOURS = {
   lowPeak: COLOURS.shieldLowPeak,
   // The ore +N tick: ore's light rust (art/controls.md "Status pill").
   oreTick: COLOURS.oreTick,
-  panel: "rgb(24 20 37 / 0.65)",
+  panel: translucentInk(0.65),
   // The separate recharge timer fill and its ink track (art/controls.md "Status pill").
   recharge: COLOURS.cream,
   rechargeEdge: COLOURS.ink,
@@ -52,7 +52,7 @@ export const STATUS_COLOURS = {
   shieldDelay: COLOURS.shieldDelay,
   tick: COLOURS.stardustTick,
   // Its own ink layer at 0.65 over the panel, not a hole in it.
-  track: "rgb(24 20 37 / 0.65)",
+  track: translucentInk(0.65),
 } as const;
 
 // The light-field outline around the shield icon and bar (`lightField.hudOutline`), in ink.
