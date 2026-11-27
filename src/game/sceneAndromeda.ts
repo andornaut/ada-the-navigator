@@ -4,6 +4,7 @@ import {
   partKey,
   playDepth,
   readBlinkArt,
+  selectEnemyFrame,
   type StationArt,
   stationFrame,
 } from "../art/index.ts";
@@ -13,7 +14,6 @@ import { CONTENT } from "../data/content.ts";
 import { SCREEN } from "../data/screen.ts";
 import { andromedaLaneCourier } from "../model/andromedaLane.ts";
 import type { FlightState, SpaceObject } from "../model/types.ts";
-import { selectEnemyFrame } from "./enemyArt.ts";
 import { keylineSprite } from "./sceneHud.ts";
 import { drawOutpost, type ObjectsContext, placeStationFrame } from "./sceneObjects.ts";
 import type { Asset } from "./sceneShared.ts";

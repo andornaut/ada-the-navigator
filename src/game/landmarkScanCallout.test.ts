@@ -5,11 +5,11 @@ import ts from "typescript";
 import { expect, it, vi } from "vitest";
 
 import needleManifest from "../../public/art/needle/manifest.json";
+import { selectEnemyFrame } from "../art/index.ts";
 import { flightWorldContext } from "../model/flightTopology.ts";
 import { worldDelta } from "../model/worldContacts.ts";
 import { USE_CALLOUT_FADE_MS, useCalloutAlpha, useCalloutLift } from "../ui/touchChrome.ts";
 import { craftArt, storyCraftSets } from "./cartwheelArt.ts";
-import { selectEnemyFrame } from "./enemyArt.ts";
 import type { Asset } from "./sceneShared.ts";
 
 function functions(file: string, names: readonly string[]): string {

@@ -2,15 +2,18 @@ import { describe, expect, it } from "vitest";
 
 import capitalHardpoints from "../../public/art/enemies/fleetCapital-hardpoints.json";
 import { salvagedColour } from "../art/heavyStates.ts";
-import { SALVAGED, salvagedMatrix, showsBanner, spritesBounds } from "../art/index.ts";
-import { ART_MANIFEST } from "../testing/publicArt.ts";
 import {
   bannerOffset,
   composedArchetypes,
   enemyArt,
   type EnemyFrame,
   enemyFrameSets,
-} from "./enemyArt.ts";
+  SALVAGED,
+  salvagedMatrix,
+  showsBanner,
+  spritesBounds,
+} from "../art/index.ts";
+import { ART_MANIFEST } from "../testing/publicArt.ts";
 
 const assets = ART_MANIFEST.assets as EnemyFrame[];
 const capital = enemyArt(

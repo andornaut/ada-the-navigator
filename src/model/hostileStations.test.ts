@@ -6,6 +6,13 @@ import claimStation from "../../public/art/cartwheel/enemies/hostileStationClaim
 import claimManifest from "../../public/art/cartwheel/manifest.json" with { type: "json" };
 import coralStation from "../../public/art/enemies/hostileStationCoral-hardpoints.json" with { type: "json" };
 import coralManifest from "../../public/art/manifest.json" with { type: "json" };
+import {
+  composeEnemy,
+  enemyArt,
+  type EnemyFrame,
+  enemyFrameSets,
+  selectEnemyFrame,
+} from "../art/index.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
@@ -14,13 +21,6 @@ import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { HOSTILE_LOCAL_ALLOWANCE, SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
-import {
-  composeEnemy,
-  enemyArt,
-  type EnemyFrame,
-  enemyFrameSets,
-  selectEnemyFrame,
-} from "../game/enemyArt.ts";
 import { fromScreen, partsReach, worldParts } from "./convex.ts";
 import { createEnemy, damageEnemy, stepEnemy } from "./enemyAi.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";

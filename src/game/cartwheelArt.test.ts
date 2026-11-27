@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { readGalaxyBackdrop } from "../art/backdropLayers.ts";
+import { enemyJetsPath, readSidecars } from "../art/index.ts";
 import { PROJECTS } from "../data/projects.ts";
 import { STORY_SHIP_CRAFT } from "../data/storyShips.ts";
 import type { GalaxyNumber } from "../data/types.ts";
@@ -20,7 +21,6 @@ import {
   storyCraftSets,
   storyNoses,
 } from "./cartwheelArt.ts";
-import { enemyJetsPath, readSidecars } from "./enemyArt.ts";
 
 const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public${path}`, import.meta.url), "utf8"));

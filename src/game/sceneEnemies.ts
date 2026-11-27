@@ -4,19 +4,26 @@ import { densityTexels } from "@andornaut/game-kit/runtime/view/renderScale";
 import { Math as PhaserMath, type Scene, TintModes } from "phaser";
 
 import {
+  bannerOffset,
+  composeEnemy,
   type EffectShape,
+  type EnemyArt,
   type EnemyEffect,
   enemyInkEdges,
+  enemyJetTriangles,
   enemyPhaser,
   type EnemyWeaponsView,
   lance,
   mine,
   mineSolid,
+  type PartPose,
+  type PartSprite,
   playDepth,
   ringDart,
   ringEmission,
   SALVAGED,
   salvagedMatrix,
+  selectEnemyFrame,
   showsBanner,
   spritesBounds,
 } from "../art/index.ts";
@@ -29,15 +36,6 @@ import { enemyEquipmentDefinition } from "../model/enemyEquipment.ts";
 import { activeEnemyBeams, activeRingEmissions, type EnemyBeam } from "../model/flight.ts";
 import { hullOffset } from "../model/shipPhysics.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
-import {
-  bannerOffset,
-  composeEnemy,
-  type EnemyArt,
-  enemyJetTriangles,
-  type PartPose,
-  type PartSprite,
-  selectEnemyFrame,
-} from "./enemyArt.ts";
 import { keylineOffsets, LIGHT_FIELD } from "./lightField.ts";
 import type { GameScene } from "./scene.ts";
 import { familyArt, filterTexture } from "./sceneAssets.ts";

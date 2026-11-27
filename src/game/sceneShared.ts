@@ -1,7 +1,6 @@
 // Declarations the scene and its modules share.
-import type { ShipAsset, StationFrame } from "../art/index.ts";
+import type { EnemyFrame, ShipAsset, StationFrame } from "../art/index.ts";
 import type { Vec } from "../model/types.ts";
-import type { EnemyFrame } from "./enemyArt.ts";
 
 // Story craft darts while their frames load.
 export const STORY_SHIP = { blocker: 0x8a7f78, hull: 0xd9c7a6 } as const;

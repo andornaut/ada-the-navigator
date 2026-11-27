@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { enemyJetsPath, readSidecars } from "../art/index.ts";
 import { shipDirection } from "../art/shipArt.ts";
 import { CONTENT } from "../data/content.ts";
 import { PROJECTS } from "../data/projects.ts";
@@ -13,7 +14,6 @@ import {
   STORY_VIEW,
 } from "../data/storyShips.ts";
 import { storyNoses } from "../game/cartwheelArt.ts";
-import { enemyJetsPath, readSidecars } from "../game/enemyArt.ts";
 import { ART_MANIFEST, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 import { dockedSpot, drawnHeading, hubBay, hubWorn, storyShips } from "./storyShips.ts";
 import type { Vec } from "./types.ts";

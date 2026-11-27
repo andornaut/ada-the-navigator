@@ -6,13 +6,13 @@ import capitalFile from "../../public/art/enemies/fleetCapital-hardpoints.json";
 import outriggerFile from "../../public/art/enemies/fleetCapitalOutrigger-hardpoints.json";
 import frigateFile from "../../public/art/enemies/fleetFrigate-hardpoints.json";
 import cargoFile from "../../public/art/enemies/fleetRetaliatorCargoHauler-hardpoints.json";
+import { aimIndex } from "../art/index.ts";
 import {
   enemyCatalog,
   type EnemyDefinition,
   type HardpointDefinition,
 } from "../data/enemyCatalog.ts";
 import { ENEMY_DISPLAY_SCALE, MUZZLE_ART, muzzleLayout } from "../data/enemyMuzzles.ts";
-import { aimIndex } from "../game/enemyArt.ts";
 import { ART_MANIFEST } from "../testing/publicArt.ts";
 import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./enemyAi.ts";
 import { drawnIndex, muzzleOffset } from "./muzzles.ts";

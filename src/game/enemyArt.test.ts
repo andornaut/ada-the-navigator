@@ -12,11 +12,6 @@ import frigateJets from "../../public/art/enemies/fleetFrigate-jets.json";
 import interceptorJets from "../../public/art/enemies/fleetInterceptor-jets.json";
 import retaliatorJets from "../../public/art/enemies/fleetRetaliator-jets.json";
 import swarmJets from "../../public/art/enemies/fleetSwarm-jets.json";
-import { jetLength, readShipJets } from "../art/index.ts";
-import { enemyCatalog } from "../data/enemyCatalog.ts";
-import { GALAXY_ID } from "../data/galaxies.ts";
-import { enemySpeedFraction } from "../model/enemyAi.ts";
-import { ART_MANIFEST as manifest, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 import {
   aimIndex,
   CLAIM,
@@ -37,15 +32,22 @@ import {
   HIT_FLASH_MS,
   HitFlashes,
   hullHeading,
+  jetLength,
   layoutTier,
   mountedTop,
   type PartPose,
+  readEnemyJets,
   readHardpointLayout,
+  readShipJets,
   readSidecars,
   selectEnemyFrame,
+  selectEnemyJetPalette,
   turretMuzzles,
-} from "./enemyArt.ts";
-import { readEnemyJets, selectEnemyJetPalette } from "./enemyJetPalette.ts";
+} from "../art/index.ts";
+import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { GALAXY_ID } from "../data/galaxies.ts";
+import { enemySpeedFraction } from "../model/enemyAi.ts";
+import { ART_MANIFEST as manifest, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 
 const assets = manifest.assets as EnemyFrame[];
 const json = (path: string | undefined): unknown => {

@@ -2,9 +2,6 @@ import { existsSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { GALAXY_ID } from "../data/galaxies.ts";
-import { CORE_MANIFEST, GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
-import { readGalaxyManifest } from "./artManifest.ts";
 import {
   type EnemyFrame,
   enemyHardpointsPath,
@@ -12,7 +9,10 @@ import {
   enemyShardsPath,
   readSidecars,
   type Sidecars,
-} from "./enemyArt.ts";
+} from "../art/index.ts";
+import { GALAXY_ID } from "../data/galaxies.ts";
+import { CORE_MANIFEST, GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
+import { readGalaxyManifest } from "./artManifest.ts";
 
 const coreSidecars = readSidecars(CORE_MANIFEST.sidecars)!;
 const manifests: readonly (readonly [string, readonly EnemyFrame[], Sidecars])[] = [

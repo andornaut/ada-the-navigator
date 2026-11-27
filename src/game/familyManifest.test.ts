@@ -12,8 +12,22 @@ import needle from "../../public/art/needle/manifest.json";
 import phantom from "../../public/art/phantom/manifest.json";
 import sunflower from "../../public/art/sunflower/manifest.json";
 import {
+  composedArchetypes,
+  ENEMY_HEADINGS,
+  type EnemyArt,
+  enemyArt,
+  type EnemyFamily,
+  enemyFrameSets,
+  enemyHardpointsPath,
+  enemyJetsPath,
+  enemyPartFrame,
+  enemyPartsToLoad,
+  enemyShardsPath,
   fileFilter,
+  GALAXY_FAMILIES,
+  mergeEnemyAssets,
   readShipJets,
+  readSidecars,
   SvgRasters,
   type SvgRequest,
   vectorRaster,
@@ -33,22 +47,6 @@ import {
 } from "./artManifest.ts";
 import { craftFrameSets, readCraftNose } from "./cartwheelArt.ts";
 import { readShards } from "./destructionArt.ts";
-import {
-  composedArchetypes,
-  ENEMY_HEADINGS,
-  type EnemyArt,
-  enemyArt,
-  type EnemyFamily,
-  enemyFrameSets,
-  enemyHardpointsPath,
-  enemyJetsPath,
-  enemyPartFrame,
-  enemyPartsToLoad,
-  enemyShardsPath,
-  GALAXY_FAMILIES,
-  mergeEnemyAssets,
-  readSidecars,
-} from "./enemyArt.ts";
 import type { Asset } from "./sceneShared.ts";
 import { readShardPalettePack } from "./shardPalettePack.ts";
 

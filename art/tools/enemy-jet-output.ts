@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { isDeepStrictEqual } from "node:util";
 
-import { selectEnemyJetPalette } from "../../src/game/enemyJetPalette.ts";
+import { selectEnemyJetPalette } from "../../src/art/index.ts";
 import { readManifest, type Sidecars } from "./manifest.ts";
 
 const families = {

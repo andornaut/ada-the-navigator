@@ -8,8 +8,10 @@ import {
   AMMO_PACK_FRAMES,
   type CameraShake,
   EDGE_MARKER_DEPTH,
+  enemyPartFrame,
   engineJets,
   FALLBACK_SPACE_PALETTE,
+  GALAXY_FAMILIES,
   galaxyPalettes,
   hasShipHeadings,
   HIT_FLASH_DEPTH,
@@ -100,7 +102,6 @@ import { createStorybook, storyPageView } from "../ui/storybook.ts";
 import { readTitleScreen, type TitleScreenArt } from "../ui/titleScreen.ts";
 import { type CoreManifest, galaxyManifestKey, readGalaxyManifest } from "./artManifest.ts";
 import { readDestruction } from "./destructionArt.ts";
-import { enemyPartFrame, GALAXY_FAMILIES } from "./enemyArt.ts";
 import { LIGHT_FIELD, lightGalaxy, readLightGalaxies } from "./lightField.ts";
 import { fitPlayCamera, sceneFit, shakeIntensity } from "./playCamera.ts";
 import { readQuantumJump } from "./quantumJump.ts";

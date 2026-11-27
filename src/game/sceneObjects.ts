@@ -36,6 +36,7 @@ import {
   revealAlpha,
   rockArt,
   sceneryDetail,
+  selectEnemyFrame,
   shipDirection,
   spaceObjectColor,
   stardustDrawn,
@@ -77,7 +78,6 @@ import { shipTuning } from "../model/upgrades.ts";
 import { worldDelta } from "../model/worldContacts.ts";
 import { hubLayers } from "./cartwheelArt.ts";
 import { reducedAt, shardFamily, shardPolygons, wreckFlashAt } from "./destructionArt.ts";
-import { selectEnemyFrame } from "./enemyArt.ts";
 import { inkEdges, keylineOffsets, LIGHT_FIELD } from "./lightField.ts";
 import type { GameScene } from "./scene.ts";
 import {

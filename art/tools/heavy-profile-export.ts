@@ -6,7 +6,7 @@ import { dirname, join, resolve } from "node:path";
 import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
 import { format, resolveConfig } from "prettier";
 
-import { selectEnemyJetPalette } from "../../src/game/enemyJetPalette.ts";
+import { selectEnemyJetPalette } from "../../src/art/index.ts";
 
 import { hullEntries, type JetColors, jetsFile } from "./crafts.ts";
 import { installedEnemyJetOutput } from "./enemy-jet-output.ts";

@@ -2,13 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import manifest from "../../public/art/andromeda/manifest.json";
 import core from "../../public/art/manifest.json";
-import { staleSpriteKeys } from "../art/index.ts";
+import { selectEnemyFrame, staleSpriteKeys } from "../art/index.ts";
 import { ANDROMEDA_REDACT } from "../data/capitalBosses.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { worldNearestSettlerStation } from "../model/andromedaPlaces.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
 import type { GalaxyProgress, SpaceObject } from "../model/types.ts";
-import { selectEnemyFrame } from "./enemyArt.ts";
 import {
   andromedaSettlementVariant,
   drawAndromeda,

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { enemyJetsPath, readSidecars } from "../art/index.ts";
 import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import {
   type EnemyArchetype,
@@ -10,7 +11,6 @@ import {
   heavyLoadout,
 } from "../data/enemyCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { enemyJetsPath, readSidecars } from "../game/enemyArt.ts";
 import { CORE_MANIFEST, GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { debrisSilhouette } from "./debrisBody.ts";

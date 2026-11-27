@@ -6,9 +6,23 @@ import { GameObjects, Loader, Scenes, Textures } from "phaser";
 
 import {
   BAND_AREA,
+  composedArchetypes,
   type DebrisArt,
   decorationRasterSize,
   drawnRockId,
+  ENEMY_HEADINGS,
+  type EnemyArt,
+  enemyArt,
+  type EnemyFamily,
+  enemyFrameSets,
+  enemyHardpointsPath,
+  enemyJetsPath,
+  enemyPartFrame,
+  enemyPartsToLoad,
+  enemyShardsPath,
+  GALAXY_FAMILIES,
+  galaxyFamily,
+  mergeEnemyAssets,
   paintBand,
   paintFrames,
   PHANTOM_ALLIES_ART,
@@ -24,12 +38,14 @@ import {
   readShipJets,
   readShipMaterialPalettes,
   readShipMaterials,
+  readSidecars,
   readStreakSpec,
   readWhaleArt,
   readWhirlpoolProjects,
   rockArt,
   RockFrames,
   ShipMaterialSources,
+  type Sidecars,
   type SvgRequest,
   type TextureFilter,
   vectorRaster,
@@ -70,24 +86,6 @@ import {
   storyNoses,
 } from "./cartwheelArt.ts";
 import { readShards, type ShardData } from "./destructionArt.ts";
-import {
-  composedArchetypes,
-  ENEMY_HEADINGS,
-  type EnemyArt,
-  enemyArt,
-  type EnemyFamily,
-  enemyFrameSets,
-  enemyHardpointsPath,
-  enemyJetsPath,
-  enemyPartFrame,
-  enemyPartsToLoad,
-  enemyShardsPath,
-  GALAXY_FAMILIES,
-  galaxyFamily,
-  mergeEnemyAssets,
-  readSidecars,
-  type Sidecars,
-} from "./enemyArt.ts";
 import { sceneFit } from "./playCamera.ts";
 import { readQuantumJump } from "./quantumJump.ts";
 import type { GameScene } from "./scene.ts";
