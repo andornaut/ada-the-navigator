@@ -479,6 +479,18 @@ Save/Continue reconstructs the registry from persisted knowledge and active
 world, quest and encounter facts. Preserve sensed versus visually identified
 states without granting scan completion or advancing story.
 
+An approach visit starts when the flight view visibly places an eligible marker
+for a physical point of interest. Marker projection alone leaves the visit
+unopened. The visit stays tied to the same flight and target ID as the target
+comes on screen and its edge marker drops away. After entering Talk range,
+leaving that range lets the next approach speak again. Going beyond 5,000 world
+units discards the visit, and a later visible marker can start a new one.
+Target knowledge persists independently.
+
+Pickups, discovery caches, Hunt glints and navigation-only waypoints keep their
+existing cues and actions. The arrival line requires a live, identified or known
+place with applicable copy. See [in-flight narration](rules.md#astra-and-penny-in-flight).
+
 Evaluate eligibility, icon, lifetime and rendering through one shared pipeline.
 Merge same-target contributors before layout; removing one contributor retains
 the marker when another still qualifies. Distinct targets retain their entries

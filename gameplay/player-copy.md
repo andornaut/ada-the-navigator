@@ -693,6 +693,16 @@ Objectives, in order:
 7. Take the holodisk from Pip.
 8. Go home to Earth when ready.
 
+Within Talk range on a marked approach to Pip, Astra gives the guidance for the
+current stage:
+
+- Before the chapter introduction: "Ask at a settlers’ station about the guide beacons."
+- At stage 1: "Check the dark guide beacon first."
+- From stage 2 onward: the current objective, starting with "Talk with Pip."
+
+After Pip's confession, scouting lore uses the usual quiet scheduler. Hearing
+it leaves current-objective guidance available on a later marked approach.
+
 ### Captain Redact and Broad Wing
 
 These [Andromeda boss cues](rules.md#captain-redact) appear in the small

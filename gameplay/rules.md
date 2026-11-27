@@ -1578,6 +1578,25 @@ Target knowledge, real icons versus
 Exact narration lines are in
 [the player copy](player-copy.md#in-flight-conversations).
 
+A marked approach can offer a short line on entering Talk range of a known or
+visually identified station, landmark or story destination. Stations use their
+galaxy's station lore. Landmarks use authored lore or available Scan guidance.
+Story destinations speak where arrival copy exists, including Astra's current
+guidance at Pip.
+
+Identification, discovery, approach and station-return lines tied to the visit
+count when first shown. A queued line alone leaves the visit unheard. Automatic
+chapter dialogue for the same place also covers the visit, including the
+Andromeda station introduction and the dark beacon's dent scene. Docked keeper
+greetings follow their own rules.
+
+The conversation director rechecks a queued line's trigger before showing it.
+An unheard arrival line still needs the live target in Talk range and applicable
+copy. See [marker visit rules](quests.md#marker-state-and-presentation) for when
+another approach can speak.
+Approach narration leaves Dock, Talk and Scan on their normal triggers. It
+grants no quest, Scan or reward progress.
+
 ## Space encounters and feedback
 
 Combat occurs in small groups separated by quiet stretches. Terrain mixes open
