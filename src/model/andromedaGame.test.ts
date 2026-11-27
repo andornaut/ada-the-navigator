@@ -122,6 +122,26 @@ function repairBeacon(initial: GameModel): GameModel {
 }
 
 describe("mounted Andromeda chapter", () => {
+  it.each([0, 3, 4, 5, 6])("withholds Talk when Pip has no conversation at stage %s", (stage) => {
+    const model = launch();
+    const progress = model.state.progress[5];
+    Object.assign(progress, {
+      holodisk: stage === 6,
+      introduced: stage > 0,
+      questComplete: stage === 6,
+      stage,
+    });
+    visit(model, "pip");
+    expect(progress.known).toContain("pip");
+    expect(model.contextAction).toBeUndefined();
+    expect(model.useTarget).toBeUndefined();
+    const before = structuredClone(progress);
+    model.step(0.001, { ...idle, use: true });
+    expect(model.state.dialogue).toBeNull();
+    expect(progress).toEqual(before);
+    expect(model.state.tasks[5]).toBeUndefined();
+  });
+
   it.each([false, true])("uses the approved Pip introduction after inspection=%s", (inspected) => {
     const model = launch();
     arrival(model);
@@ -130,7 +150,8 @@ describe("mounted Andromeda chapter", () => {
       continuePanel(model, "andromeda:dent");
     }
     visit(model, "pip");
-    model.interact();
+    expect(model.useTarget).toEqual({ action: "talk", id: "pip" });
+    model.step(0.001, { ...idle, use: true });
     const panel = model.state.dialogue!;
     const copy = interactionCopy({ galaxy: 5, progress: model.state.progress[5] }, panel);
     expect(copy.party).toBe("Pip");
@@ -158,7 +179,8 @@ describe("mounted Andromeda chapter", () => {
     let model = launch();
     model = repairBeacon(model);
     visit(model, "pip");
-    model.interact();
+    expect(model.useTarget).toEqual({ action: "talk", id: "pip" });
+    model.step(0.001, { ...idle, use: true });
     continuePanel(model, "andromeda:holodisk");
     expect(model.state.progress[5].holodisk).toBe(true);
     expect(model.state.progress[5].redact?.phase).toBe("active");

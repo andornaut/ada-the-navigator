@@ -656,6 +656,9 @@ export class GameModel {
       }
       delete (this.state as GameSave).pendingStory;
     }
+    if (this.state.flight?.galaxy === 5 && this.state.dialogue?.context === "activity:pip") {
+      this.state.dialogue = this.courierUnavailableDialogue();
+    }
     const pending = navigation?.pendingInteraction;
     if (
       pending?.galaxy &&
@@ -663,7 +666,13 @@ export class GameModel {
       pending.dialogue &&
       this.saveRestore.restoreSave({ ...this.state, dialogue: pending.dialogue })
     ) {
-      this.suspendedInteraction = { dialogue: pending.dialogue, galaxy: pending.galaxy };
+      this.suspendedInteraction = {
+        dialogue:
+          pending.galaxy === 5 && pending.dialogue.context === "activity:pip"
+            ? this.courierUnavailableDialogue()
+            : pending.dialogue,
+        galaxy: pending.galaxy,
+      };
     }
     this.depletionContinuation =
       navigation?.depletionContinuation === true && this.state.mode === "home";
@@ -2134,6 +2143,9 @@ export class GameModel {
     if (action) {
       return action;
     }
+    if (context?.flight.galaxy === 5 && id === ANDROMEDA_PLACES.pip) {
+      return placeActivity(5, context.progress, id) ? "talk" : undefined;
+    }
     // At a station an action due there comes before Dock (gameplay/rules.md).
     if (id === HUB_STATION) {
       if ((this.state.flight?.cargo ?? 0) > 0) {
@@ -2961,7 +2973,11 @@ export class GameModel {
     // No offer without its terms: a calf start for the family where it is this flight, or a
     // known station far enough for a supply run.
     if (!this.activityTerms(f, place)) {
-      this.exchange(key);
+      if (activity.id === "courierRun") {
+        this.state.dialogue = this.courierUnavailableDialogue();
+      } else {
+        this.exchange(key);
+      }
       return;
     }
     const busy = this.state.tasks[f.galaxy];
@@ -2976,6 +2992,14 @@ export class GameModel {
       title: speaker,
     };
   }
+  private courierUnavailableDialogue(): DialogueState {
+    return {
+      choices: [{ id: "continue", label: this.label("continue") }],
+      context: "courierUnavailable",
+      text: this.label("activityPipUnavailable"),
+      title: this.label(ANDROMEDA_PLACES.pip),
+    };
+  }
   /**
    * The terms a place's activity would be accepted on now, or null when it makes no offer: the
    * next guide's calf start from the family where it is this flight, a supply run's destination
@@ -2984,7 +3008,8 @@ export class GameModel {
   private activityTerms(f: FlightState, place: string): ActivityTerms | null {
     const activity = placeActivity(f.galaxy, this.current, place);
     const at = f.objects.find((o) => o.kind === "destination" && o.id === place);
-    if (!activity || !at) {
+    // A courier route must have a live escort before it can be offered.
+    if (!activity || !at || activity.id === "courierRun") {
       return null;
     }
     if (activity.id === "supplyRun") {
@@ -4532,6 +4557,10 @@ export class GameModel {
         }
         return;
       }
+    }
+    // Pip has no generic exchange outside his chapter actions and optional activity.
+    if (f.galaxy === 5 && id === ANDROMEDA_PLACES.pip) {
+      return;
     }
     if (id !== HUB_STATION && this.current.stations.includes(id)) {
       if (this.supplyDue(id)) {

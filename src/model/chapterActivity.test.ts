@@ -31,6 +31,33 @@ function atHub() {
   return model;
 }
 
+function atPip(): GameModel {
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
+  model.state.unlocked = [1, 5];
+  Object.assign(model.state.progress[5], {
+    holodisk: true,
+    introduced: true,
+    known: ["pip"],
+    questComplete: true,
+    resolved: true,
+    stage: 6,
+  });
+  model.startGalaxy(5);
+  const flight = model.state.flight!;
+  const pip = flight.objects.find(({ id }) => id === "pip")!;
+  flight.player = { x: pip.x, y: pip.y };
+  return model;
+}
+
+function expectCourierUnavailable(model: GameModel): void {
+  expect(model.state.dialogue).toEqual({
+    choices: [{ id: "continue", label: "Continue" }],
+    context: "courierUnavailable",
+    text: "I don't have a route ready yet. Check back later.",
+    title: "Pip",
+  });
+}
+
 describe("activity completion eligibility and run lifecycle", () => {
   it("records the galaxy's actual activity completion once and preserves it after dropping a later run", () => {
     const model = atHub();
@@ -63,6 +90,50 @@ describe("activity completion eligibility and run lifecycle", () => {
     saved.progress[2]!.activityCompleted = "true";
     expect(restoreSave(saved)).toBeNull();
   });
+
+  it("gives Pip an honest Talk response without offering or starting a courier run", () => {
+    const model = atPip();
+    const before = structuredClone(model.state.progress[5]);
+    const balance = model.state.economy.stardust;
+    expect(model.contextAction).toBe("talk");
+    model.interact();
+    expectCourierUnavailable(model);
+    model.choose("take");
+    expectCourierUnavailable(model);
+    expect(model.state.tasks[5]).toBeUndefined();
+    expect(model.state.progress[5]).toEqual(before);
+    expect(model.state.economy.stardust).toBe(balance);
+    model.choose("continue");
+    expect(model.state.dialogue).toBeNull();
+  });
+
+  it.each([false, true])(
+    "replaces stale active or suspended courier offers on Continue (%s)",
+    (suspended) => {
+      const model = atPip();
+      model.state.dialogue = {
+        choices: [
+          { id: "take", label: "Accept" },
+          { id: "skip", label: "Not now" },
+        ],
+        context: "activity:pip",
+        text: CONTENT.labels.activityPip!,
+        title: "Pip",
+      };
+      if (suspended) {
+        model.closeInteraction();
+      }
+      const saved = model.save();
+      expect(restoreSave(saved)).not.toBeNull();
+      const loaded = relaunch(CONTENT, saved);
+      if (suspended) {
+        expect(loaded.state.dialogue).toBeNull();
+        loaded.interact();
+      }
+      expectCourierUnavailable(loaded);
+      expect(loaded.state.tasks[5]).toBeUndefined();
+    },
+  );
 
   it("keeps a courier's exact run on Continue and resets it only when its flight ends", () => {
     const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);

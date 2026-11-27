@@ -374,6 +374,7 @@ export const CONTENT: GameContent = {
     activityLoom: "The practice channel is open. Thread it again, slowly.",
     activityPip:
       "I've got a parcel for the far settlement. Fly with me? It's less scary with company.",
+    activityPipUnavailable: "I don't have a route ready yet. Check back later.",
     activitySalvager: "A station shop needs these spare parts. Will you bring them?",
     activitySkip: "Not now",
     activityTake: "Accept",
