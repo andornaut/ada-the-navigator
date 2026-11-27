@@ -14,12 +14,13 @@ export interface DesktopSample {
   readonly turn: -1 | 0 | 1;
 }
 
-type FlightTrigger = "held" | "held-and-press" | "press";
+type DesktopTrigger = "held" | "held-and-press" | "press";
+type DesktopContext = "flight" | "menu";
 
-interface FlightBinding {
+interface DesktopBindingDescriptor {
   readonly keys?: readonly string[];
   readonly mouseButtons?: readonly number[];
-  readonly trigger: FlightTrigger;
+  readonly trigger: DesktopTrigger;
 }
 
 /** Physical inputs in the flight context. Foreground menu aliases belong to their own router. */
@@ -34,36 +35,50 @@ export const DESKTOP_FLIGHT_BINDINGS = {
   turnLeft: { keys: ["KeyH"], trigger: "held" },
   turnRight: { keys: ["KeyL"], trigger: "held" },
   use: { keys: ["Enter", "KeyE", "KeyF"], mouseButtons: [2], trigger: "press" },
-} as const satisfies Readonly<Record<string, FlightBinding>>;
+} as const satisfies Readonly<Record<string, DesktopBindingDescriptor>>;
+
+/** Ada's physical menu shortcuts. Game Kit supplies the common foreground aliases. */
+export const DESKTOP_MENU_BINDINGS = {
+  exit: { keys: ["KeyQ"], trigger: "press" },
+} as const satisfies Readonly<Record<string, DesktopBindingDescriptor>>;
 
 function register<Input extends string | number>(
-  index: Map<Input, FlightBinding>,
+  index: Map<Input, DesktopBindingDescriptor>,
+  context: DesktopContext,
   inputs: readonly Input[] | undefined,
-  binding: FlightBinding,
+  binding: DesktopBindingDescriptor,
   source: "key" | "mouse button",
 ): void {
   for (const input of inputs ?? []) {
     if (index.has(input)) {
-      throw new Error(`Duplicate flight ${source}: ${input}`);
+      throw new Error(`Duplicate ${context} ${source}: ${input}`);
     }
     index.set(input, binding);
   }
 }
 
-export function indexFlightBindings(bindings: Readonly<Record<string, FlightBinding>>): {
-  readonly keys: ReadonlyMap<string, FlightBinding>;
-  readonly mouseButtons: ReadonlyMap<number, FlightBinding>;
+export function indexDesktopBindings(
+  context: DesktopContext,
+  bindings: Readonly<Record<string, DesktopBindingDescriptor>>,
+): {
+  readonly keys: ReadonlyMap<string, DesktopBindingDescriptor>;
+  readonly mouseButtons: ReadonlyMap<number, DesktopBindingDescriptor>;
 } {
-  const keys = new Map<string, FlightBinding>();
-  const mouseButtons = new Map<number, FlightBinding>();
+  const keys = new Map<string, DesktopBindingDescriptor>();
+  const mouseButtons = new Map<number, DesktopBindingDescriptor>();
   for (const binding of Object.values(bindings)) {
-    register(keys, binding.keys, binding, "key");
-    register(mouseButtons, binding.mouseButtons, binding, "mouse button");
+    register(keys, context, binding.keys, binding, "key");
+    register(mouseButtons, context, binding.mouseButtons, binding, "mouse button");
   }
   return { keys, mouseButtons };
 }
 
-const flightBindings = indexFlightBindings(DESKTOP_FLIGHT_BINDINGS);
+const flightBindings = indexDesktopBindings("flight", DESKTOP_FLIGHT_BINDINGS);
+const menuBindings = indexDesktopBindings("menu", DESKTOP_MENU_BINDINGS);
+
+export function isMenuExitKey(event: Pick<KeyboardEvent, "code" | "repeat">): boolean {
+  return !event.repeat && menuBindings.keys.get(event.code) === DESKTOP_MENU_BINDINGS.exit;
+}
 
 const zero = (): Vector => ({ x: 0, y: 0 });
 const unit = (vector: Vector): Vector => {

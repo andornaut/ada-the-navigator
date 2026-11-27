@@ -18,6 +18,7 @@ import { SCROLL } from "../ui/layout/contentCard.ts";
 import { readViewUnit } from "../ui/layout/viewScale.ts";
 import { enterPressView, inCurrentView, rootPressGuard } from "../ui/pressScope.ts";
 import { EXIT_SHOWN_ATTRIBUTE } from "../ui/settings.ts";
+import { isMenuExitKey } from "./desktop.ts";
 
 const source = ts.createSourceFile(
   "controls.ts",
@@ -318,6 +319,7 @@ function fixture(
       createButton,
       document,
       inCurrentView,
+      isMenuExitKey,
       leaveBack: [],
       mountNavigationPose: () => ({ dispose() {}, press() {}, rest() {} }),
       openNavigation,

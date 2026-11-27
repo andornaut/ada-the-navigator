@@ -3,8 +3,10 @@ import { describe, expect, it, onTestFinished, vi } from "vitest";
 import {
   bindDesktopInput,
   DESKTOP_FLIGHT_BINDINGS,
+  DESKTOP_MENU_BINDINGS,
   DesktopControlState,
-  indexFlightBindings,
+  indexDesktopBindings,
+  isMenuExitKey,
 } from "./desktop.ts";
 import { ControlState } from "./state.ts";
 
@@ -15,9 +17,9 @@ function fresh() {
   return new DesktopControlState(() => true);
 }
 
-describe("desktop flight binding registration", () => {
+describe("desktop binding registration", () => {
   it("resolves keyboard and mouse aliases to the same Use declaration", () => {
-    const { keys, mouseButtons } = indexFlightBindings(DESKTOP_FLIGHT_BINDINGS);
+    const { keys, mouseButtons } = indexDesktopBindings("flight", DESKTOP_FLIGHT_BINDINGS);
     for (const code of ["Enter", "KeyE", "KeyF"]) {
       expect(keys.get(code)).toBe(DESKTOP_FLIGHT_BINDINGS.use);
     }
@@ -27,17 +29,31 @@ describe("desktop flight binding registration", () => {
 
   it("rejects overlapping physical keys and mouse buttons before binding listeners", () => {
     expect(() =>
-      indexFlightBindings({
+      indexDesktopBindings("flight", {
         ...DESKTOP_FLIGHT_BINDINGS,
         other: { keys: ["ArrowUp"], trigger: "press" },
       }),
     ).toThrow("Duplicate flight key: ArrowUp");
     expect(() =>
-      indexFlightBindings({
+      indexDesktopBindings("flight", {
         ...DESKTOP_FLIGHT_BINDINGS,
         other: { mouseButtons: [0], trigger: "press" },
       }),
     ).toThrow("Duplicate flight mouse button: 0");
+  });
+
+  it("keeps the physical menu Exit shortcut out of flight and rejects repeats and conflicts", () => {
+    const flight = indexDesktopBindings("flight", DESKTOP_FLIGHT_BINDINGS);
+    expect(flight.keys.has("KeyQ")).toBe(false);
+    expect(isMenuExitKey({ code: "KeyQ", repeat: false })).toBe(true);
+    expect(isMenuExitKey({ code: "KeyQ", repeat: true })).toBe(false);
+    expect(isMenuExitKey({ code: "KeyE", repeat: false })).toBe(false);
+    expect(() =>
+      indexDesktopBindings("menu", {
+        ...DESKTOP_MENU_BINDINGS,
+        other: { keys: ["KeyQ"], trigger: "held" },
+      }),
+    ).toThrow("Duplicate menu key: KeyQ");
   });
 });
 

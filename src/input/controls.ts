@@ -98,7 +98,12 @@ import { createWeaponDetailCard } from "../ui/weaponDetailCard.ts";
 import { createWeaponSelector, type WeaponChoice, type WeaponLabels } from "../ui/weapons.ts";
 import { FRAME_TURN } from "../view/frameTurn.ts";
 import { coarsePointer, touchControlsActive, useDiscShown } from "./coarsePointer.ts";
-import { bindDesktopInput, DesktopControlState, type DesktopFrame } from "./desktop.ts";
+import {
+  bindDesktopInput,
+  DesktopControlState,
+  type DesktopFrame,
+  isMenuExitKey,
+} from "./desktop.ts";
 import { type ControlSample, ControlState } from "./state.ts";
 
 export interface ControlsOptions {
@@ -944,8 +949,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     }
     // Q exits from the bare start screen, wherever Exit shows.
     if (
-      event.code === "KeyQ" &&
-      !event.repeat &&
+      isMenuExitKey(event) &&
       menuContext === "start" &&
       !backStack.anyOpen() &&
       !(

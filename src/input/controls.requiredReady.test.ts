@@ -4,6 +4,7 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
+import { isMenuExitKey } from "./desktop.ts";
 import { type ControlSample, ControlState } from "./state.ts";
 
 const source = ts.createSourceFile(
@@ -68,6 +69,7 @@ function harness(required?: () => boolean) {
       },
     },
     foregroundRoot: { closest: () => null, isConnected: true },
+    isMenuExitKey,
     menuContext: "start",
     modalOpen: () => false,
     openNavigation: navigation,
