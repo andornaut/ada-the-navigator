@@ -6,8 +6,11 @@ import { enemyHull, enemyPartOutline } from "../enemyBody.ts";
 import { flightWorldContext } from "../flightTopology.ts";
 import { impactEntry, impactSurface } from "../projectileImpact.ts";
 import { direction } from "../shipPhysics.ts";
-import type { FlightState, SpaceObject, Vec } from "../types.ts";
+import type { FlightState, Shot, SpaceObject, Vec } from "../types.ts";
 import { worldPoint } from "../worldContacts.ts";
+
+export const shotRadius = (shot: Pick<Shot, "projectile">) =>
+  shot.projectile === "missile" ? MISSILE_HIT_RADIUS : 3;
 
 interface ProjectileScenery {
   readonly drawnOf: (flight: FlightState, object: SpaceObject) => Silhouette | null;

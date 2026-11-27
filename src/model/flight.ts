@@ -50,8 +50,6 @@ import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import {
   BEAM,
-  LANCE_HIT_RADIUS,
-  MISSILE_HIT_RADIUS,
   weaponAt,
   type WeaponDefinition,
 } from "../data/weaponCatalog.ts";
@@ -82,8 +80,6 @@ import { planChunkCaches } from "./chunkCaches.ts";
 import { onScreen } from "./conversations.ts";
 import { worldCurrentsNear, worldFlowAt, worldInCurrent } from "./currents.ts";
 import {
-  crossbowAllowsAttack,
-  crossbowSector,
   hammerAllowsMount,
   mantaEscortCommand,
   mantaEscortCourse,
@@ -93,7 +89,6 @@ import {
 } from "./earlyEncounterPatterns.ts";
 import {
   EARLY_LANCE_MOUNT,
-  EARLY_LANCE_SECONDS,
   earlyEncounterCueDue,
   earlyEncounterKind,
 } from "./earlyEncounterRuntime.ts";
@@ -122,6 +117,7 @@ import { selectCartwheelClaimField } from "./cartwheelClaimField.ts";
 import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
 import { beamPoint, outlineBeamStrike, rayCircle, sampleBeam } from "./flight/beamContact.ts";
+import { crossbowAttack, crossbowFrame } from "./flight/crossbow.ts";
 import { inBattle, inDanger } from "./flight/danger.ts";
 import { moveDebris, placeRiverRock } from "./flight/debrisMotion.ts";
 import {
@@ -134,7 +130,6 @@ import {
 import {
   BEAM_TIMING,
   chargeEnemyBeam,
-  projectedLength,
   rememberEarlyLance,
   restoreEarlyLance,
   stepEnemyBeams,
@@ -162,7 +157,7 @@ import {
   movePilot,
   reflectPilotHeading,
 } from "./flight/pilotMovement.ts";
-import { projectileContact, projectileSceneryContact } from "./flight/projectileContact.ts";
+import { projectileContact, projectileSceneryContact, shotRadius } from "./flight/projectileContact.ts";
 import { resolveScenery, type SceneryContactOf } from "./flight/sceneryResolution.ts";
 import { bounceShipContact } from "./flight/shipContact.ts";
 import {
@@ -273,7 +268,7 @@ import { enemyHull, enemyPartOutline, enemyPhysicalBody } from "./enemyBody.ts";
 import { enemyBeamReach, planEnemyProjectile } from "./enemyProjectiles.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { MINE_PARTS } from "./mineShape.ts";
-import { activeNeedleCourses, needleCourses } from "./needle.ts";
+import { activeNeedleCourses } from "./needle.ts";
 import {
   clearNeedleEnemies,
   ensureNeedleDebris,
@@ -289,7 +284,6 @@ import {
   worldOreFieldsNear,
 } from "./oreFields.ts";
 import { pickupOutline, stardustPickupReach } from "./pickupBody.ts";
-import { fanHeading } from "./playerProjectiles.ts";
 import { impactSurface } from "./projectileImpact.ts";
 import { SceneryFrames } from "./sceneryFrames.ts";
 import { sceneryImpact } from "./sceneryImpact.ts";
@@ -4107,101 +4101,6 @@ function planMantaEscorts(flight: FlightState, leader: SpaceObject): MantaEscort
   return first && second ? { courses: [first, second], elapsed: 0 } : undefined;
 }
 
-function crossbowFrame(flight: FlightState, actor: SpaceObject, elapsed: number) {
-  const exit = needleCourses(flight)?.eye.path.at(-1);
-  return exit && actor.enemy
-    ? crossbowSector(
-        flightWorldContext(flight),
-        { elapsed },
-        { exit, home: actor.enemy.home, vertex: { x: actor.x, y: actor.y } },
-      )
-    : undefined;
-}
-
-function crossbowAttack(
-  context: {
-    readonly content: GameContent;
-    readonly coverage: PlayerWeaponCoverageContext;
-    readonly flight: FlightState;
-  },
-  actor: SpaceObject,
-  opportunity: EnemyAttackOpportunity,
-): boolean {
-  const { content, coverage, flight } = context;
-  const state = actor.enemy?.earlyEncounter;
-  if (state?.kind !== "crossbow") {
-    return false;
-  }
-  const { aim, delay, launchVelocity, origin, profile } = opportunity;
-  const sector = crossbowFrame(flight, actor, state.elapsed + delay);
-  if (!sector) {
-    return false;
-  }
-  const world = flightWorldContext(flight);
-  if (profile.weapon === "chargedLance") {
-    const heading = direction(aim);
-    const projection = projectedLength(heading);
-    if (state.pendingLance || !projection) {
-      return false;
-    }
-    const range = coverage.viewportWidth / projection;
-    return crossbowAllowsAttack(world, sector, {
-      fireBy: EARLY_LANCE_SECONDS,
-      paths: [
-        {
-          from: origin,
-          screenRadius: LANCE_HIT_RADIUS,
-          travel: { x: heading.x * range, y: heading.y * range },
-        },
-      ],
-    });
-  }
-  if (profile.weapon === "phaser") {
-    const heading = direction(aim);
-    const range = enemyBeamReach(coverage, { aim: heading, origin });
-    return (
-      range > 0 &&
-      crossbowAllowsAttack(world, sector, {
-        fireBy: BEAM_TIMING.phaser.fires,
-        paths: [
-          {
-            from: origin,
-            screenRadius: BEAM.halfWidth,
-            travel: { x: heading.x * range, y: heading.y * range },
-          },
-        ],
-      })
-    );
-  }
-  const { projectile } = profile;
-  if (projectile === "mine" || projectile === "beam" || enemyOnly(profile.weapon)) {
-    return false;
-  }
-  const definition = weaponAt(profile.weapon, profile.level);
-  const launchContext = {
-    baseLifetime: content.tuning.flight.enemyProjectileLifetime,
-    coverage,
-    definition,
-    inheritedVelocity: launchVelocity,
-  };
-  const paths = profile.angles.map((degrees) => {
-    const launch = planEnemyProjectile(launchContext, {
-      aim: fanHeading(aim, degrees),
-      origin,
-      speed: profile.projectileSpeed,
-    });
-    return {
-      from: origin,
-      screenRadius: Math.max(shotRadius({ projectile }), launch.blast ?? 0),
-      travel: { x: launch.velocity.x * launch.life, y: launch.velocity.y * launch.life },
-    };
-  });
-  return crossbowAllowsAttack(world, sector, {
-    fireBy: Math.max(0, ...(profile.pelletDelays ?? [])),
-    paths,
-  });
-}
-
 function enemies(
   viewport: Readonly<Pick<PlayerWeaponCoverageContext, "viewportHeight" | "viewportWidth">>,
   content: GameContent,
@@ -4743,8 +4642,6 @@ const SHOT_PARTS: Parts = [
   ],
 ];
 
-const shotRadius = (shot: Pick<Shot, "projectile">) =>
-  shot.projectile === "missile" ? MISSILE_HIT_RADIUS : 3;
 const mineStrike = { blast, shotParts: SHOT_PARTS, shotRadius };
 
 function shots(
