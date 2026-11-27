@@ -1,7 +1,6 @@
 import type { SpacePalette } from "../art/index.ts";
 import { SUNFLOWER_CAPITAL_BOSS, WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
-import { SCREEN } from "../data/screen.ts";
 import { andromedaCourierMarkers } from "../model/andromeda.ts";
 import { CARTWHEEL_MINING_PATROL } from "../model/cartwheelMiningPatrol.ts";
 import { toScreen } from "../model/convex.ts";
@@ -13,7 +12,7 @@ import { requiredFrigateEscortId } from "../model/frigateEscorts.ts";
 import type { FlightState, Vec } from "../model/types.ts";
 import { worldDistance, worldPoint } from "../model/worldContacts.ts";
 import { LIGHT_FIELD } from "./lightField.ts";
-import { drawEncounterRoute } from "./scenePhantomBlockade.ts";
+import { drawEncounterRoute, visibleDistances } from "./scenePhantomBlockade.ts";
 
 interface Segment {
   readonly from: Vec;
@@ -53,24 +52,42 @@ function stroke(
   lines();
 }
 
-/** Steady, high-contrast warning marks. Timing comes entirely from the model. */
-function dashes({ from, to }: Segment): Segment[] {
+function visibleSegment({ from, to }: Segment): Segment[] {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
-  const length = Math.hypot(dx, dy);
-  const pointAt = (distance: number) => ({
-    x: from.x + (dx * distance) / length,
-    y: from.y + (dy * distance) / length,
-  });
-  const result: Segment[] = [];
-  for (let at = 0; at < length; at += 20) {
-    result.push({ from: pointAt(at), to: pointAt(Math.min(at + 12, length)) });
+  const visible = visibleDistances(from, { x: dx, y: dy }, 1);
+  if (!visible || visible[0] >= visible[1] || (dx === 0 && dy === 0)) {
+    return [];
   }
-  return result;
+  const [start, end] = visible;
+  return [
+    {
+      from: start === 0 ? from : { x: from.x + dx * start, y: from.y + dy * start },
+      to: end === 1 ? to : { x: from.x + dx * end, y: from.y + dy * end },
+    },
+  ];
 }
 
-function inView({ x, y }: Vec): boolean {
-  return x >= 0 && x <= SCREEN.width && y >= 0 && y <= SCREEN.height;
+/** Clip the work while keeping the dash pattern anchored at the authored start. */
+function dashes(from: Vec, direction: Vec, visible: readonly [number, number] | null): Segment[] {
+  if (!visible) {
+    return [];
+  }
+  const [start, end] = visible;
+  const pointAt = (distance: number) =>
+    plus(from, {
+      x: direction.x * distance,
+      y: direction.y * distance,
+    });
+  const result: Segment[] = [];
+  for (let at = Math.floor(start / 20) * 20; at < end; at += 20) {
+    const dashStart = Math.max(start, at);
+    const dashEnd = Math.min(end, at + 12);
+    if (dashStart < dashEnd) {
+      result.push({ from: pointAt(dashStart), to: pointAt(dashEnd) });
+    }
+  }
+  return result;
 }
 
 function drawHammer(scene: EarlyEncounterScene, flight: FlightState): void {
@@ -124,9 +141,6 @@ function drawManta(scene: EarlyEncounterScene, flight: FlightState): void {
   const origin = scene.project(leader);
   const from = plus(origin, toScreen(course.entry));
   const to = plus(origin, toScreen(course.exit));
-  if (!inView(from) && !inView(to)) {
-    return;
-  }
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const span = Math.hypot(dx, dy);
@@ -140,24 +154,15 @@ function drawManta(scene: EarlyEncounterScene, flight: FlightState): void {
     },
     to,
   }));
-  const path = { from, to };
-  stroke(scene, scene.palette.threat, 1.5, 0.85, [
-    ...(phase.kind === "approach" ? dashes(path) : [path]),
-    ...arrow,
-  ]);
+  const direction = { x: dx / span, y: dy / span };
+  const body =
+    phase.kind === "approach"
+      ? dashes(from, direction, visibleDistances(from, direction, span))
+      : visibleSegment({ from, to });
+  stroke(scene, scene.palette.threat, 1.5, 0.85, [...body, ...arrow.flatMap(visibleSegment)]);
 }
 
 const ray = (angle: number): Vec => toScreen({ x: Math.cos(angle), y: Math.sin(angle) });
-
-function toViewEdge(origin: Vec, direction: Vec): Vec {
-  const x = direction.x > 0 ? SCREEN.width - origin.x : -origin.x;
-  const y = direction.y > 0 ? SCREEN.height - origin.y : -origin.y;
-  const length = Math.min(
-    direction.x === 0 ? Infinity : x / direction.x,
-    direction.y === 0 ? Infinity : y / direction.y,
-  );
-  return plus(origin, { x: direction.x * length, y: direction.y * length });
-}
 
 function drawCrossbow(scene: EarlyEncounterScene, flight: FlightState): void {
   const mark = activeCrossbowSector(flight);
@@ -165,30 +170,37 @@ function drawCrossbow(scene: EarlyEncounterScene, flight: FlightState): void {
     return;
   }
   const origin = scene.project(mark.vertex);
-  if (!inView(origin)) {
-    return;
-  }
-  const rail = (offset: number) => ({
-    from: origin,
-    to: toViewEdge(origin, ray(mark.bearing + offset)),
-  });
+  const rail = (offset: number, dashed = false): Segment[] => {
+    const raw = ray(mark.bearing + offset);
+    const span = Math.hypot(raw.x, raw.y);
+    const direction = { x: raw.x / span, y: raw.y / span };
+    const visible = visibleDistances(origin, direction, Infinity);
+    if (!visible || visible[0] >= visible[1]) {
+      return [];
+    }
+    if (dashed) {
+      return dashes(origin, direction, visible);
+    }
+    const at = (distance: number) =>
+      plus(origin, { x: direction.x * distance, y: direction.y * distance });
+    return [{ from: at(visible[0]), to: at(visible[1]) }];
+  };
   stroke(scene, scene.palette.active, 1.5, 0.9, [
-    rail(-mark.laneHalfAngle),
-    rail(mark.laneHalfAngle),
+    ...rail(-mark.laneHalfAngle),
+    ...rail(mark.laneHalfAngle),
   ]);
   if (mark.phase === "switch") {
     return;
   }
   const [min, max] = mark.sector;
   const outer = Math.abs(min) > Math.abs(max) ? min : max;
-  const edge = rail(outer);
   const arc = Array.from({ length: 13 }, (_, index) => {
     const direction = ray(mark.bearing + min + ((max - min) * index) / 12);
     return plus(origin, { x: direction.x * 73, y: direction.y * 73 });
   });
   stroke(scene, scene.palette.threat, 2, 0.8, [
-    ...(mark.phase === "warning" ? dashes(edge) : [edge]),
-    ...arc.slice(1).map((to, index) => ({ from: arc[index]!, to })),
+    ...rail(outer, mark.phase === "warning"),
+    ...arc.slice(1).flatMap((to, index) => visibleSegment({ from: arc[index]!, to })),
   ]);
 }
 

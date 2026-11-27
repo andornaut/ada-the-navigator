@@ -3,9 +3,11 @@ import { expect, it } from "vitest";
 import { FALLBACK_SPACE_PALETTE } from "../art/index.ts";
 import { NEEDLE_CADENCE, WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
+import { SCREEN } from "../data/screen.ts";
 import { toScreen } from "../model/convex.ts";
 import { createUnpopulatedFlight, spawnChapterEnemy } from "../model/flight.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
+import { needleCourses } from "../model/needle.ts";
 import type { Vec } from "../model/types.ts";
 import { drawEarlyEncounters } from "./sceneEarlyEncounters.ts";
 
@@ -76,6 +78,65 @@ it("keeps both Crossbow lane rails fixed while the warning and firing sector cha
   expect(next.slice(0, 4)).toEqual(crossing);
   expect(warning.length).toBeGreaterThan(active.length);
   expect(next[4]).not.toEqual(warning[4]);
+});
+
+it("clips Manta's crossing with both endpoints offscreen and keeps the approach dash phase", () => {
+  const flight = createUnpopulatedFlight(CONTENT, 3, 173);
+  const point = { x: 0, y: 0 };
+  const leader = spawnChapterEnemy(CONTENT, "capital", WHIRLPOOL_CAPITAL_BOSS.id, point, flight)!;
+  const escort = spawnChapterEnemy(CONTENT, "fighter", `${leader.id}:escort:0`, point, flight)!;
+  const course = { entry: { x: -300, y: 300 }, exit: { x: 300, y: -300 }, station: point };
+  const paintAt = { x: 355, y: 180 };
+  const { scene, segments } = surface();
+  scene.project = () => paintAt;
+  flight.objects = [leader, escort];
+
+  leader.enemy!.earlyEncounter = { courses: [course, course], elapsed: 1.5, kind: "manta" };
+  drawEarlyEncounters(scene, flight);
+  expect(segments).toEqual([
+    [0, 180, SCREEN.width, 180],
+    [0, 180, SCREEN.width, 180],
+  ]);
+
+  segments.length = 0;
+  leader.enemy!.earlyEncounter = { courses: [course, course], elapsed: 0.5, kind: "manta" };
+  drawEarlyEncounters(scene, flight);
+  expect(segments[0]).toEqual([0, 180, 7, 180]);
+  expect(segments[1]).toEqual([15, 180, 27, 180]);
+  expect(segments.every(([x1, , x2]) => x1! >= 0 && x2! <= SCREEN.width)).toBe(true);
+
+  segments.length = 0;
+  paintAt.y = -40;
+  drawEarlyEncounters(scene, flight);
+  expect(segments).toEqual([]);
+});
+
+it("clips forward Crossbow rails that enter the viewport and omits rails pointing away", () => {
+  const flight = createUnpopulatedFlight(CONTENT, 4, 173);
+  flight.needle = { anchor: { x: 200, y: 300 } } as NonNullable<typeof flight.needle>;
+  const exit = needleCourses(flight)!.eye.path.at(-1)!;
+  const boss = spawnChapterEnemy(CONTENT, "capital", NEEDLE_CADENCE.id, { x: 0, y: 0 }, flight)!;
+  boss.enemy!.home = { x: exit.x - 100, y: exit.y + 100 };
+  boss.enemy!.earlyEncounter = { elapsed: 4.5, kind: "crossbow" };
+  flight.objects = [boss];
+  const origin = { x: -80, y: 180 };
+  const { scene, segments } = surface();
+  scene.project = () => origin;
+
+  drawEarlyEncounters(scene, flight);
+  expect(segments).toHaveLength(4);
+  for (const [x1, y1, x2, y2] of segments) {
+    expect(x1).toBeCloseTo(0);
+    expect(x2).toBeCloseTo(SCREEN.width);
+    expect(y1).toBeGreaterThan(0);
+    expect(y2).toBeLessThan(SCREEN.height);
+  }
+  expect(segments[0]![1]).not.toBe(segments[1]![1]);
+
+  segments.length = 0;
+  origin.x = SCREEN.width + 80;
+  drawEarlyEncounters(scene, flight);
+  expect(segments).toEqual([]);
 });
 
 it("marks the prepared Cartwheel bypass only after warning and keeps one world image at the seam", () => {

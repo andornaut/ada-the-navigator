@@ -49,11 +49,12 @@ function warningMark(origin: Vec, site: Vec): Segment[] {
   ];
 }
 
-/** Bound drawing to the portion whose arrows can touch the viewport. */
-function visibleDistances(
+/** Intersect a forward path with the viewport, optionally allowing room for its marks. */
+export function visibleDistances(
   from: Vec,
   direction: Vec,
   length: number,
+  inset = 0,
 ): readonly [number, number] | null {
   let start = 0;
   let end = length;
@@ -64,13 +65,13 @@ function visibleDistances(
     const slope = direction[axis];
     const origin = from[axis];
     if (slope === 0) {
-      if (origin < -EDGE_INSET || origin > limit + EDGE_INSET) {
+      if (origin < -inset || origin > limit + inset) {
         return null;
       }
       continue;
     }
-    const a = (-EDGE_INSET - origin) / slope;
-    const b = (limit + EDGE_INSET - origin) / slope;
+    const a = (-inset - origin) / slope;
+    const b = (limit + inset - origin) / slope;
     start = Math.max(start, Math.min(a, b));
     end = Math.min(end, Math.max(a, b));
   }
@@ -86,7 +87,7 @@ function withdrawalMarks(from: Vec, to: Vec): Segment[] {
   }
   const x = dx / length;
   const y = dy / length;
-  const visible = visibleDistances(from, { x, y }, length);
+  const visible = visibleDistances(from, { x, y }, length, EDGE_INSET);
   if (!visible) {
     return [];
   }
