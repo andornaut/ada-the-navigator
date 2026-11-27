@@ -2029,20 +2029,9 @@ function scanSource(context: ScanContext, path: string, text: string) {
     return undefined;
   };
 
-  // Classify the bubble listener independently of the detached constructor's eventual mount.
-  const consumesDetachedFactoryClick = (call: ts.CallExpression): boolean => {
-    const block = call.parent.parent;
-    if (
-      !ts.isBlock(block) ||
-      !ts.isExpressionStatement(call.parent) ||
-      !dot(call.expression, "addEventListener") ||
-      !literal(call.arguments[0], "click")
-    ) {
-      return false;
-    }
-    const element = lexicalDeclaration(call.expression.expression);
-    if (!element || !ts.isVariableDeclaration(element) || !isConst(element)) {
-      return false;
+  const detachedFactoryClick = (element: ts.VariableDeclaration, block: ts.Block) => {
+    if (!isConst(element)) {
+      return undefined;
     }
     const factory = capturedKitFactory(element, block, true);
     const binding = factory && lexicalDeclaration(factory.action);
@@ -2060,7 +2049,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
       !literal(fields(registration.arguments[0])?.get("nativeClickOwner"), "factory") ||
       !inertRegistrationOptions(registration.arguments[0]!, () => false, true)
     ) {
-      return false;
+      return undefined;
     }
     const index = (local: ts.VariableDeclaration) =>
       block.statements.findIndex((step) => singleLocal(step) === local);
@@ -2074,11 +2063,11 @@ function scanSource(context: ScanContext, path: string, text: string) {
         .slice(elementIndex + 1, bindingIndex)
         .every((step) => privateDomEdit(step, privateNodes))
     ) {
-      return false;
+      return undefined;
     }
     const click = capturedKitListener(block, element, binding, factory);
-    if (click?.listener !== call) {
-      return false;
+    if (!click) {
+      return undefined;
     }
     const read = (node: ts.Identifier, local: ts.VariableDeclaration) =>
       node !== local.name &&
@@ -2109,7 +2098,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
           }
         } else if (
           read(node, click.handler) &&
-          node !== call.arguments[1] &&
+          node !== click.listener.arguments[1] &&
           !(
             ts.isCallExpression(access) &&
             access.arguments[1] === node &&
@@ -2122,7 +2111,25 @@ function scanSource(context: ScanContext, path: string, text: string) {
       }
       return ts.forEachChild(node, unsafe);
     };
-    return !unsafe(block);
+    return unsafe(block) ? undefined : { binding, click, factory };
+  };
+  // Classify the bubble listener independently of the detached constructor's eventual mount.
+  const consumesDetachedFactoryClick = (call: ts.CallExpression): boolean => {
+    const block = call.parent.parent;
+    if (
+      !ts.isBlock(block) ||
+      !ts.isExpressionStatement(call.parent) ||
+      !dot(call.expression, "addEventListener") ||
+      !literal(call.arguments[0], "click")
+    ) {
+      return false;
+    }
+    const element = lexicalDeclaration(call.expression.expression);
+    return Boolean(
+      element &&
+      ts.isVariableDeclaration(element) &&
+      detachedFactoryClick(element, block)?.click.listener === call,
+    );
   };
   const capturedProofs = new Map<ts.VariableDeclaration, number>();
   const proveCapturedConstruction = (control: ts.VariableDeclaration): number => {
@@ -2835,6 +2842,62 @@ function scanSource(context: ScanContext, path: string, text: string) {
     return !unsafe(block);
   };
 
+  // A detached record may carry propagation-only listeners that its disposer removes.
+  const detachedListenerSetup = (
+    element: ts.VariableDeclaration,
+    setup: readonly ts.Statement[],
+    click: NonNullable<ReturnType<typeof detachedFactoryClick>>["click"],
+  ) => {
+    const nodes = new Set<ts.Declaration>([element]);
+    const handlers = new Set<ts.VariableDeclaration>();
+    const listeners: ts.CallExpression[] = [];
+    for (const statement of setup) {
+      if (privateDomEdit(statement, nodes)) {
+        continue;
+      }
+      const local = singleLocal(statement);
+      const fn = local?.initializer;
+      if (local && isConst(local) && fn && ts.isArrowFunction(fn) && synchronousCallable(fn)) {
+        if (
+          local !== click.handler &&
+          !(
+            fn.parameters.length === 1 &&
+            !fn.parameters[0]!.initializer &&
+            !fn.parameters[0]!.dotDotDotToken &&
+            ts.isCallExpression(fn.body) &&
+            !fn.body.questionDotToken &&
+            !fn.body.arguments.length &&
+            dot(fn.body.expression, "stopPropagation") &&
+            lexicalIdentity(fn.body.expression.expression, fn.parameters[0]!)
+          )
+        ) {
+          return undefined;
+        }
+        handlers.add(local);
+        continue;
+      }
+      const call = callStatement(statement);
+      const handler = call?.arguments[1] && lexicalDeclaration(call.arguments[1]);
+      if (
+        !call ||
+        call.questionDotToken ||
+        !dot(call.expression, "addEventListener") ||
+        !unwritten(call.expression) ||
+        !lexicalIdentity(call.expression.expression, element) ||
+        call.arguments.length !== 2 ||
+        !handler ||
+        !ts.isVariableDeclaration(handler) ||
+        !handlers.delete(handler) ||
+        (call !== click.listener && !literal(call.arguments[0], "pointerdown"))
+      ) {
+        return undefined;
+      }
+      listeners.push(call);
+    }
+    return !handlers.size && listeners.includes(click.listener) ? listeners : undefined;
+  };
+  const registeredDetachedMetadata = new Map<ts.Declaration, number>();
+
   // Prove first publication within the construction block, independently of when it runs.
   // The Kit caller-layout icon factory calls getState with the fresh element while creating it.
   const registeredKitElement = (call: ts.CallExpression): boolean => {
@@ -2873,6 +2936,9 @@ function scanSource(context: ScanContext, path: string, text: string) {
     const content = fields(options?.get("content"));
     const state = options?.get("getState");
     const native = nativeDocument(call.arguments[0]!);
+    const detachedClick = literal(content?.get("kind"), "icon")
+      ? detachedFactoryClick(alias, block)
+      : undefined;
     const stateWithoutElement = !state || (ts.isArrowFunction(state) && !state.parameters.length);
     const textButton =
       native &&
@@ -2883,7 +2949,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
       !literal(fields(options?.get("appearance"))?.get("layout"), "caller") ||
       (!textButton && !literal(content?.get("kind"), "icon")) ||
       content?.has("icon") ||
-      (!native && !createdHostDocument(call.arguments[0]!)) ||
+      (!native && !detachedClick && !createdHostDocument(call.arguments[0]!)) ||
       (!stateWithoutElement && !readsButtonAvailability(state))
     ) {
       return false;
@@ -3076,9 +3142,13 @@ function scanSource(context: ScanContext, path: string, text: string) {
     // Its cleanup is deferred to the record's consumer and can only dispose the local handles.
     const result = tail.at(-1);
     const record = tail.length === 2 ? singleLocal(tail[0]!) : undefined;
+    const listeners =
+      detachedClick?.binding === binding
+        ? detachedListenerSetup(alias, tail.slice(0, -1), detachedClick.click)
+        : undefined;
     const value =
       result && ts.isReturnStatement(result) && result.expression
-        ? tail.length === 1
+        ? tail.length === 1 || listeners
           ? result.expression
           : record && isConst(record) && lexicalIdentity(result.expression, record)
             ? record.initializer
@@ -3091,12 +3161,13 @@ function scanSource(context: ScanContext, path: string, text: string) {
       ts.isObjectLiteralExpression(value) &&
       (ts.isFunctionDeclaration(owner) || ts.isArrowFunction(owner)) &&
       synchronousCallable(owner) &&
-      getAction &&
-      ts.isArrowFunction(getAction) &&
-      synchronousCallable(getAction) &&
-      !getAction.parameters.length &&
-      ts.isIdentifier(getAction.body) &&
-      lexicalIdentity(getAction.body, binding)
+      (listeners ||
+        (getAction &&
+          ts.isArrowFunction(getAction) &&
+          synchronousCallable(getAction) &&
+          !getAction.parameters.length &&
+          ts.isIdentifier(getAction.body) &&
+          lexicalIdentity(getAction.body, binding)))
     ) {
       const elements = value.properties.filter((property) =>
         ts.isPropertyAssignment(property)
@@ -3117,9 +3188,26 @@ function scanSource(context: ScanContext, path: string, text: string) {
         ts.isMethodDeclaration(dispose) &&
         synchronousCallable(dispose) &&
         !dispose.parameters.length &&
-        dispose.body?.statements.length === 2 &&
+        dispose.body?.statements.length === 2 + (listeners?.length ?? 0) &&
         dispose.body.statements.every((statement, position) => {
           const cleanup = callStatement(statement);
+          const listener = listeners?.[position - 2];
+          if (listener) {
+            const event = listener.arguments[0]!;
+            const handler = lexicalDeclaration(listener.arguments[1]!);
+            return (
+              cleanup &&
+              !cleanup.questionDotToken &&
+              dot(cleanup.expression, "removeEventListener") &&
+              unwritten(cleanup.expression) &&
+              lexicalIdentity(cleanup.expression.expression, alias) &&
+              cleanup.arguments.length === 2 &&
+              ts.isStringLiteral(event) &&
+              literal(cleanup.arguments[0], event.text) &&
+              handler &&
+              lexicalIdentity(cleanup.arguments[1]!, handler)
+            );
+          }
           return (
             cleanup &&
             !cleanup.questionDotToken &&
@@ -3137,6 +3225,9 @@ function scanSource(context: ScanContext, path: string, text: string) {
               owner.parameters.some((parameter) => declaration(property.name) === parameter)),
         )
       ) {
+        if (listeners) {
+          registeredDetachedMetadata.set(alias, registration.end);
+        }
         return true;
       }
     }
@@ -4763,11 +4854,13 @@ function scanSource(context: ScanContext, path: string, text: string) {
           isActionId && ts.isPropertyAccessExpression(left.expression)
             ? left.expression.expression
             : left.expression;
+        const constructor = isActionId && lexicalDeclaration(target);
         if (
           (isActionType || isActionId) &&
           !hasBinding(target) &&
           !immediateButtonRegistration(node, target) &&
           !capturedConstruction(target, node) &&
+          !(constructor && node.end <= (registeredDetachedMetadata.get(constructor) ?? -1)) &&
           !(isActionId && certifiedMemberMetadata(target))
         ) {
           record(

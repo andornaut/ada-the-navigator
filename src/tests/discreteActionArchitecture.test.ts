@@ -749,11 +749,22 @@ it.each([
 const detachedClickSource = readFileSync(new URL("../ui/statusPill.ts", import.meta.url), "utf8");
 const detachedClickPath = "src/ui/detachedClickFixture.ts";
 const detachedClickListener = 'button.addEventListener("click", click)';
+const detachedConstructor = expect.objectContaining({
+  kind: "unbound-discrete",
+  source: expect.stringContaining("createButton(parent.ownerDocument,"),
+});
+const detachedMetadata = expect.objectContaining({
+  kind: "unbound-discrete",
+  source: 'button.dataset.action = "shield-details"',
+});
 
 it.each(["src/ui/statusPill.ts", detachedClickPath])(
-  "proves the detached factory bubble listener in %s only suppresses propagation",
+  "proves detached factory registration and propagation suppression in %s",
   (path) => {
-    expect(constructionFindings(path, detachedClickSource)).toContainEqual(
+    const findings = constructionFindings(path, detachedClickSource);
+    expect(findings).not.toContainEqual(detachedConstructor);
+    expect(findings).not.toContainEqual(detachedMetadata);
+    expect(findings).toContainEqual(
       expect.objectContaining({
         classification: "suppressor",
         kind: "non-action",
@@ -790,6 +801,30 @@ it.each([
   expect(source).not.toBe(detachedClickSource);
   expect(constructionFindings(detachedClickPath, source)).toContainEqual(
     expect.objectContaining({ kind: "raw-discrete", source: detachedClickListener }),
+  );
+  expect(constructionFindings(detachedClickPath, source)).toEqual(
+    expect.arrayContaining([detachedConstructor, detachedMetadata]),
+  );
+});
+
+it.each([
+  [
+    'button.removeEventListener("pointerdown", pointerdown);',
+    'button.removeEventListener("pointerdown", otherHandler);',
+  ],
+  [
+    "    return {\n      button,\n      dispose()",
+    "    return {\n      button: other,\n      dispose()",
+  ],
+])("requires the returned button and its exact disposer with %s", (original, replacement) => {
+  const source = detachedClickSource.replace(original, replacement);
+  expect(source).not.toBe(detachedClickSource);
+  expect(constructionFindings(detachedClickPath, source)).toEqual(
+    expect.arrayContaining([
+      detachedConstructor,
+      detachedMetadata,
+      expect.objectContaining({ kind: "non-action", source: detachedClickListener }),
+    ]),
   );
 });
 
