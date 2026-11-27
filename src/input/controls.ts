@@ -320,6 +320,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     pose: undefined,
   };
   let pressedStoryButton: HTMLElement | undefined;
+  let showNavigationPress: ((element: HTMLElement | null) => void) | undefined;
   const actionRoot = bindAdaActionRoot(
     {
       allowNonPrimaryTouch: true,
@@ -328,6 +329,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
         onPressChange: (element) => {
           usePress = element === useButton ? { since: now() } : undefined;
           weapons.setPressed(element);
+          showNavigationPress?.(element);
           pressedStoryButton?.removeAttribute("data-story-pressed");
           pressedStoryButton =
             element?.classList.contains("ada-story-button") ||
@@ -518,6 +520,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     openNavigation,
   );
   const pauseButton = navigation.button;
+  showNavigationPress = (element) => navigation.setPressed(element === pauseButton);
   if (exitButton) {
     pauseButton.after(exitButton);
   }

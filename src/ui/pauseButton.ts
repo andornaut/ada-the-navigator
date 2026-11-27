@@ -11,12 +11,6 @@ import {
 import { readViewUnit } from "./layout/viewScale.ts";
 import { type PauseFrame, pauseFrames, pausePose } from "./pause.ts";
 
-const disposers = new WeakMap<HTMLButtonElement, () => void>();
-
-export function disposePauseButton(button: HTMLButtonElement): void {
-  disposers.get(button)?.();
-}
-
 const UI_ROOT = "/art/ui/";
 
 /** Presents the shared navigation poses without owning an activation. */
@@ -73,11 +67,7 @@ export function mountNavigationPose(button: HTMLButtonElement) {
 // Chibi's touch pause button (ui-pause): rest, then its press frames once on a press, then held
 // until release, each frame drawn as its pose's vector art. Activating it pauses. Its tags and
 // timing come from the UI manifest's sheet; until they load it shows the rest pose.
-export function createPauseButton(
-  root: HTMLElement,
-  label: string,
-  onPause: () => void,
-): HTMLButtonElement {
+export function createPauseButton(root: HTMLElement, label: string, onPause: () => void) {
   const kit = createButton(root.ownerDocument, {
     appearance: { className: "ada-pause", face: {}, layout: "caller" },
     content: { kind: "icon", name: label },
@@ -125,11 +115,6 @@ export function createPauseButton(
     action.dispose();
     kit.dispose();
     pose.dispose();
-    button.removeEventListener("pointerdown", pose.press);
-    for (const type of ["pointerup", "pointercancel", "pointerleave"] as const) {
-      button.removeEventListener(type, pose.rest);
-    }
-    disposers.delete(button);
   };
   try {
     assertAdaActionMetadata(button);
@@ -140,10 +125,18 @@ export function createPauseButton(
     button.remove();
     throw error;
   }
-  button.addEventListener("pointerdown", pose.press);
-  for (const type of ["pointerup", "pointercancel", "pointerleave"] as const) {
-    button.addEventListener(type, pose.rest);
-  }
-  disposers.set(button, dispose);
-  return button;
+  return {
+    button,
+    dispose,
+    setPressed(pressed: boolean) {
+      if (disposed) {
+        return;
+      }
+      if (pressed) {
+        pose.press();
+      } else {
+        pose.rest();
+      }
+    },
+  };
 }

@@ -215,7 +215,7 @@ it("holds the actual navigation button once and suppresses release click using t
   navigation.dispose();
   expect(remove).toHaveBeenCalledWith("click", expect.any(Function), true);
   for (const type of ["pointerdown", "pointerup", "pointercancel", "pointerleave"]) {
-    expect(remove).toHaveBeenCalledWith(type, expect.any(Function));
+    expect(remove).not.toHaveBeenCalledWith(type, expect.any(Function));
   }
   expect(vi.getTimerCount()).toBe(0);
   button.dispatchEvent(new Event("click"));
