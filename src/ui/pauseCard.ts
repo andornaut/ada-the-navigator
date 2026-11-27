@@ -2,6 +2,7 @@ import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayo
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
+import { CONTENT } from "../data/content.ts";
 import { EQUIPMENT_DESCRIPTIONS } from "../data/equipmentDetails.ts";
 import { RESOURCE_DESCRIPTIONS } from "../data/resourceDescriptions.ts";
 import type { GalaxyNumber } from "../data/types.ts";
@@ -247,6 +248,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     },
     initialTree,
   );
+  const backLabel = labels.mapScreen.questBack ?? CONTENT.labels.questBack!;
   const ship = createCard({
     close: closeControl("close-ship", labels.close, closeShip),
     size: "large",
@@ -254,16 +256,12 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   });
   ship.card.dataset.dialog = "ship";
   ship.frame.hidden = true;
-  const shipBackAction = createStandardTextAction(
-    root,
-    labels.mapScreen.questBack ?? labels.close,
-    {
-      availability: () => ({ kind: "available" }),
-      current: () => !disposed,
-      run: closeShip,
-      separateFace: true,
-    },
-  );
+  const shipBackAction = createStandardTextAction(root, backLabel, {
+    availability: () => ({ kind: "available" }),
+    current: () => !disposed,
+    run: closeShip,
+    separateFace: true,
+  });
   actionBindings.push(shipBackAction);
   const shipBack = shipBackAction.element;
   shipBack.classList.add("ada-primary");
@@ -290,7 +288,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     throw error;
   }
   const mapScreen = createMapScreen(root, {
-    closeLabel: labels.mapScreen.questBack ?? labels.close,
+    closeLabel: backLabel,
     labels: labels.mapScreen,
     onClose: () => closeMap(),
     // The galaxy map opens over the local map, which stays open beneath it.
@@ -307,7 +305,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   let shipDetailOrigin: HTMLElement | undefined;
   const questParentDismissal = {
     intent: "back" as const,
-    label: labels.mapScreen.questBack ?? labels.close,
+    label: backLabel,
   };
   const quests = createQuestsScreen(root, {
     labels: labels.mapScreen,
@@ -409,6 +407,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     }
   };
   const detailOptions = {
+    backLabel,
     closeLabel: labels.close,
     onOpenChange: (visible: boolean) => {
       if (!visible) {
@@ -490,6 +489,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
   const shipPaint = options.paint
     ? createShipPaintCard(root, {
         ...options.paint,
+        backLabel,
         closeLabel: labels.close,
         onClose: () => {
           if (shipOpen()) {

@@ -24,7 +24,11 @@ export interface ShipPaintOptions {
 
 export function createShipPaintCard(
   root: HTMLElement,
-  options: ShipPaintOptions & { readonly closeLabel: string; readonly onClose: () => void },
+  options: ShipPaintOptions & {
+    readonly backLabel: string;
+    readonly closeLabel: string;
+    readonly onClose: () => void;
+  },
 ) {
   const modal = document.createElement("div");
   modal.className = "ada-modal";
@@ -43,7 +47,7 @@ export function createShipPaintCard(
   parts.card.dataset.dialog = "ship-paint";
   const grid = document.createElement("div");
   grid.className = "ada-ship-paint-grid";
-  const dismiss = createStandardTextAction(root, options.closeLabel, {
+  const dismiss = createStandardTextAction(root, options.backLabel, {
     availability: () => ({ kind: "available" }),
     current,
     run: close,
@@ -52,7 +56,7 @@ export function createShipPaintCard(
   dismiss.element.classList.add("ada-primary");
   setButtonRole("primary", dismiss.element);
   const footer = createActions([{ button: dismiss.element, role: "primary" }]);
-  setFooterAction("close", footer);
+  setFooterAction("back", footer);
   parts.body.append(grid, footer);
   modal.append(parts.frame);
   assertAdaActionMetadata(modal);

@@ -12,7 +12,7 @@ import { createPauseCards, type PauseLabels, type PauseState } from "./pauseCard
 import { inCurrentView } from "./pressScope.ts";
 import * as refusal from "./refusal.ts";
 import type { ShipView } from "./shipCard.ts";
-import { createShipPaintCard } from "./shipPaintCard.ts";
+import { createShipPaintCard, type ShipPaintOptions } from "./shipPaintCard.ts";
 
 // Every focus() call, latest last, with the options of the latest.
 const focusLog: FakeElement[] = [];
@@ -368,6 +368,7 @@ function shipPaintFixture() {
   });
   const card = createShipPaintCard(root as unknown as HTMLElement, {
     applyLabel: "Apply",
+    backLabel: "Back",
     closeLabel: "Close",
     current: () => selected,
     inUseLabel: "In use",
@@ -433,10 +434,15 @@ it("rejects a paint button missing its binding before attaching that tile", () =
   }
 });
 
-function cards(detached = false, beforeCreate?: (root: FakeElement) => void) {
+function cards(
+  detached = false,
+  beforeCreate?: (root: FakeElement) => void,
+  paint?: ShipPaintOptions,
+) {
   const root = detached ? new FakeElement() : mountedRoot();
   beforeCreate?.(root);
   const options = {
+    ...(paint ? { paint } : {}),
     labels: LABELS,
     onAchievements: vi.fn(),
     onBackToTitle: vi.fn(),
@@ -1467,17 +1473,63 @@ it.each([
   origin.click();
   expect(modal.hidden).toBe(true);
   expect(pause.shipOpen()).toBe(true);
-  expect(
-    root.children.some((node) => node !== modal && node.className === "ada-modal" && !node.hidden),
-  ).toBe(true);
-  pause.closeShip();
+  const detail = root.children.find(
+    (node) => node !== modal && node.className === "ada-modal" && !node.hidden,
+  )!;
+  const kind = item.startsWith("weapon:") ? "weapon-detail" : "resource";
+  const dismiss = button(detail, `dismiss-${kind}`);
+  expect(dismiss.textContent).toBe("Back");
+  expect(dismiss.parentElement?.dataset.footerAction).toBe("back");
+  dismiss.click();
   expect(pause.shipOpen()).toBe(true);
   expect(modal.hidden).toBe(false);
   expect(focused()).toBe(origin);
   expect(SHIP).toEqual(snapshot);
   expect(options.onBackToTitle).not.toHaveBeenCalled();
   expect(options.onGalaxies).not.toHaveBeenCalled();
+  origin.click();
+  button(detail, `close-${kind}`).click();
+  expect(detail.hidden).toBe(true);
+  expect(modal.hidden).toBe(false);
+  expect(focused()).toBe(origin);
+  expect(options.onOpenChange.mock.calls).toEqual([[true]]);
+  pause.dispose();
 });
+
+it.each(["dismiss-ship-paint", "close-ship-paint"])(
+  "returns Paint to its Ship row through %s with a Back footer",
+  (action) => {
+    const select = vi.fn();
+    const { body, modal, options, pause, root, ship } = cards(false, undefined, {
+      applyLabel: "Apply",
+      current: () => "classic",
+      inUseLabel: "In use",
+      schemes: () => [{ id: "classic", name: "Classic" }],
+      select,
+      title: "Ship paint",
+    });
+    pause.setState(state());
+    pause.open();
+    button(body.children[0]!, "pause-ship").click();
+    const origin = ship.querySelector('[data-item="equipment:paint"]')!;
+    origin.click();
+    expect(modal.hidden).toBe(true);
+    const detail = root.children.find(
+      (node) => node !== modal && node.className === "ada-modal" && !node.hidden,
+    )!;
+    const dismiss = button(detail, "dismiss-ship-paint");
+    expect(dismiss.textContent).toBe("Back");
+    expect(dismiss.parentElement?.dataset.footerAction).toBe("back");
+    button(detail, action).click();
+    expect(detail.hidden).toBe(true);
+    expect(modal.hidden).toBe(false);
+    expect(pause.shipOpen()).toBe(true);
+    expect(focused()).toBe(origin);
+    expect(options.onOpenChange.mock.calls).toEqual([[true]]);
+    expect(select).not.toHaveBeenCalled();
+    pause.dispose();
+  },
+);
 
 it("returns held cargo quest details directly to the same Ship", () => {
   const { body, modal, pause, root, ship } = cards();

@@ -33,12 +33,17 @@ type WeaponDetailIdentity = {
 /** Weapon details use the shared card frame and modal pause lifecycle. */
 export function createWeaponDetailCard(
   root: HTMLElement,
-  options: { readonly closeLabel: string; readonly onOpenChange: (open: boolean) => void },
+  options: {
+    readonly backLabel?: string;
+    readonly closeLabel: string;
+    readonly onOpenChange: (open: boolean) => void;
+  },
 ) {
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
   let disposed = false;
+  const dismissLabel = options.backLabel ?? options.closeLabel;
   const headerBinding = createStandardCloseAction(root, "close-weapon-detail", options.closeLabel, {
     current: (button) =>
       !disposed &&
@@ -61,7 +66,7 @@ export function createWeaponDetailCard(
   quantity.hidden = true;
   const actions = createActions([]);
   actions.className += " ada-detail-actions";
-  setFooterAction("close", actions);
+  setFooterAction(options.backLabel === undefined ? "close" : "back", actions);
   card.body.append(description, quantity, actions);
   modal.append(card.frame);
   root.append(modal);
@@ -161,7 +166,7 @@ export function createWeaponDetailCard(
       },
       host: modal,
     },
-    weaponDetailTree({ closeLabel: options.closeLabel, lines: [], title: "" }),
+    weaponDetailTree({ closeLabel: dismissLabel, lines: [], title: "" }),
   );
   assertAdaActionMetadata(modal);
   const dismiss = actions.querySelector<HTMLButtonElement>(
@@ -188,7 +193,7 @@ export function createWeaponDetailCard(
       returnFocus = origin;
       currentIdentity = identity;
       visible = true;
-      mounted.update(weaponDetailTree({ closeLabel: options.closeLabel, lines, title }));
+      mounted.update(weaponDetailTree({ closeLabel: dismissLabel, lines, title }));
       assertAdaActionMetadata(modal);
       assertAdaActionBindings(modal);
       modal.hidden = false;

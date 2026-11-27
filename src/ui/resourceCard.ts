@@ -30,12 +30,17 @@ export interface ResourceDetails {
 /** Resource descriptions share the standard modal frame and pause lifecycle. */
 export function createResourceCard(
   root: HTMLElement,
-  options: { readonly closeLabel: string; readonly onOpenChange: (open: boolean) => void },
+  options: {
+    readonly backLabel?: string;
+    readonly closeLabel: string;
+    readonly onOpenChange: (open: boolean) => void;
+  },
 ) {
   const modal = document.createElement("div");
   modal.className = "ada-modal";
   modal.hidden = true;
   let disposed = false;
+  const dismissLabel = options.backLabel ?? options.closeLabel;
   const headerBinding = createStandardCloseAction(root, "close-resource", options.closeLabel, {
     current: (button) =>
       !disposed &&
@@ -57,7 +62,7 @@ export function createResourceCard(
   quantity.hidden = true;
   const actions = createActions([]);
   actions.className += " ada-detail-actions";
-  setFooterAction("close", actions);
+  setFooterAction(options.backLabel === undefined ? "close" : "back", actions);
   card.body.append(description, quantity, actions);
   modal.append(card.frame);
   root.append(modal);
@@ -128,7 +133,7 @@ export function createResourceCard(
       },
       host: modal,
     },
-    resourceTree({ closeLabel: options.closeLabel, description: "", title: "" }),
+    resourceTree({ closeLabel: dismissLabel, description: "", title: "" }),
   );
   assertAdaActionMetadata(modal);
   const dismiss = actions.querySelector<HTMLButtonElement>('[data-action="dismiss-resource"]')!;
@@ -158,7 +163,7 @@ export function createResourceCard(
       visible = true;
       mounted.update(
         resourceTree({
-          closeLabel: options.closeLabel,
+          closeLabel: dismissLabel,
           description: text,
           title,
           ...(amount === undefined ? {} : { quantity: amount }),
