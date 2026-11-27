@@ -105,3 +105,4 @@ Reference: [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.
 | ada-0430 | Preserve dialogue history and make optional topics replayable                   | [ada-0430.md](../work/ada-0430.md) |
 | ada-0436 | Open details from flight markers                                                | [ada-0436.md](../work/ada-0436.md) |
 | ada-0450 | Align the homepage structure and list flight and menu controls                  | [ada-0450.md](../work/ada-0450.md) |
+| ada-0454 | Put Play first and remove the homepage footer                                   | [ada-0454.md](../work/ada-0454.md) |
