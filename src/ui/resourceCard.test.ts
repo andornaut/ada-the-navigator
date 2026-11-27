@@ -99,17 +99,7 @@ const fixture = vi.hoisted(() => {
       );
     }
     querySelector(selector: string): Node | null {
-      const action = /data-action="([^"]+)"/.exec(selector)?.[1];
-      for (const child of this.children) {
-        if (action !== undefined && child.dataset.action === action) {
-          return child;
-        }
-        const found = child.querySelector(selector);
-        if (found) {
-          return found;
-        }
-      }
-      return null;
+      return this.querySelectorAll(selector)[0] ?? null;
     }
     children: Node[] = [];
     className = "";
@@ -270,6 +260,10 @@ function attach(root: InstanceType<typeof fixture.Node>) {
   document.body.append(root as unknown as HTMLElement);
   return root;
 }
+function detailParts() {
+  return fixture.card.body.children[0]!.children;
+}
+
 function attachedActionRoot(root = new fixture.Node()) {
   attach(root);
   fixtureActionRoot(root);
@@ -293,7 +287,7 @@ it("uses the shared card and reports exactly one pause/close transition, restori
   resource.open("Ore", "Approved description", origin as unknown as HTMLElement);
   expect(resource.isOpen()).toBe(true);
   expect(fixture.card.title.textContent).toBe("Ore");
-  expect(fixture.card.body.children[0]!.textContent).toBe("Approved description");
+  expect(detailParts()[0]!.textContent).toBe("Approved description");
   expect(onOpenChange).toHaveBeenLastCalledWith(true);
   expect(fixture.card.fit).toHaveBeenCalledOnce();
   resource.close();
@@ -328,7 +322,7 @@ it("reopens with current content and traps Tab on the close control", () => {
   document.defaultView!.dispatchEvent(event);
   expect(event.defaultPrevented).toBe(true);
   expect(fixture.card.title.textContent).toBe("Stardust");
-  expect(fixture.card.body.children[0]!.textContent).toBe("Second");
+  expect(detailParts()[0]!.textContent).toBe("Second");
   resource.dispose();
 });
 
@@ -350,7 +344,7 @@ it("shows canonical supplied content and secondary Quests before primary Close w
     icon: icon as unknown as HTMLElement,
     quests: { label: "Quests", onOpen: () => lifecycle.push("quests-open") },
   });
-  const [description, quantity, actions] = fixture.card.body.children;
+  const [description, quantity, actions] = detailParts();
   expect(fixture.card.title.children[0]).toBe(icon);
   expect(quantity!.hidden).toBe(true);
   expect(description!.textContent).toBe("Canonical quest description");
@@ -403,7 +397,7 @@ it("shows current resource quantities including zero separately and updates them
       count,
       icon: icon as unknown as HTMLElement,
     });
-    const row = fixture.card.body.children[1]!;
+    const row = detailParts()[1]!;
     expect(row.hidden).toBe(false);
     expect(fixture.card.title.children).toHaveLength(1);
     expect(fixture.card.title.children[0]!.textContent).toBe("Ore");
@@ -411,11 +405,11 @@ it("shows current resource quantities including zero separately and updates them
     expect(row.children[0]).not.toBe(icon);
     expect(row.children[1]!.textContent).toBe(expected);
     expect(row.attributes["aria-label"]).toBe(`Ore: ${expected}`);
-    expect(fixture.card.body.children[0]!.textContent).toBe("Approved ore description");
+    expect(detailParts()[0]!.textContent).toBe("Approved ore description");
     detail.close();
   }
   detail.open("Ore", "Approved ore description", origin);
-  expect(fixture.card.body.children[1]!.hidden).toBe(true);
+  expect(detailParts()[1]!.hidden).toBe(true);
   detail.dispose();
 });
 
@@ -435,7 +429,7 @@ it("shows shield identity in the header and formatted HP below while preserving 
     quantity: "8 / 15 HP",
   });
   expect(fixture.card.title.children[0]).toBe(icon);
-  const quantity = fixture.card.body.children[1]!;
+  const quantity = detailParts()[1]!;
   expect(quantity.hidden).toBe(false);
   expect(quantity.children.at(-1)!.textContent).toBe("8 / 15 HP");
   detail.close();
@@ -462,7 +456,7 @@ it("retains footer nodes, resolves the current Quests closure and unregisters di
   detail.open("Toolkit", "First", origin as unknown as HTMLElement, {
     quests: { label: "Quests", onOpen: first },
   });
-  const footer = fixture.card.body.children[2]!;
+  const footer = detailParts()[2]!;
   const [quests, dismiss] = footer.querySelectorAll("button");
   const captured = resolveAdaHoldAction(root as unknown as HTMLElement, quests!);
   expect(captured?.available()).toBe(true);
@@ -594,7 +588,7 @@ it("reports Resource scope and excludes a registered background action", () => {
     expect(action?.available()).toBe(false);
     action?.activate();
     expect(run).not.toHaveBeenCalled();
-    const footer = fixture.card.body.children[2]!;
+    const footer = detailParts()[2]!;
     for (const node of [fixture.card.close, ...footer.querySelectorAll("button")]) {
       expect(inCurrentView(host, node as unknown as HTMLElement)).toBe(true);
       expect(resolveAdaHoldAction(host, node)?.available()).toBe(true);
@@ -645,9 +639,7 @@ it("releases Resource scope before parent restore and invalidates close/reopen/d
     detail.open("Ore", "Current", origin as unknown as HTMLElement);
     expect(afterParentDismissal()).toBe(false);
     const resourcePress = guard.gate.capture();
-    const dismiss = fixture.card.body.children[2]!.querySelector(
-      '[data-action="dismiss-resource"]',
-    )!;
+    const dismiss = detailParts()[2]!.querySelector('[data-action="dismiss-resource"]')!;
     resolveAdaHoldAction(host, dismiss)?.activate();
     expect(resourcePress()).toBe(false);
     expect(transitions).toEqual([true, false]);
@@ -698,7 +690,7 @@ it("releases only its own Resource scope after Quests has opened a child", () =>
       },
     });
     const resourcePress = guard.gate.capture();
-    const quests = fixture.card.body.children[2]!.querySelectorAll("button")[0]!;
+    const quests = detailParts()[2]!.querySelectorAll("button")[0]!;
     const action = resolveAdaHoldAction(host, quests);
     expect(action?.available()).toBe(true);
     action?.activate();

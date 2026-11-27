@@ -4,7 +4,14 @@ import { SPACING } from "./tokens.ts";
 
 /** Header and quantity geometry for the shared weapon and resource cards. */
 export const DETAIL_CARD_STYLE = `
-.ada-controls .ada-detail-actions{display:flex;align-self:stretch;width:auto;justify-content:space-between}
+.ada-controls .ada-detail-body > .ui-layout-stack{
+  align-self:stretch;grid-template-columns:minmax(0,1fr)
+}
+.ada-controls .ada-detail-body .ada-detail-quantity{justify-self:center}
+.ada-controls .ada-detail-actions{min-width:0;width:auto;justify-content:space-between}
+.ada-controls .ada-detail-actions:has(> .ada-button-presentation:not([hidden])):not(:has(
+  > .ada-button-presentation:not([hidden]) ~ .ada-button-presentation:not([hidden])
+)){justify-self:center}
 .ada-controls .ada-detail-header,.ada-controls .ada-detail-quantity{
   display:flex;align-items:center;justify-content:center;gap:${units(SPACING.gap)}
 }

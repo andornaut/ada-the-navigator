@@ -7,12 +7,12 @@ import { WEAPON_DETAIL_LABELS } from "../data/weaponDetails.ts";
 import { ammoGlyphPath, weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { compactLevelName } from "./compactLevelName.ts";
+import { createDetailCardFrame } from "./detailCardFrame.ts";
 import { detailCount, renderDetailQuantity } from "./detailQuantity.ts";
 import { renderItemDetailDescription, renderItemDetailHeader } from "./itemDetailContent.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createAdaLayoutPorts } from "./layoutTree.ts";
-import { createActions, createCard, setFooterAction } from "./modal.ts";
 import { createStandardCloseAction } from "./modalClose.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
@@ -39,9 +39,6 @@ export function createWeaponDetailCard(
     readonly onOpenChange: (open: boolean) => void;
   },
 ) {
-  const modal = document.createElement("div");
-  modal.className = "ada-modal";
-  modal.hidden = true;
   let disposed = false;
   const dismissLabel = options.backLabel ?? options.closeLabel;
   const headerBinding = createStandardCloseAction(root, "close-weapon-detail", options.closeLabel, {
@@ -54,22 +51,13 @@ export function createWeaponDetailCard(
     slopPx: (button) => SCROLL.dragThreshold * readViewUnit(button),
     slopThreshold: SCROLL.dragThreshold,
   });
-  const card = createCard({
-    close: headerBinding.element,
-    size: "small",
-    title: "",
-  });
-  card.card.dataset.dialog = "weapon-detail";
-  const description = document.createElement("p");
-  description.className = "ada-prose";
-  const quantity = document.createElement("div");
-  quantity.hidden = true;
-  const actions = createActions([]);
-  actions.className += " ada-detail-actions";
-  setFooterAction(options.backLabel === undefined ? "close" : "back", actions);
-  card.body.append(description, quantity, actions);
-  modal.append(card.frame);
-  root.append(modal);
+  const frame = createDetailCardFrame(
+    root,
+    headerBinding.element,
+    "weapon-detail",
+    options.backLabel === undefined ? "close" : "back",
+  );
+  const { actions, card, description, modal, quantity } = frame;
   let visible = false;
   const layer = createModalLayer(modal);
   let leaveView: (() => void) | undefined;
@@ -155,7 +143,7 @@ export function createWeaponDetailCard(
           create(data) {
             renderContent(data);
             return {
-              dispose: card.dispose,
+              dispose: frame.dispose,
               element: card.frame,
               slots: { footer: actions },
               update: renderContent,

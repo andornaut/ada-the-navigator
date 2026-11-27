@@ -101,17 +101,7 @@ const fixture = vi.hoisted(() => {
       );
     }
     querySelector(selector: string): Node | null {
-      const action = /data-action="([^"]+)"/.exec(selector)?.[1];
-      for (const child of this.children) {
-        if (action !== undefined && child.dataset.action === action) {
-          return child;
-        }
-        const found = child.querySelector(selector);
-        if (found) {
-          return found;
-        }
-      }
-      return null;
+      return this.querySelectorAll(selector)[0] ?? null;
     }
     children: Node[] = [];
     className = "";
@@ -273,6 +263,10 @@ function attach(root: InstanceType<typeof fixture.Node>) {
   document.body.append(root as unknown as HTMLElement);
   return root;
 }
+function detailParts() {
+  return fixture.card.body.children[0]!.children;
+}
+
 function attachedActionRoot(root = new fixture.Node()) {
   attach(root);
   fixtureActionRoot(root);
@@ -296,10 +290,10 @@ it("uses the shared card and reports exactly one pause/close transition, restori
   resource.open("Ore", ["Approved description"], origin as unknown as HTMLElement);
   expect(resource.isOpen()).toBe(true);
   expect(fixture.card.title.textContent).toBe("Ore");
-  expect(fixture.card.body.children[0]!.children[0]!.textContent).toBe("Approved description");
+  expect(detailParts()[0]!.children[0]!.textContent).toBe("Approved description");
   expect(onOpenChange).toHaveBeenLastCalledWith(true);
   expect(fixture.card.fit).toHaveBeenCalledOnce();
-  fixture.card.body.children
+  detailParts()
     .at(-1)!
     .querySelector('[data-action="dismiss-weapon-detail"]')!
     .dispatchEvent(new Event("click"));
@@ -334,7 +328,7 @@ it("reopens with current content and traps Tab on the close control", () => {
   document.defaultView!.dispatchEvent(event);
   expect(event.defaultPrevented).toBe(true);
   expect(fixture.card.title.textContent).toBe("Stardust");
-  expect(fixture.card.body.children[0]!.children[0]!.textContent).toBe("Second");
+  expect(detailParts()[0]!.children[0]!.textContent).toBe("Second");
   resource.dispose();
 });
 
@@ -363,9 +357,9 @@ it.each([1, 2, 3])(
       `url('${uiIconUrl("weapon-rapidMissile")}')`,
     );
     expect(icon!.children[1]!.children).toHaveLength(level === 1 ? 0 : level);
-    const lines = fixture.card.body.children[0]!.children.map((node) => node.textContent);
+    const lines = detailParts()[0]!.children.map((node) => node.textContent);
     expect(lines).not.toContain("Ammo: 0 left");
-    const row = fixture.card.body.children[1]!;
+    const row = detailParts()[1]!;
     expect(row.hidden).toBe(false);
     expect(row.children[0]!.className).toBe("ada-detail-ammo-icon");
     expect(row.children[0]!.style.setProperty).toHaveBeenCalledWith(
@@ -397,9 +391,7 @@ it("keeps an unowned preview unnumbered without inventing owned level metadata",
   expect(label!.textContent).toBe("Rapid Missile");
   expect(icon!.dataset).not.toHaveProperty("level");
   expect(icon!.children[1]!.children).toHaveLength(0);
-  expect(fixture.card.body.children[0]!.children[0]!.textContent).toBe(
-    WEAPON_DETAIL_LABELS.detailIncludesAmmo,
-  );
+  expect(detailParts()[0]!.children[0]!.textContent).toBe(WEAPON_DETAIL_LABELS.detailIncludesAmmo);
   detail.dispose();
 });
 
@@ -419,10 +411,10 @@ it("renders basic Laser's existing glyph and Unlimited row without a level-one s
     { ammo: null, ammoLabel: "Ammo", id: "laser", level: 1 },
   );
   expect(fixture.card.title.children[1]!.textContent).toBe("Laser");
-  const row = fixture.card.body.children[1]!;
+  const row = detailParts()[1]!;
   expect(row.children[0]!.className).toBe("ada-detail-unlimited-icon");
   expect(row.children[1]!.textContent).toBe("Unlimited");
-  expect(fixture.card.body.children[0]!.children.map((node) => node.textContent)).toEqual(
+  expect(detailParts()[0]!.children.map((node) => node.textContent)).toEqual(
     weaponDetailLines("laser", 1),
   );
   detail.close();
@@ -452,7 +444,7 @@ it("retains native content nodes and original close actions across current view,
     closeLabel: "Close",
     onOpenChange,
   });
-  const [description, quantity, footer] = fixture.card.body.children;
+  const [description, quantity, footer] = detailParts();
   detail.open(
     "Rapid Missile",
     weaponDetailLines("rapidMissile", 3),
@@ -477,7 +469,7 @@ it("retains native content nodes and original close actions across current view,
     id: "laser",
     level: 1,
   });
-  expect(fixture.card.body.children).toEqual([description, quantity, footer]);
+  expect(detailParts()).toEqual([description, quantity, footer]);
   expect(footer!.querySelector('[data-action="dismiss-weapon-detail"]')).toBe(dismiss);
   expect(quantity!.children[1]!.textContent).toBe("Unlimited");
   const cover = new fixture.Node();
