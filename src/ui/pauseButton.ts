@@ -111,6 +111,9 @@ export function createPauseButton(root: HTMLElement, label: string, onPause: () 
     button,
   );
   const dispose = () => {
+    if (disposed) {
+      return;
+    }
     disposed = true;
     action.dispose();
     kit.dispose();
