@@ -46,23 +46,19 @@ export const KEEPER_NAME_PARTS = {
 
 export const STATION_KEEPER_COPY = {
   flavor: {
-    1: "We keep things humming around here.",
-    2: "A little dust never bothers us.",
+    1: "We hum while we work.",
+    2: "Mind the dust. It gets into everything.",
     3: "The currents are calmer by the docks.",
-    4: "Take your time. The channels teach patience.",
+    4: "Take your time. There’s no hurry here.",
     5: "We leave a light on for travelers.",
-    6: "There’s room to rest here.",
+    6: "It’s quiet here. You can catch your breath.",
   },
-  intro: "Welcome aboard.",
-  returning: [
-    "Welcome back, Navigator.",
-    "Good to see you again.",
-    "Back already? What do you need today?",
-  ],
+  intro: "Come on in.",
+  returning: ["Good to see you again.", "Back to trade?", "How was the flight in?"],
   services: {
-    equipment: "We have equipment for your ship.",
-    exchange: "You can trade ore and Stardust here.",
-    jobs: "There’s work on the board.",
-    weaponsAmmo: "We sell weapons and ammo.",
+    equipment: "Need anything for your ship?",
+    exchange: "Got ore or Stardust to trade?",
+    jobs: "Looking for work? Check the board.",
+    weaponsAmmo: "Need weapons or ammo?",
   },
 } as const;

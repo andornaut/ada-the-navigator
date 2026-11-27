@@ -202,9 +202,13 @@ describe("a keeper's greeting at the station card", () => {
     )!;
     const lines = dockAndRead(model);
     expect(lines).toHaveLength(3);
-    expect(lines[0]).toBe("Welcome aboard.");
-    expect(lines[1]).toBe("We keep things humming around here.");
-    expect(lines[2]).toMatch(/(equipment for your ship|weapons and ammo|work on the board)/);
+    expect(lines[0]).toBe("Come on in.");
+    expect(lines[1]).toBe("We hum while we work.");
+    expect([
+      "Need anything for your ship?",
+      "Need weapons or ammo?",
+      "Looking for work? Check the board.",
+    ]).toContain(lines[2]);
     expect(model.stationGreeting).toEqual({
       count: 3,
       displayName: model.stationGreeting!.displayName,
@@ -229,7 +233,7 @@ describe("a keeper's greeting at the station card", () => {
     const compact = model.dockGreeting()!;
     expect(compact.displayName).toMatch(/^(Pollen|Petal|Amber) (Goldwing|Bloom|Honeycomb)$/);
     expect(full.displayName).toBe(`${compact.displayName} of ${model.dockedStationName}`);
-    expect(full.line).toBe("Welcome aboard.");
+    expect(full.line).toBe("Come on in.");
     expect(model.dockWelcome()?.displayName).toBe(compact.displayName);
     expect(model.dockWelcome()?.line).not.toContain(model.dockedStationName);
     expect(compact).toEqual({ ...full, displayName: compact.displayName });
@@ -340,10 +344,10 @@ describe("a keeper's greeting at the station card", () => {
       later.push(dockAndRead(model));
     }
     expect(later).toEqual([
-      ["Welcome back, Navigator."],
       ["Good to see you again."],
-      ["Back already? What do you need today?"],
-      ["Welcome back, Navigator."],
+      ["Back to trade?"],
+      ["How was the flight in?"],
+      ["Good to see you again."],
     ]);
     expect(model.state.progress[1].greetings[station.id]).toBe(5);
   });
@@ -356,7 +360,7 @@ describe("a keeper's greeting at the station card", () => {
     expect(reloaded.state.progress[1].greetings).toEqual({ [station.id]: 1 });
     reloaded.state.flight!.player = { x: station.x, y: station.y };
     reloaded.state.dialogue = null;
-    expect(dockAndRead(reloaded)).toEqual(["Welcome back, Navigator."]);
+    expect(dockAndRead(reloaded)).toEqual(["Good to see you again."]);
     reloaded.undock();
     reloaded.backToTitle();
     reloaded.restart();
