@@ -121,6 +121,53 @@ describe("planRegion", () => {
     );
   });
 
+  it("admits oversized Huge only inside the chunk's outside lanes, clear of protected sites", () => {
+    const huge = { id: "huge", radius: 140, size: "huge", weight: 1 } as const;
+    const square = {
+      ...rules,
+      bands: [
+        {
+          enemies: [],
+          from: 0,
+          moving: [],
+          rocks: [{ density: 1, edgeMultiplier: 1, kind: "huge", shapes: [huge], tries: 48 }],
+        },
+      ],
+      worldSide: 4096,
+    };
+    const cell = { x: 3, y: 0 };
+    const area = { cell, columns: 1, exclusions: [], rows: 1 };
+    const plan = planRegion(square, seeds(1), area);
+    const rock = plan.placements[0]!;
+    expect(rock.shape).toBe("huge");
+    const margin = huge.radius + rules.corridor!;
+    expect(rock.x - cell.x * rules.chunkSize).toBeGreaterThanOrEqual(margin);
+    expect(rock.x - cell.x * rules.chunkSize).toBeLessThanOrEqual(rules.chunkSize - margin);
+    expect(rock.y).toBeGreaterThanOrEqual(margin);
+    expect(rock.y).toBeLessThanOrEqual(rules.chunkSize - margin);
+    const alias = planRegion(square, seeds(1), { ...area, cell: { x: -5, y: 0 } });
+    expect(alias.placements[0]!.id).toBe(rock.id);
+    expect(alias.placements[0]!.x + square.worldSide).toBeCloseTo(rock.x, 10);
+    expect(alias.placements[0]!.y).toBe(rock.y);
+    const protectedArea = planRegion(square, seeds(1), {
+      ...area,
+      exclusions: [
+        {
+          applies: ["rock"],
+          rule: "protected",
+          shape: {
+            kind: "disc",
+            radius: 200,
+            x: (cell.x + 0.5) * rules.chunkSize - square.worldSide,
+            y: rules.chunkSize / 2,
+          },
+        },
+      ],
+    });
+    expect(protectedArea.placements).toEqual([]);
+    expect(protectedArea.report.kinds.huge?.drops.protected).toBe(1);
+  });
+
   it("checks a cluster's actual per-rock paths after capping a shared launch draw", () => {
     const mixed = {
       ...rules,

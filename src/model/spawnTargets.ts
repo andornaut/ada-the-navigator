@@ -376,7 +376,8 @@ export function spawnMargin(rules: SpawnRules): number {
 /**
  * One chunk's planning region: the chunk itself, with the enemy groups of the margin around it
  * planned first, so its rocks leave their space. Rocks and moving rocks are planned in the
- * chunk alone; lanes keep every static rock inside its chunk, so no rock meets a neighbour's.
+ * chunk alone. Every static footprint stays inside its chunk's outside lanes, including Huge
+ * rocks whose footprint needs the chunk's interior quadrant boundaries.
  * The region is a function of the chunk, its zones and sites, so a chunk plans the same
  * content whichever neighbour loads it.
  */

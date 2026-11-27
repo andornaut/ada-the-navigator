@@ -303,6 +303,7 @@ export interface SpawnSeeds {
 /** Report rule names the planner itself applies; exclusion zones add their own. */
 export const SPAWN_RULE = {
   admission: "admission",
+  capacity: "capacity",
   corridor: "corridor",
   noSourceRock: "no-source-rock",
   overlap: "overlap",
@@ -336,7 +337,7 @@ class SpatialIndex {
     this.largest = Math.max(this.largest, entry.radius);
   }
 
-  clear(gap: number, at: Footprint): boolean {
+  overlap(gap: number, at: Footprint): Footprint | undefined {
     const reach = at.radius + gap + this.largest;
     const [x0, x1] = [
       Math.floor((at.x - reach) / this.size),
@@ -353,12 +354,12 @@ class SpatialIndex {
             Math.hypot(other.x - at.x, other.y - at.y) <
             other.radius + at.radius + gap - EPSILON
           ) {
-            return false;
+            return other;
           }
         }
       }
     }
-    return true;
+    return undefined;
   }
 }
 
@@ -757,7 +758,7 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
   // The first applicable rule a candidate breaks, or undefined when it is accepted.
   const blocked = (category: SpawnCategory, at: Footprint): string | undefined =>
     excludedBy(rules, region, category, at) ??
-    (index.clear(rules.gap, at) ? undefined : SPAWN_RULE.overlap);
+    (index.overlap(rules.gap, at) ? SPAWN_RULE.overlap : undefined);
 
   const rocks = (area: readonly Chunk[]) => {
     for (const kind of kindsOf(rules, (band) => band.rocks)) {
@@ -781,25 +782,66 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
           shape: weightedPick(random, target.shapes, weights),
           spawn,
         });
-        // Dense chunks sample the same size weights across the whole request. Larger draws
-        // reserve their space before small rocks can divide the quadrant.
-        const packed = target.edgeMultiplier !== undefined && count > Math.ceil(target.density);
+        // Strata preserve the requested weights. A larger footprint has fewer eligible
+        // positions, so it gets first choice of the available space.
+        const packed = target.edgeMultiplier !== undefined;
+        const layout = packed
+          ? randomInt(stream(seeds.world, kind, chunk, "layout"), 0, 20)
+          : undefined;
         const ordered = packed
           ? Array.from({ length: count }, (_, spawn) =>
               draw(() => (spawn + next()) / count, spawn),
             ).sort((a, b) => b.shape.radius - a.shape.radius)
           : undefined;
+        const compact = new Map<AsteroidSize, SpawnShape>();
+        if (packed) {
+          for (const variant of target.shapes) {
+            if (variant.size && variant.radius < (compact.get(variant.size)?.radius ?? Infinity)) {
+              compact.set(variant.size, variant);
+            }
+          }
+        }
+        const rockBlocked = (at: Footprint) => {
+          const rule = excludedBy(rules, region, "rock", at);
+          if (rule) {
+            return { rule };
+          }
+          const obstacle = index.overlap(rules.gap, at);
+          return obstacle ? { obstacle, rule: SPAWN_RULE.overlap } : undefined;
+        };
         for (let order = 0; order < count; order++) {
           const { shape, spawn } = ordered?.[order] ?? draw(next, order);
+          const variant =
+            shape.size && count > Math.ceil(target.density)
+              ? (compact.get(shape.size) ?? shape)
+              : shape;
+          const medium = compact.get("medium");
+          const mediumRequests =
+            ordered?.filter(({ shape }) => shape.size === "medium").length ?? 0;
+          const leavesRoom =
+            variant.size === "huge" && medium && rules.corridor !== undefined && mediumRequests
+              ? hugeLeavesRoom(
+                  rules.gap,
+                  rules.corridor,
+                  size,
+                  medium.radius,
+                  variant.radius,
+                  mediumRequests,
+                  rockBlocked,
+                  chunk.origin,
+                )
+              : undefined;
           const placed = placeRock(
             rules,
             size,
             chunk,
             next,
             target.tries,
-            shape.radius,
-            packed,
-            (at) => blocked("rock", at),
+            variant,
+            layout,
+            (at) =>
+              rockBlocked(at) ??
+              (leavesRoom && !leavesRoom(at) ? { rule: SPAWN_RULE.capacity } : undefined),
           );
           if (typeof placed === "string") {
             tally.drop(kind, placed);
@@ -811,15 +853,18 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
             continue;
           }
           const id = `${kind}:${chunk.key}:${spawn}`;
-          const crystals = placedRockCrystals(rules.crystals, seeds.world, { id, shape: shape.id });
+          const crystals = placedRockCrystals(rules.crystals, seeds.world, {
+            id,
+            shape: variant.id,
+          });
           const placement: SpawnPlacement = {
             category: "rock",
             chunk: chunk.key,
             id,
             kind,
-            radius: shape.radius,
-            shape: shape.id,
-            ...(shape.size ? { size: shape.size } : {}),
+            radius: variant.radius,
+            shape: variant.id,
+            ...(variant.size ? { size: variant.size } : {}),
             ...placed.at,
             ...(crystals ? { crystals } : {}),
           };
@@ -1104,9 +1149,69 @@ const QUADRANT_MIDPOINTS = [
 ] as const;
 
 /**
+ * Reserve the Medium corner capacity the current chunk can use before accepting a Huge.
+ * The bounded look-ahead checks four corners per quadrant and never rearranges a placement.
+ */
+function hugeLeavesRoom(
+  gap: number,
+  lane: number,
+  size: number,
+  medium: number,
+  huge: number,
+  requested: number,
+  blocked: (at: Footprint) => unknown,
+  origin: Vec,
+): (point: Vec) => boolean {
+  const section = size / 2;
+  const inset = medium + lane;
+  const span = section - 2 * inset;
+  const separation = (2 * medium + gap) ** 2;
+  const minimum = (medium + huge + gap) ** 2;
+  const quadrants: Vec[][] = [];
+  if (span >= 0) {
+    for (let quadrant = 0; quadrant < 4; quadrant++) {
+      const anchors: Vec[] = [];
+      for (const corner of QUADRANT_CORNERS) {
+        const point = {
+          radius: medium,
+          x: origin.x + (quadrant % 2) * section + inset + corner.x * span,
+          y: origin.y + Math.floor(quadrant / 2) * section + inset + corner.y * span,
+        };
+        if (!blocked(point)) {
+          anchors.push(point);
+        }
+      }
+      quadrants.push(anchors);
+    }
+  }
+  const capacity = (anchors: readonly Vec[]) => {
+    if (span ** 2 >= separation) {
+      return anchors.length;
+    }
+    return anchors.some((a) =>
+      anchors.some((b) => (a.x - b.x) ** 2 + (a.y - b.y) ** 2 >= separation),
+    )
+      ? 2
+      : Number(anchors.length > 0);
+  };
+  const reserve = Math.min(
+    requested,
+    quadrants.reduce((sum, anchors) => sum + capacity(anchors), 0),
+  );
+  return (point) =>
+    quadrants.reduce(
+      (sum, anchors) =>
+        sum +
+        capacity(anchors.filter((at) => (point.x - at.x) ** 2 + (point.y - at.y) ** 2 >= minimum)),
+      0,
+    ) >= reserve;
+}
+
+/**
  * A static rock uses the first clear seeded position in its quadrant's lane-free box, or
- * anywhere in the chunk without lanes. Dense slots check each quadrant's corners and midpoints
- * before using the remaining uniform draws. An oversized rock reports the corridor rule.
+ * anywhere in the chunk without lanes. Ordinary slots check corners and midpoints before the
+ * remaining uniform draws. A Huge footprint that cannot fit a quadrant uses the chunk interior
+ * with its outer lanes intact.
  */
 function placeRock(
   rules: SpawnRules,
@@ -1114,48 +1219,85 @@ function placeRock(
   chunk: Chunk,
   next: Random,
   tries: number,
-  radius: number,
-  packed: boolean,
-  blocked: (at: Footprint) => string | undefined,
+  shape: SpawnShape,
+  layout: number | undefined,
+  blocked: (at: Footprint) => { obstacle?: Footprint; rule: string } | undefined,
 ): { at?: Vec; rejected: string[] } | string {
+  const { radius } = shape;
   const lane = rules.corridor;
   const inset = lane === undefined ? 0 : radius + lane;
-  const span = lane === undefined ? size : size / 2 - 2 * inset;
+  const wholeChunk = lane === undefined || (shape.size === "huge" && 2 * inset > size / 2);
+  const section = wholeChunk ? size : size / 2;
+  const sections = wholeChunk ? 1 : 4;
+  const span = section - 2 * inset;
   if (span < 0) {
     return SPAWN_RULE.corridor;
   }
   const rejected: string[] = [];
-  const scan = packed && lane !== undefined;
-  const corners = scan ? 4 * QUADRANT_CORNERS.length : 0;
-  const midpoints = scan ? 4 * QUADRANT_MIDPOINTS.length : 0;
-  const start = scan ? randomInt(next, 0, corners * midpoints) : 0;
+  const scan = layout !== undefined && lane !== undefined;
+  const corners = scan ? sections * QUADRANT_CORNERS.length : 0;
+  const midpoints = scan ? sections * QUADRANT_MIDPOINTS.length : 0;
+  const start = layout ?? 0;
   const jitter = Math.min(span, rules.gap / 20);
+  const boundaryTries = Math.min(tries, corners + midpoints);
+  const tangentLimit = tries - boundaryTries;
+  const tangents: Vec[] = [];
   for (let attempt = 0; attempt < tries; attempt++) {
+    if (attempt >= boundaryTries && attempt - boundaryTries < tangents.length) {
+      const at = tangents[attempt - boundaryTries]!;
+      const hit = blocked({ ...at, radius });
+      if (!hit) {
+        return { at, rejected };
+      }
+      rejected.push(hit.rule);
+      continue;
+    }
     let quadrant: number;
     let x: number;
     let y: number;
-    if (attempt < corners + midpoints) {
+    if (attempt < boundaryTries) {
       const offsets = attempt < corners ? QUADRANT_CORNERS : QUADRANT_MIDPOINTS;
-      // Seven is coprime to both candidate counts (16 corners and 20 midpoints).
-      const candidate = (start + attempt * 7) % (4 * offsets.length);
-      const offset = offsets[candidate % offsets.length]!;
-      quadrant = Math.floor(candidate / offsets.length);
+      const candidate = attempt < corners ? attempt : attempt - corners;
+      const offset = offsets[(candidate + start) % offsets.length]!;
+      quadrant = (Math.floor(candidate / offsets.length) + start) % sections;
       x = offset.x * (span - jitter) + next() * jitter;
       y = offset.y * (span - jitter) + next() * jitter;
     } else {
-      quadrant = lane === undefined ? 0 : Math.floor(next() * 4);
+      quadrant = wholeChunk ? 0 : Math.floor(next() * sections);
       x = next() * span;
       y = next() * span;
     }
-    const at = {
-      x: chunk.origin.x + (quadrant % 2) * (size / 2) + inset + x,
-      y: chunk.origin.y + Math.floor(quadrant / 2) * (size / 2) + inset + y,
-    };
-    const rule = blocked({ ...at, radius });
-    if (!rule) {
+    const left = chunk.origin.x + (quadrant % 2) * section + inset;
+    const top = chunk.origin.y + Math.floor(quadrant / 2) * section + inset;
+    const at = { x: left + x, y: top + y };
+    const hit = blocked({ ...at, radius });
+    if (!hit) {
       return { at, rejected };
     }
-    rejected.push(rule);
+    rejected.push(hit.rule);
+    if (hit.obstacle && attempt < boundaryTries && tangents.length < tangentLimit) {
+      const other = hit.obstacle;
+      const distance = radius + other.radius + rules.gap + EPSILON;
+      // Keep the sampled coordinate along the wall. Slide the other coordinate to the
+      // obstacle's clearance circle, using the remaining candidate budget for these points.
+      for (const axis of ["x", "y"] as const) {
+        const across = axis === "x" ? "y" : "x";
+        const fixed = at[across] - other[across];
+        const radial = Math.sqrt(Math.max(0, distance ** 2 - fixed ** 2));
+        for (const side of at[axis] < other[axis] ? [-1, 1] : [1, -1]) {
+          const point = { ...at, [axis]: other[axis] + side * radial };
+          if (
+            point.x >= left &&
+            point.x <= left + span &&
+            point.y >= top &&
+            point.y <= top + span &&
+            tangents.length < tangentLimit
+          ) {
+            tangents.push(point);
+          }
+        }
+      }
+    }
   }
   return { rejected };
 }
