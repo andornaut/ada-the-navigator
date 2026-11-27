@@ -649,12 +649,22 @@ function constructionFindings(path: string, text: string) {
   );
 }
 
-it("accepts the actual Ship row's pre-bind metadata and catches a native click bypass on an early return", () => {
-  const path = "src/ui/shipCard.ts";
-  const source = readFileSync(new URL("../ui/shipCard.ts", import.meta.url), "utf8");
+const rawRowPath = "src/ui/inventoryFixture.ts";
+const rawRowSource = `
+  import { bindAdaAction } from "./actionBinding.ts";
+  function inventoryRow(row) {
+    const line = document.createElement("button");
+    line.type = "button";
+    const binding = bindAdaAction({ click: { run: () => onItem(row, line) } }, line);
+    line.className = "inventory-row";
+    return { element: line, dispose() { binding.dispose(); } };
+  }
+`;
+
+it("accepts pre-bind metadata and catches a native click bypass on an early return", () => {
   const metadata = 'line.type = "button"';
-  expect(constructionFindings(path, source)).toEqual([]);
-  const bypass = source.replace(
+  expect(constructionFindings(rawRowPath, rawRowSource)).toEqual([]);
+  const bypass = rawRowSource.replace(
     `${metadata};`,
     `${metadata};
      if (legacy()) {
@@ -663,8 +673,10 @@ it("accepts the actual Ship row's pre-bind metadata and catches a native click b
        return line;
      }`,
   );
-  expect(bypass).not.toBe(source);
-  expect(constructionFindings(path, bypass).map(({ kind, source }) => [kind, source])).toEqual([
+  expect(bypass).not.toBe(rawRowSource);
+  expect(
+    constructionFindings(rawRowPath, bypass).map(({ kind, source }) => [kind, source]),
+  ).toEqual([
     ["unbound-discrete", 'document.createElement("button")'],
     ["unbound-discrete", metadata],
     ["raw-discrete", 'line.addEventListener("click", () => onItem(row, line))'],
@@ -672,18 +684,50 @@ it("accepts the actual Ship row's pre-bind metadata and catches a native click b
 });
 
 it.each([
-  'line.className = "ada-ship-row ada-button"',
+  'line.className = "inventory-row ada-button"',
   'line.classList.add("ada-button")',
   'line.setAttribute("class", "ada-button")',
-])("reports a bound raw standard button when a native Ship row uses %s", (replacement) => {
-  const path = "src/ui/shipCard.ts";
-  const source = readFileSync(new URL("../ui/shipCard.ts", import.meta.url), "utf8");
-  expect(constructionFindings(path, source)).toEqual([]);
-  const bypass = source.replace('line.className = "ada-ship-row"', replacement);
-  expect(bypass).not.toBe(source);
-  expect(constructionFindings(path, bypass)).toEqual([
-    expect.objectContaining({ kind: "raw-standard-button", path, source: replacement }),
+])("reports a bound raw standard button when a native inventory row uses %s", (replacement) => {
+  expect(constructionFindings(rawRowPath, rawRowSource)).toEqual([]);
+  const bypass = rawRowSource.replace('line.className = "inventory-row"', replacement);
+  expect(bypass).not.toBe(rawRowSource);
+  expect(constructionFindings(rawRowPath, bypass)).toEqual([
+    expect.objectContaining({ kind: "raw-standard-button", path: rawRowPath, source: replacement }),
   ]);
+});
+
+const shipLayoutSource = readFileSync(new URL("../ui/shipCard.ts", import.meta.url), "utf8");
+// Scan identical source at an unrelated sibling path to rule out a Ship-specific exemption.
+it.each(["src/ui/shipCard.ts", rawRowPath])(
+  "proves the registered LayoutTree button in %s",
+  (path) => {
+    expect(constructionFindings(path, shipLayoutSource)).toEqual([]);
+  },
+);
+
+it.each([
+  ["missing registration", "const binding = bindAdaAction(", "const binding = otherBind("],
+  [
+    "early mounting",
+    "const binding = bindAdaAction(",
+    "document.body.append(line); const binding = bindAdaAction(",
+  ],
+  ["disposed on initial update", "kit.refresh();", "binding.dispose(); kit.refresh();"],
+  ["untrusted layout", "/ui/dom/layoutTree", "/ui/dom/otherLayout"],
+  [
+    "component table escape",
+    "const layout = mountLayout(",
+    "expose(components); const layout = mountLayout(",
+  ],
+] as const)("rejects the LayoutTree button with %s", (_case, original, replacement) => {
+  const source = shipLayoutSource.replace(original, replacement);
+  expect(source).not.toBe(shipLayoutSource);
+  expect(constructionFindings(rawRowPath, source)).toContainEqual(
+    expect.objectContaining({
+      kind: "unbound-discrete",
+      source: expect.stringContaining("createButton(document"),
+    }),
+  );
 });
 
 it("keeps the published text-button factory outside the raw standard findings", () => {

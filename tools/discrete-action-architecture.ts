@@ -1867,7 +1867,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
     return end >= 0 && (!metadata || metadata.end <= end);
   };
 
-  const kitButtonFactory = (callee: ts.Expression): boolean => {
+  const kitDomImport = (name: string, module: string, callee: ts.Expression): boolean => {
     const item = lexicalDeclaration(callee);
     if (!item || !ts.isImportSpecifier(item) || item.isTypeOnly || item.parent.parent.isTypeOnly) {
       return false;
@@ -1875,8 +1875,8 @@ function scanSource(context: ScanContext, path: string, text: string) {
     const statement = item.parent.parent.parent;
     return (
       ts.isStringLiteral(statement.moduleSpecifier) &&
-      statement.moduleSpecifier.text === "@andornaut/game-kit/runtime/web/ui/dom/button" &&
-      (item.propertyName?.text ?? item.name.text) === "createButton"
+      statement.moduleSpecifier.text === `@andornaut/game-kit/runtime/web/ui/dom/${module}` &&
+      (item.propertyName?.text ?? item.name.text) === name
     );
   };
   const fields = (node: ts.Expression | undefined) => {
@@ -1913,6 +1913,10 @@ function scanSource(context: ScanContext, path: string, text: string) {
     node && ts.isExpressionStatement(node) && ts.isCallExpression(node.expression)
       ? node.expression
       : undefined;
+  const namedProperty = (object: ts.ObjectLiteralExpression, name: string) =>
+    object.properties.find(
+      (property) => property.name && ts.isIdentifier(property.name) && property.name.text === name,
+    );
   const writesOnly = new Set<string>();
   const unwritten = (node: ts.Expression) => clean(reference(node), false, writesOnly);
   const domHost = (node: ts.Expression) => {
@@ -1949,6 +1953,111 @@ function scanSource(context: ScanContext, path: string, text: string) {
       node.arguments.length === 1 &&
       literal(node.arguments[0], tag),
     );
+
+  // LayoutTree invokes create synchronously and inserts the returned element. Resolve the
+  // actual Kit import and a private, literal component table before using that boundary.
+  const layoutPublishesComponent = (constructor: SynchronousCallable): boolean => {
+    const createsComponent = (port: ts.ObjectLiteralElementLike): boolean => {
+      const create = ts.isMethodDeclaration(port)
+        ? port
+        : ts.isPropertyAssignment(port) && ts.isArrowFunction(port.initializer)
+          ? port.initializer
+          : undefined;
+      if (!create || !synchronousCallable(create)) {
+        return false;
+      }
+      if (create === constructor) {
+        return true;
+      }
+      const body = create.body;
+      const call =
+        body && ts.isBlock(body) && body.statements.length === 1
+          ? ts.isReturnStatement(body.statements[0]!) && body.statements[0]!.expression
+          : body;
+      return Boolean(
+        call &&
+        ts.isCallExpression(call) &&
+        !call.questionDotToken &&
+        lexicalIdentity(call.expression, constructor) &&
+        unwritten(call.expression),
+      );
+    };
+    const isLayoutMount = (node: ts.Node): boolean => {
+      if (
+        !ts.isCallExpression(node) ||
+        node.questionDotToken ||
+        !kitDomImport("mountLayout", "layoutTree", node.expression) ||
+        !unwritten(node.expression) ||
+        node.arguments.length !== 2
+      ) {
+        return false;
+      }
+      const config = node.arguments[0]!;
+      if (!ts.isObjectLiteralExpression(config) || config.properties.length !== 2) {
+        return false;
+      }
+      const components = namedProperty(config, "components");
+      const host = namedProperty(config, "host");
+      if (
+        !components ||
+        !host ||
+        (!ts.isShorthandPropertyAssignment(host) && !ts.isPropertyAssignment(host))
+      ) {
+        return false;
+      }
+      const value = ts.isShorthandPropertyAssignment(components)
+        ? components.name
+        : ts.isPropertyAssignment(components)
+          ? components.initializer
+          : undefined;
+      if (!value) {
+        return false;
+      }
+      const local =
+        ts.isIdentifier(value) &&
+        (ts.isShorthandPropertyAssignment(components)
+          ? declaration(value)
+          : lexicalDeclaration(value));
+      if (local && (!ts.isVariableDeclaration(local) || !isConst(local) || local.end > node.pos)) {
+        return false;
+      }
+      const table = local ? local.initializer : value;
+      const ports = fields(table);
+      if (!ports) {
+        return false;
+      }
+      const otherUse = (site: ts.Node): true | undefined =>
+        ts.isIdentifier(site) &&
+        site !== value &&
+        site !== (local && local.name) &&
+        (ts.isShorthandPropertyAssignment(site.parent)
+          ? declaration(site)
+          : lexicalDeclaration(site)) === local
+          ? true
+          : ts.forEachChild(site, otherUse);
+      if (local && otherUse(source)) {
+        return false;
+      }
+      return [...ports.values()].some((component) => {
+        if (!ts.isObjectLiteralExpression(component) || component.properties.length !== 2) {
+          return false;
+        }
+        const create = namedProperty(component, "create");
+        const slots = namedProperty(component, "slots");
+        return Boolean(
+          create &&
+          slots &&
+          ts.isPropertyAssignment(slots) &&
+          ts.isArrayLiteralExpression(slots.initializer) &&
+          slots.initializer.elements.length === 0 &&
+          createsComponent(create),
+        );
+      });
+    };
+    const visit = (node: ts.Node): true | undefined =>
+      isLayoutMount(node) ? true : ts.forEachChild(node, visit);
+    return Boolean(visit(source));
+  };
 
   // Prove first publication within the construction block, independently of when it runs.
   // The Kit caller-layout icon factory calls getState with the fresh element while creating it.
@@ -2174,9 +2283,99 @@ function scanSource(context: ScanContext, path: string, text: string) {
       return false;
     }
 
-    const attempt = following
-      .slice(index + 1)
-      .find((statement) => !isDeferredDeclaration(singleLocal(statement)));
+    const tail = following.slice(index + 1);
+    const publishesLayout = (): boolean => {
+      const constructor = block.parent;
+      const [setup, initialize, publish] = tail;
+      const update = setup && singleLocal(setup);
+      const fn = update?.initializer;
+      const invoke = callStatement(initialize);
+      if (
+        (!ts.isFunctionDeclaration(constructor) &&
+          !ts.isMethodDeclaration(constructor) &&
+          !ts.isArrowFunction(constructor) &&
+          !ts.isFunctionExpression(constructor)) ||
+        !synchronousCallable(constructor) ||
+        tail.length !== 3 ||
+        !update ||
+        !isConst(update) ||
+        !fn ||
+        !ts.isArrowFunction(fn) ||
+        !synchronousCallable(fn) ||
+        !invoke ||
+        invoke.questionDotToken ||
+        !lexicalIdentity(invoke.expression, update) ||
+        !invoke.arguments.every((argument) =>
+          constructor.parameters.some((parameter) => lexicalIdentity(argument, parameter)),
+        ) ||
+        !publish ||
+        !ts.isReturnStatement(publish) ||
+        !publish.expression ||
+        !ts.isObjectLiteralExpression(publish.expression) ||
+        publish.expression.properties.length !== 4
+      ) {
+        return false;
+      }
+      const element = namedProperty(publish.expression, "element");
+      const dispose = namedProperty(publish.expression, "dispose");
+      const slots = namedProperty(publish.expression, "slots");
+      const updatePort = namedProperty(publish.expression, "update");
+      if (
+        !element ||
+        !ts.isPropertyAssignment(element) ||
+        !lexicalIdentity(element.initializer, alias) ||
+        !dispose ||
+        !ts.isMethodDeclaration(dispose) ||
+        !synchronousCallable(dispose) ||
+        !slots ||
+        !ts.isPropertyAssignment(slots) ||
+        !ts.isObjectLiteralExpression(slots.initializer) ||
+        slots.initializer.properties.length ||
+        !updatePort ||
+        !ts.isShorthandPropertyAssignment(updatePort) ||
+        declaration(updatePort.name) !== update
+      ) {
+        return false;
+      }
+      // Only the initializer executes before the component is handed to Kit. Keep the
+      // registration private and allow only local presentation operations on the fresh button.
+      const unsafeUpdate = (site: ts.Node): true | undefined => {
+        if (ts.isIdentifier(site)) {
+          const local = reads(site);
+          const member = site.parent;
+          if (local === binding || site.text === "eval") {
+            return true;
+          }
+          if (local === handle || local === alias) {
+            if (
+              !ts.isPropertyAccessExpression(member) ||
+              member.expression !== site ||
+              member.questionDotToken
+            ) {
+              return true;
+            }
+            const use = member.parent;
+            const method = member.name.text;
+            const call =
+              ts.isCallExpression(use) && use.expression === member && !use.questionDotToken;
+            const allowed =
+              local === handle
+                ? call && method === "refresh" && use.arguments.length === 0
+                : (call && ["append", "replaceChildren", "setAttribute"].includes(method)) ||
+                  ["className", "dataset", "tabIndex"].includes(method);
+            if (!allowed) {
+              return true;
+            }
+          }
+        }
+        return ts.forEachChild(site, unsafeUpdate);
+      };
+      return !unsafeUpdate(fn) && layoutPublishesComponent(constructor);
+    };
+    if (publishesLayout()) {
+      return true;
+    }
+    const attempt = tail.find((statement) => !isDeferredDeclaration(singleLocal(statement)));
     if (
       !attempt ||
       !ts.isTryStatement(attempt) ||
@@ -3603,7 +3802,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
       if (dot(callee, "setAttribute") && literal(node.arguments[0], "class") && node.arguments[1]) {
         checkStandardButtonClass(node, callee.expression, [node.arguments[1]]);
       }
-      const kitButton = kitButtonFactory(callee);
+      const kitButton = kitDomImport("createButton", "button", callee);
       if (kitButton || createsButton(node)) {
         const target =
           ts.isVariableDeclaration(node.parent) && ts.isIdentifier(node.parent.name)
