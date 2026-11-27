@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { readWhirlpoolProjects } from "../art/index.ts";
+import { readGalaxyStationArt, readWhirlpoolProjects } from "../art/index.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { GALAXY_SIDE } from "../data/world.ts";
 import { settlementsNear } from "../model/andromedaPlaces.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
 import { guideBeaconSlots } from "../model/guideBeacons.ts";
 import { needleCourses } from "../model/needle.ts";
 import type { FlightState, GalaxyProgress, Vec } from "../model/types.ts";
@@ -40,6 +42,7 @@ function fixture(galaxy: 3 | 4 | 5, player: Vec) {
     flightClock: 0,
     flightLive: true,
     galaxyManifests: GALAXY_MANIFESTS,
+    galaxyStations: new Map(),
     model: {
       revealWorldChange: vi.fn(() => true),
       state: { progress: { 5: progress } },
@@ -70,39 +73,99 @@ function fixture(galaxy: 3 | 4 | 5, player: Vec) {
 }
 
 describe("project guide lights", () => {
-  it("keeps a stable 128-unit cadence on both sides of the practice channel", () => {
+  it("places paired lamps at the published start, spacing and inward edge inset", () => {
     expect(
-      channelLampPlaces({
-        path: [
-          { x: 0, y: 0 },
-          { x: 300, y: 0 },
-        ],
-        width: 120,
-      }),
+      channelLampPlaces(
+        {
+          path: [
+            { x: 0, y: 0 },
+            { x: 210, y: 0 },
+          ],
+          width: 120,
+        },
+        { inset: 4, sides: [-1, 1], spacing: 80, start: 40 },
+      ),
     ).toEqual([
-      { index: 0, point: { x: 0, y: -80 }, side: -1 },
-      { index: 0, point: { x: 0, y: 80 }, side: 1 },
-      { index: 1, point: { x: 128, y: -80 }, side: -1 },
-      { index: 1, point: { x: 128, y: 80 }, side: 1 },
-      { index: 2, point: { x: 256, y: -80 }, side: -1 },
-      { index: 2, point: { x: 256, y: 80 }, side: 1 },
+      { index: 0, point: { x: 40, y: -56 }, side: -1 },
+      { index: 0, point: { x: 40, y: 56 }, side: 1 },
+      { index: 1, point: { x: 120, y: -56 }, side: -1 },
+      { index: 1, point: { x: 120, y: 56 }, side: 1 },
+      { index: 2, point: { x: 200, y: -56 }, side: -1 },
+      { index: 2, point: { x: 200, y: 56 }, side: 1 },
     ]);
   });
 
-  it("draws only funded practice lamps, alternating art and reporting each passable keyline", () => {
+  it("animates only funded practice lamps in the same local image, with reduced motion holding A", () => {
     const player = { x: 0, y: 0 };
     const f = fixture(4, player);
-    f.flight.needle = { anchor: { x: 0, y: 0 }, chatter: [], exitPackPlaced: false };
-    Object.assign(player, needleCourses(f.flight)!.practice.path[0]);
+    f.flight.topology = CURRENT_FLIGHT_TOPOLOGY;
+    f.flight.needle = {
+      anchor: { x: GALAXY_SIDE / 2 + 4000, y: 0 },
+      chatter: [],
+      exitPackPlaced: false,
+    };
+    const entrance = needleCourses(f.flight)!.practice.path[0]!;
+    Object.assign(player, { x: entrance.x - GALAXY_SIDE, y: entrance.y });
     expect(f.run()).toEqual([]);
     expect(calls.sprite).not.toHaveBeenCalled();
     f.changes.push({ project: "channelLights", revealed: true });
     expect(f.run().length).toBeGreaterThan(1);
-    expect(calls.sprite.mock.calls.map((call) => call[2])).toEqual(
-      expect.arrayContaining(["needle-lamp-a", "needle-lamp-b"]),
-    );
+    const textures = () =>
+      new Map(calls.sprite.mock.calls.map(([, key, texture]) => [key, texture]));
+    const on = textures();
+    expect(on.get("project:channelLights:0:-1")).toBe("needle-lamp-a");
+    expect(on.get("project:channelLights:0:1")).toBe("needle-lamp-b");
+    expect(on.get("project:channelLights:1:-1")).toBe("needle-lamp-b");
     expect(calls.keyline.mock.calls.every((call) => call[1] === "needleLamp")).toBe(true);
     expect(f.scene.passes).toHaveBeenCalledTimes(calls.sprite.mock.calls.length);
+
+    f.scene.time.now = 700;
+    expect(f.run()).toEqual([...on.keys()]);
+    const off = textures();
+    for (const [id, frame] of on) {
+      expect(off.get(id)).toBe(frame === "needle-lamp-a" ? "needle-lamp-b" : "needle-lamp-a");
+    }
+    calls.sprite.mockClear();
+    f.scene.reducedMotion = true;
+    expect(f.run()).toEqual([...on.keys()]);
+    expect([...new Set(textures().values())]).toEqual(["needle-lamp-a"]);
+  });
+
+  it("reveals the funded school beside loaded settlers' stations on their shared blink clock", () => {
+    const f = fixture(5, { x: 0, y: 0 });
+    const station = { hp: 1, id: "station:0,0", kind: "station" as const, radius: 70, x: 0, y: 0 };
+    f.flight.objects.push(station, { ...station, id: "pip", kind: "destination" });
+    const key = "project:courierSchool:station:0,0:1";
+    expect(f.run()).not.toContain(key);
+    const change = { project: "courierSchool", revealed: false };
+    f.changes.push(change);
+    f.scene.flightLive = false;
+    expect(f.run()).not.toContain(key);
+    f.scene.flightLive = true;
+    f.scene.textures.exists = () => false;
+    expect(f.run()).not.toContain(key);
+    expect(f.scene.model.revealWorldChange).not.toHaveBeenCalled();
+    f.scene.textures.exists = () => true;
+    expect(f.run()).not.toContain(key);
+    f.scene.galaxyStations.set(5, readGalaxyStationArt(GALAXY_MANIFESTS.get(5)!.assets)!);
+    expect(f.run()).toContain(key);
+    expect(f.scene.model.revealWorldChange).toHaveBeenCalledExactlyOnceWith(5, "courierSchool");
+    expect(calls.sprite).toHaveBeenCalledWith(f.scene, key, "station-settlers-school-a");
+    expect(calls.sprite.mock.results[0]!.value.setPosition).toHaveBeenCalledWith(
+      360 - 194.093 * (204.75 / 312),
+      180,
+    );
+    change.revealed = true;
+    f.scene.flightClock = 700;
+    f.scene.time.now = 700;
+    expect(f.run()).toContain(key);
+    expect(calls.sprite).toHaveBeenCalledWith(f.scene, key, "station-settlers-school-b");
+    f.scene.reducedMotion = true;
+    expect(f.run()).toContain(key);
+    expect(calls.sprite.mock.calls.filter(([, id]) => id === key).at(-1)?.[2]).toBe(
+      "station-settlers-school-a",
+    );
+    expect(f.scene.model.revealWorldChange).toHaveBeenCalledTimes(1);
   });
 
   it("uses the ordinary slot art until a story beacon occupies it, and gates its spare on repair and funding", () => {

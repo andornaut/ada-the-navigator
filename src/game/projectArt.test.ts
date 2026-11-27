@@ -55,11 +55,21 @@ describe("project world-change art", () => {
       kind: "overlay",
     });
     expect(art.world.get("channelLights")).toMatchObject({
+      anchors: { inset: 4, sides: [-1, 1], spacing: 80, start: 40 },
+      frameMs: 700,
       frames: [{ id: "needle-lamp-a" }, { id: "needle-lamp-b" }],
       kind: "path",
     });
+    expect(art.world.get("courierSchool")).toMatchObject({
+      kind: "stationOverlay",
+      overlay: {
+        anchors: [{ layer: "front", phase: 0, x: -194.093, y: 0 }],
+        frames: [{ id: "station-settlers-school-a" }, { id: "station-settlers-school-b" }],
+      },
+    });
     const projects = structuredClone(PROJECTS_FILE.projects);
     projects.channelLights!.path = "eye";
+    projects.courierSchool!.station = "hub";
     projects.spareBeacon!.state = "dented";
     const remaining = readProjectArt(manifest.assets, outposts, { ...PROJECTS_FILE, projects })!;
     expect([...remaining.world.keys()]).toEqual(["practiceBerth", "routeExchange"]);

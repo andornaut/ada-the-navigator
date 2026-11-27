@@ -104,6 +104,7 @@ export {
   type OverlayAnchor,
   type OverlayLayer,
   partsBounds,
+  type PathProjectArt,
   type PlacedProjectArt,
   type ProjectArt,
   type ProjectArtSet,

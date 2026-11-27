@@ -3,10 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import manifest from "../../public/art/andromeda/manifest.json";
 import core from "../../public/art/manifest.json";
 import { staleSpriteKeys } from "../art/index.ts";
+import { ANDROMEDA_REDACT } from "../data/capitalBosses.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { worldNearestSettlerStation } from "../model/andromedaPlaces.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
-import type { SpaceObject } from "../model/types.ts";
+import type { GalaxyProgress, SpaceObject } from "../model/types.ts";
 import { selectEnemyFrame } from "./enemyArt.ts";
 import {
   andromedaSettlementVariant,
@@ -27,20 +28,21 @@ vi.mock("./sceneHud.ts", () => ({ drawCraftJets: vi.fn(), keylineSprite: vi.fn()
 
 const frames = core.assets.filter(({ id }) => /^craft-pip-\d+$/u.test(id)) as unknown as Asset[];
 const craft = { frames, jets: undefined };
-function scene(complete = false, ready = true): ObjectsContext {
+function scene(complete = false, ready = true, redact?: GalaxyProgress["redact"]): ObjectsContext {
   return {
     craftArt: new Map([["pip", craft]]),
     galaxyManifests: new Map([[5, manifest]]),
     model: {
       state: {
         flight: { galaxy: 5, player: { x: 100, y: 0 } },
-        progress: { 5: { questComplete: complete } },
+        progress: { 5: { questComplete: complete, redact } },
       },
     },
     passes: vi.fn(),
     project: (point: { x: number; y: number }) => point,
     shipAssets: [],
     textures: { exists: () => ready },
+    time: { now: 0 },
   } as unknown as ObjectsContext;
 }
 const destination = (id: string): SpaceObject => ({
@@ -71,6 +73,28 @@ describe("Andromeda authored rendering", () => {
       "beacon-guide-relit-a",
       "beacon-guide-relit-b",
     ]);
+  });
+
+  it("draws the existing guide beacon only for Redact's resolved relay", () => {
+    const relay = destination(ANDROMEDA_REDACT.relayId);
+    const record = { relay: { x: 0, y: 0 }, site: { x: 500, y: 0 } };
+    expect(drawAndromeda(scene(true, true, { ...record, phase: "active" }), relay)).toBe(true);
+    expect(calls.single).not.toHaveBeenCalled();
+    expect(
+      drawAndromeda(
+        scene(true, false, { ...record, outcome: "salvaged", phase: "resolved" }),
+        relay,
+      ),
+    ).toBe(false);
+    const resolved = scene(true, true, { ...record, outcome: "defeated", phase: "resolved" });
+    expect(drawAndromeda(resolved, relay)).toBe(true);
+    expect(calls.single).toHaveBeenCalledExactlyOnceWith(
+      resolved,
+      expect.objectContaining({ id: "beacon-guide-lit-a" }),
+      "guideBeacon",
+      relay,
+      relay,
+    );
   });
 
   it("assigns actual seeded settlement identities stable authored designs", () => {

@@ -32,9 +32,24 @@ export interface PlacedProjectArt<T> {
   readonly offset: Vec;
 }
 
+export interface PathProjectArt<T> {
+  readonly frames: readonly [T, T];
+  readonly frameMs: number;
+  readonly anchors: {
+    readonly start: number;
+    readonly spacing: number;
+    readonly inset: number;
+    readonly sides: readonly [-1, 1];
+  };
+}
+
 export type WorldProjectArt<T extends StationFrame> =
   | { readonly kind: "overlay"; readonly frame: T }
-  | { readonly kind: "path"; readonly frames: readonly [T, T] }
+  | ({ readonly kind: "path" } & PathProjectArt<T>)
+  | {
+      readonly kind: "stationOverlay";
+      readonly overlay: Extract<ProjectArt<T>, { kind: "overlay" }>;
+    }
   | ({ readonly kind: "placed" } & PlacedProjectArt<T>);
 
 export interface ProjectArtSet<T extends StationFrame = StationFrame> {
@@ -129,13 +144,54 @@ function readProject<T extends StationFrame>(
       replaces[1] === outpost.frames[1].id;
     return matches ? { frames, kind: "replace", outpost: entry.outpost as string } : undefined;
   }
-  if (entry.kind === "overlay" && Array.isArray(entry.anchors) && entry.anchors.length > 0) {
-    const anchors = entry.anchors.map(readAnchor);
-    return anchors.every((anchor) => anchor !== undefined)
-      ? { anchors, frames, kind: "overlay", outpost: entry.outpost as string }
-      : undefined;
+  const anchors = readOverlayAnchors(entry.anchors);
+  return entry.kind === "overlay" && anchors
+    ? { anchors, frames, kind: "overlay", outpost: entry.outpost as string }
+    : undefined;
+}
+
+function readOverlayAnchors(value: unknown): readonly OverlayAnchor[] | undefined {
+  if (!Array.isArray(value) || value.length === 0) {
+    return undefined;
   }
-  return undefined;
+  const anchors = value.map(readAnchor);
+  return anchors.every((anchor) => anchor !== undefined) ? anchors : undefined;
+}
+
+function readPathProject<T extends StationFrame>(
+  frames: readonly [T, T],
+  value: unknown,
+): PathProjectArt<T> | undefined {
+  const anchors = fields(value);
+  const frameMs = frames[0].frameMs;
+  if (
+    !finite(frameMs) ||
+    frameMs <= 0 ||
+    frames[1].frameMs !== frameMs ||
+    !finite(anchors?.start) ||
+    anchors.start < 0 ||
+    !finite(anchors.spacing) ||
+    anchors.spacing <= 0 ||
+    !finite(anchors.inset) ||
+    anchors.inset < 0 ||
+    !Array.isArray(anchors.sides) ||
+    anchors.sides.length !== 2 ||
+    anchors.sides[0] !== -1 ||
+    anchors.sides[1] !== 1 ||
+    anchors.phase !== "alternate"
+  ) {
+    return undefined;
+  }
+  return {
+    anchors: {
+      inset: anchors.inset,
+      sides: [-1, 1],
+      spacing: anchors.spacing,
+      start: anchors.start,
+    },
+    frameMs,
+    frames,
+  };
 }
 
 /**
@@ -181,6 +237,21 @@ export function readProjectArt<T extends StationFrame>(
     }
     const frames = framePair(assets, spec?.frames);
     if (
+      id === "courierSchool" &&
+      spec?.station === "settlers" &&
+      spec.kind === "overlay" &&
+      frames
+    ) {
+      const anchors = readOverlayAnchors(spec.anchors);
+      if (anchors) {
+        world.set(id, {
+          kind: "stationOverlay",
+          overlay: { anchors, frames, kind: "overlay", outpost: "settlers" },
+        });
+      }
+      continue;
+    }
+    if (
       id === "spareBeacon" &&
       spec?.kind === "overlay" &&
       spec.outpost === undefined &&
@@ -198,7 +269,10 @@ export function readProjectArt<T extends StationFrame>(
       spec.path === "practice" &&
       frames
     ) {
-      world.set(id, { frames, kind: "path" });
+      const path = readPathProject(frames, spec.anchors);
+      if (path) {
+        world.set(id, { ...path, kind: "path" });
+      }
       continue;
     }
     const project = readProject(assets, outposts, entry);

@@ -16,6 +16,20 @@ import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
 import { type WorldContext, worldPoint } from "../model/worldContacts.ts";
 import { COLOURS, UNLISTED_COLOURS } from "../ui/layout/colours.ts";
 
+/** A course uses one local world image for every gate, stitch and lamp. */
+export function needleCourseOffset(
+  course: Pick<NeedleCourse, "path">,
+  player: Vec,
+  world: WorldContext,
+): Vec {
+  const start = course.path[0];
+  if (!start) {
+    return { x: 0, y: 0 };
+  }
+  const local = worldPoint(world, player, start);
+  return { x: local.x - start.x, y: local.y - start.y };
+}
+
 export interface NeedleStitch {
   readonly from: Vec;
   readonly to: Vec;
@@ -292,12 +306,16 @@ export function createNeedleRenderer(context: NeedleRenderContext) {
         return image;
       };
       const stitch = NEEDLE.channels.stitch;
-      const activity = frame.courses.find((course) => course.kind === "activity");
-      const start = activity?.path[0];
-      const image = start && worldPoint(frame.world ?? {}, frame.player, start);
-      const shift = start && image && { x: image.x - start.x, y: image.y - start.y };
-      const coursePoint = (course: NeedleCourse, point: Vec): Vec =>
-        course === activity && shift ? { x: point.x + shift.x, y: point.y + shift.y } : point;
+      const shifts = new Map(
+        frame.courses.map((course) => [
+          course,
+          needleCourseOffset(course, frame.player, frame.world ?? {}),
+        ]),
+      );
+      const coursePoint = (course: NeedleCourse, point: Vec): Vec => {
+        const offset = shifts.get(course)!;
+        return { x: point.x + offset.x, y: point.y + offset.y };
+      };
       const dashes = frame.courses.flatMap((course) =>
         needleStitches(
           {

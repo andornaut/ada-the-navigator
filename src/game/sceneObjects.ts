@@ -369,7 +369,7 @@ export function drawBlink(
 export function placeStationFrame(
   scene: ObjectsContext,
   frame: Asset,
-  kind: "outpost" | "station",
+  kind: "guideBeacon" | "outpost" | "station",
   object: SpaceObject,
   point: Vec,
   key = object.id,

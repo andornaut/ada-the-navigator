@@ -216,24 +216,27 @@ function fixture() {
 }
 
 describe("Needle renderer lifecycle and published gate art", () => {
-  it("renders the race ring and stitches in the player's adjacent chart", () => {
-    const f = fixture();
-    const race = createNeedleCourse({ anchor: { x: GALAXY_SIDE / 2 + 4000, y: 0 } }, "activity");
-    const first = race.gates[0]!.point;
-    const player = { x: first.x - GALAXY_SIDE, y: first.y };
-    const renderer = createNeedleRenderer({
-      ...f.context,
-      project: ({ x, y }) => ({ x: x - player.x + 360, y: y - player.y + 180 }),
-    });
-    renderer.draw({
-      ...f.frame,
-      courses: [race],
-      player,
-      world: { worldSide: GALAXY_SIDE },
-    });
-    expect(f.images.filter(({ x, y }) => x === 360 && y === 180)).toHaveLength(2);
-    expect(f.lines.length).toBeGreaterThan(0);
-  });
+  it.each(["activity", "practice", "eye"] as const)(
+    "renders the %s gates and stitches in the same adjacent chart",
+    (kind) => {
+      const f = fixture();
+      const course = createNeedleCourse({ anchor: { x: GALAXY_SIDE / 2 + 4000, y: 0 } }, kind);
+      const first = course.gates[0]!.point;
+      const player = { x: first.x - GALAXY_SIDE, y: first.y };
+      const renderer = createNeedleRenderer({
+        ...f.context,
+        project: ({ x, y }) => ({ x: x - player.x + 360, y: y - player.y + 180 }),
+      });
+      renderer.draw({
+        ...f.frame,
+        courses: [course],
+        player,
+        world: { worldSide: GALAXY_SIDE },
+      });
+      expect(f.images.filter(({ x, y }) => x === 360 && y === 180)).toHaveLength(2);
+      expect(f.lines.length).toBeGreaterThan(0);
+    },
+  );
 
   it("draws only published gate frames at their authored size with back and front around the ship", () => {
     const f = fixture();

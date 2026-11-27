@@ -2,14 +2,18 @@ import PROJECTS_FILE from "../../public/art/projects.json" with { type: "json" }
 import {
   boundsOnScreen,
   frameBounds,
+  outpostParts,
+  type PathProjectArt,
   type PlacedProjectArt,
   playDepth,
   readProjectArt,
   revealAlpha,
+  stationFrameIndex,
 } from "../art/index.ts";
 import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { SCREEN } from "../data/screen.ts";
 import { pointOnCurrent } from "../model/currents.ts";
+import { flightWorldContext } from "../model/flightTopology.ts";
 import {
   guideBeaconCell,
   guideBeaconCellKey,
@@ -19,28 +23,29 @@ import {
 import { type NeedleCourse, needleCourses } from "../model/needle.ts";
 import type { FlightState, Vec } from "../model/types.ts";
 import { keylineSprite } from "./sceneHud.ts";
+import { needleCourseOffset } from "./sceneNeedle.ts";
 import type { ObjectsContext } from "./sceneObjects.ts";
 import type { Asset } from "./sceneShared.ts";
 import { objectSprite } from "./sceneSprites.ts";
 
-const LAMP_SPACING = 128;
-const LAMP_EDGE = 20;
-
-export function channelLampPlaces(course: Pick<NeedleCourse, "path" | "width">) {
+export function channelLampPlaces(
+  course: Pick<NeedleCourse, "path" | "width">,
+  { inset, sides, spacing, start }: PathProjectArt<Asset>["anchors"],
+) {
   const stations = [0];
   for (let index = 1; index < course.path.length; index++) {
     const [from, to] = [course.path[index - 1]!, course.path[index]!];
     stations.push(stations[index - 1]! + Math.hypot(to.x - from.x, to.y - from.y));
   }
   const length = stations.at(-1)!;
-  const reach = course.width / 2 + LAMP_EDGE;
+  const reach = Math.max(0, course.width / 2 - inset);
   const lamps: { index: number; point: Vec; side: number }[] = [];
   if (length === 0) {
     return lamps;
   }
-  for (let index = 0, arc = 0; arc <= length; index++, arc += LAMP_SPACING) {
+  for (let index = 0, arc = start; arc <= length; index++, arc += spacing) {
     const { point, tangent } = pointOnCurrent({ length, points: course.path, stations }, arc);
-    for (const side of [-1, 1]) {
+    for (const side of sides) {
       lamps.push({
         index,
         point: { x: point.x - side * tangent.y * reach, y: point.y + side * tangent.x * reach },
@@ -83,16 +88,17 @@ export function createGuideLights() {
     const drawn: string[] = [];
     const draw = (
       key: string,
-      kind: "guideBeacon" | "needleLamp" | "nurseryBeacon",
+      kind: "guideBeacon" | "needleLamp" | "nurseryBeacon" | "station",
       frame: Asset,
       point: Vec,
       alpha: number,
+      depth = playDepth(point.y),
     ) => {
       const sprite = objectSprite(scene, key, frame.id)
         .setDisplaySize(frame.displayWidth!, frame.displayHeight!)
         .setOrigin(frame.pivot.x, frame.pivot.y)
         .setPosition(point.x, point.y)
-        .setDepth(playDepth(point.y))
+        .setDepth(depth)
         .setAlpha(alpha);
       keylineSprite(scene, kind, key, sprite);
       scene.passes(sprite);
@@ -158,6 +164,42 @@ export function createGuideLights() {
     }
 
     if (flight.galaxy === 5) {
+      const school = worldArt?.world.get("courierSchool");
+      const base = scene.galaxyStations.get(5)?.base;
+      const [a, b] = base?.frames ?? [];
+      if (
+        base &&
+        a?.id === "station-settlers-a" &&
+        b?.id === "station-settlers-b" &&
+        school?.kind === "stationOverlay" &&
+        school.overlay.frames.every((frame) => scene.textures.exists(frame.id))
+      ) {
+        const index = stationFrameIndex(base, scene.reducedMotion, scene.time.now);
+        const parts = outpostParts(
+          { frameMs: base.frameMs, frames: [a, b] },
+          [school.overlay],
+          index,
+        ).filter(({ order }) => order !== 0);
+        const shown = flight.objects.flatMap((station) => {
+          if (station.kind !== "station") {
+            return [];
+          }
+          const base = scene.project(station);
+          return parts.flatMap(({ frame, offset, order }) => {
+            const point = { x: base.x + offset.x, y: base.y + offset.y };
+            const key = `project:courierSchool:${station.id}:${order}`;
+            return visible(frame, point)
+              ? [{ depth: playDepth(base.y) + order * 1e-7, frame, key, point }]
+              : [];
+          });
+        });
+        const alpha = changeAlpha("courierSchool", shown.length > 0);
+        if (alpha !== undefined) {
+          for (const { depth, frame, key, point } of shown) {
+            draw(key, "station", frame, point, alpha, depth);
+          }
+        }
+      }
       const exchange = worldArt?.world.get("routeExchange");
       const settlement = scene.model.state.progress[5].andromeda?.settlement;
       const anchor = settlement
@@ -230,11 +272,14 @@ export function createGuideLights() {
     }
     if (practice !== course) {
       practice = course;
-      lamps = channelLampPlaces(practice);
+      lamps = channelLampPlaces(practice, art.anchors);
     }
+    const shift = needleCourseOffset(course, flight.player, flightWorldContext(flight));
+    const tick = Math.floor(scene.time.now / art.frameMs);
     const shown = lamps.flatMap(({ index, point, side }) => {
-      const frame = art.frames[index % 2]!;
-      const screen = scene.project(point);
+      const phase = scene.reducedMotion ? 0 : (tick + index + (side === 1 ? 1 : 0)) % 2;
+      const frame = art.frames[phase]!;
+      const screen = scene.project({ x: point.x + shift.x, y: point.y + shift.y });
       return visible(frame, screen) ? [{ frame, index, screen, side }] : [];
     });
     const alpha = changeAlpha("channelLights", shown.length > 0);

@@ -5,8 +5,10 @@ import {
   playDepth,
   readBlinkArt,
   type StationArt,
+  stationFrame,
 } from "../art/index.ts";
 import { ANDROMEDA_LANE_COURIER, ANDROMEDA_PLACES } from "../data/andromeda.ts";
+import { ANDROMEDA_REDACT } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { SCREEN } from "../data/screen.ts";
 import { andromedaLaneCourier } from "../model/andromedaLane.ts";
@@ -52,6 +54,7 @@ export function drawAndromedaLaneCourier(scene: WorldContext, flight: FlightStat
 
 interface AndromedaArt {
   readonly dented: Asset | undefined;
+  readonly relay: StationArt<Asset> | undefined;
   readonly relit: StationArt<Asset> | undefined;
   readonly settlements: ReadonlyMap<string, StationArt<Asset>>;
 }
@@ -68,6 +71,7 @@ function artFor(assets: readonly Asset[]): AndromedaArt {
     }
     art = {
       dented: assets.find(({ id }) => id === "beacon-guide-dented"),
+      relay: readBlinkArt(assets, "beacon-guide-lit-a", "beacon-guide-lit-b"),
       relit: readBlinkArt(assets, "beacon-guide-relit-a", "beacon-guide-relit-b"),
       settlements,
     };
@@ -112,13 +116,26 @@ export function drawAndromeda(scene: ObjectsContext, object: SpaceObject): boole
     scene.passes(sprite);
     return true;
   }
+  const relay = object.id === ANDROMEDA_REDACT.relayId;
+  const progress = scene.model.state.progress[5];
+  if (relay && progress.redact?.phase !== "resolved") {
+    return true;
+  }
   const assets = scene.galaxyManifests.get(5)?.assets;
   if (!assets) {
     return false;
   }
   const art = artFor(assets);
+  if (relay) {
+    const frame = art.relay && stationFrame(art.relay, scene.reducedMotion, scene.time.now);
+    if (!frame || !scene.textures.exists(frame.id)) {
+      return false;
+    }
+    placeStationFrame(scene, frame, "guideBeacon", object, point);
+    return true;
+  }
   if (object.id === ANDROMEDA_PLACES.beacon) {
-    if (scene.model.state.progress[5].questComplete) {
+    if (progress.questComplete) {
       if (!art.relit || !art.relit.frames.every((frame) => scene.textures.exists(frame.id))) {
         return false;
       }
