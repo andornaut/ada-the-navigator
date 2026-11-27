@@ -1,3 +1,4 @@
+import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
@@ -10,6 +11,7 @@ import type { StationGreeting } from "../model/keepers.ts";
 import { fill } from "../model/shop.ts";
 import type { StationServices } from "../model/stationServices.ts";
 import {
+  ADA_ACTION_HOLD_MS,
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
@@ -296,8 +298,22 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
     !element.hidden &&
     !element.closest("[hidden], [inert]");
   const createRowButton = (run: (button: HTMLButtonElement) => void) => {
-    const button = document.createElement("button");
-    button.type = "button";
+    const kit = createButton(document, {
+      appearance: { layout: "caller" },
+      content: { kind: "text", label: labels.shop },
+      getAction: () => binding,
+      getState: (button) => ({
+        availability: button.hidden
+          ? { kind: "omitted" }
+          : button.disabled
+            ? { kind: "disabled" }
+            : { kind: "available" },
+      }),
+      rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: SCROLL.dragThreshold },
+    });
+    const button = kit.element;
+    // The row layout provides its own name, face and direct children.
+    button.replaceChildren();
     const binding = bindAdaAction(
       {
         click: {
@@ -305,11 +321,18 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
           run: () => run(button),
         },
         current: () => canUse(button),
+        nativeClickOwner: "factory",
         slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
       },
       button,
     );
-    return { button, dispose: () => binding.dispose() };
+    return {
+      button,
+      dispose() {
+        binding.dispose();
+        kit.dispose();
+      },
+    };
   };
   const textAction = (
     label: string,

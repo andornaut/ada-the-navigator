@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { createContext, runInContext } from "node:vm";
 
+import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 import ts from "typescript";
@@ -14,6 +15,7 @@ import { fill } from "../model/shop.ts";
 import type { StationServices } from "../model/stationServices.ts";
 import type { DialogueState } from "../model/types.ts";
 import {
+  ADA_ACTION_HOLD_MS,
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
@@ -868,6 +870,7 @@ function constructedStation(
   beforeCreate?.(parent);
   const context = createContext({
     ...stationSource,
+    ADA_ACTION_HOLD_MS,
     CONFIRM_ITEM,
     CONTENT,
     EXCHANGE_COPY,
@@ -879,6 +882,7 @@ function constructedStation(
     assertAdaActionMetadata,
     bindAdaAction,
     createActions: actions,
+    createButton,
     createCard: parts,
     createDialoguePanel: parts,
     createExchangeView: (
@@ -1201,6 +1205,10 @@ it.each(["shop", "jobs"] as const)(
     f.dispatch("pointerup", limit);
     expect(f.dispatch("click", limit).defaultPrevented).toBe(false);
     expect(f.calls()).toEqual([[f.id]]);
+    expect(f.action.available()).toBe(false);
+    f.action.activate();
+    f.row.dispatchEvent(new Event("click"));
+    expect(f.calls()).toEqual([[f.id]]);
     if (kind === "jobs") {
       expect(f.acceptJob).not.toHaveBeenCalled();
       f.station.layers.inner.back();
@@ -1208,6 +1216,7 @@ it.each(["shop", "jobs"] as const)(
     f.station.dispose();
     expect(f.action.available()).toBe(false);
     f.action.activate();
+    f.row.dispatchEvent(new Event("click"));
     expect(f.calls()).toEqual(kind === "shop" ? [[f.id]] : []);
   },
 );
