@@ -1,6 +1,7 @@
+import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 import { setControlPlacement } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 
-import { bindAdaAction } from "./actionBinding.ts";
+import { ADA_ACTION_HOLD_MS, bindAdaAction } from "./actionBinding.ts";
 import { CARD_CONTENT, cardHeaderLayout, listCardHeader } from "./layout/cardFrame.ts";
 import { type CardSize, SCROLL } from "./layout/contentCard.ts";
 import { type ButtonTag, FOCUS_RING } from "./layout/controls.ts";
@@ -234,20 +235,26 @@ export function createSwitchRow(options: {
   readonly note?: string | undefined;
   readonly run: () => void;
 }) {
-  const row = document.createElement("button");
-  row.type = "button";
+  const kit = createButton(document, {
+    appearance: { layout: "caller" },
+    content: { kind: "icon", name: options.label },
+    getAction: () => action,
+    rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: SCROLL.dragThreshold },
+  });
+  const row = kit.element;
   const action = bindAdaAction(
     {
       click: { availability: () => ({ kind: "available" }), run: () => options.run() },
       current: () => options.current(),
+      nativeClickOwner: "factory",
       slopPx: () => SCROLL.dragThreshold * readViewUnit(row),
     },
     row,
   );
+  // The switch row owns its face and focus cue.
   row.className = "ada-row";
   setControlPlacement(options.align ?? "top", row);
   row.setAttribute("role", "switch");
-  row.setAttribute("aria-label", options.label);
   const text = document.createElement("span");
   text.className = "ada-setting-text";
   const caption = document.createElement("span");
@@ -265,9 +272,12 @@ export function createSwitchRow(options: {
   toggle.className = "ada-switch";
   toggle.setAttribute("aria-hidden", "true");
   const parts = { icon: options.icon, switch: toggle, text };
-  row.append(...SWITCH_ROW_PARTS.map((part) => parts[part]));
+  row.replaceChildren(...SWITCH_ROW_PARTS.map((part) => parts[part]));
   return {
-    dispose: action.dispose,
+    dispose() {
+      action.dispose();
+      kit.dispose();
+    },
     row,
     show(on: boolean) {
       const state = switchState(on);

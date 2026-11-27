@@ -446,6 +446,7 @@ describe("Settings current-state labels", () => {
     const priorStored = new Map(stored);
     const priorFeedbackCalls = onFeedbackChange.mock.calls.length;
     const priorVisibilityCalls = onVisibilityChange.mock.calls.length;
+    settings.open();
     row.click();
     expect(fpsCounter.set).toHaveBeenLastCalledWith(true);
     expect([...stored]).toEqual([...priorStored, [key, "on"]]);
@@ -460,6 +461,7 @@ describe("Settings current-state labels", () => {
     expect(reopened.settings.isOpen()).toBe(false);
     expect(reopened.fpsCounter.set).toHaveBeenCalledExactlyOnceWith(true);
     expect(state(restored).textContent).toBe("On");
+    reopened.settings.open();
     restored.click();
     expect(reopened.fpsCounter.set).toHaveBeenLastCalledWith(false);
     expect(restored.attributes.get("aria-checked")).toBe("false");
@@ -484,6 +486,7 @@ describe("Settings current-state labels", () => {
       reducedMotion: "on",
       sound: "off",
     });
+    settings.open();
     for (const [setting] of choices) {
       rows.find((row) => row.dataset.setting === setting)!.click();
     }
@@ -521,6 +524,7 @@ describe("Settings current-state labels", () => {
       const help = text.children[1]!.textContent;
       const visible = key === "move" || key === "aim";
       expect(state(row).textContent).toBe(visible ? "Hidden" : "Off");
+      settings.open();
       for (const on of [true, false, true]) {
         row.click();
         expect(state(row).textContent).toBe(
@@ -546,6 +550,7 @@ describe("Settings current-state labels", () => {
     });
     expect(state(rows[0]!).textContent).toBe("shown-test");
     expect(state(rows[2]!).textContent).toBe("on-test");
+    settings.open();
     rows[0]!.click();
     rows[2]!.click();
     expect(state(rows[0]!).textContent).toBe("hidden-test");
@@ -571,6 +576,7 @@ describe("Settings current-state labels", () => {
 
   it("reports visibility and feedback changes through the existing separate callbacks", () => {
     const { onFeedbackChange, onVisibilityChange, rows, settings } = setup();
+    settings.open();
     onFeedbackChange.mockClear();
     onVisibilityChange.mockClear();
     rows[0]!.click();
@@ -586,10 +592,8 @@ describe("Settings current-state labels", () => {
 it("registers the actual Settings switch callback for held activation and removes it on disposal", () => {
   const { onVisibilityChange, rows, settings } = setup();
   const row = rows[0]!;
-  // Expose retained component nodes without a layout or browser claim.
-  for (let parent: Element | undefined = row; parent; parent = parent.parent) {
-    parent.hidden = false;
-  }
+  settings.open();
+  onVisibilityChange.mockClear();
   const action = resolveAdaHoldAction(settings.root, row as unknown as HTMLElement);
   expect(action?.rule.holdMs).toBe(500);
   expect(action?.available()).toBe(true);
@@ -598,8 +602,16 @@ it("registers the actual Settings switch callback for held activation and remove
   expect(onVisibilityChange).toHaveBeenLastCalledWith({ aim: true, move: false });
   row.click();
   expect(state(row).textContent).toBe("Shown");
+  expect(onVisibilityChange.mock.calls).toEqual([
+    [{ aim: true, move: false }],
+    [{ aim: true, move: true }],
+  ]);
   settings.dispose();
   expect(resolveAdaHoldAction(settings.root, row as unknown as HTMLElement)).toBeNull();
+  expect(action?.available()).toBe(false);
+  action?.activate();
+  row.click();
+  expect(onVisibilityChange).toHaveBeenCalledTimes(2);
 });
 
 it("offers one Install button and cancels a deferred guide after closing Settings", async () => {
