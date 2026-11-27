@@ -375,6 +375,8 @@ export interface HeldJob extends JobOffer {
   entered?: boolean;
 }
 /** An accepted repeatable activity (data/activities.ts) and how far it has come. */
+export type CourierApproach = "scout" | "escort";
+
 export interface HeldActivity {
   kind: "activity";
   id: ActivityId;
@@ -382,14 +384,19 @@ export interface HeldActivity {
   place: string;
   reward: number;
   /** A courier escort resumes at its saved position with its one patrol. */
-  courier?: { position: Vec; patrolSpawned: boolean };
+  courier?: {
+    approach?: CourierApproach;
+    patrolSpawned: boolean;
+    position: Vec;
+    scout?: "depart" | "patrol" | "return";
+  };
   /** Gates lit in the held Thread the needle run, separate from the chapter's gates. */
   lit?: number;
   /** A mining contract's resources deposited at the hub since accepting. */
   deposited?: number;
   /** A supply run's item is aboard; a lost one is replaced through Talk at the issuer. */
   carrying?: boolean;
-  /** A guide's calf start, as an offset from the family. */
+  /** The calf's start offset or the courier's route origin. */
   start?: Vec;
   /** A supply run's destination station, fixed when accepted. */
   target?: JobTarget;

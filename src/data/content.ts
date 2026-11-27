@@ -374,6 +374,9 @@ export const CONTENT: GameContent = {
     activityLoom: "The practice channel is open. Thread it again, slowly.",
     activityPip:
       "I've got a parcel for the far settlement. Fly with me? It's less scary with company.",
+    activityPipChoice: "Drones patrol the way to the outpost. How should we get past them?",
+    activityPipScout: "Scout ahead",
+    activityPipStay: "Stay with Pip",
     activityPipUnavailable: "I don't have a route ready yet. Check back later.",
     activitySalvager: "A station shop needs these spare parts. Will you bring them?",
     activitySkip: "Not now",
@@ -401,6 +404,8 @@ export const CONTENT: GameContent = {
     contractObjective: "Deposit ore at the hub: {have} of {need}.",
     controlsNote: "Touch still works when hidden",
     courierGoal: "Fly a parcel with Pip.",
+    courierPatrolArea: "Patrol area",
+    courierPatrolSpotted: "That's the patrol. Head back to Pip and he'll follow you.",
     darkBeacon: "Dark beacon",
     deliver: "Deliver",
     deliveryAbout: "They're waiting for it.",

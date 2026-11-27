@@ -101,6 +101,14 @@ import {
   type PoiConfirmation,
   speakerName,
 } from "./conversations.ts";
+import {
+  clearCourierPatrol,
+  courierRendezvous,
+  courierScoutTarget,
+  courierTerms,
+  positionCourier,
+  stepCourierRun,
+} from "./courierRun.ts";
 import { inCurrent } from "./currents.ts";
 import { carriesStardust, dropRandom } from "./drops.ts";
 import { edgeMarkerKind } from "./edgeMarkers.ts";
@@ -361,6 +369,7 @@ import {
 } from "./targetMarkers.ts";
 import type {
   Aboard,
+  CourierApproach,
   DialogueState,
   FlightEvent,
   FlightInput,
@@ -1087,9 +1096,6 @@ export class GameModel {
     needle: NeedleTrackedObjective | null,
   ): (TrackedTarget & { readonly waypoint?: PennyPoint }) | undefined {
     const tracked = this.trackedQuestId;
-    if (tracked === null) {
-      return undefined;
-    }
     const waypoint = (
       id: string,
       point: Vec,
@@ -1110,6 +1116,15 @@ export class GameModel {
         ...(jobType ? { jobType } : {}),
       },
     });
+    const activity = heldActivity(f.galaxy, this.state);
+    const scout =
+      activity?.id === "courierRun" && courierScoutTarget(flightWorldContext(f), activity);
+    if (scout) {
+      return waypoint(scout.id, scout, "job", this.label(scout.label));
+    }
+    if (tracked === null) {
+      return undefined;
+    }
     const held = tracked === f.trackedQuestId ? this.held : undefined;
     if (needle) {
       const label = needle.step === "ring" ? `Ring ${needle.ringIndex + 1}` : this.label(needle.id);
@@ -1271,7 +1286,7 @@ export class GameModel {
         state: "present",
         symbol: point.symbol,
         taskCategory: waypoint
-          ? waypoint.jobType
+          ? waypoint.symbol === "job"
             ? "job"
             : "story"
           : (categories.get(id) ?? "generic"),
@@ -2981,6 +2996,20 @@ export class GameModel {
       return;
     }
     const busy = this.state.tasks[f.galaxy];
+    if (activity.id === "courierRun") {
+      const refused = busy ? { refused: true } : {};
+      this.state.dialogue = {
+        choices: [
+          { id: "scout", label: this.label("activityPipScout"), ...refused },
+          { id: "escort", label: this.label("activityPipStay"), ...refused },
+          { id: "skip", label: this.label("activitySkip") },
+        ],
+        context: "activity:courier",
+        text: this.label("activityPipChoice"),
+        title: speaker,
+      };
+      return;
+    }
     this.state.dialogue = {
       choices: [
         { id: "take", label: this.label("activityTake"), ...(busy ? { refused: true } : {}) },
@@ -3008,9 +3037,11 @@ export class GameModel {
   private activityTerms(f: FlightState, place: string): ActivityTerms | null {
     const activity = placeActivity(f.galaxy, this.current, place);
     const at = f.objects.find((o) => o.kind === "destination" && o.id === place);
-    // A courier route must have a live escort before it can be offered.
-    if (!activity || !at || activity.id === "courierRun") {
+    if (!activity || !at) {
       return null;
+    }
+    if (activity.id === "courierRun") {
+      return courierTerms(this.content, f, at, activity.reward!);
     }
     if (activity.id === "supplyRun") {
       const stations = this.current.stations.flatMap((id) => this.stationSite(f, id) ?? []);
@@ -3023,7 +3054,7 @@ export class GameModel {
     return { reward: activity.reward! };
   }
   /** Accepts the offered activity, or refuses while the galaxy's slot is taken. */
-  private takeActivity(place: string): void {
+  private takeActivity(place: string, courierApproach?: CourierApproach): void {
     const f = this.state.flight;
     if (!f) {
       return;
@@ -3034,10 +3065,21 @@ export class GameModel {
       return;
     }
     const terms = this.activityTerms(f, place);
-    if (!terms || !acceptActivity(f.galaxy, this.current, this.state, place, terms)) {
+    if (!terms) {
+      if (courierApproach) {
+        this.state.dialogue = this.courierUnavailableDialogue();
+      }
       return;
     }
-    if (terms.start) {
+    if (
+      !acceptActivity(f.galaxy, this.current, this.state, place, {
+        ...terms,
+        ...(courierApproach ? { courierApproach } : {}),
+      })
+    ) {
+      return;
+    }
+    if (terms.start && !courierApproach) {
       this.current.guides = (this.current.guides ?? 0) + 1;
     }
     this.state.dialogue = null;
@@ -3045,13 +3087,17 @@ export class GameModel {
   /**
    * Returns the galaxy's held activity to its start: the guided calf goes back to its start spot
    * and its hunter pack is placed again. Leaving the galaxy (the galaxy map's Earth or Jump), a
-   * shield-depletion jump, Drop and Back to title use it.
+   * shield-depletion jump and Drop use it.
    */
   resetActivity(galaxy: GalaxyNumber): void {
     const f = this.state.flight;
     const held = heldActivity(galaxy, this.state);
     if (held?.id === "courierRun") {
       resetCourier(held);
+      if (f?.galaxy === galaxy && held.start) {
+        positionCourier(this.content, f, held.start);
+        clearCourierPatrol(this.content, f);
+      }
     }
     if (held?.id === "threadNeedle") {
       held.lit = 0;
@@ -3171,6 +3217,7 @@ export class GameModel {
         ensureDestination(this.content, id, this.state.flight);
       }
     }
+    this.restoreCourierPosition(flight, true);
     this.prepareSunflowerBoss(flight);
     this.explore(this.state.flight);
     this.ensureWhaleDebris();
@@ -3829,6 +3876,7 @@ export class GameModel {
     }
     this.stepJob(f);
     this.stepCalf(dt, f);
+    this.advanceCourier(f, f.time - flightTimeBeforeStep);
     if (context && previousChapterPosition) {
       this.applyChapterResult(runtime?.afterStep?.(context, dt, previousChapterPosition, events));
       if (f.galaxy === 4) {
@@ -4979,6 +5027,10 @@ export class GameModel {
       return id;
     }
     const progress = this.state.progress[flight.galaxy];
+    const activity = heldActivity(flight.galaxy, this.state);
+    if (activity?.id === "courierRun" && activity.courier?.scout) {
+      return this.taskQuestId(flight.galaxy, activity);
+    }
     return BUILT.has(flight.galaxy) && progress.introduced && !progress.resolved
       ? `story:${flight.galaxy}:${progress.stage}`
       : null;
@@ -5356,6 +5408,40 @@ export class GameModel {
       this.finishActivity(f.galaxy);
     }
   }
+  private restoreCourierPosition(flight: FlightState, newFlight = false): void {
+    if (flight.galaxy !== 5) {
+      return;
+    }
+    const held = heldActivity(5, this.state);
+    if (held?.id === "courierRun" && held.courier?.approach) {
+      positionCourier(this.content, flight, held.courier.position);
+    } else if (newFlight && this.state.progress[5].resolved) {
+      const pip = flight.objects.find(({ id }) => id === ANDROMEDA_PLACES.pip);
+      if (pip) {
+        positionCourier(
+          this.content,
+          flight,
+          courierRendezvous(this.content, flight, pip, ACTIVITIES[5]!.reward!),
+        );
+      }
+    }
+  }
+
+  private advanceCourier(flight: FlightState, seconds: number): void {
+    const held = heldActivity(flight.galaxy, this.state);
+    if (held?.id !== "courierRun" || !held.courier?.approach) {
+      return;
+    }
+    const result = stepCourierRun(this.content, flight, held, seconds);
+    if (result.spotted) {
+      this.talk.chapterCue({ speaker: "astra", text: this.label("courierPatrolSpotted") });
+    }
+    if (result.complete) {
+      this.resetActivity(flight.galaxy);
+      this.finishActivity(flight.galaxy);
+    }
+  }
+
   /** A held hunt's lost item within Penny's hunt range, as its point id. */
   private lostItemNear(f: FlightState): string | null {
     const held = this.held;
@@ -5447,6 +5533,10 @@ export class GameModel {
       }
       return;
     }
+    if (dialogue.context === "activity:courier" && (id === "scout" || id === "escort")) {
+      this.takeActivity(ANDROMEDA_PLACES.pip, id);
+      return;
+    }
     const offered = /^activity:(.+)$/.exec(dialogue.context);
     if (offered && id === "take") {
       this.takeActivity(offered[1]!);
@@ -5524,6 +5614,7 @@ export class GameModel {
         chapterRuntime(chapter.flight.galaxy)?.init?.(chapter);
       }
       if (flight) {
+        this.restoreCourierPosition(flight);
         this.reconcileScannedSurvey(flight, "remembered");
       }
       if (this.resumeHeldStory()) {

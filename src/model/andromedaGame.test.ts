@@ -191,13 +191,16 @@ describe("mounted Andromeda chapter", () => {
     model.returnHome();
     readStory(model);
     expect(model.state.progress[5].resolved).toBe(true);
-    const { redact, ...completed } = structuredClone(model.state.progress[5]);
+    const { explored, redact, ...completed } = structuredClone(model.state.progress[5]);
     expect(redact?.phase).toBe("away");
     model.startGalaxy(5);
     visit(model, "pip");
     model.interact();
-    const { redact: resumed, ...story } = model.state.progress[5];
+    const { explored: revisited, redact: resumed, ...story } = model.state.progress[5];
+    expect(revisited.slice(0, explored.length)).toEqual(explored);
+    expect(revisited).toHaveLength(explored.length + 1);
     expect(story).toEqual(completed);
+    expect(model.state.dialogue?.context).toBe("activity:courier");
     expect(resumed).toMatchObject({ phase: "active", site: redact?.site });
   });
 

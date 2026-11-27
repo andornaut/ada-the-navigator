@@ -10,8 +10,19 @@ import { JOB_REWARDS, JOB_TUNING } from "../data/jobs.ts";
 import { NEEDLE } from "../data/needle.ts";
 import { questReward } from "../data/questRewards.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { GALAXY_SIDE } from "../data/world.ts";
+import { settlementById } from "./legacySettlements.ts";
 import { stationById, type StationSite } from "./stations.ts";
-import type { GalaxyProgress, GameState, HeldActivity, JobTarget, Vec } from "./types.ts";
+import type {
+  CourierApproach,
+  GalaxyProgress,
+  GameState,
+  HeldActivity,
+  JobTarget,
+  Vec,
+} from "./types.ts";
+import { type WorldContext, worldDelta, worldDistance } from "./worldContacts.ts";
+import { wrapPoint } from "./worldGeometry.ts";
 
 // Repeatable activities (gameplay/quests.md "Repeatable activities"): once a galaxy's chapter is
 // complete, its story places offer its activity through Talk. An accepted activity takes the
@@ -54,6 +65,7 @@ export function activityOffer(
 /** What one run of an activity is fixed with when accepted: its reward and targets. */
 export interface ActivityTerms {
   readonly reward: number;
+  readonly courierApproach?: CourierApproach;
   /** A calf's or optional courier's start. */
   readonly start?: Vec;
   /** A supply run's station or optional courier's settlement. */
@@ -102,7 +114,7 @@ export function acceptActivity(
     ...(activity.id === "miningContract" ? { deposited: 0 } : {}),
     ...(activity.id === "threadNeedle" ? { lit: 0 } : {}),
     ...(activity.id === "courierRun"
-      ? { courier: { patrolSpawned: false, position: { ...terms.start! } } }
+      ? { courier: courierAtStart(terms.start!, terms.courierApproach) }
       : {}),
     // A supply run's item loads at once into the job carried-item slot.
     ...(activity.id === "supplyRun" ? { carrying: true } : {}),
@@ -146,18 +158,17 @@ export function contractDeposit(galaxy: GalaxyNumber, book: Tasks, amount: numbe
 
 /** Advances only the optional courier; a waiting courier resumes when Ada returns in range. */
 export function stepCourier(
-  context: { readonly baseSpeed: number; readonly dt: number; readonly player: Vec },
+  context: WorldContext & { readonly baseSpeed: number; readonly dt: number; readonly player: Vec },
   held: HeldActivity,
 ): boolean {
   if (held.id !== "courierRun" || !held.courier || !held.target) {
     return false;
   }
   const position = held.courier.position;
-  if (Math.hypot(context.player.x - position.x, context.player.y - position.y) > COURIER.follow) {
+  if (worldDistance(context, context.player, position) > COURIER.follow) {
     return false;
   }
-  const dx = held.target.x - position.x;
-  const dy = held.target.y - position.y;
+  const { x: dx, y: dy } = worldDelta(context, position, held.target);
   const distance = Math.hypot(dx, dy);
   const travel = Math.max(0, context.baseSpeed * COURIER.speedFraction * context.dt);
   if (travel >= distance) {
@@ -167,14 +178,68 @@ export function stepCourier(
   }
   position.x += (dx / distance) * travel;
   position.y += (dy / distance) * travel;
+  if (context.worldSide !== undefined) {
+    Object.assign(position, wrapPoint(context.worldSide, position));
+  }
   return false;
 }
 
 /** Leaving or shield depletion restarts the optional run; Continue does not call this. */
 export function resetCourier(held: HeldActivity): void {
   if (held.id === "courierRun" && held.start && held.courier) {
-    held.courier = { patrolSpawned: false, position: { ...held.start } };
+    held.courier = courierAtStart(held.start, held.courier.approach);
   }
+}
+
+function courierAtStart(
+  start: Vec,
+  approach?: CourierApproach,
+): NonNullable<HeldActivity["courier"]> {
+  return {
+    ...(approach ? { approach } : {}),
+    patrolSpawned: false,
+    position: { ...start },
+    ...(approach === "scout" ? { scout: "depart" as const } : {}),
+  };
+}
+
+function validCourier(value: Record<string, unknown>): boolean {
+  if (!value.courier || typeof value.courier !== "object" || Array.isArray(value.courier)) {
+    return false;
+  }
+  const { approach, patrolSpawned, position, scout } = value.courier as NonNullable<
+    HeldActivity["courier"]
+  >;
+  if (!vector(position) || typeof patrolSpawned !== "boolean") {
+    return false;
+  }
+  // Earlier saves stored the position and patrol only.
+  if (approach === undefined) {
+    return scout === undefined;
+  }
+  if (
+    (approach !== "escort" && approach !== "scout") ||
+    (scout !== undefined &&
+      (approach !== "scout" || !["depart", "patrol", "return"].includes(scout)))
+  ) {
+    return false;
+  }
+  const start = value.start as Vec;
+  const target = value.target as JobTarget;
+  const settlement = settlementById(ECONOMY, target.id);
+  if (!settlement) {
+    return false;
+  }
+  const canonical = wrapPoint(GALAXY_SIDE, settlement);
+  const [min, max] = COURIER.distance;
+  const distance = worldDistance({ worldSide: GALAXY_SIDE }, start, target);
+  return (
+    ((settlement.x === target.x && settlement.y === target.y) ||
+      (canonical.x === target.x && canonical.y === target.y)) &&
+    distance >= min &&
+    distance <= max &&
+    (scout === undefined || (position.x === start.x && position.y === start.y))
+  );
 }
 
 /** Whether a saved activity is the galaxy's, offered by one of its places, with its reward. */
@@ -212,12 +277,7 @@ export function validActivity(galaxy: GalaxyNumber, value: Record<string, unknow
         (value.lit as number) >= 0 &&
         (value.lit as number) <= NEEDLE.activityGates
       : value.lit === undefined) &&
-    (activity.id === "courierRun"
-      ? typeof value.courier === "object" &&
-        value.courier !== null &&
-        vector((value.courier as HeldActivity["courier"])!.position) &&
-        typeof (value.courier as HeldActivity["courier"])!.patrolSpawned === "boolean"
-      : value.courier === undefined)
+    (activity.id === "courierRun" ? validCourier(value) : value.courier === undefined)
   );
 }
 

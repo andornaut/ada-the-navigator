@@ -74,7 +74,29 @@ export function settlementsNear(
   return worldSettlementsNear({}, catalog, radius, point);
 }
 
-/** Retained outposts keep their original sites, including when queried across a flight seam. */
+/** Retained outposts keep their original sites when queried across a flight seam. */
+export function retainedSettlementsNear(
+  context: WorldCellContext,
+  catalog: EconomyCatalog,
+  radius: number,
+  point: Vec,
+): StationSite[] {
+  const side = context.worldSide;
+  if (side === undefined) {
+    return settlementsNear(catalog, radius, point);
+  }
+  const center = wrapPoint(side, point);
+  const images = settlementImages(side, radius);
+  const ys = images(center.y);
+  const sites = images(center.x).flatMap((x) =>
+    ys.flatMap((y) => settlementsNear(catalog, radius, { x, y })),
+  );
+  return [...new Map(sites.map((site) => [site.id, site])).values()].map((site) => ({
+    ...wrapPoint(side, site),
+    id: site.id,
+  }));
+}
+
 export function retainedSettlementWithin(
   context: WorldCellContext,
   catalog: EconomyCatalog,
@@ -86,7 +108,15 @@ export function retainedSettlementWithin(
     return settlementsNear(catalog, radius, point).length > 0;
   }
   const center = wrapPoint(side, point);
-  const images = (coordinate: number) => {
+  const images = settlementImages(side, radius);
+  const ys = images(center.y);
+  return images(center.x).some((x) =>
+    ys.some((y) => settlementsNear(catalog, radius, { x, y }).length > 0),
+  );
+}
+
+function settlementImages(side: number, radius: number): (coordinate: number) => number[] {
+  return (coordinate: number) => {
     if (coordinate - radius < -side / 2) {
       return [coordinate, coordinate + side];
     }
@@ -95,8 +125,4 @@ export function retainedSettlementWithin(
     }
     return [coordinate];
   };
-  const ys = images(center.y);
-  return images(center.x).some((x) =>
-    ys.some((y) => settlementsNear(catalog, radius, { x, y }).length > 0),
-  );
 }

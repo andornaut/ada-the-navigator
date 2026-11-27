@@ -246,6 +246,19 @@ export function worldActivateFlightRegion(
     }
   }
 }
+/** Discards a temporary notable without retaining a defeat tombstone. */
+export function worldDiscardNotable(
+  context: GeographyContext,
+  content: GameContent,
+  id: string,
+  flight: FlightState,
+): void {
+  const previous = flight.world.notables[id];
+  if (previous) {
+    account(context, content, indexWorld(context, content, flight), previous, false);
+  }
+  delete flight.world.notables[id];
+}
 /** Null records suppress defeated notable identities before any later template admission. */
 export function worldRecordObjectRemoval(
   context: GeographyContext,

@@ -102,7 +102,9 @@ export function ensureAndromedaWorld(context: ChapterContext): void {
     flight.objects.splice(flight.objects.indexOf(existing), 1);
   }
   ensureDestinationAt(content, beaconId, point, flight);
-  ensureDestination(content, ANDROMEDA_PLACES.pip, flight);
+  if (!flight.world.notables[ANDROMEDA_PLACES.pip]) {
+    ensureDestination(content, ANDROMEDA_PLACES.pip, flight);
+  }
   const target = memory(progress);
   if (target?.station) {
     ensureStation(content, target.station, flight);
