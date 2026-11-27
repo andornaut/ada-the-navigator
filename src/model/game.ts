@@ -54,7 +54,6 @@ import {
 } from "../data/poiDiscoveryLore.ts";
 import { holodiskInsertion } from "../data/premiseCopy.ts";
 import { galaxyProjects, PROJECT_THANKS } from "../data/projects.ts";
-import { questReward } from "../data/questRewards.ts";
 import { SCREEN } from "../data/screen.ts";
 import { STATION_KEEPER_COPY } from "../data/stationCopy.ts";
 import { galaxyCard, OVERNIGHT_SLEEP } from "../data/storybook.ts";
@@ -196,6 +195,7 @@ import { initializeGalaxyGeography } from "./galaxyGeography.ts";
 import { earlyRequiredDestination, galaxyRoute, newGameState } from "./game/campaignState.ts";
 import { dockedShopGroups, dockedShopOffers, dockedShopSupply } from "./game/dockedShop.ts";
 import { encounterCues, stationsInRange } from "./game/encounterCues.ts";
+import { dockedJobRows, type JobRow } from "./game/jobBoard.ts";
 import { jobIndicator, jobMapTarget, type JobNavigationContext } from "./game/jobNavigation.ts";
 import { type HeldFlight, saveSnapshot } from "./game/saveSnapshot.ts";
 import { aboard, shipItemFacts } from "./game/shipCargo.ts";
@@ -419,6 +419,7 @@ import { wrapPoint } from "./worldGeometry.ts";
 
 export type { AchievementView } from "./achievements.ts";
 export { galaxyRoute, newGameState } from "./game/campaignState.ts";
+export type { JobRow } from "./game/jobBoard.ts";
 export { newProgress } from "./progress.ts";
 
 // The dialogue marker that holds the flight under the holodisk moment's story pages.
@@ -486,19 +487,6 @@ function placeholderChapter(galaxy: GalaxyNumber): ChapterContent {
   };
 }
 const dialogueKeys: Record<string, string> = { growers: "grower", salvagers: "salvager" };
-
-/** A job board row: the held job (Active, with Drop) or an offer, refused while Ada is busy. */
-export interface JobRow {
-  readonly id: string;
-  /** A station job, or the galaxy's active repeatable activity. */
-  readonly kind: "activity" | "job";
-  /** The row's icon: the job's type, or `activity`. */
-  readonly type: JobType | "activity";
-  readonly title: string;
-  readonly detail: string;
-  readonly reward: number;
-  readonly state: "held" | "offer" | "busy";
-}
 
 /** What the scene draws for jobs: landmarks, a rescue's craft and a hunt's area and glint. */
 export interface JobScenery {
@@ -5211,43 +5199,21 @@ export class GameModel {
       : [];
     const held = this.held;
     const busy = Boolean(this.state.tasks[f.galaxy]);
-    const row = (job: JobOffer, state: JobRow["state"]): JobRow => ({
-      ...this.jobText(job),
-      id: job.id,
-      kind: "job",
-      reward: questReward(job.reward),
-      state,
-      type: job.type,
-    });
-    // A posted lead gets the first offer slot before the station's featured activity and
-    // ordinary jobs, even when projects reserve the remaining slots.
     const activity = this.activity;
-    const offered = activity ? null : this.boardActivity(f, site.id);
-    const activityRow: JobRow[] =
-      activity || offered
-        ? [
-            {
-              detail: this.label(ACTIVITIES[f.galaxy]?.goal ?? ""),
-              id: activity?.id ?? offered!.id,
-              kind: "activity",
-              reward: questReward(activity?.reward ?? offered!.reward),
-              state: activity ? "held" : busy ? "busy" : "offer",
-              title: ACTIVITIES[f.galaxy]?.name ?? "",
-              type: "activity",
-            },
-          ]
-        : [];
-    const offers = board.filter((offer) => offer.id !== held?.id);
-    const lead = offers.find(isPostedLead);
-    const offerState = busy ? "busy" : "offer";
-    const featuredFirst = Boolean(activity) || !lead;
-    return [
-      ...(featuredFirst ? activityRow : []),
-      ...(held ? [row(held, "held")] : []),
-      ...(lead ? [row(lead, offerState)] : []),
-      ...(featuredFirst ? [] : activityRow),
-      ...offers.filter((offer) => !isPostedLead(offer)).map((offer) => row(offer, offerState)),
-    ];
+    const featured = activity ?? this.boardActivity(f, site.id);
+    return dockedJobRows(
+      {
+        activity: featured
+          ? { held: Boolean(activity), id: featured.id, reward: featured.reward }
+          : null,
+        busy,
+        galaxy: f.galaxy,
+        held,
+        jobText: (job) => this.jobText(job),
+        label: (key) => this.label(key),
+      },
+      board,
+    );
   }
   /** Why a board's Accept refuses while the slot is taken: an activity, else a held job. */
   get jobBusyLine(): string {
