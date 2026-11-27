@@ -649,6 +649,53 @@ function constructionFindings(path: string, text: string) {
   );
 }
 
+const detachedClickSource = readFileSync(new URL("../ui/statusPill.ts", import.meta.url), "utf8");
+const detachedClickPath = "src/ui/detachedClickFixture.ts";
+const detachedClickListener = 'button.addEventListener("click", click)';
+
+it.each(["src/ui/statusPill.ts", detachedClickPath])(
+  "proves the detached factory bubble listener in %s only suppresses propagation",
+  (path) => {
+    expect(constructionFindings(path, detachedClickSource)).toContainEqual(
+      expect.objectContaining({
+        classification: "suppressor",
+        kind: "non-action",
+        source: detachedClickListener,
+      }),
+    );
+  },
+);
+
+it.each([
+  [
+    "duplicate activation",
+    "clickActivated = false;\n        event.stopPropagation();",
+    "clickActivated = false;\n        event.stopPropagation(); binding.activate();",
+  ],
+  ["registry native ownership", 'nativeClickOwner: "factory"', 'nativeClickOwner: "registry"'],
+  [
+    "unrelated activation flag",
+    "clickActivated = binding.activate();",
+    "clickActivated = unrelated.activate();",
+  ],
+  [
+    "early publication",
+    "const binding = bindAdaAction(",
+    "parent.append(button); const binding = bindAdaAction(",
+  ],
+  [
+    "eager teardown",
+    "    button.addEventListener",
+    "    binding.dispose();\n    button.addEventListener",
+  ],
+] as const)("keeps the detached bubble listener raw with %s", (_name, original, replacement) => {
+  const source = detachedClickSource.replace(original, replacement);
+  expect(source).not.toBe(detachedClickSource);
+  expect(constructionFindings(detachedClickPath, source)).toContainEqual(
+    expect.objectContaining({ kind: "raw-discrete", source: detachedClickListener }),
+  );
+});
+
 const rawRowPath = "src/ui/inventoryFixture.ts";
 const rawRowSource = `
   import { bindAdaAction } from "./actionBinding.ts";

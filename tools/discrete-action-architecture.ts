@@ -1798,7 +1798,11 @@ function scanSource(context: ScanContext, path: string, text: string) {
       ? expression
       : undefined;
   };
-  const capturedKitFactory = (element: ts.VariableDeclaration, block: ts.Block) => {
+  const capturedKitFactory = (
+    element: ts.VariableDeclaration,
+    block: ts.Block,
+    detachedIcon = false,
+  ) => {
     if (!dot(element.initializer, "element") || !unwritten(element.initializer)) {
       return undefined;
     }
@@ -1818,7 +1822,13 @@ function scanSource(context: ScanContext, path: string, text: string) {
       !kitDomImport("createButton", "button", call.expression) ||
       !unwritten(call.expression) ||
       call.arguments.length !== 2 ||
-      !nativeDocument(call.arguments[0]!) ||
+      !(
+        nativeDocument(call.arguments[0]!) ||
+        (detachedIcon &&
+          dot(call.arguments[0], "ownerDocument") &&
+          domHost(call.arguments[0].expression) &&
+          unwritten(call.arguments[0]))
+      ) ||
       !clean(`${reference(call.arguments[0]!)}.createElement`, false, writesOnly)
     ) {
       return undefined;
@@ -1828,9 +1838,11 @@ function scanSource(context: ScanContext, path: string, text: string) {
     const getAction = options?.get("getAction");
     if (
       !literal(fields(options?.get("appearance"))?.get("layout"), "caller") ||
-      !literal(content?.get("kind"), "text") ||
       content?.size !== 2 ||
-      !ts.isStringLiteral(content.get("label") ?? source) ||
+      (detachedIcon
+        ? !literal(content.get("kind"), "icon") || !content.has("name")
+        : !literal(content.get("kind"), "text") ||
+          !ts.isStringLiteral(content.get("label") ?? source)) ||
       !readsButtonAvailability(options?.get("getState")) ||
       !getAction ||
       !ts.isArrowFunction(getAction) ||
@@ -1871,7 +1883,19 @@ function scanSource(context: ScanContext, path: string, text: string) {
       : undefined;
   };
   const capturedSuppressors = new Set<ts.CallExpression>();
-  const capturedKitCleanup = (
+  const kitClickListener = (
+    element: ts.VariableDeclaration,
+    method: string,
+    call: ts.CallExpression | undefined,
+  ) =>
+    call &&
+    !call.questionDotToken &&
+    dot(call.expression, method) &&
+    unwritten(call.expression) &&
+    lexicalIdentity(call.expression.expression, element) &&
+    call.arguments.length === 2 &&
+    literal(call.arguments[0], "click");
+  const capturedKitListener = (
     block: ts.Block,
     element: ts.VariableDeclaration,
     action: ts.VariableDeclaration,
@@ -1880,18 +1904,12 @@ function scanSource(context: ScanContext, path: string, text: string) {
     if (!lexicalIdentity(factory.action, action)) {
       return undefined;
     }
-    const listenerCall = (call: ts.CallExpression | undefined, method: string) =>
-      call &&
-      !call.questionDotToken &&
-      dot(call.expression, method) &&
-      unwritten(call.expression) &&
-      lexicalIdentity(call.expression.expression, element) &&
-      call.arguments.length === 2 &&
-      literal(call.arguments[0], "click");
     const listeners = block.statements
       .map(callStatement)
       .filter((call): call is ts.CallExpression =>
-        Boolean(call && call.pos > action.end && listenerCall(call, "addEventListener")),
+        Boolean(
+          call && call.pos > action.end && kitClickListener(element, "addEventListener", call),
+        ),
       );
     if (listeners.length !== 1) {
       return undefined;
@@ -1958,6 +1976,18 @@ function scanSource(context: ScanContext, path: string, text: string) {
     if (localUses(block)) {
       return undefined;
     }
+    return { handler, listener: listener! };
+  };
+  const capturedKitCleanup = (
+    block: ts.Block,
+    element: ts.VariableDeclaration,
+    action: ts.VariableDeclaration,
+    factory: NonNullable<ReturnType<typeof capturedKitFactory>>,
+  ) => {
+    const click = capturedKitListener(block, element, action, factory);
+    if (!click) {
+      return undefined;
+    }
     for (const statement of block.statements) {
       const cleanup = singleLocal(statement);
       const fn = cleanup?.initializer;
@@ -1984,13 +2014,12 @@ function scanSource(context: ScanContext, path: string, text: string) {
         disposes(retire, action) &&
         disposes(dispose, factory.kit) &&
         remove &&
-        listenerCall(remove, "removeEventListener") &&
-        lexicalIdentity(remove.arguments[1]!, handler)
+        kitClickListener(element, "removeEventListener", remove) &&
+        lexicalIdentity(remove.arguments[1]!, click.handler)
       ) {
         return {
           cleanup,
-          handler,
-          listener: listener!,
+          ...click,
           retire: retire!,
           dispose: dispose!,
           remove,
@@ -1998,6 +2027,102 @@ function scanSource(context: ScanContext, path: string, text: string) {
       }
     }
     return undefined;
+  };
+
+  // Classify the bubble listener independently of the detached constructor's eventual mount.
+  const consumesDetachedFactoryClick = (call: ts.CallExpression): boolean => {
+    const block = call.parent.parent;
+    if (
+      !ts.isBlock(block) ||
+      !ts.isExpressionStatement(call.parent) ||
+      !dot(call.expression, "addEventListener") ||
+      !literal(call.arguments[0], "click")
+    ) {
+      return false;
+    }
+    const element = lexicalDeclaration(call.expression.expression);
+    if (!element || !ts.isVariableDeclaration(element) || !isConst(element)) {
+      return false;
+    }
+    const factory = capturedKitFactory(element, block, true);
+    const binding = factory && lexicalDeclaration(factory.action);
+    const registration = binding && ts.isVariableDeclaration(binding) && binding.initializer;
+    if (
+      !factory ||
+      !binding ||
+      !ts.isVariableDeclaration(binding) ||
+      !isConst(binding) ||
+      !registration ||
+      !ts.isCallExpression(registration) ||
+      !canonicalBindingCall(registration) ||
+      registration.arguments.length !== 2 ||
+      !lexicalIdentity(registration.arguments[1]!, element) ||
+      !literal(fields(registration.arguments[0])?.get("nativeClickOwner"), "factory") ||
+      !inertRegistrationOptions(registration.arguments[0]!, () => false, true)
+    ) {
+      return false;
+    }
+    const index = (local: ts.VariableDeclaration) =>
+      block.statements.findIndex((step) => singleLocal(step) === local);
+    const elementIndex = index(element);
+    const bindingIndex = index(binding);
+    const privateNodes = new Set([element]);
+    if (
+      elementIndex < 0 ||
+      bindingIndex <= elementIndex ||
+      !block.statements
+        .slice(elementIndex + 1, bindingIndex)
+        .every((step) => privateDomEdit(step, privateNodes))
+    ) {
+      return false;
+    }
+    const click = capturedKitListener(block, element, binding, factory);
+    if (click?.listener !== call) {
+      return false;
+    }
+    const read = (node: ts.Identifier, local: ts.VariableDeclaration) =>
+      node !== local.name &&
+      (ts.isShorthandPropertyAssignment(node.parent)
+        ? declaration(node)
+        : lexicalDeclaration(node)) === local;
+    const unsafe = (node: ts.Node): true | undefined => {
+      if (ts.isIdentifier(node)) {
+        const access = node.parent;
+        const use = access.parent;
+        if (read(node, binding) || read(node, factory.kit)) {
+          if (
+            node !== factory.action &&
+            access !== element.initializer &&
+            !(
+              ts.isPropertyAccessExpression(access) &&
+              !access.questionDotToken &&
+              access.name.text === "dispose" &&
+              access.expression === node &&
+              ts.isCallExpression(use) &&
+              use.expression === access &&
+              !use.questionDotToken &&
+              !use.arguments.length &&
+              returnedMethod(node, block.parent)
+            )
+          ) {
+            return true;
+          }
+        } else if (
+          read(node, click.handler) &&
+          node !== call.arguments[1] &&
+          !(
+            ts.isCallExpression(access) &&
+            access.arguments[1] === node &&
+            kitClickListener(element, "removeEventListener", access) &&
+            returnedMethod(node, block.parent)
+          )
+        ) {
+          return true;
+        }
+      }
+      return ts.forEachChild(node, unsafe);
+    };
+    return !unsafe(block);
   };
   const capturedProofs = new Map<ts.VariableDeclaration, number>();
   const proveCapturedConstruction = (control: ts.VariableDeclaration): number => {
@@ -4199,7 +4324,10 @@ function scanSource(context: ScanContext, path: string, text: string) {
             "suppressor",
             "Capture click only clears a private pointer latch used for suppression and cancels the browser event",
           );
-        } else if (discrete && capturedSuppressors.has(node)) {
+        } else if (
+          discrete &&
+          (capturedSuppressors.has(node) || consumesDetachedFactoryClick(node))
+        ) {
           record(
             "non-action",
             node,
