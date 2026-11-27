@@ -40,7 +40,6 @@ import {
   unlockedBy,
 } from "../data/galaxies.ts";
 import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
-import { carriedItemName, STORY_ITEM_NAMES } from "../data/itemNames.ts";
 import { JOB_TUNING, type JobType } from "../data/jobs.ts";
 import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
 import { canAffordMapJump, MAP_JUMP_COST, travelState } from "../data/mapJump.ts";
@@ -199,6 +198,7 @@ import { dockedShopGroups, dockedShopOffers, dockedShopSupply } from "./game/doc
 import { encounterCues, stationsInRange } from "./game/encounterCues.ts";
 import { jobIndicator, jobMapTarget, type JobNavigationContext } from "./game/jobNavigation.ts";
 import { type HeldFlight, saveSnapshot } from "./game/saveSnapshot.ts";
+import { aboard, shipItemFacts } from "./game/shipCargo.ts";
 import {
   floatingHolodisk,
   holodiskTouched,
@@ -300,7 +300,7 @@ import {
   type WorldChange,
   worldChanges,
 } from "./projects.ts";
-import { questDetails, type QuestEntry } from "./questDetails.ts";
+import { questDetails, type QuestEntry, taskQuestId } from "./questDetails.ts";
 import {
   type ContextQuestDetails,
   type QuestObjectLink,
@@ -396,8 +396,6 @@ import type {
   HeldJob,
   JobOffer,
   JobTarget,
-  OptionalTask,
-  ShipItemFact,
   ShipState,
   SpaceObject,
   UseAction,
@@ -1307,7 +1305,7 @@ export class GameModel {
     }
     const held = tracked === f.trackedQuestId ? this.held : undefined;
     const activity = heldActivity(f.galaxy, this.state);
-    if (activity && tracked === this.taskQuestId(f.galaxy, activity)) {
+    if (activity && tracked === taskQuestId(f.galaxy, activity)) {
       if (activity.id === "courierRun") {
         const scout = courierScoutTarget(flightWorldContext(f), activity);
         if (scout) {
@@ -2698,9 +2696,6 @@ export class GameModel {
       this.scannedLandmarks.push(site.id);
     }
   }
-  private taskQuestId(galaxy: GalaxyNumber, task: OptionalTask): string {
-    return `${task.kind}:${galaxy}:${task.id}`;
-  }
   /** Credit only the accepted survey's actual target through the ordinary completion pipeline. */
   private reconcileScannedSurvey(
     flight: FlightState,
@@ -2718,7 +2713,7 @@ export class GameModel {
     }
     const quest = {
       icon: { jobType: held.type, symbol: "job" as const },
-      id: this.taskQuestId(flight.galaxy, held),
+      id: taskQuestId(flight.galaxy, held),
       name: this.jobTextIn(flight.galaxy, held).title,
     };
     this.finishJob(flight);
@@ -5306,7 +5301,7 @@ export class GameModel {
       return false;
     }
     const held = heldJob(flight.galaxy, this.state);
-    return held !== undefined && this.taskQuestId(flight.galaxy, held) === id;
+    return held !== undefined && taskQuestId(flight.galaxy, held) === id;
   }
   trackQuest(id: string): boolean {
     const flight = this.state.flight;
@@ -5327,10 +5322,10 @@ export class GameModel {
     }
     const activity = heldActivity(flight.galaxy, this.state);
     if (activity?.id === "threadNeedle") {
-      return this.taskQuestId(flight.galaxy, activity);
+      return taskQuestId(flight.galaxy, activity);
     }
     if (activity?.id === "courierRun" && activity.courier?.scout) {
-      return this.taskQuestId(flight.galaxy, activity);
+      return taskQuestId(flight.galaxy, activity);
     }
     const progress = this.state.progress[flight.galaxy];
     return BUILT.has(flight.galaxy) && progress.introduced && !progress.resolved
@@ -5398,7 +5393,7 @@ export class GameModel {
     if (task && text) {
       entries.push({
         galaxy,
-        id: this.taskQuestId(galaxy, task),
+        id: taskQuestId(galaxy, task),
         ...(task.kind === "job" ? { jobType: task.type } : {}),
         line: { ...details.jobDetails, kind: "job", target: null, text },
       });
@@ -5456,82 +5451,13 @@ export class GameModel {
   get guidedCalf(): Readonly<GuidedCalf> | null {
     return this.state.mode === "space" ? (this.state.flight?.calf ?? null) : null;
   }
-  /**
-   * What Ada carries in flight: a rescue's towed craft, a delivery's item or a supply run's
-   * cargo; null with nothing aboard.
-   */
   get aboard(): Aboard | null {
-    if (this.state.mode !== "space" || !this.state.flight) {
-      return null;
-    }
-    const held = this.held;
-    if (this.towing && held) {
-      return { kind: "towing", name: carriedItemName(held.item) };
-    }
-    if (held?.carrying) {
-      return { kind: "carrying", name: carriedItemName(held.item) };
-    }
-    const activity = this.activity;
-    if (activity?.id === "supplyRun" && activity.carrying) {
-      return { kind: "carrying", name: carriedItemName(SUPPLY_ITEMS[activity.place] ?? "") };
-    }
-    const story = this.current.questItem;
-    if (story !== null && STORY_ITEM_NAMES[story] !== undefined) {
-      return { kind: "carrying", name: STORY_ITEM_NAMES[story] };
-    }
-    return null;
-  }
-  /** Independent Ship rows do not inherit the HUD's single-item display priority. */
-  private get shipItemFacts(): { carrying: ShipItemFact[]; towing: ShipItemFact | null } {
-    const flight = this.state.flight;
-    const carrying: ShipItemFact[] = [];
-    if (this.state.mode !== "space" || !flight) {
-      return { carrying, towing: null };
-    }
-    const galaxy = flight.galaxy,
-      progress = this.state.progress[galaxy];
-    let live: ReadonlySet<string> | undefined;
-    const fact = (id: string, name: string, questId: string): ShipItemFact => {
-      live ??= new Set(this.quests.map(({ id }) => id));
-      return { id, name, ...(live.has(questId) ? { questId } : {}) };
-    };
-    const story = progress.questItem;
-    if (story !== null && STORY_ITEM_NAMES[story] !== undefined) {
-      carrying.push(
-        fact(
-          `story-item:${galaxy}:${story}`,
-          STORY_ITEM_NAMES[story]!,
-          `story:${galaxy}:${progress.stage}`,
-        ),
-      );
-    }
-    const held = heldJob(galaxy, this.state);
-    if (held?.carrying) {
-      const id = this.taskQuestId(galaxy, held);
-      carrying.push(fact(id, carriedItemName(held.item), id));
-    }
-    const activity = heldActivity(galaxy, this.state);
-    if (activity?.id === "supplyRun" && activity.carrying) {
-      const item = SUPPLY_ITEMS[activity.place];
-      if (item !== undefined) {
-        const id = this.taskQuestId(galaxy, activity);
-        carrying.push(fact(id, carriedItemName(item), id));
-      }
-    }
-    const towing =
-      flight.tow && held?.type === "rescue"
-        ? fact(
-            this.taskQuestId(galaxy, held),
-            carriedItemName(held.item),
-            this.taskQuestId(galaxy, held),
-          )
-        : null;
-    return { carrying, towing };
+    return aboard(this.state);
   }
   /** The Ship card's facts: what Ada carries this flight and her ship's levels and weapons. */
   get ship(): ShipState {
     const { economy, flight } = this.state;
-    const { carrying, towing } = this.shipItemFacts;
+    const { carrying, towing } = shipItemFacts(() => this.quests, this.state);
     const levels = (this.state.mode === "space" && flight?.levels) || economy.levels;
     return {
       aboard: this.aboard,

@@ -12,6 +12,10 @@ import type { QuestDetails, QuestLine } from "./map.ts";
 import { fill } from "./shop.ts";
 import type { GalaxyProgress, HeldJob, OptionalTask, Vec } from "./types.ts";
 
+export function taskQuestId(galaxy: GalaxyNumber, task: OptionalTask): string {
+  return `${task.kind}:${galaxy}:${task.id}`;
+}
+
 export interface QuestObjective {
   readonly label: string;
   readonly checked: boolean;
