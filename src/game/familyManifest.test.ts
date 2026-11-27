@@ -11,6 +11,7 @@ import core from "../../public/art/manifest.json";
 import needle from "../../public/art/needle/manifest.json";
 import phantom from "../../public/art/phantom/manifest.json";
 import sunflower from "../../public/art/sunflower/manifest.json";
+import { fileFilter, SvgRasters, type SvgRequest, vectorRaster } from "../art/index.ts";
 import { PHANTOM_ALLIES_ART } from "../art/phantomAllyArt.ts";
 import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import { enemyAssetKey, hullDesign, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
@@ -44,9 +45,7 @@ import {
 import type { Asset } from "./sceneShared.ts";
 import { readShardPalettePack } from "./shardPalettePack.ts";
 import { readShipJets } from "./shipJets.ts";
-import { SvgRasters, type SvgRequest } from "./svgRasters.ts";
 import { vectorSheetKey } from "./svgSheet.ts";
-import { fileFilter, vectorRaster } from "./textures.ts";
 
 const m1 = ASTEROID_ART.asteroids.find(({ id }) => id === "asteroid-m1")!;
 const claim = GALAXY_FAMILIES.find(({ family }) => family === "claim")!;

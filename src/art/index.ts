@@ -96,6 +96,7 @@ export {
   type PhantomAllyArt,
   readPhantomAllyArt,
 } from "./phantomAllyArt.ts";
+export { hasPlayerHeadingPackage } from "./playerHeadingPackage.ts";
 export {
   type Bounds,
   boundsOnScreen,
@@ -173,6 +174,18 @@ export {
   type StationLoop,
   stationLoopFrame,
 } from "./stationArt.ts";
+export { RASTER_SCALE_EVENT, SvgRasters, type SvgRequest, type SvgSize } from "./svgRasters.ts";
+export {
+  chromeAtlasGrid,
+  FILE_FILTERS,
+  fileFilter,
+  needsRaster,
+  RASTER_CAP,
+  RASTER_STEP,
+  rasterScale,
+  type TextureFilter,
+  vectorRaster,
+} from "./textures.ts";
 export {
   ADA_MISSILES,
   beam,

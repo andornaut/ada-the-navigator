@@ -11,6 +11,7 @@ import mainData from "../../public/art/ship-jets.json";
 import noseData from "../../public/art/ship-nose.json";
 import retroData from "../../public/art/ship-retro-jets.json";
 import title from "../../public/art/title-screen.json";
+import { hasPlayerHeadingPackage } from "../art/index.ts";
 import {
   hasShipHeadings,
   selectPaintedShipAsset,
@@ -32,7 +33,6 @@ import { SHIP_HEADING_CONTRACT } from "../model/shipHeadingContract.ts";
 import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
 import { readTitleScreen } from "../ui/titleScreen.ts";
 import { ENEMY_HEADINGS } from "./enemyArt.ts";
-import { hasPlayerHeadingPackage } from "./playerHeadingPackage.ts";
 import { readQuantumJump } from "./quantumJump.ts";
 import {
   engineJets,

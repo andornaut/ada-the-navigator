@@ -8,6 +8,7 @@ import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import type { GameObjects, Scene } from "phaser";
 
+import { RASTER_SCALE_EVENT } from "../art/index.ts";
 import { BUILD_LABEL } from "../buildLabel.ts";
 import { CONTENT } from "../data/content.ts";
 import { RESOURCE_DESCRIPTIONS } from "../data/resourceDescriptions.ts";
@@ -15,7 +16,6 @@ import type { Weapon } from "../data/types.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { weaponDetailLines } from "../data/weaponDetails.ts";
 import { canvasSize, fitCanvasCamera, sceneFit } from "../game/playCamera.ts";
-import { RASTER_SCALE_EVENT } from "../game/svgRasters.ts";
 import {
   createSpeedLine,
   createTouchChrome,

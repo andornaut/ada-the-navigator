@@ -26,6 +26,9 @@ import {
   readWhirlpoolProjects,
   rockArt,
   RockFrames,
+  type SvgRequest,
+  type TextureFilter,
+  vectorRaster,
   whaleFrameAsset,
   whaleViewBox,
 } from "../art/index.ts";
@@ -90,9 +93,7 @@ import {
   readShipMaterials,
   ShipMaterialSources,
 } from "./shipMaterials.ts";
-import type { SvgRequest } from "./svgRasters.ts";
 import { vectorSheetKey, vectorSheetSource } from "./svgSheet.ts";
-import { type TextureFilter, vectorRaster } from "./textures.ts";
 import { readStrandedCraft, readTowLine } from "./towArt.ts";
 
 interface MaterialCache {

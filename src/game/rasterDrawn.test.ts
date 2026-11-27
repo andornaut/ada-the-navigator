@@ -4,7 +4,7 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
-import { SvgRasters, type SvgRequest } from "./svgRasters.ts";
+import { SvgRasters, type SvgRequest } from "../art/index.ts";
 
 // The production frame hook, run against fake display objects without loading Phaser.
 const source = ts.createSourceFile(

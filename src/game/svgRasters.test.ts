@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { SvgRasters, type SvgRequest } from "./svgRasters.ts";
-import { vectorRaster } from "./textures.ts";
+import { SvgRasters, type SvgRequest, vectorRaster } from "../art/index.ts";
 
 const ship: SvgRequest = {
   key: "ship",

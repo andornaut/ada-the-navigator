@@ -26,8 +26,10 @@ import {
   type EnemyWeaponsArt,
   FALLBACK_SPACE_PALETTE,
   fanVolley,
+  fileFilter,
   type GalaxyBackdrop,
   type GalaxyStationArt,
+  hasPlayerHeadingPackage,
   heldFade,
   hexNumber,
   impactEffect,
@@ -56,6 +58,7 @@ import {
   type StardustArt,
   type StationArt,
   type StreakSpec,
+  SvgRasters,
   type WeaponSolids,
   type WhaleArt,
   type WhirlpoolProjects,
@@ -145,7 +148,6 @@ import {
   lightGalaxy,
 } from "./lightField.ts";
 import { cameraWorldView, parentFit, sceneFit, viewShift } from "./playCamera.ts";
-import { hasPlayerHeadingPackage } from "./playerHeadingPackage.ts";
 import { setRendering } from "./renderLoop.ts";
 import { drawAndromeda } from "./sceneAndromeda.ts";
 import {
@@ -209,8 +211,6 @@ import {
   travelJets,
 } from "./shipJets.ts";
 import { aboardGalaxy, storyCoversScene } from "./storyPresentation.ts";
-import { SvgRasters } from "./svgRasters.ts";
-import { fileFilter } from "./textures.ts";
 import { preloadTouchChrome } from "./touchChrome.ts";
 import type { StrandedCraftArt, TowLine } from "./towArt.ts";
 import type { UpgradePickupArt } from "./upgradePickup.ts";

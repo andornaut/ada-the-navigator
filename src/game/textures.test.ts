@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import { readGalaxyBackdrop } from "../art/backdropLayers.ts";
-import { decorationRasterSize } from "../art/rareDecorations.ts";
-import { ART_MANIFEST, GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
-import { TOUCH_CHROME_FRAME, USE_DISC_POSES, USE_SYMBOLS } from "../ui/touchChrome.ts";
-import { parentFit } from "./playCamera.ts";
 import {
   chromeAtlasGrid,
   fileFilter,
@@ -12,7 +8,11 @@ import {
   RASTER_CAP,
   rasterScale,
   vectorRaster,
-} from "./textures.ts";
+} from "../art/index.ts";
+import { decorationRasterSize } from "../art/rareDecorations.ts";
+import { ART_MANIFEST, GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
+import { TOUCH_CHROME_FRAME, USE_DISC_POSES, USE_SYMBOLS } from "../ui/touchChrome.ts";
+import { parentFit } from "./playCamera.ts";
 
 describe("texture filters", () => {
   it("samples SVGs linear and sheets nearest, and leaves other files alone", () => {

@@ -1,6 +1,5 @@
-import { readEnemyWeaponsArt } from "../art/index.ts";
+import { hasPlayerHeadingPackage,readEnemyWeaponsArt } from "../art/index.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { hasPlayerHeadingPackage } from "../game/playerHeadingPackage.ts";
 import { readQuantumJump } from "../game/quantumJump.ts";
 import { readEngineJets } from "../game/shipJets.ts";
 import { readShipMaterialPalettes, readShipMaterials } from "../game/shipMaterials.ts";

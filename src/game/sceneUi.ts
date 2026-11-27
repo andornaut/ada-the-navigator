@@ -12,6 +12,7 @@ import {
   hasShipHeadings,
   HIT_FLASH_DEPTH,
   HOLODISK_FRAMES,
+  RASTER_SCALE_EVENT,
   readBeaconArt,
   readCacheArt,
   readEnemyWeaponsArt,
@@ -120,7 +121,6 @@ import { engineJets } from "./shipJets.ts";
 import { shopItemDetail, stationRow } from "./shopView.ts";
 import { staticShipJets } from "./staticShipJets.ts";
 import { aboardGalaxy } from "./storyPresentation.ts";
-import { RASTER_SCALE_EVENT } from "./svgRasters.ts";
 import { readUpgradePickup } from "./upgradePickup.ts";
 
 const scanViews = new WeakMap<
