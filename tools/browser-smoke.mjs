@@ -958,7 +958,7 @@ try {
     { GameModel, galaxyRoute },
     { CONTENT },
     { MAP_JUMP_COST },
-    { ensureDestination, routeBlocked },
+    { ensureDestination, populateFlight, routeBlocked },
     { playOpening, relaunch, supportEntropy },
     { SAVE_RESTORE, SAVE_VERSION, restoreSave: restoreCalm },
     { ACHIEVEMENTS },
@@ -3441,11 +3441,19 @@ try {
   Object.assign(hubInput.state.progress[2], { known: ["hub"], stations: ["hub"] });
   const hubFlight = hubInput.state.flight;
   delete hubFlight.storyScene;
-  hubFlight.objects = hubFlight.objects.filter(({ kind }) => kind !== "enemy");
-  hubFlight.shots = [];
   const hubAt = ensureDestination(CONTENT, "hub", hubFlight);
   hubFlight.player = { x: hubAt.x + 100, y: hubAt.y };
   hubFlight.velocity = { x: 0, y: 0 };
+  // Generate at the hub before clearing the fixture's ambient combat. The first live step
+  // otherwise generates fresh attackers while Ada leaves the deposit interaction.
+  populateFlight(CONTENT, { known: [] }, hubFlight);
+  hubFlight.objects = hubFlight.objects.filter(({ kind }) => kind !== "enemy");
+  for (const [id, object] of Object.entries(hubFlight.world.notables)) {
+    if (object?.kind === "enemy") {
+      delete hubFlight.world.notables[id];
+    }
+  }
+  hubFlight.shots = [];
   hubFlight.dangerFor = 0;
   hubFlight.cargo = 4;
   hubInput.state.economy.stardust = 600;
