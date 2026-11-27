@@ -399,7 +399,8 @@ describe("Ship sections rendering", () => {
     expect(root.children[4]!.children[1]!.children).toHaveLength(0);
     const cargo = root.children[0]!.children[1]!;
     expect(rowText(cargo.children.at(-2)!)).toEqual([
-      "Carrying: A very long cargo name that must wrap",
+      "Carrying",
+      "A very long cargo name that must wrap",
     ]);
     const empty = rendered({ ...sections, cargo: [] });
     expect(empty.children[0]!.children[0]!.textContent).toBe("Cargo");
