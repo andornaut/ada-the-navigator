@@ -2,11 +2,12 @@ import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
 import type { MapTool } from "./layout/mapScreen.ts";
 
-export type MapChromeGroup = "header" | "headerRow" | "column" | "tools" | "navigation";
+export type MapChromeGroup = "header" | "headerRow" | "tools" | "navigation";
 export type MapChromeLeaf =
   | MapTool
   | "galaxy"
-  | "divider"
+  | "nameDivider"
+  | "progressDivider"
   | "percent"
   | "pips"
   | "surveyInfo"
@@ -40,8 +41,10 @@ export function mapChromeTrees(tools: readonly MapTool[]): readonly LayoutNode<M
     group("header", [
       group("headerRow", [
         leaf("galaxy"),
-        leaf("divider"),
-        group("column", [leaf("percent"), leaf("pips")]),
+        leaf("nameDivider"),
+        leaf("percent"),
+        leaf("progressDivider"),
+        leaf("pips"),
       ]),
       leaf("surveyInfo"),
     ]),

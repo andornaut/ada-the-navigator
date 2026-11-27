@@ -19,8 +19,10 @@ it("preserves header and navigation order in independent retained native chrome 
             slots: {
               content: [
                 { props: "galaxy" },
-                { props: "divider" },
-                { props: "column", slots: { content: [{ props: "percent" }, { props: "pips" }] } },
+                { props: "nameDivider" },
+                { props: "percent" },
+                { props: "progressDivider" },
+                { props: "pips" },
               ],
             },
           },

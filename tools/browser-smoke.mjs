@@ -552,7 +552,7 @@ try {
     actual.every((value, index) => Math.abs(value - expected[index]) <= within);
   // The map's header starts at the safe page inset. Its
   // right at most its cap, SPACING.gap short of the tools, from the same insets. The pip row is ten
-  // full-size pips, 6 across at an 8 pitch and 78 wide, unscaled, the first floor(percent / 10)
+  // full-size pips at the approved diameter and pitch, unscaled, the first floor(percent / 10)
   // filled cream and the rest hollow rings. The widest header, the longest galaxy name with "100%
   // mapped", measured in the header's own fonts, stays in the cap.
   const mapLayout = await import(new URL("../src/ui/layout/mapScreen.ts", import.meta.url));
@@ -617,7 +617,16 @@ try {
         };
         const galaxy = header.querySelector(".ada-map-galaxy");
         const percent = header.querySelector(".ada-map-percent");
+        const frame = header.getBoundingClientRect();
+        const parts = [...header.querySelector(".ada-map-header-row").children].map((part) =>
+          part.getBoundingClientRect(),
+        );
+        const gaps = [
+          ...parts.map((part, index) => part.left - (parts[index - 1]?.right ?? frame.left)),
+          frame.right - parts.at(-1).right,
+        ].map(logical);
         return {
+          gaps,
           name: ink(galaxy, galaxy.textContent),
           names: Object.fromEntries(names.map((text) => [text, ink(galaxy, text)])),
           note: ink(
@@ -655,22 +664,23 @@ try {
       pixelUnit,
     );
     const expectedWidth = mapLayout.mapCardWidth(insets, view, current.width, pixelUnit);
-    const { divider, padding, pip, pipPitch, pips } = mapLayout.MAP_SCREEN.header;
+    const { divider, dividerCount, gapCount, padding, pip, pipPitch, pips } =
+      mapLayout.MAP_SCREEN.header;
     const pixels = (logical) => Math.round(logical * pixelUnit);
-    // The note sets a floor from actual ink and two insets. The four row segments add
-    // five equal, whole-device-pixel gaps. Rounding these can add fewer than five pixels.
-    const gaps = 5;
+    // The note sets a floor from actual ink and two insets. Each first-row gap has the same
+    // floor, rounded to a device pixel for intrinsic sizing.
     const noteFloor = pixels(measured.note) + 2 * pixels(padding);
     const rowFloor =
       pixels(measured.name) +
-      pixels(divider.width) +
+      dividerCount * pixels(divider.width) +
       pixels(measured.percentInk) +
       pixels((pips - 1) * pipPitch) +
       pixels(pip) +
-      gaps * pixels(mapSpacing.gap);
+      gapCount * pixels(mapSpacing.gap);
     const noteRounding = pixels(narrowest.width) - noteFloor;
     const headerRounding = pixels(width) - Math.max(noteFloor, rowFloor);
     mapHeaders[name] = {
+      gaps: measured.gaps,
       headerRounding,
       noteFloor,
       noteRounding,
@@ -717,14 +727,19 @@ try {
         ) &&
         filled === mapLayout.filledPips(percent) &&
         measured.pips.every((entry, index) => entry.filled === index < filled),
-      `${name}: the header shows ten unscaled pips, 78 wide, ${mapLayout.filledPips(
+      `${name}: the header shows ten unscaled pips, ${mapLayout.filledPips(
         percent,
       )} filled at ${percent}%: ${JSON.stringify(measured)}`,
     );
     assert.ok(
+      measured.gaps.length === gapCount &&
+        Math.max(...measured.gaps) - Math.min(...measured.gaps) <= 0.25,
+      `${name}: both dividers, the percentage and pips share equal padding: ${measured.gaps}`,
+    );
+    assert.ok(
       widest.width <= cap &&
         noteRounding >= 0 &&
-        noteRounding < gaps &&
+        noteRounding < gapCount &&
         headerRounding >= 0 &&
         Math.abs(width - expectedWidth) <= 0.5,
       `${name}: header fits its ${cap} cap and ink floors at the shared card width: ${JSON.stringify(

@@ -559,16 +559,12 @@ export const MAP_SCREEN_STYLE = `
   height:${units(MAP_SCREEN.header.divider.height)};
   background:${TEXT_TOKENS.supporting}
 }
-.ada-controls .ada-map-column{
-  display:flex;
-  align-items:center;
-  gap:var(--map-header-gap)
-}
 .ada-controls .ada-map-percent{
   font:${font(TYPE.label)};
   color:${MAP_COLORS.cream}
 }
 .ada-controls .ada-map-pips{
+  flex:none;
   display:flex;
   align-items:center;
   gap:${units(MAP_SCREEN.header.pipPitch - MAP_SCREEN.header.pip)}
@@ -1029,9 +1025,12 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   header.className = "ada-map-header";
   const galaxy = document.createElement("span");
   galaxy.className = "ada-map-galaxy";
-  const divider = document.createElement("span");
-  divider.className = "ada-map-divider";
-  divider.setAttribute("aria-hidden", "true");
+  const dividers = Array.from({ length: MAP_SCREEN.header.dividerCount }, () => {
+    const divider = document.createElement("span");
+    divider.className = "ada-map-divider";
+    divider.setAttribute("aria-hidden", "true");
+    return divider;
+  });
   const percent = document.createElement("span");
   percent.className = "ada-map-percent";
   const pips = document.createElement("span");
@@ -1044,8 +1043,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       return pip;
     }),
   );
-  const column = document.createElement("span");
-  column.className = "ada-map-column";
   const headerRow = document.createElement("div");
   headerRow.className = "ada-map-header-row";
   const surveyInfo = document.createElement("p");
@@ -1260,7 +1257,6 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   actionBindings.add(closeXAction);
   const closeX = closeXAction.element;
   const chromeGroups: Readonly<Record<MapChromeGroup, HTMLElement>> = {
-    column,
     header,
     headerRow,
     navigation: hudRow,
@@ -1268,11 +1264,12 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   };
   const chromeLeaves: Readonly<Record<MapChromeLeaf, HTMLElement>> = {
     close: closeButton,
-    divider,
     galaxies,
     galaxy,
+    nameDivider: dividers[0]!,
     percent,
     pips,
+    progressDivider: dividers[1]!,
     quests: questsButton,
     recentre: toolButtons.get("recentre")!,
     surveyInfo,
@@ -1552,8 +1549,12 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     header.style.left = pixels(Math.ceil(mapHeaderLeft(insets, size) * pixelUnit) / density);
     header.style.top = pixels(Math.ceil(page.y * pixelUnit) / density);
     header.style.width = units(cardWidth);
-    header.style.setProperty("--map-header-gap", units(geometry.gap));
-    divider.style.width = pixels(Math.round(MAP_SCREEN.header.divider.width * pixelUnit) / density);
+    const gap = geometry.gap + (cardWidth - geometry.width) / MAP_SCREEN.header.gapCount;
+    header.style.setProperty("--map-header-gap", units(gap));
+    const dividerWidth = pixels(Math.round(MAP_SCREEN.header.divider.width * pixelUnit) / density);
+    for (const divider of dividers) {
+      divider.style.width = dividerWidth;
+    }
     const diameter = Math.round(MAP_SCREEN.header.pip * pixelUnit);
     pips.style.position = "relative";
     pips.style.height = pixels(diameter / density);

@@ -194,15 +194,15 @@ describe("map projection and fit", () => {
 
   it("draws ten 8-pixel pips at an 11-pixel pitch", () => {
     expect(MAP_SCREEN.header).toMatchObject({ pip: 8, pipPitch: 11, pipRow: 107, pips: 10 });
-    expect(mapHeaderWidth(200, 100)).toBe(200 + 1 + 100 + 107 + 5 * 8);
+    expect(mapHeaderWidth(200, 100)).toBe(200 + 2 + 100 + 107 + 6 * 8);
   });
 
-  it("uses one equal ink gap for title, divider, percent, pips and both outer edges", () => {
-    // The ink totals 272. Five equal 18-pixel gaps make room for the padded 346-pixel note.
-    expect(mapHeaderGeometry(100, 64, 346)).toEqual({ gap: 18, width: 362 });
-    expect(mapHeaderWidth(100, 64, 346)).toBe(362);
-    expect(mapHeaderGeometry(100, 64, 346, 2)).toEqual({ gap: 18, width: 362 });
-    expect(mapHeaderWidth(100, 64, 601)).toBe(617);
+  it("uses one equal ink gap for title, both dividers, percent, pips and both outer edges", () => {
+    // The ink totals 273. Six equal 15-pixel gaps make room for the padded 346-pixel note.
+    expect(mapHeaderGeometry(100, 64, 346)).toEqual({ gap: 15, width: 363 });
+    expect(mapHeaderWidth(100, 64, 346)).toBe(363);
+    expect(mapHeaderGeometry(100, 64, 346, 2)).toEqual({ gap: 15, width: 363 });
+    expect(mapHeaderWidth(100, 64, 601)).toBe(621);
   });
 
   it("keeps the widest header inside the phone cap and the note's minimum at about 363", () => {

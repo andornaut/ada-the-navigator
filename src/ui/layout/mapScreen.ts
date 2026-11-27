@@ -34,6 +34,8 @@ export const MAP_SCREEN = {
   chartRadius: CHARTING_RADIUS,
   header: {
     ...MAP_SCREEN_LAYOUT.header,
+    dividerCount: 2,
+    gapCount: 6,
     height: TYPE.heading.lineHeight + 2 * SPACING.rowGap + TYPE.body.lineHeight + SPACING.gap,
     /** The rendered width of the entire pip row. */
     pipRow:
@@ -229,7 +231,7 @@ export function filledPips(percent: number): number {
 
 /**
  * One equal gap spans both outer edges and each pair of adjacent ink segments: the name, the
- * divider, the percent and the full-size pip row. The note sets the minimum width.
+ * two dividers, the percent and the full-size pip row. The note sets the minimum width.
  */
 export function mapHeaderGeometry(
   nameWidth: number,
@@ -237,20 +239,19 @@ export function mapHeaderGeometry(
   noteWidth = 0,
   pixelUnit = 1,
 ) {
-  const { divider, padding, pip, pipPitch, pips } = MAP_SCREEN.header;
+  const { divider, dividerCount, gapCount, padding, pip, pipPitch, pips } = MAP_SCREEN.header;
   const pipRow = Math.round((pips - 1) * pipPitch * pixelUnit) + Math.round(pip * pixelUnit);
   const ink =
     Math.round(nameWidth * pixelUnit) +
-    Math.round(divider.width * pixelUnit) +
+    dividerCount * Math.round(divider.width * pixelUnit) +
     Math.round(percentWidth * pixelUnit) +
     pipRow;
-  const gaps = 5;
   const minimum = Math.max(
-    ink + gaps * Math.round(SPACING.gap * pixelUnit),
+    ink + gapCount * Math.round(SPACING.gap * pixelUnit),
     Math.ceil(noteWidth * pixelUnit) + 2 * Math.round(padding * pixelUnit),
   );
-  const gap = Math.ceil((minimum - ink) / gaps);
-  return { gap: gap / pixelUnit, width: (ink + gaps * gap) / pixelUnit };
+  const gap = Math.ceil((minimum - ink) / gapCount);
+  return { gap: gap / pixelUnit, width: (ink + gapCount * gap) / pixelUnit };
 }
 
 export function mapHeaderWidth(nameWidth: number, percentWidth: number, noteWidth = 0): number {
