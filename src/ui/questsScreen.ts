@@ -50,18 +50,28 @@ interface LocatedEndpoint {
   readonly placeId: string;
 }
 
-/** Endpoint metadata is already filtered by the model; current map membership enables locating. */
+/** Use the current visible map objective when the story has no authored route. */
 export function questRoute(entry: QuestEntry, places: readonly MapPlace[]) {
   const { line } = entry;
+  const mapObjective =
+    line.kind === "story" && line.destination === undefined && line.target === null
+      ? places.find(({ objective }) => objective)
+      : undefined;
   return [
     ...(line.source === undefined ? [] : [{ id: line.source, kind: "source" as const }]),
     {
-      id: line.destination === undefined ? line.target : line.destination,
+      id:
+        line.destination === undefined
+          ? (line.target ?? mapObjective?.id ?? null)
+          : line.destination,
       kind: "target" as const,
     },
   ].map(({ id, kind }) => ({
     kind,
-    location: entry.locations.find((location) => location.id === id) ?? null,
+    location:
+      mapObjective && kind === "target"
+        ? { id: mapObjective.id, label: mapObjective.label, symbol: mapObjective.symbol }
+        : (entry.locations.find((location) => location.id === id) ?? null),
     place: places.find((place) => place.id === id) ?? null,
   }));
 }
@@ -313,7 +323,10 @@ export function createQuestsScreen(
           iconPath: questObjectiveIcon(entry, step),
           step,
         })),
-        ...(line.source !== undefined || line.destination !== undefined || line.target !== null
+        ...(line.source !== undefined ||
+        line.destination !== undefined ||
+        line.target !== null ||
+        endpoints.some(({ place }) => place !== null)
           ? { route: endpoints.map((endpoint) => ({ endpoint, entry })) }
           : {}),
         reward: {

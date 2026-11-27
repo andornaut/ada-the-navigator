@@ -44,10 +44,12 @@ describe("quest detail routes", () => {
     ]);
   });
   it("does not reveal an explicit unknown destination or fall back to its pickup target", () => {
-    const route = questRoute({ ...entry, line: { ...entry.line, destination: null } }, [
-      place("growers"),
-    ]);
-    expect(route[1]).toEqual({ kind: "target", location: null, place: null });
+    for (const target of [entry.line.target, null]) {
+      const route = questRoute({ ...entry, line: { ...entry.line, destination: null, target } }, [
+        { ...place("growers"), objective: true },
+      ]);
+      expect(route[1]).toEqual({ kind: "target", location: null, place: null });
+    }
   });
   it("shows known location labels from another galaxy without enabling current-map locating", () => {
     const route = questRoute(entry, []);
@@ -714,6 +716,40 @@ it("opens the flight log on the existing card and returns to the original page a
   expect(root.querySelectorAll("button").flatMap(({ dataset }) => dataset.questId ?? [])).toEqual(
     quests.slice(0, 2).map(({ id }) => id),
   );
+  screen.dispose();
+});
+
+it("locates the revealed story objective from the current map when the quest has no route", () => {
+  const { onLocate, root, screen } = screenFixture();
+  const story: QuestEntry = {
+    galaxy: 4,
+    id: "story:4:2",
+    line: { kind: "story", target: null, text: "Fly the Practice Channel" },
+    locations: [],
+  };
+  const channel: MapPlace = {
+    id: "needlePractice",
+    job: false,
+    kind: "destination",
+    label: "Practice Channel",
+    objective: true,
+    symbol: "destination",
+    travel: true,
+    x: 80,
+    y: 20,
+  };
+  const endpoint = () =>
+    root.querySelectorAll("button").find((node) => node.className === "ada-quest-endpoint");
+
+  screen.setState([story], [{ ...channel, objective: false }], 4);
+  screen.open(story.id, "list");
+  expect(endpoint()).toBeUndefined();
+  screen.setState([story], [channel], 5);
+  expect(endpoint()).toBeUndefined();
+  screen.setState([story], [channel], 4);
+  expect(endpoint()?.textContent).toContain("Practice Channel");
+  endpoint()!.dispatchEvent(new Event("click", { cancelable: true }));
+  expect(onLocate).toHaveBeenCalledExactlyOnceWith("needlePractice");
   screen.dispose();
 });
 
