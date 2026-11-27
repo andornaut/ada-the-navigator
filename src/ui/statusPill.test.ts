@@ -357,7 +357,7 @@ describe("status pill count", () => {
     readonly attributes = new Map<string, string>();
     children: FakeNode[] = [];
     className = "";
-    readonly classList = { add: vi.fn() };
+    readonly classList = { add: vi.fn(), remove: vi.fn() };
     data = "";
     readonly dataset: Record<string, string> = {};
     hidden = false;
@@ -381,6 +381,12 @@ describe("status pill count", () => {
         node.parent = this;
       }
       this.children.push(...nodes);
+    }
+    replaceChildren(...nodes: FakeNode[]): void {
+      for (const child of [...this.children]) {
+        child.remove();
+      }
+      this.append(...nodes);
     }
     remove(): void {
       if (this.parent) {
@@ -412,6 +418,13 @@ describe("status pill count", () => {
     }
     setAttribute(name: string, value: string): void {
       this.attributes.set(name, value);
+    }
+    toggleAttribute(name: string, force: boolean): void {
+      if (force) {
+        this.setAttribute(name, "");
+      } else {
+        this.removeAttribute(name);
+      }
     }
     set type(value: string) {
       this.setAttribute("type", value);
@@ -531,12 +544,28 @@ describe("status pill count", () => {
     shield.dispatchEvent(press);
     expect(stop).toHaveBeenCalledOnce();
     shield.dispatchEvent(new Event("click"));
+    expect(shield.hidden).toBe(true);
+    expect(onShield).not.toHaveBeenCalled();
+    status.setShown(true);
+    const click = new Event("click");
+    const stopClick = vi.spyOn(click, "stopPropagation");
+    shield.dispatchEvent(click);
+    expect(stopClick).toHaveBeenCalledOnce();
     expect(onShield).toHaveBeenCalledExactlyOnceWith(shield);
-    shield.hidden = false;
-    resolveAdaHoldAction(parent as unknown as HTMLElement, shield)?.activate();
+    expect(shield.dataset.action).toBe("shield-details");
+    expect(shield.children).toHaveLength(4);
+    expect(shield.children[0]?.getAttribute("aria-hidden")).toBe("true");
+    expect(shield.children[1]?.getAttribute("role")).toBe("meter");
+    const held = resolveAdaHoldAction(parent as unknown as HTMLElement, shield);
+    expect(held?.rule.holdMs).toBe(500);
+    held?.activate();
     expect(onShield).toHaveBeenCalledTimes(2);
     status.dispose();
     expect(resolveAdaHoldAction(parent as unknown as HTMLElement, shield)).toBeNull();
+    expect(held?.available()).toBe(false);
+    held?.activate();
+    shield.dispatchEvent(new Event("click"));
+    expect(onShield).toHaveBeenCalledTimes(2);
   });
 
   it("paints one complete pill in every shield state and keeps the empty track dark", () => {

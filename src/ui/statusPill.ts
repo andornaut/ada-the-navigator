@@ -1,8 +1,11 @@
+import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
+
 import type { StatusAboardKind } from "../data/hudIconBearings.ts";
 import { HUD_TICK_TIMING } from "../data/noticeTiming.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { LIGHT_FIELD } from "../game/lightField.ts";
 import {
+  ADA_ACTION_HOLD_MS,
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
@@ -687,30 +690,62 @@ export function createStatusPill(
   root.className = "ada-status";
   root.hidden = true;
   const createShieldControl = () => {
-    const button = document.createElement("button");
-    button.type = "button";
+    let clickActivated = false;
+    const kit = createButton(parent.ownerDocument, {
+      appearance: { layout: "caller" },
+      content: { kind: "icon", name: options.shieldLabel },
+      getAction: () => ({
+        activate() {
+          clickActivated = binding.activate();
+        },
+      }),
+      getState: (button) => ({
+        availability: button.hidden
+          ? { kind: "omitted" }
+          : button.disabled
+            ? { kind: "disabled" }
+            : { kind: "available" },
+      }),
+      rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: SCROLL.dragThreshold },
+    });
+    const button = kit.element;
     button.dataset.action = "shield-details";
     const binding = bindAdaAction(
       {
-        beforeClick: (event) => event.stopPropagation(),
         click: {
           availability: () => ({ kind: "available" }),
           run: () => options.onShield?.(button),
         },
         current: () => !disposed,
+        nativeClickOwner: "factory",
         slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
       },
       button,
     );
-    button.setAttribute("aria-label", options.shieldLabel);
     button.setAttribute("aria-haspopup", "dialog");
     const pointerdown = (event: Event) => event.stopPropagation();
+    // Kit activates in capture. Keep accepted clicks out of flight input during bubbling.
+    const click = (event: Event) => {
+      if (clickActivated) {
+        clickActivated = false;
+        event.stopPropagation();
+      }
+    };
     button.addEventListener("pointerdown", pointerdown);
-    leaveInputs.push(() => button.removeEventListener("pointerdown", pointerdown));
-    return { button, dispose: () => binding.dispose() };
+    button.addEventListener("click", click);
+    return {
+      button,
+      dispose() {
+        binding.dispose();
+        kit.dispose();
+        button.removeEventListener("pointerdown", pointerdown);
+        button.removeEventListener("click", click);
+      },
+    };
   };
   const shieldControl = options.onShield ? createShieldControl() : undefined;
   const shieldRoot = shieldControl?.button ?? document.createElement("div");
+  // The HUD paints its own face and focus cue.
   shieldRoot.className = "ada-shield";
   shieldRoot.hidden = true;
   // The icon's outline is a filter on a wrapper: the icon's own mask would clip it.
@@ -739,7 +774,7 @@ export function createStatusPill(
   recharge.className = "ada-status-recharge";
   rechargeTrack.append(recharge);
   const drawing = createShieldDrawing(STATUS_COLOURS);
-  shieldRoot.append(shieldMark, meter, rechargeTrack, drawing.node);
+  shieldRoot.replaceChildren(shieldMark, meter, rechargeTrack, drawing.node);
   const sparkle = document.createElement("span");
   sparkle.className = "ada-status-stardust";
   sparkle.setAttribute("aria-hidden", "true");
