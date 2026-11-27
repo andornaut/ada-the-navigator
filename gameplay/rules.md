@@ -1059,9 +1059,9 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
     0.7 times base Laser damage. The wider coverage makes small targets easier
     to hit, so the volleys fire less often than Laser shots. Its bolts are
     slower than Laser's at the same level.
-  - Rapid Missile: quick straight missiles with a small blast (radius 30) and a fixed
-    1.5 times Laser damage; levels grow its fire rate (every 0.30, 0.25, 0.20 s)
-    and missile speed.
+  - Rapid Missile: quick straight missiles with a small blast (radius 30) and
+    2 damage at every level. Levels increase its fire rate (every 0.50, 0.40,
+    0.30 s) and missile speed.
   - Heavy Missile: one slow straight missile with a large blast (radius 60),
     every 2.0 s at every level. Damage is 5, 6 and 7 at levels 1, 2 and 3.
     Rapid Missile remains faster at every level.
