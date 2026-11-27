@@ -19,13 +19,50 @@ export interface NeedleStitch {
   readonly to: Vec;
 }
 
+function visibleStitchSpan(
+  from: Vec,
+  to: Vec,
+  viewport: { readonly width: number; readonly height: number },
+  padding: number,
+): readonly [number, number] | null {
+  let first = 0;
+  let last = 1;
+  for (const [start, end, limit] of [
+    [from.x, to.x, viewport.width],
+    [from.y, to.y, viewport.height],
+  ] as const) {
+    const delta = end - start;
+    if (delta === 0) {
+      if (start < -padding || start > limit + padding) {
+        return null;
+      }
+      continue;
+    }
+    const a = (-padding - start) / delta;
+    const b = (limit + padding - start) / delta;
+    first = Math.max(first, Math.min(a, b));
+    last = Math.min(last, Math.max(a, b));
+    if (first >= last) {
+      return null;
+    }
+  }
+  return [first, last];
+}
+
 /** Edge dashes use projected logical lengths and keep their phase across polyline vertices. */
 export function needleStitches(
-  context: { readonly project: (point: Vec) => Vec },
+  context: {
+    readonly project: (point: Vec) => Vec;
+    readonly viewport?: { readonly width: number; readonly height: number };
+  },
   course: NeedleCourse,
 ): readonly NeedleStitch[] {
   const marks: NeedleStitch[] = [];
-  const [on, off] = NEEDLE.channels.stitch.dash;
+  const {
+    dash: [on, off],
+    inset,
+    keyline,
+  } = NEEDLE.channels.stitch;
   const period = on! + off!;
   for (const side of [-1, 1]) {
     const edge = course.path.map((point, index) => {
@@ -34,7 +71,7 @@ export function needleStitches(
       const dx = after.x - before.x;
       const dy = after.y - before.y;
       const length = Math.hypot(dx, dy);
-      const across = side * (course.width / 2 - NEEDLE.channels.stitch.inset);
+      const across = side * (course.width / 2 - inset);
       return context.project({
         x: point.x - (length ? dy / length : 0) * across,
         y: point.y + (length ? dx / length : 0) * across,
@@ -47,9 +84,22 @@ export function needleStitches(
       const dx = b.x - a.x;
       const dy = b.y - a.y;
       const length = Math.hypot(dx, dy);
-      for (let dash = Math.floor(arc / period) * period; dash < arc + length; dash += period) {
-        const from = Math.max(0, dash - arc);
-        const to = Math.min(length, dash + on! - arc);
+      const span = context.viewport
+        ? visibleStitchSpan(a, b, context.viewport, keyline.width / 2)
+        : ([0, 1] as const);
+      if (!length || !span) {
+        arc += length;
+        continue;
+      }
+      const start = span[0] * length;
+      const end = span[1] * length;
+      for (
+        let dash = Math.floor((arc + start) / period) * period;
+        dash < arc + end;
+        dash += period
+      ) {
+        const from = Math.max(start, dash - arc);
+        const to = Math.min(end, dash + on! - arc);
         if (to > from) {
           marks.push({
             from: { x: a.x + (dx * from) / length, y: a.y + (dy * from) / length },
@@ -237,24 +287,20 @@ export function createNeedleRenderer(context: NeedleRenderContext) {
           .setAlpha(alpha);
         return image;
       };
-      for (const course of frame.courses) {
-        const stitch = NEEDLE.channels.stitch;
-        context.ink.lineStyle(
-          stitch.width,
-          Number.parseInt(stitch.color.slice(1), 16),
-          stitch.alpha,
-        );
-        for (const { from, to } of needleStitches(context, course)) {
-          // Keep dashes crossing the viewport even when both endpoints lie just outside it.
-          if (
-            Math.max(from.x, to.x) >= 0 &&
-            Math.max(from.y, to.y) >= 0 &&
-            Math.min(from.x, to.x) <= context.viewport.width &&
-            Math.min(from.y, to.y) <= context.viewport.height
-          ) {
+      const stitch = NEEDLE.channels.stitch;
+      const dashes = frame.courses.flatMap((course) => needleStitches(context, course));
+      if (dashes.length) {
+        for (const [width, colour, alpha] of [
+          [stitch.keyline.width, stitch.keyline.color, 1],
+          [stitch.width, stitch.color, stitch.alpha],
+        ] as const) {
+          context.ink.lineStyle(width, hex(colour), alpha);
+          for (const { from, to } of dashes) {
             context.ink.lineBetween(from.x, from.y, to.x, to.y);
           }
         }
+      }
+      for (const course of frame.courses) {
         const lit = frame.lit(course);
         course.gates.forEach((gate, index) => {
           const at = context.project(gate.point);

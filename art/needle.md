@@ -25,7 +25,8 @@ palette are in [art/tools/needle-common.ts](tools/needle-common.ts).
   in ink `#181425`, 9.49:1 on the field, which carries its silhouette: the
   station 2 px; the drones, frigate and capital (with their jets), the ring
   gates, channel lamps, channel debris, Elder Loom's saucer and the stranded
-  craft 1 px. The channel stitch and the band are field paint and take none.
+  craft 1 px. The band is unoutlined field paint. The channel stitch has its
+  own opaque ink under-stroke drawn on the field.
   The build measures on this field (`FIELD` in `art/tools/needle-common.ts`,
   read from galaxies.json); on a light field the keyline meets each edge
   floor (`floorEdge`, the [floor rule](tools/palette.ts)).
@@ -166,29 +167,18 @@ Tech draws each channel edge at runtime from `stitch`; there are no edge
 sprites. The edges are the centre line offset by half the width each side, on
 the world plane through the view projection.
 
-| Part   | Rule                                                                                                                        |
-| ------ | --------------------------------------------------------------------------------------------------------------------------- |
-| Colour | `#CFC5BD` (`color`, Needle's marker) at alpha 0.38 (`alpha`): `#C9BFAF`, 1.04:1                                             |
-| Dashes | 6 on, 4 off (`dash`), logical px measured along the projected edge from the channel's start                                 |
-| Stroke | 1 px (`width`), scaled by `s` like every other space stroke, butt caps                                                      |
-| Inset  | 0 (`inset`): on the edge itself                                                                                             |
-| Motion | None: the stitch is static, so reduced motion needs no change                                                               |
-| Depth  | On the field, above specks, the band and backdrop rocks, below every play object, pickup and effect, as Whirlpool's streaks |
+| Part   | Rule                                                                                                                                                                                                                                                                    |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Colour | Lavender-white `#f4e9ff` (`color`) at full opacity (`alpha` 1). It contrasts 1.62:1 with the field and 15.40:1 with the ink.                                                                                                                                            |
+| Dashes | 10 on, 8 off (`dash`), in logical px along the projected edge from the channel's start                                                                                                                                                                                  |
+| Stroke | Draw the same dashes first in opaque ink `#181425` (`keyline.color`), 4 px total (`keyline.width`). Draw the 2 px lavender-white stroke (`width`) over it. Both use butt caps and scale by `s`. The 1 px of ink visible on either side contrasts 9.49:1 with the field. |
+| Inset  | 0 (`inset`), on the edge itself                                                                                                                                                                                                                                         |
+| Motion | Static in both motion modes                                                                                                                                                                                                                                             |
+| Depth  | On the field, above specks, the band and backdrop rocks, below every play object, pickup and effect, as Whirlpool's streaks                                                                                                                                             |
 
-#### Bolder stitch
-
-The accepted stitch, staged as `runtime-stitch` in
-[polish-rows.json](polish-rows.json) for `channels.json`
-([handoff](polish-handoff.md)): the same colour, inset and path rules, with
-
-| Value | Shipped                   | Bolder stitch            |
-| ----- | ------------------------- | ------------------------ |
-| Width | 1 px                      | 2 px                     |
-| Dash  | 6 on, 4 off               | 10 on, 8 off             |
-| Alpha | 0.38, 1.04:1 on the field | 0.6, 1.07:1 on the field |
-
-The renderer reads `width`, `dash` and `alpha` from the data, so the switch
-is the data alone.
+The `runtime-stitch` group in [polish-rows.json](polish-rows.json) mirrors the
+authored stitch in `channels.json`. Pair the data with the renderer's ink pass
+and verify the result in the channel component. [Handoff](polish-handoff.md#staged-switch-with-a-reader-or-renderer-change)
 
 ### Debris
 

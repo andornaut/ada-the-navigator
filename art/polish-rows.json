@@ -119,9 +119,15 @@
   "runtime-stitch": {
     "file": "/art/needle/channels.json",
     "stitch": {
+      "color": "#f4e9ff",
+      "alpha": 1,
       "width": 2,
       "dash": [10, 8],
-      "alpha": 0.6
+      "inset": 0,
+      "keyline": {
+        "color": "#181425",
+        "width": 4
+      }
     }
   },
   "weapon-solids": {

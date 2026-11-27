@@ -229,8 +229,12 @@ describe("Needle renderer lifecycle and published gate art", () => {
           : image.depth > f.frame.playerDepth,
       ).toBe(true);
     }
-    expect(f.styles[0]).toEqual([2, 0xcfc5bd, 0.6]);
+    expect(f.styles).toEqual([
+      [4, 0x181425, 1],
+      [2, 0xf4e9ff, 1],
+    ]);
     expect(f.lines.length).toBeGreaterThan(0);
+    expect(f.lines.slice(f.lines.length / 2)).toEqual(f.lines.slice(0, f.lines.length / 2));
   });
 
   it("draws the first visible signal immediately and changes it without advancing flight time", () => {
@@ -464,6 +468,54 @@ describe("Needle channel stitch", () => {
     const marks = needleStitches(projected, straight());
     expect(marks[0]).toEqual({ from: { x: 0, y: -52.5 }, to: { x: 10, y: -52.5 } });
     expect(marks).toHaveLength(6);
+  });
+
+  it("clips actual spans with room for the ink under-stroke and preserves the dash phase", () => {
+    const context = { ...identity, viewport: { height: 20, width: 32 } };
+    const course = {
+      ...straight([
+        { x: -25, y: 10 },
+        { x: 60, y: 10 },
+      ]),
+      width: 2,
+    };
+    const marks = needleStitches(context, course);
+    expect(marks).toHaveLength(6);
+    expect(marks.map(({ from, to }) => [Math.round(from.x), Math.round(to.x)])).toEqual([
+      [-2, 3],
+      [11, 21],
+      [29, 34],
+      [-2, 3],
+      [11, 21],
+      [29, 34],
+    ]);
+    expect(
+      needleStitches(context, {
+        ...straight([
+          { x: -10, y: 3 },
+          { x: 3, y: -10 },
+        ]),
+        width: 0,
+      }),
+    ).toEqual([]);
+  });
+
+  it("keeps identical clipped dashes when the caller supplies a coherent chart across a seam", () => {
+    const viewport = { height: 20, width: 32 };
+    const original = {
+      ...straight([
+        { x: -25, y: 10 },
+        { x: 60, y: 10 },
+      ]),
+      width: 2,
+    };
+    const translated = {
+      ...original,
+      path: original.path.map(({ x, y }) => ({ x: x + 100000, y })),
+    };
+    expect(
+      needleStitches({ project: ({ x, y }) => ({ x: x - 100000, y }), viewport }, translated),
+    ).toEqual(needleStitches({ ...identity, viewport }, original));
   });
 
   it("does not emit non-finite segments for an empty or repeated path", () => {

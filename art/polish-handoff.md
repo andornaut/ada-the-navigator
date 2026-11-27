@@ -20,11 +20,11 @@ the test pins listed.
 
 ## Staged: switch with a reader or renderer change
 
-| Rows group         | Art side                                    | Tech change                                                                                                                      |
-| ------------------ | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `runtime-currents` | [Ordered darts](whirlpool.md#ordered-darts) | `src/game/currentStreaks.ts`: filled dart polygon, even lanes and rows, stepped size and alpha; `currentStreaks.test.ts`         |
-| `runtime-stitch`   | [Bolder stitch](needle.md#bolder-stitch)    | Data only: write `width`, `dash` and `alpha` into `channels.json`                                                                |
-| `runtime-eye`      | [Ordered Eye](needle.md#ordered-eye)        | `src/model/needle.ts`: piece by row, tumble frame by index and row, no spread; after Gameplay accepts 360 pieces in place of 468 |
+| Rows group         | Art side                                    | Tech change                                                                                                                                                     |
+| ------------------ | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `runtime-currents` | [Ordered darts](whirlpool.md#ordered-darts) | `src/game/currentStreaks.ts`: filled dart polygon, even lanes and rows, stepped size and alpha; `currentStreaks.test.ts`                                        |
+| `runtime-stitch`   | [Edge stitch](needle.md#edge-stitch)        | `src/game/sceneNeedle.ts` draws the opaque ink dashes beneath the foreground dashes at the same depth. Pair the data with that change and verify the component. |
+| `runtime-eye`      | [Ordered Eye](needle.md#ordered-eye)        | `src/model/needle.ts`: piece by row, tumble frame by index and row, no spread; after Gameplay accepts 360 pieces in place of 468                                |
 
 ## Specification only: renderer changes
 

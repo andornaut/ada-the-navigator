@@ -16,7 +16,7 @@ import {
 import { writeDebrisFrames } from "./debris-sheets.ts";
 import { svgText } from "./svg-text.ts";
 import { linkData, replaceEntries } from "./manifest.ts";
-import { floorEdge, lift, MARKER, OUT, type Polygon, PUBLIC } from "./needle-common.ts";
+import { floorEdge, lift, OUT, type Polygon, PUBLIC } from "./needle-common.ts";
 import { stageRows } from "./polish-rows.ts";
 import { json, round } from "./projection.ts";
 import { DISPLAY_SCALE, type Mesh } from "./solid.ts";
@@ -34,11 +34,12 @@ const FRAME = 80;
 
 // ---------------------------------------------------------------- stitch
 const STITCH = {
-  color: MARKER,
-  alpha: 0.38,
-  width: 1,
-  dash: [6, 4],
+  color: "#f4e9ff",
+  alpha: 1,
+  width: 2,
+  dash: [10, 8],
   inset: 0,
+  keyline: { color: "#181425", width: 4 },
 };
 
 // ---------------------------------------------------------------- debris
@@ -235,11 +236,10 @@ writeFileSync(
   }),
 );
 writeFileSync(`${OUT}eye.json`, json(eye));
-// The staged looks (art/needle.md, Bolder stitch and Ordered Eye): a bolder stitch, and the
-// Eye's debris on an even spacing with one piece per row and its tumble frame stepping in order.
+// Keep the staged stitch in sync with the channel data. The staged Eye orders debris by row.
 stageRows("runtime-stitch", {
   file: `${PUBLIC}channels.json`,
-  stitch: { width: 2, dash: [10, 8], alpha: 0.6 },
+  stitch: STITCH,
 });
 stageRows("runtime-eye", {
   file: `${PUBLIC}eye.json`,
