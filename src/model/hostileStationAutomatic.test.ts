@@ -8,6 +8,7 @@ import { SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { settlementsNear } from "./andromedaPlaces.ts";
 import { fromScreen } from "./convex.ts";
+import { enemyStardust } from "./drops.ts";
 import { enemyHull } from "./enemyBody.ts";
 import { createUnpopulatedFlight, populateFlight, spawnPlannedHostileStation } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
@@ -114,6 +115,7 @@ it("queries generated cells, retains encounters on Continue and credits a real h
   const saved = relaunch(CONTENT, model.save());
   expect(saved.state.flight).toEqual(flight);
   const balance = model.state.economy.stardust;
+  const reward = enemyStardust({ id: body.id, seed: flight.seed }, "hostileStation");
   // The Andromeda ring's open center is flyable. Hit one of its solid convex faces.
   const part = enemyHull(body.enemy!, ROUTE_POSITION[flight.galaxy])![0]!;
   const solid = fromScreen(
@@ -138,12 +140,12 @@ it("queries generated cells, retains encounters on Continue and credits a real h
     y: body.y + solid.y,
   });
   model.step(0.001, idle);
-  expect(model.state.economy.stardust).toBe(balance + 100);
+  expect(model.state.economy.stardust).toBe(balance + reward);
   expect(model.map!.places.find(({ id }) => id === site.id)).toMatchObject({
     hostileStationStatus: "removed",
   });
   model.step(0.001, idle);
-  expect(model.state.economy.stardust).toBe(balance + 100);
+  expect(model.state.economy.stardust).toBe(balance + reward);
   expect(stationPopulationObjects(flight).some(({ id }) => id === site.id)).toBe(false);
   const continued = relaunch(CONTENT, model.save());
   expect(continued.state.flight).toEqual(flight);

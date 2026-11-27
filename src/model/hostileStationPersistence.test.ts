@@ -3,11 +3,12 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
-import { HOSTILE_STATION_POLICY, hostileStationReward } from "../data/hostileStationPolicy.ts";
+import { HOSTILE_STATION_POLICY } from "../data/hostileStationPolicy.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
+import { enemyStardust } from "./drops.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createUnpopulatedFlight } from "./flight.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
@@ -122,16 +123,14 @@ describe("hostile station geography and encounter persistence", () => {
     expect(progress.known).toEqual([]);
   });
 
-  it.each([
-    [5, 100],
-    [2, 150],
-    [6, 200],
-  ] as const)(
-    "pays galaxy %i first disable once for %i Stardust across save and later destruction",
-    (galaxy, amount) => {
+  it.each([5, 2, 6] as const)(
+    "pays the galaxy %i first disable once across save and later destruction",
+    (galaxy) => {
       const { body, encounter, flight, model } = fixture(galaxy);
       const wallet = model.state.economy.stardust;
-      expect(hostileStationReward(galaxy)).toBe(amount);
+      const amount = enemyStardust({ id: body.id, seed: flight.seed }, "hostileStation");
+      expect(amount).toBeGreaterThanOrEqual(10);
+      expect(amount).toBeLessThanOrEqual(20);
       expect(awardHostileStationEncounterReward(model.state.economy, flight, body)).toBe(0);
       body.enemy!.disabled = true;
       expect(awardHostileStationEncounterReward(model.state.economy, flight, body)).toBe(amount);
@@ -151,7 +150,9 @@ describe("hostile station geography and encounter persistence", () => {
     const { body, encounter, flight, model } = fixture();
     body.enemy!.disabled = true;
     const wallet = model.state.economy.stardust;
-    expect(claimHostileStationEncounterReward(flight, body)).toBe(150);
+    expect(claimHostileStationEncounterReward(flight, body)).toBe(
+      enemyStardust({ id: body.id, seed: flight.seed }, "hostileStation"),
+    );
     expect(encounter.rewarded).toBe(true);
     expect(claimHostileStationEncounterReward(flight, body)).toBe(0);
     expect(awardHostileStationEncounterReward(model.state.economy, flight, body)).toBe(0);
@@ -163,7 +164,9 @@ describe("hostile station geography and encounter persistence", () => {
     actors[1]!.enemy!.disabled = true;
     expect(awardHostileStationEncounterReward(model.state.economy, flight, actors[1]!)).toBe(0);
     body.hp = body.enemy!.hp = 0;
-    expect(awardHostileStationEncounterReward(model.state.economy, flight, body)).toBe(150);
+    expect(awardHostileStationEncounterReward(model.state.economy, flight, body)).toBe(
+      enemyStardust({ id: body.id, seed: flight.seed }, "hostileStation"),
+    );
     expect(awardHostileStationEncounterReward(model.state.economy, flight, body)).toBe(0);
     expect(identifiedHostileStationSites(progress)).toEqual([]);
   });

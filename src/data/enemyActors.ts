@@ -3,7 +3,7 @@ import { HOSTILE_STATION_SIGNATURE } from "./enemySignatures.ts";
 import { ROUTE_POSITION } from "./galaxies.ts";
 import type { GalaxyNumber } from "./types.ts";
 
-/** Actor identity includes stations without adding an unapproved economy archetype. */
+/** Actor identity includes stations outside the ordinary ship roster. */
 export type EnemyActorKind = EnemyArchetype | "hostileStation";
 
 export function isEnemyActorKind(value: unknown): value is EnemyActorKind {

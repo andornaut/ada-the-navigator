@@ -201,6 +201,6 @@ describe("world ammunition odds", () => {
       rapidMissile: 12,
       scattershot: 7,
     });
-    expect(ECONOMY.upgradeDropChance).toEqual({ heavy: 0.1, small: 0.0025 });
+    expect(ECONOMY.upgradeDropChance).toEqual({ heavy: 0.2, small: 0.0025 });
   });
 });

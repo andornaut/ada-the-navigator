@@ -317,7 +317,7 @@ export const ECONOMY: EconomyCatalog = {
   // The tractor beam's pull radius and speed by level, alike for every pickup.
   tractorRadius: { base: 60, levels: [90, 120] },
   tractorSpeed: { base: 120, levels: [160, 200] },
-  upgradeDropChance: { heavy: 0.1, small: 0.0025 },
+  upgradeDropChance: { heavy: 0.2, small: 0.0025 },
   upgradeDropWeights: {
     categories: { engine: 1, shield: 1, tractor: 1, weapons: 1 },
     // Each weapon half as likely as the one before it in weapon order.

@@ -509,15 +509,16 @@ describe("guaranteed destruction loot", () => {
 describe("Stardust drops", () => {
   it("reaches every approved galaxy-independent integer endpoint with even frequencies", () => {
     const ranges = {
-      capital: [10, 20],
+      capital: [20, 30],
       fighter: [2, 5],
-      frigate: [4, 10],
+      frigate: [10, 20],
+      hostileStation: [10, 20],
       interceptor: [2, 5],
-      platform: [4, 10],
+      platform: [10, 20],
       retaliator: [2, 5],
       swarm: [1, 3],
     };
-    for (const archetype of Object.keys(enemyCatalog) as EnemyArchetype[]) {
+    for (const archetype of Object.keys(ranges) as (keyof typeof ranges)[]) {
       const [low, high] = ranges[archetype]!;
       const counts = new Map<number, number>();
       const samples = 4096;
@@ -578,11 +579,15 @@ describe("Stardust drops", () => {
     [1, "capital"],
     [2, "platform"],
   ] as const)(
-    "drops an upgrade pickup from galaxy %i's %s 10% of the time when salvaged, never when destroyed",
+    "drops an upgrade pickup from galaxy %i's %s 20% of the time when salvaged, never when destroyed",
     (galaxy, archetype) => {
       let dropped = 0;
       const identity = { id: `route-fixture:${galaxy}`, seed: 5 };
       const reward = enemyStardust(identity, archetype);
+      expect(
+        rollSalvageDrop(ECONOMY, identity, archetype, () => 0.2 - Number.EPSILON).upgrade,
+      ).toBe(true);
+      expect(rollSalvageDrop(ECONOMY, identity, archetype, () => 0.2).upgrade).toBe(false);
       for (let index = 0; index < 20000; index++) {
         const salvaged = rollSalvageDrop(ECONOMY, identity, archetype, dropRandom(5, `s:${index}`));
         expect(salvaged.stardust).toBe(Math.floor(reward / 2));
@@ -590,7 +595,7 @@ describe("Stardust drops", () => {
         const destroyed = rollEnemyDrop(ECONOMY, identity, archetype, dropRandom(5, `d:${index}`));
         expect(destroyed).toEqual({ stardust: reward, upgrade: false });
       }
-      expect(Math.abs(dropped / 20000 - 0.1)).toBeLessThan(0.006);
+      expect(Math.abs(dropped / 20000 - 0.2)).toBeLessThan(0.006);
     },
   );
 
@@ -598,7 +603,7 @@ describe("Stardust drops", () => {
     expect(splitResourcePickup(0)).toEqual([]);
     expect(splitResourcePickup(1)).toEqual([1]);
     expect(splitResourcePickup(12)).toEqual([5, 5, 1, 1]);
-    const [min, max] = [10, 20];
+    const [min, max] = [20, 30];
     const seed = 1;
     const id = Array.from({ length: 64 }, (_, index) => `capital:${index}`).find(
       (candidate) => enemyStardust({ id: candidate, seed }, "capital") === max,
@@ -607,7 +612,7 @@ describe("Stardust drops", () => {
     const reward = enemyStardust({ id, seed }, "capital");
     expect(reward).toBeGreaterThanOrEqual(min);
     const pieces = splitResourcePickup(reward);
-    expect(pieces).toEqual([5, 5, 5, 5]);
+    expect(pieces).toEqual([5, 5, 5, 5, 5, 5]);
     expect(pieces.reduce((sum, amount) => sum + amount, 0)).toBe(reward);
   });
 

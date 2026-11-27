@@ -2,7 +2,10 @@ import { randomStream } from "@andornaut/game-kit/runtime/random";
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { GALAXY_ID } from "../data/galaxies.ts";
-import { HOSTILE_STATION_PLACEMENT } from "../data/hostileStationPlacement.ts";
+import {
+  hasHostileStationSites,
+  HOSTILE_STATION_PLACEMENT,
+} from "../data/hostileStationPlacement.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { Vec } from "./types.ts";
 import {
@@ -76,7 +79,7 @@ export function hostileStationSites(
   }
   const policy = HOSTILE_STATION_PLACEMENT;
   const galaxy = GALAXY_ID[context.galaxy];
-  if (!region.width || !region.height || !policy.galaxies.some((id) => id === galaxy)) {
+  if (!region.width || !region.height || !hasHostileStationSites(context.galaxy)) {
     return [];
   }
   // Tile area derives from density; independent Poisson counts do not impose one site per tile.

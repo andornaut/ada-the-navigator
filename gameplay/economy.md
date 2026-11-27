@@ -30,13 +30,10 @@ Exploring finds a station every few minutes.
 
 ## Earning Stardust
 
-A hostile station pays 100 Stardust in Andromeda, 150 in Cartwheel and 200 in
-Phantom, once on its first disable or destruction in that encounter. Destruction
-after disable pays nothing further, and Continue must not duplicate the payout.
-Defenders retain their ordinary drops; no other reward override is approved.
-This station-specific reward policy is approved and its constants are present in
-the inspected source; production payout acceptance remains unverified. Site and
-encounter lifetimes follow
+A hostile station pays its full roll on its first disable or destruction in the
+encounter. Destruction after disable pays nothing further, and Continue
+preserves whether the payout already happened. Defenders retain their ordinary
+drops. Site and encounter lifetimes follow
 [Rules](rules.md#hostile-station-sites-and-map-knowledge) and
 [Ships](ships.md#hostile-station-defenders-and-encounter-lifetime).
 
@@ -62,14 +59,14 @@ The range is the same in every galaxy. Fighter escorts use the fighter range.
 | Fighter         |               2–5 |     3.5 |
 | Interceptor     |               2–5 |     3.5 |
 | Retaliator      |               2–5 |     3.5 |
-| Frigate         |              4–10 |       7 |
-| Capital ship    |             10–20 |      15 |
-| Turret platform |              4–10 |       7 |
+| Frigate         |             10–20 |      15 |
+| Capital ship    |             20–30 |      25 |
+| Turret platform |             10–20 |      15 |
+| Hostile station |             10–20 |      15 |
 
 For a frigate, capital ship or turret platform, salvage pays half the rolled
-value, rounded down, and retains the existing upgrade chance. Destroying the
-hull pays the full roll. The finale flagship pays 44 on salvage. Hostile
-stations use their separate encounter rewards above. A discovery cache pays 4.
+value, rounded down. Destroying the hull pays the full roll. The finale flagship pays 44 on salvage. A discovery
+cache pays 4.
 
 Disabling a heavy does not destroy it. Fleeing, unloading,
 despawning or restoring a survivor does not grant defeat loot, and a released
@@ -137,7 +134,7 @@ of pickups is the drop's value, capped at 8 for small craft, 16 for frigates and
 destroyed capital's, splits into pickups worth more than 1 Stardust.
 
 Upgrades are sold at stations and are also rare drops, at the same rates in every
-galaxy: 0.25% of destroyed small ships and 10% of salvaged frigates, platforms and
+galaxy: 0.25% of destroyed small ships and 20% of salvaged frigates, platforms and
 capitals drop an upgrade pickup. Rocks never drop one. A destroyed heavy drops none. An upgrade drop
 gives one level, as buying the next level does, and only something Ada can still
 use. The game picks a category, then an item within it. Weapons, Shield, Engine

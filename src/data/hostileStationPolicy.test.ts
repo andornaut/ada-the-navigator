@@ -1,15 +1,10 @@
 import { expect, it } from "vitest";
 
-import { HOSTILE_STATION_POLICY, hostileStationReward } from "./hostileStationPolicy.ts";
+import { hasHostileStationSites } from "./hostileStationPlacement.ts";
+import { HOSTILE_STATION_POLICY } from "./hostileStationPolicy.ts";
 
-it("keeps the approved named-galaxy rewards independent of numeric galaxy order", () => {
-  expect([hostileStationReward(5), hostileStationReward(2), hostileStationReward(6)]).toEqual([
-    100, 150, 200,
-  ]);
-  expect([hostileStationReward(1), hostileStationReward(3), hostileStationReward(4)]).toEqual([
-    undefined,
-    undefined,
-    undefined,
-  ]);
+it("limits sites to the approved galaxies and keeps two defenders per station", () => {
+  expect(([5, 2, 6] as const).map(hasHostileStationSites)).toEqual([true, true, true]);
+  expect(([1, 3, 4] as const).map(hasHostileStationSites)).toEqual([false, false, false]);
   expect(HOSTILE_STATION_POLICY.defenders).toBe(2);
 });

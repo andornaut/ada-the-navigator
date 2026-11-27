@@ -1,8 +1,12 @@
 import { enemyActorAvailable } from "../data/enemyActors.ts";
-import { HOSTILE_STATION_PLACEMENT } from "../data/hostileStationPlacement.ts";
-import { HOSTILE_STATION_POLICY, hostileStationReward } from "../data/hostileStationPolicy.ts";
+import {
+  hasHostileStationSites,
+  HOSTILE_STATION_PLACEMENT,
+} from "../data/hostileStationPlacement.ts";
+import { HOSTILE_STATION_POLICY } from "../data/hostileStationPolicy.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
+import { enemyStardust } from "./drops.ts";
 import { escortPackId } from "./geography.ts";
 import { hostileStationPack } from "./hostileStations.ts";
 import type {
@@ -69,7 +73,7 @@ export function validHostileStationSites(galaxy: GalaxyNumber, value: unknown): 
     (record(value) &&
       Object.entries(value).every(
         ([id, site]) =>
-          (hostileStationReward(galaxy) ?? 0) > 0 &&
+          hasHostileStationSites(galaxy) &&
           enemyActorAvailable(galaxy, "hostileStation") &&
           isHostileStationSiteId(id) &&
           record(site) &&
@@ -137,7 +141,7 @@ export function validHostileStationEncounters(
   const ids = new Set<string>();
   return Object.entries(value).every(([siteId, encounter]) => {
     if (
-      hostileStationReward(flight.galaxy) === undefined ||
+      !hasHostileStationSites(flight.galaxy) ||
       !progress.hostileSites?.[siteId] ||
       !isHostileStationSiteId(siteId) ||
       !record(encounter) ||
@@ -183,7 +187,7 @@ export function registerHostileStationEncounter(
   if (existing) {
     return existing;
   }
-  if (!progress.hostileSites?.[siteId] || hostileStationReward(flight.galaxy) === undefined) {
+  if (!progress.hostileSites?.[siteId] || !hasHostileStationSites(flight.galaxy)) {
     throw new RangeError("Hostile station site unavailable");
   }
   const expected = hostileStationEncounterIds(siteId);
@@ -260,15 +264,13 @@ function rewardClaim(
   const encounter = Object.values(flight.hostileStations ?? {}).find(
     (entry) => entry.bodyId === body.id,
   );
-  const amount = hostileStationReward(flight.galaxy);
   return encounter &&
     !encounter.rewarded &&
-    amount !== undefined &&
-    amount > 0 &&
+    hasHostileStationSites(flight.galaxy) &&
     actorFor(flight, body.id) === body &&
     bodyRole(body) &&
     (body.enemy!.disabled || body.hp <= 0 || body.enemy!.hp <= 0)
-    ? { amount, encounter }
+    ? { amount: enemyStardust({ id: body.id, seed: flight.seed }, "hostileStation"), encounter }
     : null;
 }
 

@@ -5,6 +5,7 @@ import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { fromScreen } from "./convex.ts";
+import { enemyStardust } from "./drops.ts";
 import { damageEnemy } from "./enemyAi.ts";
 import { enemyHull } from "./enemyBody.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
@@ -69,7 +70,10 @@ it("claims the authoritative disabled station once before a queued depletion", (
   queueHostileStationReward(flight, events, body);
   expect(events).toEqual([
     { amount: 3, type: "stardust" },
-    { amount: 100, type: "stardust" },
+    {
+      amount: enemyStardust({ id: body.id, seed: flight.seed }, "hostileStation"),
+      type: "stardust",
+    },
     { type: "depleted" },
   ]);
   queueHostileStationReward(flight, events, body);
@@ -132,7 +136,10 @@ it("emits the existing Stardust event from real station hull destruction before 
   );
   expect(events).toContainEqual({ id: body.id, type: "enemyDestroyed" });
   expect(events.filter(({ type }) => type === "stardust")).toEqual([
-    { amount: 100, type: "stardust" },
+    {
+      amount: enemyStardust({ id: body.id, seed: flight.seed }, "hostileStation"),
+      type: "stardust",
+    },
   ]);
   expect(flight.hostileStations![body.id]!.rewarded).toBe(true);
   expect(flight.objects.some(({ id }) => id === `wreck:${body.id}`)).toBe(false);

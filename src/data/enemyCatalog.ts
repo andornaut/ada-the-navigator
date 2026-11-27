@@ -862,14 +862,15 @@ export function unscaledHullHp(galaxy: GalaxyNumber, archetype: EnemyArchetype):
 
 /** Inclusive whole-number destruction payouts, regardless of route position or HP. */
 export const ENEMY_STARDUST_RANGES = {
-  capital: [10, 20],
+  capital: [20, 30],
   fighter: [2, 5],
-  frigate: [4, 10],
+  frigate: [10, 20],
+  hostileStation: [10, 20],
   interceptor: [2, 5],
-  platform: [4, 10],
+  platform: [10, 20],
   retaliator: [2, 5],
   swarm: [1, 3],
-} as const satisfies Record<EnemyArchetype, readonly [number, number]>;
+} as const satisfies Record<EnemyActorKind, readonly [number, number]>;
 
 /** A galaxy's encounter rate: its position's, times difficultyScale. */
 export function encounterRate(galaxy: GalaxyNumber): number {

@@ -35,7 +35,7 @@ interface EnemyPayoutIdentity {
 }
 
 /** One payout per original actor and flight seed, independent of the upgrade and ammo streams. */
-export function enemyStardust(identity: EnemyPayoutIdentity, archetype: EnemyArchetype): number {
+export function enemyStardust(identity: EnemyPayoutIdentity, archetype: EnemyActorKind): number {
   const [low, high] = ENEMY_STARDUST_RANGES[archetype];
   const count = high - low + 1;
   const next = dropRandom(identity.seed, `enemy-stardust:${wreckEnemyId(identity.id)}`);
