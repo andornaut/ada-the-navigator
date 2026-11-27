@@ -1417,7 +1417,7 @@ or replay rewards.
   accessible level descriptions retain Level {n} of 3.
   Cargo and paint have no level. Paint opens a card titled “Paint” with each
   owned scheme's swatch and name, including Classic. Other schemes show
-  “Apply”, the selected scheme shows “In use”, and “Close” returns to Ship.
+  “Apply”, the selected scheme shows “In use”, and “Back” returns to Ship.
   Existing icons and detail return paths remain.
 - Pause: Pause (button label), Paused, Cheats, Map, Quests, Ship, Achievements,
   Settings, Back to title, Resume. Pause is used only during active pausable gameplay.
