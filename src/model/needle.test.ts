@@ -401,7 +401,7 @@ describe("Needle chapter runtime", () => {
     }
     expect(needleObjectiveIndex(context)).toBe(4);
     expect(chapterProgress(context)).toMatchObject({ eyeLit: 8, practiceLit: 3 });
-    expect(useNeedle(context, "holodisk")).toEqual({});
+    expect(useNeedle(context, "holodisk")).toEqual({ useRefused: true });
     context.flight.player = { ...layout.eye.holodisk };
     stepNeedle(context, 0.1, context.flight.player);
     expect(
@@ -421,7 +421,7 @@ describe("Needle chapter runtime", () => {
     context.progress.questComplete = true;
     expect(needleObjectiveIndex(context)).toBe(5);
     expect(chooseNeedle(context, collect, "continue")).toEqual({});
-    expect(useNeedle(context, "holodisk")).toEqual({});
+    expect(useNeedle(context, "holodisk")).toEqual({ useRefused: true });
     const before = structuredClone(chapterProgress(context));
     const panel = useNeedle(context, "elderLoom")!.dialogue!;
     chooseNeedle(context, panel, "continue");
