@@ -253,7 +253,7 @@ describe("Captain Cadence admission and outcome", () => {
     };
     const tells = new Set<number>();
     const fired = new Map<number, number>();
-    let cancelled = false;
+    let aimStayedFixed = false;
     model.step(0.02, idle);
     expect(activeCrossbowSector(flight)?.phase).toBe("warning");
     for (let frame = 0; frame < 1300 && new Set(fired.values()).size < 2; frame++) {
@@ -296,20 +296,23 @@ describe("Captain Cadence admission and outcome", () => {
         }
         if (beam.fired) {
           fired.set(beam.volley, Math.sign(sector.sector[0]));
-        } else if (!cancelled && beam.age > 0.05) {
-          const volley = beam.volley;
-          place(sector.bearing);
-          model.step(0.02, idle);
-          expect(
-            activeEnemyBeams(flight).some((next) => next.ownerId === id && next.volley === volley),
-          ).toBe(false);
-          cancelled = true;
         } else {
           tells.add(beam.volley);
+          if (!aimStayedFixed && beam.age > 0.05) {
+            const { direction, muzzle, volley } = structuredClone(beam);
+            place(sector.bearing);
+            model.step(0.02, idle);
+            expect(
+              activeEnemyBeams(flight).find(
+                (next) => next.ownerId === id && next.volley === volley,
+              ),
+            ).toMatchObject({ direction, muzzle });
+            aimStayedFixed = true;
+          }
         }
       }
     }
-    expect(cancelled).toBe(true);
+    expect(aimStayedFixed).toBe(true);
     expect(new Set(fired.values())).toEqual(new Set([1, -1]));
     expect([...fired.keys()].every((volley) => tells.has(volley))).toBe(true);
     expect(model.bossHud()).toMatchObject({
