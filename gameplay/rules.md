@@ -397,18 +397,19 @@ in order by crossing their openings below 50% of her current engine's top
 speed. For the next uncleared gate on screen, the rim immediately shows red at
 75% or faster, yellow from 50% to below 75%, and green below 50%. These colors
 reflect current speed. Ada can stop in front of the ring or glide through while
-it is green. A gate passed too fast stays uncleared, and Elder Loom guides her
-back to the last gate she cleared, or the first gate when she has cleared none.
+it is green. A gate passed too fast stays uncleared. Guide Ada back to that
+ring and keep all earlier cleared rings.
 
 Use wide, high-contrast color bands along the ring's circumference. The band
 and the ring's guide detail are visible when the gate first appears. Later
 gates stay inactive until they are next, and cleared gates keep a distinct
 state.
 
-At the green-flag start of the current unfinished course, Elder Loom gives
-an in-flight instruction on approach. Use restarts that course's attempt at
-its first gate and repeats how to cross. Restart preserves completed courses,
-story, and earned rewards. See [Needle dialogue](player-copy.md#needle-copy-anchor-course-start-party-elder-loom).
+Approaching the green flag of the current unfinished course starts guidance
+automatically. Elder Loom gives an in-flight instruction and the highlight
+moves from the flag to the next uncleared ring. The flag has no Use action.
+Returning to it preserves cleared rings and can repeat the instruction on a
+new approach. See [Needle dialogue](player-copy.md#needle-copy-anchor-course-start-party-elder-loom).
 
 Debris in the channel drifts slowly and deals bump damage. The practice run
 has 3 gates and the Eye has 8, with the holodisk beyond the last. No enemies

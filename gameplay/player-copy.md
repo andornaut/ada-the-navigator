@@ -499,10 +499,6 @@ Optional topics:
 
 - On approach to the current course's green flag, Elder Loom: "Ease off before
   the ring. When it turns green, glide through."
-- After Use restarts an in-progress attempt, Elder Loom: "Start at the first
-  ring. Slow down until it turns green, then glide through."
-- At the start of a fresh attempt, Elder Loom: "Take the rings in order.
-  Slow down before each one and glide through on green."
 
 ### Needle copy anchor: holodisk and practice: PARTY Elder Loom
 
