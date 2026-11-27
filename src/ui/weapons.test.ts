@@ -276,6 +276,13 @@ describe("HUD weapon buttons", () => {
     expect(ammo).toContain(`border-radius:${units(HUD_AMMO_COUNT.radius)}`);
   });
 
+  it("removes only the unused weapon content slot from the disc grid", () => {
+    expect(WEAPON_STYLE).toContain(
+      ".ada-controls .ada-weapon .ada-disc > .ada-weapon-content:empty{\n  display:none\n}",
+    );
+    expect(hudDiscStyle(".shared-button", ".disc")).not.toContain("ada-weapon-content");
+  });
+
   it("shows focus on the disc face without adding an outline or shadow", () => {
     const shared = hudDiscStyle(".shared-button", ".disc");
     const focus = shared.split("}").filter((rule) => rule.includes(":focus-visible .disc{"));

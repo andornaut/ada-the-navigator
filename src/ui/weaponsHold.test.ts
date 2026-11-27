@@ -362,7 +362,12 @@ it("gives the factory one native action and disposes a running refusal with the 
     );
   expect(registrations(f.button).filter(([name]) => name === "click")).toEqual([["click", true]]);
   expect(f.button.classList.contains("ui-standard-button")).toBe(true);
-  expect(f.button.querySelector(".ada-disc")?.classList.contains("ui-button-face")).toBe(true);
+  const disc = f.button.querySelector(".ada-disc")!;
+  expect(disc.classList.contains("ui-button-face")).toBe(true);
+  const slot = disc.querySelector(".ada-weapon-content")!;
+  expect(slot.getAttribute("aria-hidden")).toBe("true");
+  expect(slot.children).toHaveLength(0);
+  expect(slot.textContent).toBe("");
 
   const row = f.button.parentElement!;
   const click = f.event("click");

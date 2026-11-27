@@ -221,6 +221,10 @@ export const WEAPON_STYLE = `
   gap:${units(HUD_BUTTON.gap)}
 }
 ${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
+/* An unused Kit slot must not add a grid row beside the masked glyph. */
+.ada-controls .ada-weapon .ada-disc > .ada-weapon-content:empty{
+  display:none
+}
 /* The scaled mask's asymmetric ink bearings leave the darts left of the disc centre. */
 @media ${EXPANDED_VIEWPORT}{
   .ada-controls .ada-weapon[data-weapon="rapidMissile"] .ada-disc::before{translate:${rapidDiscInkOffset} 0}
@@ -405,6 +409,7 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
         const kit = createButton(document, {
           appearance: {
             className: "ada-weapon",
+            contentClassName: "ada-weapon-content",
             face: { className: "ada-disc" },
             layout: "caller",
           },
