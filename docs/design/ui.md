@@ -6,8 +6,8 @@ modal lifecycle and return context stay outside tree data. The Ship inventory an
 completion indicators use shared presentation factories and stylesheet. The 720 by 360 play view stays centred while the canvas fills the available space,
 and portrait touch screens turn the page frame to landscape.
 
-Reference: [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.md),
-[completion indicators](../completion-indicators.md), [Phone](../../src/README.md#phone).
+Reference: [UI layout tree](ui/ui-layout-tree.md), [ship screen](ui/ship-screen.md),
+[completion indicators](ui/completion-indicators.md), [Phone](../../src/README.md#phone).
 
 ## Work items
 

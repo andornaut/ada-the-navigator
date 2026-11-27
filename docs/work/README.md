@@ -29,7 +29,7 @@ decided or delivered, and why, in a line or two each.
 - Work files are public: no session IDs, hostnames, local home-directory paths or quoted
   conversation, only short approval references.
 - On an ordinary change confined to `docs/`, CI runs attribution and lint and skips the test and
-  build job. See [isolated checks](../checks.md#container-profile-and-ci) and
+  build job. See [isolated checks](../reference/checks.md#container-profile-and-ci) and
   [the docs-only check decision](ada-0005.md).
 - The game never serves or deploys `docs/`: the build reads `pages/` and `public/`, and
   deployment uploads only `dist/`.

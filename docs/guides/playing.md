@@ -2,8 +2,8 @@
 
 ## Campaign
 
-Ada explores six story galaxies in this order. See the [version one rules](../gameplay/rules.md)
-for the full progression and the [player copy](../gameplay/player-copy.md) for objectives and dialogue.
+Ada explores six story galaxies in this order. See the [version one rules](../../gameplay/rules.md)
+for the full progression and the [player copy](../../gameplay/player-copy.md) for objectives and dialogue.
 
 | Galaxy    | Chapter                                                                        |
 | --------- | ------------------------------------------------------------------------------ |
@@ -16,7 +16,7 @@ for the full progression and the [player copy](../gameplay/player-copy.md) for o
 
 Finish the galaxy's space quest and Earth resolution and recover its holodisk to unlock the
 next galaxy. Ada can replay completed Earth chapters from her room. Continue on the title screen
-restores your [saved progress](../src/README.md#save-data).
+restores your [saved progress](../../src/README.md#save-data).
 
 ## Flight
 
@@ -27,20 +27,20 @@ weapon. Ada switches to Laser when the equipped weapon runs out.
 
 Stardust pays for weapons, upgrades, ammunition and paint at stations. Chapter completion unlocks
 community projects in galaxies that have them. Confirmed part payments persist. See the
-[economy](../gameplay/economy.md) for shops, drops, weapon levels and project funding, and
-[galaxy art](../art/galaxies.md) for the visual reference.
+[economy](../../gameplay/economy.md) for shops, drops, weapon levels and project funding, and
+[galaxy art](../../art/galaxies.md) for the visual reference.
 
 The Paused card's Map shows discovered places and survey progress. Travel here checks danger,
 tow and cargo. The galaxy map offers travel between galaxies and back to Earth. The
-[flight rules](../gameplay/rules.md#flight-and-combat) cover the travel conditions, and
-[quests](../gameplay/quests.md) covers the story objective and jobs. See the
-[enemy rule interface](../gameplay/enemies.md) for encounter and combat rules.
+[flight rules](../../gameplay/rules.md#flight-and-combat) cover the travel conditions, and
+[quests](../../gameplay/quests.md) covers the story objective and jobs. See the
+[enemy rule interface](../../gameplay/enemies.md) for encounter and combat rules.
 
 ## Controls
 
-The homepage's [Controls tables](../pages/index.html) show the live site copy. Use the left stick
+The homepage's [Controls tables](../../pages/index.html) show the live site copy. Use the left stick
 to move, the right stick to aim and fire, and Use to interact on touch. The
-[phone runtime](../src/README.md#phone) explains installation and the landscape view.
+[phone runtime](../../src/README.md#phone) explains installation and the landscape view.
 
 | Input                                         | Action                                            |
 | --------------------------------------------- | ------------------------------------------------- |

@@ -7,17 +7,17 @@ through six galaxies and brings what she learns back to Earth.
 
 ## Playing
 
-- [Campaign, controls and saves](docs/playing.md)
+- [Campaign, controls and saves](docs/guides/playing.md)
 - [Gameplay rules and player copy](gameplay/README.md)
 
 ## Developing
 
-- [Local setup and checks](docs/development.md)
+- [Local setup and checks](docs/guides/development.md)
 - [Source architecture](src/README.md)
 
 ## Deploying
 
-- [Delivery and deployment](docs/checks.md#cloudflare-build-and-deployment-checks)
+- [Delivery and deployment](docs/reference/checks.md#cloudflare-build-and-deployment-checks)
 
 ## Docs
 

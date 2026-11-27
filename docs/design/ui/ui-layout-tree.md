@@ -1,23 +1,23 @@
 # Typed layout consumers
 
-The public GameKit release pinned in [package.json](../package.json) supplies the
+The public GameKit release pinned in [package.json](../../../package.json) supplies the
 typed tree and DOM reconciler. The local adapter wraps
 `createCard`, `createButton`, `createActions` and `createProse`; it does not interpret
 expressions or implement another renderer. Action registries, current availability,
 modal lifecycle and return context stay outside tree data.
 
 `stationDropTree` and `mountStationDropDetails` in
-[src/ui/stationDropDetails.ts](../src/ui/stationDropDetails.ts) serve the station's
+[src/ui/stationDropDetails.ts](../../../src/ui/stationDropDetails.ts) serve the station's
 job/activity Drop confirmation and the isolated component fixture. The confirmation preserves its
 small card, authored labels, secondary Cancel and primary Drop actions.
 
-`restartTree` in [src/ui/restartTree.ts](../src/ui/restartTree.ts) supplies the
+`restartTree` in [src/ui/restartTree.ts](../../../src/ui/restartTree.ts) supplies the
 Restart confirmation through the same card and button ports. The small card keeps
 its secondary Cancel and primary Restart actions. A footer-only card sets `body:
 false` to omit the empty content slot. Restart's caller retains dismissal, focus,
 press scope and the original restart callback; callbacks are not stored in tree data.
 
-`resourceTree` in [src/ui/resourceTree.ts](../src/ui/resourceTree.ts) drives Resource
+`resourceTree` in [src/ui/resourceTree.ts](../../../src/ui/resourceTree.ts) drives Resource
 content and footer reconciliation through a native card component port. The existing
 card, prose, quantity and footer nodes are retained. Caller-owned icon nodes,
 count formatting, current Quests callbacks, pause transitions and focus return
@@ -29,26 +29,26 @@ and their canonical presentation wrappers when centering a single visible button
 Trees use `LayoutNode` or `ComponentNode` from
 `@andornaut/game-kit/runtime/ui/layoutTree` and the public `mountLayout` DOM
 reconciler from `@andornaut/game-kit/runtime/web/ui/dom/layoutTree`.
-[The local adapter](../src/ui/layoutTree.ts) supplies shared native card, button
+[The local adapter](../../../src/ui/layoutTree.ts) supplies shared native card, button
 and prose ports; consumers can also supply their own native component ports.
 
-| Consumer                                                                              | Typed composition                                                                                            | Native or caller-owned boundary                                                                         |
-| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| [Station](../src/ui/station.ts)                                                       | `stationMenuTree`, `stationShopTree`, `stationShopRowTree`, `stationJobsTree`, `stationJobRowTree`           | Card shells, item icons, selection, purchasing and job policy, confirmation and Back callbacks          |
-| [Drop](../src/ui/stationDropDetails.ts), [Restart](../src/ui/restartCard.ts)          | `stationDropTree`, `restartTree` card and footer                                                             | Original confirmation actions, availability, focus and modal lifecycle                                  |
-| [Resource](../src/ui/resourceCard.ts), [Weapon detail](../src/ui/weaponDetailCard.ts) | `resourceTree`, `weaponDetailTree` content and footer ports                                                  | Existing card/header nodes, icons, quantity and level formatting, original actions and foreground scope |
-| [Update](../src/ui/updateDialog.ts)                                                   | `updateTree` native card and ordered footer                                                                  | Offer subscription, accept/defer policy, outside-tap guard, focus and modal lifecycle                   |
-| [Settings](../src/ui/settings.ts)                                                     | `settingsTree` columns, device rows, divider, conditional install row, build and actions                     | Stateful widgets, install guide, preferences and callbacks                                              |
-| [Menu](../src/ui/menuCard.ts), [Pause](../src/ui/pauseCard.ts)                        | `menuTree`, `pauseTree` action arrangement                                                                   | Navigation, context, modal scope and return focus; the Ship modal frame and Back footer remain native   |
-| [Ship](../src/ui/shipCard.ts)                                                         | `shipTree` sections and rows                                                                                 | Model-selected contents, canonical icons, completion widgets and detail callbacks                       |
-| [Achievements](../src/ui/achievementsCard.ts)                                         | `achievementsTree` entries and pager                                                                         | Measured pagination, native card and Close footer, completion component and callbacks                   |
-| [Quests](../src/ui/questsScreen.ts)                                                   | `questsBodyTree` list/detail body and `questsTree` footer                                                    | Objective and route facts, icon resolution, rewards, filtering, pagination and return context           |
-| [Start](../src/ui/startScreen.ts)                                                     | `startScreenTree` action row and optional note                                                               | Field, ship/jet and wordmark Art, canonical coordinates and shell actions                               |
-| [Local map](../src/ui/mapScreen.ts)                                                   | `mapPanelTree` selected-object panel and `mapChromeTrees` header, tools, navigation and fallback quest pager | Canvas, place chips, current selection, survey/travel policy and native control handlers                |
-| [Galaxy selector](../src/ui/galaxyMap.ts)                                             | `galaxyPanelTree` selected panel and footer                                                                  | Route Art, current selection, unlock checks and jump/close callbacks                                    |
-| [Dialogue](../src/ui/dialoguePanel.ts), [Storybook](../src/ui/storybook.ts)           | `dialoguePanelTree`, `storyPanelTree` copy, portrait, choices and navigation slots                           | Native text and choice updates, Art composition/crop, timing and original navigation callbacks          |
-| [Cheats](../src/ui/cheats.ts)                                                         | `cheatsTree` one scrolling column of action and switch rows, Close in its own slot                           | Native controls, browser-only eligibility at open and at each action                                    |
-| [Exchange](../src/ui/exchange.ts)                                                     | `exchangeTree` fixed 1/10/100 Buy ore/Sell ore actions, result and status                                    | Model-owned availability and immediate atomic trades; native buttons, refusal text and callbacks        |
+| Consumer                                                                                          | Typed composition                                                                                            | Native or caller-owned boundary                                                                         |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| [Station](../../../src/ui/station.ts)                                                             | `stationMenuTree`, `stationShopTree`, `stationShopRowTree`, `stationJobsTree`, `stationJobRowTree`           | Card shells, item icons, selection, purchasing and job policy, confirmation and Back callbacks          |
+| [Drop](../../../src/ui/stationDropDetails.ts), [Restart](../../../src/ui/restartCard.ts)          | `stationDropTree`, `restartTree` card and footer                                                             | Original confirmation actions, availability, focus and modal lifecycle                                  |
+| [Resource](../../../src/ui/resourceCard.ts), [Weapon detail](../../../src/ui/weaponDetailCard.ts) | `resourceTree`, `weaponDetailTree` content and footer ports                                                  | Existing card/header nodes, icons, quantity and level formatting, original actions and foreground scope |
+| [Update](../../../src/ui/updateDialog.ts)                                                         | `updateTree` native card and ordered footer                                                                  | Offer subscription, accept/defer policy, outside-tap guard, focus and modal lifecycle                   |
+| [Settings](../../../src/ui/settings.ts)                                                           | `settingsTree` columns, device rows, divider, conditional install row, build and actions                     | Stateful widgets, install guide, preferences and callbacks                                              |
+| [Menu](../../../src/ui/menuCard.ts), [Pause](../../../src/ui/pauseCard.ts)                        | `menuTree`, `pauseTree` action arrangement                                                                   | Navigation, context, modal scope and return focus; the Ship modal frame and Back footer remain native   |
+| [Ship](../../../src/ui/shipCard.ts)                                                               | `shipTree` sections and rows                                                                                 | Model-selected contents, canonical icons, completion widgets and detail callbacks                       |
+| [Achievements](../../../src/ui/achievementsCard.ts)                                               | `achievementsTree` entries and pager                                                                         | Measured pagination, native card and Close footer, completion component and callbacks                   |
+| [Quests](../../../src/ui/questsScreen.ts)                                                         | `questsBodyTree` list/detail body and `questsTree` footer                                                    | Objective and route facts, icon resolution, rewards, filtering, pagination and return context           |
+| [Start](../../../src/ui/startScreen.ts)                                                           | `startScreenTree` action row and optional note                                                               | Field, ship/jet and wordmark Art, canonical coordinates and shell actions                               |
+| [Local map](../../../src/ui/mapScreen.ts)                                                         | `mapPanelTree` selected-object panel and `mapChromeTrees` header, tools, navigation and fallback quest pager | Canvas, place chips, current selection, survey/travel policy and native control handlers                |
+| [Galaxy selector](../../../src/ui/galaxyMap.ts)                                                   | `galaxyPanelTree` selected panel and footer                                                                  | Route Art, current selection, unlock checks and jump/close callbacks                                    |
+| [Dialogue](../../../src/ui/dialoguePanel.ts), [Storybook](../../../src/ui/storybook.ts)           | `dialoguePanelTree`, `storyPanelTree` copy, portrait, choices and navigation slots                           | Native text and choice updates, Art composition/crop, timing and original navigation callbacks          |
+| [Cheats](../../../src/ui/cheats.ts)                                                               | `cheatsTree` one scrolling column of action and switch rows, Close in its own slot                           | Native controls, browser-only eligibility at open and at each action                                    |
+| [Exchange](../../../src/ui/exchange.ts)                                                           | `exchangeTree` fixed 1/10/100 Buy ore/Sell ore actions, result and status                                    | Model-owned availability and immediate atomic trades; native buttons, refusal text and callbacks        |
 
 Adoption is scoped to these managed slots. Native ports retain their geometry,
 Art, widget identity and policy; their presence does not imply an unfinished
@@ -77,7 +77,7 @@ const evidence = detail.inspect(viewport);
 
 The viewport and physical measurements use the production view bridge's logical
 units. The inspector in
-[src/ui/layoutTreeMeasurements.ts](../src/ui/layoutTreeMeasurements.ts) retains one
+[src/ui/layoutTreeMeasurements.ts](../../../src/ui/layoutTreeMeasurements.ts) retains one
 current keyed DOM snapshot. It reports available and required rectangles, actual
 text fragments, clipping and overlaps, including native title and Close controls.
 Card capacity comes from its modal's measured content box, including the canonical
@@ -89,20 +89,20 @@ report; it cannot establish fit by hiding excess content. Physical reports and
 rendered artifacts are both required for visual review.
 
 Shop offer rows and purchase-detail headers share `createStationItemIcon` from
-[src/ui/stationItemIcon.ts](../src/ui/stationItemIcon.ts). The caller's existing
+[src/ui/stationItemIcon.ts](../../../src/ui/stationItemIcon.ts). The caller's existing
 item descriptor selects the canonical sprite, weapon upgrade composite or paint
 swatch. Header icons are decorative and preserve the visible item name. Rendering
 an additional header icon does not move or replace the row's icon.
 
 ## Registered actions and completed producers
 
-[Action metadata](../src/ui/actionBinding.ts) registers each discrete control and
+[Action metadata](../../../src/ui/actionBinding.ts) registers each discrete control and
 its original availability and callback. `assertAdaActionMetadata` checks completed
 producers while detached; `assertAdaActionBindings` additionally requires attached
 controls beneath live registered roots. These structural checks do not invoke
 availability or execution policy.
 
-[Action roots](../src/ui/holdActionsAdapter.ts) own published tap/hold dispatch and
+[Action roots](../../../src/ui/holdActionsAdapter.ts) own published tap/hold dispatch and
 nearest-root eligibility. The current Ada hold duration is 500 ms, independent of
 display scale. A hold uses its registered override or falls back to the tap action.
 Factory bindings register metadata only: the factory keeps its original guarded

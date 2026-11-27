@@ -14,7 +14,7 @@ Vite builds the HTML inputs in [`pages/`](../pages/) and serves the landing page
 `gameViteConfig` (`@andornaut/game-kit/build/gameConfig`) with the plugin
 inputs in [`src/build/index.ts`](build/index.ts): the
 dev server's `/play` redirect (`sitePages`), hashed icons and the service worker's
-precache. See [development](../docs/development.md) for local build and delivery links.
+precache. See [development](../docs/guides/development.md) for local build and delivery links.
 
 ## Architecture
 
@@ -74,7 +74,7 @@ describes their implementation.
 Discrete UI actions use registered metadata and owning roots, with detached metadata
 and attached binding checks at completed producer boundaries. The shared dispatcher
 owns tap/hold gestures; factory callbacks retain native click ownership. See the
-[current action contract and scoped coverage](../docs/ui-layout-tree.md#registered-actions-and-completed-producers).
+[current action contract and scoped coverage](../docs/design/ui/ui-layout-tree.md#registered-actions-and-completed-producers).
 
 ### Assets and build
 
@@ -193,7 +193,7 @@ opens the browser's prompt or that browser's menu steps.
   UI layout result as canonical JSON.
 - **Browser smoke:** [`tools/browser-check.mjs`](../tools/browser-check.mjs) runs
   [`tools/browser-smoke.mjs`](../tools/browser-smoke.mjs) against a gated build; see
-  [check commands and evidence](../docs/checks.md).
+  [check commands and evidence](../docs/reference/checks.md).
 
 The shield's lighter outer pill contains one opaque dark rectangle behind both
 bars. The main border has the same gap to the dark rectangle's top, left and

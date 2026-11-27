@@ -8,8 +8,8 @@ Make; `AI attributions` is a separate required check. The Vite build reads `page
 `public/`, compacts emitted JSON and writes `dist/`, the only directory Wrangler deploys.
 `docs/` is never served or packaged.
 
-Reference: [checks](../checks.md), [container adoption](../container-adoption.md),
-[download size](../download-size.md), [Developing](../../README.md#developing),
+Reference: [checks](../reference/checks.md), [container adoption](../reference/container-adoption.md),
+[download size](../reference/download-size.md), [Developing](../../README.md#developing),
 [Deploying](../../README.md#deploying).
 
 ## Work items
