@@ -1563,7 +1563,7 @@ Chart (`GALAXY_MAP`):
 | Rules                 | 1 px `#6B6685` on the available rect, and 1 px `#4A4660` 3 inside it, as Chibi's paper's inset rules (`GALAXY_MAP.rules`), over the sky and under the ground                                                                                                                                                                                                                                  |
 | Marker centres        | On one circular arc through route positions 1 (96, 122) and 6 (624, 122) whose top is (360, 46): radius `(264² + 76²) / 152` = 496.53 about (360, 542.53), the six centres at equal angles from -32.12° to 32.12° off vertical, 12.85° apart: 1 (96, 122), 2 (196.12, 73.82), 3 (304.45, 49.12), 4 (415.55, 49.12), 5 (523.88, 73.82), 6 (624, 122), left to right in route order (`centres`) |
 | Marker                | 36 frame: disc radius 12 with a 1.5 ink edge, the route number in `TYPE.label` ink centred on it, over an ink backing disc radius 15 at 0.85 (`marker`)                                                                                                                                                                                                                                       |
-| Current selected ring | 2 px cream `#EAD4AA` at radius 17 (band 16 to 18) on the marker whose panel shows, Earth's included (`marker.ring`). Pending button-state migration                                                                                                                                                                                                                                           |
+| Current selected ring | For the selected numbered marker, an active teal `#65C9BF` backing out to radius 16 under the unchanged radius-12 disc, leaving a 4 logical px band. Earth keeps its artwork and label selection cue                                                                                                                                                                                          |
 | Route line            | The arc itself between consecutive markers, each leg 111.34 of arc; stamped every 0.5; stops 15 from each centre (`path`)                                                                                                                                                                                                                                                                     |
 | Line looks            | By the leg's destination: open 4 px solid cream; locked 2 px `#B8B3C9` dashes, 6 on and 4 off                                                                                                                                                                                                                                                                                                 |
 | Label                 | Name in `TYPE.label` on an ink pill at 0.85: 20 high, label + 8 wide, radius 4, top at centre + 19 (`label`); the pill covers the 3 to 4 leg under it                                                                                                                                                                                                                                         |
@@ -1571,7 +1571,6 @@ Chart (`GALAXY_MAP`):
 | Ship heading          | Of the 32 headings, the one whose nose angle (`ship-nose.json`) is nearest the arc's tangent at the marker, toward the next galaxy; at galaxy 6, the incoming leg's at its end. Rest headings 24, 25, 27, 29, 31 and 0 for galaxies 1 to 6                                                                                                                                                    |
 | Earth marker          | A seventh marker centred at (360, 122), midway between markers 1 and 6, inside the arc: the galaxy marker's frame, backing, its disc blue `#65AEDD` with two green `#8AB86B` patches and no number; label "Earth" on the same pill, top at 141                                                                                                                                                |
 | Press area            | 48x48 centred on each marker (`HIT_RULE.minTarget`); galaxy centres are 111.1 apart and Earth's is 91.64 or more from each (markers 3 and 4), so press areas never overlap                                                                                                                                                                                                                    |
-| Current focus ring    | 44x44 centred on the marker (36 frame + `FOCUS_RING.outset` 4 a side). Pending button-state migration                                                                                                                                                                                                                                                                                         |
 
 At viewport widths of 720 CSS px or less or heights of 360 CSS px or less,
 named destination labels, including Earth, use a 22 logical px line height
@@ -1611,27 +1610,29 @@ the label pills of markers 1 and 6 and of Earth end at 161, the chart's lowest
 mark. Across the
 32 headings the ship's hull spans 11.8 above to 9.8 below its pivot at 42, so
 a resting hull ends 23.2 or more above its marker's centre, clear of the
-selected ring (radius 18) and the focus ring (22). Resting and in flight, the
+selected ring (radius 16). Resting and in flight, the
 hull keeps 23.5 from every label pill, 18.8 from every leg's stroke and 6.1
 from the play view's top. At markers 3 and 4 the resting hull starts at 10.3 and
 7.8 at 360-high views, over the rules at 16 and 19, which draw under it.
 
-Galaxy and Earth markers use native buttons. The state table records the
-current button visuals pending migration. Use a visible face or ink change
-for focus, press and selection per [Controls](controls.md#buttons). Keep the
-authored marker art, persistent edges, route and ship clearance.
+Galaxy and Earth markers use native buttons with accessible names. The label
+pill provides the [Controls](controls.md#buttons) cues for keyboard focus
+and press. In forced colors, keep the marker artwork and use the system
+selection, focus and press colors on the label pill.
 
-| Face     | Disc                  | Edge                                                    | Number      | Label            |
-| -------- | --------------------- | ------------------------------------------------------- | ----------- | ---------------- |
-| Selected | The galaxy's `marker` | 1.5 ink edge and the cream selected ring; ship above it | Ink         | Name, cream      |
-| Unlocked | The galaxy's `marker` | 1.5 ink edge                                            | Ink         | Name, cream      |
-| Locked   | Shared grey `#8B8B8B` | 1.5 ink edge                                            | Ink, 5.29:1 | "...", `#B8B3C9` |
-| Focused  | The face it has       | Plus the focus ring                                     | As the face | As the face      |
+| State    | Disc                        | Backing                                      | Number                  | Label                   |
+| -------- | --------------------------- | -------------------------------------------- | ----------------------- | ----------------------- |
+| Unlocked | The galaxy's `marker`       | Ink                                          | Ink                     | Name, cream on ink      |
+| Locked   | Shared grey `#8B8B8B`       | Ink                                          | Ink, 5.29:1             | "...", `#B8B3C9` on ink |
+| Selected | Its unlocked or locked face | Teal for numbered markers, ink for Earth     | Ink on numbered markers | Ink on cream            |
+| Focused  | The face it has             | Teal if selected and numbered, otherwise ink | As on the resting disc  | Ink on `#B8B3C9`        |
 
 A placeholder galaxy's marker is unlocked, in its galaxy's hue. Locked is
 greyscale with "..." for its name and dashes on its leg, so the state reads by
-its label and line as well as its colour. On the backing disc over the guarded
-sky every marker is 5.11:1 or more (the locked grey; the hues 9.97:1 or more).
+its label and line as well as its colour. Against the ink backing over the
+guarded sky, unselected numbered discs reach 5.11:1 or more (the locked grey;
+the hues 9.97:1 or more). The selected disc keeps its ink route number and
+its ink-to-face contrast. The teal band marks which destination the panel shows.
 On the sky the cream line is 9.29:1 or more and the `#B8B3C9` dashes 6.62:1 or
 more ([route sky](route-sky.md#guard)).
 
@@ -1651,20 +1652,19 @@ one size for every galaxy and state.
 
 Input and focus:
 
-- Right moves the ship to the next open galaxy in route order and Left to the
-  previous one, skipping locked galaxies, as Chibi's walk skips
-  unavailable zones; at either end nothing moves. The arrows (and the gamepad
-  d-pad) walk the route wherever focus is, and return the panel to the ship's
-  galaxy.
-- Tapping an open marker moves the ship there. Tapping a locked
-  marker shows its panel face while the ship stays on its open galaxy; the
-  action is then unavailable and refuses. Tapping Earth shows Earth's panel.
+- Right selects the next open galaxy in route order and Left selects the
+  previous one, skipping locked galaxies, as Chibi's walk skips unavailable
+  zones. At either end the ship stays. The arrows (and the gamepad d-pad)
+  work wherever focus is and return the panel to the ship's galaxy.
+- Tapping or focusing an open marker snaps the ring, panel and resting ship
+  to that galaxy together. Tapping or focusing a locked marker shows its ring
+  and panel immediately while the ship stays on its open galaxy. The action
+  is then unavailable and refuses. Tapping or focusing Earth shows Earth's
+  panel and selected label cue.
 - In the current selector, Tab focuses every galaxy marker in route order,
   then Earth, the destination action and the Close X when shown, and wraps.
-  Focus starts on the destination action. A
-  focused locked marker or Earth shows its panel as a tap does; a focused open
-  marker moves the ship there. Enter, Space and the gamepad's confirm activate
-  the focused control; on a marker they act as a tap.
+  Focus starts on the destination action. Enter, Space and the gamepad's confirm
+  activate the focused control; on a marker they act as a tap.
 - The destination action leaves galaxy selection: "Jump to {galaxy}" quantum
   jumps there, "Jump to Earth" jumps Ada home to her room, "Stay in {galaxy}"
   returns to the local map and "Stay on Earth" returns her to her room, both
@@ -1675,22 +1675,22 @@ Input and focus:
   focus target. Preserve the authored unlock and jump input guards. An input
   that finishes the unlock animation must not also dismiss the selector.
 
-Moves (`GALAXY_MAP_MOVE`):
+Selection and unlock (`GALAXY_MAP_MOVE` for the earned unlock):
 
 | Move           | Rule                                                                                                                                                                                                                                                                |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Selection      | The ship travels the legs between the two galaxies at 360 px/s, clamped to 0.3 to 0.9 s, easeInOutSine on arc length; the panel switches at the input; a new input retargets from the ship's position                                                               |
+| Selection      | Normal selection updates the ring and panel immediately. When the ship changes marker, it snaps to its resting pose on the same update in both motion settings                                                                                                      |
 | Unlock         | The first boarding after an unlock opens with the ship on the galaxy it flew from and every newly unlocked galaxy still locked, plays the steps below, then waits for the player's choice                                                                           |
 | 0 to 300 ms    | Every newly unlocked marker crossfades from its locked face to its hue (ease-out quad); the legs to them turn from dashes to the open line, drawn along the route from the ship's marker                                                                            |
 | 0 to 400 ms    | A 2 px ring in the farthest new marker's hue grows from radius 13 to 26, alpha 0.8 to 0                                                                                                                                                                             |
 | 400 ms         | The ship departs on its heading frame, selected each frame from the path tangent; it flies the legs to the farthest newly unlocked galaxy as one path at clamp(length / 180 px/s, 0.8, 2.0) s, easeInOutSine on arc length, so the whole unlock takes at most 2.4 s |
 | Timeline       | Sunflower to Whirlpool, one 111.34 leg: 800 ms of flight (the 0.8 s floor), arrival at 1200 ms. Whirlpool to Cartwheel, 334.02 over three legs: 1856 ms of flight, arrival at 2256 ms                                                                               |
-| Arrival        | The idle frame. The current selected ring fades in over 120 ms pending button-state migration. The panel crossfades to the new galaxy over 160 ms and focus moves to the action                                                                                     |
+| Arrival        | The ship rests at the new galaxy and its selection ring appears immediately. The panel crossfades to the new galaxy over 160 ms and focus moves to the action                                                                                                       |
 | Skip           | A tap, key or button press during the unlock jumps to the arrived state                                                                                                                                                                                             |
-| Reduced motion | No travel or pulse. Selection moves cut. The unlock fades the ship out over 150 ms, switches the markers and legs at 150 ms, then fades the ship in at the new galaxy over 150 ms: 300 ms in all                                                                    |
+| Reduced motion | The unlock fades the ship out over 150 ms, switches the markers and legs at 150 ms, then fades the ship in at the new galaxy over 150 ms: 300 ms in all. The ship stays off the flight path and the pulse is omitted                                                |
 
-The ship's path is the route curve offset by the ship pivot (0, -25), so it
-leaves and lands standing above the markers.
+The unlock flight follows the route curve at the ship's chart offset, so
+the ship leaves and lands above the markers.
 
 ## Changes from current values
 
