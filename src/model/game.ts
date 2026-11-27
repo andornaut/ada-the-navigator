@@ -3230,22 +3230,16 @@ export class GameModel {
     const station = this.keeperStationName(galaxy, id);
     const name = stationKeeperPersonalName(galaxy, id);
     const displayName = id === HUB_STATION ? name : `${name} of ${station}`;
-    const format = (text: string) =>
-      text.replaceAll("{station}", station).replaceAll("{keeper}", displayName);
     const lines =
       id === HUB_STATION
         ? greetingLines(keeper.greetings, docked)
         : docked === 0
           ? [
-              format(STATION_KEEPER_COPY.intro),
-              format(STATION_KEEPER_COPY.flavor[galaxy]),
-              format(STATION_KEEPER_COPY.services[specialty ?? "exchange"]),
+              STATION_KEEPER_COPY.intro,
+              STATION_KEEPER_COPY.flavor[galaxy],
+              STATION_KEEPER_COPY.services[specialty ?? "exchange"],
             ]
-          : [
-              format(
-                STATION_KEEPER_COPY.returning[(docked - 1) % STATION_KEEPER_COPY.returning.length]!,
-              ),
-            ];
+          : [STATION_KEEPER_COPY.returning[(docked - 1) % STATION_KEEPER_COPY.returning.length]!];
     this.greeting = { displayName, index: 0, keeper: keeper.key, lines };
   }
   /** The docked station keeper's line on show; null where the generic welcome shows. */

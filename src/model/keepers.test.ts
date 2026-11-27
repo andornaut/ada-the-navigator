@@ -202,10 +202,8 @@ describe("a keeper's greeting at the station card", () => {
     )!;
     const lines = dockAndRead(model);
     expect(lines).toHaveLength(3);
-    expect(lines[0]).toMatch(
-      /^Welcome to Sunflower .+ Station\. I'm (Pollen|Petal|Amber) (Goldwing|Bloom|Honeycomb) of /,
-    );
-    expect(lines[1]).toMatch(/ keeps humming\.$/);
+    expect(lines[0]).toBe("Welcome aboard.");
+    expect(lines[1]).toBe("We keep things humming around here.");
     expect(lines[2]).toMatch(/(equipment for your ship|weapons and ammo|work on the board)/);
     expect(model.stationGreeting).toEqual({
       count: 3,
@@ -231,7 +229,9 @@ describe("a keeper's greeting at the station card", () => {
     const compact = model.dockGreeting()!;
     expect(compact.displayName).toMatch(/^(Pollen|Petal|Amber) (Goldwing|Bloom|Honeycomb)$/);
     expect(full.displayName).toBe(`${compact.displayName} of ${model.dockedStationName}`);
-    expect(full.line).toContain(full.displayName);
+    expect(full.line).toBe("Welcome aboard.");
+    expect(model.dockWelcome()?.displayName).toBe(compact.displayName);
+    expect(model.dockWelcome()?.line).not.toContain(model.dockedStationName);
     expect(compact).toEqual({ ...full, displayName: compact.displayName });
     expect(model.state.docked).toBe(station.id);
     expect(model.saveDocument()).toEqual(saved);
@@ -334,18 +334,16 @@ describe("a keeper's greeting at the station card", () => {
   it("greets later dockings with one line each, the three in turn", () => {
     const { model, station } = beside();
     dockAndRead(model);
-    const keeperName = model.stationGreeting!.displayName;
-    const stationName = model.dockedStationName;
     const later: string[][] = [];
     for (let docking = 0; docking < 4; docking++) {
       model.undock();
       later.push(dockAndRead(model));
     }
     expect(later).toEqual([
-      [`Welcome back to ${stationName}, Navigator.`],
-      [`${keeperName} here. You can trade ore and Stardust here.`],
-      [`Back at ${stationName}! What do you need today?`],
-      [`Welcome back to ${stationName}, Navigator.`],
+      ["Welcome back, Navigator."],
+      ["Good to see you again."],
+      ["Back already? What do you need today?"],
+      ["Welcome back, Navigator."],
     ]);
     expect(model.state.progress[1].greetings[station.id]).toBe(5);
   });
@@ -353,13 +351,12 @@ describe("a keeper's greeting at the station card", () => {
   it("saves the greetings per station across a relaunch, and Restart clears them", () => {
     const { model, station } = beside();
     dockAndRead(model);
-    const stationName = model.dockedStationName;
     model.undock();
     const reloaded = relaunch(CONTENT, model.save());
     expect(reloaded.state.progress[1].greetings).toEqual({ [station.id]: 1 });
     reloaded.state.flight!.player = { x: station.x, y: station.y };
     reloaded.state.dialogue = null;
-    expect(dockAndRead(reloaded)).toEqual([`Welcome back to ${stationName}, Navigator.`]);
+    expect(dockAndRead(reloaded)).toEqual(["Welcome back, Navigator."]);
     reloaded.undock();
     reloaded.backToTitle();
     reloaded.restart();
