@@ -48,11 +48,7 @@ import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
-import {
-  BEAM,
-  weaponAt,
-  type WeaponDefinition,
-} from "../data/weaponCatalog.ts";
+import { BEAM, weaponAt, type WeaponDefinition } from "../data/weaponCatalog.ts";
 import { minerNeedsPick, outlineEdge, type TracedEdge } from "./ai/edgeTrace.ts";
 import type { StationGuardAnchor } from "./ai/stationGuardPatrol.ts";
 import { worldNavigationQuery } from "./ai/worldNavigation.ts";
@@ -157,7 +153,11 @@ import {
   movePilot,
   reflectPilotHeading,
 } from "./flight/pilotMovement.ts";
-import { projectileContact, projectileSceneryContact, shotRadius } from "./flight/projectileContact.ts";
+import {
+  projectileContact,
+  projectileSceneryContact,
+  shotRadius,
+} from "./flight/projectileContact.ts";
 import { resolveScenery, type SceneryContactOf } from "./flight/sceneryResolution.ts";
 import { bounceShipContact } from "./flight/shipContact.ts";
 import {
