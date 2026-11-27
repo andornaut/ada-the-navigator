@@ -25,7 +25,6 @@ import {
   STORY_PORTRAITS,
   STORY_TAB_COLOURS,
   STORYBOOK_STYLE,
-  storyChoicePreviousInHud,
   storyControlsLayout,
   storyPageView,
   storyPortrait,
@@ -99,7 +98,7 @@ describe("storybook page", () => {
       text: "",
     };
     expect(storyPageView(page, page.questions, false, true)).toMatchObject({
-      canSkip: true,
+      canSkip: false,
       next: false,
     });
     expect(storyPageView(page, [], true, true)).toMatchObject({ canSkip: true, next: true });
@@ -408,23 +407,19 @@ it("grows the half spread past the lower half up to the light spread's top cap",
   expect(panel).toBeLessThanOrEqual(360 - (12 + STORY_PANEL_TOP) - SPACING.pageInset);
 });
 
-it("keeps overflowing chapter choices visible without occupying Skip or displacing Next", () => {
+it("keeps Previous in the bottom row and centers linear page controls", () => {
   const page = openingScene(CONTENT, 1, true).pages.find(({ id }) => id === "opening")!;
   const view = storyPageView(page, page.choices!, true, false);
   expect(view.choices?.[1]?.label).toBe("I'd like to meet the organizer.");
-  expect(storyChoicePreviousInHud(true, view)).toBe(true);
-  expect(storyChoicePreviousInHud(false, view)).toBe(false);
-  expect(storyChoicePreviousInHud(true, { ...view, canSkip: true })).toBe(false);
-  expect(storyChoicePreviousInHud(true, { ...view, next: true })).toBe(false);
-  expect(storyChoicePreviousInHud(true, { ...view, canGoBack: false })).toBe(false);
-  expect(storyChoicePreviousInHud(true, { ...view, choices: [] })).toBe(false);
-  expect(rule(".ada-controls .ada-story .ada-button.ada-story-choice-previous")).toContain(
-    "position:absolute",
-  );
+  expect(view).toMatchObject({ canGoBack: true, canSkip: false, next: false });
+  const linear = rule(".ada-controls .ada-story-controls.ada-story-linear");
+  expect(linear).toContain("justify-content:center");
+  expect(linear).toContain(`gap:${units(STORY_CHOICE_GAP)}`);
+  expect(STORY_CHOICE_GAP).toBe(16);
 });
 
 it.each([true, false])(
-  "preserves refit focus for HUD Previous without stealing unrelated focus: %s",
+  "preserves refit focus for Previous without stealing unrelated focus: %s",
   (focusPrevious) => {
     class FocusNode {
       hidden = false;

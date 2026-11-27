@@ -288,14 +288,14 @@ describe("story runs", () => {
     expect(model.state.unlocked).toEqual([1, 3]);
   });
 
-  it("keeps Skip on the room's named action and follows it to boarding's destination", () => {
+  it("hides Skip on the named room action and retains the boarding destination", () => {
     const model = questDone(1);
     model.returnHome();
     expect(model.storyView?.canGoBack).toBe(false);
     readTo(model, "room");
     expect(model.storyView).toMatchObject({
       canGoBack: true,
-      canSkip: true,
+      canSkip: false,
       page: { action: "Pick up the rock." },
     });
     model.storySkip();
@@ -372,27 +372,39 @@ describe("story runs", () => {
     return pages;
   }
 
-  it("shows Skip on every Next page, including the last page before galaxy selection", () => {
+  it("shows Skip only across adjacent linear Next pages", () => {
     const model = started();
+    const showsNext = (view: typeof model.storyView) =>
+      Boolean(view && !view.page.sleep && !view.page.action && !view.choices.length);
+    const states = new Set<string>();
     for (let turns = 0; model.storyView && turns < 80; turns++) {
       const view = model.storyView;
       if (view.page.choices?.length) {
         expect(view.canSkip).toBe(false);
+        expect(view.canGoBack).toBe(true);
+        states.add("fork");
         model.storyChoose(0);
       } else {
-        expect(view.canSkip).toBe(true);
         model.storyNext();
+        const successor = model.storyView;
+        const expected = showsNext(view) && showsNext(successor);
+        expect(view.canSkip, view.page.id).toBe(expected);
+        if (expected && view.canGoBack) {states.add("middle");}
+        if (expected && !view.canGoBack) {states.add("first");}
+        if (successor?.page.choices?.length) {states.add("before-fork");}
+        if (!successor) {states.add("final");}
       }
     }
     expect(model.screen).toBe("selector");
+    expect(states).toEqual(new Set(["first", "middle", "before-fork", "fork", "final"]));
   });
 
-  it("shows Skip on the room and the preceding Next page", () => {
+  it("hides Skip on the room and the preceding Next page", () => {
     const model = questDone(1);
     model.returnHome();
     const pages = skipShown(model);
     expect(pages.at(-1)?.id).toBe("room");
-    expect(pages.slice(-2).map(({ skip }) => skip)).toEqual([true, true]);
+    expect(pages.slice(-2).map(({ skip }) => skip)).toEqual([false, false]);
     expect(pages.length).toBeGreaterThan(2);
   });
 
@@ -427,7 +439,7 @@ describe("story runs", () => {
     const reloaded = relaunch(CONTENT, model.save());
     reloaded.continueGame();
     expect(reloaded.roomPage).toBe(true);
-    expect(reloaded.storyView).toMatchObject({ canGoBack: false, canSkip: true });
+    expect(reloaded.storyView).toMatchObject({ canGoBack: false, canSkip: false });
     reloaded.storySkip();
     expect(reloaded.screen).toBe("selector");
     reloaded.closeGalaxyMap();

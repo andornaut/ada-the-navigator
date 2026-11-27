@@ -92,7 +92,7 @@ describe("optional Earth chapter replay", () => {
     expect(
       storyPageView(replay.page, replay.choices, replay.canGoBack, replay.canSkip),
     ).toMatchObject({
-      canSkip: true,
+      canSkip: false,
       next: false,
     });
     expect(model.state.progress[3].opened).toBe(false);

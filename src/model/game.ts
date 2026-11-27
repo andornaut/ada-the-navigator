@@ -362,6 +362,7 @@ import {
   type Scene,
   sceneEnd,
   shownChoices,
+  showsStoryNext,
   stepOf,
   stepPage,
   type StoryChoice,
@@ -1536,7 +1537,7 @@ export class GameModel {
     }
     return {
       canGoBack: canGoBack(position),
-      canSkip: page.replay === true || (!page.sleep && !page.choices?.length),
+      canSkip: this.storyCanSkip(position, page),
       choices:
         this.roomPage && this.replayChapters.length > 0
           ? [{ label: this.label("replayChapter") }]
@@ -1544,6 +1545,24 @@ export class GameModel {
       page,
       run: this.run,
     };
+  }
+  private storyCanSkip(position: StoryPosition, page: StoryPage): boolean {
+    if (!showsStoryNext(page)) {
+      return false;
+    }
+    const { scene } = position;
+    if (page.next !== undefined) {
+      const next = scene.pages.find(({ id }) => id === page.next);
+      const following =
+        next?.sleep && this.playedInterludes.has(scene)
+          ? scene.pages.find(({ id }) => id === next.next)
+          : next;
+      return following !== undefined && showsStoryNext(following);
+    }
+    // The run preview is built through the same scene transitions as Next.
+    const index = this.runScenes.findIndex(({ id }) => id === scene.id);
+    const following = index < 0 ? undefined : this.runScenes[index + 1]?.pages[0];
+    return following !== undefined && showsStoryNext(following);
   }
   /** Ada's room page, where Back opens Menu unless chapter selection is open. */
   get roomPage(): boolean {

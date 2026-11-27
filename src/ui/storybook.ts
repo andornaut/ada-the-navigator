@@ -125,7 +125,7 @@ export function storyPageView(
   return {
     background: page.background,
     canGoBack,
-    canSkip: canSkip && (page.replay === true || !page.choices?.length),
+    canSkip: canSkip && !page.sleep && !page.action && choices.length === 0,
     ...(page.heading ? { heading: page.heading } : {}),
     text: page.text,
     ...(page.speaker ? { speaker: page.speaker } : {}),
@@ -585,6 +585,12 @@ ${STORY_PORTRAIT_RULES}
   grid-template-columns:minmax(0,1fr);
   grid-template-areas:"previous"
 }
+.ada-controls .ada-story-controls.ada-story-linear{
+  display:flex;
+  justify-content:center;
+  gap:${units(STORY_CHOICE_GAP)}
+}
+
 .ada-controls .ada-story-panel[data-topic-page] :is(.ada-story-choice-column,.ada-story-choices){
   row-gap:${units(SPACING.gap)}
 }
@@ -659,23 +665,9 @@ ${PRESSED_STORY_BUTTON}{
 .ada-controls .ada-story-half > .ada-story-skip{
   right:var(${HALF_ACTION_RIGHT})
 }
-.ada-controls .ada-story .ada-button.ada-story-choice-previous{
-  position:absolute;
-  top:${fromHudEdge("top", STORY_SKIP.top)};
-  right:${fromHudEdge("right", STORY_SKIP.right.besideSettings)}
-}
-.ada-controls.ada-no-settings-button .ada-story .ada-story-choice-previous{
-  right:${fromHudEdge("right", STORY_SKIP.right.corner)}
-}
+
 
 `;
-
-/** Choice pages can reuse Skip's free HUD slot when page navigation would conceal choices. */
-export function storyChoicePreviousInHud(overflows: boolean, page: StoryPageView): boolean {
-  return (
-    overflows && Boolean(page.choices?.length) && page.canGoBack && !page.next && !page.canSkip
-  );
-}
 
 /** How a page's Previous and primary share the choice column's bottom. */
 export type StoryControlsLayout = "below" | "beside" | "halves";
@@ -981,16 +973,17 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     controls.hidden = !page.canGoBack && !page.next;
     controls.classList.toggle("ada-story-no-previous", !page.canGoBack);
     controls.classList.toggle("ada-story-no-next", !page.next);
+    const linear = page.next && !page.action;
+    controls.classList.toggle("ada-story-linear", linear);
     next.hidden = !page.next;
     nextAction.setLabel(page.action ?? labels.next);
     // A named action too wide for its half sits beside Previous when both fit at their own widths,
     // else on the column's full row below it. Each face is measured at its label's width; the
     // press area's pseudo-element overflows the face, so the face's own box is measured.
     controls.classList.remove("ada-story-beside", "ada-story-wide");
-    previous.classList.remove("ada-story-choice-previous");
     controls.replaceChildren(previous, next);
     let layout: StoryControlsLayout = "halves";
-    if (page.canGoBack && page.next && !page.topicList) {
+    if (page.canGoBack && page.next && !linear && !page.topicList) {
       const unit = readViewUnit(controls);
       previous.style.maxWidth = "none";
       next.style.maxWidth = "none";
@@ -1013,16 +1006,7 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       return box.y + box.height;
     };
     const overflows = bottom(controls) > bottom(column) + 0.5;
-    const previousInHud = storyChoicePreviousInHud(overflows, page);
-    if (previousInHud) {
-      layer.append(previous);
-      previous.classList.add("ada-story-choice-previous");
-      controls.hidden = true;
-    }
-    choices.classList.toggle(
-      "ada-story-scrolls",
-      previousInHud ? choices.scrollHeight > column.clientHeight + 1 : overflows,
-    );
+    choices.classList.toggle("ada-story-scrolls", overflows);
     // Only the text column scrolls, focusable while it does, past the panel's top cap.
     copy.classList.remove("ada-story-scrolls");
     const scrolls = copy.scrollHeight > copy.clientHeight + 1;

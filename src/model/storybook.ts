@@ -98,6 +98,11 @@ export function currentPage(position: StoryPosition): StoryPage {
   return lookup(position.scene, position.page);
 }
 
+/** Whether the page offers the ordinary Next button rather than an authored action. */
+export function showsStoryNext(page: StoryPage): boolean {
+  return !page.sleep && !page.action && !page.choices?.length && !page.questions?.length;
+}
+
 /** The page's choices, including completed optional threads. */
 export function shownChoices(position: StoryPosition): readonly StoryChoice[] {
   const page = currentPage(position);

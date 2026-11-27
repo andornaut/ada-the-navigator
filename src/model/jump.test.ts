@@ -342,13 +342,17 @@ describe("quantum jump home", () => {
     const model = launched();
     seenHome(model);
     deplete(model);
-    expect(model.storyView).toMatchObject({ canGoBack: false, canSkip: true });
+    expect(model.storyView).toMatchObject({ canGoBack: false, canSkip: false });
     model.storyNext();
     expect(model.storyView).toMatchObject({ canSkip: false, page: { sleep: true } });
     model.storyTick(OVERNIGHT_SLEEP.seconds, OVERNIGHT_SLEEP.seconds);
-    expect(model.storyView).toMatchObject({ canSkip: true, page: { id: "morning" } });
+    expect(model.storyView).toMatchObject({ canSkip: false, page: { id: "morning" } });
     model.storyNext();
-    expect(model.storyView).toMatchObject({ canGoBack: true, canSkip: true, page: { id: "room" } });
+    expect(model.storyView).toMatchObject({
+      canGoBack: true,
+      canSkip: false,
+      page: { id: "room" },
+    });
     model.storyPrevious();
     expect(model.storyView?.page.id).toBe("morning");
     model.storySkip();
