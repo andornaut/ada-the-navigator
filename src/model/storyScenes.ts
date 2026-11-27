@@ -1,4 +1,4 @@
-import { GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { BUILT, GALAXY_NUMBERS, ROUTE } from "../data/galaxies.ts";
 import { holodiskInsertion } from "../data/premiseCopy.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import {
@@ -9,9 +9,12 @@ import {
   prologueScene,
   replayChapterScene,
   resolutionScene,
+  roomBackground,
   roomScene,
   type Scene,
+  stepPage,
   type StoryLabels,
+  type StoryStep,
 } from "./storybook.ts";
 import { isStoryRoomBackground, type StorySceneReference } from "./storyCursor.ts";
 import type { GameState } from "./types.ts";
@@ -22,6 +25,36 @@ export function canReplayEarthChapter(
   galaxy: GalaxyNumber,
 ): boolean {
   return state.prologueSeen && Boolean(content.chapters[galaxy]) && state.progress[galaxy].resolved;
+}
+
+/** The first built Earth scene waiting in route order, with resolutions before openings. */
+export function waitingEarthScene(
+  content: GameContent,
+  state: Readonly<Pick<GameState, "progress" | "prologueSeen" | "unlocked">>,
+): Scene | null {
+  const galaxies = ROUTE.filter((id) => BUILT.has(id));
+  const resolution = galaxies.find((id) => {
+    const progress = state.progress[id];
+    return progress.questComplete && !progress.resolved;
+  });
+  if (resolution !== undefined) {
+    return resolutionScene(content, resolution);
+  }
+  const opening = galaxies.find((id) => state.unlocked.includes(id) && !state.progress[id].opened);
+  return opening === undefined ? null : openingScene(content, opening, !state.prologueSeen);
+}
+
+/** After Earth scenes, show the prologue once and Ada's room on subsequent visits. */
+export function visitRoomScene(
+  content: GameContent,
+  labels: StoryLabels,
+  prologueSeen: boolean,
+  trail: readonly StoryStep[],
+  empty: boolean,
+): Scene {
+  return prologueSeen
+    ? roomScene(content, labels, empty, roomBackground(trail.map(stepPage)))
+    : prologueScene(content, labels);
 }
 
 export interface StorySceneContext {

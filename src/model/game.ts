@@ -350,12 +350,8 @@ import {
   goBack,
   holodiskScene,
   jumpHomeScene,
-  openingScene,
-  prologueScene,
   replayChapterScene,
-  resolutionScene,
   roomBackground,
-  roomScene,
   runTrail,
   type Scene,
   sceneEnd,
@@ -371,7 +367,12 @@ import {
   type StoryStep,
 } from "./storybook.ts";
 import { readStoryCursor, type StorySceneReference } from "./storyCursor.ts";
-import { canReplayEarthChapter, resolveStoryScene } from "./storyScenes.ts";
+import {
+  canReplayEarthChapter,
+  resolveStoryScene,
+  visitRoomScene,
+  waitingEarthScene,
+} from "./storyScenes.ts";
 import {
   resolveTargetObject,
   type TargetContribution,
@@ -6143,28 +6144,6 @@ export class GameModel {
       this.beginVisit();
     }
   }
-  /** The first home scene waiting on story progress: a resolution, then an opening. */
-  private waitingScene(): Scene | null {
-    // Only built galaxies have Earth scenes, in route order.
-    const galaxies = ROUTE.filter((id) => BUILT.has(id));
-    const resolution = galaxies.find(
-      (id) => this.state.progress[id].questComplete && !this.state.progress[id].resolved,
-    );
-    if (resolution !== undefined) {
-      return resolutionScene(this.content, resolution);
-    }
-    const opening = galaxies.find((id) => this.isUnlocked(id) && !this.state.progress[id].opened);
-    // Before the prologue is seen, chapter one's opening is the first launch's.
-    return opening === undefined
-      ? null
-      : openingScene(this.content, opening, !this.state.prologueSeen);
-  }
-  /** After Earth scenes: the prologue the first time, else Ada's room with the rock. */
-  private roomScene(trail: readonly StoryStep[], empty: boolean): Scene {
-    return this.state.prologueSeen
-      ? roomScene(this.content, this.storyLabels, empty, roomBackground(trail.map(stepPage)))
-      : prologueScene(this.content, this.storyLabels);
-  }
   private get storyLabels(): StoryLabels {
     return { next: this.label("next"), pickUpRock: this.label("pickUpRock") };
   }
@@ -6175,8 +6154,12 @@ export class GameModel {
    */
   private beginVisit(trail: readonly StoryStep[] = [], startsRun = trail.length === 0): void {
     this.closeSelection();
-    const waiting = this.waitingScene();
-    this.showScene(waiting ?? this.roomScene(trail, true), trail, startsRun);
+    this.showScene(
+      waitingEarthScene(this.content, this.state) ??
+        visitRoomScene(this.content, this.storyLabels, this.state.prologueSeen, trail, true),
+      trail,
+      startsRun,
+    );
   }
   /**
    * A scene's first page; `trail` carries the story run's earlier pages. A run starts with an
@@ -6292,7 +6275,12 @@ export class GameModel {
     const startsRun = Boolean(ended.endsRun) && !this.depletionContinuation;
     this.applyEffect(ended);
     if (ended.lead === "home") {
-      this.showScene(this.waitingScene() ?? this.roomScene(trail, false), trail, startsRun);
+      this.showScene(
+        waitingEarthScene(this.content, this.state) ??
+          visitRoomScene(this.content, this.storyLabels, this.state.prologueSeen, trail, false),
+        trail,
+        startsRun,
+      );
     } else if (ended.lead === "visit") {
       this.beginVisit(trail, startsRun);
     } else if (ended.lead === "board") {
