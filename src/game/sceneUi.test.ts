@@ -339,6 +339,10 @@ describe("conversation exposure under covering cards", () => {
       reducedMotion: false,
       savingUnavailable: true,
       settingsOpen: kind === "settings",
+      ship: {
+        getBounds: vi.fn(() => ({ height: 34, width: 36, x: 342, y: 163 })),
+        visible: true,
+      },
     };
     const pennyLayers = new WeakMap([[scene, { place }]]);
     const hud = { height: 30, width: 100, x: 0, y: 0 };
@@ -444,6 +448,18 @@ describe("conversation exposure under covering cards", () => {
     expect(ui.place.mock.lastCall?.at(-1)).toEqual([ui.marker]);
     expect(ui.footprints).toHaveBeenCalledOnce();
     expect(ui.place.mock.lastCall?.[2].blocked).toEqual([ui.hud]);
+  });
+
+  it("includes Ada's visible bounds when placing an in-world tracked marker", () => {
+    const ui = covered("settings", false);
+    ui.scene.settingsOpen = false;
+    ui.markers.mockReturnValue([{ ...ui.marker, onScreen: true, trackedLabel: "Ring 1" }]);
+    ui.update();
+    expect(ui.scene.ship.getBounds).toHaveBeenCalledOnce();
+    expect(ui.place.mock.lastCall?.[2].blocked).toEqual([
+      ui.hud,
+      ui.scene.ship.getBounds.mock.results[0]?.value,
+    ]);
   });
 
   it("retains already painted chatter and markers under UI without advancing knowledge", () => {

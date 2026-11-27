@@ -1393,13 +1393,18 @@ export function renderConversation(scene: UiContext): void {
   const markers = paint.markers(flight, scene.settingsOpen, !sceneCovered && !emergency, () =>
     scene.model.targetMarkers(area, scene.litCaches),
   );
+  // Measure HUD ink only for markers to place. A tracked marker above a nearby target also
+  // clears Ada's ship, which may be directly under the target.
+  const blocked =
+    markers.length > 0 ? markerFootprints(document, document.getElementById(VIEW_HOST_ID)) : [];
+  if (markers.some((marker) => marker.onScreen) && scene.ship.visible) {
+    blocked.push(scene.ship.getBounds());
+  }
   penny.place(
     flight?.player ?? { x: 0, y: 0 },
     area,
     {
-      // The HUD footprints, a DOM measurement, matter only for markers to place.
-      blocked:
-        markers.length > 0 ? markerFootprints(document, document.getElementById(VIEW_HOST_ID)) : [],
+      blocked,
       color: `#${scene.palette.pointOfInterest.toString(16).padStart(6, "0")}`,
       light: scene.light,
       reducedMotion: scene.reducedMotion,
