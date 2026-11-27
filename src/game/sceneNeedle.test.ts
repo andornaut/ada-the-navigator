@@ -16,6 +16,7 @@ import {
 import type { SpaceObject } from "../model/types.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
+import { COLOURS, UNLISTED_COLOURS } from "../ui/layout/colours.ts";
 import {
   createNeedleRenderer,
   type NeedleImage,
@@ -51,17 +52,18 @@ describe("production Needle frame", () => {
     const f = flight();
     f.needle = { anchor: { x: 0, y: 0 }, chatter: [], exitPackPlaced: false };
     f.time = 1.25;
-    f.velocity = { x: 39, y: 0 };
+    f.velocity = { x: 49, y: 0 };
     let frame = needleRenderFrame(context, f)!;
     expect(frame.courses.map((course) => course.kind)).toEqual(["practice", "eye"]);
     expect(frame.courses.map(frame.lit)).toEqual([3, 2]);
     expect(frame.timeMs).toBe(1250);
     expect(frame.playerDepth).toBe(context.playerDepth);
-    expect(frame.slow).toBe(true);
-    f.velocity.x = 40;
+    expect(frame.activeCourse).toBe("eye");
+    expect(frame.readiness).toBe("green");
+    f.velocity.x = 50;
     setNeedleActivity(f, true);
     frame = needleRenderFrame(context, f)!;
-    expect(frame.slow).toBe(false);
+    expect(frame.readiness).toBe("yellow");
     expect(frame.courses.map((course) => course.kind)).toEqual(["practice", "eye", "activity"]);
     expect(frame.courses.map(frame.lit)).toEqual([3, 2, 4]);
     expect(frame.timeMs).toBe(1250);
@@ -119,6 +121,7 @@ class Image implements NeedleImage {
   height = 0;
   origin = { x: 0, y: 0 };
   texture = "";
+  tint = 0xffffff;
   width = 0;
   x = 0;
   y = 0;
@@ -149,6 +152,10 @@ class Image implements NeedleImage {
   }
   setTexture(texture: string) {
     this.texture = texture;
+    return this;
+  }
+  setTint(tint: number) {
+    this.tint = tint;
     return this;
   }
 }
@@ -182,14 +189,15 @@ function fixture() {
     viewport: { height: 360, width: 720 },
   };
   const frame: NeedleRenderFrame = {
+    activeCourse: "practice",
     courses: [course],
     debris: [],
     lit: () => 0,
     player: first,
     playerDepth: 2.002,
+    readiness: "red",
     reducedMotion: false,
     seed: 123,
-    slow: false,
     timeMs: 0,
   };
   return {
@@ -225,43 +233,38 @@ describe("Needle renderer lifecycle and published gate art", () => {
     expect(f.lines.length).toBeGreaterThan(0);
   });
 
-  it("fades the lit pair over opaque dark support using frozen flight time and retains lit gates at high speed", () => {
+  it("draws the first visible signal immediately and changes it without advancing flight time", () => {
     const f = fixture();
-    f.renderer.draw(f.frame);
-    const lit = { ...f.frame, lit: () => 1 };
-    f.renderer.draw(lit);
-    f.renderer.draw({ ...lit, timeMs: 120 });
-    const front = () =>
-      f.images.findLast(
-        (i) =>
-          !i.destroyed && i.x === 360 && i.texture.includes("lit") && i.texture.endsWith("front"),
-      )!;
-    expect(front().alpha).toBeCloseTo(0.875);
-    expect(
-      f.images.find((i) => !i.destroyed && i.x === 360 && i.texture.includes("dark"))!.alpha,
-    ).toBe(1);
-    f.renderer.draw({ ...lit, timeMs: 120 });
-    expect(front().alpha).toBeCloseTo(0.875);
-    f.renderer.draw({ ...lit, slow: false, timeMs: 500 });
-    expect(front().alpha).toBe(1);
+    for (const [readiness, colour] of [
+      ["red", COLOURS.refusalRed],
+      ["yellow", UNLISTED_COLOURS.mapWorkshop],
+      ["green", COLOURS.momTab],
+    ] as const) {
+      f.renderer.draw({ ...f.frame, readiness });
+      const gate = f.images.filter((i) => !i.destroyed && i.x === 360 && i.y === 180);
+      expect(gate).toHaveLength(2);
+      for (const layer of gate) {
+        expect(layer.texture).toContain("lit");
+        expect(layer.alpha).toBe(1);
+        expect(layer.tint).toBe(Number.parseInt(colour.slice(1), 16));
+      }
+    }
   });
 
-  it("shows the slow-enough glow without changing progress and cuts under reduced motion", () => {
+  it("keeps cleared and inactive gates distinct and untinted, including in reduced motion", () => {
     const f = fixture();
-    f.renderer.draw(f.frame);
-    f.renderer.draw({ ...f.frame, reducedMotion: true, slow: true, timeMs: 1 });
-    expect(f.images.some((i) => !i.destroyed && i.texture.includes("lit") && i.alpha === 1)).toBe(
-      true,
-    );
-    expect(f.frame.lit(f.course)).toBe(0);
-    f.renderer.draw({ ...f.frame, reducedMotion: false, slow: true, timeMs: 2 });
-    expect(
-      f.images.filter((i) => !i.destroyed && i.texture.includes("lit")).every((i) => i.alpha === 1),
-    ).toBe(true);
-    f.renderer.draw({ ...f.frame, reducedMotion: true, slow: false, timeMs: 3 });
-    expect(f.images.filter((i) => !i.destroyed).every((i) => i.texture.includes("dark"))).toBe(
-      true,
-    );
+    f.renderer.draw({ ...f.frame, readiness: "green", reducedMotion: true });
+    f.renderer.draw({ ...f.frame, lit: () => 1, reducedMotion: true });
+    const atFirst = () => f.images.filter((i) => !i.destroyed && i.x === 360 && i.y === 180);
+    expect(atFirst().map((i) => [i.texture.includes("lit"), i.tint, i.alpha])).toEqual([
+      [true, 0xffffff, 1],
+      [true, 0xffffff, 1],
+    ]);
+    f.renderer.draw({ ...f.frame, activeCourse: "eye", readiness: "green", reducedMotion: true });
+    expect(atFirst().map((i) => [i.texture.includes("dark"), i.tint, i.alpha])).toEqual([
+      [true, 0xffffff, 1],
+      [true, 0xffffff, 1],
+    ]);
   });
 
   it("reuses visible sprites and destroys stale ones on culling, hidden courses, clear and disposal", () => {

@@ -13,7 +13,7 @@ export const NEEDLE = {
   eyeGates: 8,
   /** Keep the two courses separate and their entries away from the teaching station. */
   eyeOffset: { x: 2000, y: -2000 },
-  fastFraction: 0.6,
+  fastFraction: 0.75,
   gate: GATES,
   insideDebrisEvery: 10,
   insideDebrisOffset: 5,
@@ -22,6 +22,6 @@ export const NEEDLE = {
   practiceGates: 3,
   practiceOffset: { x: 500, y: 500 },
   practiceWidth: 210,
-  speedFraction: 0.4,
+  speedFraction: 0.5,
 } as const;
 export const NEEDLE_PLACES = ["elderLoom", "needlePractice", "needleEye", "holodisk"] as const;

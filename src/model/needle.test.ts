@@ -146,7 +146,7 @@ describe("Needle course geometry", () => {
   });
 });
 describe("Needle actual centre crossings", () => {
-  it.each([0, 79.999])("lights below 40 percent at speed %s", (speed) => {
+  it.each([0, 99.999])("lights below 50 percent at speed %s", (speed) => {
     const eye = course();
     expect(stepNeedleCourse(pass(eye.gates[0]!, speed), eye, 0)).toEqual({
       guidanceGate: 0,
@@ -155,7 +155,7 @@ describe("Needle actual centre crossings", () => {
       passed: [0],
     });
   });
-  it.each([80, 200])(
+  it.each([100, 150, 200])(
     "rejects speed %s including the exact threshold without resetting lit gates",
     (speed) => {
       const eye = course();
@@ -201,8 +201,8 @@ describe("Needle actual centre crossings", () => {
     expect(stepNeedleCourse(pass(eye.gates[7]!, 20), eye, lit).passed).toEqual([]);
   });
   it("uses actual resultant velocity including diagonal movement and the current engine top speed", () => {
-    expect(needleSlow({ topSpeed: 200, velocity: { x: 60, y: 60 } })).toBe(false);
-    expect(needleSlow({ topSpeed: 300, velocity: { x: 60, y: 60 } })).toBe(true);
+    expect(needleSlow({ topSpeed: 200, velocity: { x: 80, y: 80 } })).toBe(false);
+    expect(needleSlow({ topSpeed: 300, velocity: { x: 80, y: 80 } })).toBe(true);
     expect(needleSlow({ topSpeed: 0, velocity: { x: 0, y: 0 } })).toBe(false);
   });
 });
@@ -330,12 +330,12 @@ describe("Needle chapter runtime", () => {
       const signal = (share: number) =>
         needleGateReadiness({ topSpeed, velocity: { x: 0, y: -topSpeed * share } });
       expect([
-        signal(0.6),
-        signal(0.599),
-        signal(0.4),
-        signal(0.399),
+        signal(0.75),
+        signal(0.749),
+        signal(0.5),
+        signal(0.499),
         signal(0),
-        signal(0.7),
+        signal(0.8),
       ]).toEqual(["red", "yellow", "yellow", "green", "green", "red"]);
     },
   );

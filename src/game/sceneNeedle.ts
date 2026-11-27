@@ -7,10 +7,12 @@ import {
   needleDebris,
   type NeedleDebrisDescriptor,
   needleGateOrientation,
+  needleGateReadiness,
   type NeedleProgress,
-  needleSlow,
+  unfinishedNeedleCourse,
 } from "../model/needle.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
+import { COLOURS, UNLISTED_COLOURS } from "../ui/layout/colours.ts";
 
 export interface NeedleStitch {
   readonly from: Vec;
@@ -70,6 +72,7 @@ export interface NeedleImage {
   setOrigin(x: number, y: number): this;
   setPosition(x: number, y: number): this;
   setTexture(texture: string): this;
+  setTint(colour: number): this;
 }
 
 export interface NeedleRenderContext {
@@ -94,6 +97,7 @@ export interface NeedleRenderContext {
 }
 
 export interface NeedleRenderFrame {
+  readonly activeCourse: ReturnType<typeof unfinishedNeedleCourse>;
   readonly courses: readonly NeedleCourse[];
   readonly debris: readonly {
     readonly object: SpaceObject;
@@ -102,9 +106,9 @@ export interface NeedleRenderFrame {
   readonly lit: (course: NeedleCourse) => number;
   readonly player: Vec;
   readonly playerDepth: number;
+  readonly readiness: ReturnType<typeof needleGateReadiness>;
   readonly reducedMotion: boolean;
   readonly seed: number;
-  readonly slow: boolean;
   /** Paused flight time, not wall time, in milliseconds. */
   readonly timeMs: number;
 }
@@ -154,6 +158,7 @@ export function needleRenderFrame(
     }
   }
   return {
+    activeCourse: unfinishedNeedleCourse(context.progress),
     courses,
     debris,
     lit: (course) =>
@@ -164,35 +169,30 @@ export function needleRenderFrame(
           : context.activityLit,
     player: flight.player,
     playerDepth: context.playerDepth,
+    readiness: needleGateReadiness({ topSpeed: context.topSpeed, velocity: flight.velocity }),
     reducedMotion: context.reducedMotion,
     seed: flight.seed,
-    slow: needleSlow({ topSpeed: context.topSpeed, velocity: flight.velocity }),
     timeMs: flight.time * 1000,
   };
 }
 
-interface GateFade {
-  from: number;
-  started: number;
-  target: number;
-}
-
-const fadeAlpha = (now: number, fade: GateFade): number => {
-  const t = Math.min(1, Math.max(0, (now - fade.started) / NEEDLE.gate.light.fadeMs));
-  return fade.from + (fade.target - fade.from) * (1 - (1 - t) ** 3);
+const hex = (colour: string) => Number.parseInt(colour.slice(1), 16);
+const gateTint = {
+  green: hex(COLOURS.momTab),
+  red: hex(COLOURS.refusalRed),
+  yellow: hex(UNLISTED_COLOURS.mapWorkshop),
 };
+const untinted = hex(COLOURS.white);
 
-/** Own only current visible sprites and one fade record per current gate; the caller owns physics. */
+/** Own only current visible sprites; the caller owns physics. */
 export function createNeedleRenderer(context: NeedleRenderContext) {
   const images = new Map<string, NeedleImage>();
-  const fades = new Map<string, GateFade>();
   let disposed = false;
   const clear = () => {
     for (const image of images.values()) {
       image.destroy();
     }
     images.clear();
-    fades.clear();
   };
   const visible = (position: Vec, radius: number): boolean =>
     position.x + radius >= 0 &&
@@ -212,7 +212,6 @@ export function createNeedleRenderer(context: NeedleRenderContext) {
         return handled;
       }
       const used = new Set<string>();
-      const currentGates = new Set<string>();
       const place = (
         key: string,
         texture: string,
@@ -258,22 +257,6 @@ export function createNeedleRenderer(context: NeedleRenderContext) {
         }
         const lit = frame.lit(course);
         course.gates.forEach((gate, index) => {
-          const key = `${course.kind}:${index}`;
-          currentGates.add(key);
-          const target = index < lit || frame.slow ? 1 : 0;
-          let fade = fades.get(key);
-          if (!fade || frame.timeMs < fade.started) {
-            fade = { from: target, started: frame.timeMs, target };
-            fades.set(key, fade);
-          } else if (fade.target !== target) {
-            fade = { from: fadeAlpha(frame.timeMs, fade), started: frame.timeMs, target };
-            fades.set(key, fade);
-          }
-          if (frame.reducedMotion) {
-            fade.from = target;
-            fade.started = frame.timeMs;
-          }
-          const alpha = frame.reducedMotion ? target : fadeAlpha(frame.timeMs, fade);
           const at = context.project(gate.point);
           const size = NEEDLE.gate.frame * NEEDLE.gate.displayScale;
           if (!visible(at, size / 2)) {
@@ -285,24 +268,27 @@ export function createNeedleRenderer(context: NeedleRenderContext) {
           const threading =
             Math.hypot(frame.player.x - gate.point.x, frame.player.y - gate.point.y) <=
             NEEDLE.gate.rim.outer;
-          for (const state of ["dark", "lit"] as const) {
-            // Art's lit pair fades over the opaque dark pair, without fading out its support.
-            const opacity = state === "lit" ? alpha : 1;
-            if (opacity <= 0) {
+          const next =
+            index === lit && (course.kind === frame.activeCourse || course.kind === "activity");
+          const { dark, lit: litPair } = orientation.files;
+          const useLit =
+            (next || index < lit) &&
+            context.textures.exists(litPair.back) &&
+            context.textures.exists(litPair.front);
+          const pair = useLit ? litPair : dark;
+          const tint = next && useLit ? gateTint[frame.readiness] : untinted;
+          for (const layer of ["back", "front"] as const) {
+            const texture = pair[layer];
+            if (!context.textures.exists(texture)) {
               continue;
             }
-            for (const layer of ["back", "front"] as const) {
-              const texture = orientation.files[state][layer];
-              if (!context.textures.exists(texture)) {
-                continue;
-              }
-              const depth = threading
-                ? frame.playerDepth + (layer === "front" ? 1e-6 : -5e-6)
-                : playDepth(at.y) + (layer === "front" ? 1e-7 : -1e-7);
-              const id = `gate:${key}:${state}:${layer}`;
-              const image = place(id, texture, at, size, size, { x: 0.5, y: 0.5 }, depth, opacity);
-              context.keyline?.("needleGate", `needle:${id}`, image);
-            }
+            const depth = threading
+              ? frame.playerDepth + (layer === "front" ? 1e-6 : -5e-6)
+              : playDepth(at.y) + (layer === "front" ? 1e-7 : -1e-7);
+            const id = `gate:${course.kind}:${index}:${layer}`;
+            const image = place(id, texture, at, size, size, { x: 0.5, y: 0.5 }, depth, 1);
+            image.setTint(tint);
+            context.keyline?.("needleGate", `needle:${id}`, image);
           }
         });
       }
@@ -363,11 +349,6 @@ export function createNeedleRenderer(context: NeedleRenderContext) {
         if (!used.has(key)) {
           image.destroy();
           images.delete(key);
-        }
-      }
-      for (const key of fades.keys()) {
-        if (!currentGates.has(key)) {
-          fades.delete(key);
         }
       }
       return handled;
