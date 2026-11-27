@@ -106,6 +106,7 @@ describe("map screen tokens", () => {
       minBox: { height: 6000, width: 12000 },
       tools: { pitch: 57 },
       wheelStep: 100,
+      zoomRangeShift: 2,
       zoomStep: 1.5,
     });
     expect(MAP_PANEL).toMatchObject({
@@ -147,12 +148,12 @@ describe("map projection and fit", () => {
     expect([base.fit.width, base.fit.height]).toEqual([688, 200]);
     expect([base.inner.width, base.inner.height]).toEqual([644, 156]);
     const limits = scaleLimits(base.inner, base.field, SIDE);
-    expect(round(limits.max, 5)).toBe(0.04733);
-    expect(round(limits.min, 5)).toBe(0.00441);
-    expect(round(Math.log(limits.max / limits.min) / Math.log(MAP_SCREEN.zoomStep), 2)).toBe(5.85);
+    expect(round(limits.max, 5)).toBe(0.02104);
+    expect(round(limits.min, 5)).toBe(0.002);
+    expect(round(Math.log(limits.max / limits.min) / Math.log(MAP_SCREEN.zoomStep), 2)).toBe(5.81);
     const wide = regionsAt({ height: 720, width: 1280 });
     expect([wide.fit.width, round(wide.fit.height, 2)]).toEqual([688, 245]);
-    expect(round(scaleLimits(wide.inner, wide.field, SIDE).max, 5)).toBe(0.05367);
+    expect(round(scaleLimits(wide.inner, wide.field, SIDE).max, 5)).toBe(0.02385);
   });
 
   it("anchors Quests, Galaxies and the sole primary Close at the bottom right", () => {
@@ -242,13 +243,12 @@ describe("map projection and fit", () => {
     }
   });
 
-  it("opens on the box of Ada and every place, clamped between the disc and the minimum box", () => {
+  it("opens on Ada and the places, clamped to the outward zoom range", () => {
     const { field, inner } = regionsAt(BASE);
     const { max, min } = scaleLimits(inner, field, SIDE);
-    // The opening fits the minimum box inside reserved chrome; further zoom remains available.
+    // The former close view now reaches the earlier zoom-in cap.
     const close = openingView(inner, field, SIDE, [{ x: 500, y: 0 }], { x: 0, y: 0 });
-    expect(close.scale).toBeCloseTo(0.026);
-    expect(close.scale).toBeLessThan(max);
+    expect(close.scale).toBe(max);
     // A spread galaxy fits between the limits.
     const spread = [
       { x: 12000, y: -12000 },
@@ -263,7 +263,7 @@ describe("map projection and fit", () => {
       expect(at.x).toBeLessThanOrEqual(inner.x + inner.width + 1e-6);
     }
     // A far station: minScale clamps it, and the least pan keeps Ada inside the inner region.
-    const far = openingView(inner, field, SIDE, [{ x: 100_000, y: -100_000 }], { x: 0, y: 0 });
+    const far = openingView(inner, field, SIDE, [{ x: 85_000, y: 85_000 }], { x: 0, y: 0 });
     expect(far.scale).toBeCloseTo(min);
     const ada = toScreen(inner, far, { x: 0, y: 0 });
     expect(ada.x).toBeGreaterThanOrEqual(inner.x - 1e-6);
@@ -401,7 +401,7 @@ describe("the square bound", () => {
   const wide = regionsAt({ height: 720, width: 1280 });
 
   it("projects all four unwrapped tips as the map pans, zooms, and refits", () => {
-    const worldSide = 240_000;
+    const worldSide = 540_000;
     const region = { height: 240, width: 640, x: 78, y: 65 };
     const view = { centre: { x: 60_000, y: -30_000 }, scale: 0.002, worldSide };
     expect(mapWorldDiamond(region, view)).toEqual([
@@ -531,7 +531,7 @@ describe("the square bound", () => {
 
   it("pulls back a diagonal view whose ellipse box overlaps but whose actual oval misses", () => {
     // This extent leaves the survey oval as the tighter bound for the diagonal request.
-    const worldSide = 240_000;
+    const worldSide = 540_000;
     const { min } = scaleLimits(inner, field, worldSide);
     const start = { centre: { x: 0, y: 0 }, scale: min, worldSide };
     const { rx, ry, x, y } = mapSurveyEllipse(inner, start);
@@ -634,20 +634,37 @@ describe("the square bound", () => {
     expectSurveyArc(field, inner, view);
   });
 
-  it("caps zoom-out at the charting disc while the square is larger than the view", () => {
+  it("adds two zoom-out presses beyond the previous disc limit", () => {
     for (const frame of [{ field, inner }, wide]) {
       const { min } = scaleLimits(frame.inner, frame.field, SIDE);
       const disc = Math.min(
         frame.inner.width / (2 * Math.SQRT2 * MAP_SCREEN.chartRadius),
         frame.inner.height / (Math.SQRT2 * MAP_SCREEN.chartRadius),
       );
-      expect(min).toBe(disc);
+      const shift = MAP_SCREEN.zoomStep ** MAP_SCREEN.zoomRangeShift;
+      const expected = Math.max(
+        disc / shift,
+        frame.field.width / (2 * SIDE),
+        frame.field.height / SIDE,
+      );
+      expect(min).toBe(expected);
+      const start = { centre: { x: 0, y: 0 }, scale: disc, worldSide: SIDE };
+      const pointer = { x: frame.inner.x, y: frame.inner.y };
+      const zoomOut = (view: MapView) =>
+        zoomView(frame.inner, frame.field, 1 / MAP_SCREEN.zoomStep, pointer, view);
+      const first = zoomOut(start);
+      expect(first.refused).toBe(false);
+      expect(first.view.scale).toBeCloseTo(disc / MAP_SCREEN.zoomStep, 9);
+      const second = zoomOut(first.view);
+      expect(second.refused).toBe(false);
+      expect(second.view.scale).toBeCloseTo(min, 9);
+      expect(zoomOut(second.view).refused).toBe(true);
       const capped = clampView(frame.inner, frame.field, {
         centre: { x: 0, y: 0 },
         scale: 0,
         worldSide: SIDE,
       });
-      expect(capped.scale).toBe(disc);
+      expect(capped.scale).toBe(expected);
     }
   });
 

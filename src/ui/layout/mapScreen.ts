@@ -30,7 +30,7 @@ const HUD_ACTION_WIDTH = Math.max(...Object.values(MAP_HUD_LABEL_WIDTHS)) + 2 * 
 
 export const MAP_SCREEN = {
   ...MAP_SCREEN_LAYOUT,
-  /** The charting disc minScale fits (model/map.ts CHARTING_RADIUS). */
+  /** The charting disc used for the zoom-out reference (model/map.ts CHARTING_RADIUS). */
   chartRadius: CHARTING_RADIUS,
   header: {
     ...MAP_SCREEN_LAYOUT.header,
@@ -271,26 +271,27 @@ function squareExtent(side: number): Size {
 }
 
 /**
- * The zoom range: maxScale fits the minimum box; minScale is the tighter of the charting-disc fit
- * and the scale at which the field spans the square's projected extent on its limiting axis.
+ * Shift both scale limits outward by the same number of zoom steps. The field
+ * still stays within one wrap period when it reaches the playable bounds.
  */
 export function scaleLimits(
   inner: MapRegion,
   field: Size,
   side: number,
 ): { readonly max: number; readonly min: number } {
-  const { chartRadius, minBox } = MAP_SCREEN;
+  const { chartRadius, minBox, zoomRangeShift, zoomStep } = MAP_SCREEN;
   const square = squareExtent(side);
-  return {
-    max: Math.min(inner.width / minBox.width, (inner.zoomHeight ?? inner.height) / minBox.height),
-    min: Math.max(
-      Math.min(
-        inner.width / (2 * Math.SQRT2 * chartRadius),
-        inner.height / (Math.SQRT2 * chartRadius),
-      ),
-      Math.max(field.width / square.width, field.height / square.height),
-    ),
-  };
+  const shift = zoomStep ** zoomRangeShift;
+  const closeFit = Math.min(
+    inner.width / minBox.width,
+    (inner.zoomHeight ?? inner.height) / minBox.height,
+  );
+  const discFit = Math.min(
+    inner.width / (2 * Math.SQRT2 * chartRadius),
+    inner.height / (Math.SQRT2 * chartRadius),
+  );
+  const worldFit = Math.max(field.width / square.width, field.height / square.height);
+  return { max: closeFit / shift, min: Math.max(discFit / shift, worldFit) };
 }
 
 const centreOf = (rect: Rect): Point => ({
