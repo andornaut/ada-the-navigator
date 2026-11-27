@@ -1137,19 +1137,19 @@ equal (`minmax(0, 1fr)`), so content never sizes a column; a page divider sits
 in its own intrinsic track between each pair. Each section is one list under
 its heading, never a nested grid.
 
-| Part                | Token or derivation                                                                 | Rule                                                                                      |
-| ------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Outer padding       | `CARD_CONTENT.padding` (16)                                                         | The shared content-card padding on every edge                                             |
-| Divider             | `PAGE_DIVIDER_STYLE`, from `STORY_PANEL.rule`: 1 wide, `#6b6685`                    | One vertical rule between neighbouring columns, spanning the body                         |
-| Divider clearance   | `SPACING.panelPadding` (16) on each side                                            | Each gutter is `2 * SPACING.panelPadding + 1` (33)                                        |
-| Column              | `(inner width - 2 * 33) / 3`                                                        | 200.67 in the full 700 card (inner width 668)                                             |
-| Section heading     | `TYPE.label` on a 20 line, `TEXT_TOKENS.supporting`                                 | Cargo, Equipment and Weapons only, the same role and top in every column                  |
-| Heading-to-list gap | `SPACING.gap` (8)                                                                   | Between a heading and its first row                                                       |
-| List row gap        | `SPACING.rowGap` (4)                                                                | Between rows in a list                                                                    |
-| Row                 | `SHIP_CARD.row`, `TYPE.body.lineHeight` (20), minimum height                        | `TYPE.body`, `TEXT_TOKENS.label`; each wrapped line adds 20                               |
-| Row icon            | `SHIP_CARD.icon` (20), then `SPACING.markGap` (6)                                   | A sprite sheet's first frame, or a weapon glyph masked in `TEXT_TOKENS.label`             |
-| Value               | `TYPE.label` on a 20 line, `SPACING.markGap` (6) after the name                     | A count or ammunition at the row's right end; it wraps under the name when space runs out |
-| Footer              | `SPACING.gap` (8) above Back, `SCROLL.endPad - CARD_CONTENT.frameBorder` (14) below | Back is centred, outside the scrolling body                                               |
+| Part                | Token or derivation                                                                 | Rule                                                                                   |
+| ------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Outer padding       | `CARD_CONTENT.padding` (16)                                                         | The shared content-card padding on every edge                                          |
+| Divider             | `PAGE_DIVIDER_STYLE`, from `STORY_PANEL.rule`: 1 wide, `#6b6685`                    | One vertical rule between neighbouring columns, spanning the body                      |
+| Divider clearance   | `SPACING.panelPadding` (16) on each side                                            | Each gutter is `2 * SPACING.panelPadding + 1` (33)                                     |
+| Column              | `(inner width - 2 * 33) / 3`                                                        | 200.67 in the full 700 card (inner width 668)                                          |
+| Section heading     | `TYPE.label` on a 20 line, `TEXT_TOKENS.supporting`                                 | Cargo, Equipment and Weapons only, the same role and top in every column               |
+| Heading-to-list gap | `SPACING.gap` (8)                                                                   | Between a heading and its first row                                                    |
+| List row gap        | `SHIP_CARD.rowGap = (SPACING.rowGap + SPACING.gap) / 2` (6)                         | Between rows in the Ship lists                                                         |
+| Row                 | `SHIP_CARD.row`, `TYPE.body.lineHeight` (20), minimum height                        | `TYPE.body`, `TEXT_TOKENS.label`; each wrapped line adds 20                            |
+| Row icon            | `SHIP_CARD.icon` (20), then `SPACING.markGap` (6)                                   | A sprite sheet's first frame, or a weapon glyph masked in `TEXT_TOKENS.label`          |
+| Value               | `TYPE.label` on a 20 line, `SPACING.markGap` (6) after the name                     | Cargo names, counts and ammunition sit at the right and wrap under the label as needed |
+| Footer              | `SPACING.gap` (8) above Back, `SCROLL.endPad - CARD_CONTENT.frameBorder` (14) below | Back is centred, outside the scrolling body                                            |
 
 A level-one item shows only its name. Higher levels append `[2]` or `[3]`
 (`compactLevelName`), without "Level", "LVL" or "of 3". Each row's accessible
@@ -1159,27 +1159,30 @@ shrinking type.
 
 1. Cargo: Stardust (`icon-stardust-20`) and Ore (`icon-ore-20`) with exact
    grouped counts, "Holodisks" (`icon-holodisk-20`) with `{n} of {total}` in
-   the shared right-aligned value slot, one "Carrying: {item}" row per carried
-   item or "Carrying: Nothing"
-   (`icon-cargo-20`), then "Towing: {craft}" or "Towing: Nothing"
-   (`icon-tow-20`). Carrying and Towing rows are always present and
-   independent: each carried item keeps its own row, and a towed craft never
-   hides them. A "Nothing" row is a disabled button out of the Tab order
-   (`tabIndex` -1) and opens nothing.
+   the shared right-aligned value slot, then the independent "Carrying"
+   (`icon-cargo-20`) and "Towing" (`icon-tow-20`) rows. Each carried item
+   keeps its own row. These labels have no colon, and the item name, craft
+   name or "Nothing" uses the same value slot. A "Nothing" row is a disabled
+   button out of the Tab order (`tabIndex` -1). A populated row opens its
+   live linked quest when available, or a detail titled with the item or
+   craft name. Dismissing the detail returns focus to the originating row.
+   Flight HUD carrying and towing labels keep their existing copy.
 2. Equipment: Engine (`icon-shop-engine-tuning`), Shield (`icon-shop-shield`),
    and Tractor beam (`icon-shop-tractor-beam`), each with its compact level
    suffix where it has a level. The paint row keeps the current swatch, with
    `icon-shop-ship-paint` as its fallback. It shows the current paint name
-   followed by "paint" and the inline cue, as in "Classic paint (Click to
-   change)". The whole row opens the existing paint picker detail.
+   followed by "paint", as in "Classic paint". The complete "(Click to
+   change)" cue sits on its own line below the name. The whole row opens the
+   existing paint picker detail.
 3. Weapons: every owned weapon in HUD order, with its weapon glyph, compact
    level suffix and ammunition as a grouped count; the Laser's ammunition is
    blank. With no owned weapons the heading remains and no empty-state copy is
    added. There is no "Ammo" heading.
 
-Height follows the content up to the available rect. Past that the body
-scrolls vertically with all three columns and both dividers together, while
-the title, close X and Back stay fixed.
+The checked ordinary and populated Ship inventories fit without clipping or
+scrolling at 844x390 and 1280x720. Height follows the content up to the
+available rect. The overflow guard scrolls the body with all three columns
+and both dividers together, while the title, close X and Back stay fixed.
 
 Map, from the Paused card, is a full-screen map rather than a card: the
 galaxy's field under the insets, with every part on the page rect
