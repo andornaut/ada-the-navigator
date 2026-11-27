@@ -121,6 +121,77 @@ describe("planRegion", () => {
     );
   });
 
+  it("checks a cluster's actual per-rock paths after capping a shared launch draw", () => {
+    const mixed = {
+      ...rules,
+      bands: [
+        {
+          enemies: [],
+          from: 0,
+          moving: [
+            {
+              cluster: { radius: 2000, share: 1, size: [1, 1] as const },
+              density: 2,
+              from: ["small", "large"],
+              fromPlaced: { baseline: 1, kind: "small" },
+              kind: "mover",
+              path: 30,
+              speed: [125, 125] as const,
+              tries: 1,
+            },
+          ],
+          rocks: [
+            {
+              density: 1,
+              kind: "small",
+              shapes: [{ id: "small", radius: 15, size: "small" as const, weight: 1 }],
+              tries: 48,
+            },
+            {
+              density: 1,
+              kind: "large",
+              shapes: [{ id: "large", radius: 70, size: "large" as const, weight: 1 }],
+              tries: 48,
+            },
+          ],
+        },
+      ],
+    };
+    const area = { cell: { x: 0, y: 0 }, columns: 1, exclusions: [], rows: 1 };
+    const plan = planRegion(mixed, seeds(17), area);
+    const large = plan.placements.find(({ kind }) => kind === "large")!;
+    const small = plan.placements.find(({ kind }) => kind === "small")!;
+    expect(large.moving?.clustered).toBe(true);
+    expect(small.moving?.clustered).toBe(true);
+    const fast = small.moving!.velocity;
+    const slow = large.moving!.velocity;
+    expect(Math.hypot(fast.x, fast.y)).toBeCloseTo(125);
+    expect(Math.hypot(slow.x, slow.y)).toBeCloseTo(62.5);
+    expect(slow.x).toBeCloseTo(fast.x / 2);
+    expect(slow.y).toBeCloseTo(fast.y / 2);
+
+    const protectedArea = (rock: SpawnPlacement, seconds: number) => ({
+      ...area,
+      exclusions: [
+        {
+          applies: ["path" as const],
+          rule: "protected",
+          shape: {
+            kind: "disc" as const,
+            radius: 10,
+            x: rock.x + fast.x * seconds,
+            y: rock.y + fast.y * seconds,
+          },
+        },
+      ],
+    });
+    // Behind the large rock's actual path, on the path it would have at the shared raw speed.
+    expect(planRegion(mixed, seeds(17), protectedArea(large, 24))).toEqual(plan);
+    const blocked = planRegion(mixed, seeds(17), protectedArea(small, 24));
+    expect(blocked.placements.every((rock) => !rock.moving)).toBe(true);
+    expect(blocked.report.kinds.mover?.drops.protected).toBe(2);
+  });
+
   it("draws rocks from the world seed and enemy groups from the encounter seed", () => {
     const rocksOnly = { ...rules, bands: [{ ...band, enemies: [] }] };
     const of = (plan: SpawnPlan, category: SpawnPlacement["category"]) =>

@@ -1,5 +1,6 @@
 import type { RockRicochet } from "../data/types.ts";
 import {
+  cappedAsteroidVelocity,
   sceneryShape,
   silhouetteArea,
   silhouetteWorldReach,
@@ -73,19 +74,12 @@ export function rocksContact(
   );
 }
 
-function capped(maxSpeed: number, velocity: Vec): Vec {
-  const speed = Math.hypot(velocity.x, velocity.y);
-  return speed > maxSpeed
-    ? { x: (velocity.x * maxSpeed) / speed, y: (velocity.y * maxSpeed) / speed }
-    : velocity;
-}
-
 /**
  * A ricochet's new velocity for one rock, capped at the fastest a rock leaves one. A struck
  * static rock then drifts and settles; a moving rock keeps the velocity, its own from now on.
  */
 function deflect(tuning: RockRicochet, velocity: Vec, rock: SpaceObject): void {
-  rock.velocity = capped(tuning.maxSpeed, velocity);
+  rock.velocity = cappedAsteroidVelocity(tuning.maxSpeed, sceneryShape(rock)!.size, velocity);
   if (rock.kind === "rock") {
     rock.settle = tuning.settleSeconds;
   }

@@ -76,6 +76,7 @@ function sized(sizes: Readonly<Partial<Record<AsteroidSize, number>>>): SpawnSha
           {
             id: shape.id,
             radius: placementRadius({ asteroid: shape.id, kind: "rock", radius: shape.radius }),
+            size: shape.size,
             weight: weight / variants,
           },
         ]

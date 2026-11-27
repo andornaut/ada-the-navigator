@@ -136,7 +136,7 @@ describe("rock ricochet", () => {
     expect(smallChange / bigChange).toBeCloseTo(rockMass(big) / rockMass(small));
   });
 
-  it("caps every rock leaving a ricochet at the fastest speed", () => {
+  it("caps outgoing small and Huge rocks independently after one ricochet", () => {
     const big = mover("big", largest, { x: 0, y: 0 }, { x: RULES.maxSpeed, y: 0 });
     const small = mover("small", smallest, { x: 0, y: 0 }, { x: -RULES.maxSpeed, y: 0 });
     touching(small, big);
@@ -144,7 +144,7 @@ describe("rock ricochet", () => {
     ricochetRocks(context, { ...RULES, maxSpeed: 1000 }, uncapped);
     expect(Math.max(...uncapped.map(speed))).toBeGreaterThan(RULES.maxSpeed);
     ricochetRocks(context, RULES, [big, small]);
-    expect(speed(big)).toBeLessThanOrEqual(RULES.maxSpeed + 1e-9);
+    expect(speed(big)).toBeCloseTo(RULES.maxSpeed * 0.25);
     expect(speed(small)).toBeCloseTo(RULES.maxSpeed);
   });
 

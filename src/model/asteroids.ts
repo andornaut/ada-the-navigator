@@ -7,6 +7,7 @@ import {
   type CrystalSelection,
 } from "../data/asteroidCatalog.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
+import { ASTEROID_SPEED_SHARE } from "../data/spawnTargets.ts";
 import type { GalaxyNumber, Vec } from "../data/types.ts";
 import {
   closestOnSegment,
@@ -91,6 +92,15 @@ function hash(seed: number, text: string): number {
   value = Math.imul(value, 0x2c1b3c6d) >>> 0;
   return (value ^ (value >>> 12)) >>> 0;
 }
+/** Clamp magnitude to the rock's size limit while preserving its heading. */
+export function cappedAsteroidVelocity(maximum: number, size: AsteroidSize, velocity: Vec): Vec {
+  const limit = maximum * ASTEROID_SPEED_SHARE[size];
+  const speed = Math.hypot(velocity.x, velocity.y);
+  return speed > limit
+    ? { x: (velocity.x * limit) / speed, y: (velocity.y * limit) / speed }
+    : { ...velocity };
+}
+
 /** A stable value in [0, 1) for a seed, an id and a salt. */
 function unit(seed: number, id: string, salt: string): number {
   return hash(seed, `${id}:${salt}`) / 0x100000000;

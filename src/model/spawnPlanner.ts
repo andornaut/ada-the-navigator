@@ -7,8 +7,8 @@ import {
   weightedPick,
 } from "@andornaut/game-kit/runtime/random";
 
-import type { CrystalFlag } from "../data/asteroidCatalog.ts";
-import { type PlacedCrystals, placedRockCrystals } from "./asteroids.ts";
+import type { AsteroidSize, CrystalFlag } from "../data/asteroidCatalog.ts";
+import { cappedAsteroidVelocity, type PlacedCrystals, placedRockCrystals } from "./asteroids.ts";
 import type { Vec } from "./types.ts";
 import { periodicWorldGrid, worldCellKey, type WorldGrid } from "./worldCells.ts";
 import { nearestImage, wrappedDelta } from "./worldGeometry.ts";
@@ -23,6 +23,7 @@ export type SpawnCategory = "enemy" | "moving" | "path" | "rock";
 export interface SpawnShape {
   readonly id: string;
   readonly radius: number;
+  readonly size?: AsteroidSize;
   readonly weight: number;
 }
 
@@ -38,7 +39,7 @@ export interface RockTarget {
 }
 
 /**
- * Rocks a cluster leader pulls along at its velocity: a seeded `share` of chosen rocks lead, each
+ * Rocks a cluster leader pulls along its initial heading: a seeded `share` of chosen rocks lead, each
  * pulling from `size[0]` to `size[1]` (equal weight) of its chunk's nearest free source rocks
  * whose centres lie within `radius`, fewer when fewer qualify.
  */
@@ -242,7 +243,7 @@ export interface SpawnRegion {
 }
 
 export interface SpawnMotion {
-  /** Whether the rock moves in a cluster of two or more sharing one velocity. */
+  /** Whether the rock starts in a group of two or more sharing one launch heading. */
   readonly clustered: boolean;
   readonly kind: string;
   readonly velocity: Vec;
@@ -264,6 +265,7 @@ export interface SpawnPlacement extends Vec {
   readonly moving?: SpawnMotion;
   readonly radius: number;
   readonly shape?: string;
+  readonly size?: AsteroidSize;
 }
 
 /** Rocks count one per rock; enemies count one per whole group, members and escorts included. */
@@ -817,6 +819,7 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
             kind,
             radius: shape.radius,
             shape: shape.id,
+            ...(shape.size ? { size: shape.size } : {}),
             ...placed.at,
             ...(crystals ? { crystals } : {}),
           };
@@ -859,23 +862,34 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
           }
         }
         const free = new Set(shuffled(stream(seeds.world, kind, chunk, "choose"), eligible));
-        // A velocity is kept when every rock it moves keeps its path clear; otherwise it is
-        // redrawn, and after the tries those rocks stay still and are dropped as movers.
+        // Each attempt draws one heading and speed, then checks each rock's capped path.
+        // A failed attempt redraws the whole group within the existing velocity budget.
         const move = (rocks: readonly SpawnPlacement[], next: Random) => {
           let rule: string | undefined;
           for (let attempt = 0; attempt < target.tries; attempt++) {
             const motion = velocity(next, target.speed);
-            rule = target.path
-              ? rocks
-                  .map((rock) => pathBlocked(rules, region, rock, motion, target.path!))
-                  .find((found) => found !== undefined)
-              : undefined;
+            const launches = rocks.map((rock) => ({
+              rock,
+              velocity: rock.size
+                ? cappedAsteroidVelocity(target.speed[1], rock.size, motion)
+                : { ...motion },
+            }));
+            const seconds = target.path;
+            rule = undefined;
+            if (seconds) {
+              for (const launch of launches) {
+                rule = pathBlocked(rules, region, launch.rock, launch.velocity, seconds);
+                if (rule) {
+                  break;
+                }
+              }
+            }
             if (!rule) {
-              for (const rock of rocks) {
-                const slot = slots.find((index) => placements[index] === rock)!;
+              for (const launch of launches) {
+                const slot = slots.find((index) => placements[index] === launch.rock)!;
                 placements[slot] = {
-                  ...rock,
-                  moving: { clustered: rocks.length > 1, kind, velocity: { ...motion } },
+                  ...launch.rock,
+                  moving: { clustered: rocks.length > 1, kind, velocity: launch.velocity },
                 };
                 tally.deliver(kind);
               }

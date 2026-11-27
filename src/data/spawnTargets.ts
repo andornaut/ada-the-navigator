@@ -1,3 +1,4 @@
+import type { AsteroidSize } from "./asteroidCatalog.ts";
 import type { EnemyArchetype } from "./enemyCatalog.ts";
 import type { GalaxyNumber } from "./types.ts";
 
@@ -27,13 +28,20 @@ export const SLOT_ROCK_EDGE_MULTIPLIER = 2.5;
  * that lead a cluster, how many placed rocks each leader pulls (equal weight, inclusive) and the
  * farthest a pulled rock's centre lies from the leader's; the seconds of straight path checked
  * against exclusion zones and arrival clearances; and the speed range in world units per second,
- * whose top is also the fastest a rock leaves a ricochet.
+ * whose top supplies the per-size caps at launch and after a ricochet.
  */
 export const MOVING_ROCKS = {
   cluster: { radius: 300, share: 0.5, size: [1, 3] },
   pathSeconds: 30,
   speed: [25, 125],
 } as const;
+/** Shares of the upper ambient speed bound, by asteroid size. */
+export const ASTEROID_SPEED_SHARE: Readonly<Record<AsteroidSize, number>> = {
+  huge: 0.25,
+  large: 0.5,
+  medium: 0.75,
+  small: 1,
+};
 /**
  * Each galaxy's enemy density factor: the share of encounter lattice cells that hold a group is
  * 0.75 times it (gameplay/ships.md "Ambient admission"). It scales enemy densities only; the
