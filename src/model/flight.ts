@@ -2761,7 +2761,7 @@ function minerInput(
     };
     return !sceneryBlocksFlightSegment(sceneryResolution, world, flight, {
       clearance: ENEMY_AVOIDANCE.passageClearance + object.radius,
-      except: rock.id,
+      excludedId: rock.id,
       from: object,
       to: entry,
     });
