@@ -138,7 +138,7 @@ describe("Andromeda chapter runtime", () => {
     finish(context, useAndromeda(context, stationId));
     const settlement = andromedaObjective(context)!;
     before = JSON.stringify(context);
-    expect(andromedaAction(context, settlement)).toBe("deliver");
+    expect(andromedaAction(context, settlement)).toBe("talk");
     expect(andromedaAction(context, "darkBeacon")).toBeUndefined();
     expect(JSON.stringify(context)).toBe(before);
     finish(context, useAndromeda(context, settlement));

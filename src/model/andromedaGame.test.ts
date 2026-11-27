@@ -120,7 +120,15 @@ function repairBeacon(initial: GameModel): GameModel {
   expect(settlement).toMatch(/^settlement:/u);
   expect(settlement).not.toBe(station);
   visit(model, settlement!);
-  expect(model.contextAction).toBe("deliver");
+  expect(model.useTarget).toEqual({ action: "talk", id: settlement });
+  expect(model.map?.places.find(({ id }) => id === settlement)).toMatchObject({
+    label: CONTENT.labels.settlement,
+    objective: true,
+  });
+  expect(model.map?.quests.find(({ kind }) => kind === "story")).toMatchObject({
+    target: settlement,
+    text: CONTENT.chapters[5]!.objectives[4],
+  });
   model.interact();
   expect(model.state.progress[5]).toMatchObject({ questItem: null, stage: 4 });
   const partsPanel = model.state.dialogue;
@@ -750,7 +758,7 @@ it("reserves Pip's unmodified seeded route and gates the real fighter pairs thro
   expect(returned.enemy?.engaged).toBe(false);
   expect(returned.enemy?.lastSeen).toBeNull();
   visit(model, route.leg.settlement.id);
-  expect(model.contextAction).toBe("deliver");
+  expect(model.contextAction).toBe("talk");
   model.interact();
   continuePanel(model, "andromeda:parts");
   expect(model.state.progress[5]).toMatchObject({ questItem: "beaconParts", stage: 5 });
@@ -820,7 +828,7 @@ it("keeps a blocked seeded leg open and refuses to spend another attempt after C
   expect(courierActors(model)).toEqual([]);
   expect(takeAndromedaCourierWarning(retry)).toBeUndefined();
   visit(model, route.leg.settlement.id);
-  expect(model.contextAction).toBe("deliver");
+  expect(model.contextAction).toBe("talk");
   model.interact();
   continuePanel(model, "andromeda:parts");
   expect(model.state.progress[5]).toMatchObject({ questItem: "beaconParts", stage: 5 });

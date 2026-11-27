@@ -198,16 +198,16 @@ export function andromedaAction(
     (progress.stage === 0 &&
       worldStationById(flightStationContext(flight), ECONOMY, 5, destination)) ||
     (progress.stage === 3 && destination === target?.station) ||
+    (progress.stage === 4 && destination === target?.settlement) ||
     (destination === ANDROMEDA_PLACES.pip &&
       (relevant(progress, "confession") || relevant(progress, "holodisk")))
   ) {
     return "talk";
   }
   if (
-    (progress.stage === 4 && destination === target?.settlement) ||
-    (progress.stage === 5 &&
-      destination === ANDROMEDA_PLACES.beacon &&
-      progress.questItem === ANDROMEDA_PARTS)
+    progress.stage === 5 &&
+    destination === ANDROMEDA_PLACES.beacon &&
+    progress.questItem === ANDROMEDA_PARTS
   ) {
     return "deliver";
   }
