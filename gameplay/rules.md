@@ -545,9 +545,18 @@ holding point beside the hub. Once the Second docking bay project is funded,
 that visitor docks at the new bay. Between scenes the miner and visitors wait at
 holding points near the hub, inside the view while Ada is docked, which are
 their story destinations; these have no
-route guards, since Cartwheel's danger is at the ore fields. Each scene plays
-first, and its dialogue line follows when the scene ends. A scene cut short by
-the end of a flight replays with its line when Ada next reaches the hub. The hub looks worn but working until its Hub repairs project is funded.
+route guards, since Cartwheel's danger is at the ore fields. The hub withholds
+Dock while a story scene plays. After the first blocked approach, Ada's reaction
+appears as passive flight dialogue and clears the scene's Dock gate. After the
+final docking animation, flight continues and the hub offers Talk. Independent
+flight lore can still play while Talk is due. Choosing Talk docks Ada
+and opens the exchange in the normal station shell with its services available.
+Advance through Jasper's line, the docking narration and Mica's thanks, in that
+order. Completing the exchange restores ordinary Dock on later approaches.
+If the flight ends with a scene's reaction or exchange still due, the scene
+replays when Ada next reaches the hub. Continue restores the current authored
+Talk page when the save was made while docked in the exchange. The hub looks
+worn but working until its Hub repairs project is funded.
 
 Player text calls the pieces "ore". Every static rock is an ordinary asteroid,
 and its contents are decided when it is destroyed by the size-based asteroid
