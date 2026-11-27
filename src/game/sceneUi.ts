@@ -1578,11 +1578,12 @@ export function observeFeedback(scene: UiContext): void {
   }
 }
 
-/** The Ship card's facts with the paint named. */
+/** The Ship card's facts with the current paint label and material swatch. */
 export function shipView(scene: UiContext): ShipView {
   const ship = scene.model.ship;
   const flight = scene.model.state.flight;
   const paint = ECONOMY.paints[ship.paint]?.label;
+  const swatch = paintSwatch(scene, ship.paint);
   return {
     ...ship,
     ...(flight
@@ -1596,6 +1597,7 @@ export function shipView(scene: UiContext): ShipView {
       : {}),
     ...(scene.model.aboardQuestId ? { aboardQuestId: scene.model.aboardQuestId } : {}),
     paint: (paint && CONTENT.labels[paint]) ?? "",
+    ...(swatch ? { paintSwatch: swatch } : {}),
   };
 }
 

@@ -335,9 +335,11 @@ Ship paint schemes are Classic (the free white and blue default), Cobalt,
 Obsidian, Crimson, Iris and Amber. Tapping an owned scheme puts it in use at once, with
 no confirm. The current scheme shows In use instead of Owned. The five paid schemes cost 1500, 2000, 2500, 3000 and 3500 Stardust by
 purchase order, whichever scheme Ada chooses next. Classic stays free and does
-not advance that order. Buy new paints at shops. From Paused → Ship, open
-Paint to see swatches for every owned scheme, including Classic. Apply equips
-a paint immediately for free and keeps the card open. The selected scheme
+not advance that order. Buy new paints at shops. In Paused → Ship → Equipment,
+one button shows the current paint swatch and name on the first line and
+“Change paint” below. The whole button opens the picker for owned schemes,
+including Classic. Apply equips a paint immediately for free and keeps the
+card open. The selected scheme
 shows In use. Close returns to Ship. The selected paint is saved with the
 loadout. Each scheme has a main colour and a wing-tip accent colour. Shop
 swatches, Paint swatches and the paint notice show both.

@@ -45,6 +45,7 @@ export interface ShipView {
   readonly ore: number;
   /** The ship paint's name. */
   readonly paint: string;
+  readonly paintSwatch?: string;
   readonly shield: number;
   readonly shieldHealth?: {
     readonly capacity: number;
@@ -79,6 +80,8 @@ export interface ShipRow {
   readonly interactive?: boolean;
   readonly icon: ShipIcon;
   readonly label: string;
+  /** A second visible line naming the action of the existing row button. */
+  readonly actionLabel?: string;
   readonly count?: string;
   readonly level?: string;
   /** Canonical numeric level, used only for the compact visible name suffix. */
@@ -190,9 +193,10 @@ export function shipSections(labels: Labels, view: ShipView): ShipSections {
       tier: view.tractor,
     },
     {
-      icon: equipmentIcon("ship-paint"),
+      actionLabel: labels.shipChangePaint ?? "",
+      icon: view.paintSwatch ? { vector: view.paintSwatch } : equipmentIcon("ship-paint"),
       item: { id: "paint", kind: "equipment" },
-      label: fill(labels.shipPaintName ?? "", { paint: view.paint }),
+      label: view.paint,
     },
   ];
   const right: ShipRow[] = view.weapons.map((weapon): ShipRow => ({
@@ -254,7 +258,7 @@ function rowPart(onItem: (row: ShipRow, origin: HTMLButtonElement) => void, init
     label.textContent = compactLevelName(row.tier, row.label);
     line.setAttribute(
       "aria-label",
-      [row.label, row.level, row.count, row.ammo].filter(Boolean).join(", "),
+      [row.actionLabel, row.label, row.level, row.count, row.ammo].filter(Boolean).join(", "),
     );
     if (row.tier !== undefined) {
       line.dataset.level = String(row.tier);
@@ -262,6 +266,12 @@ function rowPart(onItem: (row: ShipRow, origin: HTMLButtonElement) => void, init
     const content = document.createElement("span");
     content.className = "ada-ship-text";
     content.append(label);
+    if (row.actionLabel) {
+      const action = document.createElement("span");
+      action.className = "ada-ship-action-label";
+      action.textContent = row.actionLabel;
+      content.append(action);
+    }
     line.append(shipIconNode(row.icon), content);
     for (const [part, text] of [
       ["count", row.count],

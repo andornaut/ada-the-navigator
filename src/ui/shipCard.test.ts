@@ -162,7 +162,7 @@ describe("Ship card", () => {
 
   it("keeps the systems and paint data with Engine first, and weapons in HUD order", () => {
     const [left, right] = shipSections(LABELS, VIEW).equipment;
-    expect(labels(left)).toEqual(["Engine", LABELS.shield, LABELS.tractorBeam, "Paint: Sky blue"]);
+    expect(labels(left)).toEqual(["Engine", LABELS.shield, LABELS.tractorBeam, "Sky blue"]);
     expect(left.map((row) => row.level)).toEqual([
       "Level 2 of 3",
       "Level 1 of 3",
@@ -177,6 +177,21 @@ describe("Ship card", () => {
     ]);
     expect(right.map((row) => row.level)).toEqual(["Level 2 of 3", "Level 1 of 3"]);
     expect(right.map((row) => "mask" in row.icon)).toEqual([true, true]);
+  });
+
+  it("uses the selected paint swatch and falls back to the equipment icon", () => {
+    const swatch = "/material/obsidian.svg";
+    const view = { ...VIEW, paint: "Obsidian", paintSwatch: swatch };
+    const paint = shipSections(LABELS, view).equipment[0].at(-1);
+    expect(paint).toEqual({
+      actionLabel: "Change paint",
+      icon: { vector: swatch },
+      item: { id: "paint", kind: "equipment" },
+      label: "Obsidian",
+    });
+    expect(shipSections(LABELS, VIEW).equipment[0].at(-1)?.icon).toEqual({
+      vector: uiIconUrl("icon-shop-ship-paint"),
+    });
   });
 
   it("gives every weapon an ammunition cell, empty for the one without ammunition", () => {
@@ -319,7 +334,7 @@ describe("Ship sections rendering", () => {
       "Engine [2]",
       LABELS.shield,
       `${LABELS.tractorBeam} [3]`,
-      "Paint: Sky blue",
+      "Sky blue",
     ]);
     expect(sections[0]!.children[1]!.children.map(rowText)).toEqual([
       ["Stardust", "1,234,567"],
@@ -328,6 +343,20 @@ describe("Ship sections rendering", () => {
       ["Carrying: Nothing"],
       ["Towing: Nothing"],
     ]);
+  });
+
+  it("renders the swatch and both text lines in the same accessible paint button", () => {
+    const swatch = "/material/obsidian.svg";
+    const root = rendered(
+      shipSections(LABELS, { ...VIEW, paint: "Obsidian", paintSwatch: swatch }),
+    );
+    const rows = root.children[2]!.children[1]!.children;
+    const paint = rows.at(-1)!;
+    expect(rows.filter(({ dataset }) => dataset.item === "equipment:paint")).toEqual([paint]);
+    expect(paint.attributes.get("aria-label")).toBe("Change paint, Obsidian");
+    expect(rowText(paint)).toEqual(["Obsidian", "Change paint"]);
+    expect(paint.children[0]!.style.background).toContain(swatch);
+    expect(paint.children[0]!.attributes.get("aria-hidden")).toBe("true");
   });
 
   it.each([1, 2, 3])(
@@ -441,9 +470,15 @@ it("routes clickable inventory identities without reading labels", () => {
     expect.objectContaining({ item: { id: "laser", kind: "weapon" } }),
     row,
   );
+  const paint = root.children[2]!.children[1]!.children.at(-1)!;
+  resolveAdaHoldAction(root as unknown as HTMLElement, paint)?.activate();
+  expect(onItem).toHaveBeenLastCalledWith(
+    expect.objectContaining({ item: { id: "paint", kind: "equipment" } }),
+    paint,
+  );
   disposeShipSections(root as unknown as HTMLElement);
   row.dispatchEvent(new Event("click"));
-  expect(onItem).toHaveBeenCalledTimes(1);
+  expect(onItem).toHaveBeenCalledTimes(2);
 });
 
 it("keeps both empty status rows inert for click and registered hold activation", () => {
