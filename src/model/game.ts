@@ -1122,23 +1122,24 @@ export class GameModel {
         ...(jobType ? { jobType } : {}),
       },
     });
-    const activity = heldActivity(f.galaxy, this.state);
-    const scout =
-      activity?.id === "courierRun" && courierScoutTarget(flightWorldContext(f), activity);
-    if (scout) {
-      return waypoint(scout.id, scout, "job", this.label(scout.label));
-    }
     if (tracked === null) {
       return undefined;
     }
     const held = tracked === f.trackedQuestId ? this.held : undefined;
     const activity = heldActivity(f.galaxy, this.state);
-    if (activity?.id === "threadNeedle") {
-      const ring = activity.lit ?? 0;
-      const gate = needleCourses(f)?.activity.gates[ring];
-      return (
-        gate && waypoint(NEEDLE_ACTIVITY_TARGET, gate.point, "destination", `Ring ${ring + 1}`)
-      );
+    if (activity && tracked === this.taskQuestId(f.galaxy, activity)) {
+      if (activity.id === "courierRun") {
+        const scout = courierScoutTarget(flightWorldContext(f), activity);
+        if (scout) {
+          return waypoint(scout.id, scout, "job", this.label(scout.label));
+        }
+      } else if (activity.id === "threadNeedle") {
+        const ring = activity.lit ?? 0;
+        const gate = needleCourses(f)?.activity.gates[ring];
+        return (
+          gate && waypoint(NEEDLE_ACTIVITY_TARGET, gate.point, "destination", `Ring ${ring + 1}`)
+        );
+      }
     }
     if (needle) {
       const label = needle.step === "ring" ? `Ring ${needle.ringIndex + 1}` : this.label(needle.id);
@@ -5065,11 +5066,10 @@ export class GameModel {
     if (activity?.id === "threadNeedle") {
       return this.taskQuestId(flight.galaxy, activity);
     }
-    const progress = this.state.progress[flight.galaxy];
-    const activity = heldActivity(flight.galaxy, this.state);
     if (activity?.id === "courierRun" && activity.courier?.scout) {
       return this.taskQuestId(flight.galaxy, activity);
     }
+    const progress = this.state.progress[flight.galaxy];
     return BUILT.has(flight.galaxy) && progress.introduced && !progress.resolved
       ? `story:${flight.galaxy}:${progress.stage}`
       : null;

@@ -287,7 +287,7 @@ export const ECONOMY: EconomyCatalog = {
     amber: { label: "paintAmber", top: "#f4b665" },
     classic: { label: "paintClassic", top: "#ffffff" },
     cobalt: { label: "paintCobalt", top: "#6f9ff0" },
-    graphite: { label: "paintGraphite", top: "#d96b73" },
+    graphite: { label: "paintGraphite", top: "#ed3046" },
     iris: { label: "paintIris", top: "#8455bf" },
     seafoam: { label: "paintSeafoam", top: "#282d36" },
   },

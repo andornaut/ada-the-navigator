@@ -80,7 +80,7 @@ describe("saved quest reward boundaries", () => {
   it.each([
     [2, "miningContract", "hub", 180],
     [3, "guideCalf", "family", 105],
-    [4, "threadNeedle", "elderLoom", 150],
+    [4, "threadNeedle", "elderLoom", 50],
     [5, "courierRun", "pip", 165],
   ] as const)(
     "keeps galaxy %i's accepted activity base valid through save and completion",

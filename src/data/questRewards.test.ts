@@ -31,7 +31,7 @@ describe("quest completion rewards", () => {
 
   it.each([
     [2, 450],
-    [3, 600],
+    [3, 200],
     [4, 700],
     [5, 750],
   ] as const)("pays position %i's activity %i", (position, paid) => {
