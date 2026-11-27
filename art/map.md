@@ -48,7 +48,7 @@ oval as a distinct marker inside the playable field.
 
 One ink panel in two lines. The row holds, left to right: the galaxy name
 (`TYPE.heading`, white), a divider, "{percent}% mapped" (`TYPE.label`, cream),
-then a row of ten survey pips. Under it, the survey note `mapSurveyInfo`
+a matching divider, then a row of ten survey pips. Under it, the survey note `mapSurveyInfo`
 (`TYPE.body`, supporting `#b8b3c9`), "Mapping progress only tracks the
 galactic center.". Strings are Gameplay's (`gameplay/player-copy.md`).
 
@@ -58,19 +58,19 @@ galactic center.". Strings are Gameplay's (`gameplay/player-copy.md`).
 | `MAP_SCREEN.header.radius`   | 4     | As `PILL`                                                                                              |
 | `MAP_SCREEN.header.alpha`    | 0.65  | Ink `#181425` panel, the HUD panel alpha                                                               |
 | `MAP_SCREEN.header.padding`  | 8     | The survey note's inset at each side                                                                   |
-| `MAP_SCREEN.header.divider`  | 1x16  | Supporting `#b8b3c9`, centred on the row                                                               |
+| `MAP_SCREEN.header.divider`  | 1x16  | Both dividers use supporting `#b8b3c9` and are centred on the row                                      |
 | `MAP_SCREEN.header.pip`      | 8     | Pip diameter                                                                                           |
 | `MAP_SCREEN.header.pipPitch` | 11    | Pip centre to centre, with a 3 px gap between discs                                                    |
 | `MAP_SCREEN.header.pips`     | 10    | Pips in the row, one per tenth of the survey; the row is 107 wide (`9 * pipPitch + pip`)               |
 
-- Left: the pause press area's right plus `SPACING.gap`, the status pill's
-  rule: 62.75 at the 720 base, 93.75 with phone insets. Without the pause
-  button the header's left is the page rect's left. Top: the page rect's top.
+- Left: the page rect's left, 16 at the 720 base and 43 with phone insets.
+  Top: the page rect's top.
 - Row: every part centred on the 36 row. One equal gap `g` spans both outer
-  edges and each pair of neighbouring parts (name, divider, percent, pips), so
-  5 gaps (`mapHeaderGeometry`). `g` is at least
-  `SPACING.gap` and grows so the header is at least the note plus
-  `2 * padding` wide. Measure ink, not line boxes.
+  edges and each neighbouring pair of the five parts (name, divider, percent,
+  divider, pips), for six gaps. `mapHeaderGeometry` starts at `SPACING.gap`
+  and increases `g` to fit the note plus `2 * padding`. The row divides any
+  difference between that width and the final card width evenly across the six
+  gaps. Measure ink, not line boxes.
 - Note: one line, with 8 logical px at each side. Its width plus these
   insets sets the minimum header width, about 363 logical px before gap
   rounding.
@@ -83,12 +83,12 @@ galactic center.". Strings are Gameplay's (`gameplay/player-copy.md`).
   the same diameter, hollow, so the two read apart by shape as well as colour.
   0 to 9% fills none, 100% fills all ten.
 - The header's width is capped at `mapHeaderCap`:
-  `toolColumnLeft - SPACING.gap - header left`, 471.25 at the 720 base
-  (`542 - 8 - 62.75`) and 413.25 with phone insets (`515 - 8 - 93.75`), so it
-  always ends `SPACING.gap` left of the tools and clears the pause disc. The
-  pips always draw at full size, never scaled: the widest header, the longest
-  galaxy name with "100% mapped" and the 107 pip row, stays under 413.25, and
-  the note sets its minimum width (about 363 before gap rounding).
+  `toolColumnLeft - SPACING.gap - header left`, 470 at the 720 base
+  (`494 - 8 - 16`) and 416 with phone insets (`467 - 8 - 43`), so it
+  always ends at least `SPACING.gap` left of the tools. The pips always draw
+  at full size, never scaled. With the 720 × 360 reference ink widths, the
+  longest galaxy name with "100% mapped" and the 107 px pip row fits within
+  the phone cap at 395 logical px.
 - The fit region's top is `SPACING.gap` below the header's 64.
 - The header takes no input. Its accessible text is the name and the percent;
   the pips are decorative.
