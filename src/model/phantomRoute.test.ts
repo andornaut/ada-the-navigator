@@ -17,7 +17,7 @@ import { clearPhantomTraffic } from "../testing/phantomTraffic.ts";
 import { worldParts } from "./convex.ts";
 import { createEnemy, enemyIntegrity, hardpointOffset } from "./enemyAi.ts";
 import { enemyPartOutline } from "./enemyBody.ts";
-import { ensureDestination, ensureStation } from "./flight.ts";
+import { ensureDestination, ensureStation, salvageTarget } from "./flight.ts";
 import { GameModel, newGameState } from "./game.ts";
 import { activateFlightRegion } from "./geography.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
@@ -238,12 +238,21 @@ describe("Phantom full route under test-only chapter admission, not production r
         id: PHANTOM_FLAGSHIP,
         type: "enemyDestroyed",
       });
-      travel(model, {
-        x: flagship.x + flagship.radius + CONTENT.tuning.flight.shipRadius + 1,
-        y: flagship.y,
-      });
-      expect(model.bossHud()).toMatchObject({ disabled: true, hull: 1, id: PHANTOM_FLAGSHIP });
       const flight = model.state.flight!;
+      const offset = flagship.radius + CONTENT.tuning.flight.shipRadius + 1;
+      for (const [x, y] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ] as const) {
+        travel(model, { x: flagship.x + x * offset, y: flagship.y + y * offset });
+        if (salvageTarget(CONTENT, flight)?.id === PHANTOM_FLAGSHIP) {
+          break;
+        }
+      }
+      expect(salvageTarget(CONTENT, flight)?.id).toBe(PHANTOM_FLAGSHIP);
+      expect(model.bossHud()).toMatchObject({ disabled: true, hull: 1, id: PHANTOM_FLAGSHIP });
       const closer = createEnemy(
         enemyDefinition(6, "frigate"),
         { archetype: "frigate", id: "closer-salvage", packId: null, phase: 0 },

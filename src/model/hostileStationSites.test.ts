@@ -10,7 +10,8 @@ const context: HostileStationSitesContext = {
   geographySeed: 173,
   worldSide: GALAXY_SIDE,
 };
-const region = { height: 200000, width: 200000, x: -100000, y: -100000 };
+const half = GALAXY_SIDE / 2;
+const region = { height: GALAXY_SIDE, width: GALAXY_SIDE, x: -half, y: -half };
 const ids = (sites: ReturnType<typeof hostileStationSites>) => sites.map(({ id }) => id).sort();
 
 describe("hostile station geographic sites", () => {
@@ -44,7 +45,7 @@ describe("hostile station geographic sites", () => {
   });
 
   it("partitions half-open queries at a real site without gaps or duplicate boundary identities", () => {
-    const positive = { ...region, width: 100000, x: 0 };
+    const positive = { ...region, width: half, x: 0 };
     const sites = hostileStationSites(context, positive);
     const edge = sites[0]!.x;
     const left = hostileStationSites(context, { ...positive, width: edge });

@@ -180,7 +180,12 @@ describe("production unified marker facade", () => {
       { x: -GALAXY_SIDE / 2 + 5000, y: 0 },
       flight,
     );
-    const growers = ensureDestinationAt(CONTENT, "growers", { x: 90000, y: 0 }, flight);
+    const growers = ensureDestinationAt(
+      CONTENT,
+      "growers",
+      { x: GALAXY_SIDE / 2 - 10000, y: 0 },
+      flight,
+    );
     flight.player = { x: GALAXY_SIDE / 2 - 100, y: 0 };
     progress.known.push(growers.id);
     expect(model.trackedQuestId).toBe("story:1:1");

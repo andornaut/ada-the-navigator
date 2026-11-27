@@ -127,7 +127,9 @@ describe("additive station density", () => {
 
   it("keeps infill and retained settlements canonical across a periodic seam", () => {
     const context = { worldSide: GALAXY_SIDE };
-    const edge = -periodicWorldGrid(context, ECONOMY.station.cellSize).periodCells! / 2;
+    const grid = periodicWorldGrid(context, ECONOMY.station.cellSize);
+    const radius = Math.floor(grid.periodCells! / 2);
+    const edge = -radius;
     const accepted = [];
     for (let y = -4; y <= 4; y++) {
       const site = worldInfillStationInCell(context, ECONOMY, 5, { x: edge, y });
@@ -146,7 +148,7 @@ describe("additive station density", () => {
       expect(worldStationById(blocked, ECONOMY, 5, site.id)).toBeNull();
     }
     expect(accepted.length).toBeGreaterThan(0);
-    expect(worldStationById(context, ECONOMY, 5, `station:infill:${-edge},0`)).toBeNull();
+    expect(worldStationById(context, ECONOMY, 5, `station:infill:${radius + 1},0`)).toBeNull();
   });
 
   it("round-trips a genuinely docked infill station without growing the save schema", () => {

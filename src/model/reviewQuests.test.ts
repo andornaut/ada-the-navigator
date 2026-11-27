@@ -9,6 +9,7 @@ import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { type BoardContext, type JobBook, rerollBoards, stationBoard } from "./jobs.ts";
 import { flightStationContext, stationsNear, worldStationsNear } from "./stations.ts";
+import { stationSpecialty } from "./stationServices.ts";
 import type { JobOffer } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -16,7 +17,7 @@ const legacySites = stationsNear(ECONOMY, 1, 40000, { x: 0, y: 0 }).sort(
   (a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y),
 );
 
-/** Sunflower's flight docked at its station nearest the origin, its two nearest discovered. */
+/** Sunflower's flight docked at its nearest jobs station, with the next one discovered too. */
 function docked() {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   Object.assign(model.state, { prologueSeen: true, started: true });
@@ -27,7 +28,9 @@ function docked() {
   const sites = worldStationsNear(flightStationContext(flight), ECONOMY, 1, 40000, {
     x: 0,
     y: 0,
-  }).sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y));
+  })
+    .filter(({ id }) => stationSpecialty(1, id) === "jobs")
+    .sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y));
   flight.objects = flight.objects.filter((object) => !object.enemy);
   for (const site of sites.slice(0, 2)) {
     ensureStation(CONTENT, site.id, flight);

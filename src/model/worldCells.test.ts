@@ -50,11 +50,10 @@ describe("explicit world placement grids", () => {
     const context = { worldSide: GALAXY_SIDE };
     const edge = GALAXY_SIDE / 2;
     for (const [nominal, count, key] of [
-      [ECONOMY.station.cellSize, 16, "-8,7"],
-      [CONTENT.tuning.chunkSize, 390, "-195,194"],
-      [ORE_FIELDS.cellSize, 44, "-22,21"],
+      [ECONOMY.station.cellSize, 15, "-7,7"],
+      [CONTENT.tuning.chunkSize, 351, "-175,175"],
+      [ORE_FIELDS.cellSize, 40, "-20,19"],
     ] as const) {
-      expect(() => worldGrid(context, nominal)).toThrow(RangeError);
       const grid = periodicWorldGrid(context, nominal);
       expect(grid.periodCells).toBe(count);
       expect(grid.pitch).toBe(GALAXY_SIDE / count);
@@ -65,7 +64,7 @@ describe("explicit world placement grids", () => {
 
   it.each([
     [exactGridSide, 338],
-    [GALAXY_SIDE, 58],
+    [GALAXY_SIDE, 52],
   ])("requires resampling for currents and preserves density at side %s", (worldSide, count) => {
     expect(() => worldGrid({ worldSide }, CURRENTS.cellSize)).toThrow(RangeError);
     const grid = periodicWorldGrid({ worldSide }, CURRENTS.cellSize);

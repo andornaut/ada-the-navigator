@@ -1,6 +1,7 @@
 import type { EconomyCatalog } from "../data/economy.ts";
 import { LANDMARK_TUNING } from "../data/jobs.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { GALAXY_SIDE } from "../data/world.ts";
 import { flightDestinationSites } from "./destinationContext.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { retainedSettlementWithin } from "./legacySettlements.ts";
@@ -260,6 +261,18 @@ export function stationInCell(
 export function namesStation(catalog: EconomyCatalog, galaxy: GalaxyNumber, id: string): boolean {
   return worldNamesStation({}, catalog, galaxy, id);
 }
+/** A saved station ID may refer to the current chart or a retained earlier discovery. */
+export function namesSavedStation(
+  catalog: EconomyCatalog,
+  galaxy: GalaxyNumber,
+  id: string,
+): boolean {
+  return (
+    namesStation(catalog, galaxy, id) ||
+    worldNamesStation({ worldSide: GALAXY_SIDE }, catalog, galaxy, id)
+  );
+}
+
 export function stationById(
   catalog: EconomyCatalog,
   galaxy: GalaxyNumber,

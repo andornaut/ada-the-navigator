@@ -10,6 +10,7 @@ import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { landmarkById, landmarkLabel, landmarkSites } from "./landmarks.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
+import { stationSpecialty } from "./stationServices.ts";
 
 function fixture() {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
@@ -19,7 +20,9 @@ function fixture() {
   const station = worldStationsNear(flightStationContext(flight), ECONOMY, 1, 20000, {
     x: 0,
     y: 0,
-  }).sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y))[0]!;
+  })
+    .filter(({ id }) => stationSpecialty(1, id) === "jobs")
+    .sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y))[0]!;
   ensureStation(CONTENT, station.id, flight);
   model.state.progress[1].stations.push(station.id);
   flight.player = { x: station.x, y: station.y };

@@ -17,7 +17,7 @@ import {
 import type { ChapterContext, ChapterResult, ChapterRuntime } from "./chapterProtocol.ts";
 import { ensureDestination, ensureDestinationAt, ensureStation } from "./flight.ts";
 import { guideBeaconSlotAt, storyGuideBeaconSlot } from "./guideBeacons.ts";
-import { flightStationContext, stationById, worldStationById } from "./stations.ts";
+import { flightStationContext, namesSavedStation, worldStationById } from "./stations.ts";
 import type { DialogueState, GalaxyProgress, UseAction, Vec } from "./types.ts";
 
 export const ANDROMEDA_PARTS = "beaconParts";
@@ -36,7 +36,7 @@ export function validAndromedaProgress(value: unknown): value is AndromedaProgre
   return (
     Object.keys(state).every((key) => key === "station" || key === "settlement") &&
     (state.station === undefined ||
-      (typeof state.station === "string" && stationById(ECONOMY, 5, state.station) !== null)) &&
+      (typeof state.station === "string" && namesSavedStation(ECONOMY, 5, state.station))) &&
     (state.settlement === undefined ||
       (typeof state.settlement === "string" && settlementById(ECONOMY, state.settlement) !== null))
   );

@@ -29,15 +29,15 @@ describe("ordinary exploration renewal", () => {
     expect(state).toMatchObject({ departed: true, distance: 0, seconds: 0 });
   });
 
-  it.each(["x", "y"] as const)("keeps renewal local across the 200,000-unit %s seam", (axis) => {
+  it.each(["x", "y"] as const)("keeps renewal local across the 180,000-unit %s seam", (axis) => {
     const chart = { ...context, chunkSize: CONTENT.tuning.chunkSize, worldSide: GALAXY_SIDE };
     const half = GALAXY_SIDE / 2;
-    const pitch = GALAXY_SIDE / 390;
+    const pitch = GALAXY_SIDE / 351;
     const at = (coordinate: number) =>
       axis === "x" ? { x: coordinate, y: 0 } : { x: 0, y: coordinate };
     let position = at(half - 1);
     const state = explorationRenewal(chart, position);
-    expect(state.footprint).toEqual(at(194));
+    expect(state.footprint).toEqual(at(175));
 
     const stepTo = (next: ReturnType<typeof at>, seconds: number) => {
       stepExplorationRenewal(chart, { from: position, seconds, to: next }, state);

@@ -905,7 +905,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   safely placed sites per galaxy while preserving the original 12 identities and
   positions. Distant landmarks remain visible, scannable, chartable and mapped;
   the galactic-center mapping-progress and survey-area denominator stays 25000.
-- Each galaxy wraps on both axes across a square 200000 world units on a side.
+- Each galaxy wraps on both axes across a square 180000 world units on a side.
   Flight crosses to the opposite edge with its direction and speed intact.
   Flight, placement and distance queries use the same wrap geometry, so
   distances run the short way across the seam. The local map shows one wrap
@@ -913,9 +913,9 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   at the seam, and every position draws at its canonical point. At maximum
   zoom-out, pan and zoom keep part of the survey oval visible, even if Ada
   goes off screen near a seam. Before v1, loading a version-14 save with an
-  in-progress flight on the former 240000-unit chart triggers the existing save
+  in-progress flight on the former 200000-unit chart triggers the existing save
   repair. It backs up the original save and starts a new game on the
-  200000-unit chart. This size check applies to the saved flight's topology.
+  180000-unit chart. This size check applies to the saved flight's topology.
   Valid saves retain their discoveries and story progress across later flights.
   Landmark labels use the stable shared [Quests](quests.md#landmarks) contract.
   Undiscovered places never appear. Map places keep at least

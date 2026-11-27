@@ -30,7 +30,7 @@ const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const pilot = { ...idle, move: { x: 1, y: 0 }, throttle: 0.25 };
 
 function fixture(kind: "resources" | "salvage") {
-  const admitted = approach(kind, kind === "resources" ? 13 : 12)!;
+  const admitted = approach(kind, kind === "resources" ? 13 : 31)!;
   expect(admitted).toBeDefined();
   expect(admitted.progress.explorationSites?.[admitted.candidate.id]).toEqual({
     kind,
@@ -395,8 +395,8 @@ it("posts an admitted near-route hunt on Scan, then accepts and pays through the
   throw new Error("No near-route hunt fixture admitted");
 });
 
-it("admits and posts the seed-125 hunt when every seeded centre is blocked", () => {
-  const seed = 125;
+it("admits and posts the seed-3 hunt when every seeded centre is blocked", () => {
+  const seed = 3;
   const world = { worldSide: GALAXY_SIDE };
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   const progress = model.state.progress[1];
@@ -415,11 +415,11 @@ it("admits and posts the seed-125 hunt when every seeded centre is blocked", () 
     seed,
     TARGET_MARKER_RANGE,
     { x: 0, y: 0 },
-  ).find(({ id }) => id === "poi:1:0,-1:0")!;
+  ).find(({ id }) => id === "poi:1:0,0:0")!;
   const [issuer, other] = stations.sort(
     (a, b) => worldDistance(world, a, site) - worldDistance(world, b, site),
   );
-  expect(issuer?.id).toBe("station:-1,-2");
+  expect(issuer?.id).toBe("station:-1,1");
   expect(other).toBeDefined();
   progress.stations.push(issuer!.id, other!.id);
   const id = `lead:${site.id}`;

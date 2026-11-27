@@ -53,7 +53,7 @@ it("backs up an in-progress campaign on the previous 240,000-unit chart", async 
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.startGalaxy(1);
   const old = model.saveDocument();
-  old.flight!.topology = { kind: "torus", side: 240_000, version: 1 };
+  old.flight!.topology = { kind: "torus", side: 200_000, version: 1 };
   const raw = JSON.stringify(old);
   const f = fixture(raw);
 

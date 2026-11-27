@@ -50,7 +50,7 @@ function fixture(player: Vec, galaxy: GalaxyNumber = 1) {
   return flight;
 }
 
-const seamY = ECONOMY.station.cellSize / 2;
+const seamY = 0;
 
 /** Seam interactions require open space beyond canonical station exclusion zones. */
 function stationClearFixture(player: Vec, galaxy: GalaxyNumber = 1) {

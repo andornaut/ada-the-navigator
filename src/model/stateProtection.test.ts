@@ -473,7 +473,12 @@ describe("guards fire back wherever Ada attacks from", () => {
     const site = model.state.progress[3].requiredSites!.holodisk!;
     const out = { x: leader.x - site.x, y: leader.y - site.y };
     const reach = Math.hypot(out.x, out.y);
-    flight.player = { x: site.x + (out.x / reach) * 100, y: site.y + (out.y / reach) * 100 };
+    // Approach from the edge of the protected site so the leader closes into view promptly.
+    const approach = content.tuning.exclusionRadius - 5;
+    flight.player = {
+      x: site.x + (out.x / reach) * approach,
+      y: site.y + (out.y / reach) * approach,
+    };
     flight.velocity = { x: 0, y: 0 };
     expect(Math.hypot(flight.player.x - site.x, flight.player.y - site.y)).toBeLessThan(
       content.tuning.exclusionRadius,

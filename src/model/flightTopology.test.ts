@@ -42,7 +42,7 @@ it("starts and resumes only the new canonical flight chart", () => {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.startGalaxy(1);
   const current = model.saveDocument();
-  expect(current.flight?.topology).toEqual({ kind: "torus", side: 200_000, version: 1 });
+  expect(current.flight?.topology).toEqual({ kind: "torus", side: 180_000, version: 1 });
   expect(restoreSave(current)?.flight?.topology).toEqual(current.flight?.topology);
   expect(restoreSave({ ...current, version: SAVE_VERSION - 1 })).toBeNull();
 
@@ -51,6 +51,6 @@ it("starts and resumes only the new canonical flight chart", () => {
   expect(restoreSave(missing)).toBeNull();
 
   const wrongSide = structuredClone(current);
-  wrongSide.flight!.topology = { kind: "torus", side: 1_152_000, version: 1 };
+  wrongSide.flight!.topology = { kind: "torus", side: 200_000, version: 1 };
   expect(restoreSave(wrongSide)).toBeNull();
 });

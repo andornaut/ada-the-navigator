@@ -630,9 +630,11 @@ describe("jobs in play", () => {
   it("show the held job at the top of every board in its galaxy, marked Active", () => {
     const { model } = docked();
     const held = take(model, "survey");
-    const sites = stationsNear(ECONOMY, 1, 30_000, { x: 0, y: 0 }).filter(
-      ({ id }) => id !== held.station,
-    );
+    const flight = model.state.flight!;
+    const sites = worldStationsNear(flightStationContext(flight), ECONOMY, 1, 30_000, {
+      x: 0,
+      y: 0,
+    }).filter(({ id }) => id !== held.station);
     const capabilities = new Set<boolean>();
     for (const site of sites) {
       ensureStation(CONTENT, site.id, model.state.flight!);

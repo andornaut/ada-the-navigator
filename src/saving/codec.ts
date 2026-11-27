@@ -65,7 +65,7 @@ import {
   type StationOffer,
   type StationRestockState,
 } from "../model/stationRestock.ts";
-import { HUB_STATION, namesStation, stationById } from "../model/stations.ts";
+import { HUB_STATION, namesSavedStation } from "../model/stations.ts";
 import { stationShopCategories, stationSpecialty } from "../model/stationServices.ts";
 import { currentPage, openingScene, resolutionScene } from "../model/storybook.ts";
 import { readStoryCursor } from "../model/storyCursor.ts";
@@ -363,7 +363,8 @@ function spaceObject(
     value.id.length > 0 &&
     !["__proto__", "prototype", "constructor"].includes(value.id) &&
     OBJECT_KINDS.includes(String(value.kind)) &&
-    (value.kind !== "station" || stationById(ECONOMY, galaxy, value.id) !== null) &&
+    (value.kind !== "station" ||
+      (value.id !== HUB_STATION && namesSavedStation(ECONOMY, galaxy, value.id))) &&
     (value.kind === "wreck" ? wreckState(value.id, value.wreck) : value.wreck === undefined) &&
     (value.release === undefined ||
       (value.kind === "pickup" &&
@@ -899,7 +900,9 @@ function greetingCounts(galaxy: GalaxyNumber, value: unknown): boolean {
     record(value) &&
     Object.entries(value).every(
       ([id, docked]) =>
-        namesStation(ECONOMY, galaxy, id) && Number.isSafeInteger(docked) && Number(docked) > 0,
+        namesSavedStation(ECONOMY, galaxy, id) &&
+        Number.isSafeInteger(docked) &&
+        Number(docked) > 0,
     )
   );
 }
@@ -935,7 +938,7 @@ function stationIds(galaxy: GalaxyNumber, value: unknown): boolean {
     strings(value) &&
     Array.isArray(value) &&
     new Set(value).size === value.length &&
-    value.every((id) => namesStation(ECONOMY, galaxy, String(id)))
+    value.every((id) => namesSavedStation(ECONOMY, galaxy, String(id)))
   );
 }
 
@@ -1031,7 +1034,7 @@ function validStationRestock(
       !GALAXY_NUMBERS.includes(galaxy) ||
       typeof id !== "string" ||
       key !== JSON.stringify([galaxy, id]) ||
-      !namesStation(ECONOMY, galaxy, id) ||
+      !namesSavedStation(ECONOMY, galaxy, id) ||
       !record(slots)
     ) {
       return false;
@@ -1112,7 +1115,7 @@ function jobOffer(galaxy: GalaxyNumber, value: unknown): boolean {
     typeof value.id !== "string" ||
     !JOB_TYPES.includes(value.type as (typeof JOB_TYPES)[number]) ||
     typeof value.station !== "string" ||
-    !namesStation(ECONOMY, galaxy, value.station) ||
+    !namesSavedStation(ECONOMY, galaxy, value.station) ||
     !nonnegative(value.reward) ||
     typeof value.item !== "string" ||
     !record(value.target) ||
@@ -1137,7 +1140,7 @@ function jobOffer(galaxy: GalaxyNumber, value: unknown): boolean {
   if (value.type === "delivery") {
     return (
       target !== value.station &&
-      (stationById(ECONOMY, galaxy, target) !== null ||
+      ((target !== HUB_STATION && namesSavedStation(ECONOMY, galaxy, target)) ||
         ((destinationIds[galaxy] ?? []).includes(target) && deliveryDestination(target)))
     );
   }
@@ -1162,7 +1165,7 @@ function jobsState(value: unknown): boolean {
       record(stations) &&
       Object.entries(stations).every(
         ([station, offers]) =>
-          namesStation(ECONOMY, Number(galaxy) as GalaxyNumber, station) &&
+          namesSavedStation(ECONOMY, Number(galaxy) as GalaxyNumber, station) &&
           Array.isArray(offers) &&
           offers.every(
             (offer) =>
