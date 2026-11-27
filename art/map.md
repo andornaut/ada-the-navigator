@@ -496,15 +496,16 @@ discovered place for the reveal, so a hunt's search area is never fogged.
 
 ## Projection and fit
 
-| Token                      | Value | Rule                                                                        |
-| -------------------------- | ----- | --------------------------------------------------------------------------- |
-| `MAP_SCREEN.fitMargin`     | 22    | Chip radius plus `SPACING.gap`: symbols keep this far inside the fit region |
-| `MAP_SCREEN.minBox.width`  | 12000 | The opening box is at least this many projected units across                |
-| `MAP_SCREEN.minBox.height` | 6000  | And this many down                                                          |
-| `MAP_SCREEN.chartRadius`   | 25000 | `CHARTING_RADIUS` (`src/model/map.ts`): the disc `minScale` fits            |
-| `MAP_SCREEN.zoomStep`      | 1.5   | One zoom step                                                               |
-| `MAP_SCREEN.wheelStep`     | 100   | Wheel `deltaY` px per zoom step                                             |
-| `MAP_SCREEN.dragThreshold` | 8     | `SCROLL.dragThreshold`: movement past this pans and never selects           |
+| Token                       | Value | Rule                                                                         |
+| --------------------------- | ----- | ---------------------------------------------------------------------------- |
+| `MAP_SCREEN.fitMargin`      | 22    | Chip radius plus `SPACING.gap`: symbols keep this far inside the fit region  |
+| `MAP_SCREEN.minBox.width`   | 12000 | The opening box is at least this many projected units across                 |
+| `MAP_SCREEN.minBox.height`  | 6000  | And this many down                                                           |
+| `MAP_SCREEN.chartRadius`    | 25000 | `CHARTING_RADIUS` (`src/model/map.ts`), the disc used for the zoom reference |
+| `MAP_SCREEN.zoomStep`       | 1.5   | One zoom step                                                                |
+| `MAP_SCREEN.zoomRangeShift` | 2     | Outward shift applied to the zoom-in and disc-fit references                 |
+| `MAP_SCREEN.wheelStep`      | 100   | Wheel `deltaY` px per zoom step                                              |
+| `MAP_SCREEN.dragThreshold`  | 8     | `SCROLL.dragThreshold`: movement past this pans and never selects            |
 
 - Projection: the flight's own, `x - y` across and `(x + y) / 2` down
   (`chartProjection`), times the map's `scale` in logical px per projected
@@ -516,14 +517,16 @@ discovered place for the reveal, so a hunt's search area is never fogged.
   (288 at the 720 base, 285 with phone insets, above the footer). Inset by
   `fitMargin` on every side it is the inner region. The panel floats over its
   lower part.
-- `maxScale = min(innerWidth / minBox.width, zoomHeight / minBox.height)`,
+- Both zoom references move two steps outward by dividing their scales by
+  `shift = zoomStep ** zoomRangeShift` (`1.5²`). The zoom-in bound is
+  `maxScale = min(innerWidth / minBox.width, zoomHeight / minBox.height) / shift`,
   where `zoomHeight` is the page rect's height less `2 * fitMargin` (284 at
   the 720 base).
-- `minScale = max(disc fit, max(fieldWidth / (2 side), fieldHeight / side))`,
-  where the disc fit is `min(innerWidth / (2 sqrt(2) R), innerHeight /
-(sqrt(2) R))` for `R = chartRadius` and `side` is the wrap square's 240000.
-  The disc fit is the tighter at every supported view, so the table below
-  holds.
+- `minScale = max(disc fit / shift, world fit)`, where disc fit is
+  `min(innerWidth / (2 sqrt(2) R), innerHeight / (sqrt(2) R))` for
+  `R = chartRadius`. The hard floor `world fit` is
+  `max(fieldWidth / (2 side), fieldHeight / side)` for the wrap square's
+  180000-unit side.
 - Opening fit: the bounding box of Ada and every discovered place, at their
   canonical positions in the wrap square, projected, grown about its centre to
   at least `minBox`; `scale = clamp(min(innerWidth / box width, innerHeight /
@@ -532,10 +535,10 @@ box height), minScale, maxScale)`; the box centre at the inner region's
   clamps it, pan the least distance to bring Ada into the inner region, then
   apply the pan limits below. Nothing is selected on opening.
 - Pan limit: pan and zoom stay within one wrap period, the canonical
-  240000-unit square that flight wraps into, which the map projects as a 2:1
+  180000-unit square that flight wraps into, which the map projects as a 2:1
   diamond. The inner region's centre stays inside the diamond (`|x| / 2 + |y|
 <= side / 2`), and the whole map field's edge stays inside the diamond's
-  bounding box (x within +-240000, y within +-120000), so up to half the view
+  bounding box (x within ±180000, y within ±90000), so up to half the view
   can show past a diagonal seam. A pan beyond the one-wrap bounds moves to
   the nearest centre within them. At maximum zoom-out only (`minScale`),
   the actual projected charting oval must overlap the map field inset by
@@ -551,26 +554,23 @@ box height), minScale, maxScale)`; the box centre at the inner region's
 
 | View, CSS px    | Fit region      | Inner region    | `maxScale` | `minScale` | Zoom steps between |
 | --------------- | --------------- | --------------- | ---------- | ---------- | ------------------ |
-| 844x390, insets | 692.31 x 196.62 | 648.31 x 152.62 | 0.04677    | 0.00432    | 5.88               |
-| 720x360 (base)  | 688 x 200       | 644 x 156       | 0.04733    | 0.00441    | 5.85               |
-| 1280x720        | 688 x 245       | 644 x 201       | 0.05367    | 0.00569    | 5.54               |
+| 844x390, insets | 692.31 x 196.62 | 648.31 x 152.62 | 0.02079    | 0.00216    | 5.58               |
+| 720x360 (base)  | 688 x 200       | 644 x 156       | 0.02104    | 0.00200    | 5.80               |
+| 1280x720        | 688 x 245       | 644 x 201       | 0.02385    | 0.00253    | 5.54               |
 
 ### Close places
 
-A far station or a wide spread of discoveries lowers the opening scale, and
-close places' chips then overlap. Two rules keep each one reachable:
+A far station or a wide spread of discoveries lowers the opening scale.
+Nearby places' chips can overlap even at full zoom.
 
 1. Press rule. Each chip's press area is `hitAround(chip)`, 48 x 48 on its
    drawn centre. A press goes to `pressedArea` (`hitAreas.ts`): of the areas
    that take the press in, the chip whose drawn centre is nearest wins. Every
    chip is therefore selectable by pressing its own visible centre, however
    its area overlaps a neighbour's. Exact ties go to the chip drawn on top.
-2. Scale rule. Zoom always reaches `maxScale`, where two chips stop
-   overlapping once their places are 599 projected units apart at the phone
-   view (522 at 1280x720). The projection shrinks a world distance by at most
-   `sqrt(2)`, so places at least 1020 world units apart are always separable
-   at full zoom. At `minScale` the same holds from about 9200 world units.
-   Gameplay keeps every mapped place at least 1020 world units apart.
+2. Scale rule. Zoom spreads the chips up to `maxScale`. When chips still
+   overlap, the nearest-centre press rule applies. Gameplay keeps mapped places
+   at least 1020 world units apart.
 
 The selected chip draws above every other chip, so the place the panel names
 is always fully visible. Header, tools, footer and panel sit above the field
