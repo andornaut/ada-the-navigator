@@ -304,7 +304,11 @@ afterEach(() => {
   producer.reveal.mockClear();
   producer.scroll.mockClear();
 });
-function screenFixture(owned = true, beforeCreate?: (root: QuestNode) => void) {
+function screenFixture(
+  owned = true,
+  beforeCreate?: (root: QuestNode) => void,
+  tracking?: Parameters<typeof createQuestsScreen>[1]["tracking"],
+) {
   vi.stubGlobal("document", {
     addEventListener: vi.fn(),
     createElement: (tag: string) => new QuestNode(tag),
@@ -326,6 +330,7 @@ function screenFixture(owned = true, beforeCreate?: (root: QuestNode) => void) {
     onClose,
     onLocate,
     reducedMotion: () => true,
+    ...(tracking ? { tracking } : {}),
   });
   return { onClose, onLocate, root, screen };
 }
@@ -453,6 +458,114 @@ it("keeps Back outside the quest detail's scroll group", () => {
   expect(body).toBe(detail);
   expect(footer?.className).toBe("ada-quest-footer");
   expect(footer?.querySelectorAll("button")[0]?.dataset.action).toBe("quest-back");
+  screen.dispose();
+});
+
+const trackableJob: QuestEntry = {
+  ...entry,
+  id: "survey:active",
+  jobType: "survey",
+  line: { kind: "job", target: null, text: "Survey the signal" },
+};
+const trackButton = (root: QuestNode) =>
+  root.querySelectorAll("button").find(({ dataset }) => dataset.action === "quest-track");
+const clickQuestAction = (button: QuestNode) =>
+  button.dispatchEvent(new Event("click", { cancelable: true }));
+
+it("only offers tracking for an active job detail in the current galaxy", () => {
+  const completed = { ...trackableJob, id: "survey:complete" };
+  const away = { ...trackableJob, galaxy: 2 as const, id: "survey:away" };
+  const canTrack = vi.fn((id: string) => id !== completed.id);
+  const track = vi.fn(() => true);
+  const { root, screen } = screenFixture(true, undefined, { canTrack, track });
+  screen.setState([entry, trackableJob, completed, away], [], 1);
+  screen.open();
+  expect(trackButton(root)).toBeUndefined();
+  screen.open(entry.id);
+  expect(trackButton(root)).toBeUndefined();
+  screen.open(away.id);
+  expect(trackButton(root)).toBeUndefined();
+  expect(canTrack).not.toHaveBeenCalled();
+  screen.open(completed.id);
+  expect(trackButton(root)).toBeUndefined();
+  expect(canTrack).toHaveBeenCalledExactlyOnceWith(completed.id);
+  screen.open(trackableJob.id);
+  expect(trackButton(root)?.textContent).toBe("Track quest");
+  expect(
+    root.querySelectorAll("button").filter((node) => node.textContent === "Track quest"),
+  ).toHaveLength(1);
+  expect(track).not.toHaveBeenCalled();
+  screen.dispose();
+});
+
+it("tracks once through the standard footer control and returns to the same list page and row", () => {
+  const track = vi.fn(() => true);
+  const { onClose, root, screen } = screenFixture(true, undefined, { canTrack: () => true, track });
+  screen.setState([entry, { ...trackableJob, id: "survey:other" }, trackableJob], [], 1);
+  screen.open();
+  clickQuestAction(
+    root.querySelectorAll("button").find(({ textContent }) => textContent === "Next")!,
+  );
+  const row = () =>
+    root.querySelectorAll("button").find(({ dataset }) => dataset.questId === trackableJob.id)!;
+  clickQuestAction(row());
+  const button = trackButton(root)!;
+  expect(button.matches(".ui-standard-button")).toBe(true);
+  expect(button.getAttribute("data-ui-button-role")).toBe("secondary");
+  const [card, detail] = producer.scroll.mock.lastCall!;
+  expect(detail.querySelectorAll("button")).not.toContain(button);
+  expect(
+    card.body.children[1]?.querySelectorAll("button").map(({ dataset }) => dataset.action),
+  ).toEqual(["quest-track", "quest-back"]);
+  expect(producer.reveal.mock.lastCall?.[0].focus.dataset.action).toBe("quest-back");
+  clickQuestAction(button);
+  clickQuestAction(button);
+  expect(track).toHaveBeenCalledExactlyOnceWith(trackableJob.id);
+  expect(trackButton(root)).toBeUndefined();
+  expect(root.querySelectorAll("output")[0]?.textContent).toBe("2/2");
+  expect(producer.reveal.mock.lastCall?.[0].focus).toBe(row());
+  expect(onClose).not.toHaveBeenCalled();
+  screen.dispose();
+});
+
+it("rechecks tracking on a held action and closes a flight detail only after success", () => {
+  const canTrack = vi.fn(() => true);
+  const track = vi.fn<(questId: string) => boolean>(() => true).mockReturnValueOnce(false);
+  const { onClose, root, screen } = screenFixture(true, undefined, { canTrack, track });
+  const state = [trackableJob];
+  screen.setState(state, [], 1);
+  screen.open(trackableJob.id, "flight");
+  const initial = trackButton(root)!;
+  const resolve = (node: QuestNode) =>
+    actionBinding.resolveAdaHoldAction(root as unknown as HTMLElement, node)!;
+  const initialHold = resolve(initial);
+  canTrack.mockReturnValue(false);
+  expect(initialHold.available()).toBe(false);
+  initialHold.activate();
+  clickQuestAction(initial);
+  expect(track).not.toHaveBeenCalled();
+  screen.setState(state, [], 1);
+  expect(trackButton(root)).toBeUndefined();
+
+  canTrack.mockReturnValue(true);
+  screen.setState(state, [], 1);
+  const current = trackButton(root)!;
+  expect(current).toBeDefined();
+  expect(
+    root
+      .querySelectorAll(".ada-quest-footer")[0]!
+      .querySelectorAll("button")
+      .map(({ dataset }) => dataset.action),
+  ).toEqual(["quest-other", "quest-track", "quest-close"]);
+  const hold = resolve(current);
+  hold.activate();
+  expect(screen.isOpen()).toBe(true);
+  expect(onClose).not.toHaveBeenCalled();
+  hold.activate();
+  clickQuestAction(current);
+  expect(track.mock.calls).toEqual([[trackableJob.id], [trackableJob.id]]);
+  expect(screen.isOpen()).toBe(false);
+  expect(onClose).toHaveBeenCalledOnce();
   screen.dispose();
 });
 

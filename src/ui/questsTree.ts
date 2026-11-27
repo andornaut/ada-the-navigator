@@ -1,6 +1,6 @@
 import type { ComponentNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
-export type QuestFooterAction = "dismiss" | "flightLog" | "other" | "previous" | "next";
+export type QuestFooterAction = "dismiss" | "flightLog" | "other" | "previous" | "next" | "track";
 export interface QuestFooterData {
   readonly dismiss: {
     readonly actionId: "quest-back" | "quest-close";
@@ -14,6 +14,7 @@ export interface QuestFooterData {
     readonly next: { readonly disabled: boolean; readonly label: string };
     readonly previous: { readonly disabled: boolean; readonly label: string };
   };
+  readonly track?: { readonly label: string };
 }
 export type QuestsFooterSchema = {
   button: {
@@ -93,6 +94,21 @@ export function questsTree(
                   action: "flightLog" as const,
                   actionId: "quest-flight-log",
                   label: data.flightLog.label,
+                  role: "secondary" as const,
+                },
+              },
+            ]),
+        ...(data.track === undefined
+          ? []
+          : [
+              {
+                component: "button" as const,
+                key: "track",
+                kind: "component" as const,
+                props: {
+                  action: "track" as const,
+                  actionId: "quest-track",
+                  label: data.track.label,
                   role: "secondary" as const,
                 },
               },

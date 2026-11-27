@@ -43,6 +43,7 @@ import { CARGO_ICONS } from "./statusPill.ts";
 
 export type QuestOrigin = "flight" | "list" | "ship";
 const FLIGHT_LOG_LABEL = "Flight log";
+const TRACK_QUEST_LABEL = "Track quest";
 
 interface LocatedEndpoint {
   readonly kind: "source" | "target";
@@ -135,9 +136,13 @@ export function createQuestsScreen(
     readonly onClose: () => void;
     readonly onLocate: (id: string) => void;
     readonly reducedMotion: () => boolean;
+    readonly tracking?: {
+      readonly canTrack: (questId: string) => boolean;
+      readonly track: (questId: string) => boolean;
+    };
   },
 ) {
-  const { labels } = options;
+  const { labels, tracking } = options;
   const modal = document.createElement("div");
   modal.className = "ada-modal ada-quests-screen";
   modal.hidden = true;
@@ -182,6 +187,7 @@ export function createQuestsScreen(
   let contextEntries: readonly QuestEntry[] | null = null;
   let places: readonly MapPlace[] = [];
   let selected: string | null = null;
+  let renderedTrackId: string | null = null;
   let galaxy: GalaxyNumber | undefined;
   let origin: QuestOrigin = "list";
   let rootDismissal: Pick<QuestFooterData["dismiss"], "intent" | "label"> = {
@@ -230,6 +236,15 @@ export function createQuestsScreen(
       image.src = path;
     }
     return image;
+  };
+  const trackableQuestId = (): string | null => {
+    if (!tracking || selected === null || showingFlightLog) {
+      return null;
+    }
+    const entry = (contextEntries ?? entries).find((quest) => quest.id === selected);
+    return entry?.line.kind === "job" && entry.galaxy === galaxy && tracking.canTrack(entry.id)
+      ? entry.id
+      : null;
   };
   const back = () => {
     if (showingFlightLog) {
@@ -591,6 +606,20 @@ export function createQuestsScreen(
       },
       questsBodyTree(bodyData),
     );
+    const trackId = trackableQuestId();
+    renderedTrackId = trackId;
+    if (tracking && trackId !== null) {
+      footerActions.set("track", () => {
+        if (
+          trackableQuestId() === trackId &&
+          tracking.track(trackId) &&
+          !modal.hidden &&
+          selected === trackId
+        ) {
+          back();
+        }
+      });
+    }
     const detailBack = showingFlightLog || (entry && origin === "list");
     const footerData: QuestFooterData = {
       dismiss: detailBack
@@ -599,6 +628,7 @@ export function createQuestsScreen(
       ...(offersFlightLog ? { flightLog: { label: FLIGHT_LOG_LABEL } } : {}),
       ...(other === undefined ? {} : { other }),
       ...(pager === undefined ? {} : { pager }),
+      ...(trackId === null ? {} : { track: { label: TRACK_QUEST_LABEL } }),
     };
     footerActions.set("dismiss", back);
     const footerRun = (action: QuestFooterAction) => {
@@ -619,12 +649,16 @@ export function createQuestsScreen(
               const paginates = initial.action === "previous" || initial.action === "next";
               let stopRefusal: (() => void) | undefined;
               const action = createStandardTextAction(root, initial.label, {
-                availability: () =>
-                  props.disabled
+                availability: () => {
+                  if (initial.action === "track" && trackableQuestId() !== trackId) {
+                    return { kind: "disabled" };
+                  }
+                  return props.disabled
                     ? paginates
                       ? { kind: "unavailable", reason: "Action unavailable." }
                       : { kind: "disabled" }
-                    : { kind: "available" },
+                    : { kind: "available" };
+                },
                 current: () => !disposed && !modal.hidden && inCurrentView(root, action.element),
                 pointerRefusal: paginates,
                 ...(paginates
@@ -807,7 +841,7 @@ export function createQuestsScreen(
           return;
         }
       }
-      if (signature !== revision && !modal.hidden) {
+      if (!modal.hidden && (signature !== revision || renderedTrackId !== trackableQuestId())) {
         render();
       }
       signature = revision;
