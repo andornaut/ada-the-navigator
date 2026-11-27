@@ -133,7 +133,7 @@ describe("enemy fire profiles", () => {
     }
   });
 
-  it("assigns exactly two signature types without changing armed mount counts", () => {
+  it("limits ordinary heavy loadouts without changing armed mount counts", () => {
     for (const position of ROUTE_POSITIONS) {
       for (const archetype of ["capital", "frigate"] as const) {
         const mounts = HEAVY_MOUNTS[archetype];
@@ -142,7 +142,10 @@ describe("enemy fire profiles", () => {
         for (const id of ["ship:0", "ship:1"]) {
           const loadout = heavyLoadout(archetype, position, id)!;
           expect([...loadout.keys()]).toEqual(active);
-          expect(new Set(loadout.values()).size).toBe(2);
+          expect(new Set(loadout.values()).size).toBe(archetype === "capital" ? 3 : 2);
+          expect([...loadout.values()].filter((weapon) => weapon === "scattershot")).toHaveLength(
+            archetype === "capital" ? 2 : 0,
+          );
           const special =
             archetype === "frigate"
               ? "heavyMissile"

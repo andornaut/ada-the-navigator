@@ -1,4 +1,12 @@
+import {
+  ANDROMEDA_REDACT,
+  CARTWHEEL_CLAIM,
+  NEEDLE_CADENCE,
+  SUNFLOWER_CAPITAL_BOSS,
+  WHIRLPOOL_CAPITAL_BOSS,
+} from "./capitalBosses.ts";
 import type { EnemyActorKind } from "./enemyActors.ts";
+import { PHANTOM_FLAGSHIP_ID } from "./enemyIdentity.ts";
 import { enemyRandom } from "./enemyRandom.ts";
 import type { RoutePosition } from "./galaxies.ts";
 import type { EnemyWeapon, Weapon } from "./types.ts";
@@ -14,10 +22,57 @@ export const HEAVY_SIGNATURES = {
   capital: {
     lance: { mount: "weapon-left", weapon: "chargedLance" },
     mine: { mount: "stern-right", weapon: "mineLayer" },
-    remaining: "scattershot",
+    remaining: "laser",
   },
   frigate: { mount: "port", remaining: "laser", weapon: "heavyMissile" },
 } as const;
+
+const POINT_DEFENSE_MOUNTS = {
+  "weapon-rear-left": "scattershot",
+  "weapon-rear-right": "scattershot",
+} as const;
+
+/** Named capital turret overrides in route order. Other active mounts carry Laser. */
+const BOSS_TURRETS: Readonly<Record<string, Readonly<Partial<Record<string, EnemyWeapon>>>>> = {
+  [`1:${SUNFLOWER_CAPITAL_BOSS.id}`]: {
+    ...POINT_DEFENSE_MOUNTS,
+    "weapon-left": "chargedLance",
+    "weapon-right": "rapidMissile",
+  },
+  [`2:${WHIRLPOOL_CAPITAL_BOSS.id}`]: {
+    "weapon-left": "chargedLance",
+    "weapon-rear-left": "rapidMissile",
+    "weapon-rear-right": "rapidMissile",
+    "weapon-right": "rapidMissile",
+  },
+  [`3:${NEEDLE_CADENCE.id}`]: {
+    ...POINT_DEFENSE_MOUNTS,
+    "claw-left": "multiLaser",
+    "claw-right": "chargedLance",
+    "weapon-left": "chargedLance",
+    "weapon-right": "multiLaser",
+  },
+  [`4:${ANDROMEDA_REDACT.id}`]: {
+    ...POINT_DEFENSE_MOUNTS,
+    "claw-left": "heavyMissile",
+    "claw-right": "heavyMissile",
+    "weapon-left": "chargedLance",
+    "weapon-right": "heavyMissile",
+  },
+  [`5:${CARTWHEEL_CLAIM.id}`]: {
+    ...POINT_DEFENSE_MOUNTS,
+    "stern-left": "mineLayer",
+    "stern-right": "mineLayer",
+  },
+  [`6:${PHANTOM_FLAGSHIP_ID}`]: {
+    "claw-right": "chargedLance",
+    "stern-left": "mineLayer",
+    "stern-right": "mineLayer",
+    "weapon-left": "chargedLance",
+    "weapon-rear-left": "heavyMissile",
+    "weapon-rear-right": "heavyMissile",
+  },
+};
 
 const SHARED_MOUNT_RATES = {
   1: [0.25, 0.4],
@@ -88,7 +143,7 @@ export function capitalProfile(position: RoutePosition, shipId: string): "lance"
     : "lance";
 }
 
-/** Assigns only existing active mount ids, with one specialized mount and no additional parts. */
+/** Assigns weapons to existing active mounts. Unnamed capitals keep one seeded specialist. */
 export function signatureLoadout(
   archetype: "capital" | "frigate",
   position: RoutePosition,
@@ -96,12 +151,21 @@ export function signatureLoadout(
   activeMounts: readonly string[],
 ): ReadonlyMap<string, EnemyWeapon> {
   const role = HEAVY_SIGNATURES[archetype];
+  const boss = archetype === "capital" ? BOSS_TURRETS[`${position}:${shipId}`] : undefined;
+  if (boss) {
+    return new Map(activeMounts.map((id) => [id, boss[id] ?? role.remaining]));
+  }
   const special =
     archetype === "capital"
       ? HEAVY_SIGNATURES.capital[capitalProfile(position, shipId)]
       : HEAVY_SIGNATURES.frigate;
+  const pointDefense: Readonly<Partial<Record<string, EnemyWeapon>>> =
+    archetype === "capital" ? POINT_DEFENSE_MOUNTS : {};
   return new Map(
-    activeMounts.map((id) => [id, id === special.mount ? special.weapon : role.remaining]),
+    activeMounts.map((id) => [
+      id,
+      id === special.mount ? special.weapon : (pointDefense[id] ?? role.remaining),
+    ]),
   );
 }
 

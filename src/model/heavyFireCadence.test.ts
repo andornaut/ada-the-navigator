@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { NEEDLE_CADENCE } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import {
   type EnemyDefinition,
@@ -55,6 +56,30 @@ function mounts(definition: EnemyDefinition) {
 }
 
 describe("heavy fire clocks", () => {
+  it.each([
+    [4, NEEDLE_CADENCE.id, 1.875, 1.125],
+    [6, PHANTOM_FLAGSHIP_ID, 1, 1],
+  ] as const)(
+    "leaves a full warning between the paired lances in galaxy %i",
+    (galaxy, id, gap, rest) => {
+      const definition = enemyDefinition(galaxy, "capital", id);
+      const state = createEnemy(
+        definition,
+        { archetype: "capital", id, packId: null, phase: 0 },
+        { x: 300, y: 0 },
+      );
+      state.engaged = true;
+      state.facing = { x: -1, y: 0 };
+      const next = stepEnemy(definition, context(state), state);
+      const lances = next.fire.filter(({ weapon }) => weapon === "chargedLance");
+      expect(lances.map(({ hardpointId }) => hardpointId)).toEqual(["weapon-left"]);
+      const cooldown = (hardpoint: string) =>
+        next.state.hardpoints.find(({ id }) => id === hardpoint)!.cooldown;
+      expect(cooldown("claw-right")).toBeCloseTo(gap - 0.01, 9);
+      expect(cooldown("weapon-left") - cooldown("claw-right")).toBeCloseTo(rest, 9);
+    },
+  );
+
   it.each(["frigate", "capital", "flagship"] as const)(
     "starts %s phases at first eligibility using each mount's own interval",
     (kind) => {
