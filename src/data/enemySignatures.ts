@@ -1,3 +1,4 @@
+import type { EnemyActorKind } from "./enemyActors.ts";
 import { enemyRandom } from "./enemyRandom.ts";
 import type { RoutePosition } from "./galaxies.ts";
 import type { EnemyWeapon, Weapon } from "./types.ts";
@@ -18,32 +19,29 @@ export const HEAVY_SIGNATURES = {
   frigate: { mount: "port", remaining: "laser", weapon: "heavyMissile" },
 } as const;
 
-export const ENEMY_FIRE_MULTIPLIERS = {
-  capital: 1.5,
-  fighter: 1,
-  frigate: 2,
-  hostileStation: 1,
-  interceptor: 1,
-  platform: 1.5,
-  retaliator: 1,
-  swarm: 1,
-} as const;
+const SHARED_MOUNT_RATES = {
+  1: [0.25, 0.4],
+  2: [0.25, 0.4],
+  3: [0.35, 0.5],
+  4: [0.35, 0.5],
+  5: [0.45, 0.6],
+  6: [0.45, 0.6],
+} as const satisfies Record<RoutePosition, readonly [number, number]>;
 
-/** Per-weapon ship fire multipliers that replace the archetype's ENEMY_FIRE_MULTIPLIERS entry. */
-export const ENEMY_WEAPON_FIRE_MULTIPLIERS = {
-  frigate: { laser: 1 },
-} as const satisfies Partial<
-  Record<keyof typeof ENEMY_FIRE_MULTIPLIERS, Partial<Record<EnemyWeapon, number>>>
->;
-
-/** The ship fire multiplier for one weapon on an archetype. */
-export function enemyShipFireMultiplier(
-  archetype: keyof typeof ENEMY_FIRE_MULTIPLIERS,
-  weapon: EnemyWeapon,
+/** Absolute fractions of Ada's same-level rate. Fixed front Lasers use the standard band. */
+export function enemySharedMountRate(
+  position: RoutePosition,
+  archetype: EnemyActorKind,
+  weapon: Weapon,
+  fixed: boolean,
 ): number {
-  const overrides: Readonly<Partial<Record<string, Partial<Record<EnemyWeapon, number>>>>> =
-    ENEMY_WEAPON_FIRE_MULTIPLIERS;
-  return overrides[archetype]?.[weapon] ?? ENEMY_FIRE_MULTIPLIERS[archetype];
+  const [standard, heavy] = SHARED_MOUNT_RATES[position];
+  const usesHeavyBand =
+    (archetype === "capital" && !(fixed && weapon === "laser")) ||
+    (archetype === "frigate" && weapon === "heavyMissile") ||
+    (archetype === "platform" && weapon === "laser") ||
+    (archetype === "retaliator" && weapon === "rapidMissile");
+  return usesHeavyBand ? heavy : standard;
 }
 
 export const CAPITAL_PROFILE_SELECTION = {

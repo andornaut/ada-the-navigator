@@ -3,7 +3,6 @@ import { expect, it } from "vitest";
 import { difficultyOf } from "./enemyCatalog.ts";
 import {
   capitalProfile,
-  ENEMY_FIRE_MULTIPLIERS,
   HOSTILE_STATION_SIGNATURE,
   hostileStationHullHp,
   hostileStationSignatureTiers,
@@ -13,22 +12,12 @@ import {
 } from "./enemySignatures.ts";
 import { ROUTE, ROUTE_POSITION } from "./galaxies.ts";
 
-it("states the approved small-craft weapons and ship fire multipliers", () => {
+it("states the approved small-craft weapons", () => {
   expect(SMALL_CRAFT_SIGNATURES).toEqual({
     fighter: "multiLaser",
     interceptor: "phaser",
     retaliator: "rapidMissile",
     swarm: "laser",
-  });
-  expect(ENEMY_FIRE_MULTIPLIERS).toEqual({
-    capital: 1.5,
-    fighter: 1,
-    frigate: 2,
-    hostileStation: 1,
-    interceptor: 1,
-    platform: 1.5,
-    retaliator: 1,
-    swarm: 1,
   });
 });
 

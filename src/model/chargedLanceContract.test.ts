@@ -73,6 +73,17 @@ describe("charged lance six-damage contract", () => {
     expect(tell.fired).toBe(false);
   });
 
+  it("starts Cartwheel's next warning two seconds after the first warning starts", () => {
+    const { flight, mount, target, tell } = fixture();
+    const remaining = target.enemy!.hardpoints.find((part) => part.id === mount)!.cooldown;
+    expect(remaining + 1 / 60).toBeCloseTo(2, 9);
+    stepFlight(CONTENT, remaining - 0.01, idle, flight);
+    expect(tell.fired).toBe(true);
+    expect(activeEnemyBeams(flight).filter((beam) => beam.kind === "lance")).toEqual([]);
+    stepFlight(CONTENT, 0.02, idle, flight);
+    expect(activeEnemyBeams(flight).find((beam) => beam.kind === "lance")?.fired).toBe(false);
+  });
+
   it("deals canonical six damage once, rather than once per displayed frame", () => {
     expect(ENEMY_ONLY_DAMAGE.chargedLance).toBe(6);
     const { flight, tell } = fixture();

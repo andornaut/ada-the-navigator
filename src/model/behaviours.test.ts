@@ -6,17 +6,13 @@ import {
   DIFFICULTY_SCALE,
   encounterQuiet,
   encounterRate,
-  ENEMY_FIRE,
   type EnemyArchetype,
   enemyCatalog,
   enemyDefinition,
-  enemyOnly,
   escortTuning,
-  type FireProfile,
 } from "../data/enemyCatalog.ts";
 import { SPACING_RADII } from "../data/enemySpacing.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { weaponAt } from "../data/weaponCatalog.ts";
 import {
   aimDrift,
   createEnemy,
@@ -426,50 +422,20 @@ describe("standoff", () => {
 
 describe("galaxy difficulty", () => {
   it.each([
-    [1, 1.2, 1.44, 0.25],
-    [3, 1.3, 1.63, 0.25],
-    [4, 1.4, 1.81, 0.3],
-    [5, 1.45, 1.88, 0.3],
-    [2, 1.5, 1.94, 0.35],
-    [6, 1.5, 2, 0.35],
-  ] as const)(
-    "applies galaxy %i perception %f, enemy-only curve %f and shared fire share %f",
-    (galaxy, perception, enemyOnlyRate, sharedRate) => {
-      for (const archetype of Object.keys(enemyCatalog) as EnemyArchetype[]) {
-        const base = enemyCatalog[archetype];
-        const scaled = enemyDefinition(galaxy, archetype);
-        const interval = (fire: FireProfile) => {
-          const shipRate =
-            archetype === "frigate"
-              ? fire.weapon === "laser"
-                ? 1
-                : 2
-              : archetype === "capital" || archetype === "platform"
-                ? 1.5
-                : 1;
-          if (enemyOnly(fire.weapon)) {
-            return ENEMY_FIRE[fire.weapon].interval / (enemyOnlyRate * shipRate);
-          }
-          const relative =
-            archetype === "swarm" && fire.weapon === "laser"
-              ? 7 / 9
-              : archetype === "retaliator" && fire.weapon === "rapidMissile"
-                ? 5 / 4
-                : 1;
-          return (
-            weaponAt(fire.weapon, fire.level).intervalSeconds / (sharedRate * shipRate * relative)
-          );
-        };
-        expect(scaled.perception).toBeCloseTo(base.perception * perception, 9);
-        expect(scaled.fire.interval).toBeCloseTo(interval(scaled.fire), 9);
-        for (const part of scaled.hardpoints) {
-          if (part.kind === "weapon") {
-            expect(part.fire.interval).toBeCloseTo(interval(part.fire), 9);
-          }
-        }
-      }
-    },
-  );
+    [1, 1.2],
+    [3, 1.3],
+    [4, 1.4],
+    [5, 1.45],
+    [2, 1.5],
+    [6, 1.5],
+  ] as const)("applies galaxy %i perception %f", (galaxy, perception) => {
+    for (const archetype of Object.keys(enemyCatalog) as EnemyArchetype[]) {
+      expect(enemyDefinition(galaxy, archetype).perception).toBeCloseTo(
+        enemyCatalog[archetype].perception * perception,
+        9,
+      );
+    }
+  });
 
   it("gives every route position Gameplay's hull and hardpoint HP and retreat time", () => {
     const archetypes = [

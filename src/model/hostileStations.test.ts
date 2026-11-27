@@ -319,14 +319,17 @@ it.each([
       { archetype: "hostileStation", id: plan.id, packId: null, phase: 0, weaponLevel: 1 },
       plan.point,
     );
-    for (const part of enemy.hardpoints) {
-      part.cooldown = 0;
-    }
+    // Observe a complete longest interval so every phased mount can fire.
+    const interval = Math.max(
+      ...definition.hardpoints.flatMap((part) =>
+        part.kind === "weapon" ? [part.fire.interval] : [],
+      ),
+    );
     const intent = stepEnemy(
       definition,
       {
         adaWidth: CONTENT.tuning.flight.shipRadius * 2,
-        dt: 0.01,
+        dt: interval,
         inPlayView: true,
         initialPackSizes: {},
         lead: 1,

@@ -9,8 +9,7 @@ import {
 import { ART_FRONT_LASER_MOUNTS } from "./enemyMuzzles.ts";
 import { ENEMY_FORWARD_GUNS, type ForwardGuns } from "./enemyNavigation.ts";
 import {
-  ENEMY_FIRE_MULTIPLIERS,
-  enemyShipFireMultiplier,
+  enemySharedMountRate,
   HEAVY_SIGNATURES,
   HOSTILE_STATION_SIGNATURE,
   PLATFORM_SIGNATURE,
@@ -18,11 +17,7 @@ import {
   signatureLoadout,
   SMALL_CRAFT_SIGNATURES,
 } from "./enemySignatures.ts";
-import {
-  ENEMY_SHARED_WEAPON_TUNING,
-  enemyRelativeFireRate,
-  equippedEnemyWeaponLevel,
-} from "./enemyWeaponLevels.ts";
+import { ENEMY_SHARED_WEAPON_TUNING, equippedEnemyWeaponLevel } from "./enemyWeaponLevels.ts";
 import { byPosition, ROUTE_POSITION, type RoutePosition } from "./galaxies.ts";
 import { hostileStationDefinition } from "./hostileStations.ts";
 import { SHIP_PHYSICS, type ShipPhysics } from "./shipPhysics.ts";
@@ -195,11 +190,11 @@ const engine = (id: string, x: number, y: number): HardpointDefinition => ({
   offset: { x, y },
 });
 type Cadence = Pick<FireProfile, "burst" | "interval">;
-/** Enemy-only base intervals retain their own cadence and the existing galaxy fire curve. */
+/** Unpositioned enemy-only profiles use the first applicable battle interval. */
 export const ENEMY_FIRE: Readonly<Record<EnemyOnlyWeapon, Cadence>> = {
-  chargedLance: { interval: 6 },
-  mineLayer: { interval: 5 },
-  ringBurst: { interval: 3.5 },
+  chargedLance: { interval: 4 },
+  mineLayer: { interval: 2 },
+  ringBurst: { interval: 3 },
 };
 /**
  * An enemy projectile flies this share of Ada's level 1 speed for the same weapon: `forward` from
@@ -810,12 +805,12 @@ export interface PositionDifficulty {
   hp: Readonly<Record<SmallCraft, number>>;
   /** Added to both ends of every swarm and fighter group range. */
   groupBonus: number;
-  /** Multipliers on the base catalog's perception, fire rate and encounter rate. */
-  rates: { encounters: number; fire: number; notice: number };
+  /** Multipliers on the base catalog's perception and encounter rate. */
+  rates: { encounters: number; notice: number };
 }
 
 /**
- * One tuning value multiplying every enemy's HP, the fire rate and the encounter rate at every
+ * One tuning value multiplying every enemy's HP and the encounter rate at every
  * position, so the whole curve tunes at once; Stardust uses the unscaled HP.
  */
 export const DIFFICULTY_SCALE = 1;
@@ -823,7 +818,7 @@ export const DIFFICULTY_SCALE = 1;
 const position = (
   hp: [swarm: number, fighter: number, interceptor: number, retaliator: number],
   groupBonus: number,
-  rates: [notice: number, fire: number, encounters: number],
+  rates: [notice: number, encounters: number],
   hardpointHp: number,
   hulls: [frigate: number, capital: number],
   heavyShare: number,
@@ -833,17 +828,17 @@ const position = (
   heavyShare,
   hp: { fighter: hp[1], interceptor: hp[2], retaliator: hp[3], swarm: hp[0] },
   hulls: { capital: hulls[1], frigate: hulls[0] },
-  rates: { encounters: rates[2], fire: rates[1], notice: rates[0] },
+  rates: { encounters: rates[1], notice: rates[0] },
 });
 
 /** Difficulty by route position (gameplay/ships.md "Difficulty"). */
 export const POSITION_DIFFICULTY: Readonly<Record<RoutePosition, PositionDifficulty>> = {
-  1: position([2, 4, 3, 8], 1, [1.2, 1.44, 1.725], 10, [40, 80], 1),
-  2: position([2, 5, 3, 9], 1, [1.3, 1.63, 1.8975], 10, [44, 88], 1),
-  3: position([3, 5, 4, 10], 2, [1.4, 1.81, 2.07], 12, [60, 120], 1.2),
-  4: position([3, 6, 4, 11], 2, [1.45, 1.88, 2.2425], 12, [64, 128], 1.3),
-  5: position([3, 6, 5, 11], 3, [1.5, 1.94, 2.415], 14, [88, 176], 1.4),
-  6: position([3, 6, 5, 12], 3, [1.5, 2, 2.5875], 14, [96, 192], 1.5),
+  1: position([2, 4, 3, 8], 1, [1.2, 1.725], 10, [40, 80], 1),
+  2: position([2, 5, 3, 9], 1, [1.3, 1.8975], 10, [44, 88], 1),
+  3: position([3, 5, 4, 10], 2, [1.4, 2.07], 12, [60, 120], 1.2),
+  4: position([3, 6, 4, 11], 2, [1.45, 2.2425], 12, [64, 128], 1.3),
+  5: position([3, 6, 5, 11], 3, [1.5, 2.415], 14, [88, 176], 1.4),
+  6: position([3, 6, 5, 12], 3, [1.5, 2.5875], 14, [96, 192], 1.5),
 };
 
 /** A galaxy's difficulty, by its route position. */
@@ -978,25 +973,35 @@ export { PHANTOM_FLAGSHIP_ID };
 export const FLAGSHIP_HULL_HP = 320;
 export const FLAGSHIP_PART_HP = 18;
 
-/** Shared weapons use the player cadence share; enemy-only weapons retain their galaxy curve. */
-export function enemyFireRate(
+/** Seconds between attack starts, including any warning already inside the weapon cycle. */
+export function enemyFireInterval(
   galaxy: GalaxyNumber,
-  archetype: keyof typeof ENEMY_FIRE_MULTIPLIERS,
-  weapon: EnemyWeapon,
+  archetype: EnemyActorKind,
+  fire: Pick<FireProfile, "weapon" | "level">,
+  fixed = false,
 ): number {
-  const shipRate = enemyShipFireMultiplier(archetype, weapon);
-  return enemyOnly(weapon)
-    ? difficultyOf(galaxy).rates.fire * DIFFICULTY_SCALE * shipRate
-    : ENEMY_SHARED_WEAPON_TUNING.fireRateShare[ROUTE_POSITION[galaxy]] *
-        shipRate *
-        enemyRelativeFireRate(archetype, weapon);
+  const position = ROUTE_POSITION[galaxy];
+  const { level, weapon } = fire;
+  if (weapon === "chargedLance") {
+    return 4 - Math.floor((position - 1) / 2);
+  }
+  if (weapon === "ringBurst") {
+    return position >= 5 ? 2 : ENEMY_FIRE.ringBurst.interval;
+  }
+  if (weapon === "mineLayer") {
+    return ENEMY_FIRE.mineLayer.interval;
+  }
+  return (
+    weaponAt(weapon, level).intervalSeconds /
+    enemySharedMountRate(position, archetype, weapon, fixed)
+  );
 }
 
 const scaled = new WeakMap<FrontLaserMounts, Map<string, EnemyDefinition>>();
 /**
  * The catalog definition at a galaxy's route position: its roster behaviour, its position's
  * weapons, hull and hardpoint HP, perception and fire rate, with
- * difficultyScale on HP and fire rate. A heavy's weapon hardpoints are its tier's armed mounts,
+ * difficultyScale on HP. A heavy's weapon hardpoints are its tier's armed mounts,
  * armed with the loadout ship `shipId` draws (heavyLoadout), then its front Lasers on Art's prow
  * mounts (FRONT_LASER_MOUNTS).
  */
@@ -1034,7 +1039,7 @@ export function mountedEnemyDefinition(
           const profile = enemyFire("hostileStation", { level: weaponLevel, weapon });
           return {
             ...profile,
-            interval: profile.interval / enemyFireRate(galaxy, "hostileStation", weapon),
+            interval: enemyFireInterval(galaxy, "hostileStation", profile),
           };
         },
         partHp: difficultyOf(galaxy).hardpointHp * DIFFICULTY_SCALE,
@@ -1083,9 +1088,9 @@ export function mountedEnemyDefinition(
           ]
         : entry.hardpoints,
     };
-    const faster = (fire: FireProfile): FireProfile => ({
+    const withCadence = (fire: FireProfile, fixed = false): FireProfile => ({
       ...fire,
-      interval: fire.interval / enemyFireRate(galaxy, archetype, fire.weapon),
+      interval: enemyFireInterval(galaxy, archetype, fire, fixed),
     });
     const hardpointHp = difficulty.hardpointHp * DIFFICULTY_SCALE;
     definition = {
@@ -1093,10 +1098,10 @@ export function mountedEnemyDefinition(
       assetKey,
       behaviour: catalog.behaviour,
       escortFallback: catalog.escortFallback,
-      fire: faster(catalog.fire),
+      fire: withCadence(catalog.fire),
       hardpoints: catalog.hardpoints.map((part) =>
         part.kind === "weapon"
-          ? { ...part, fire: faster(part.fire), hp: hardpointHp }
+          ? { ...part, fire: withCadence(part.fire, part.fixed), hp: hardpointHp }
           : { ...part, hp: hardpointHp },
       ),
       hp: unscaledHullHp(galaxy, archetype) * DIFFICULTY_SCALE,

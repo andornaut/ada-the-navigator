@@ -6,6 +6,7 @@ import {
   enemyDefinition,
   PHANTOM_FLAGSHIP_ID,
 } from "../data/enemyCatalog.ts";
+import { weaponAt } from "../data/weaponCatalog.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./enemyAi.ts";
@@ -80,6 +81,60 @@ describe("heavy fire clocks", () => {
         );
       });
       expect(state.firePhasesInitialized).toBeUndefined();
+    },
+  );
+
+  it.each([
+    [5, 6, 0.35, 3],
+    [2, 7, 0.45, 2],
+    [6, 8, 0.45, 2],
+  ] as const)(
+    "phases and pauses the actual station tier in galaxy %i",
+    (galaxy, count, share, ringInterval) => {
+      const definition = enemyDefinition(galaxy, "hostileStation", "phased-station", 3);
+      const state = createEnemy(
+        definition,
+        {
+          archetype: "hostileStation",
+          id: "phased-station",
+          packId: null,
+          phase: 0,
+          weaponLevel: 3,
+        },
+        { x: 300, y: 0 },
+      );
+      state.engaged = true;
+      const ineligible = { ...context(state, 0.2), targetable: false };
+      const before = stepEnemy(definition, ineligible, state);
+      expect(before.state.firePhasesInitialized).toBeUndefined();
+      expect(before.fire).toEqual([]);
+      const first = stepEnemy(definition, context(before.state), before.state);
+      expect(first.state.firePhasesInitialized).toBe(true);
+      expect(first.fire.map(({ hardpointId }) => hardpointId)).toEqual(["weapon-0"]);
+      expect(first.state.hardpoints).toHaveLength(count);
+      for (const [index, mount] of first.state.hardpoints.entries()) {
+        expect(mount.id).toBe(`weapon-${index}`);
+        const interval =
+          index === 5 ? ringInterval : weaponAt("rapidMissile", 3).intervalSeconds / share;
+        expect(mount.cooldown).toBeCloseTo((index ? index / count : 1) * interval - 0.01, 9);
+      }
+      first.state.hardpoints[0]!.hp = 0;
+      const paused = stepEnemy(
+        definition,
+        { ...context(first.state, 0.3), visibility: "occluded" },
+        first.state,
+      );
+      expect(paused.fire).toEqual([]);
+      expect(paused.state.hardpoints.map(({ cooldown }) => cooldown)).toEqual(
+        first.state.hardpoints.map(({ cooldown }) => cooldown),
+      );
+      const ringWait = paused.state.hardpoints[5]!.cooldown;
+      const resumed = stepEnemy(definition, context(paused.state, ringWait + 0.001), paused.state);
+      const ring = resumed.fire.filter(({ weapon }) => weapon === "ringBurst");
+      expect(ring).toHaveLength(8);
+      expect(ring.map(({ delay, hardpointId }) => ({ delay, hardpointId }))).toEqual(
+        Array.from({ length: 8 }, () => ({ delay: ringWait, hardpointId: "weapon-5" })),
+      );
     },
   );
 
@@ -219,7 +274,8 @@ describe("heavy fire clocks", () => {
     expect(restoreSave(saved)).not.toBeNull();
   });
 
-  it.each(["platform", "hostileStation"] as const)("leaves %s clocks continuous", (archetype) => {
+  it("leaves platform clocks continuous", () => {
+    const archetype = "platform";
     const definition = enemyDefinition(6, archetype, "continuous-clock");
     const state = createEnemy(
       definition,

@@ -199,17 +199,17 @@ describe("enemy fire profiles", () => {
       const profile = enemyDefinition(galaxy, archetype).fire;
       return [profile.weapon, profile.level, profile.interval, profile.projectileSpeed];
     };
-    // Sunflower and Whirlpool share 25%, Needle 30%, and Phantom 35% of the player rate.
-    expect(fire(1, "swarm")).toEqual(["laser", 1, 0.3 / (0.25 * (7 / 9)), 300]);
+    // Sunflower and Whirlpool share 25%, Needle 35%, and Phantom 45% of the player rate.
+    expect(fire(1, "swarm")).toEqual(["laser", 1, 0.3 / 0.25, 300]);
     expect(fire(1, "fighter")).toEqual(["multiLaser", 1, 0.4 / 0.25, 240]);
     expect(fire(1, "interceptor")).toEqual(["phaser", 1, 1 / 0.25, 0]);
-    expect(fire(1, "retaliator")).toEqual(["rapidMissile", 1, 0.3 / (0.25 * 1.25), 300]);
-    expect(fire(4, "swarm")).toEqual(["laser", 1, 0.3 / (0.3 * (7 / 9)), 300]);
-    expect(fire(4, "fighter")).toEqual(["multiLaser", 1, 0.4 / 0.3, 240]);
-    expect(fire(4, "interceptor")).toEqual(["phaser", 1, 1 / 0.3, 0]);
-    expect(fire(4, "retaliator")).toEqual(["rapidMissile", 1, 0.3 / (0.3 * 1.25), 300]);
-    expect(fire(6, "fighter")).toEqual(["multiLaser", 1, 0.4 / 0.35, 240]);
-    expect(fire(6, "interceptor")).toEqual(["phaser", 1, 1 / 0.35, 0]);
+    expect(fire(1, "retaliator")).toEqual(["rapidMissile", 1, 0.3 / 0.4, 300]);
+    expect(fire(4, "swarm")).toEqual(["laser", 1, 0.3 / 0.35, 300]);
+    expect(fire(4, "fighter")).toEqual(["multiLaser", 1, 0.4 / 0.35, 240]);
+    expect(fire(4, "interceptor")).toEqual(["phaser", 1, 1 / 0.35, 0]);
+    expect(fire(4, "retaliator")).toEqual(["rapidMissile", 1, 0.3 / 0.5, 300]);
+    expect(fire(6, "fighter")).toEqual(["multiLaser", 1, 0.4 / 0.45, 240]);
+    expect(fire(6, "interceptor")).toEqual(["phaser", 1, 1 / 0.45, 0]);
     expect(enemyFire("frigate", { level: 1, weapon: "heavyMissile" }).interval).toBe(
       weaponAt("heavyMissile", 1).intervalSeconds,
     );
@@ -262,7 +262,7 @@ describe("enemy fire profiles", () => {
         }
       }
     }
-    expect(ENEMY_FIRE.chargedLance.interval).toBe(6);
+    expect(ENEMY_FIRE.chargedLance.interval).toBe(4);
     // The platform's Laser fires two-shot bursts 0.15 s apart.
     const turret = enemyDefinition(2, "platform").hardpoints[0]!;
     expect(turret.kind === "weapon" && turret.fire.burst).toEqual({ count: 2, gap: 0.15 });

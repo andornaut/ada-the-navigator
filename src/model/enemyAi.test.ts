@@ -8,7 +8,7 @@ import {
   type EnemyDefinition,
   enemyDefinition,
   enemyFire,
-  enemyFireRate,
+  enemyFireInterval,
   fireDamageRatio,
 } from "../data/enemyCatalog.ts";
 import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
@@ -57,7 +57,7 @@ function mixedMechanismDefinition(): EnemyDefinition {
         const fire = enemyFire("capital", { level: 1, weapon });
         return {
           ...part,
-          fire: { ...fire, interval: fire.interval / enemyFireRate(5, "capital", weapon) },
+          fire: { ...fire, interval: enemyFireInterval(5, "capital", fire) },
         };
       }),
   };

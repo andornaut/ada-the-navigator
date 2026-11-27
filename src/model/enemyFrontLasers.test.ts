@@ -164,11 +164,8 @@ describe("heavy front Lasers", () => {
 
   it("fires the shared Laser at the equipped level, heavy shot speed, the ship's Laser rate and part HP", () => {
     for (const galaxy of [1, 6] as const) {
-      const share = galaxy === 1 ? 0.25 : 0.35;
-      for (const [archetype, rate] of [
-        ["frigate", 1],
-        ["capital", 1.5],
-      ] as const) {
+      const share = galaxy === 1 ? 0.25 : 0.45;
+      for (const archetype of ["frigate", "capital"] as const) {
         const definition = mountedEnemyDefinition(TEST_MOUNTS, galaxy, archetype, "ship", 3);
         const turret = definition.hardpoints.find((part) => part.kind === "weapon")!;
         for (const part of frontParts(definition)) {
@@ -187,10 +184,7 @@ describe("heavy front Lasers", () => {
             9,
           );
           expect(part.fire.projectileSpeed).toBeCloseTo(400, 9);
-          expect(part.fire.interval).toBeCloseTo(
-            weaponAt("laser", 3).intervalSeconds / (share * rate),
-            12,
-          );
+          expect(part.fire.interval).toBeCloseTo(weaponAt("laser", 3).intervalSeconds / share, 12);
         }
       }
     }

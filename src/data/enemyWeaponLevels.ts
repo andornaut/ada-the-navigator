@@ -12,29 +12,8 @@ export const ENEMY_WEAPON_LEVEL_WEIGHTS = {
   6: [0, 50, 50],
 } as const satisfies Readonly<Record<RoutePosition, readonly [number, number, number]>>;
 
-/** Shared enemy damage and fire shares use galaxy route position, not numeric galaxy id. */
-export const ENEMY_SHARED_WEAPON_TUNING = {
-  damageMultiplier: 1,
-  fireRateShare: {
-    1: 0.25,
-    2: 0.25,
-    3: 0.3,
-    4: 0.3,
-    5: 0.35,
-    6: 0.35,
-  },
-  relativeRates: {
-    retaliator: { rapidMissile: 5 / 4 },
-    swarm: { laser: 7 / 9 },
-  },
-} as const;
-
-/** Existing slow and fast archetype relationships, independent of the shared player cadence. */
-export function enemyRelativeFireRate(archetype: string, weapon: EnemyWeapon): number {
-  const rates: Readonly<Partial<Record<string, Partial<Record<EnemyWeapon, number>>>>> =
-    ENEMY_SHARED_WEAPON_TUNING.relativeRates;
-  return rates[archetype]?.[weapon] ?? 1;
-}
+/** Shared enemy damage uses the equipped player weapon's damage. */
+export const ENEMY_SHARED_WEAPON_TUNING = { damageMultiplier: 1 } as const;
 
 /** Selects from a supplied uniform draw without choosing eligibility or consuming a stream. */
 export function selectEnemyWeaponLevel(position: RoutePosition, roll: number): WeaponLevel {

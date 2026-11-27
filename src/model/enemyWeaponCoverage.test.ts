@@ -2,7 +2,8 @@ import { expect, it } from "vitest";
 
 import { ANDROMEDA_REDACT, CARTWHEEL_CLAIM } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
-import type { EnemyWeapon, GalaxyNumber } from "../data/types.ts";
+import type { EnemyWeapon, GalaxyNumber, Weapon } from "../data/types.ts";
+import { weaponAt } from "../data/weaponCatalog.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { visitCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
@@ -20,21 +21,32 @@ import type { SpaceObject } from "./types.ts";
 
 it("materializes the signature roster and both exclusive capital profiles through admitted production actors", () => {
   const witnessed = new Set<EnemyWeapon>();
-  const observe = (galaxy: GalaxyNumber, object: SpaceObject) => {
+  const observe = (
+    galaxy: GalaxyNumber,
+    object: SpaceObject,
+    sharedRates: Partial<Record<Weapon, number>> = {},
+  ) => {
     const enemy = object.enemy!;
     const definition = enemyEquipmentDefinition(galaxy, enemy);
-    const weapons = definition.hardpoints.length
+    const profiles = definition.hardpoints.length
       ? definition.hardpoints.flatMap((part) =>
           part.kind === "weapon" &&
           enemy.hardpoints.some((state) => state.id === part.id && state.hp > 0)
-            ? [part.fire.weapon]
+            ? [part.fire]
             : [],
         )
-      : [definition.fire.weapon];
-    for (const weapon of weapons) {
+      : [definition.fire];
+    const weapons = new Set<EnemyWeapon>();
+    for (const { interval, level, weapon } of profiles) {
+      const shared = weapon as Weapon;
+      const rate = sharedRates[shared];
+      if (rate !== undefined) {
+        expect(interval).toBeCloseTo(weaponAt(shared, level).intervalSeconds / rate, 12);
+      }
+      weapons.add(weapon);
       witnessed.add(weapon);
     }
-    return new Set(weapons);
+    return weapons;
   };
   const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
   // These are possible seeded encounters, not a guarantee that each run meets every weapon.
@@ -64,7 +76,9 @@ it("materializes the signature roster and both exclusive capital profiles throug
   admitRedactEncounter(CONTENT, andromeda, { x: 1000, y: 0 }, { x: 2000, y: 0 });
   const redact = capitalBossActor(andromeda, ANDROMEDA_REDACT.id);
   expect(redact?.enemy?.archetype).toBe("capital");
-  expect(observe(5, redact!)).toEqual(new Set(["laser", "scattershot", "chargedLance"]));
+  expect(observe(5, redact!, { laser: 0.35, scattershot: 0.5 })).toEqual(
+    new Set(["laser", "scattershot", "chargedLance"]),
+  );
 
   const seeds = [173, 301];
   const cartwheelModel = new GameModel(CONTENT, () => seeds.shift() ?? 503, SAVE_RESTORE);
@@ -77,7 +91,9 @@ it("materializes the signature roster and both exclusive capital profiles throug
   expect(placeCartwheelClaim(CONTENT, cartwheel, hub)).not.toBeNull();
   const claim = capitalBossActor(cartwheel, CARTWHEEL_CLAIM.id);
   expect(claim?.enemy?.archetype).toBe("capital");
-  expect(observe(2, claim!)).toEqual(new Set(["laser", "scattershot", "mineLayer"]));
+  expect(observe(2, claim!, { laser: 0.45, scattershot: 0.6 })).toEqual(
+    new Set(["laser", "scattershot", "mineLayer"]),
+  );
 
   // An explicit accepted plan proves station capability, not a default site distribution.
   const stationFlight = createFlight(CONTENT, 5, 173, { known: [] });
@@ -96,7 +112,7 @@ it("materializes the signature roster and both exclusive capital profiles throug
   if (station.status !== "created") {
     throw Error("station coverage admission failed");
   }
-  observe(5, station.station);
+  expect(observe(5, station.station, { rapidMissile: 0.35 }).has("rapidMissile")).toBe(true);
   expect([...witnessed].sort()).toEqual(
     expect.arrayContaining([
       "chargedLance",

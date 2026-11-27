@@ -35,7 +35,7 @@ it("keeps approved station hulls and all-weapon prefixes with one Ring and all o
   }
 });
 
-it("uses final shared cadence without stacking the old curve and retains enemy-only Ring cadence", () => {
+it("uses the standard Rapid Missile fraction and the fixed Ring Burst interval", () => {
   const station = enemyActorDefinition(5, "hostileStation", "station", 3);
   const weapon = (id: string) => {
     const part = station.hardpoints.find((part) => part.id === id)!;
@@ -44,8 +44,8 @@ it("uses final shared cadence without stacking the old curve and retains enemy-o
     }
     return part.fire;
   };
-  expect(weapon("weapon-0").interval).toBeCloseTo(0.2 / 0.3, 12);
-  expect(weapon("weapon-5").interval).toBeCloseTo(3.5 / 1.88, 12);
+  expect(weapon("weapon-0").interval).toBeCloseTo(0.2 / 0.35, 12);
+  expect(weapon("weapon-5").interval).toBe(3);
   expect(station).toBe(enemyActorDefinition(5, "hostileStation", "another", 3));
   expect(station).not.toBe(enemyActorDefinition(5, "hostileStation", "station", 1));
 });
@@ -60,14 +60,14 @@ it("preserves ship profiles and rejects unsupported station definitions before m
   }
 });
 
-it("keeps station clocks continuous even when the supplied base is phased", () => {
+it("uses phased station clocks even when the supplied platform base is continuous", () => {
   const definition = hostileStationDefinition(
     {
-      base: { ...enemyCatalog.platform, fireClockPolicy: "staggered-and-paused" },
+      base: enemyCatalog.platform,
       fire: (weapon) => enemyFire("platform", { level: 2, weapon }),
       partHp: 7,
     },
     { galaxy: 5, weaponLevel: 2 },
   );
-  expect(definition.fireClockPolicy).toBe("continuous");
+  expect(definition.fireClockPolicy).toBe("staggered-and-paused");
 });

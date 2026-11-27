@@ -12,7 +12,7 @@ import {
   type EnemyDefinition,
   enemyDefinition,
   enemyFire,
-  enemyFireRate,
+  enemyFireInterval,
   fireDamageRatio,
   galaxyEncounters,
   heavyLoadout,
@@ -778,7 +778,7 @@ describe("integrated combat", () => {
         part.kind === "weapon" && part.id === mount
           ? {
               ...part,
-              fire: { ...fire, interval: fire.interval / enemyFireRate(6, "capital", "ringBurst") },
+              fire: { ...fire, interval: enemyFireInterval(6, "capital", fire) },
             }
           : part,
       ),

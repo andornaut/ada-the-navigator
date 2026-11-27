@@ -19,7 +19,7 @@ export interface HostileStationProfileContext {
   readonly partHp: number;
 }
 
-/** Fixed stations use the existing immobile platform policy with their approved weapon profile. */
+/** Immobile stations use phased weapon clocks and their route-position mount tier. */
 export function hostileStationDefinition(
   context: HostileStationProfileContext,
   subject: { readonly galaxy: GalaxyNumber; readonly weaponLevel: WeaponLevel },
@@ -71,7 +71,7 @@ export function hostileStationDefinition(
     ...context.base,
     assetKey,
     fire: fire(signature.fill[0]),
-    fireClockPolicy: "continuous",
+    fireClockPolicy: "staggered-and-paused",
     hardpoints: signature.fill.flatMap((id) =>
       tier.mounts[id]
         ? [
