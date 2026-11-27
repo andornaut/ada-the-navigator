@@ -53,23 +53,23 @@ import type { PennyMarker } from "../model/pennyMarkers.ts";
 import { fill, itemName, type ShopItem, type ShopRow, shopRow, weaponName } from "../model/shop.ts";
 import type { FlightState } from "../model/types.ts";
 import {
+  canLeaveViaBack,
   exitGame,
   exitShown,
   installApp,
   installState,
   keepScreenOn,
+  leaveViaBack,
   networkPlayNotice,
   offersInstall,
   onInstallStateChange,
   requestUpdateCheck,
   requireNewerVersion,
   saveBeforeUpdate,
-  setBackArmed,
   stepsKind,
   updateOffer,
 } from "../pwa/index.ts";
 import { type CampaignSave, SAVE_RESTORE, saves } from "../saving/index.ts";
-import { backReleased } from "../ui/backStack.ts";
 import { createBossHud } from "../ui/bossHud.ts";
 import { createConversationBox, createInteractionCard } from "../ui/conversation.ts";
 import { pageStorage, screenShakes } from "../ui/deviceSettings.ts";
@@ -727,9 +727,9 @@ export function buildScene(scene: UiContext): void {
       if (paused) {
         pauseNetworkPlayClock(scene);
       }
-      armBack(scene);
       flushScene(scene);
     },
+    onStartBack: () => exitPrompt.open(),
     onWeaponSelect: (weapon) => {
       const state = scene.model.state;
       let refused = false;
@@ -1269,6 +1269,18 @@ export function buildScene(scene: UiContext): void {
     onRestart: () => apply(() => scene.model.restart()),
   });
   partial.push(() => scene.restartCard.dispose());
+  const exitPrompt = createRestartCard(scene.controls.overlay, {
+    canExit: canLeaveViaBack,
+    kind: "exit-prompt",
+    labels: {
+      cancel: label("confirmCancel"),
+      close: label("close"),
+      restart: label("exit"),
+      title: label("exit"),
+    },
+    requestExit: leaveViaBack,
+  });
+  partial.push(() => exitPrompt.dispose());
   const rewindCard = createRestartCard(scene.controls.overlay, {
     commit: async (current) => {
       const source = rewindSource;
@@ -1317,6 +1329,7 @@ export function buildScene(scene: UiContext): void {
     }),
   ];
   partial.push(() => homeLayers.forEach((unregister) => unregister()));
+  partial.push(scene.controls.registerBack({ back: exitPrompt.close, isOpen: exitPrompt.isOpen }));
   const hide = (): void => {
     const scan = scanViews.get(scene);
     if (scan) {
@@ -1747,7 +1760,6 @@ export function refreshScene(scene: UiContext, covered = false): void {
     scene.screenOn = playing;
     keepScreenOn(playing);
   }
-  armBack(scene);
   scene.controls.setExitButton(start && exitShown());
   const pauseModel: GameModel & { readonly pauseMapAvailable?: boolean } = scene.model;
   const entry = navigationEntry({
@@ -1842,11 +1854,6 @@ export function mapField(scene: UiContext): MapField | null {
     fog: fogColor(palette.environment, palette.environmentDetail),
     name: galaxyCard(galaxy).name,
   };
-}
-
-// Back stays on the game except on the start screen with nothing open, where it is the browser's.
-export function armBack(scene: UiContext): void {
-  setBackArmed(!backReleased(scene.startShown, scene.settingsOpen));
 }
 
 /** The one save write, so every save path shares its admission. */

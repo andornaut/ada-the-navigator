@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { type BackLayer, backReleased, createBackStack, pressBack } from "./backStack.ts";
+import { type BackLayer, createBackStack, pressBack } from "./backStack.ts";
 
 // A card that back closes.
 function card(open = false) {
@@ -105,16 +105,5 @@ describe("open layers", () => {
     open = true;
     leave();
     expect(stack.anyOpen()).toBe(false);
-  });
-});
-
-describe("back release", () => {
-  it.each([
-    [true, false, true],
-    [true, true, false],
-    [false, false, false],
-    [false, true, false],
-  ])("on the start screen %s with a card open %s is the browser's: %s", (start, open, released) => {
-    expect(backReleased(start, open)).toBe(released);
   });
 });

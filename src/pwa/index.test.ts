@@ -96,6 +96,16 @@ const SAMSUNG =
   "SamsungBrowser/28.0 Chrome/130.0 Mobile Safari/537.36";
 const OPERA = "Mozilla/5.0 (X11; Linux x86_64) Chrome/142.0 Safari/537.36 OPR/120.0";
 
+const watchers: TestCloseWatcher[] = [];
+class TestCloseWatcher extends EventTarget {
+  destroy = vi.fn();
+
+  constructor() {
+    super();
+    watchers.push(this);
+  }
+}
+
 // The browser's window as the kit's install flow and back guard read it.
 function stubDevice({
   app = false,
@@ -115,13 +125,18 @@ function stubDevice({
   };
   const page = Object.assign(new EventTarget(), {
     close: vi.fn(),
+    closed: false,
     location: { assign: vi.fn() },
     matchMedia: () => ({ addEventListener: () => undefined, matches: app }),
     navigator,
+    setTimeout,
   });
   // The history stubbed now or later in the test, as window.history reads the global.
   Object.defineProperty(page, "history", { get: () => history });
-  vi.stubGlobal("CloseWatcher", closeWatcher ? EventTarget : undefined);
+  page.close.mockImplementation(() => {
+    page.closed = true;
+  });
+  vi.stubGlobal("CloseWatcher", closeWatcher ? TestCloseWatcher : undefined);
   vi.stubGlobal("window", page);
   vi.stubGlobal("navigator", navigator);
   const frame = { remove: vi.fn(), style: {} };
@@ -153,6 +168,7 @@ function installPrompt(outcome: "accepted" | "dismissed") {
 }
 
 beforeEach(() => {
+  watchers.length = 0;
   vi.resetModules();
   vi.clearAllMocks();
   vi.stubEnv("PROD", true);
@@ -530,111 +546,52 @@ describe("exit", () => {
   });
 });
 
-describe("back gesture", () => {
-  it("guards back in a browser tab, which shows no Exit", async () => {
-    const page = stubDevice({});
-    const history = stubHistory();
+describe("shared platform Back", () => {
+  it("routes the live watcher through one owner and removes it on disposal", async () => {
+    const page = stubDevice({ closeWatcher: true });
     const pwa = await import("./index.ts");
+    pwa.setupPhoneApp();
     pwa.setupPhoneApp();
     const backs = vi.fn();
     page.addEventListener(pwa.PHONE_BACK_PRESSED, backs);
-    page.dispatchEvent(new Event("pointerup"));
-    history.state = null;
-    page.dispatchEvent(new Event("popstate"));
-    expect(pwa.exitShown()).toBe(false);
+    expect(watchers).toHaveLength(1);
+    const first = watchers[0]!;
+    first.dispatchEvent(new Event("close"));
+    expect(first.destroy).toHaveBeenCalledOnce();
     expect(backs).toHaveBeenCalledOnce();
-  });
-
-  it("leaves back to the browser until the player's first input", async () => {
-    const page = stubDevice({});
-    const history = stubHistory();
-    const pwa = await import("./index.ts");
-    pwa.setupPhoneApp();
-    const backs = vi.fn();
-    page.addEventListener(pwa.PHONE_BACK_PRESSED, backs);
-    expect(history.pushState).not.toHaveBeenCalled();
-    page.dispatchEvent(new Event("pointerup"));
-    expect(history.pushState).toHaveBeenCalledOnce();
-    // Back pops the guard entry: the game hears back and the guard returns.
-    history.state = null;
-    page.dispatchEvent(new Event("popstate"));
+    expect(watchers).toHaveLength(2);
+    const current = watchers[1]!;
+    pwa.disposePlatformBack();
+    pwa.disposePlatformBack();
+    expect(current.destroy).toHaveBeenCalledOnce();
+    current.dispatchEvent(new Event("close"));
     expect(backs).toHaveBeenCalledOnce();
-    expect(history.pushState).toHaveBeenCalledTimes(2);
+    expect(pwa.canLeaveViaBack()).toBe(false);
+    expect(await pwa.leaveViaBack()).toBe(false);
   });
 
-  it("ignores forward onto the guard entry", async () => {
-    const page = stubDevice({});
-    stubHistory();
+  it("lets the shared guard confirm a supported installed close once", async () => {
+    const app = stubDevice({ app: true, closeWatcher: true }) as unknown as Window;
     const pwa = await import("./index.ts");
     pwa.setupPhoneApp();
-    const backs = vi.fn();
-    page.addEventListener(pwa.PHONE_BACK_PRESSED, backs);
-    page.dispatchEvent(new Event("pointerup"));
-    page.dispatchEvent(new Event("popstate"));
-    expect(backs).not.toHaveBeenCalled();
-  });
-
-  it("leaves back to the browser on the start screen with nothing open", async () => {
-    const page = stubDevice({});
-    const history = stubHistory();
-    const pwa = await import("./index.ts");
-    pwa.setupPhoneApp();
-    const backs = vi.fn();
-    page.addEventListener(pwa.PHONE_BACK_PRESSED, backs);
-    page.dispatchEvent(new Event("pointerup"));
-    pwa.setBackArmed(false);
-    // Back pops the guard entry; the game hears nothing, no guard returns and the browser steps
-    // back past the game.
-    history.state = null;
-    page.dispatchEvent(new Event("popstate"));
-    expect(backs).not.toHaveBeenCalled();
-    expect(history.pushState).toHaveBeenCalledOnce();
-    expect(history.back).toHaveBeenCalledOnce();
-    // Input on the released start screen adds no guard.
-    page.dispatchEvent(new Event("pointerup"));
-    expect(history.pushState).toHaveBeenCalledOnce();
-    pwa.setBackArmed(true);
-  });
-
-  it("re-arms during the player's input as flight starts or a card opens", async () => {
-    const page = stubDevice({});
-    const history = stubHistory();
-    const pwa = await import("./index.ts");
-    pwa.setupPhoneApp();
-    const backs = vi.fn();
-    page.addEventListener(pwa.PHONE_BACK_PRESSED, backs);
-    pwa.setBackArmed(false);
-    Object.assign(navigator, { userActivation: { isActive: true } });
-    pwa.setBackArmed(true);
-    expect(history.pushState).toHaveBeenCalledOnce();
-    history.state = null;
-    page.dispatchEvent(new Event("popstate"));
-    expect(backs).toHaveBeenCalledOnce();
-    expect(history.back).not.toHaveBeenCalled();
-  });
-
-  it("re-arms without an entry outside the player's input, until the next input", async () => {
-    const page = stubDevice({});
-    const history = stubHistory();
-    const pwa = await import("./index.ts");
-    pwa.setupPhoneApp();
-    pwa.setBackArmed(false);
-    pwa.setBackArmed(true);
-    expect(history.pushState).not.toHaveBeenCalled();
-    page.dispatchEvent(new Event("pointerup"));
-    expect(history.pushState).toHaveBeenCalledOnce();
+    expect(pwa.canLeaveViaBack()).toBe(true);
+    const departure = pwa.leaveViaBack();
+    expect(await pwa.leaveViaBack()).toBe(false);
+    expect(await departure).toBe(true);
+    expect(app.close).toHaveBeenCalledOnce();
+    expect(pwa.canLeaveViaBack()).toBe(false);
+    expect(pwa.exitShown()).toBe(true);
   });
 
   it.each([
-    ["Samsung Internet", { app: true, closeWatcher: true, userAgent: SAMSUNG }],
-    [
-      "an iPhone Home Screen",
-      { app: true, maxTouchPoints: 5, standalone: true, userAgent: IPHONE },
-    ],
-  ] satisfies [string, Device][])(
-    "keeps %s app's own back, since its window cannot close",
-    async (_name, device) => {
-      const page = stubDevice(device);
+    { closeWatcher: true },
+    { app: true, closeWatcher: true, userAgent: SAMSUNG },
+    { app: true, maxTouchPoints: 5, standalone: true, userAgent: IPHONE },
+    { app: true, closeWatcher: true, userAgent: FIREFOX_ANDROID },
+  ] satisfies Device[])(
+    "fails safely without a known platform destination in %j",
+    async (device) => {
+      const page = stubDevice(device) as unknown as Window;
       const history = stubHistory();
       const pwa = await import("./index.ts");
       pwa.setupPhoneApp();
@@ -642,19 +599,18 @@ describe("back gesture", () => {
       page.addEventListener(pwa.PHONE_BACK_PRESSED, backs);
       page.dispatchEvent(new Event("pointerup"));
       page.dispatchEvent(new Event("popstate"));
-      expect(history.pushState).not.toHaveBeenCalled();
       expect(backs).not.toHaveBeenCalled();
+      expect(pwa.canLeaveViaBack()).toBe(false);
+      expect(await pwa.leaveViaBack()).toBe(false);
+      expect(history.pushState).not.toHaveBeenCalled();
+      expect(history.back).not.toHaveBeenCalled();
+      expect(page.close).not.toHaveBeenCalled();
+      expect(pwa.exitShown()).toBe(false);
+      if (device.userAgent === FIREFOX_ANDROID) {
+        expect(watchers).toHaveLength(0);
+      }
     },
   );
-
-  it("keeps the browser's back in Firefox for Android's installed app", async () => {
-    const page = stubDevice({ app: true, userAgent: FIREFOX_ANDROID });
-    const history = stubHistory();
-    const pwa = await import("./index.ts");
-    pwa.setupPhoneApp();
-    page.dispatchEvent(new Event("pointerup"));
-    expect(history.pushState).not.toHaveBeenCalled();
-  });
 });
 
 describe("install offer", () => {

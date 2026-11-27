@@ -257,6 +257,7 @@ function fixture(
   exit = true,
   missing?: "exit" | "use",
   update?: { defer(): void; isOpen(): boolean },
+  onStartBack?: () => void,
 ) {
   vi.useFakeTimers();
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
@@ -299,6 +300,7 @@ function fixture(
   const backStack = createBackStack();
   const openNavigation = vi.fn();
   const options = {
+    onStartBack,
     requiredReady: () => ready,
     ...(exit ? { exit: { label: "Exit", onExit: vi.fn() } } : {}),
   };
@@ -575,6 +577,45 @@ it("fences phone Back on an optional update and still defers it like Cancel once
   expect(defer).toHaveBeenCalledOnce();
   expect(open).toBe(false);
   expect(f.openNavigation).not.toHaveBeenCalled();
+});
+
+it("offers Exit confirmation only for a ready bare Start platform Back", () => {
+  let open = false;
+  const show = vi.fn(() => {
+    open = true;
+  });
+  const cancel = vi.fn(() => {
+    open = false;
+  });
+  const f = fixture(false, undefined, undefined, show);
+  f.backStack.register({ back: cancel, isOpen: () => open });
+  f.phoneBack();
+  expect(f.openNavigation).toHaveBeenCalledOnce();
+  expect(show).not.toHaveBeenCalled();
+  f.updateContext({ menuContext: "start" });
+  f.setReady(false);
+  f.phoneBack();
+  expect(show).not.toHaveBeenCalled();
+  f.setReady(true);
+  const closeChild = vi.fn();
+  const unregister = f.backStack.register({ back: closeChild, isOpen: () => true });
+  f.phoneBack();
+  expect(closeChild).toHaveBeenCalledOnce();
+  expect(show).not.toHaveBeenCalled();
+  unregister();
+  f.gameEscape()?.();
+  expect(f.openNavigation).toHaveBeenCalledTimes(2);
+  expect(show).not.toHaveBeenCalled();
+  f.phoneBack();
+  expect(show).toHaveBeenCalledOnce();
+  f.phoneBack();
+  expect(cancel).toHaveBeenCalledOnce();
+  expect(show).toHaveBeenCalledOnce();
+  f.phoneBack();
+  expect(show).toHaveBeenCalledTimes(2);
+  f.gameEscape()?.();
+  expect(cancel).toHaveBeenCalledTimes(2);
+  expect(f.openNavigation).toHaveBeenCalledTimes(2);
 });
 
 it("keeps Q fenced by runtime capability, readiness, menu context and the registered back stack", () => {

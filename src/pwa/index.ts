@@ -8,25 +8,16 @@
 // construction or save access; during a session the staged version is offered through Update now
 // on any screen. A newer save is the automatic exception (requireNewerVersion).
 import type { LoadingFailurePresentation } from "@andornaut/game-kit/runtime/web/progress/dom/loadingFailure";
-import {
-  appCannotClose,
-  canExitApp,
-  runsInAppWindow,
-} from "@andornaut/game-kit/runtime/web/pwa/appWindow";
-import {
-  backCloseWatcher,
-  backGuardState,
-  isBackGuardState,
-} from "@andornaut/game-kit/runtime/web/pwa/backNavigation";
+import { canExitApp } from "@andornaut/game-kit/runtime/web/pwa/appWindow";
+import { backCloseWatcher } from "@andornaut/game-kit/runtime/web/pwa/backNavigation";
 import type {
   LaunchResult,
   NetworkPlayNotice,
 } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 import {
+  type BackNavigationGuard,
   browserCloseWatcher,
-  type CloseWatcherFactory,
-  guardBackNavigation,
-  type HistoryLike,
+  createBackNavigationGuard,
 } from "@andornaut/game-kit/runtime/web/pwa/dom/backNavigation";
 import {
   type InstallFlow,
@@ -138,90 +129,41 @@ function createPhoneLaunch(context: LaunchContext): ReturnType<typeof createLaun
   return created;
 }
 
-// Whether back stays on the game. The start screen with nothing open releases it; flight or an
-// open card arms it again (setBackArmed).
-let backArmed = true;
-let backGuardInUse = () => false;
-// Whether Exit shows: an installed app window that can close (canExitApp), read once at load.
+let backGuard: BackNavigationGuard | undefined;
+// The separate title Exit button reads its existing app-window eligibility at launch.
 let exitOffered = false;
 
-// The page's history as the back guard sees it: while released the guard adds no entry.
-const guardHistory: HistoryLike = {
-  get length() {
-    return history.length;
-  },
-  pushState(data, unused) {
-    if (backArmed) {
-      history.pushState(data, unused);
-    }
-  },
-  get state() {
-    return history.state as unknown;
-  },
-};
-
-// Back while released is the browser's: the guard entry it popped is not replaced, so one more
-// step leaves the game for the page before it. An installed app with no page before it closes,
-// as Chibi's Exit does, where the platform lets it.
-function releasedBack(): void {
-  if (backGuardInUse()) {
-    history.back();
-  } else if (runsInAppWindow(window)) {
-    exitGame();
-  } else {
-    history.back();
-  }
-}
-
-// Keeps back on the game, as in Chibi: each back dispatches PHONE_BACK_PRESSED on window.
-// Before the player's first input, while released, and where the browser cannot hand back to the
-// game, back is the browser's own. Read before the guard pushes any entry: an installed app that
-// cannot close its window keeps its own back, as in Archie, so back never leaves it on a blank
-// page. A browser tab keeps the guard but never offers Exit.
 function guardBack(): void {
-  const createCloseWatcher: CloseWatcherFactory | undefined = backCloseWatcher(
-    navigator.userAgent,
-    browserCloseWatcher(),
-  );
-  exitOffered = canExitApp(createCloseWatcher, window);
-  if (appCannotClose(createCloseWatcher, window)) {
+  if (backGuard) {
     return;
   }
-  backGuardInUse = () => createCloseWatcher === undefined || history.length > 1;
-  guardBackNavigation(
+  const createCloseWatcher = backCloseWatcher(navigator.userAgent, browserCloseWatcher());
+  exitOffered = canExitApp(createCloseWatcher, window);
+  backGuard = createBackNavigationGuard(
     {
       createCloseWatcher,
-      history: guardHistory,
-      onBack: () => {
-        if (backArmed) {
-          dispatchPhoneBack(window);
-        } else {
-          releasedBack();
-        }
-      },
+      history: window.history,
+      onBack: () => dispatchPhoneBack(window),
       stateKey: BACK_GUARD_KEY,
       timer: window,
     },
     window,
   );
+  // Start and its confirmation own Back just as play does. Kit disarms after a departure.
+  backGuard.setEnabled(true);
 }
 
-// Arms or releases the back guard: released only on the start screen with nothing open. Arming
-// during the player's input adds the guard entry at once, as the guard does on input.
-export function setBackArmed(armed: boolean): void {
-  if (armed === backArmed) {
-    return;
-  }
-  backArmed = armed;
-  const activation = (navigator as { userActivation?: { isActive: boolean } }).userActivation;
-  if (
-    armed &&
-    backGuardInUse() &&
-    (activation?.isActive ?? false) &&
-    !isBackGuardState(BACK_GUARD_KEY, history.state)
-  ) {
-    history.pushState(backGuardState(BACK_GUARD_KEY), "");
-  }
+export function canLeaveViaBack(): boolean {
+  return backGuard?.canLeave() ?? false;
+}
+
+export function leaveViaBack(): Promise<boolean> {
+  return backGuard?.leave() ?? Promise.resolve(false);
+}
+
+export function disposePlatformBack(): void {
+  backGuard?.dispose();
+  backGuard = undefined;
 }
 
 // Sets up the install offer, the back gesture and persistent storage.
@@ -251,7 +193,7 @@ export function keepScreenOn(on: boolean): void {
   }
 }
 
-// Whether the start screen offers Exit (its Exit, Q and released back), as read at load: only in
+// Whether the start screen offers Exit (its Exit and Q), as read at load: only in
 // an installed app window that can close it (the kit's canExitApp), never in a browser tab or in
 // an app whose platform never closes or whose history holds more than the game's entry.
 export function exitShown(): boolean {

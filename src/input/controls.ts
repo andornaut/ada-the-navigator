@@ -129,6 +129,7 @@ export interface ControlsOptions {
   // The start screen's Exit where the game offers to leave (exitShown), or undefined where it
   // does not, which makes no Exit at all.
   readonly exit?: { readonly label: string; readonly onExit: () => void } | undefined;
+  readonly onStartBack?: () => void;
   readonly fpsCounter: SettingsOptions["fpsCounter"];
   readonly install?: SettingsOptions["install"];
   readonly labels: SettingsLabels;
@@ -902,12 +903,14 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   if (update) {
     leaveBack.push(backStack.register({ back: update.defer, isOpen: update.isOpen }));
   }
-  // Back with nothing open opens the Paused card where it opens.
+  // Platform Back closes one layer before offering the current screen's action.
   const onBack = () => {
     if (!requiredReady()) {
       return;
     }
-    pressBack(backStack, true, openNavigation);
+    const onBareScreen =
+      menuContext === "start" ? (options.onStartBack ?? openNavigation) : openNavigation;
+    pressBack(backStack, true, onBareScreen);
   };
   const reset = () => {
     actionRoot.invalidate();

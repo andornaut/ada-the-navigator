@@ -268,7 +268,11 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.clearAllMocks();
 });
-function fixture(rewind?: (current: () => boolean) => Promise<(() => void) | null>) {
+function fixture(
+  rewind?: (current: () => boolean) => Promise<(() => void) | null>,
+  requestExit?: () => Promise<boolean>,
+  canExit = () => true,
+) {
   const root = new Element(),
     onRestart = vi.fn();
   const guard = rootPressGuard(root as unknown as HTMLElement);
@@ -286,14 +290,86 @@ function fixture(rewind?: (current: () => boolean) => Promise<(() => void) | nul
   const labels = { cancel: "Cancel", close: "Close", restart: "Restart", title: "Restart?" };
   const card = createRestartCard(
     root as unknown as HTMLElement,
-    rewind
-      ? { commit: rewind, kind: "rewind-quests", labels: { ...labels, body: "Confirm rewind." } }
-      : { labels, onRestart },
+    requestExit
+      ? {
+          canExit,
+          kind: "exit-prompt",
+          labels: { ...labels, restart: "Exit", title: "Exit" },
+          requestExit,
+        }
+      : rewind
+        ? { commit: rewind, kind: "rewind-quests", labels: { ...labels, body: "Confirm rewind." } }
+        : { labels, onRestart },
   );
   const modal = root.children[0]!;
   const action = (name: string) => modal.querySelector(`[data-action="${name}"]`)!;
   return { action, card, guard, modal, onRestart, root };
 }
+
+it("confirms platform Exit once, keeps a declined request open, and lets Cancel and X stay", async () => {
+  let finish!: (left: boolean) => void;
+  const requestExit = vi.fn(
+    () =>
+      new Promise<boolean>((resolve) => {
+        finish = resolve;
+      }),
+  );
+  const f = fixture(undefined, requestExit);
+  const cancel = f.action("exit-prompt-cancel");
+  const exit = f.action("exit-prompt-confirm");
+  const close = f.action("close-exit-prompt");
+  f.card.open();
+  expect(native.present).toHaveBeenCalledWith(
+    expect.objectContaining({ actionId: "exit-prompt-cancel", label: "Cancel" }),
+  );
+  expect(native.present).toHaveBeenCalledWith(
+    expect.objectContaining({ actionId: "exit-prompt-confirm", label: "Exit" }),
+  );
+  expect(doc.activeElement).toBe(cancel);
+  cancel.click();
+  expect(f.card.isOpen()).toBe(false);
+  f.card.open();
+  close.click();
+  expect(f.card.isOpen()).toBe(false);
+  expect(requestExit).not.toHaveBeenCalled();
+
+  f.card.open();
+  exit.click();
+  exit.click();
+  expect(requestExit).toHaveBeenCalledOnce();
+  cancel.click();
+  expect(f.card.isOpen()).toBe(true);
+  finish(false);
+  await Promise.resolve();
+  expect(f.card.isOpen()).toBe(true);
+  exit.click();
+  exit.click();
+  expect(requestExit).toHaveBeenCalledTimes(2);
+  finish(true);
+  await Promise.resolve();
+  exit.click();
+  expect(requestExit).toHaveBeenCalledTimes(2);
+  expect(f.card.isOpen()).toBe(false);
+  f.card.dispose();
+});
+
+it("keeps Cancel live and declines an Exit that is unavailable at activation", () => {
+  let available = true;
+  const requestExit = vi.fn(async () => true);
+  const f = fixture(undefined, requestExit, () => available);
+  f.card.open();
+  const exit = f.action("exit-prompt-confirm");
+  available = false;
+  exit.click();
+  expect(exit.hidden).toBe(false);
+  expect(exit.getAttribute("aria-disabled")).toBe("true");
+  expect(exit.getAttribute("aria-description")).toBe("Action unavailable.");
+  expect(requestExit).not.toHaveBeenCalled();
+  expect(f.card.isOpen()).toBe(true);
+  f.action("exit-prompt-cancel").click();
+  expect(f.card.isOpen()).toBe(false);
+  f.card.dispose();
+});
 
 describe("Restart's configured production binding", () => {
   it("opens on top of the controls overlay's shared modal layer, focused on Cancel", () => {

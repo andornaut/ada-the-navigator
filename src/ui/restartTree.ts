@@ -3,8 +3,8 @@ import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import type { AdaLayoutSchema } from "./layoutTree.ts";
 import type { RestartLabels } from "./restartCard.ts";
 
-/** Start Restart and the selective campaign rewind in Cheats. */
-export type ConfirmKind = "restart" | "rewind-quests";
+/** Start confirmations and the selective campaign rewind in Cheats. */
+export type ConfirmKind = "restart" | "rewind-quests" | "exit-prompt";
 
 export type ConfirmAction<K extends ConfirmKind = ConfirmKind> =
   `close-${K}` | `${K}-cancel` | `${K}-confirm`;

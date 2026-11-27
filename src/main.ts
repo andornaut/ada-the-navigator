@@ -26,7 +26,12 @@ import { requiredLoading, requiredReady } from "./loading/required.ts";
 import { requireBootJets, validateBootCore } from "./loading/requiredCore.ts";
 import { requireSceneFiles } from "./loading/requiredFiles.ts";
 import { startupFence } from "./loading/startup.ts";
-import { launchPhoneApp, requireNewerVersion, setupPhoneApp } from "./pwa/index.ts";
+import {
+  disposePlatformBack,
+  launchPhoneApp,
+  requireNewerVersion,
+  setupPhoneApp,
+} from "./pwa/index.ts";
 import { saves } from "./saving/index.ts";
 import { CRASH_SCREEN } from "./ui/crashScreen.ts";
 import { registerForegroundSurface } from "./ui/foregroundInput.ts";
@@ -350,5 +355,8 @@ async function enterGame(attempt: LoadingAttempt): Promise<void> {
 }
 
 if (import.meta.hot) {
-  import.meta.hot.dispose(disposeGame);
+  import.meta.hot.dispose(() => {
+    disposePlatformBack();
+    disposeGame();
+  });
 }
