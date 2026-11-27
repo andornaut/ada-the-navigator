@@ -678,8 +678,10 @@ export const MAP_SCREEN_LAYOUT = {
   },
   /** Wheel deltaY px per zoom step. */
   wheelStep: 100,
-  /** How many zoom steps to shift the chart's range outward. */
-  zoomRangeShift: 2,
+  /** Steps removed from the closest view. */
+  zoomInStepsRemoved: 1,
+  /** Additional outward steps, up to the playable world boundary. */
+  zoomOutStepsAdded: 2,
   /** One zoom step. */
   zoomStep: 1.5,
 } as const;

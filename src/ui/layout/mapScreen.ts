@@ -271,7 +271,7 @@ function squareExtent(side: number): Size {
 }
 
 /**
- * Shift both scale limits outward by the same number of zoom steps. The field
+ * Shift the close and far scale limits by their configured steps. The field
  * still stays within one wrap period when it reaches the playable bounds.
  */
 export function scaleLimits(
@@ -279,9 +279,8 @@ export function scaleLimits(
   field: Size,
   side: number,
 ): { readonly max: number; readonly min: number } {
-  const { chartRadius, minBox, zoomRangeShift, zoomStep } = MAP_SCREEN;
+  const { chartRadius, minBox, zoomInStepsRemoved, zoomOutStepsAdded, zoomStep } = MAP_SCREEN;
   const square = squareExtent(side);
-  const shift = zoomStep ** zoomRangeShift;
   const closeFit = Math.min(
     inner.width / minBox.width,
     (inner.zoomHeight ?? inner.height) / minBox.height,
@@ -291,7 +290,10 @@ export function scaleLimits(
     inner.height / (Math.SQRT2 * chartRadius),
   );
   const worldFit = Math.max(field.width / square.width, field.height / square.height);
-  return { max: closeFit / shift, min: Math.max(discFit / shift, worldFit) };
+  return {
+    max: closeFit / zoomStep ** zoomInStepsRemoved,
+    min: Math.max(discFit / zoomStep ** zoomOutStepsAdded, worldFit),
+  };
 }
 
 const centreOf = (rect: Rect): Point => ({

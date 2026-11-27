@@ -106,7 +106,8 @@ describe("map screen tokens", () => {
       minBox: { height: 6000, width: 12000 },
       tools: { pitch: 57 },
       wheelStep: 100,
-      zoomRangeShift: 2,
+      zoomInStepsRemoved: 1,
+      zoomOutStepsAdded: 2,
       zoomStep: 1.5,
     });
     expect(MAP_PANEL).toMatchObject({
@@ -148,12 +149,12 @@ describe("map projection and fit", () => {
     expect([base.fit.width, base.fit.height]).toEqual([688, 200]);
     expect([base.inner.width, base.inner.height]).toEqual([644, 156]);
     const limits = scaleLimits(base.inner, base.field, SIDE);
-    expect(round(limits.max, 5)).toBe(0.02104);
+    expect(round(limits.max, 5)).toBe(0.03156);
     expect(round(limits.min, 5)).toBe(0.002);
-    expect(round(Math.log(limits.max / limits.min) / Math.log(MAP_SCREEN.zoomStep), 2)).toBe(5.8);
+    expect(round(Math.log(limits.max / limits.min) / Math.log(MAP_SCREEN.zoomStep), 2)).toBe(6.8);
     const wide = regionsAt({ height: 720, width: 1280 });
     expect([wide.fit.width, round(wide.fit.height, 2)]).toEqual([688, 245]);
-    expect(round(scaleLimits(wide.inner, wide.field, SIDE).max, 5)).toBe(0.02385);
+    expect(round(scaleLimits(wide.inner, wide.field, SIDE).max, 5)).toBe(0.03578);
   });
 
   it("anchors Quests, Galaxies and the sole primary Close at the bottom right", () => {
@@ -246,9 +247,10 @@ describe("map projection and fit", () => {
   it("opens on Ada and the places, clamped to the outward zoom range", () => {
     const { field, inner } = regionsAt(BASE);
     const { max, min } = scaleLimits(inner, field, SIDE);
-    // The former close view now reaches the earlier zoom-in cap.
+    // The opening preserves an extra step of close zoom for nearby places.
     const close = openingView(inner, field, SIDE, [{ x: 500, y: 0 }], { x: 0, y: 0 });
-    expect(close.scale).toBe(max);
+    expect(close.scale).toBeCloseTo(0.026);
+    expect(close.scale).toBeLessThan(max);
     // A spread galaxy fits between the limits.
     const spread = [
       { x: 12000, y: -12000 },
@@ -320,16 +322,26 @@ describe("close places", () => {
   });
 
   it("keeps 1020-apart places selectable at the reduced maximum zoom", () => {
-    const { inner } = regionsAt(
+    const { field, inner } = regionsAt(
       { height: 390, width: 844 },
       { bottom: 21, left: 47, right: 47, top: 0 },
     );
-    const { max } = scaleLimits(inner, { height: 390, width: 844 }, SIDE);
+    const { max } = scaleLimits(inner, field, SIDE);
     const fullPageLimit = Math.min(
       inner.width / MAP_SCREEN.minBox.width,
       inner.zoomHeight! / MAP_SCREEN.minBox.height,
     );
-    expect(max).toBeCloseTo(fullPageLimit / MAP_SCREEN.zoomStep ** 2, 9);
+    const previousMax = fullPageLimit / MAP_SCREEN.zoomStep ** 2;
+    expect(max).toBeCloseTo(previousMax * MAP_SCREEN.zoomStep, 9);
+    const anchor = { x: inner.x + inner.width / 2, y: inner.y + inner.height / 2 };
+    const previous = { centre: { x: 0, y: 0 }, scale: previousMax, worldSide: SIDE };
+    const closer = zoomView(inner, field, MAP_SCREEN.zoomStep, anchor, previous);
+    expect(closer.refused).toBe(false);
+    expect(closer.view.scale).toBeCloseTo(max, 9);
+    expect(zoomView(inner, field, MAP_SCREEN.zoomStep, anchor, closer.view).refused).toBe(true);
+    expect(
+      zoomView(inner, field, 1 / MAP_SCREEN.zoomStep, anchor, closer.view).view.scale,
+    ).toBeCloseTo(previousMax, 9);
     const view = { centre: { x: 0, y: 0 }, scale: max, worldSide: SIDE };
     for (let degrees = 0; degrees < 360; degrees += 5) {
       const angle = (degrees * Math.PI) / 180;
@@ -654,7 +666,7 @@ describe("the square bound", () => {
         frame.inner.width / (2 * Math.SQRT2 * MAP_SCREEN.chartRadius),
         frame.inner.height / (Math.SQRT2 * MAP_SCREEN.chartRadius),
       );
-      const shift = MAP_SCREEN.zoomStep ** MAP_SCREEN.zoomRangeShift;
+      const shift = MAP_SCREEN.zoomStep ** MAP_SCREEN.zoomOutStepsAdded;
       const expected = Math.max(
         disc / shift,
         frame.field.width / (2 * SIDE),
