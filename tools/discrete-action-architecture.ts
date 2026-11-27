@@ -1013,15 +1013,15 @@ function scanSource(context: ScanContext, path: string, text: string) {
       }
     }
   }
-  const synchronousCallable = (
-    node: ts.FunctionDeclaration | ts.FunctionExpression | ts.ArrowFunction,
-  ): boolean =>
+  type SynchronousCallable =
+    | ts.FunctionDeclaration
+    | ts.FunctionExpression
+    | ts.ArrowFunction
+    | ts.MethodDeclaration;
+  const synchronousCallable = (node: SynchronousCallable): boolean =>
     !node.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.AsyncKeyword) &&
-    !((ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node)) && node.asteriskToken);
-  const immediateWrapperCall = (
-    site: ts.Node,
-    owner: ts.FunctionDeclaration | ts.FunctionExpression | ts.ArrowFunction | ts.SourceFile,
-  ): boolean => {
+    !(!ts.isArrowFunction(node) && node.asteriskToken);
+  const immediateWrapperCall = (site: ts.Node, owner: SynchronousCallable | ts.SourceFile): boolean => {
     if (!ts.isSourceFile(owner) && (!synchronousCallable(owner) || !owner.body)) {
       return false;
     }
@@ -1113,7 +1113,8 @@ function scanSource(context: ScanContext, path: string, text: string) {
     return (
       (ts.isFunctionDeclaration(owner) ||
         ts.isFunctionExpression(owner) ||
-        ts.isArrowFunction(owner)) &&
+        ts.isArrowFunction(owner) ||
+        ts.isMethodDeclaration(owner)) &&
       immediateWrapperCall(call, owner)
     );
   };

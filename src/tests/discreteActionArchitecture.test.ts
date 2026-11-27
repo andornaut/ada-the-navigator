@@ -26,6 +26,28 @@ it("accepts registered action construction and rejects a raw replacement instead
     ),
   ).toEqual(["raw-discrete"]);
 });
+it.each([
+  ["create()", "bindAdaAction(options, button);", true],
+  ["create()", "if (eligible) bindAdaAction(options, button);", false],
+  ["create()", "const deferred = () => bindAdaAction(options, button);", false],
+  ["async create()", "bindAdaAction(options, button);", false],
+  ["*create()", "bindAdaAction(options, button);", false],
+])("proves only immediate construction metadata in %s with %s", (method, binding, proven) => {
+  const source = `
+    const port = {
+      ${method} {
+        const button = document.createElement("button");
+        ${binding}
+        button.dataset.action = "run";
+        return button;
+      },
+    };
+  `;
+  const findings = scanWithRegistry("src/ui/newCard.ts", source);
+  expect(findings.map(({ kind }) => kind)).toEqual(
+    proven ? [] : ["unbound-discrete", "unbound-discrete"],
+  );
+});
 it("finds aliases, onclick forms and delegated glyph callbacks", () => {
   const source = [
     'const event = "click"; glyph.addEventListener(event, action);',
