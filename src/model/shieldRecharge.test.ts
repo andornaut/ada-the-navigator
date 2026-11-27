@@ -17,7 +17,7 @@ function fixture(level = 1, cargo = 100, fraction = 0.5) {
   const state: Parameters<typeof rechargeShield>[2] = {
     cargo,
     shield: ship.shieldMax * fraction,
-    sinceDamage: 25,
+    sinceDamage: 20,
   };
   const advance = (seconds: number) => {
     state.sinceDamage += seconds;
@@ -41,12 +41,12 @@ function launched() {
 
 describe("ore-funded shield recharge", () => {
   it.each([1, 2, 3])(
-    "funds a 25-second recharge with 100 whole ore at shield level %i",
+    "funds a 20-second recharge with 100 whole ore at shield level %i",
     (level) => {
       const { advance, ship, state } = fixture(level, 100, Number.EPSILON);
-      expect(advance(1)).toBe(4);
-      expect(state.shield).toBeCloseTo(ship.shieldMax * 0.04, 12);
-      expect(advance(24)).toBe(96);
+      expect(advance(1)).toBe(5);
+      expect(state.shield).toBeCloseTo(ship.shieldMax * 0.05, 12);
+      expect(advance(19)).toBe(95);
       expect(state.shield).toBe(ship.shieldMax);
       expect(state.cargo).toBe(0);
       expect(state.shieldOreSpent).toBe(100);
@@ -76,7 +76,7 @@ describe("ore-funded shield recharge", () => {
     (level) => {
       const single = fixture(level);
       const partitioned = fixture(level);
-      single.state.sinceDamage = partitioned.state.sinceDamage = 24.75;
+      single.state.sinceDamage = partitioned.state.sinceDamage = 19.75;
       single.advance(7.75);
       for (let frame = 0; frame < 775; frame++) {
         partitioned.advance(0.01);
@@ -91,10 +91,10 @@ describe("ore-funded shield recharge", () => {
     },
   );
 
-  it("waits the full 25 seconds after a hit before using ore or paid credit", () => {
+  it("waits the full 20 seconds after a hit before using ore or paid credit", () => {
     const { advance, state } = fixture();
     state.sinceDamage = 0;
-    advance(24);
+    advance(19);
     advance(1);
     expect(state.shield).toBe(5);
     expect(state.cargo).toBe(100);
@@ -104,7 +104,7 @@ describe("ore-funded shield recharge", () => {
     state.shield--;
     state.sinceDamage = 0;
     const hp = state.shield;
-    advance(25);
+    advance(20);
     expect(state.shield).toBe(hp);
     expect(state.shieldRechargeCredit).toBe(credit);
     expect(state.cargo).toBe(99);
@@ -138,7 +138,7 @@ describe("ore-funded shield recharge", () => {
     const flight = model.state.flight!;
     flight.shield = 5;
     flight.cargo = 3;
-    flight.sinceDamage = 25;
+    flight.sinceDamage = 20;
     expect(stepFlight(CONTENT, 0.03, idle, flight)).toContainEqual({
       amount: 1,
       total: 1,
@@ -167,7 +167,7 @@ describe("ore-funded shield recharge", () => {
     const resumed = relaunch(CONTENT, saved);
     const restored = resumed.state.flight!;
     expect(restored.shieldOreSpent).toBe(1);
-    stepFlight(CONTENT, 25, idle, restored);
+    stepFlight(CONTENT, 20, idle, restored);
     expect(restored.shield).toBe(hp - 1);
     expect(restored.shieldRechargeCredit).toBe(credit);
     expect(
@@ -182,8 +182,8 @@ describe("ore-funded shield recharge", () => {
     const flight = model.state.flight!;
     flight.shield = 5;
     flight.cargo = 100;
-    flight.sinceDamage = 25;
-    const first = stepFlight(CONTENT, 2.24, idle, flight).filter(
+    flight.sinceDamage = 20;
+    const first = stepFlight(CONTENT, 1.79, idle, flight).filter(
       (event) => event.type === "shieldOreSpent",
     );
     expect(first).toEqual([{ amount: 9, total: 9, type: "shieldOreSpent" }]);
@@ -203,7 +203,7 @@ describe("ore-funded shield recharge", () => {
     const flight = model.state.flight!;
     flight.shield = 5;
     flight.cargo = 1;
-    flight.sinceDamage = 25;
+    flight.sinceDamage = 20;
     stepFlight(CONTENT, 0.03, idle, flight);
     expect(model.shieldRecharging).toBe(true);
     const credit = flight.shieldRechargeCredit;

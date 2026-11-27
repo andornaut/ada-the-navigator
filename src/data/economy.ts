@@ -84,8 +84,7 @@ export interface EconomyCatalog {
    */
   engineLevels: Readonly<Record<keyof ShipPhysics, readonly [number, number]>>;
   /**
-   * The Shield at levels 2 and 3: capacity and seconds from empty to full; level 1 is the content
-   * tuning's own. The recharge delay is the same at every level.
+   * The Shield capacity at levels 2 and 3. Shared recharge timing comes from content tuning.
    */
   shieldLevels: { readonly capacity: readonly [number, number] };
   /** Maximum-capacity fraction funded per whole ore and the ore-free recharge floor. */
@@ -292,8 +291,7 @@ export const ECONOMY: EconomyCatalog = {
     seafoam: { label: "paintSeafoam", top: "#282d36" },
   },
   rockRelease: { releaseSeconds: 0.24, spread: 7.68 },
-  // Shield levels 2 and 3: capacity 15 then 20 HP, empty to full in 45 then 30 s.
-  // Every level waits 30 s after damage (gameplay/economy.md).
+  // Shield levels 2 and 3 add capacity. All levels share the content's recharge timing.
   shieldLevels: { capacity: [15, 20] },
   shieldRecharge: { capacityPerOre: 0.01, freeCapacity: 0.1 },
   stardustPickupGap: 2,

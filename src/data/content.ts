@@ -788,9 +788,9 @@ export const CONTENT: GameContent = {
     minSpeedFraction: 0.04,
     miningMilestones: [10, 20, 30],
     physics: SHIP_PHYSICS.ada,
-    shieldFillSeconds: 25,
+    shieldFillSeconds: 20,
     shieldMax: 10,
-    shieldRechargeDelay: 25,
+    shieldRechargeDelay: 20,
     speedCurveExponent: 2.5,
     // A relaunch spaces story destinations at least this far apart, beyond the Map's 1020.
     storySpacing: 1200,
