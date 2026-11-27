@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import spearArt from "../../public/art/enemies/fleetInterceptor-jets.json";
 import { CONTENT } from "../data/content.ts";
 import { type EnemyActorKind, shipCatalogEntry } from "../data/enemyActors.ts";
 import * as enemyCatalogModule from "../data/enemyCatalog.ts";
@@ -663,14 +664,30 @@ describe("integrated combat", () => {
     );
     target.enemy!.facing = { x: -1, y: 0 };
     flight.objects.push(target);
+    const heading = spearArt.headings[8]!;
+    const half = spearArt.frame / 2;
+    const noseX = (heading.muzzles[0]![0]! - half) * 0.4375;
+    const noseY = (heading.muzzles[0]![1]! - half) * 0.4375;
     stepFlight(CONTENT, 1 / 60, idle, flight);
     const [beam] = activeEnemyBeams(flight);
+    expect(beam!.muzzle).toEqual({ x: 220 + (noseY + noseX / 2), y: noseY - noseX / 2 });
     const aimLine = { end: { ...beam!.end }, muzzle: { ...beam!.muzzle } };
     stepFlight(CONTENT, 0.3, idle, flight);
     // The aim line stays where it started.
     expect(beam).toMatchObject({ drawn: null, fired: false, muzzle: aimLine.muzzle });
-    stepFlight(CONTENT, 0.15, idle, flight);
-    expect(beam).toMatchObject({ fired: true, stopped: false });
+    for (let i = 0; i < 9 && !beam!.fired; i++) {
+      stepFlight(CONTENT, 1 / 60, idle, flight);
+    }
+    expect(beam).toMatchObject({ fired: true, muzzle: aimLine.muzzle, stopped: false });
+    expect(beam!.drawn!.from).toEqual(
+      enemyFireLine(
+        enemyEquipmentDefinition(6, target.enemy!),
+        CONTENT.tuning.flight.shipRadius * 2,
+        beam!.hardpointId,
+        beam!.volley,
+        target.enemy!,
+      )!.origin,
+    );
     const hit = {
       end: { ...beam!.end },
       impact: { ...beam!.impact! },

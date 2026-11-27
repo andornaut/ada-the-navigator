@@ -190,8 +190,12 @@ export function chargeEnemyBeam(
  * Moves a fired Phaser's visible beam onto its ship's current muzzle and aim at its fire-time
  * length; the beam holds where it last was once its ship or weapon can no longer aim.
  */
-function followEnemyBeam(content: GameContent, flight: FlightState, beam: EnemyBeam): void {
-  const owner = flight.objects.find((object) => object.id === beam.ownerId);
+function followEnemyBeam(
+  content: GameContent,
+  flight: FlightState,
+  beam: EnemyBeam,
+  owner = flight.objects.find((object) => object.id === beam.ownerId),
+): void {
   const line =
     owner?.enemy && owner.hp > 0
       ? enemyFireLine(
@@ -351,6 +355,12 @@ export function stepEnemyBeams(
     beam.end = beamPoint(beam.muzzle, beam.direction, reach);
     if (beam.fired && beam.kind === "phaser") {
       beam.drawn = { from: { ...beam.muzzle }, to: { ...beam.end } };
+      // Spear's visible shot follows its flush emitter from the first drawn frame. The
+      // collision above still uses the locked tell's muzzle, direction and length.
+      const owner = flight.objects.find((object) => object.id === beam.ownerId);
+      if (beam.hardpointId === null && owner?.enemy?.archetype === "interceptor") {
+        followEnemyBeam(content, flight, beam, owner);
+      }
     }
   }
   enemyBeams.set(

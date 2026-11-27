@@ -44,7 +44,12 @@ import {
   stationGuardPatrolRadius,
 } from "./ai/stationGuardPatrol.ts";
 import type { EarlyEncounterState } from "./earlyEncounterRuntime.ts";
-import { fixedMuzzleOffset, hardpointAnchorOffset, muzzleOffset } from "./muzzles.ts";
+import {
+  fixedMuzzleOffset,
+  hardpointAnchorOffset,
+  muzzleOffset,
+  spearMuzzleOffset,
+} from "./muzzles.ts";
 import { fanHeading } from "./playerProjectiles.ts";
 import {
   INDUSTRIAL_HOME_RADIUS,
@@ -334,6 +339,13 @@ export function hardpointOffset(
   return hullOffset(facing, { x: part.offset.x * width, y: part.offset.y * width });
 }
 
+function primaryPortOffset(definition: EnemyDefinition, state: EnemyState): Point | undefined {
+  return (definition.assetKey ?? state.archetype) === "interceptor" &&
+    definition.fire.weapon === "phaser"
+    ? spearMuzzleOffset(state.facing)
+    : undefined;
+}
+
 /**
  * A weapon's fire line for the ship as it is now: from the drawn barrel tip `volley` picks when
  * its art defines muzzles, else from the hardpoint's (or the hull's) model origin, along the
@@ -359,9 +371,11 @@ export function enemyFireLine(
   const layout = muzzleLayout(definition, art);
   // A fixed front Laser fires from its drawn shot origin; a turret from its barrel tip.
   const tip =
+    (part === null ? primaryPortOffset(definition, state) : undefined) ??
     (part?.kind === "weapon" && part.fixed
       ? fixedMuzzleOffset(art, part.id, state.facing)
-      : undefined) ?? muzzleOffset(layout, hardpointId, state.facing, aim, volley);
+      : undefined) ??
+    muzzleOffset(layout, hardpointId, state.facing, aim, volley);
   const offset = tip ?? (part ? hardpointOffset(definition, adaWidth, state.facing, part) : null);
   return {
     aim: unit(aim),
@@ -1590,11 +1604,13 @@ export function stepEnemy(
   let volleys = 0;
   // A turret whose art defines muzzles fires from the drawn barrel tip of the hull's drawn
   // heading and the top's drawn aim frame, cycling barrels by volley; the shot still flies along
-  // the continuous aim. Other weapons fire from the model origin.
+  // the continuous aim. Spear has a flush port on its drawn hull instead.
   const art = muzzleArtForDefinition(definition) ?? MUZZLE_ART[state.archetype];
   const layout = muzzleLayout(definition, art);
   const spawn = (origin: Point, turret: string | null, muzzleAim: Point, volley: number) => {
-    const offset = muzzleOffset(layout, turret, state.facing, muzzleAim, volley);
+    const offset =
+      (turret === null ? primaryPortOffset(definition, state) : undefined) ??
+      muzzleOffset(layout, turret, state.facing, muzzleAim, volley);
     return offset ? { x: state.position.x + offset.x, y: state.position.y + offset.y } : origin;
   };
   /**

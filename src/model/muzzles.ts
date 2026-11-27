@@ -1,3 +1,4 @@
+import spearArt from "../../public/art/enemies/fleetInterceptor-jets.json" with { type: "json" };
 import type { Point } from "../data/enemyCatalog.ts";
 import { ENEMY_DISPLAY_SCALE, type MuzzleArt, type MuzzleLayout } from "../data/enemyMuzzles.ts";
 
@@ -15,6 +16,16 @@ export function drawnIndex(direction: Point): number {
 /** A display px offset on screen to world units under the view's 2:1 projection. */
 function screenToWorld(screen: Point): Point {
   return { x: screen.y + screen.x / 2, y: screen.y - screen.x / 2 };
+}
+
+/** Spear's flush emitter uses the same heading and frame centre as the drawn hull. */
+export function spearMuzzleOffset(facing: Point): Point {
+  const [x, y] = spearArt.headings[drawnIndex(facing)]!.muzzles[0]!;
+  const half = spearArt.frame / 2;
+  return screenToWorld({
+    x: (x! - half) * ENEMY_DISPLAY_SCALE,
+    y: (y! - half) * ENEMY_DISPLAY_SCALE,
+  });
 }
 
 /**
