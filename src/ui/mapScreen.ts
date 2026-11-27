@@ -75,7 +75,7 @@ import {
   zoomView,
 } from "./layout/mapScreen.ts";
 import { SAFE_MARGIN, safeRect } from "./layout/playView.ts";
-import { SPACING, TYPE } from "./layout/tokens.ts";
+import { BUTTON_GAP, SPACING, TYPE } from "./layout/tokens.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import {
   type MapChromeGroup,
@@ -705,7 +705,7 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
 .ada-controls .ada-map-place-actions{
   display:flex;
   align-items:center;
-  gap:${units(SPACING.gap)}
+  gap:${units(BUTTON_GAP)}
 }
 .ada-controls .ada-map-place-actions[hidden]{
   display:none
