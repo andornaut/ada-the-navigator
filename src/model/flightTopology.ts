@@ -15,6 +15,11 @@ export const CURRENT_FLIGHT_TOPOLOGY = Object.freeze<FlightTopology>({
   version: 1,
 });
 
+function hasOwnDataProperty(value: object, key: keyof FlightTopology): boolean {
+  const descriptor = Object.getOwnPropertyDescriptor(value, key);
+  return descriptor !== undefined && Object.hasOwn(descriptor, "value");
+}
+
 export function validFlightTopology(value: unknown): value is FlightTopology {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return false;
@@ -24,10 +29,9 @@ export function validFlightTopology(value: unknown): value is FlightTopology {
   return (
     (prototype === Object.prototype || prototype === null) &&
     Reflect.ownKeys(topology).length === 3 &&
-    ["kind", "side", "version"].every(
-      (key) =>
-        Object.hasOwn(topology, key) && "value" in Object.getOwnPropertyDescriptor(topology, key)!,
-    ) &&
+    hasOwnDataProperty(topology, "kind") &&
+    hasOwnDataProperty(topology, "side") &&
+    hasOwnDataProperty(topology, "version") &&
     topology.kind === "torus" &&
     topology.side === GALAXY_SIDE &&
     topology.version === 1
@@ -35,6 +39,7 @@ export function validFlightTopology(value: unknown): value is FlightTopology {
 }
 
 const legacy: WorldContext = Object.freeze({});
+const current: WorldContext = Object.freeze({ worldSide: CURRENT_FLIGHT_TOPOLOGY.side });
 const contexts = new WeakMap<FlightTopology, WorldContext>();
 
 /** No seed, coordinate or galaxy inference changes an existing flight's chart. */
@@ -43,6 +48,10 @@ export function flightWorldContext(flight: Pick<FlightState, "topology">): World
   if (topology === undefined) {
     return legacy;
   }
+  if (topology === CURRENT_FLIGHT_TOPOLOGY) {
+    return current;
+  }
+  // Restored and caller-supplied records can change despite the readonly type.
   if (!validFlightTopology(topology)) {
     throw new RangeError("Unsupported flight topology");
   }

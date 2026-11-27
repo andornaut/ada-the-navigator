@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
@@ -23,6 +23,30 @@ describe("explicit flight geometry context", () => {
     expect(context.worldSide).toBe(GALAXY_SIDE);
     expect(flightWorldContext(flight)).toBe(context);
     expect(Object.isFrozen(context)).toBe(true);
+  });
+
+  it("revalidates mutable metadata even after making a context", () => {
+    const topology = { kind: "torus" as const, side: GALAXY_SIDE, version: 1 as const };
+    const flight = { topology };
+    const context = flightWorldContext(flight);
+
+    topology.side *= 2;
+    expect(() => flightWorldContext(flight)).toThrow(RangeError);
+    topology.side = GALAXY_SIDE;
+    expect(flightWorldContext(flight)).toBe(context);
+
+    const getter = vi.fn(() => GALAXY_SIDE);
+    Object.defineProperty(topology, "side", { configurable: true, get: getter });
+    expect(() => flightWorldContext(flight)).toThrow(RangeError);
+    expect(getter).not.toHaveBeenCalled();
+  });
+
+  it("rejects hidden extra keys and accepts plain null-prototype records", () => {
+    const topology = { kind: "torus", side: GALAXY_SIDE, version: 1 };
+    Object.setPrototypeOf(topology, null);
+    expect(validFlightTopology(topology)).toBe(true);
+    Object.defineProperty(topology, Symbol("extra"), { value: true });
+    expect(validFlightTopology(topology)).toBe(false);
   });
 
   it.each([
