@@ -21,6 +21,7 @@ import {
 import { SPACING } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { chipGlyph } from "./mapScreen.ts";
+import { FOCUS_STYLE } from "./modal.ts";
 const { question: BODY_QUESTION, size: SIZE } = PENNY_MARKER;
 /** The enemy markers, each a filled threat disc; a hostile station draws the heavy disc. */
 const THREAT_SYMBOLS = ["enemy", "guard", "heavy", "hostileStation"] as const;
@@ -31,8 +32,7 @@ export const PENNY_MARKERS_STYLE = `
 height:${units(SIZE)};border:${units(MAP_SYMBOL.edge)} solid ${MAP_COLORS.ink};
 border-radius:50%;display:grid;place-items:center}
 button.ada-penny-marker{appearance:none;padding:0;pointer-events:auto;cursor:pointer}
-button.ada-penny-marker:focus-visible{outline:${units(2)} solid ${MAP_COLORS.cream};
-outline-offset:${units(2)}}
+button.ada-penny-marker:focus-visible{${FOCUS_STYLE}}
 .ada-penny-glyph{width:${units(MAP_SYMBOL.glyph)};height:${units(MAP_SYMBOL.glyph)};
 background:${MAP_COLORS.ink};mask:var(--glyph) center / contain no-repeat;
 -webkit-mask:var(--glyph) center / contain no-repeat}
