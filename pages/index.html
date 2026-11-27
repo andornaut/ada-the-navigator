@@ -37,19 +37,73 @@
           <button class="site-install" id="install" type="button" hidden>Install</button>
           <a class="site-play" href="/play/">Play <span aria-hidden="true">&rarr;</span></a>
         </div>
-        <ul class="site-controls" aria-label="Controls">
-          <li>
-            <span class="site-control-label">Mobile</span>
-            <p>%HOME_MOBILE%</p>
-          </li>
-          <li>
-            <span class="site-control-label">Desktop</span>
-            <p>
-              Move with WASD. Aim and fire with the arrow keys. Press Space to interact and Escape
-              to pause.
-            </p>
-          </li>
-        </ul>
+        <section class="site-controls" aria-labelledby="controls">
+          <h2 id="controls">Controls</h2>
+          <table>
+            <caption>
+              Flight
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Action</th>
+                <th scope="col">Input</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Thrust</th>
+                <td><kbd>W</kbd> or <kbd>Up Arrow</kbd>. Hold <kbd>Shift</kbd> for low thrust.</td>
+              </tr>
+              <tr>
+                <th scope="row">Turn</th>
+                <td>
+                  <kbd>A</kbd> / <kbd>D</kbd> or <kbd>Left Arrow</kbd> / <kbd>Right Arrow</kbd>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Steer with mouse</th>
+                <td>Hold the left mouse button and point.</td>
+              </tr>
+              <tr>
+                <th scope="row">Aim and fire</th>
+                <td><kbd>Space</kbd> to fire, or hold the right mouse button to aim and fire.</td>
+              </tr>
+              <tr>
+                <th scope="row">Interact</th>
+                <td><kbd>E</kbd> or <kbd>Enter</kbd></td>
+              </tr>
+              <tr>
+                <th scope="row">Fly on touch</th>
+                <td>%HOME_MOBILE%</td>
+              </tr>
+            </tbody>
+          </table>
+          <table>
+            <caption>
+              Menus
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Action</th>
+                <th scope="col">Input</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Pause or go back</th>
+                <td><kbd>Escape</kbd>, or click or tap Pause, Menu, Back or Close.</td>
+              </tr>
+              <tr>
+                <th scope="row">Move focus</th>
+                <td><kbd>Tab</kbd> or <kbd>Shift</kbd> + <kbd>Tab</kbd></td>
+              </tr>
+              <tr>
+                <th scope="row">Activate a button</th>
+                <td>Click, tap, or focus and press <kbd>Enter</kbd> or <kbd>Space</kbd>.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
       </div>
     </main>
     <footer class="site-footer">

@@ -269,21 +269,58 @@ body.site {
   margin: 32px 0 0;
   padding: 24px 0 0;
   border-top: 1px solid #514c62;
-  list-style: none;
   color: #c7bdc9;
   font-size: 14px;
   line-height: 1.6;
 }
 
-.site .site-control-label {
-  display: block;
+.site .site-controls h2 {
+  margin: 0;
+  color: #ead4aa;
+  font-size: 18px;
+}
+
+.site .site-controls table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.site .site-controls caption {
   margin-bottom: 3px;
   color: #70ace8;
   font-weight: 600;
+  text-align: left;
 }
 
-.site .site-controls p {
-  margin: 0;
+.site .site-controls th,
+.site .site-controls td {
+  padding: 4px 0;
+  vertical-align: top;
+}
+
+.site .site-controls tr > :first-child {
+  width: 36%;
+  padding-right: 12px;
+}
+
+.site .site-controls thead,
+.site .site-controls tbody tr + tr {
+  border-bottom: 1px solid #514c62;
+}
+
+.site .site-controls tbody tr:last-child {
+  border-bottom: 0;
+}
+
+.site .site-controls tbody th {
+  font-weight: 400;
+}
+
+.site .site-controls kbd {
+  font-family: inherit;
+  font-weight: 600;
 }
 
 .site .site-footer {
