@@ -1564,21 +1564,21 @@ Chart galaxies, scan unusual places, and help communities through jobs and proje
 
 #### Flight
 
-| Action           | Input                                                                             |
-| ---------------- | --------------------------------------------------------------------------------- |
-| Thrust           | `W` or `Up Arrow`. Hold `Shift` for low thrust.                                   |
-| Turn             | `A` / `D` or `Left Arrow` / `Right Arrow`                                         |
-| Steer with mouse | Hold the left mouse button and point.                                             |
-| Aim and fire     | `Space` to fire, or hold the right mouse button to aim and fire.                  |
-| Interact         | `E` or `Enter`                                                                    |
-| Fly on touch     | Move with the left stick. Aim and fire with the right stick. Tap Use to interact. |
+| Action              | Input                                                                                                                       |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Move                | `WASD` or arrow keys move relative to the screen without turning the nose. Hold `Shift` for low thrust.                     |
+| Turn nose           | `H` turns left. `L` turns right.                                                                                            |
+| Aim and fire        | Left-click to turn toward the cursor at the usual speed and request one shot. Hold to track and fire at the normal cadence. |
+| Fire along the nose | `Space`                                                                                                                     |
+| Use                 | Right-click, `E`, `F` or `Enter`                                                                                            |
+| Fly on touch        | Move with the left stick. Aim and fire with the right stick. Tap Use to interact.                                           |
 
 Each named control's icon follows its name.
 
 #### Menus
 
-| Action            | Input                                                 |
-| ----------------- | ----------------------------------------------------- |
-| Pause or go back  | `Escape`, or click or tap Pause, Menu, Back or Close. |
-| Move focus        | `Tab` or `Shift` + `Tab`                              |
-| Activate a button | Click, tap, or focus and press `Enter` or `Space`.    |
+| Action                 | Input                                                                                                                              |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Pause, go back or skip | `Escape` acts on the top surface and invokes Skip when visible and eligible. You can also click or tap Pause, Menu, Back or Close. |
+| Move focus             | `WASD`, `HJKL` or arrow keys. `Tab` cycles focus. `Shift` + `Tab` cycles in reverse.                                               |
+| Activate a button      | Click, tap, or focus and press `E`, `F`, `Enter` or `Space`.                                                                       |
