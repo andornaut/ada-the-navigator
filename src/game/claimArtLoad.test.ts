@@ -11,9 +11,9 @@ import {
   enemyFrameSets,
   enemyPartFrame,
   enemyPartsToLoad,
+  galaxyLoadsAtOnce,
 } from "../art/index.ts";
 import { GALAXY_MANIFESTS } from "../testing/publicArt.ts";
-import { galaxyLoadsAtOnce } from "./artManifest.ts";
 
 // Cartwheel's claim jumpers: their hulls and part frames are in Cartwheel's manifest, which loads
 // with the galaxy's first flight (sceneAssets.ts loadGalaxyArt).

@@ -25,7 +25,12 @@ import {
   enemyShardsPath,
   fileFilter,
   GALAXY_FAMILIES,
+  galaxyLoadsAtOnce,
+  type GalaxyManifest,
+  galaxyManifestKey,
+  galaxyTowKey,
   mergeEnemyAssets,
+  readGalaxyManifest,
   readShipJets,
   readSidecars,
   SvgRasters,
@@ -38,13 +43,6 @@ import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import { enemyAssetKey, hullDesign, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { publicJson } from "../testing/publicArt.ts";
-import {
-  galaxyLoadsAtOnce,
-  type GalaxyManifest,
-  galaxyManifestKey,
-  galaxyTowKey,
-  readGalaxyManifest,
-} from "./artManifest.ts";
 import { craftFrameSets, readCraftNose } from "./cartwheelArt.ts";
 import { readShards } from "./destructionArt.ts";
 import type { Asset } from "./sceneShared.ts";

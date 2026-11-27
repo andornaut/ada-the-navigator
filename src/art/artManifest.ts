@@ -1,8 +1,8 @@
-import { type EnemyFrame, enemyPartFrame, readSidecars, type Sidecars } from "../art/index.ts";
-import { whaleFrameAsset } from "../art/whaleArt.ts";
 import { byGalaxy } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { ShipHeadingContract } from "../model/shipHeadingContract.ts";
+import { type EnemyFrame, enemyPartFrame, readSidecars, type Sidecars } from "./enemyArt.ts";
+import { whaleFrameAsset } from "./whaleArt.ts";
 
 // Art's split manifest (art/README.md): the core manifest at public/art/manifest.json holds the
 // boot set and shared data links and maps each galaxy to its own manifest, which holds the

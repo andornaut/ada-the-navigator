@@ -14,6 +14,7 @@ import {
   boxWith,
   type CacheArt,
   clipBehind,
+  type CoreManifest,
   type DebrisArt,
   type DrawnBox,
   drawnBox,
@@ -32,6 +33,10 @@ import {
   fanVolley,
   fileFilter,
   type GalaxyBackdrop,
+  galaxyLoadsAtOnce,
+  type GalaxyManifest,
+  galaxyManifestKey,
+  galaxyManifestPaths,
   type GalaxyStationArt,
   hasPlayerHeadingPackage,
   heldFade,
@@ -60,6 +65,7 @@ import {
   type Placed,
   playDepth,
   type ProjectArtSet,
+  readGalaxyManifest,
   readSidecars,
   screenAngle,
   selectPaintedShipAsset,
@@ -122,14 +128,6 @@ import type { BoxOccupant } from "../ui/notice.ts";
 import { createRestartCard } from "../ui/restartCard.ts";
 import { createStationView } from "../ui/station.ts";
 import { createStorybook } from "../ui/storybook.ts";
-import {
-  type CoreManifest,
-  galaxyLoadsAtOnce,
-  type GalaxyManifest,
-  galaxyManifestKey,
-  galaxyManifestPaths,
-  readGalaxyManifest,
-} from "./artManifest.ts";
 import { craftFrameSets, type HubArt } from "./cartwheelArt.ts";
 import {
   type DestructionData,

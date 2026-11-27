@@ -7,6 +7,7 @@ import { GameObjects, Loader, Scenes, Textures } from "phaser";
 import {
   BAND_AREA,
   composedArchetypes,
+  type CoreManifest,
   type DebrisArt,
   decorationRasterSize,
   drawnRockId,
@@ -22,6 +23,10 @@ import {
   enemyShardsPath,
   GALAXY_FAMILIES,
   galaxyFamily,
+  galaxyLoadsAtOnce,
+  type GalaxyManifest,
+  galaxyManifestKey,
+  galaxyTowKey,
   mergeEnemyAssets,
   paintBand,
   paintFrames,
@@ -32,6 +37,7 @@ import {
   readBackdropRules,
   readDebrisArt,
   readGalaxyBackdrop,
+  readGalaxyManifest,
   readGalaxyStationArt,
   readJobArt,
   readMarloArt,
@@ -68,14 +74,6 @@ import { flightWorldContext } from "../model/flightTopology.ts";
 import { SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
 import { worldDelta } from "../model/worldContacts.ts";
-import {
-  type CoreManifest,
-  galaxyLoadsAtOnce,
-  type GalaxyManifest,
-  galaxyManifestKey,
-  galaxyTowKey,
-  readGalaxyManifest,
-} from "./artManifest.ts";
 import {
   craftArt,
   craftFrameSets,

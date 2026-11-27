@@ -1,11 +1,7 @@
 import { readFileSync } from "node:fs";
 
+import { type GalaxyManifest, galaxyManifestPaths, readGalaxyManifest } from "../art/index.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import {
-  type GalaxyManifest,
-  galaxyManifestPaths,
-  readGalaxyManifest,
-} from "../game/artManifest.ts";
 
 // Test support: Art's split manifests read from public/art, so no test reads or merges them by
 // hand. The core manifest holds the boot set and shared links; each galaxy manifest holds that

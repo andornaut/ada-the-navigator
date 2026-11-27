@@ -5,8 +5,7 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { expect, it, vi } from "vitest";
 
-import { vectorSheetKey, whaleFrameAsset, whaleViewBox } from "../art/index.ts";
-import { galaxyLoadsAtOnce } from "./artManifest.ts";
+import { galaxyLoadsAtOnce, vectorSheetKey, whaleFrameAsset, whaleViewBox } from "../art/index.ts";
 import type { Asset } from "./sceneShared.ts";
 
 const names = new Set([

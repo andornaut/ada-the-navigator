@@ -1,4 +1,13 @@
 export {
+  type CoreManifest,
+  galaxyLoadsAtOnce,
+  type GalaxyManifest,
+  galaxyManifestKey,
+  galaxyManifestPaths,
+  galaxyTowKey,
+  readGalaxyManifest,
+} from "./artManifest.ts";
+export {
   type AsteroidOutline,
   type BackdropRock,
   backdropRock,

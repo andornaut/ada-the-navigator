@@ -7,12 +7,12 @@ import {
   enemyHardpointsPath,
   enemyJetsPath,
   enemyShardsPath,
+  readGalaxyManifest,
   readSidecars,
   type Sidecars,
 } from "../art/index.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
 import { CORE_MANIFEST, GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
-import { readGalaxyManifest } from "./artManifest.ts";
 
 const coreSidecars = readSidecars(CORE_MANIFEST.sidecars)!;
 const manifests: readonly (readonly [string, readonly EnemyFrame[], Sidecars])[] = [

@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
-import { ART_MANIFEST, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 import {
   galaxyLoadsAtOnce,
   galaxyManifestKey,
   galaxyManifestPaths,
   galaxyTowKey,
   readGalaxyManifest,
-} from "./artManifest.ts";
+} from "../art/index.ts";
+import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { ART_MANIFEST, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 
 describe("split art manifest", () => {
   it("maps each galaxy to its manifest from the core manifest, keyed by stable galaxy id", () => {
