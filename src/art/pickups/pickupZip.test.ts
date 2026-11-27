@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { CONTENT } from "../data/content.ts";
+import { CONTENT } from "../../data/content.ts";
 import { ZIP_END_SCALE, zipAt } from "./pickupZip.ts";
 
 const { pickupZip } = CONTENT.tuning.flight;

@@ -46,6 +46,8 @@ import {
   stationFrame,
   stationFrameIndex,
   stationLoopFrame,
+  UPGRADE_CHEVRON,
+  upgradeFrame,
   type WhaleKind,
   whaleLoopFrame,
   whalePhase,
@@ -96,7 +98,6 @@ import {
   acknowledgeCacheSprite,
   acknowledgePrimitiveTarget,
 } from "./sceneTargetMarkers.ts";
-import { UPGRADE_CHEVRON, upgradeFrame } from "./upgradePickup.ts";
 
 /** The scene state and methods this module's functions use. */
 export type ObjectsContext = Partial<Pick<GameScene, "fieldLight">> &

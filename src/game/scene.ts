@@ -59,6 +59,7 @@ import {
   type StationArt,
   type StreakSpec,
   SvgRasters,
+  type UpgradePickupArt,
   type WeaponSolids,
   type WhaleArt,
   type WhirlpoolProjects,
@@ -214,7 +215,6 @@ import {
 import { aboardGalaxy, storyCoversScene } from "./storyPresentation.ts";
 import { preloadTouchChrome } from "./touchChrome.ts";
 import type { StrandedCraftArt, TowLine } from "./towArt.ts";
-import type { UpgradePickupArt } from "./upgradePickup.ts";
 
 const ENGINE_ONE_FLIGHT_JET_COLORS = {
   core: [0x64caff, 0x64caff],

@@ -1,4 +1,4 @@
-import type { Vec } from "../model/types.ts";
+import type { Vec } from "../../model/types.ts";
 
 /** The core manifest's upgrade chevron strip (art/friendly-redesign.md "Pickup animations"). */
 export const UPGRADE_CHEVRON = "upgrade-chevron";

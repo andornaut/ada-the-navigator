@@ -1,4 +1,4 @@
-import type { Vec } from "../model/types.ts";
+import type { Vec } from "../../model/types.ts";
 
 // A collected pickup's zip into the ship (gameplay/rules.md forgiving contacts): drawn only, as
 // collection, credit and the notice happen at contact. It accelerates from where the pickup was

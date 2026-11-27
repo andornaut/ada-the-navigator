@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import manifest from "../../public/art/manifest.json";
+import manifest from "../../../public/art/manifest.json";
 import { readUpgradePickup, upgradeFrame } from "./upgradePickup.ts";
 
 describe("upgrade pickup art", () => {

@@ -96,6 +96,13 @@ export {
   type PhantomAllyArt,
   readPhantomAllyArt,
 } from "./phantomAllyArt.ts";
+export { zipAt } from "./pickups/pickupZip.ts";
+export {
+  readUpgradePickup,
+  UPGRADE_CHEVRON,
+  upgradeFrame,
+  type UpgradePickupArt,
+} from "./pickups/upgradePickup.ts";
 export { hasPlayerHeadingPackage } from "./playerHeadingPackage.ts";
 export {
   type Bounds,

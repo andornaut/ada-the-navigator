@@ -23,6 +23,7 @@ import {
   readSpacePalette,
   readStardustArt,
   readStationArt,
+  readUpgradePickup,
   readWeaponSolids,
 } from "../art/index.ts";
 import { CHEAT_COPY } from "../data/cheatCopy.ts";
@@ -123,7 +124,6 @@ import { engineJets } from "./shipJets.ts";
 import { shopItemDetail, stationRow } from "./shopView.ts";
 import { staticShipJets } from "./staticShipJets.ts";
 import { aboardGalaxy } from "./storyPresentation.ts";
-import { readUpgradePickup } from "./upgradePickup.ts";
 
 const scanViews = new WeakMap<
   object,
