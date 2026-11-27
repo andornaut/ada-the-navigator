@@ -256,7 +256,8 @@ describe("flight spawns from the planner", () => {
       loaded.continueGame();
       const resumed = loaded.state.flight!;
       expect(resumed.combat?.unloadedPackMembers?.[pack]).toBe(tracked ? undefined : 1);
-      resumed.player = home;
+      // Page in the same cell from outside the capital's hull.
+      resumed.player = { x: home.x - grid.pitch / 3, y: home.y };
       stepFlight(CONTENT, 1e-6, idle, resumed);
       expect(resumed.chunks).toContain(chunk);
       expect(
