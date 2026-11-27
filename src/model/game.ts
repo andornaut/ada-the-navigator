@@ -61,7 +61,6 @@ import {
   type AchievementEvent,
   type AchievementView,
   achievementViews,
-  newAchievements,
   reachSensed,
   recordAchievement,
   recordSensed,
@@ -189,6 +188,7 @@ import {
   flightWorldContext,
 } from "./flightTopology.ts";
 import { initializeGalaxyGeography } from "./galaxyGeography.ts";
+import { earlyRequiredDestination, galaxyRoute, newGameState } from "./game/campaignState.ts";
 import { dockedShopGroups, dockedShopOffers, dockedShopSupply } from "./game/dockedShop.ts";
 import { encounterCues, stationsInRange } from "./game/encounterCues.ts";
 import { jobIndicator, jobMapTarget, type JobNavigationContext } from "./game/jobNavigation.ts";
@@ -280,7 +280,6 @@ import { phantomAllyRoster, type PhantomAllySpec } from "./phantomAllies.ts";
 import { queuePhantomBlockadeCue } from "./phantomBlockadeCue.ts";
 import { HUNT_GLINT } from "./pickupBody.ts";
 import { ambientSecondThread } from "./poiDiscourse.ts";
-import { newProgress } from "./progress.ts";
 import {
   donate,
   type DonationRequest,
@@ -302,7 +301,7 @@ import {
   taskMarkerCategory,
 } from "./questObjectLinks.ts";
 import { readRequiredRolePlan } from "./requiredRolePlans.ts";
-import { SAVE_VERSION, type SaveRestore } from "./saveSchema.ts";
+import type { SaveRestore } from "./saveSchema.ts";
 import {
   immutableScanOutcome,
   type ScanActionLead,
@@ -398,7 +397,7 @@ import type {
   Vec,
 } from "./types.ts";
 import { applyUpgrade, chooseAmmoPack, chooseUpgrade } from "./upgradeDrops.ts";
-import { newEconomy, shipTuning } from "./upgrades.ts";
+import { shipTuning } from "./upgrades.ts";
 import { visitedChunk } from "./visited.ts";
 import {
   collectWeapon,
@@ -413,8 +412,8 @@ import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 import { wrapPoint } from "./worldGeometry.ts";
 
 export type { AchievementView } from "./achievements.ts";
+export { galaxyRoute, newGameState } from "./game/campaignState.ts";
 export { newProgress } from "./progress.ts";
-const progress = newProgress;
 
 // The dialogue marker that holds the flight under the holodisk moment's story pages.
 const HOLODISK_MOMENT = "holodiskMoment";
@@ -428,31 +427,6 @@ const NAMED_CAPITAL_IDS: Partial<Record<GalaxyNumber, string>> = {
 };
 const NEEDLE_PRELUDE = ["arrival:4", "meeting:4:avi"] as const;
 
-/** A first launch: galaxy one unlocked and nothing begun. */
-export function newGameState(): GameState {
-  return {
-    achievements: newAchievements(),
-    announceGalaxy: false,
-    dialogue: null,
-    docked: null,
-    economy: newEconomy(ECONOMY),
-    flight: null,
-    jobs: { boards: {}, made: 0 },
-    mode: "home",
-    notice: "",
-    progress: Object.fromEntries(GALAXY_NUMBERS.map((id) => [id, progress()])) as Record<
-      GalaxyNumber,
-      GalaxyProgress
-    >,
-    prologueSeen: false,
-    seenConversations: [],
-    selectedGalaxy: 1,
-    started: false,
-    tasks: {},
-    unlocked: [1],
-    version: SAVE_VERSION,
-  };
-}
 /** What the home half shows: the start screen, a storybook page or galaxy selection. */
 export type Screen = "selector" | "space" | "start" | "story";
 
@@ -485,17 +459,6 @@ export interface StoryView {
   readonly canSkip: boolean;
   /** The choices shown: a choice page's, or the optional questions not yet asked. */
   readonly choices: readonly StoryChoice[];
-}
-// The built galaxies' story destinations; a placeholder galaxy has none.
-const required: Partial<Record<GalaxyNumber, readonly string[]>> = {
-  1: ["growers", "workshop", "salvagers", "workshop"],
-  2: ["hub", "hub", "miner", "visitors", "hub"],
-  3: ["whale", "whale", "whale", "family", "whale"],
-};
-
-/** A galaxy's story destinations in the order its route first visits them; the first opens it. */
-export function galaxyRoute(galaxy: GalaxyNumber): readonly string[] {
-  return chapterRuntime(galaxy)?.route ?? [...new Set(required[galaxy] ?? [])];
 }
 /** The destination that opens a built galaxy's story; none in a placeholder. */
 const first = (galaxy: GalaxyNumber): string | undefined => galaxyRoute(galaxy)[0];
@@ -4142,7 +4105,7 @@ export class GameModel {
         this.content.tuning.introFreshDistance +
           this.current.stage * this.content.tuning.encounterFreshDistance
     ) {
-      const id = required[f.galaxy]?.[this.current.stage];
+      const id = earlyRequiredDestination(f.galaxy, this.current.stage);
       if (
         id &&
         (f.galaxy !== 3 || activateRequiredWhirlpoolRoute(this.content, this.current, f, id))

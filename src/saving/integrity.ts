@@ -1,5 +1,5 @@
 import packageInfo from "../../package.json" with { type: "json" };
-import { galaxyRoute } from "../model/game.ts";
+import { galaxyRoute } from "../model/game/campaignState.ts";
 import { stationPopulationObjects } from "../model/hostileStations.ts";
 import { routeGuardEvidence } from "../model/routeGuardEvidence.ts";
 import type { GameState } from "../model/types.ts";

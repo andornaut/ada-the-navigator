@@ -3,7 +3,7 @@ import type { SaveStorage } from "@andornaut/game-kit/runtime/save/storage";
 import { encodeSave, type SaveFormat } from "@andornaut/game-kit/runtime/save/versionedSave";
 import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/localSaveStorage";
 
-import { newGameState } from "../model/game.ts";
+import { newGameState } from "../model/game/campaignState.ts";
 import { SAVE_VERSION } from "../model/saveSchema.ts";
 import type { GameSave } from "../model/types.ts";
 import { restoreSave } from "./codec.ts";
