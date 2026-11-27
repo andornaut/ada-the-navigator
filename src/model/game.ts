@@ -79,7 +79,7 @@ import {
   resetCourier,
   supplyTerms,
 } from "./activities.ts";
-import { andromedaCourierActor } from "./andromeda.ts";
+import { andromedaCourierActor, takeAndromedaCourierWarning } from "./andromeda.ts";
 import {
   ANDROMEDA_REDACT,
   ANDROMEDA_REDACT_CUES,
@@ -113,6 +113,7 @@ import {
 } from "./courierRun.ts";
 import { inCurrent } from "./currents.ts";
 import { carriesStardust, dropRandom } from "./drops.ts";
+import { EARLY_ENCOUNTER_CUES } from "./earlyEncounterRuntime.ts";
 import { edgeMarkerKind } from "./edgeMarkers.ts";
 import {
   confirmExchange,
@@ -3876,6 +3877,12 @@ export class GameModel {
       }
     }
     for (const event of events) {
+      if (event.type === "earlyEncounterCue") {
+        this.talk.encounterCue(
+          `chapter:encounter:${event.encounter}`,
+          EARLY_ENCOUNTER_CUES[event.encounter],
+        );
+      }
       if (event.type === "cartwheelPatrolWarning") {
         this.talk.chapterCue({
           speaker: "astra",
@@ -3979,6 +3986,12 @@ export class GameModel {
     this.advanceCourier(f, f.time - flightTimeBeforeStep);
     if (context && previousChapterPosition) {
       this.applyChapterResult(runtime?.afterStep?.(context, dt, previousChapterPosition, events));
+      if (f.galaxy === 5) {
+        const warning = takeAndromedaCourierWarning(f);
+        if (warning) {
+          this.talk.encounterCue("chapter:encounter:andromedaCourier", warning);
+        }
+      }
       if (f.galaxy === 4) {
         this.prepareNeedleBoss(context);
         this.needleBossCues();

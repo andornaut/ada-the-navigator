@@ -144,6 +144,10 @@ it("keeps the family's disk blocked by Sounder and collectible once after resolu
     return current?.kind === "manta" ? current : undefined;
   };
   expect(mantaEscortPhase(clock()!.elapsed)).toMatchObject({ escort: 0, kind: "approach" });
+  expect(model.conversation).toMatchObject({
+    speaker: "astra",
+    text: "The escorts are taking turns. Use the gap between passes.",
+  });
   expect(first.enemy!.tactic.volleys).toBe(0);
   expect(second.enemy!.tactic.volleys).toBe(0);
   const emitted = new Set<number>();

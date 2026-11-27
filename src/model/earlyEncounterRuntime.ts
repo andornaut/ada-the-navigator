@@ -18,6 +18,21 @@ export type EarlyEncounterState =
   | ({ readonly kind: "manta" } & MantaEscortState)
   | ({ readonly kind: "crossbow" } & CrossbowTimingState);
 
+export const EARLY_ENCOUNTER_CUES = {
+  crossbow: {
+    speaker: "astra",
+    text: "Crossbow fires to one side at a time. Look for the marked lane.",
+  },
+  hammer: {
+    speaker: "astra",
+    text: "Wait for the aim line to stop moving. Then dodge. Aim for the glowing mount.",
+  },
+  manta: {
+    speaker: "astra",
+    text: "The escorts are taking turns. Use the gap between passes.",
+  },
+} as const satisfies Record<EarlyEncounterState["kind"], { speaker: "astra"; text: string }>;
+
 export const EARLY_LANCE_MOUNT = HEAVY_SIGNATURES.capital.lance.mount;
 export const EARLY_LANCE_SECONDS = LANCE_TELL.trackSeconds + LANCE_TELL.lockSeconds;
 

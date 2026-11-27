@@ -4690,6 +4690,7 @@ function enemies(
       (state.engaged || admissions.has(object.id))
     ) {
       state.earlyEncounter = { elapsed: 0, kind };
+      events.push({ encounter: "crossbow", type: "earlyEncounterCue" });
     }
     const early = state.earlyEncounter;
     const lanceAvailable =
@@ -4714,6 +4715,7 @@ function enemies(
       const escortPlan = planMantaEscorts(flight, manta);
       if (escortPlan) {
         manta.enemy.earlyEncounter = { ...escortPlan, kind: "manta" };
+        events.push({ encounter: "manta", type: "earlyEncounterCue" });
       }
     }
     const mantaState = manta?.enemy?.earlyEncounter;
@@ -4962,6 +4964,9 @@ function enemies(
           (firstTellDue || early?.kind === "crossbow")
         ) {
           rememberEarlyLance(object, beam, "started");
+          if (firstTellDue) {
+            events.push({ encounter: "hammer", type: "earlyEncounterCue" });
+          }
         }
         continue;
       }

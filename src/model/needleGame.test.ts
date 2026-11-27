@@ -271,6 +271,10 @@ describe("Captain Cadence admission and outcome", () => {
     const fired = new Set<number>();
     model.step(0.02, idle);
     expect(activeCrossbowSector(flight)?.phase).toBe("warning");
+    expect(model.conversation).toMatchObject({
+      speaker: "astra",
+      text: "Crossbow fires to one side at a time. Look for the marked lane.",
+    });
     for (let frame = 0; frame < 1300 && fired.size < 2; frame++) {
       const sector = activeCrossbowSector(flight)!;
       const side = Math.sign(sector.sector[0]);

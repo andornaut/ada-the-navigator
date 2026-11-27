@@ -517,7 +517,7 @@ it("reserves Pip's unmodified seeded route and gates the real fighter pairs thro
   );
   crossCourierLine(model, route.plan);
   expect(andromedaCourierAttempt(route.progress)?.state).toEqual({ elapsed: 0, phase: "warned" });
-  expect(takeAndromedaCourierWarning(route.flight)).toEqual({
+  expect(model.conversation).toMatchObject({
     speaker: "astra",
     text: "Fighters on both sides. Keep going toward the settlement.",
   });

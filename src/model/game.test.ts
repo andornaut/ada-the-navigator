@@ -419,6 +419,10 @@ describe("Captain Tally in Sunflower", () => {
     const beam = () =>
       activeEnemyBeams(flightOf(model)).find(({ authored, ownerId }) => ownerId === id && authored);
     expect(beam()).toMatchObject({ fired: false, hardpointId: "weapon-left" });
+    expect(model.conversation).toMatchObject({
+      speaker: "astra",
+      text: "Wait for the aim line to stop moving. Then dodge. Aim for the glowing mount.",
+    });
     const flight = flightOf(model);
     const before = flight.shots.length;
     for (let frame = 0; frame < 40; frame++) {

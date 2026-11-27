@@ -15,6 +15,7 @@ import type {
   RequiredCapitalBossProgress,
 } from "./capitalBossEncounter.ts";
 import type { CartwheelMiningPatrol } from "./cartwheelMiningPatrol.ts";
+import type { EarlyEncounterState } from "./earlyEncounterRuntime.ts";
 import type { EnemyState } from "./enemyAi.ts";
 import type { ExplorationSites, ExplorationState } from "./explorationState.ts";
 import type { FlightTopology } from "./flightTopology.ts";
@@ -503,6 +504,7 @@ export interface FlightLogEntry {
 export type FlightEvent =
   | { type: "depleted" }
   | { type: "cartwheelPatrolWarning" }
+  | { type: "earlyEncounterCue"; encounter: EarlyEncounterState["kind"] }
   /** The equipped weapon ran out of ammunition and Ada switched to Laser. */
   | { type: "outOfAmmo" }
   | { type: "stardust"; amount: number }

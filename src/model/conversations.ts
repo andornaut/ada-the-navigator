@@ -164,6 +164,8 @@ interface Request {
   readonly resume?: { readonly elapsed: number; readonly exposed: boolean; readonly line: number };
   /** A scan receipt, which ranks as a notice: below warnings, above every other line. */
   readonly notice?: true;
+  /** A live encounter instruction precedes ordinary battle chatter. */
+  readonly timedWarning?: true;
   readonly variants?: readonly Conversation[];
 }
 
@@ -174,9 +176,11 @@ interface Active extends Request {
 }
 
 /** A request's place in BOX_PRIORITIES, highest first. */
-const rank = (request: Pick<Request, "conversation" | "notice" | "optional">) => {
+const rank = (request: Pick<Request, "conversation" | "notice" | "optional" | "timedWarning">) => {
   const base = BOX_PRIORITIES.indexOf(request.notice ? "notice" : request.conversation.priority);
-  return base + (request.optional === "approach" ? 0.25 : request.optional === "ambient" ? 0.5 : 0);
+  const optional =
+    request.optional === "approach" ? 0.25 : request.optional === "ambient" ? 0.5 : 0;
+  return base + optional - (request.timedWarning ? 0.25 : 0);
 };
 
 /** An event's trigger, such as an arrival or a newly mapped place, which keeps holding. */
@@ -590,6 +594,11 @@ export class ConversationDirector {
     this.eventCue([line], id, false, "never", presentation);
   }
 
+  /** A one-time live combat instruction can interrupt ordinary battle chatter. */
+  encounterCue(id: string, line: ConversationLine): void {
+    this.eventCue([line], id, false, "never", { timedWarning: true });
+  }
+
   /**
    * One receipt per actual immutable outcome; distinct same-worded events remain distinct. The
    * receipt ranks as a notice and is scheduled at once, so it shows on the step its outcome is
@@ -618,7 +627,7 @@ export class ConversationDirector {
     id: string,
     notice = false,
     repeat: "always" | "never" = "always",
-    presentation?: Pick<Request, "onFirstShowing" | "relevant">,
+    presentation?: Pick<Request, "onFirstShowing" | "relevant" | "timedWarning">,
   ): void {
     const galaxy = this.galaxy;
     if (galaxy === null) {
@@ -1128,7 +1137,9 @@ export class ConversationDirector {
   /** Whether a warning shows. */
   get warningShowing(): boolean {
     this.revalidate();
-    return this.active !== null && rank(this.active) === BOX_PRIORITIES.indexOf("warning");
+    return (
+      this.active !== null && !this.active.notice && this.active.conversation.priority === "warning"
+    );
   }
 
   /**
