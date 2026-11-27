@@ -210,6 +210,27 @@ export function createPennyMarkerLayer(
       view.place(latest.player, latest.area, latest.directionStyle, latest.markers, false);
     }
   });
+  function createEntry(marker: PennyMarker): Entry {
+    if (!actions) {
+      return { element: doc.createElement("div"), marker };
+    }
+    const node = doc.createElement("button");
+    const item: Entry = { element: node, marker };
+    const binding = bindAdaAction(
+      {
+        click: {
+          availability: () => ({ kind: "available" }),
+          run: () => actions.open(item.marker, node),
+        },
+        current: actions.available,
+        slopPx: () => SCROLL.dragThreshold * readViewUnit(node),
+      },
+      node,
+    );
+    item.dispose = binding.dispose;
+    node.type = "button";
+    return item;
+  }
   const view = {
     destroy() {
       latest = undefined;
@@ -238,28 +259,13 @@ export function createPennyMarkerLayer(
       for (const marker of markers) {
         let entry = nodes.get(marker.id);
         if (!entry) {
-          const node = actions ? doc.createElement("button") : doc.createElement("div");
-          node.className = "ada-penny-marker";
-          const glyph = doc.createElement("span");
-          glyph.className = "ada-penny-glyph";
-          node.append(glyph);
-          const item: Entry = { element: node, marker };
-          if (actions) {
-            node.setAttribute("type", "button");
-            const binding = bindAdaAction(
-              {
-                click: {
-                  availability: () => ({ kind: "available" }),
-                  run: () => actions.open(item.marker, node),
-                },
-                current: actions.available,
-                slopPx: () => SCROLL.dragThreshold * readViewUnit(node),
-              },
-              node,
-            );
-            item.dispose = binding.dispose;
-          }
+          const item = createEntry(marker);
+          const node = item.element;
           try {
+            node.className = "ada-penny-marker";
+            const glyph = doc.createElement("span");
+            glyph.className = "ada-penny-glyph";
+            node.append(glyph);
             if (actions) {
               assertAdaActionMetadata(node);
             }
