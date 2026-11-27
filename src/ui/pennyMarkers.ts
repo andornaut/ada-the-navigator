@@ -178,14 +178,16 @@ interface DirectionStyle {
   readonly reducedMotion?: boolean;
   readonly threat?: string;
 }
+interface MarkerActions {
+  readonly available: () => boolean;
+  readonly open: (marker: PennyMarker, origin: HTMLElement) => void;
+}
+
 /** Reuses the existing atlas question mark and approved category glyphs. */
 export function createPennyMarkerLayer(
   doc: Pick<Document, "createElement" | "createElementNS">,
   parent: Pick<HTMLElement, "append">,
-  actions?: {
-    readonly available: () => boolean;
-    readonly open: (marker: PennyMarker, origin: HTMLElement) => void;
-  },
+  actions?: MarkerActions,
 ) {
   const layer = doc.createElement("div");
   layer.className = "ada-penny-markers";
@@ -210,12 +212,8 @@ export function createPennyMarkerLayer(
       view.place(latest.player, latest.area, latest.directionStyle, latest.markers, false);
     }
   });
-  function createEntry(marker: PennyMarker): Entry {
-    if (!actions) {
-      return { element: doc.createElement("div"), marker };
-    }
+  function createActionEntry(actions: MarkerActions, marker: PennyMarker): Entry {
     const node = doc.createElement("button");
-    const item: Entry = { element: node, marker };
     const binding = bindAdaAction(
       {
         click: {
@@ -227,8 +225,8 @@ export function createPennyMarkerLayer(
       },
       node,
     );
-    item.dispose = binding.dispose;
     node.setAttribute("type", "button");
+    const item: Entry = { dispose: binding.dispose, element: node, marker };
     return item;
   }
   const view = {
@@ -259,7 +257,9 @@ export function createPennyMarkerLayer(
       for (const marker of markers) {
         let entry = nodes.get(marker.id);
         if (!entry) {
-          const item = createEntry(marker);
+          const item: Entry = actions
+            ? createActionEntry(actions, marker)
+            : { element: doc.createElement("div"), marker };
           const node = item.element;
           try {
             node.className = "ada-penny-marker";
