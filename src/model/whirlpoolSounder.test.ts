@@ -4,7 +4,7 @@ import { WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import type { Vec } from "../data/types.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
-import { readStory, relaunch } from "../testing/launch.ts";
+import { relaunch } from "../testing/launch.ts";
 import { mantaEscortMayFire, mantaEscortPhase } from "./earlyEncounterPatterns.ts";
 import { damageEnemy } from "./enemyAi.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
@@ -255,11 +255,22 @@ it("keeps the family's disk blocked by Sounder and collectible once after resolu
   model.step(0.01, idle);
   expect(progressOf(model).holodisk).toBe(true);
   expect(progressOf(model).known).not.toContain("holodisk");
-  expect(readStory(model).map(({ text }) => text)).toContain(
-    "Ada slides the holodisk into Astra's drive.",
-  );
-  model.step(0.01, idle);
   expect(model.screen).toBe("space");
+  expect(model.storyView).toBeNull();
+  expect(model.state.dialogue).toBeNull();
+  expect(model.conversation).toMatchObject({
+    speaker: "astra",
+    text: "Memory restored. I've found new coordinates.",
+  });
+  model.dismissConversation();
+  const pickupTime = flightOf(model).time;
+  model.step(0.01, idle);
+  expect(flightOf(model).time).toBeGreaterThan(pickupTime);
+  expect(model.screen).toBe("space");
+  expect(model.conversation).toMatchObject({
+    speaker: "astra",
+    text: "I carried that fleet from galaxy to galaxy. But whose fleet?",
+  });
   expect(waypoint(model)).toBeUndefined();
   expect(flightOf(model).objects.some(({ id }) => id === "holodisk")).toBe(false);
 });
