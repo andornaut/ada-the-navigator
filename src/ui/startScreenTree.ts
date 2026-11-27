@@ -1,6 +1,7 @@
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
 import type { StartAction } from "./layout/startScreen.ts";
+import { BUTTON_GAP } from "./layout/tokens.ts";
 
 export interface StartActionData {
   readonly action: StartAction;
@@ -9,7 +10,6 @@ export interface StartActionData {
 }
 export type StartScreenSchema = {
   start: { props: Record<string, never>; slots: "content" };
-  row: { props: Record<string, never>; slots: "actions" };
   action: { props: StartActionData; slots: never };
   note: { props: string; slots: never };
 };
@@ -27,18 +27,16 @@ export function startScreenTree(data: {
     slots: {
       content: [
         {
-          component: "row",
+          children: data.actions.map(({ action, label, role }) => ({
+            component: "action",
+            key: action,
+            kind: "component",
+            props: { action, label, role },
+          })),
+          gap: BUTTON_GAP,
           key: "actions",
-          kind: "component",
-          props: {},
-          slots: {
-            actions: data.actions.map(({ action, label, role }) => ({
-              component: "action",
-              key: action,
-              kind: "component",
-              props: { action, label, role },
-            })),
-          },
+          kind: "row",
+          padding: 0,
         },
         ...(data.note
           ? [

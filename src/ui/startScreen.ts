@@ -67,17 +67,19 @@ ${TITLE_SHIP_STYLE}
   height:100%
 }
 
-.${START_SCREEN_CLASS} .ada-start-actions{
+/* The title row hugs its action labels at the game area's absolute centre. */
+.${START_SCREEN_CLASS} > .ui-layout-row{
+  --ui-unit:var(--ada-unit,1);
   left:${fromAreaLeft(note.centre)};
   top:${fromAreaTop(actions.top)};
   transform:translateX(-50%);
-  display:flex;
-  gap:${units(BUTTON_GAP)};
-  width:max-content;
+  grid-auto-columns:max-content;
+  align-items:stretch;
+  min-width:0;
   max-width:${units(2 * actions.width + BUTTON_GAP)}
 }
 
-.${START_SCREEN_CLASS} .ada-start-actions > button{
+.${START_SCREEN_CLASS} > .ui-layout-row > button{
   width:max-content;
   max-width:${units(actions.width)}
 }
@@ -137,8 +139,6 @@ export function createStartScreen(
   } else {
     title.textContent = content.title;
   }
-  const row = document.createElement("div");
-  row.className = "ada-start-actions";
   const callbacks = new Map(content.actions.map(({ action, run }) => [action, run]));
   const buttons: HTMLButtonElement[] = [];
   root.append(...parts, title);
@@ -182,10 +182,6 @@ export function createStartScreen(
             return { dispose() {}, element, slots: {}, update() {} };
           },
           slots: [],
-        },
-        row: {
-          create: () => ({ dispose() {}, element: row, slots: { actions: row }, update() {} }),
-          slots: ["actions"],
         },
         start: {
           create: () => ({ dispose() {}, element: root, slots: { content: root }, update() {} }),

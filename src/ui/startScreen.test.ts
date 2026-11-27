@@ -299,6 +299,7 @@ it("retains supplied action order, labels, roles and callbacks with the status n
   expect(root.children[2]!.textContent).toBe("Saved progress");
   expect(root.children[2]!.attributes.get("role")).toBe("status");
   const buttons = view.buttons as unknown as Element[];
+  expect(root.children[1]!.className).toBe("ui-layout-row");
   expect(root.children[1]!.children).toEqual(buttons);
   expect(buttons.map(({ dataset, textContent }) => [dataset.action, textContent])).toEqual([
     ["restart", "New"],

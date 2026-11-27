@@ -63,7 +63,19 @@ class Element extends EventTarget {
   get nextSibling() {
     return this.parent?.children[this.parent.children.indexOf(this) + 1] ?? null;
   }
-  readonly style = { opacity: "", removeProperty() {}, setProperty() {} };
+  private readonly customProperties = new Map<string, string>();
+  readonly style = {
+    getPropertyValue: (name: string) => this.customProperties.get(name) ?? "",
+    opacity: "",
+    removeProperty: (name: string) => {
+      const previous = this.customProperties.get(name) ?? "";
+      this.customProperties.delete(name);
+      return previous;
+    },
+    setProperty: (name: string, value: string) => {
+      this.customProperties.set(name, value);
+    },
+  };
   removeAttribute(name: string): void {
     this.attributes.delete(name);
   }

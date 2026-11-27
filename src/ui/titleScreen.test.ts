@@ -272,12 +272,13 @@ describe("start screen style", () => {
     expect(rule(`.${START_SCREEN_CLASS} .ada-start-ship`)).toContain(
       `left:${fromAreaLeft(ship.centre.x - ship.size / 2)}`,
     );
-    const row = rule(`.${START_SCREEN_CLASS} .ada-start-actions`);
+    const row = rule(`.${START_SCREEN_CLASS} > .ui-layout-row`);
     expect(row).toContain(`left:${fromAreaLeft(note.centre)}`);
     expect(row).toContain(`top:${fromAreaTop(actions.top)}`);
     expect(row).toContain("transform:translateX(-50%)");
-    expect(row).toContain("display:flex");
-    const button = rule(`.${START_SCREEN_CLASS} .ada-start-actions > button`);
+    expect(row).toContain("grid-auto-columns:max-content");
+    expect(row).toContain("min-width:0");
+    const button = rule(`.${START_SCREEN_CLASS} > .ui-layout-row > button`);
     expect(button).toContain("width:max-content");
     expect(button).toContain(`max-width:${units(actions.width)}`);
     // The note (only the forced update's message) is one body line centred on the game area.
