@@ -649,6 +649,56 @@ function constructionFindings(path: string, text: string) {
   );
 }
 
+const returnedButtonSource = readFileSync(new URL("../ui/station.ts", import.meta.url), "utf8");
+const returnedButtonFixture = "src/ui/returnedButtonFixture.ts";
+const returnedButtonFinding = expect.objectContaining({
+  kind: "unbound-discrete",
+  source: expect.stringContaining("createButton(document,"),
+});
+
+it.each(["src/ui/station.ts", returnedButtonFixture])(
+  "proves the same registered button is returned with deferred cleanup in %s",
+  (path) => {
+    expect(constructionFindings(path, returnedButtonSource)).not.toContainEqual(
+      returnedButtonFinding,
+    );
+  },
+);
+
+it.each([
+  [
+    "early publication",
+    "button.replaceChildren();",
+    "parent.append(button); button.replaceChildren();",
+  ],
+  ["foreign action", "getAction: () => binding,", "getAction: () => otherBinding,"],
+  ["registry click owner", 'nativeClickOwner: "factory"', 'nativeClickOwner: "registry"'],
+  [
+    "second native click",
+    "    return {\n      button,\n      dispose()",
+    '    button.addEventListener("click", () => run(button));\n    return {\n      button,\n      dispose()',
+  ],
+  [
+    "early cleanup",
+    "    return {\n      button,\n      dispose()",
+    "    binding.dispose();\n    return {\n      button,\n      dispose()",
+  ],
+  [
+    "replacement button",
+    "    return {\n      button,\n      dispose()",
+    "    return {\n      button: otherButton,\n      dispose()",
+  ],
+  [
+    "overwritten disposer",
+    "    return {\n      button,\n      dispose()",
+    "    return {\n      button,\n      dispose: foreign,\n      dispose()",
+  ],
+] as const)("retains the returned construction finding for %s", (_case, original, replacement) => {
+  const source = returnedButtonSource.replace(original, replacement);
+  expect(source).not.toBe(returnedButtonSource);
+  expect(constructionFindings(returnedButtonFixture, source)).toContainEqual(returnedButtonFinding);
+});
+
 const mappedFocusSource = readFileSync(new URL("../ui/galaxyMap.ts", import.meta.url), "utf8");
 const mappedFocusFinding = expect.objectContaining({
   kind: "unbound-discrete",

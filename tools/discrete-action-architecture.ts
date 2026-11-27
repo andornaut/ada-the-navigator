@@ -2874,14 +2874,14 @@ function scanSource(context: ScanContext, path: string, text: string) {
     const state = options?.get("getState");
     const native = nativeDocument(call.arguments[0]!);
     const stateWithoutElement = !state || (ts.isArrowFunction(state) && !state.parameters.length);
-    const mappedText =
+    const textButton =
       native &&
       literal(content?.get("kind"), "text") &&
       content?.size === 2 &&
       readsButtonAvailability(state);
     if (
       !literal(fields(options?.get("appearance"))?.get("layout"), "caller") ||
-      (!mappedText && !literal(content?.get("kind"), "icon")) ||
+      (!textButton && !literal(content?.get("kind"), "icon")) ||
       content?.has("icon") ||
       (!native && !createdHostDocument(call.arguments[0]!)) ||
       (!stateWithoutElement && !readsButtonAvailability(state))
@@ -2972,6 +2972,8 @@ function scanSource(context: ScanContext, path: string, text: string) {
       switch (name.text) {
         case "append":
           return lexicalIdentity(target, alias) && args.every(localChild);
+        case "replaceChildren":
+          return textButton && lexicalIdentity(target, alias) && args.length === 0;
         case "addEventListener":
           return (
             lexicalIdentity(target, alias) &&
@@ -3070,34 +3072,47 @@ function scanSource(context: ScanContext, path: string, text: string) {
     }
 
     const tail = following.slice(index + 1);
-    if (mappedText) {
-      return mappedFocusPublication(block, handle, alias, binding, options, action);
-    }
     // A synchronous detached factory first gives its button away in this returned record.
     // Its cleanup is deferred to the record's consumer and can only dispose the local handles.
-    const [makeRecord, returnRecord] = tail;
-    const record = makeRecord && singleLocal(makeRecord);
-    const value = record?.initializer;
+    const result = tail.at(-1);
+    const record = tail.length === 2 ? singleLocal(tail[0]!) : undefined;
+    const value =
+      result && ts.isReturnStatement(result) && result.expression
+        ? tail.length === 1
+          ? result.expression
+          : record && isConst(record) && lexicalIdentity(result.expression, record)
+            ? record.initializer
+            : undefined
+        : undefined;
     const owner = block.parent;
+    const getAction = options?.get("getAction");
     if (
-      tail.length === 2 &&
-      record &&
-      isConst(record) &&
       value &&
       ts.isObjectLiteralExpression(value) &&
-      returnRecord &&
-      ts.isReturnStatement(returnRecord) &&
-      returnRecord.expression &&
-      lexicalIdentity(returnRecord.expression, record) &&
-      ts.isFunctionDeclaration(owner) &&
-      synchronousCallable(owner)
+      (ts.isFunctionDeclaration(owner) || ts.isArrowFunction(owner)) &&
+      synchronousCallable(owner) &&
+      getAction &&
+      ts.isArrowFunction(getAction) &&
+      synchronousCallable(getAction) &&
+      !getAction.parameters.length &&
+      ts.isIdentifier(getAction.body) &&
+      lexicalIdentity(getAction.body, binding)
     ) {
-      const element = namedProperty(value, "element");
+      const elements = value.properties.filter((property) =>
+        ts.isPropertyAssignment(property)
+          ? lexicalIdentity(property.initializer, alias)
+          : ts.isShorthandPropertyAssignment(property) &&
+            !property.objectAssignmentInitializer &&
+            declaration(property.name) === alias,
+      );
       const dispose = namedProperty(value, "dispose");
+      const names = value.properties.map((property) =>
+        property.name && ts.isIdentifier(property.name) ? property.name.text : undefined,
+      );
       if (
-        element &&
-        ts.isPropertyAssignment(element) &&
-        lexicalIdentity(element.initializer, alias) &&
+        names.every((name) => name !== undefined && name !== "__proto__") &&
+        new Set(names).size === names.length &&
+        elements.length === 1 &&
         dispose &&
         ts.isMethodDeclaration(dispose) &&
         synchronousCallable(dispose) &&
@@ -3115,16 +3130,18 @@ function scanSource(context: ScanContext, path: string, text: string) {
         }) &&
         value.properties.every(
           (property) =>
-            property === element ||
+            property === elements[0] ||
             property === dispose ||
             (ts.isShorthandPropertyAssignment(property) &&
               !property.objectAssignmentInitializer &&
-              !["dispose", "element", "__proto__"].includes(property.name.text) &&
               owner.parameters.some((parameter) => declaration(property.name) === parameter)),
         )
       ) {
         return true;
       }
+    }
+    if (textButton) {
+      return mappedFocusPublication(block, handle, alias, binding, options, action);
     }
     if (!native || !stateWithoutElement) {
       return false;
