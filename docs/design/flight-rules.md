@@ -69,3 +69,5 @@ and scan feedback.
 | ada-0423 | Strengthen Whirlpool currents by 50 percent                                                                | [ada-0423.md](../work/ada-0423.md) |
 | ada-0443 | Remove three farthest Local Map zoom levels                                                                | [ada-0443.md](../work/ada-0443.md) |
 | ada-0444 | Add one closer Local Map zoom step                                                                         | [ada-0444.md](../work/ada-0444.md) |
+| ada-0441 | Improve ambient asteroid placement and cap speeds by size                                                  | [ada-0441.md](../work/ada-0441.md) |
+| ada-0442 | Shift the Local Map zoom range two steps outward                                                           | [ada-0442.md](../work/ada-0442.md) |

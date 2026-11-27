@@ -24,3 +24,7 @@ See [Ships](../../gameplay/ships.md) for physics, rosters and
 | ada-0416 | Diversify encounter difficulty across all six galaxies                   | [ada-0416.md](../work/ada-0416.md) |
 | ada-0424 | Tune enemy mount cadence by galaxy and stagger station fire              | [ada-0424.md](../work/ada-0424.md) |
 | ada-0431 | Fix Multi-Laser bolt speed and slow Phaser cadence                       | [ada-0431.md](../work/ada-0431.md) |
+| ada-0432 | Deal one HP to both ships on hull impact                                 | [ada-0432.md](../work/ada-0432.md) |
+| ada-0434 | Show the actual Needle crossing speed on the next ring                   | [ada-0434.md](../work/ada-0434.md) |
+| ada-0437 | Give capital bosses distinct weapon loadouts                             | [ada-0437.md](../work/ada-0437.md) |
+| ada-0440 | Tune Rapid and Heavy Missile progression                                 | [ada-0440.md](../work/ada-0440.md) |

@@ -57,3 +57,5 @@ Reference: [checks](../checks.md), [container adoption](../container-adoption.md
 | ada-0413 | Start version discovery earlier and show continuous update progress       | [ada-0413.md](../work/ada-0413.md) |
 | ada-0419 | Pause flight for a ready update offer                                     | [ada-0419.md](../work/ada-0419.md) |
 | ada-0426 | Fix flight hitches after resume and around Whirlpool currents             | [ada-0426.md](../work/ada-0426.md) |
+| ada-0438 | Prepare visible destinations during flight transitions                    | [ada-0438.md](../work/ada-0438.md) |
+| ada-0439 | Shrink the playable galaxy chart to 180,000 units                         | [ada-0439.md](../work/ada-0439.md) |

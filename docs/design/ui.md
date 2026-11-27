@@ -103,3 +103,4 @@ Reference: [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.
 | ada-0427 | Explain refused Use at Needle objectives                                        | [ada-0427.md](../work/ada-0427.md) |
 | ada-0428 | Render the approved missing destination and project art                         | [ada-0428.md](../work/ada-0428.md) |
 | ada-0430 | Preserve dialogue history and make optional topics replayable                   | [ada-0430.md](../work/ada-0430.md) |
+| ada-0436 | Open details from flight markers                                                | [ada-0436.md](../work/ada-0436.md) |

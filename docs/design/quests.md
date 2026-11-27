@@ -15,3 +15,5 @@ repeatable activities, achievements, markers and scan feedback.
 | ada-0295 | Name delivery and supply run places by their sentence names in quest details | [ada-0295.md](../work/ada-0295.md) |
 | ada-0364 | Keep quest route text clear of Back                                          | [ada-0364.md](../work/ada-0364.md) |
 | ada-0369 | Add optional exploration leads along flight routes                           | [ada-0369.md](../work/ada-0369.md) |
+| ada-0433 | Highlight one tracked quest objective during flight                          | [ada-0433.md](../work/ada-0433.md) |
+| ada-0435 | Clarify quest handoffs across all six galaxies                               | [ada-0435.md](../work/ada-0435.md) |
