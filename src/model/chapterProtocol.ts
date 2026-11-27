@@ -21,6 +21,8 @@ export interface ChapterResult {
   readonly complete?: boolean;
   readonly dialogue?: DialogueState;
   readonly holodisk?: { readonly giver?: string };
+  /** The contextual Use press was handled by showing the current chapter objective. */
+  readonly useRefused?: true;
 }
 
 /** Hooks use the existing flight engine and return shared outcomes through one model owner. */

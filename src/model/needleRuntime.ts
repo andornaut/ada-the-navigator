@@ -238,7 +238,10 @@ export function useNeedle(context: ChapterContext, id: string): ChapterResult | 
     return { dialogue };
   }
   if (id === "holodisk") {
-    return canCollect(context) ? { dialogue: panel("collect") } : {};
+    return canCollect(context) ? { dialogue: panel("collect") } : { useRefused: true };
+  }
+  if (id === "needlePractice" || id === "needleEye") {
+    return { useRefused: true };
   }
   return undefined;
 }

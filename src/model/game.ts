@@ -4204,7 +4204,12 @@ export class GameModel {
     if (chapterContext) {
       const result = chapterRuntime(f.galaxy)?.use?.(chapterContext, id);
       if (result !== undefined) {
-        this.applyChapterResult(result);
+        if (result.useRefused) {
+          this.refuse(this.objective);
+          this.useRefusalCount++;
+        } else {
+          this.applyChapterResult(result);
+        }
         return;
       }
     }

@@ -6,6 +6,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { BUILT, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { NEEDLE } from "../data/needle.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { ControlState } from "../input/state.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
@@ -124,6 +125,60 @@ function nearCrossbow(model: GameModel, distance: number) {
   expect(flight.objects).toContain(boss);
   return boss;
 }
+
+describe("Needle contextual Use", () => {
+  it.each([
+    ["needlePractice", 0, 0, "Light the practice gates."],
+    ["needleEye", NEEDLE.practiceGates, 0, "Light the Eye's gates."],
+    ["holodisk", NEEDLE.practiceGates, NEEDLE.eyeGates - 1, "Light the Eye's gates."],
+  ] as const)(
+    "answers a press at %s without bypassing the gate objectives",
+    (id, practiceLit, eyeLit, objective) => {
+      const model = launch(173);
+      const progress = model.state.progress[4];
+      Object.assign(progress.needle!, {
+        approach: "independent",
+        briefed: true,
+        eyeLit,
+        met: true,
+        practiceLit,
+      });
+      visit(model, id);
+      model.dismissNotice();
+      expect(model.useTarget).toEqual({ action: "use", id });
+      const before = model.useRefusals;
+      const controls = new ControlState();
+      controls.setUseAvailable(true);
+      controls.requestUse();
+      model.step(0.001, controls.sample());
+      expect(model.useRefusals).toBe(before + 1);
+      expect(model.state.notice).toBe(objective);
+      expect(model.state.dialogue).toBeNull();
+      expect(progress).toMatchObject({
+        holodisk: false,
+        needle: { eyeLit, practiceLit },
+        questComplete: false,
+      });
+      model.step(0.001, controls.sample());
+      expect(model.useRefusals).toBe(before + 1);
+    },
+  );
+
+  it("opens collection once the last Eye gate is lit and awards the disk only on Continue", () => {
+    const model = completeEye(173);
+    const progress = model.state.progress[4];
+    visit(model, "holodisk");
+    expect(model.useTarget).toEqual({ action: "use", id: "holodisk" });
+    const before = model.useRefusals;
+    model.step(0.001, { ...idle, use: true });
+    expect(model.state.dialogue?.context).toBe("needle.collect");
+    expect(progress.holodisk).toBe(false);
+    expect(model.useRefusals).toBe(before);
+    model.choose("continue");
+    expect(progress.holodisk).toBe(true);
+    expect(model.useTarget?.id).not.toBe("holodisk");
+  });
+});
 
 describe("Captain Cadence admission and outcome", () => {
   it("fires from the actual Crossbow and retains its clocks through Continue and a new flight", () => {
