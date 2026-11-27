@@ -37,7 +37,7 @@ import {
 import { ENEMY_AVOIDANCE, ENEMY_KEEP_MOVING, MINING_HULLS } from "../data/enemyNavigation.ts";
 import { spacingRadius } from "../data/enemySpacing.ts";
 import { byPosition, ROUTE_POSITION } from "../data/galaxies.ts";
-import { CURRENTS, HUNTING_PACKS, ORE_FIELDS } from "../data/galaxyFeatures.ts";
+import { CURRENTS, ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { LANDMARK_TUNING } from "../data/jobs.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../data/phantom.ts";
@@ -134,6 +134,10 @@ import {
   screenGap,
 } from "./flight/enemyHitGeometry.ts";
 import { movementSpeedFraction, shipSpeedFraction, towing } from "./flight/handling.ts";
+import {
+  ensureHuntingPacks as ensureFlightHuntingPacks,
+  placeHuntingPack as placeFlightHuntingPack,
+} from "./flight/huntingPacks.ts";
 import {
   ageFlashes,
   recordBeamFlash,
@@ -3004,15 +3008,8 @@ function guardPack(
   combat(flight).initialPackSizes[packId] = packSize;
 }
 
-/**
- * Places a hunting pack near each whale destination within `placeRange` of Ada, once per
- * flight: hunters on a seeded side of the destination, or its far side when that side holds
- * the route guard. Members are retained like route guards and chase as one pack.
- */
-/**
- * A Whirlpool hunting pack of `count` fighters around a centre, kept with the flight. A pack
- * placed again under its id replaces its members.
- */
+const huntingPackContext = { combat, hash, random, spawnEnemy };
+
 export function placeHuntingPack(
   content: GameContent,
   packId: string,
@@ -3020,64 +3017,11 @@ export function placeHuntingPack(
   count: number,
   flight: FlightState,
 ): void {
-  flight.objects = flight.objects.filter(
-    (object) => object.kind !== "enemy" || object.enemy?.packId !== packId,
-  );
-  worldActivateFlightRegion(flightWorldContext(flight), content, centre, flight);
-  for (let i = 0; i < count; i++) {
-    const phase = (i * Math.PI * 2) / count;
-    const member = spawnEnemy(
-      content,
-      flight,
-      HUNTING_PACKS.archetype,
-      `${packId}:${i}`,
-      {
-        x: centre.x + Math.cos(phase) * HUNTING_PACKS.spread,
-        y: centre.y + Math.sin(phase) * HUNTING_PACKS.spread,
-      },
-      packId,
-      phase,
-    );
-    member.persistent = true;
-    flight.objects.push(member);
-  }
-  combat(flight).initialPackSizes[packId] = count;
+  placeFlightHuntingPack(huntingPackContext, content, packId, centre, count, flight);
 }
 
 export function ensureHuntingPacks(content: GameContent, flight: FlightState): void {
-  if (!HUNTING_PACKS.galaxies.includes(flight.galaxy)) {
-    return;
-  }
-  const placed = (combat(flight).huntingPacks ??= []);
-  for (const destination of flight.objects.filter(
-    (object) =>
-      object.kind === "destination" &&
-      HUNTING_PACKS.destinations.includes(object.id) &&
-      !placed.includes(object.id) &&
-      worldDistance(flightWorldContext(flight), object, flight.player) <= HUNTING_PACKS.placeRange,
-  )) {
-    const next = random(
-      hash(flight.seed ^ 0x4a7e, destination.id.length, destination.id.charCodeAt(0)),
-    );
-    const [fewest, most] = HUNTING_PACKS.count;
-    const count = fewest + Math.floor(next() * (most - fewest + 1));
-    let angle = next() * Math.PI * 2;
-    const at = (turn: number) => ({
-      x: destination.x + Math.cos(turn) * HUNTING_PACKS.distance,
-      y: destination.y + Math.sin(turn) * HUNTING_PACKS.distance,
-    });
-    const guard = flight.objects.find(
-      (object) => object.kind === "enemy" && object.routeId === destination.id,
-    );
-    if (
-      guard &&
-      worldDistance(flightWorldContext(flight), guard, at(angle)) < HUNTING_PACKS.guardGap
-    ) {
-      angle += Math.PI;
-    }
-    placeHuntingPack(content, `hunt:${destination.id}`, at(angle), count, flight);
-    placed.push(destination.id);
-  }
+  ensureFlightHuntingPacks(huntingPackContext, content, flight);
 }
 
 function requiredSiteSpan(content: GameContent, reach: number): number {
