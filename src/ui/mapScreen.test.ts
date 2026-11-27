@@ -249,11 +249,12 @@ describe("map screen place panel", () => {
     expect(MAP_SCREEN_STYLE).toContain("--map-place-rim:ButtonText;");
   });
 
-  it("keeps the unselected panel content-sized and the Travel action on one line", () => {
+  it("sizes the panel to its contents and keeps Travel on its own unbroken row", () => {
     const panel = MAP_SCREEN_STYLE.match(/\.ada-map-panel\{([^}]*width:max-content[^}]*)\}/u)?.[1];
     expect(panel).toContain("width:max-content");
-    expect(panel).toContain("min-width:");
+    expect(panel).not.toContain("min-width:");
     expect(panel).not.toContain("max-width");
+    expect(MAP_SCREEN_STYLE).toMatch(/\.ada-map-row\{[^}]*display:grid/u);
     expect(MAP_SCREEN_STYLE).toMatch(/\.ada-map-row \.ada-button\{[^}]*white-space:nowrap/u);
   });
 });
