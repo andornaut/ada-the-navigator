@@ -310,6 +310,9 @@ export function useDiscLayers(
     { centre: CENTRE, colour: core, inner: outer - 4, kind: "ring", outer: outer - 1 },
   );
   const parts = action === "quest" ? [] : USE_SYMBOLS[action];
+  // Lift the Dock arch and ship together for optical centering in the HUD.
+  const hudPoints = (points: readonly Point[]): readonly Point[] =>
+    action === "dock" ? points.map(({ x, y }) => ({ x, y: y - 2 })) : points;
   const paint = (part: SymbolPart, colour: number, grow: number): TouchChromeLayer =>
     part.kind === "disc"
       ? { centre: part.centre, colour, kind: "disc", radius: part.radius + grow }
@@ -322,8 +325,8 @@ export function useDiscLayers(
             outer: part.outer + grow,
           }
         : part.kind === "polygon"
-          ? { colour, grow, kind: "polygon", points: part.points }
-          : { colour, kind: "stroke", path: part.path, width: part.width + 2 * grow };
+          ? { colour, grow, kind: "polygon", points: hudPoints(part.points) }
+          : { colour, kind: "stroke", path: hudPoints(part.path), width: part.width + 2 * grow };
   layers.push(...parts.map((part) => paint(part, colours.ink, 1)));
   layers.push(...parts.map((part) => paint(part, core, 0)));
   if (action === "salvage") {

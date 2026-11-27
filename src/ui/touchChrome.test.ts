@@ -160,7 +160,6 @@ describe("Use disc chrome", () => {
     ["tow", { bottom: 56.5, left: 28, right: 47.5, top: 19 }],
     ["salvage", { bottom: 51.5, left: 25, right: 50, top: 24 }],
     ["use", { bottom: 48.5, left: 26.5, right: 48.5, top: 26.5 }],
-    ["dock", { bottom: 55.5, left: 21.5, right: 53.5, top: 20 }],
   ] as const)(
     "centres %s's drawn bounds, ink included, within 0.5 of the ring's",
     (action, bounds) => {
@@ -180,6 +179,18 @@ describe("Use disc chrome", () => {
       expect(corner).toBeLessThan(31.5);
     },
   );
+
+  it.each(USE_DISC_POSES)("optically centres Dock in the %s pose", (pose) => {
+    const dock = useDiscLayers(TOUCH_CHROME_COLOURS, "dock", pose);
+    const frame = useDiscLayers(TOUCH_CHROME_COLOURS, "quest", pose);
+    expect(dock.slice(0, frame.length)).toEqual(frame);
+    expect(layerBounds(dock.slice(frame.length))).toEqual({
+      bottom: 53.5,
+      left: 21.5,
+      right: 53.5,
+      top: 18,
+    });
+  });
 
   it("paints every symbol's ink before its cores, and Salvage's pole gaps in ink last", () => {
     for (const action of Object.keys(USE_SYMBOLS) as UseAction[]) {
@@ -224,11 +235,11 @@ describe("Use disc chrome", () => {
   it("draws Dock as a filled ship under a hangar arch, the ship's ink its outline stroked 2", () => {
     const dock = useDiscLayers(TOUCH_CHROME_COLOURS, "dock", "rest");
     // The ship's body is cream; just outside its edge is its ink; the arch top is cream.
-    expect(touchChromePixel(4, dock, { x: 37.5, y: 40 })).toEqual(CREAM);
-    expect(touchChromePixel(4, dock, { x: 37.5, y: 30.5 })).toEqual(INK);
-    expect(touchChromePixel(4, dock, { x: 37.5, y: 22.5 })).toEqual(CREAM);
+    expect(touchChromePixel(4, dock, { x: 37.5, y: 38 })).toEqual(CREAM);
+    expect(touchChromePixel(4, dock, { x: 37.5, y: 28.5 })).toEqual(INK);
+    expect(touchChromePixel(4, dock, { x: 37.5, y: 20.5 })).toEqual(CREAM);
     // Inside the arch, between its legs and the ship, nothing is drawn.
-    expect(touchChromePixel(4, dock, { x: 28, y: 33 })).toEqual([0, 0, 0, 0]);
+    expect(touchChromePixel(4, dock, { x: 28, y: 31 })).toEqual([0, 0, 0, 0]);
   });
 });
 
