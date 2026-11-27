@@ -829,13 +829,20 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   `maxSpeed * (minSpeedFraction + (1 - minSpeedFraction) * m ^ speedCurveExponent)`.
   Provisional values are `minSpeedFraction` 0.04 and `speedCurveExponent` 2.5:
   at the base engine's 175, about 7 world units per second just past the
-  deadzone, 12 at a quarter, 37 at half, 89 at three quarters and 175 at full. Keyboard movement is full deflection.
+  deadzone, 12 at a quarter, 37 at half, 89 at three quarters and 175 at full.
 - The ship's thrust jets scale with current speed as a fraction of maximum speed,
   not with stick deflection. Their colour follows engine tuning: pale blue at
   base, orange at Engine level 2 and purple at level 3, on every paint scheme.
 - Right joystick aims and fires continuously while deflected. The ship turns toward
   the aim with damping. Shots follow the ship's current facing and start
   immediately at the normal cadence.
+- With the paired desktop control update, WASD and the arrow keys move
+  screen-relative in active flight without changing the ship's nose direction.
+  Keyboard movement uses full deflection unless Shift is held for low thrust.
+  H turns the nose left and L turns it right. J and K have no flight action.
+  Left-click to turn the nose toward the cursor at the usual turn speed and
+  request one shot. Hold the left button to track the cursor and fire at the
+  normal cadence. Space fires along the nose. Right-click, E, F and Enter invoke Use.
 - Ada's maximum movement speed is provisionally 175 world units per second,
   200 and 225 at engine levels 2 and 3.
 - The space screen shows only essentials: the joysticks, weapon icons, the
@@ -870,6 +877,10 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   visible dismissal action. Restore focus to its opener or a logical control
   in the restored view. Keep mandatory choices, Cancel and confirmation or
   save guards, and block underlying gameplay input while the menu remains open.
+  In the active menu, WASD, HJKL and the arrow keys move focus. Tab cycles
+  focus, with Shift+Tab cycling in reverse. E, F, Enter and Space activate the
+  focused action. Escape acts on the top surface and invokes Skip when that
+  surface shows an eligible Skip action.
 - Pause is visible at the top left during active pausable flight. It opens a
   card titled "Paused" over the dimmed game without advancing story or dialogue.
   The left column lists Cheats, Map, Quests and Ship in label order. The right

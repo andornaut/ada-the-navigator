@@ -1009,15 +1009,16 @@ Ada's and Penny's lines show the portrait mood in brackets after the line; an
 unmarked line is neutral. Ada has happy and neutral; Penny has happy, neutral and
 upset.
 
-Each speaker line wraps to at most two lines. First flight lessons, once each, skipped if already
-done: (on touch, each named stick's control icon follows its name, per the rules):
+Each speaker line wraps to at most two lines. First flight lessons play once each
+and are skipped if already done. On touch, each named stick's icon follows its name.
+The desktop lines pair with the approved control update.
 
-- Astra: "Fly with the left stick." (desktop: "Fly with WASD.")
-- Astra: "Aim and fire with the right stick." (desktop: "Aim and fire with the
-  arrow keys.")
+- Astra: "Fly with the left stick." (desktop: "Move with WASD or the arrow keys.")
+- Astra: "Aim and fire with the right stick." (desktop: "Left-click to aim and fire.
+  Hold to keep firing.")
 - Astra: "That's Stardust. Fly close and I'll pull it in." Ada: "Like a magnet!" (happy)
 - Astra: "A station! Come close and tap Use to dock." (desktop: "A station! Come
-  close and press Space to dock.") Ada: "Shopping in space!" (happy)
+  close and press E to dock.") Ada: "Shopping in space!" (happy)
 
 Repeating triggers draw one variant from their pool, as the rules describe.
 
