@@ -932,10 +932,12 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   180000-unit chart. This size check applies to the saved flight's topology.
   Valid saves retain their discoveries and story progress across later flights.
   Landmark labels use the stable shared [Quests](quests.md#landmarks) contract.
-  Undiscovered places never appear. Map places keep at least
-  1020 world units apart, so each stays separate at full zoom; placement
-  enforces this for every mapped place, outposts and the waypoint included, and
-  story destinations keep at least 1200 apart. Story characters
+  Undiscovered places never appear. Placement and discovery generation keep
+  every mapped place at least 1020 world units apart, including outposts and
+  the waypoint. Story destinations keep at least 1200 world units apart.
+  At the widest map view, nearby place chips can overlap. Within overlapping
+  press areas, the nearest chip centre wins. Press either chip's visible centre
+  to select that place. Story characters
   waiting at a station, such as Cartwheel's miner and visitors, are not map
   places; the station stands for them. Only chunks inside the charting circle
   enter the explored record. The
