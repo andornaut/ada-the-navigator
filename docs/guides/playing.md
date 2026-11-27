@@ -38,17 +38,27 @@ tow and cargo. The galaxy map offers travel between galaxies and back to Earth. 
 
 ## Controls
 
-The homepage's [Controls tables](../../pages/index.html) show the live site copy. Use the left stick
-to move, the right stick to aim and fire, and Use to interact on touch. The
-[phone runtime](../../src/README.md#phone) explains installation and the landscape view.
+The homepage [Controls tables](../../pages/index.html) show the live site copy.
+The [phone runtime](../../src/README.md#phone) explains installation and the
+landscape view.
 
-| Input                                         | Action                                            |
-| --------------------------------------------- | ------------------------------------------------- |
-| W or Up Arrow. Hold Shift for low thrust.     | Thrust                                            |
-| A / D or Left Arrow / Right Arrow             | Turn                                              |
-| Hold the left mouse button and point          | Steer                                             |
-| Space, or hold the right mouse button and aim | Fire                                              |
-| E or Enter during flight                      | Interact                                          |
-| Tab or Shift + Tab                            | Move focus within menus                           |
-| Enter or Space on a focused button            | Activate it                                       |
-| Escape                                        | Act on the top card, or use visible eligible Skip |
+### Flight
+
+| Action              | Input                                                                                                                       |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Move                | `WASD` or arrow keys move relative to the screen without turning the nose. Hold `Shift` for low thrust.                     |
+| Turn nose           | `H` turns left. `L` turns right.                                                                                            |
+| Aim and fire        | Left-click to turn toward the cursor at the usual speed and request one shot. Hold to track and fire at the normal cadence. |
+| Fire along the nose | `Space`                                                                                                                     |
+| Use                 | Right-click, `E`, `F` or `Enter`                                                                                            |
+| Fly on touch        | Move with the left stick. Aim and fire with the right stick. Tap Use to interact.                                           |
+
+Each named control's icon follows its name.
+
+### Menus
+
+| Action                 | Input                                                                                                                              |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Pause, go back or skip | `Escape` acts on the top surface and invokes Skip when visible and eligible. You can also click or tap Pause, Menu, Back or Close. |
+| Move focus             | `WASD`, `HJKL` or arrow keys. `Tab` cycles focus. `Shift` + `Tab` cycles in reverse.                                               |
+| Activate a button      | Click, tap, or focus and press `E`, `F`, `Enter` or `Space`.                                                                       |

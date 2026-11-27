@@ -241,14 +241,14 @@ export const CONVERSATIONS: readonly Conversation[] = [
   })),
   {
     id: "lesson:move",
-    lines: [line("astra", "Fly with the {move}.", "Fly with WASD.")],
+    lines: [line("astra", "Fly with the {move}.", "Move with WASD or the arrow keys.")],
     priority: "lesson",
     repeat: "never",
     trigger: { kind: "lesson", lesson: "move" },
   },
   {
     id: "lesson:aim",
-    lines: [line("astra", "Aim and fire with the {aim}.", "Aim and fire with the arrow keys.")],
+    lines: [line("astra", "Aim and fire with the {aim}.", "Left-click to aim and fire. Hold to keep firing.")],
     priority: "lesson",
     repeat: "never",
     trigger: { kind: "lesson", lesson: "aim" },
@@ -276,7 +276,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
       line(
         "astra",
         "A station! Come close and tap {use} to dock.",
-        "A station! Come close and press Space to dock.",
+        "A station! Come close and press E to dock.",
       ),
       happy("ada", "Shopping in space!"),
     ],

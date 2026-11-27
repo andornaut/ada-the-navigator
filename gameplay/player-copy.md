@@ -1011,7 +1011,6 @@ upset.
 
 Each speaker line wraps to at most two lines. First flight lessons play once each
 and are skipped if already done. On touch, each named stick's icon follows its name.
-The desktop lines pair with the approved control update.
 
 - Astra: "Fly with the left stick." (desktop: "Move with WASD or the arrow keys.")
 - Astra: "Aim and fire with the right stick." (desktop: "Left-click to aim and fire.

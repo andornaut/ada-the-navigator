@@ -836,7 +836,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
 - Right joystick aims and fires continuously while deflected. The ship turns toward
   the aim with damping. Shots follow the ship's current facing and start
   immediately at the normal cadence.
-- With the paired desktop control update, WASD and the arrow keys move
+- WASD and the arrow keys move
   screen-relative in active flight without changing the ship's nose direction.
   Keyboard movement uses full deflection unless Shift is held for low thrust.
   H turns the nose left and L turns it right. J and K have no flight action.
