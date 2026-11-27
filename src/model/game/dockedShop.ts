@@ -22,7 +22,7 @@ type DockedShopState = Readonly<
 
 /** Resolve the station's context, eligible stock, and existing visit without mutating the economy. */
 export function dockedShopSupply(
-  services: StationServices | undefined,
+  services: StationServices | null,
   position: RoutePosition,
   docked: DockedShopState,
 ) {
