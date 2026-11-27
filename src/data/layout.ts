@@ -650,9 +650,9 @@ export const MAP_SCREEN_LAYOUT = {
     nameTop: 10,
     padding: 8,
     /** Pip diameter. */
-    pip: 6,
+    pip: 8,
     /** Pip centre to centre. */
-    pipPitch: 8,
+    pipPitch: 11,
     /** An unfilled pip's ring. */
     pipRing: 1,
     /** Pips in the row, one per tenth of the survey, always drawn at full size. */

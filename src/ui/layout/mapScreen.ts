@@ -35,7 +35,7 @@ export const MAP_SCREEN = {
   header: {
     ...MAP_SCREEN_LAYOUT.header,
     height: TYPE.heading.lineHeight + 2 * SPACING.rowGap + TYPE.body.lineHeight + SPACING.gap,
-    /** The pip row's width: 78. */
+    /** The rendered width of the entire pip row. */
     pipRow:
       (MAP_SCREEN_LAYOUT.header.pips - 1) * MAP_SCREEN_LAYOUT.header.pipPitch +
       MAP_SCREEN_LAYOUT.header.pip,

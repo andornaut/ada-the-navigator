@@ -98,8 +98,8 @@ describe("map screen tokens", () => {
         labelTop: 14,
         nameTop: 10,
         padding: 8,
-        pip: 6,
-        pipPitch: 8,
+        pip: 8,
+        pipPitch: 11,
         radius: 4,
         stackGap: 4,
         stackTop: 9,
@@ -192,21 +192,17 @@ describe("map projection and fit", () => {
     expect([0, 9, 10, 55, 99, 100].map(filledPips)).toEqual([0, 0, 1, 5, 9, 10]);
   });
 
-  it("draws ten 6 pips at an 8 pitch in a fixed 78 row", () => {
-    expect(MAP_SCREEN.header).toMatchObject({ pip: 6, pipPitch: 8, pipRow: 78, pips: 10 });
-    // The row's width counts in every header, whatever the percent: the note sets 363 with ink to
-    // spare, and a wide name and percent add their ink to the 78 row and five 8 gaps.
-    expect(mapHeaderWidth(200, 100)).toBe(200 + 1 + 100 + 78 + 5 * 8);
+  it("draws ten 8-pixel pips at an 11-pixel pitch", () => {
+    expect(MAP_SCREEN.header).toMatchObject({ pip: 8, pipPitch: 11, pipRow: 107, pips: 10 });
+    expect(mapHeaderWidth(200, 100)).toBe(200 + 1 + 100 + 107 + 5 * 8);
   });
 
   it("uses one equal ink gap for title, divider, percent, pips and both outer edges", () => {
-    // Synthetic measured ink widths: 100 + 1 + 64 + 78 = 243 plus five equal 24 gaps fits the
-    // note's 346 plus 2 * 8 padding after snapping.
-    expect(mapHeaderGeometry(100, 64, 346)).toEqual({ gap: 24, width: 363 });
-    expect(mapHeaderWidth(100, 64, 346)).toBe(363);
-    // At 2 device px per logical px the row snaps to 156 device px and the header still to 363.
-    expect(mapHeaderGeometry(100, 64, 346, 2)).toEqual({ gap: 24, width: 363 });
-    expect(mapHeaderWidth(100, 64, 601)).toBe(618);
+    // The ink totals 272. Five equal 18-pixel gaps make room for the padded 346-pixel note.
+    expect(mapHeaderGeometry(100, 64, 346)).toEqual({ gap: 18, width: 362 });
+    expect(mapHeaderWidth(100, 64, 346)).toBe(362);
+    expect(mapHeaderGeometry(100, 64, 346, 2)).toEqual({ gap: 18, width: 362 });
+    expect(mapHeaderWidth(100, 64, 601)).toBe(617);
   });
 
   it("keeps the widest header inside the phone cap and the note's minimum at about 363", () => {
