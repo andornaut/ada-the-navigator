@@ -16,7 +16,7 @@ import { ControlState } from "../input/state.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
-import { worldSceneryBodyContact } from "./asteroids.ts";
+import { worldSceneryBlocksSegment, worldSceneryBodyContact } from "./asteroids.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { interactionCopy } from "./conversations.ts";
 import { partsReach, worldParts } from "./convex.ts";
@@ -282,23 +282,24 @@ describe("Captain Cadence admission and outcome", () => {
     const fired = new Set<number>();
     const warned = new Set<number>();
     const placement = questGuardPlacementContext(CONTENT, flight);
-    const inScenery = () => {
+    const berthBlocked = (requireSight: boolean) => {
       const body = shipBody(flight.facing);
+      const target = worldPoint(world, boss, flight.player);
       return flight.objects.some((object) => {
         if (object.hp <= 0 || (object.kind !== "rock" && object.kind !== "debris")) {
           return false;
         }
+        const frame = placement.frameOf(object);
+        const drawn = placement.drawnOf(object);
+        if (
+          requireSight &&
+          worldSceneryBlocksSegment(world, object, boss, target, 0, frame, drawn)
+        ) {
+          return true;
+        }
         return isNeedleRim(object)
           ? needleRimContact({ body, position: flight.player, world }, object) !== null
-          : worldSceneryBodyContact(
-              world,
-              object,
-              flight.player,
-              body,
-              placement.frameOf(object),
-              0,
-              placement.drawnOf(object),
-            ) !== null;
+          : worldSceneryBodyContact(world, object, flight.player, body, frame, 0, drawn) !== null;
       });
     };
     model.step(SIMULATION_STEP_SECONDS, idle);
@@ -319,16 +320,22 @@ describe("Captain Cadence admission and outcome", () => {
       const heading = pending
         ? sector.bearing
         : sector.bearing + (sector.sector[0] + sector.sector[1]) / 2;
-      // Stay outside firing view between active sectors. Check nearby berths against the
-      // live scenery, starting closer for the opposite side of this chart.
+      // Acquisition needs both a clear berth and sight through the live scenery.
+      // Once a tell locks, move into the safe lane and check only the berth.
       const active = pending !== undefined || sector.phase === "active";
       let clear = false;
       if (active) {
         const radius = side > 0 ? 245 : 185;
-        clear = [0, -10, 10, -20, 20, -30, 30, -40, 40].some((offset) => {
-          place(heading, radius + offset);
-          return !inScenery();
-        });
+        const berths = [0, -10, 10, -20, 20, -30, 30, -40, 40].map((offset) => radius + offset);
+        const headings = pending
+          ? [heading, heading - sector.laneHalfAngle / 2, heading + sector.laneHalfAngle / 2]
+          : [heading];
+        clear = headings.some((candidate) =>
+          [...berths, 165, 145, 125, ...(pending ? [310, 350, 390] : [])].some((distance) => {
+            place(candidate, distance);
+            return !berthBlocked(!pending);
+          }),
+        );
       } else {
         place(heading, 540);
       }

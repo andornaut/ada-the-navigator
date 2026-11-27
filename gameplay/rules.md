@@ -1771,10 +1771,9 @@ One seeded planner places salvage wrecks, ambient enemy groups, static rocks and
 moving rocks, after the required sites and guards above. It plans salvage sites
 first, then enemy groups, then static rocks (features, then slot rocks), then
 moving rocks, which it chooses only from placed slot and feature rocks.
-All placements share one spatial index. The planner reads its densities
-from one catalog that mirrors the table below. The ambient admission budgets,
-archetype limits and capital allowance in [Ships](ships.md#ambient-admission)
-apply to the planner's output.
+All placements share one spatial index. The planner reads its targets from one
+catalog. The ambient admission budgets, archetype limits and capital allowance
+in [Ships](ships.md#ambient-admission) apply to the planner's output.
 
 - A spawn is accepted only when its footprint is at least 20 world units (Ada's
   diameter) from every placed footprint. Required hulls and salvage wrecks are
@@ -1813,10 +1812,10 @@ apply to the planner's output.
   keep the usual 20-world-unit gap from the wreck's footprint. Local admission
   (budget, archetype limit and capital count) does not apply to salvage wrecks
   ([Ships](ships.md#ambient-admission)).
-- Slot rock requests use weights of 50% Small, 40% Medium, 7% Large and 3% Huge.
+- Slot rock requests use weights of 42% Small, 38% Medium, 16% Large and 4% Huge.
   Each chunk orders seeded draws by footprint, largest first. When its slot
-  request exceeds the rounded-up per-chunk center baseline, it uses the
-  smallest footprint variant of each drawn size. Within the 48-attempt budget,
+  request exceeds seven rocks, it uses the smallest footprint variant of each
+  drawn size. Within the 48-attempt budget,
   slots try seeded corners and midpoints, then tangent points derived from
   overlaps at those positions, then uniform draws with any attempts left.
   Feature shapes remain Large only.
@@ -1842,60 +1841,55 @@ apply to the planner's output.
   rocks when their orbit is cleared. Debris-river rocks and whale quest debris
   keep their authored behaviour and do not ricochet.
 
-Densities are mean counts per open 3x3-chunk area, one ninth per chunk. Each
-kind's request in a chunk shrinks by the share of the chunk covered by the
-exclusion zones that apply to that kind, measured on an 8x8 grid of sample
-points, and an area's request is the sum of its nine chunks. Flight lanes are not
-exclusion zones and do not count as covered. Enemy columns count groups.
-Frigate groups include their escorts. Capital encounters use authored
+Ordinary slot-rock requests per open 3×3-chunk area are 60 in Sunflower,
+64 in Whirlpool, 68 in Needle, 72 in Andromeda, 76 in Cartwheel and 80 in Phantom.
+Within each galaxy, the target is uniform.
+Moving-rock requests use the number of ordinary slot rocks actually placed and
+the galaxy’s mover share: 25%, 28%, 31%, 34%, 37% or 40% in galaxy order.
+Count individual rocks in a moving cluster toward that request. A protected or
+blocked path can still reduce the delivered number.
+
+Slot-rock, feature and enemy densities are mean counts per open 3x3-chunk area,
+one ninth per chunk. Each of these requests shrinks in a chunk by the share
+covered by the exclusion zones for that kind, measured on an 8x8 grid of
+sample points. An area's request is the sum of its nine chunks. Flight lanes
+are not exclusion zones and do not count as covered. Enemy columns count
+groups. Frigate groups include their escorts. Capital encounters use authored
 placements and have zero ambient density in every region.
-The table gives the center baseline for ordinary slot rocks and movers.
-For ordinary rocks, let `edgeShare` be the larger absolute coordinate of the
-chunk centre's shortest wrapped offset from galactic center, divided by half
-the chart width. Multiply the baseline by `1 + 1.5 * edgeShare`. This is a
-linear ramp from 1× at the center to 2.5× on each edge of the square chart.
-At halfway to an edge in any direction, the multiplier is 1.75×.
 
-Derive the requested number of moving rocks from the slot rocks actually
-placed. Use the galaxy's existing center moving target divided by its center
-slot-rock target as the share. Doubling the placed slot count therefore
-doubles the moving-rock request. Count individual rocks in a moving cluster
-toward that request. A protected or blocked path can still reduce the
-delivered number.
-
-The table sets the per-kind enemy requests. Lattice spacing and occupancy
-remain set by [ambient admission](ships.md#ambient-admission), with roster
-weights and the frigate heavy share described in [Ships](ships.md#difficulty).
+The table sets the feature and per-kind enemy requests. Lattice spacing and
+occupancy remain set by [ambient admission](ships.md#ambient-admission), with
+roster weights and the frigate heavy share described in [Ships](ships.md#difficulty).
 Regions are the [geographic regions](ships.md#ambient-admission) by distance from the galactic
 center: inner below 10000 world units, middle from 10000 to below 25000 and
-outer from 25000 (planner bands 0, 1 and 2). Every density blends linearly
-between the two regions' values across 9000–11000 and 24000–26000, and
-acceptance areas there are judged against the blended request.
+outer from 25000 (planner bands 0, 1 and 2). Feature and enemy densities blend
+linearly between the two regions' values across 9000–11000 and 24000–26000,
+and acceptance areas there are judged against the blended request.
 Group sizes switch at 10000 and 25000, as budgets and archetype limits do in
 [Ships](ships.md#ambient-admission).
 Enemy group targets are interim until they are re-measured with the spacing
 radii.
 
-| Galaxy    | Region | Slot rocks | Features | Moving rocks | `swarm` | `fighter` | `interceptor` | `retaliator` | `frigate` | `capital` |
-| --------- | ------ | ---------: | -------: | -----------: | ------: | --------: | ------------: | -----------: | --------: | --------: |
-| Sunflower | inner  |      44.76 |     2.25 |            5 |   0.244 |     0.200 |             0 |            0 |         0 |         0 |
-|           | middle |      44.76 |     2.40 |            5 |   0.200 |     0.178 |             0 |        0.067 |         0 |         0 |
-|           | outer  |      44.76 |     2.25 |            5 |   0.178 |     0.155 |         0.044 |        0.067 |         0 |         0 |
-| Whirlpool | inner  |      44.76 |     1.95 |            7 |   0.105 |     0.126 |         0.063 |        0.042 |     0.063 |         0 |
-|           | middle |      44.76 |     1.80 |            7 |   0.105 |     0.126 |         0.063 |        0.042 |     0.063 |         0 |
-|           | outer  |      44.76 |     1.65 |            7 |   0.105 |     0.126 |         0.063 |        0.042 |     0.063 |         0 |
-| Needle    | inner  |      44.76 |     1.95 |            8 |   0.084 |     0.105 |         0.105 |        0.033 |     0.075 |         0 |
-|           | middle |      44.76 |     2.10 |            8 |   0.084 |     0.105 |         0.105 |        0.033 |     0.075 |         0 |
-|           | outer  |      44.76 |     2.10 |            8 |   0.084 |     0.105 |         0.105 |        0.033 |     0.075 |         0 |
-| Andromeda | inner  |      44.76 |     2.10 |            9 |   0.092 |     0.137 |         0.069 |        0.046 |     0.107 |         0 |
-|           | middle |      44.76 |     2.25 |            9 |   0.092 |     0.137 |         0.069 |        0.046 |     0.107 |         0 |
-|           | outer  |      44.76 |     2.10 |            9 |   0.092 |     0.137 |         0.069 |        0.046 |     0.107 |         0 |
-| Cartwheel | inner  |      44.76 |     2.10 |            6 |   0.131 |     0.209 |         0.063 |        0.052 |     0.073 |         0 |
-|           | middle |      44.76 |     2.10 |            6 |   0.131 |     0.209 |         0.063 |        0.052 |     0.073 |         0 |
-|           | outer  |      44.76 |     1.95 |            6 |   0.131 |     0.209 |         0.063 |        0.052 |     0.073 |         0 |
-| Phantom   | inner  |      44.76 |     2.10 |           10 |   0.129 |     0.179 |         0.107 |        0.050 |     0.268 |         0 |
-|           | middle |      44.76 |     2.10 |           10 |   0.129 |     0.179 |         0.107 |        0.050 |     0.268 |         0 |
-|           | outer  |      44.76 |     1.95 |           10 |   0.129 |     0.179 |         0.107 |        0.050 |     0.268 |         0 |
+| Galaxy    | Region | Features | `swarm` | `fighter` | `interceptor` | `retaliator` | `frigate` | `capital` |
+| --------- | ------ | -------: | ------: | --------: | ------------: | -----------: | --------: | --------: |
+| Sunflower | inner  |     2.25 |   0.244 |     0.200 |             0 |            0 |         0 |         0 |
+|           | middle |     2.40 |   0.200 |     0.178 |             0 |        0.067 |         0 |         0 |
+|           | outer  |     2.25 |   0.178 |     0.155 |         0.044 |        0.067 |         0 |         0 |
+| Whirlpool | inner  |     1.95 |   0.105 |     0.126 |         0.063 |        0.042 |     0.063 |         0 |
+|           | middle |     1.80 |   0.105 |     0.126 |         0.063 |        0.042 |     0.063 |         0 |
+|           | outer  |     1.65 |   0.105 |     0.126 |         0.063 |        0.042 |     0.063 |         0 |
+| Needle    | inner  |     1.95 |   0.084 |     0.105 |         0.105 |        0.033 |     0.075 |         0 |
+|           | middle |     2.10 |   0.084 |     0.105 |         0.105 |        0.033 |     0.075 |         0 |
+|           | outer  |     2.10 |   0.084 |     0.105 |         0.105 |        0.033 |     0.075 |         0 |
+| Andromeda | inner  |     2.10 |   0.092 |     0.137 |         0.069 |        0.046 |     0.107 |         0 |
+|           | middle |     2.25 |   0.092 |     0.137 |         0.069 |        0.046 |     0.107 |         0 |
+|           | outer  |     2.10 |   0.092 |     0.137 |         0.069 |        0.046 |     0.107 |         0 |
+| Cartwheel | inner  |     2.10 |   0.131 |     0.209 |         0.063 |        0.052 |     0.073 |         0 |
+|           | middle |     2.10 |   0.131 |     0.209 |         0.063 |        0.052 |     0.073 |         0 |
+|           | outer  |     1.95 |   0.131 |     0.209 |         0.063 |        0.052 |     0.073 |         0 |
+| Phantom   | inner  |     2.10 |   0.129 |     0.179 |         0.107 |        0.050 |     0.268 |         0 |
+|           | middle |     2.10 |   0.129 |     0.179 |         0.107 |        0.050 |     0.268 |         0 |
+|           | outer  |     1.95 |   0.129 |     0.179 |         0.107 |        0.050 |     0.268 |         0 |
 
 A target passes when at least 90% of sampled 3x3-chunk areas, over fixed seeds
 in every galaxy and region, deliver at least 90% of their requested count. A
