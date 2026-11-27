@@ -303,7 +303,7 @@ export class GameScene extends Scene {
   private passable: PassableDraw[] = [];
   towDepth: number | undefined;
   silhouettes = new Silhouettes();
-  // Every SVG's raster scale (svgRasters.ts), from the canvas's fit when preload starts.
+  // Every SVG's raster scale (art/svg/rasters.ts), from the canvas's fit when preload starts.
   rasters!: SvgRasters;
   jetKeyline!: GameObjects.Graphics;
   indicatorInk!: GameObjects.Graphics;

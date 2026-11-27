@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { afterEach, expect, it, vi } from "vitest";
 
-import { vectorSheetSource } from "./svgSheet.ts";
+import { vectorSheetSource } from "./sheet.ts";
 
 const svg = "http://www.w3.org/2000/svg";
 const path = "/art/enemies/capital-lance-top-sheet.svg";

@@ -1,4 +1,4 @@
-import { needsRaster, rasterScale } from "./textures.ts";
+import { needsRaster, rasterScale } from "../textures.ts";
 
 // The scene event that carries each new raster scale, for vector textures the scene does not
 // load as SVGs (the touch chrome).

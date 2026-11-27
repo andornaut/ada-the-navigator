@@ -311,7 +311,7 @@ export function buildScene(scene: UiContext): void {
     () => aboardGalaxy(scene.model.state, scene.model.storyView?.page) !== null,
   );
   // SVGs (as each is next drawn, rasterDrawn), and the touch chrome on RASTER_SCALE_EVENT,
-  // rasterise again once a resize moves the camera's zoom far enough (svgRasters.ts).
+  // rasterise again once a resize moves the camera's zoom far enough (art/svg/rasters.ts).
   const followZoom = (): void => {
     if (scene.rasters.resize(sceneFit(scene).zoom)) {
       scene.events.emit(RASTER_SCALE_EVENT, scene.rasters.scale);

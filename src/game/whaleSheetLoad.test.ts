@@ -5,10 +5,9 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { expect, it, vi } from "vitest";
 
-import { whaleFrameAsset, whaleViewBox } from "../art/whaleArt.ts";
+import { vectorSheetKey, whaleFrameAsset, whaleViewBox } from "../art/index.ts";
 import { galaxyLoadsAtOnce } from "./artManifest.ts";
 import type { Asset } from "./sceneShared.ts";
-import { vectorSheetKey } from "./svgSheet.ts";
 
 const names = new Set([
   "arrivalQueues",

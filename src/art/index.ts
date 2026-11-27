@@ -179,7 +179,8 @@ export {
   type StationLoop,
   stationLoopFrame,
 } from "./stationArt.ts";
-export { RASTER_SCALE_EVENT, SvgRasters, type SvgRequest } from "./svgRasters.ts";
+export { RASTER_SCALE_EVENT, SvgRasters, type SvgRequest } from "./svg/rasters.ts";
+export { vectorSheetKey, vectorSheetSource } from "./svg/sheet.ts";
 export {
   chromeAtlasGrid,
   fileFilter,

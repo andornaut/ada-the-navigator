@@ -32,6 +32,8 @@ import {
   type SvgRequest,
   type TextureFilter,
   vectorRaster,
+  vectorSheetKey,
+  vectorSheetSource,
   whaleFrameAsset,
   whaleViewBox,
 } from "../art/index.ts";
@@ -91,7 +93,6 @@ import type { GameScene } from "./scene.ts";
 import type { Asset } from "./sceneShared.ts";
 import { readShardPalettePack } from "./shardPalettePack.ts";
 import { readShipJets } from "./shipJets.ts";
-import { vectorSheetKey, vectorSheetSource } from "./svgSheet.ts";
 import { readStrandedCraft, readTowLine } from "./towArt.ts";
 
 interface MaterialCache {
@@ -1463,7 +1464,7 @@ export function loadEnemyParts(scene: AssetsContext, archetype: string): void {
   scene.load.start();
 }
 
-/** Queues an SVG at the current raster scale (svgRasters.ts). */
+/** Queues an SVG at the current raster scale (art/svg/rasters.ts). */
 export function queueSvg(scene: AssetsContext, request: SvgRequest): void {
   scene.load.svg(request.key, request.path, scene.rasters.request(request));
 }
