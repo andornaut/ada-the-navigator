@@ -388,8 +388,8 @@ Lasers. The four-type limit counts the whole ship, including the front Lasers.
 | ------------------------- | ------------------------------------------------------- |
 | Hammer                    | 1 Charged Lance, 2 Scattershot, 1 Rapid Missile         |
 | Manta Dreadnought         | 1 Charged Lance, 3 Rapid Missile                        |
-| Crossbow                  | 2 Charged Lance, 2 Multi-Laser, 2 Scattershot           |
-| Broad Wing                | 1 Charged Lance, 3 Heavy Missile, 2 Scattershot         |
+| Crossbow                  | 1 Phaser, 3 Heavy Missile, 2 Scattershot                |
+| Broad Wing                | 2 Phaser, 2 Multi-Laser, 2 Scattershot                  |
 | Outrigger Carrier         | 2 Mine Layer, 4 Laser, 2 Scattershot                    |
 | Admiral Archie's flagship | 2 Mine Layer, 2 Heavy Missile, 2 Charged Lance, 2 Laser |
 

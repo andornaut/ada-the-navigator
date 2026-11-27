@@ -1,6 +1,10 @@
 import { expect, it } from "vitest";
 
-import { ANDROMEDA_REDACT, CARTWHEEL_CLAIM } from "../data/capitalBosses.ts";
+import {
+  ANDROMEDA_REDACT,
+  CARTWHEEL_CLAIM,
+  SUNFLOWER_CAPITAL_BOSS,
+} from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import type { EnemyWeapon, GalaxyNumber, Weapon } from "../data/types.ts";
 import { weaponAt } from "../data/weaponCatalog.ts";
@@ -13,6 +17,7 @@ import {
   createFlight,
   createUnpopulatedFlight,
   placeCartwheelClaim,
+  placeSunflowerCapitalBoss,
   spawnPlannedHostileStation,
   stepFlight,
 } from "./flight.ts";
@@ -75,13 +80,28 @@ it("materializes signature and boss weapons through admitted production actors",
     }
   }
 
-  // Materialize the two authored hulls through their production placement functions.
+  // Hammer remains a production Charged Lance witness after the Phaser swap.
+  const sunflower = createUnpopulatedFlight(CONTENT, 1, 173);
+  expect(
+    placeSunflowerCapitalBoss(CONTENT, sunflower, [
+      { x: 1800, y: 0 },
+      { x: 3600, y: 0 },
+      { x: 5400, y: 0 },
+    ]),
+  ).not.toBeNull();
+  const hammer = capitalBossActor(sunflower, SUNFLOWER_CAPITAL_BOSS.id);
+  expect(hammer?.enemy?.archetype).toBe("capital");
+  expect(observe(1, hammer!, { rapidMissile: 0.4, scattershot: 0.4 }, 0.25)).toEqual(
+    new Set(["chargedLance", "laser", "rapidMissile", "scattershot"]),
+  );
+
+  // Materialize the other authored hulls through their production placement functions.
   const andromeda = createUnpopulatedFlight(CONTENT, 5, 173);
   admitRedactEncounter(CONTENT, andromeda, { x: 1000, y: 0 }, { x: 2000, y: 0 });
   const redact = capitalBossActor(andromeda, ANDROMEDA_REDACT.id);
   expect(redact?.enemy?.archetype).toBe("capital");
-  expect(observe(5, redact!, { heavyMissile: 0.5, scattershot: 0.5 }, 0.35)).toEqual(
-    new Set(["laser", "scattershot", "chargedLance", "heavyMissile"]),
+  expect(observe(5, redact!, { multiLaser: 0.5, phaser: 0.5, scattershot: 0.5 }, 0.35)).toEqual(
+    new Set(["laser", "scattershot", "multiLaser", "phaser"]),
   );
 
   const seeds = [173, 301];

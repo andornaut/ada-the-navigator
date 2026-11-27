@@ -63,8 +63,8 @@ it("keeps early capitals lance-only and late capital profiles exclusive with aft
 it.each([
   [1, SUNFLOWER_CAPITAL_BOSS.id, { chargedLance: 1, rapidMissile: 1, scattershot: 2 }],
   [3, WHIRLPOOL_CAPITAL_BOSS.id, { chargedLance: 1, rapidMissile: 3 }],
-  [4, NEEDLE_CADENCE.id, { chargedLance: 2, multiLaser: 2, scattershot: 2 }],
-  [5, ANDROMEDA_REDACT.id, { chargedLance: 1, heavyMissile: 3, scattershot: 2 }],
+  [4, NEEDLE_CADENCE.id, { heavyMissile: 3, phaser: 1, scattershot: 2 }],
+  [5, ANDROMEDA_REDACT.id, { multiLaser: 2, phaser: 2, scattershot: 2 }],
   [2, CARTWHEEL_CLAIM.id, { laser: 4, mineLayer: 2, scattershot: 2 }],
   [6, PHANTOM_FLAGSHIP_ID, { chargedLance: 2, heavyMissile: 2, laser: 2, mineLayer: 2 }],
 ] as const)(

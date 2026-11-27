@@ -250,7 +250,7 @@ describe("Captain Cadence admission and outcome", () => {
       flight.shield = model.shieldMax;
       model.step(0.02, idle);
       for (const beam of activeEnemyBeams(flight)) {
-        if (beam.kind === "lance" && beam.ownerId === id) {
+        if (beam.kind === "phaser" && beam.ownerId === id) {
           (beam.fired ? fired : tells).add(beam.volley);
         }
       }
