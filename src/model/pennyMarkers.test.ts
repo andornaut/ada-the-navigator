@@ -99,6 +99,11 @@ describe("production unified marker facade", () => {
         },
       ]);
       expect(indicator()).toEqual([]);
+      const [flagMarker] = markers();
+      expect(model.markerDetails(flagMarker!)).toMatchObject({
+        details: { quests: [{ id: model.trackedQuestId }], targetId: id },
+        kind: "quest",
+      });
       expect(progress.markerKnowledge?.[id]).toBeUndefined();
       const entry = { ...flag!, id, kind: "objective" };
       flight.player = { x: flag!.x + 500, y: flag!.y };
@@ -113,6 +118,12 @@ describe("production unified marker facade", () => {
       expect(first!.point).not.toEqual(flag);
       expect(indicator()).toEqual([{ ...first!.point, id, kind: "objective" }]);
       expect(markers()).toMatchObject([{ ...first!.point, id, trackedLabel: "Ring 1" }]);
+      expect(model.markerDetails(flagMarker!)).toBeNull();
+      const [ringMarker] = markers();
+      expect(model.markerDetails(ringMarker!)).toMatchObject({
+        details: { quests: [{ id: model.trackedQuestId }], targetId: id },
+        kind: "quest",
+      });
 
       flight.player = {
         x: first!.point.x - first!.tangent.x * 0.1,
@@ -144,10 +155,17 @@ describe("production unified marker facade", () => {
       expect(model.trackQuest("job:4:needle-hunt")).toBe(true);
       expect(indicator()).toEqual([]);
       expect(markers()).toEqual([]);
-      expect(current()).toMatchObject([
-        { id: "job:needle-hunt:search", trackedLabel: "Search area" },
-      ]);
+      const [huntMarker] = current();
+      expect(huntMarker).toMatchObject({
+        id: "job:needle-hunt:search",
+        trackedLabel: "Search area",
+      });
+      expect(model.markerDetails(huntMarker!)).toMatchObject({
+        details: { quests: [{ id: "job:4:needle-hunt" }], targetId: "job:needle-hunt:search" },
+        kind: "quest",
+      });
       expect(model.dropJob()).toBe(true);
+      expect(model.markerDetails(huntMarker!)).toBeNull();
       expect(current()).toMatchObject([{ ...second!.point, id, trackedLabel: "Ring 2" }]);
     },
   );
@@ -177,6 +195,11 @@ describe("production unified marker facade", () => {
         x: workshop.x + GALAXY_SIDE,
       },
     ]);
+    const [workshopMarker] = model.targetMarkers(GAME_AREA);
+    expect(model.markerDetails(workshopMarker!)).toMatchObject({
+      details: { quests: [{ id: "story:1:1" }], targetId: workshop.id },
+      kind: "quest",
+    });
     flight.player = { x: workshop.x, y: workshop.y };
     expect(model.targetMarkers(GAME_AREA)).toMatchObject([
       { id: workshop.id, onScreen: true, trackedLabel: "Workshop" },
@@ -305,6 +328,40 @@ describe("production unified marker facade", () => {
     ]);
     expect(model.state.progress[1].charted).toEqual([]);
     expect(model.state.progress[1].known).toEqual([]);
+  });
+  it("resolves only marker projections from the current visible flight without changing discovery", () => {
+    const { cache, flight, model, progress, store } = fixture();
+    store.set(cache.id, "sensed");
+    const [sensed] = model.targetMarkers(GAME_AREA);
+    const before = structuredClone(model.state);
+    expect(model.markerDetails(sensed!)).toEqual({
+      kind: "point",
+      point: { category: "discovery", identified: false, symbol: sensed!.symbol },
+    });
+    expect(model.state).toEqual(before);
+    expect(model.markerDetails({ ...sensed!, identified: true })).toBeNull();
+
+    cache.x = 100;
+    expect(model.markerDetails(sensed!)).toBeNull();
+    cache.x = TARGET_MARKER_RANGE + 1;
+    expect(model.markerDetails(sensed!)).toBeNull();
+    cache.x = 2000;
+    model.markerTargetDisplayed(cache.id, new Set([cache.id]));
+    expect(model.markerDetails(sensed!)).toBeNull();
+    const [identified] = model.targetMarkers(GAME_AREA);
+    expect(model.markerDetails(identified!)).toEqual({
+      kind: "point",
+      point: { category: "discovery", identified: true, label: "Stardust", symbol: sensed!.symbol },
+    });
+    expect(progress.known).toEqual([]);
+    expect(progress.charted).toEqual([]);
+
+    cache.hp = 0;
+    expect(model.markerDetails(identified!)).toBeNull();
+    expect(store.get(cache.id)).toBe("identified");
+    cache.hp = 1;
+    model.state.flight = structuredClone(flight);
+    expect(model.markerDetails(identified!)).toBeNull();
   });
   it("uses inclusive5000, hides outside it and restores the same target without narration or1400 cutoff", () => {
     const { cache, model, store } = fixture();

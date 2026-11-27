@@ -253,7 +253,7 @@ import {
   type NeedleTrackedObjective,
   needleTrackedObjective,
 } from "./needleRuntime.ts";
-import type { PennyMarker, PennyPoint } from "./pennyMarkers.ts";
+import type { MarkerDetails, PennyMarker, PennyPoint } from "./pennyMarkers.ts";
 import { phantomBossHud, type PhantomContext, phantomWaypoint } from "./phantom.ts";
 import { phantomAllyRoster, type PhantomAllySpec } from "./phantomAllies.ts";
 import { HUNT_GLINT } from "./pickupBody.ts";
@@ -554,6 +554,10 @@ export type Entropy = () => number;
 
 export class GameModel {
   private readonly markerRegistry = new TargetMarkerRegistry();
+  private readonly markerViews = new WeakMap<
+    PennyMarker,
+    { area: Rect; flight: FlightState; litCaches: ReadonlySet<string> | undefined }
+  >();
   private readonly seenCacheGroups = new Set<string>();
   private scannedLandmarks: string[] = [];
   private scanOutcomes: ScanOutcome[] = [];
@@ -1137,6 +1141,20 @@ export class GameModel {
     if (!f || this.screen !== "space") {
       return [];
     }
+    const markers = this.projectTargetMarkers(f, area, litCaches).markers;
+    const view = { area: { ...area }, flight: f, litCaches };
+    for (const marker of markers) {
+      this.markerViews.set(marker, view);
+    }
+    return markers;
+  }
+
+  private projectTargetMarkers(
+    f: FlightState,
+    area: Rect,
+    litCaches: ReadonlySet<string> | undefined,
+    readOnly = false,
+  ) {
     const progress = this.state.progress[f.galaxy];
     const store = this.markerStore(f);
     const known = [
@@ -1223,13 +1241,15 @@ export class GameModel {
           : (categories.get(id) ?? "generic"),
       };
     };
-    return this.markerRegistry
+    // Details use the same visibility rules without recording discoveries or retiring markers.
+    const registry = readOnly ? new TargetMarkerRegistry() : this.markerRegistry;
+    const markers = registry
       .evaluate(
         {
           area,
           player: f.player,
           resolve,
-          store,
+          store: readOnly ? { ...store, remove: () => {}, set: () => {} } : store,
           ...flightWorldContext(f),
           ...(tracked ? { tracked } : {}),
         },
@@ -1239,6 +1259,70 @@ export class GameModel {
         const point = points.get(marker.id);
         return point ? [{ ...point, ...marker }] : [];
       });
+    return { known, markers, storyTargets: tasks.storyTargets, waypointId: tracked?.waypoint?.id };
+  }
+
+  /** Resolve a displayed flight marker against current world and quest state without updating it. */
+  markerDetails(marker: PennyMarker): MarkerDetails | null {
+    const view = this.markerViews.get(marker);
+    const flight = this.state.flight;
+    if (
+      !view ||
+      view.flight !== flight ||
+      flight.galaxy !== this.state.selectedGalaxy ||
+      this.screen !== "space" ||
+      this.state.docked ||
+      this.state.dialogue
+    ) {
+      return null;
+    }
+    const { known, markers, storyTargets, waypointId } = this.projectTargetMarkers(
+      flight,
+      view.area,
+      view.litCaches,
+      true,
+    );
+    const current = markers.find(({ id }) => id === marker.id);
+    if (
+      !current ||
+      current.identified !== marker.identified ||
+      current.trackedLabel !== marker.trackedLabel
+    ) {
+      return null;
+    }
+    const { category, id, identified, item, symbol } = current;
+    if (!identified) {
+      return { kind: "point", point: { category, identified, symbol } };
+    }
+    const task = this.state.tasks[flight.galaxy];
+    const entries = this.quests;
+    const quests =
+      id === waypointId
+        ? entries.filter((entry) => entry.id === this.trackedQuestId)
+        : questsForObject(
+            {
+              galaxy: flight.galaxy,
+              knownIds: known,
+              quests: entries,
+              storyTargets,
+              ...(task ? { task } : {}),
+            },
+            id,
+          );
+    if (quests.length) {
+      return { details: { quests, targetId: id }, kind: "quest" };
+    }
+    const site =
+      category === "discovery"
+        ? this.scannableSites(flight).find((site) => site.id === id)
+        : undefined;
+    const label = site
+      ? landmarkLabel((key) => this.label(key), site)
+      : this.label(item ?? id) ||
+        (symbol === "holodisk" ? this.label("mapHolodiskWaypoint") : "") ||
+        (category === "station" ? this.label("station") : "") ||
+        (id.startsWith("settlement:") ? this.label("settlement") : "");
+    return { kind: "point", point: { category, identified, symbol, ...(label ? { label } : {}) } };
   }
 
   /** Retained presentation facade; all targets now use the same registry. */
