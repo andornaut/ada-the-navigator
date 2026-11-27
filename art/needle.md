@@ -103,8 +103,7 @@ right berth at the chamber's outer end, 114 units from the pivot.
 links as `needleGates` ([Friendly object redesign](friendly-redesign.md)).
 
 An upright hoop with its axis along the channel: rim radius 40 and depth 7
-model units, 32 flat-shaded segments in the world light of the debris model,
-and eight lamps on each face. The opening is 66 across, Gameplay's pass
+model units, with a lamp band on each side collar. The opening is 66 across, Gameplay's pass
 opening: a pass counts when Ada's centre crosses inside it, and the rim bumps
 like scenery. Four detached violet-blue light bands frame the outside of the
 hoop. They mark the gate's field and have no collision.
@@ -138,16 +137,17 @@ hoop. They mark the gate's field and have no collision.
 
 | State | Rim ramp, lit to shadow | Lamps     | Veil                                | Rim edge median, orientation 2 | Keyline |
 | ----- | ----------------------- | --------- | ----------------------------------- | -----------------------------: | ------: |
-| Dark  | `#A0988F` to `#524C47`  | `#4d4640` | none                                |                         4.45:1 |  9.49:1 |
-| Lit   | `#F3EDE6` to `#8A8178`  | `#ffe9b8` | `#ffe9b8` at 0.16 alpha, back layer |                         1.63:1 |  9.49:1 |
+| Dark  | `#A0988F` to `#524C47`  | `#4a4358` | none                                |                         4.45:1 |  9.49:1 |
+| Lit   | `#F3EDE6` to `#8A8178`  | `#8b4fe0` | `#ffe9b8` at 0.16 alpha, back layer |                         1.63:1 |  9.49:1 |
 
 - The dark ramp is a dimmed silver, lifted in Oklab L by the least step that
   puts the worst drawn orientation's floor edge at 3:1 at display size. On
   Needle's light field the keyline is that edge (9.49:1), so the lift is 0;
   the build fails if either state falls under 3:1. Each layer draws over its
-  own keyline in its depth slot. Lamps lit are 1.59:1.
-- A gate lights when Gameplay counts Ada's pass: the lit pair fades in over the
-  dark pair in 240 ms, `cubicOut` (`light`). Reduced motion cuts. A too-fast pass leaves existing lit gates unchanged. Guidance returns to the last
+  own keyline in its depth slot.
+- Cleared gates show the violet collar lamps in the untinted lit art. The next
+  gate takes the current speed-band tint across both layers of its lit art.
+- A too-fast pass leaves existing lit gates unchanged. Guidance returns to the last
   lit gate, or the first when none is lit; the ship is never teleported or reset.
 - `rim` gives `inner` 33, `outer` 40 and `depth` 7 in world units: on the
   world plane the rim is two blocks across the channel, 33 to 40 from the

@@ -117,7 +117,7 @@
   "colors": {
     "rim": ["#f3ecdd", "#c6bca5", "#a0957c"],
     "band": ["#3a3f63", "#282c49", "#1b1d30"],
-    "lampLit": "#d7263d",
+    "lampLit": "#8b4fe0",
     "lampDark": "#4a4358"
   }
 }

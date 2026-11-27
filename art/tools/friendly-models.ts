@@ -412,7 +412,7 @@ export const GATE_AXES = [0, 22.5, 45, 67.5, 90] as const;
 // The collar's reach from the gate's centre, in model units beyond the rim's outer radius.
 const COLLAR_REACH = 4.2;
 export const GATE_COLLAR = GATE_RIM.outer + COLLAR_REACH / WORLD_UNIT;
-export const GATE_LAMP = { lit: NEEDLE.lamp[0], dark: "#4a4358" } as const;
+export const GATE_LAMP = { lit: "#8b4fe0", dark: "#4a4358" } as const;
 // The rim's and its band's flat tones: top, left wall, right wall.
 export const NEEDLE_GATE_TONES = { rim: NEEDLE.body, band: NEEDLE.trim } as const;
 export type GateLayer = "back" | "front";
