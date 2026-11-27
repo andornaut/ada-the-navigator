@@ -26,6 +26,7 @@ import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import { readRequiredPlan } from "./requiredEncounterPlans.ts";
+import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
 import { flightStationContext, type StationSite, worldStationInCell } from "./stations.ts";
 import type { FlightInput, FlightState, SpaceObject, Vec } from "./types.ts";
 
@@ -492,9 +493,14 @@ describe("guards fire back wherever Ada attacks from", () => {
         worldRecordObjectRemoval(world, content, actor, flight);
       }
     }
-    flight.objects = flight.objects.filter((actor) => actor.kind !== "enemy" || actor === leader);
+    // Ambient movers can change the leader's approach through predicted avoidance.
+    // Keep the protected site and static scenery for this targeting check.
+    flight.objects = flight.objects.filter(
+      (actor) =>
+        (actor.kind !== "enemy" || actor === leader) && !actor.id.startsWith(MOVING_ROCK_PREFIX),
+    );
     flight.shots = [];
-    expect(flight.objects).toContain(leader);
+    expect(flight.objects.filter(({ kind }) => kind === "enemy")).toEqual([leader]);
     const { answered, hit } = answerTime(model, leader, 8);
     expect(hit).toBe(true);
     expect(answered).not.toBeNull();

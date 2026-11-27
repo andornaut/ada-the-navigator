@@ -14,6 +14,7 @@ import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { createEnemy, type EnemyState } from "./enemyAi.ts";
 import { GameModel } from "./game.ts";
+import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -248,9 +249,11 @@ describe("keep moving in flight", () => {
     const model = flightModel(1, { x: point.x, y: point.y + 900 });
     const flight = model.state.flight!;
     const shape = [...ASTEROID_SHAPES.values()].find((entry) => entry.size === "large")!;
-    // One step generates the region around Ada first, so the traced rock is the only rock there.
+    // Generate the region first, then clear ambient rocks so the fixture has a clear approach.
     stepModel(model);
-    flight.objects = flight.objects.filter((object) => object.kind !== "rock");
+    flight.objects = flight.objects.filter(
+      (object) => object.kind !== "rock" && !object.id.startsWith(MOVING_ROCK_PREFIX),
+    );
     flight.objects.push({
       asteroid: shape.id,
       hp: 99,
@@ -275,12 +278,14 @@ describe("keep moving in flight", () => {
         slowest = Math.min(slowest, speed(miner));
       }
     }
-    // It picked live rocks at rest and traces one of them.
+    // The fixture rock is selected and remains a live tracing target at rest.
     const tracing = miner.enemy!.miner!;
-    expect(tracing.picks.length).toBeGreaterThan(0);
-    expect(
-      flight.objects.some((object) => object.id === tracing.rock && object.kind === "rock"),
-    ).toBe(true);
+    expect(tracing.picks).toEqual(["trace-rock"]);
+    expect(tracing.rock).toBe("trace-rock");
+    const traced = flight.objects.find((object) => object.id === tracing.rock);
+    expect(traced?.kind).toBe("rock");
+    expect(traced!.hp).toBeGreaterThan(0);
+    expect(traced?.velocity).toBeUndefined();
     // It traces at the minimum speed, dipping briefly through the outline's corners.
     expect(slowest).toBeGreaterThanOrEqual(120 * ENEMY_KEEP_MOVING.minimumShare * 0.8);
     const resumed = relaunch(CONTENT, model.save());
