@@ -1660,7 +1660,7 @@ whose centres lie within 300 world units, fewer when fewer qualify, and the
 cluster shares the leader's velocity. The other half move alone. Every rock that
 moves counts toward the moving-rock target, so about 60% of moving rocks travel
 in clusters. A destroyed moving rock drops loot like a static rock of its size.
-Each cluster or solo rock rolls a seeded speed from 10 to 100 world units per
+Each cluster or solo rock rolls a seeded speed from 25 to 125 world units per
 second and travels in a straight line at constant velocity. It may rotate. A chosen rock starts outside the
 exclusion zones that apply to moving rocks; once moving, it may hit any object.
 Authored current debris follows its current.
@@ -1668,7 +1668,7 @@ Authored current debris follows its current.
 A moving rock that touches another asteroid ricochets off it, and both rocks
 respond. Each rock's mass is its drawn area, so a small rock deflects more than
 a large one. The pair keeps 0.3 of its closing speed along the contact normal,
-a soft knock. No rock leaves a ricochet faster than 100 world units per second, the top
+a soft knock. No rock leaves a ricochet faster than 125 world units per second, the top
 moving-rock speed.
 A moving rock keeps its new velocity at constant speed; a rock in a moving
 cluster leaves the cluster's shared velocity. A struck static rock drifts, slows to
@@ -1772,7 +1772,7 @@ apply to the planner's output.
   shapes; Huge shapes do not fit.
 - Two planner rules have no table entry: Cartwheel's claim jumpers gather at ore
   fields ([Ships](ships.md#cartwheel-roster)), and each moving rock's straight
-  path over the next 30 seconds, up to 3000 world units, is checked against
+  path over the next 30 seconds, up to 3750 world units, is checked against
   station exclusion zones and launch and arrival clearances; the Needle channel
   is not checked. A failed path redraws the rock's velocity, up to 24 times.
   After the 24th failure the rock stays where it was placed as a static rock and
