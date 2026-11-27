@@ -4371,29 +4371,33 @@ function planMantaEscorts(flight: FlightState, leader: SpaceObject): MantaEscort
     );
   const course = (escort: MantaEscortIndex) => {
     const side = escort === 0 ? 1 : -1;
-    const station = { x: -forward.y * gap * side, y: forward.x * gap * side };
     const point = (offset: Vec) => ({ x: home.x + offset.x, y: home.y + offset.y });
-    for (const span of [escortTuning.stationGap, escortTuning.stationGap / 2]) {
-      const entry = {
-        x: station.x - forward.x * span * side,
-        y: station.y - forward.y * span * side,
-      };
-      const exit = {
-        x: station.x + forward.x * span * side,
-        y: station.y + forward.y * span * side,
-      };
-      if (
-        clear(point(entry), point(exit)) &&
-        clear(point(station), point(entry)) &&
-        clear(point(exit), point(station))
-      ) {
-        return mantaEscortCourse(
-          {
-            current: worldFlowAt(world, flight.galaxy, point(station)),
-            reverseIsClear: true,
-          },
-          { entry, exit, station },
-        );
+    // Keep the two escorts on opposite sides and move a blocked pass outwards past the terrain.
+    for (const offset of [0, escortTuning.stationGap / 2, escortTuning.stationGap]) {
+      const distance = gap + offset;
+      const station = { x: -forward.y * distance * side, y: forward.x * distance * side };
+      for (const span of [escortTuning.stationGap, escortTuning.stationGap / 2]) {
+        const entry = {
+          x: station.x - forward.x * span * side,
+          y: station.y - forward.y * span * side,
+        };
+        const exit = {
+          x: station.x + forward.x * span * side,
+          y: station.y + forward.y * span * side,
+        };
+        if (
+          clear(point(entry), point(exit)) &&
+          clear(point(station), point(entry)) &&
+          clear(point(exit), point(station))
+        ) {
+          return mantaEscortCourse(
+            {
+              current: worldFlowAt(world, flight.galaxy, point(station)),
+              reverseIsClear: true,
+            },
+            { entry, exit, station },
+          );
+        }
       }
     }
     return undefined;
