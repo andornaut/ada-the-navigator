@@ -338,6 +338,25 @@ it("uses a real pending fighter allocation only after discovery and reserves its
   expect(restored.time).toBeGreaterThan(admittedAt);
   expect(cartwheelPatrolAdmits(restored, { id: actors[0]! })).toBe(true);
 
+  // Fly the entire marked bypass after the fighters can engage, with real collision and paging.
+  restored.player = { ...entry };
+  restored.velocity = { x: 0, y: 0 };
+  const leg = { x: end.x - entry.x, y: end.y - entry.y };
+  const move = { x: leg.x / length([entry, end]), y: leg.y / length([entry, end]) };
+  const startShield = restored.shield;
+  let along = 0;
+  for (let step = 0; step < 320 && along < length([entry, end]); step++) {
+    const frame = stepFlight(CONTENT, 0.05, { ...idle, cartwheelHubKnown: true, move }, restored);
+    const point = worldPoint(world, entry, restored.player);
+    along = move.x * (point.x - entry.x) + move.y * (point.y - entry.y);
+    expect(Math.abs(move.x * (point.y - entry.y) - move.y * (point.x - entry.x))).toBeLessThan(
+      CARTWHEEL_MINING_PATROL.bypassWidth / 2,
+    );
+    expect(frame.some(({ type }) => type === "cartwheelPatrolWarning")).toBe(false);
+  }
+  expect(along).toBeGreaterThanOrEqual(length([entry, end]));
+  expect(restored.shield).toBe(startShield);
+
   const malformed = JSON.parse(saved);
   malformed.flight.cartwheelMiningPatrol.plan.bypass = [entry];
   expect(restoreSave(JSON.stringify(malformed))).toBeNull();
