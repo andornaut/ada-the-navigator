@@ -172,6 +172,7 @@ class FakeElement {
   }
   click(): void {
     const event = new Event("click", { cancelable: true });
+    Object.defineProperty(event, "detail", { value: 0 });
     for (const listener of this.listeners.get("click") ?? []) {
       listener(event);
     }
@@ -655,6 +656,87 @@ it("keeps the priced Travel here button visible and disabled below 50 Stardust",
   }
 });
 
+it.each([
+  [false, true, 1, "quest-close"],
+  [true, true, 1, "close-quests"],
+  [false, false, 2, "quest-close"],
+] as const)(
+  "opens and returns from selected place quests (blocked=%s, travel=%s, count=%s)",
+  (inDanger, travelOffered, count, dismiss) => {
+    mapMeasurement();
+    const { modal, pause, root } = cards();
+    const entries = [
+      {
+        galaxy: 1 as const,
+        id: "story:1:1",
+        line: { kind: "story" as const, target: null, text: "Bring food" },
+        locations: [],
+      },
+      {
+        galaxy: 1 as const,
+        id: "job:1:held",
+        line: { kind: "job" as const, target: null, text: "Deliver a parcel" },
+        locations: [],
+      },
+      {
+        galaxy: 2 as const,
+        id: "story:2:1",
+        line: { kind: "story" as const, target: null, text: "Unrelated" },
+        locations: [],
+      },
+    ];
+    const site = {
+      ...STATION,
+      questLinks: entries.slice(0, count).map(({ id, line }) => ({ id, label: line.text })),
+      travel: travelOffered,
+    };
+    pause.setState(
+      state({ galaxy: 1, inDanger, map: { ...MAP, places: [site] }, questEntries: entries }),
+    );
+    pause.open();
+    button(modal, "pause-map").click();
+    const map = root.children.find((node) => node.dataset.dialog === "map")!;
+    const chip = buttonsOf(map).find((node) => node.dataset.place === site.id)!;
+    chip.click();
+    expect(chip.getAttribute("aria-pressed")).toBe("true");
+    const travel = button(map, "map-travel");
+    const quest = button(map, "map-quest");
+    expect(travel.parentElement?.children).toEqual([travel, quest]);
+    expect(travel.hidden).toBe(!travelOffered);
+    expect(quest.hidden).toBe(false);
+    expect(quest.getAttribute("aria-label")).toBe(count === 1 ? "Quest: Bring food" : "Quest");
+    quest.focus();
+    quest.click();
+    const dialog = root.children.find((node) => node.className.includes("ada-quests-screen"))!;
+    expect(dialog.hidden).toBe(false);
+    if (count === 2) {
+      const rows = buttonsOf(dialog).filter((node) => node.dataset.questId);
+      expect(rows.map(({ dataset }) => dataset.questId)).toEqual(
+        entries.slice(0, 2).map(({ id }) => id),
+      );
+      rows[1]!.click();
+      expect(texts(dialog)).toContain("Deliver a parcel");
+      button(dialog, "quest-back").click();
+    } else {
+      expect(texts(dialog)).toContain("Bring food");
+    }
+    button(dialog, dismiss).click();
+    expect(dialog.hidden).toBe(true);
+    expect(pause.mapOpen()).toBe(true);
+    expect(chip.getAttribute("aria-pressed")).toBe("true");
+    expect(focused()).toBe(quest);
+    pause.setState(
+      state({
+        galaxy: 1,
+        map: { ...MAP, places: [{ ...site, questLinks: [] }] },
+        questEntries: entries,
+      }),
+    );
+    expect(quest.hidden).toBe(true);
+    pause.dispose();
+  },
+);
+
 function isMapTravelBinding(
   options: actionBinding.AdaActionOptions,
   element: HTMLElement,
@@ -709,7 +791,7 @@ it.each(["map-zoomIn", "map-travel"])(
   },
 );
 
-it("publishes the hidden Local Map field and its eight chrome nodes already bound", () => {
+it("publishes the hidden Local Map field and its nine chrome nodes already bound", () => {
   const root = mountedRoot();
   const append = root.append.bind(root);
   const registered = new Set<HTMLElement>();
@@ -754,6 +836,7 @@ it("publishes the hidden Local Map field and its eight chrome nodes already boun
         "map-close",
         "map-close-x",
         "map-galaxies",
+        "map-quest",
         "map-quests",
         "map-recentre",
         "map-travel",
@@ -790,11 +873,11 @@ it("rejects a missing Map chrome binding before publication and releases owned b
   });
   expect(() => standaloneMap(root)).toThrow("no registered action binding");
   expect(append).not.toHaveBeenCalled();
-  expect(disposals).toHaveLength(8);
+  expect(disposals).toHaveLength(9);
   for (const dispose of disposals) {
     expect(dispose).toHaveBeenCalledOnce();
   }
-  expect(buttons).toHaveLength(7);
+  expect(buttons).toHaveLength(8);
   for (const element of buttons) {
     expect(() => actionBinding.assertAdaActionMetadata(element)).toThrow(
       "no registered action binding",

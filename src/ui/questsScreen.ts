@@ -806,11 +806,12 @@ export function createQuestsScreen(
     /** Entries come from the canonical model getter; no object association is inferred here. */
     openContext(
       context: { readonly targetId: string; readonly quests: readonly QuestEntry[] } | null,
+      dismissal?: Pick<QuestFooterData["dismiss"], "intent" | "label">,
     ): boolean {
       if (!context?.quests.length) {
         return false;
       }
-      rootDismissal = { intent: "close", label: labels.close };
+      rootDismissal = dismissal ?? { intent: "close", label: labels.close };
       suspended = undefined;
       contextEntries = [...context.quests];
       showingFlightLog = false;

@@ -300,7 +300,7 @@ import {
   type WorldChange,
   worldChanges,
 } from "./projects.ts";
-import { questDetails, type QuestEntry, taskQuestId } from "./questDetails.ts";
+import { questDetails, type QuestEntry, storyQuestId, taskQuestId } from "./questDetails.ts";
 import {
   type ContextQuestDetails,
   type QuestObjectLink,
@@ -4616,22 +4616,36 @@ export class GameModel {
     });
     const tasks = this.markerTaskContext(
       f,
-      [...this.current.known, ...this.current.stations, ...this.current.charted],
+      [
+        ...this.current.known,
+        ...this.current.stations,
+        ...this.current.charted,
+        ...map.places.filter(({ kind }) => kind === "holodisk").map(({ id }) => id),
+      ],
       map.quests.flatMap((line) =>
         line.kind === "job" || line.kind === "story" ? [{ galaxy: f.galaxy, line }] : [],
       ),
     );
     const boards = this.state.jobs.boards[f.galaxy];
     const held = heldJob(f.galaxy, this.state)?.id;
+    const task = this.state.tasks[f.galaxy];
     return {
       ...map,
       places: map.places.map((place) => {
         const pendingJobLead =
           place.kind === "station" &&
           boards?.[place.id]?.some((offer) => isPostedLead(offer) && offer.id !== held);
+        const links = tasks.links(place.id);
+        const questLinks = links.flatMap(({ line }) => {
+          const id =
+            line.kind === "story"
+              ? storyQuestId(f.galaxy, this.current.stage)
+              : task && taskQuestId(f.galaxy, task);
+          return id ? [{ id, label: line.text }] : [];
+        });
         const category = tasks.category(
           place.id,
-          tasks.links(place.id),
+          links,
           place.objective || place.kind === "holodisk",
           place.job,
         );
@@ -4640,6 +4654,7 @@ export class GameModel {
           ...(pendingJobLead
             ? { label: this.keeperStationName(f.galaxy, place.id), pendingJobLead: true as const }
             : {}),
+          ...(questLinks.length ? { questLinks } : {}),
           taskCategory: pendingJobLead && category === "generic" ? "job" : category,
         };
       }),
@@ -5340,7 +5355,7 @@ export class GameModel {
     }
     const progress = this.state.progress[flight.galaxy];
     return BUILT.has(flight.galaxy) && progress.introduced && !progress.resolved
-      ? `story:${flight.galaxy}:${progress.stage}`
+      ? storyQuestId(flight.galaxy, progress.stage)
       : null;
   }
   private taskObjective(galaxy: GalaxyNumber): string | null {
@@ -5391,7 +5406,7 @@ export class GameModel {
     if (BUILT.has(galaxy) && progress.introduced && !progress.resolved) {
       entries.push({
         galaxy,
-        id: `story:${galaxy}:${progress.stage}`,
+        id: storyQuestId(galaxy, progress.stage),
         line: {
           ...details.storyDetails,
           kind: "story",

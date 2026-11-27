@@ -3,7 +3,7 @@ import { expect, it } from "vitest";
 
 import { mapPanelTree } from "./mapPanelTree.ts";
 
-it("groups the place content separately from the native travel action", () => {
+it("groups the place content separately from the ordered native actions", () => {
   const tree = mapPanelTree();
   validateLayoutTree({ group: ["content"], leaf: [] }, tree);
   expect(tree).toMatchObject({
@@ -28,7 +28,7 @@ it("groups the place content separately from the native travel action", () => {
                   ],
                 },
               },
-              { props: "travel" },
+              { props: "actions", slots: { content: [{ props: "travel" }, { props: "quest" }] } },
             ],
           },
         },
@@ -55,7 +55,9 @@ it("retains all native visibility targets and stable keys without selection or p
     "name",
     "detail0",
     "detail1",
+    "actions",
     "travel",
+    "quest",
     "danger",
     "towing",
     "carrying",

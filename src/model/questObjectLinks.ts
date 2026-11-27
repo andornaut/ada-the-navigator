@@ -38,6 +38,7 @@ export function questsForObject<Entry extends QuestObjectLink>(
     }
     const { line } = entry;
     return (
+      line.target === id ||
       line.source === id ||
       line.destination === id ||
       line.objectives?.some((objective) => objective.location === id) ||

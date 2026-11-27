@@ -38,9 +38,13 @@ describe("GameModel map quest detail integration", () => {
     expect(model.map!.places.some(({ id }) => id === "workshop")).toBe(false);
     expect(model.state).toEqual(before);
     progress.known.push("workshop");
+    const story = model.quests.find(({ galaxy, line }) => galaxy === 1 && line.kind === "story")!;
     expect(model.map!.quests.find((quest) => quest.kind === "story")).toMatchObject({
       destination: "workshop",
     });
+    expect(model.map!.places.find(({ id }) => id === "workshop")?.questLinks).toEqual([
+      { id: story.id, label: story.line.text },
+    ]);
     progress.questItem = null;
     const collecting = model.map!.quests.find((quest) => quest.kind === "story")!;
     expect(collecting).not.toEqual(hidden);

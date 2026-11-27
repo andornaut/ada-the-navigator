@@ -249,6 +249,7 @@ export interface MapScreenOptions {
   readonly closeLabel?: string;
   /** Quests: the caller opens the shared Quests list (questsScreen.ts) over the map. */
   readonly onQuests: () => void;
+  readonly onPlaceQuest?: (place: MapPlace) => void;
   readonly labels: MapScreenLabels;
   readonly onClose: () => void;
   /** Galaxies: the galaxy map; refused in danger, never while towing (pause.ts galaxiesAvailable). */
@@ -331,17 +332,17 @@ export function emptyPanelHeight(reason: boolean): number {
 }
 
 /**
- * The expected panel height before layout, with additional rows for Travel and a reason.
+ * The expected panel height before layout, with additional rows for actions and a reason.
  * The line count includes the name and is zero for a reason-only panel.
  */
-export function panelHeight(reason: boolean, lines = 2, offersTravel = false): number {
+export function panelHeight(reason: boolean, lines = 2, hasActions = false): number {
   const { padding, reasonGap, row, textTop } = MAP_PANEL;
   const reasonLine = reason ? TYPE.body.lineHeight : 0;
   if (lines === 0) {
     return 2 * padding + reasonLine;
   }
   const text = 2 * textTop + lines * TYPE.body.lineHeight;
-  const action = offersTravel ? SPACING.gap + row : 0;
+  const action = hasActions ? SPACING.gap + row : 0;
   return 2 * padding + Math.max(row, text) + action + (reason ? reasonGap + reasonLine : 0);
 }
 
@@ -701,8 +702,15 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
   font:${font(TYPE.label)};
   color:${MAP_COLORS.cream}
 }
+.ada-controls .ada-map-place-actions{
+  display:flex;
+  align-items:center;
+  gap:${units(SPACING.gap)}
+}
+.ada-controls .ada-map-place-actions[hidden]{
+  display:none
+}
 .ada-controls .ada-map-row .ada-button{
-  justify-self:start;
   min-width:max-content;
   white-space:nowrap
 }
@@ -928,6 +936,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   let selected: string | null = null;
   const places = () => state?.map.places ?? [];
   const selectedPlace = () => places().find(({ id }) => id === selected) ?? null;
+  const selectedQuests = () => (options.onPlaceQuest ? (selectedPlace()?.questLinks ?? []) : []);
   const travelNow = () =>
     travelState(
       state?.inDanger ?? false,
@@ -1144,10 +1153,28 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   travel.setAttribute("aria-label", `${labels.travelHere}, ${labels.travelCost}`);
   setButtonRole("secondary", travel);
   actionBindings.add(travelAction);
+  const questLabel = "Quest";
+  const questAction = createStandardTextAction(root, questLabel, {
+    availability: () => ({ kind: selectedQuests().length ? "available" : "omitted" }),
+    current: () => actionCurrent(questAction.element),
+    run: () => {
+      const place = selectedPlace();
+      if (place?.questLinks?.length) {
+        options.onPlaceQuest?.(place);
+      }
+    },
+  });
+  const quest = questAction.element;
+  quest.dataset.action = "map-quest";
+  setButtonRole("secondary", quest);
+  actionBindings.add(questAction);
+  const actions = document.createElement("div");
+  actions.className = "ada-map-place-actions";
   const empty = document.createElement("p");
   empty.className = "ada-map-empty";
   empty.textContent = labels.travelEmpty;
   const panelGroups: Readonly<Record<MapPanelGroup, HTMLElement>> = {
+    actions,
     panel,
     place: placeContent,
     reason,
@@ -1161,6 +1188,7 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     detail1: detail[1]!,
     empty,
     name,
+    quest,
     travel,
   };
   const panelLayout = mountLayout<MapPanelSchema>(
@@ -1357,7 +1385,14 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     if (!place && mapShowsEmpty(places())) {
       return bottom - emptyPanelHeight(reason);
     }
-    return bottom - panelHeight(reason, place ? 1 + detailLines(place).length : 0, offered);
+    return (
+      bottom -
+      panelHeight(
+        reason,
+        place ? 1 + detailLines(place).length : 0,
+        offered || selectedQuests().length > 0,
+      )
+    );
   };
 
   const drawFog = (inner: Rect, unit: number, current: MapView) => {
@@ -1637,6 +1672,13 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       });
     }
     travelAction.refresh();
+    const links = selectedQuests();
+    actions.hidden = !travelling.offered && !links.length;
+    quest.setAttribute(
+      "aria-label",
+      links.length === 1 ? `${questLabel}: ${links[0]!.label}` : questLabel,
+    );
+    questAction.refresh();
     reasons.danger.toggleAttribute("data-shown", travelling.reason === "danger");
     reasons.towing.toggleAttribute("data-shown", travelling.reason === "towing");
     reasons.carrying.toggleAttribute("data-shown", travelling.reason === "carrying");
@@ -1959,6 +2001,34 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
       view = null;
       render();
       focusTarget(closeButton);
+    },
+    /** Return from a selected place's quest, including after browsing another Locate endpoint. */
+    questReturn(): () => void {
+      const origin = selected;
+      const position = view;
+      const side = state?.map.worldSide;
+      return () => {
+        if (screen.hidden) {
+          return;
+        }
+        if (
+          origin !== null &&
+          side === state?.map.worldSide &&
+          places().some(({ id }) => id === origin)
+        ) {
+          if (selected !== origin || view !== position) {
+            cancelFieldAction();
+            selected = origin;
+            view = position;
+            render();
+          }
+          if (!quest.hidden) {
+            focusTarget(quest);
+            return;
+          }
+        }
+        focusTarget(questsButton);
+      };
     },
     setState(next: MapScreenState): void {
       if (!screen.hidden) {

@@ -169,6 +169,7 @@ export interface MapPlace {
   readonly objective: boolean;
   readonly optionalEncounter?: true;
   readonly pendingJobLead?: true;
+  readonly questLinks?: readonly { readonly id: string; readonly label: string }[];
   readonly symbol: MapSymbol;
   readonly taskCategory?: TaskCategory;
   readonly travel: boolean;

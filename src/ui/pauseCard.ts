@@ -7,7 +7,7 @@ import { EQUIPMENT_DESCRIPTIONS } from "../data/equipmentDetails.ts";
 import { RESOURCE_DESCRIPTIONS } from "../data/resourceDescriptions.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { weaponDetailLines } from "../data/weaponDetails.ts";
-import type { LocalMap } from "../model/map.ts";
+import type { LocalMap, MapPlace } from "../model/map.ts";
 import type { QuestEntry } from "../model/questDetails.ts";
 import type { ContextQuestDetails } from "../model/questObjectLinks.ts";
 import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
@@ -293,6 +293,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     onClose: () => closeMap(),
     // The galaxy map opens over the local map, which stays open beneath it.
     onGalaxies: () => options.onGalaxies(),
+    onPlaceQuest: openPlaceQuest,
     onQuests: () => openQuests(),
     onTravel: (id) => {
       setOpen(false);
@@ -302,6 +303,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     shipFrame: (heading) => options.shipFrame?.(heading),
   });
   let questRoot: "map" | "flight" | "pause" | "ship" = "map";
+  let returnToPlace: (() => void) | undefined;
   let shipDetailOrigin: HTMLElement | undefined;
   const questParentDismissal = {
     intent: "back" as const,
@@ -315,7 +317,13 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       } else if (questRoot === "flight") {
         setOpen(false);
       } else if (questRoot === "map") {
-        mapScreen.focusQuests();
+        const restore = returnToPlace;
+        returnToPlace = undefined;
+        if (restore) {
+          restore();
+        } else {
+          mapScreen.focusQuests();
+        }
       } else {
         show("paused");
         const button = buttons.get("quests");
@@ -541,6 +549,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       layer?.dispose();
       layer = undefined;
       quests.close();
+      returnToPlace = undefined;
       shipResource.close();
       shipWeapon.close();
       shipPaint?.close();
@@ -608,6 +617,20 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
     layer = undefined;
     modal.hidden = true;
     mapScreen.close();
+  }
+  function openPlaceQuest(place: MapPlace): void {
+    if (quests.isSuspended()) {
+      closeMap();
+      return;
+    }
+    const linked = (state.questEntries ?? []).filter(({ id }) =>
+      place.questLinks?.some((quest) => quest.id === id),
+    );
+    if (linked.length) {
+      questRoot = "map";
+      returnToPlace = mapScreen.questReturn();
+      quests.openContext({ quests: linked, targetId: place.id }, questParentDismissal);
+    }
   }
   function openQuests(opener: "map" | "quests" = "map"): void {
     if (opener === "map" && quests.isSuspended()) {

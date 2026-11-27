@@ -499,6 +499,7 @@ describe("galaxy map", () => {
       kind: "holodisk",
       label: "Lost holodisk",
       objective: true,
+      questLinks: [{ id: "story:3:5", label: model.objective }],
       symbol: "holodisk",
       taskCategory: "story",
       travel: true,

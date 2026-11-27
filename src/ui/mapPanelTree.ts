@@ -1,8 +1,17 @@
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
-export type MapPanelGroup = "panel" | "row" | "place" | "text" | "reason";
+export type MapPanelGroup = "panel" | "row" | "place" | "text" | "reason" | "actions";
 export type MapPanelLeaf =
-  "chip" | "name" | "detail0" | "detail1" | "travel" | "danger" | "towing" | "carrying" | "empty";
+  | "chip"
+  | "name"
+  | "detail0"
+  | "detail1"
+  | "travel"
+  | "quest"
+  | "danger"
+  | "towing"
+  | "carrying"
+  | "empty";
 export type MapPanelSchema = {
   group: { props: MapPanelGroup; slots: "content" };
   leaf: { props: MapPanelLeaf; slots: never };
@@ -33,7 +42,7 @@ export function mapPanelTree(): LayoutNode<MapPanelSchema> {
         leaf("chip"),
         group("text", [leaf("name"), leaf("detail0"), leaf("detail1")]),
       ]),
-      leaf("travel"),
+      group("actions", [leaf("travel"), leaf("quest")]),
     ]),
     // With no places the empty note comes first and the danger line follows it (art/map.md).
     leaf("empty"),
