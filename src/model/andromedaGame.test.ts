@@ -554,29 +554,53 @@ it("reserves Pip's unmodified seeded route and gates the real fighter pairs thro
   const firstRelease = ["released", "released", "held", "held"];
   expect(ids.map((id) => andromedaCourierActor(route.flight, id))).toEqual(firstRelease);
   const placement = questGuardPlacementContext(CONTENT, route.flight);
-  const occluders = (actor: (typeof actors)[number]) =>
-    route.flight.objects
-      .filter(
-        (object) =>
-          object.hp > 0 &&
-          (object.kind === "rock" || object.kind === "debris") &&
-          worldSceneryBlocksSegment(
-            route.world,
-            object,
-            actor,
-            worldPoint(route.world, actor, route.flight.player),
-            0,
-            placement.frameOf(object),
-            placement.drawnOf(object),
-          ),
-      )
-      .map(({ id }) => id);
-  const [lead, wing] = courierActors(model);
+  const occluded = (actor: (typeof actors)[number], player = route.flight.player) =>
+    route.flight.objects.some(
+      (object) =>
+        object.hp > 0 &&
+        (object.kind === "rock" || object.kind === "debris") &&
+        worldSceneryBlocksSegment(
+          route.world,
+          object,
+          actor,
+          worldPoint(route.world, actor, player),
+          0,
+          placement.frameOf(object),
+          placement.drawnOf(object),
+        ),
+    );
+  const present = courierActors(model);
+  const [lead, wing] = present;
   expect(wing!.enemy?.engaged).toBe(false);
-  expect(occluders(wing!)).toContain("rock:7,-18:4");
+  expect(worldDistance(route.world, wing!, route.flight.player)).toBeLessThan(
+    enemyEquipmentDefinition(5, wing!.enemy!).perception,
+  );
+  expect(occluded(wing!)).toBe(true);
 
-  // This approach opens sight to both pairs on the seeded 180,000-unit chart.
-  route.flight.player = { x: (lead!.x + wing!.x) / 2, y: (lead!.y + wing!.y) / 2 + 180 };
+  // Choose a nearby clear point from the live chart while both pairs remain in sight range.
+  const pairCentre = { x: (lead!.x + wing!.x) / 2, y: (lead!.y + wing!.y) / 2 };
+  const approach = [180, 240, 320, 430, 540]
+    .flatMap((radius) =>
+      Array.from({ length: 24 }, (_, index) => {
+        const angle = (index * Math.PI) / 12;
+        return {
+          x: pairCentre.x + radius * Math.cos(angle),
+          y: pairCentre.y + radius * Math.sin(angle),
+        };
+      }),
+    )
+    .find((point) =>
+      present.every((actor) => {
+        const distance = worldDistance(route.world, actor, point);
+        return (
+          distance > 75 &&
+          distance < enemyEquipmentDefinition(5, actor.enemy!).perception &&
+          !occluded(actor, point)
+        );
+      }),
+    );
+  expect(approach, "a clear approach within perception of both pairs").toBeDefined();
+  route.flight.player = approach!;
   route.flight.velocity = { x: 0, y: 0 };
   worldSyncFlightRegion(route.world, CONTENT, route.flight);
   for (const actor of courierActors(model)) {
@@ -584,7 +608,7 @@ it("reserves Pip's unmodified seeded route and gates the real fighter pairs thro
     expect(worldDistance(route.world, actor, route.flight.player)).toBeLessThan(
       definition.perception,
     );
-    expect(occluders(actor)).toEqual([]);
+    expect(occluded(actor)).toBe(false);
   }
   model.step(1 / 60, idle);
   expect(ids.map((id) => andromedaCourierActor(route.flight, id))).toEqual(firstRelease);
@@ -659,7 +683,7 @@ it("reserves Pip's unmodified seeded route and gates the real fighter pairs thro
 });
 
 it("keeps a blocked seeded leg open and refuses to spend another attempt after Continue", () => {
-  const blockerId = "rock:6,-18:3";
+  const previsitedBlockers = new Set<string>();
   const launched = launch(3);
   let model = acceptCourierLeg(launched, (flight, stationId) => {
     const player = { ...flight.player };
@@ -667,20 +691,28 @@ it("keeps a blocked seeded leg open and refuses to spend another attempt after C
     const settlement = nearestSettlement(ECONOMY, station);
     const world = flightWorldContext(flight);
     const plan = planCourierAmbush(world, { settlement, station })!;
-    expect(flight.objects.some(({ id }) => id === blockerId)).toBe(false);
+    const represented = new Set(stationPopulationObjects(flight).map(({ id }) => id));
     // Visit during normal flight before accepting Pip's delivery or reserving its terrain.
     launched.closeInteraction();
     flight.player = { ...plan.warning };
     flight.velocity = { x: 0, y: 0 };
     launched.step(0.001, idle);
-    const blocker = flight.objects.find(({ id }) => id === blockerId);
-    expect(blocker).toMatchObject({ asteroid: "asteroid-s3", kind: "rock" });
     const { from, halfWidth, to } = plan.escape;
-    const point = worldPoint(world, from, blocker!);
-    const nearest = closestOnSegment(point, from, worldPoint(world, from, to));
-    expect(Math.hypot(point.x - nearest.x, point.y - nearest.y)).toBeLessThan(
-      halfWidth + placementRadius(blocker!),
-    );
+    const end = worldPoint(world, from, to);
+    for (const rock of flight.objects) {
+      if (rock.kind !== "rock" || rock.hp <= 0 || represented.has(rock.id)) {
+        continue;
+      }
+      const point = worldPoint(world, from, rock);
+      const nearest = closestOnSegment(point, from, end);
+      if (
+        Math.hypot(point.x - nearest.x, point.y - nearest.y) <
+        halfWidth + placementRadius(rock)
+      ) {
+        previsitedBlockers.add(rock.id);
+      }
+    }
+    expect(previsitedBlockers.size).toBeGreaterThan(0);
     flight.player = player;
     expect(launched.reopenInteraction()).toBe(true);
   });
@@ -689,7 +721,9 @@ it("keeps a blocked seeded leg open and refuses to spend another attempt after C
     true,
   );
   crossCourierLine(model, route.plan);
-  expect(route.flight.objects.some(({ id }) => id === blockerId)).toBe(true);
+  expect(route.flight.objects.some(({ hp, id }) => hp > 0 && previsitedBlockers.has(id))).toBe(
+    true,
+  );
   const skipped = andromedaCourierAttempt(route.progress);
   expect(skipped?.state.phase).toBe("skipped");
   expect(courierActors(model)).toEqual([]);
