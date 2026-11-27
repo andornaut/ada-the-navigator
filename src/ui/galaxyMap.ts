@@ -1,3 +1,4 @@
+import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
@@ -8,6 +9,7 @@ import { SCREEN } from "../data/screen.ts";
 import { TASK_COLORS } from "../data/taskCategories.ts";
 import type { RouteFlight } from "../model/game.ts";
 import {
+  ADA_ACTION_HOLD_MS,
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
@@ -586,17 +588,36 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
       drawPanel();
       drawChart();
     };
-    const button = document.createElement("button");
-    button.type = "button";
+    const kit = createButton(document, {
+      appearance: { layout: "caller" },
+      content: { kind: "text", label: String(position) },
+      getAction: () => binding,
+      getState: (button) => ({
+        availability: button.hidden
+          ? { kind: "omitted" }
+          : button.disabled
+            ? { kind: "disabled" }
+            : { kind: "available" },
+      }),
+      rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: SCROLL.dragThreshold },
+    });
+    const button = kit.element;
     const binding = bindAdaAction(
       {
         click: { availability: () => ({ kind: "available" }), run: () => selectGalaxy() },
         current: () => current(),
+        nativeClickOwner: "factory",
         slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
       },
       button,
     );
-    bindings.push({ dispose: () => binding.dispose() });
+    bindings.push({
+      dispose() {
+        binding.dispose();
+        kit.dispose();
+      },
+    });
+    // The chart supplies the marker's face and focus cue.
     button.className = "ada-route-marker";
     button.dataset.position = String(position);
     const centre = GALAXY_MAP.centres[position - 1]!;
@@ -607,7 +628,7 @@ export function createGalaxyMap(root: HTMLElement, options: GalaxyMapOptions) {
     const disc = document.createElement("span");
     disc.className = "ada-route-disc";
     disc.textContent = String(position);
-    button.append(backing, disc);
+    button.replaceChildren(backing, disc);
     button.addEventListener("focus", selectGalaxy);
     leaveFocus.push(() => button.removeEventListener("focus", selectGalaxy));
     const name = document.createElement("span");

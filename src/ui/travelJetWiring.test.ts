@@ -939,7 +939,9 @@ it("registers native route actions once and releases selection callbacks on disp
   const marker = fixture.nodes.find((node) => node.dataset.position === "2")!;
   const primary = fixture.nodes.find((node) => node.dataset.action === "galaxy-jump")!;
   const action = resolveAdaHoldAction(fixture.host, marker as unknown as HTMLElement)!;
+  expect(marker.listeners.get("click")).toHaveLength(1);
   expect(action.available()).toBe(true);
+  expect(action.rule.holdMs).toBe(500);
   expect(action.hold).toBeUndefined();
   action.activate();
   expect(onView).toHaveBeenCalledExactlyOnceWith(2);
@@ -955,10 +957,17 @@ it("registers native route actions once and releases selection callbacks on disp
   expect(onEarth).toHaveBeenCalledOnce();
   map.show(null);
   expect(action.available()).toBe(false);
-  map.show({ ...mapView(null), stay: true });
+  marker.click();
+  expect(onView).toHaveBeenCalledOnce();
+  map.show({ ...mapView(null), panel: 1, stay: true });
   jump.activate();
   expect(onClose).toHaveBeenCalledOnce();
+  map.jump();
+  expect(action.available()).toBe(false);
+  marker.click();
+  expect(onView).toHaveBeenCalledOnce();
   map.dispose();
+  expect(marker.listeners.get("click")).toEqual([]);
   expect(action.available()).toBe(false);
   action.activate();
   marker.click();
