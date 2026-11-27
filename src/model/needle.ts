@@ -187,10 +187,44 @@ export interface NeedlePass {
   readonly lit: number;
   readonly passed: readonly number[];
   readonly missed: boolean;
+  readonly outOfOrder?: true;
 }
+
+/** A centre landing on the plane counts once. A retry may cross from either side. */
+function gateCrossing(
+  context: { readonly from: Vec; readonly to: Vec },
+  gate: NeedleGate,
+): number | null {
+  const before = dot(subtract(context.from, gate.point), gate.tangent);
+  const after = dot(subtract(context.to, gate.point), gate.tangent);
+  if (!((before < 0 && after >= 0) || (before > 0 && after <= 0))) {
+    return null;
+  }
+  const t = -before / (after - before);
+  const crossing = {
+    x: context.from.x + (context.to.x - context.from.x) * t,
+    y: context.from.y + (context.to.y - context.from.y) * t,
+  };
+  const boundaryTolerance =
+    Number.EPSILON *
+    32 *
+    Math.max(
+      1,
+      Math.abs(gate.point.x),
+      Math.abs(gate.point.y),
+      Math.abs(crossing.x),
+      Math.abs(crossing.y),
+    );
+  return Math.abs(dot(subtract(crossing, gate.point), normal(gate.tangent))) <
+    NEEDLE.gate.opening / 2 - boundaryTolerance
+    ? t
+    : null;
+}
+
 /** Swept centre-plane crossings, in route order. Lighting never uses an endpoint proximity. */
 export function stepNeedleCourse(
   context: {
+    readonly checkOrder?: boolean;
     readonly from: Vec;
     readonly to: Vec;
     readonly velocity: Vec;
@@ -202,37 +236,15 @@ export function stepNeedleCourse(
   let count = lit;
   const passed: number[] = [];
   let missed = false;
+  let reversed = false;
   let previousCrossing = -1;
   for (let index = lit; index < course.gates.length; index++) {
-    const gate = course.gates[index]!;
-    const before = dot(subtract(context.from, gate.point), gate.tangent);
-    const after = dot(subtract(context.to, gate.point), gate.tangent);
-    // A centre landing on the plane counts once. A slow retry may cross from either side.
-    if (!((before < 0 && after >= 0) || (before > 0 && after <= 0))) {
+    const t = gateCrossing(context, course.gates[index]!);
+    if (t === null) {
       break;
     }
-    const t = -before / (after - before);
     if (t < previousCrossing) {
-      break;
-    }
-    const crossing = {
-      x: context.from.x + (context.to.x - context.from.x) * t,
-      y: context.from.y + (context.to.y - context.from.y) * t,
-    };
-    const boundaryTolerance =
-      Number.EPSILON *
-      32 *
-      Math.max(
-        1,
-        Math.abs(gate.point.x),
-        Math.abs(gate.point.y),
-        Math.abs(crossing.x),
-        Math.abs(crossing.y),
-      );
-    if (
-      Math.abs(dot(subtract(crossing, gate.point), normal(gate.tangent))) >=
-      NEEDLE.gate.opening / 2 - boundaryTolerance
-    ) {
+      reversed = true;
       break;
     }
     if (!needleSlow(context)) {
@@ -243,7 +255,11 @@ export function stepNeedleCourse(
     count++;
     previousCrossing = t;
   }
-  return { lit: count, missed, passed };
+  const outOfOrder =
+    context.checkOrder &&
+    (reversed ||
+      course.gates.slice(count + 1).some((gate) => gateCrossing(context, gate) !== null));
+  return { lit: count, missed, ...(outOfOrder ? { outOfOrder: true } : {}), passed };
 }
 /** Corridor query for central generation, enemy movement and shots. Include each body's radius. */
 export function inNeedleChannel(

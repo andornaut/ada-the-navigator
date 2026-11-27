@@ -392,6 +392,8 @@ export interface HeldActivity {
   };
   /** Gates lit in the held Thread the needle run, separate from the chapter's gates. */
   lit?: number;
+  /** Clean-run eligibility, absent for attempts saved before rejected crossings were recorded. */
+  cleanRun?: boolean;
   /** A mining contract's resources deposited at the hub since accepting. */
   deposited?: number;
   /** A supply run's item is aboard; a lost one is replaced through Talk at the issuer. */

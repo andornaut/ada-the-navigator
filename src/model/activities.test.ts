@@ -246,6 +246,7 @@ describe("repeatable activities", () => {
     const chapter = { resolved: true };
     expect(acceptActivity(4, chapter, book, "elderLoom", { reward: 50 })).toBe(true);
     expect(book.tasks[4]).toEqual({
+      cleanRun: true,
       id: "threadNeedle",
       kind: "activity",
       lit: 0,
@@ -256,6 +257,8 @@ describe("repeatable activities", () => {
     expect(completeActivity(4, book)).toBe(200);
     expect(completeActivity(4, book)).toBe(0);
     expect(activityOffer(4, chapter, book, "elderLoom")?.id).toBe("threadNeedle");
+    expect(acceptActivity(4, chapter, book, "elderLoom", { reward: 50 })).toBe(true);
+    expect(book.tasks[4]).toMatchObject({ cleanRun: true, lit: 0 });
   });
 
   it("validates saved Needle gate counts and rejects chapter or foreign activity fields", () => {
@@ -268,6 +271,8 @@ describe("repeatable activities", () => {
     }
     expect(validActivity(4, { ...saved, place: "needleEye" })).toBe(false);
     expect(validActivity(4, { ...saved, start: { x: 1, y: 2 } })).toBe(false);
+    expect(validActivity(4, { ...saved, cleanRun: false })).toBe(true);
+    expect(validActivity(4, { ...saved, cleanRun: "false" })).toBe(false);
     expect(
       validActivity(2, {
         deposited: 0,

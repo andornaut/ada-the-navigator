@@ -112,7 +112,7 @@ export function acceptActivity(
     place,
     reward: terms.reward,
     ...(activity.id === "miningContract" ? { deposited: 0 } : {}),
-    ...(activity.id === "threadNeedle" ? { lit: 0 } : {}),
+    ...(activity.id === "threadNeedle" ? { cleanRun: true, lit: 0 } : {}),
     ...(activity.id === "courierRun"
       ? { courier: courierAtStart(terms.start!, terms.courierApproach) }
       : {}),
@@ -277,6 +277,8 @@ export function validActivity(galaxy: GalaxyNumber, value: Record<string, unknow
         (value.lit as number) >= 0 &&
         (value.lit as number) <= NEEDLE.activityGates
       : value.lit === undefined) &&
+    (value.cleanRun === undefined ||
+      (activity.id === "threadNeedle" && typeof value.cleanRun === "boolean")) &&
     (activity.id === "courierRun" ? validCourier(value) : value.courier === undefined)
   );
 }

@@ -3,6 +3,7 @@ import type { MapSymbol } from "../data/destinations.ts";
 import { carriedItemName, STORY_ITEM_NAMES } from "../data/itemNames.ts";
 import type { JobType } from "../data/jobs.ts";
 import { NEEDLE } from "../data/needle.ts";
+import { NEEDLE_COURSE_COPY } from "../data/needleCopy.ts";
 import { questReward } from "../data/questRewards.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { questItemDestination } from "./indicators.ts";
@@ -302,6 +303,9 @@ export function questDetails(
             count: progress,
             label: context.label("needleGoal"),
           },
+          ...(task.cleanRun === undefined
+            ? []
+            : [{ checked: task.cleanRun, label: NEEDLE_COURSE_COPY.cleanRun }]),
         ],
         progress,
         reward,

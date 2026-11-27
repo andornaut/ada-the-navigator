@@ -44,6 +44,7 @@ import { JOB_TUNING, type JobType } from "../data/jobs.ts";
 import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
 import { canAffordMapJump, MAP_JUMP_COST, travelState } from "../data/mapJump.ts";
 import { isNeedleCourseStart, NEEDLE } from "../data/needle.ts";
+import { NEEDLE_COURSE_COPY } from "../data/needleCopy.ts";
 import { visualNoticeTiming } from "../data/noticeTiming.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { poiAmbientLine, type PoiApproachKind } from "../data/poiDiscoveryLore.ts";
@@ -3117,6 +3118,7 @@ export class GameModel {
     }
     if (held?.id === "threadNeedle") {
       held.lit = 0;
+      held.cleanRun = true;
       if (f?.galaxy === galaxy) {
         setNeedleActivity(f, false);
         retireNeedleActivityPatrols(this.content, f);
@@ -3132,14 +3134,15 @@ export class GameModel {
     return dropActivity(galaxy, this.state);
   }
   /** Pays the held activity with the job completion notice and frees the galaxy's slot. */
-  private finishActivity(galaxy: GalaxyNumber): void {
+  private finishActivity(galaxy: GalaxyNumber, completionNote?: string): void {
     const reward = completeActivity(galaxy, this.state);
     if (!reward) {
       return;
     }
     this.state.progress[galaxy].activityCompleted = true;
     this.state.economy.stardust += reward;
-    this.notify(fill(this.label("jobComplete"), { amount: reward }));
+    const notice = fill(this.label("jobComplete"), { amount: reward });
+    this.notify(completionNote ? `${notice} ${completionNote}` : notice);
     this.recordAchievement({ kind: "activityCompleted" });
   }
   private exchange(key: string): void {
@@ -3912,6 +3915,7 @@ export class GameModel {
         const from = worldPoint(world, layout.activity.path[0]!, previousChapterPosition);
         const attempt = stepNeedleCourse(
           {
+            checkOrder: thread.cleanRun === true,
             from,
             to: worldPoint(world, from, f.player),
             topSpeed: shipTuning(ECONOMY, this.content, f.levels).physics.maxSpeed,
@@ -3921,8 +3925,14 @@ export class GameModel {
           thread.lit!,
         );
         thread.lit = attempt.lit;
+        if (thread.cleanRun && (attempt.missed || attempt.outOfOrder)) {
+          thread.cleanRun = false;
+        }
         if (thread.lit === layout.activity.gates.length) {
-          this.finishActivity(f.galaxy);
+          this.finishActivity(
+            f.galaxy,
+            thread.cleanRun ? NEEDLE_COURSE_COPY.cleanRunFinish : undefined,
+          );
           setNeedleActivity(f, false);
           retireNeedleActivityPatrols(this.content, f);
         } else {
