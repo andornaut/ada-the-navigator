@@ -5,7 +5,6 @@ import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { BUILT, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { NEEDLE } from "../data/needle.ts";
-import { NEEDLE_COURSE_COPY } from "../data/needleCopy.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { ControlState } from "../input/state.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
@@ -20,7 +19,7 @@ import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { needleCourses } from "./needle.ts";
-import { NEEDLE_CADENCE } from "./needleRuntime.ts";
+import { NEEDLE_CADENCE, needleTrackedObjective } from "./needleRuntime.ts";
 import { stationsNear } from "./stations.ts";
 
 const built = BUILT as Set<GalaxyNumber>;
@@ -127,50 +126,45 @@ function nearCrossbow(model: GameModel, distance: number) {
   return boss;
 }
 
-describe("Needle contextual Use", () => {
-  it.each([
-    ["needlePractice", NEEDLE.practiceGates, 0, "Light the Eye's gates."],
-    ["needleEye", 0, 0, "Light the practice gates."],
-    ["holodisk", NEEDLE.practiceGates, NEEDLE.eyeGates - 1, "Light the Eye's gates."],
-  ] as const)(
-    "answers a press at %s without bypassing the gate objectives",
-    (id, practiceLit, eyeLit, objective) => {
-      const model = launch(173);
-      const progress = model.state.progress[4];
-      Object.assign(progress.needle!, {
-        approach: "independent",
-        briefed: true,
-        eyeLit,
-        met: true,
-        practiceLit,
-      });
-      visit(model, id);
-      model.dismissNotice();
-      expect(model.useTarget).toEqual({ action: "use", id });
-      const before = model.useRefusals;
-      const controls = new ControlState();
-      controls.setUseAvailable(true);
-      controls.requestUse();
-      model.step(0.001, controls.sample());
-      expect(model.useRefusals).toBe(before + 1);
-      expect(model.state.notice).toBe(objective);
-      expect(model.state.dialogue).toBeNull();
-      expect(progress).toMatchObject({
-        holodisk: false,
-        needle: { eyeLit, practiceLit },
-        questComplete: false,
-      });
-      model.step(0.001, controls.sample());
-      expect(model.useRefusals).toBe(before + 1);
-    },
-  );
+describe("Needle contextual Use and automatic guidance", () => {
+  it("keeps the unavailable holodisk's refusal before the last Eye gate", () => {
+    const model = launch(173);
+    const progress = model.state.progress[4];
+    Object.assign(progress.needle!, {
+      approach: "independent",
+      briefed: true,
+      eyeLit: NEEDLE.eyeGates - 1,
+      met: true,
+      practiceLit: NEEDLE.practiceGates,
+    });
+    visit(model, "holodisk");
+    model.dismissNotice();
+    expect(model.useTarget).toEqual({ action: "use", id: "holodisk" });
+    const before = model.useRefusals;
+    const controls = new ControlState();
+    controls.setUseAvailable(true);
+    controls.requestUse();
+    model.step(0.001, controls.sample());
+    expect(model.useRefusals).toBe(before + 1);
+    expect(model.state.notice).toBe("Light the Eye's gates.");
+    expect(model.state.dialogue).toBeNull();
+    expect(progress).toMatchObject({
+      holodisk: false,
+      needle: { eyeLit: NEEDLE.eyeGates - 1, practiceLit: NEEDLE.practiceGates },
+      questComplete: false,
+    });
+    model.step(0.001, controls.sample());
+    expect(model.useRefusals).toBe(before + 1);
+  });
 
   it.each([
-    ["needlePractice", "practice", 1, 0, 0, 0],
-    ["needleEye", "eye", NEEDLE.practiceGates, 2, NEEDLE.practiceGates, 0],
+    ["needlePractice", "practice", 0, 0, 0],
+    ["needlePractice", "practice", 1, 0, 1],
+    ["needleEye", "eye", NEEDLE.practiceGates, 0, 0],
+    ["needleEye", "eye", NEEDLE.practiceGates, 2, 2],
   ] as const)(
-    "restarts only the current course at %s through a queued Use press",
-    (id, course, practiceLit, eyeLit, nextPracticeLit, nextEyeLit) => {
+    "approaches %s without offering Use, preserving its cleared rings across Continue (%s %s %s)",
+    (id, course, practiceLit, eyeLit, ringIndex) => {
       const model = launch(173);
       const progress = model.state.progress[4];
       Object.assign(progress.needle!, {
@@ -181,10 +175,19 @@ describe("Needle contextual Use", () => {
         practiceLit,
         practiceThanked: course === "eye",
       });
+      const flight = model.state.flight!;
+      const layout = needleCourses(flight)![course];
+      const indicator = () => model.indicatorTargets.filter((target) => target.id === id);
+      if (ringIndex === 0) {
+        expect(indicator()).toEqual([{ ...layout.path[0]!, id, kind: "objective" }]);
+      }
       visit(model, id);
       model.dismissNotice();
-      expect(model.useTarget).toEqual({ action: "use", id });
-      const flight = model.state.flight!;
+      expect(progress.known).toContain(id);
+      expect(model.useTarget).toBeUndefined();
+      expect(model.contextAction).toBeUndefined();
+      expect(model.contextQuestDetails).toBeNull();
+      expect(indicator()).toEqual([{ ...layout.gates[ringIndex]!.point, id, kind: "objective" }]);
       const before = structuredClone(progress);
       const at = { ...flight.player };
       const refusals = model.useRefusals;
@@ -192,19 +195,19 @@ describe("Needle contextual Use", () => {
       controls.setUseAvailable(true);
       controls.requestUse();
       model.step(0.001, controls.sample());
-      expect(progress).toEqual({
-        ...before,
-        needle: { ...before.needle, eyeLit: nextEyeLit, practiceLit: nextPracticeLit },
-      });
+      expect(progress).toEqual(before);
       expect(flight.player).toEqual(at);
-      expect(flight.needle?.guidance).toEqual(needleCourses(flight)![course].gates[0]!.point);
-      expect(flight.needle?.chatter).toContainEqual({
-        speaker: "loom",
-        text: NEEDLE_COURSE_COPY.retry,
-      });
       expect(model.state.dialogue).toBeNull();
       expect(model.useRefusals).toBe(refusals);
       expect(controls.sample().use).toBe(false);
+      const restored = relaunch(CONTENT, model.save());
+      expect(
+        needleTrackedObjective({
+          content: CONTENT,
+          flight: restored.state.flight!,
+          progress: restored.state.progress[4],
+        }),
+      ).toEqual({ id, point: layout.gates[ringIndex]!.point, ringIndex, step: "ring" });
     },
   );
 
@@ -381,9 +384,13 @@ describe("mounted Needle interactions", () => {
     expect(loaded.state.progress[4].needle?.approach).toBeUndefined();
     loaded.choose("show");
     expect(loaded.state.progress[4].needle?.approach).toBe("show");
-    expect(loaded.state.flight!.needle!.guidance).toEqual(
-      needleCourses(loaded.state.flight!)!.practice.gates[0]!.point,
-    );
+    expect(
+      needleTrackedObjective({
+        content: CONTENT,
+        flight: loaded.state.flight!,
+        progress: loaded.state.progress[4],
+      })?.step,
+    ).toBe("flag");
     expect(loaded.state.flight!.needle!.chatter).toHaveLength(1);
     expect(loaded.saveDocument().flight!.needle!.chatter).toEqual([]);
     expect(loaded.state.flight!.needle!.chatter).toHaveLength(1);

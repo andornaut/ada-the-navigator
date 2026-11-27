@@ -25,3 +25,6 @@ export const NEEDLE = {
   speedFraction: 0.5,
 } as const;
 export const NEEDLE_PLACES = ["elderLoom", "needlePractice", "needleEye", "holodisk"] as const;
+export function isNeedleCourseStart(id: string): boolean {
+  return id === "needlePractice" || id === "needleEye";
+}

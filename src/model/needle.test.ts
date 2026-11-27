@@ -14,7 +14,6 @@ import {
   type NeedleGate,
   needleGateOrientation,
   needleGateReadiness,
-  needleLearningCue,
   needleLearningFeedback,
   needleRimContacts,
   needleSlow,
@@ -31,6 +30,7 @@ import {
   needleCourses,
   type NeedleFlight,
   needleObjectiveIndex,
+  needleTrackedObjective,
   readNeedleChapterProgress,
   stepNeedle,
   useNeedle,
@@ -149,7 +149,6 @@ describe("Needle actual centre crossings", () => {
   it.each([0, 99.999])("lights below 50 percent at speed %s", (speed) => {
     const eye = course();
     expect(stepNeedleCourse(pass(eye.gates[0]!, speed), eye, 0)).toEqual({
-      guidanceGate: 0,
       lit: 1,
       missed: false,
       passed: [0],
@@ -162,13 +161,16 @@ describe("Needle actual centre crossings", () => {
       const context = pass(eye.gates[3]!, speed);
       const before = structuredClone(context);
       expect(stepNeedleCourse(context, eye, 3)).toEqual({
-        guidanceGate: 2,
         lit: 3,
         missed: true,
         passed: [],
       });
       expect(context).toEqual(before);
-      expect(stepNeedleCourse(pass(eye.gates[0]!, speed), eye, 0).guidanceGate).toBe(0);
+      expect(stepNeedleCourse(pass(eye.gates[0]!, speed), eye, 0)).toEqual({
+        lit: 0,
+        missed: true,
+        passed: [],
+      });
     },
   );
   it("uses the swept crossing inside the opening rather than distance to its endpoint", () => {
@@ -244,14 +246,6 @@ describe("Needle saved practice choice and real guidance", () => {
       expect(readNeedleProgress(value)).toBeNull();
     }
   });
-  it("shows only the first practice approach when chosen, with no automatic gate completion", () => {
-    const practice = course("practice");
-    const progress = { approach: "show" as const, eyeLit: 0, practiceLit: 0 };
-    expect(needleLearningCue(progress, practice)).toBe(practice.gates[0]);
-    expect(progress.practiceLit).toBe(0);
-    expect(needleLearningCue({ ...progress, practiceLit: 1 }, practice)).toBeNull();
-    expect(needleLearningCue(progress, course())).toBeNull();
-  });
   it("gives attempt feedback and keeps independent mode quiet except failure clarity", () => {
     const practice = course("practice");
     const success = stepNeedleCourse(pass(practice.gates[0]!, 30), practice, 0);
@@ -264,9 +258,6 @@ describe("Needle saved practice choice and real guidance", () => {
       expect(needleLearningFeedback(progress, { ...success, missed: true })).toBe(
         NEEDLE_LEARNING.tooFast,
       );
-      if (approach !== "show") {
-        expect(needleLearningCue(progress, practice)).toBeNull();
-      }
     }
   });
 });
@@ -340,11 +331,17 @@ describe("Needle chapter runtime", () => {
     },
   );
 
-  it("coaches each approach to the current flag and distinguishes a fresh start from a failed attempt", () => {
+  it("tracks only the current flag, starts on approach and repeats the tip only on reentry", () => {
     const context = chapter();
+    expect(needleTrackedObjective(context)).toBeNull();
     learn(context, "independent");
     const { flight } = context;
     const { eye, practice } = needleCourses(flight)!;
+    expect(needleTrackedObjective(context)).toEqual({
+      id: "needlePractice",
+      point: practice.path[0],
+      step: "flag",
+    });
     const cue = () => chapterFlight(context).chatter.at(-1)?.text;
     const visitStart = (course: NeedleCourse) => {
       flight.player = { ...course.path[0]! };
@@ -355,20 +352,43 @@ describe("Needle chapter runtime", () => {
         .length;
     visitStart(eye);
     expect(approachCount()).toBe(0);
-    expect(useNeedle(context, "needleEye")).toEqual({ useRefused: true });
+    expect(useNeedle(context, "needleEye")).toBeUndefined();
     visitStart(practice);
     expect(cue()).toBe(NEEDLE_COURSE_COPY.approach);
     visitStart(practice);
     expect(approachCount()).toBe(1);
-    expect(useNeedle(context, "needlePractice")).toEqual({});
-    expect(cue()).toBe(NEEDLE_COURSE_COPY.start);
+    expect(useNeedle(context, "needlePractice")).toBeUndefined();
+    expect(needleTrackedObjective(context)).toEqual({
+      id: "needlePractice",
+      point: practice.gates[0]!.point,
+      ringIndex: 0,
+      step: "ring",
+    });
     cross(context, practice.gates[0]!, 200);
     expect(chapterProgress(context).practiceLit).toBe(0);
+    expect(needleTrackedObjective(context)?.point).toEqual(practice.gates[0]!.point);
     visitStart(practice);
     expect(approachCount()).toBe(2);
-    expect(useNeedle(context, "needlePractice")).toEqual({});
-    expect(cue()).toBe(NEEDLE_COURSE_COPY.retry);
-    expect(chapterFlight(context).guidance).toEqual(practice.gates[0]!.point);
+    expect(cue()).toBe(NEEDLE_COURSE_COPY.approach);
+    for (const gate of practice.gates) {
+      cross(context, gate, 20);
+    }
+    expect(needleTrackedObjective(context)).toEqual({
+      id: "needleEye",
+      point: eye.path[0],
+      step: "flag",
+    });
+    visitStart(eye);
+    expect(needleTrackedObjective(context)).toEqual({
+      id: "needleEye",
+      point: eye.gates[0]!.point,
+      ringIndex: 0,
+      step: "ring",
+    });
+    for (const gate of eye.gates) {
+      cross(context, gate, 20);
+    }
+    expect(needleTrackedObjective(context)).toBeNull();
   });
 
   it.each(["show", "feedback", "independent"] as const)(
@@ -396,7 +416,7 @@ describe("Needle chapter runtime", () => {
       initNeedle(resumed);
       expect(resumed.flight.objects).toEqual(objects);
       expect(chapterProgress(resumed).approach).toBe(approach);
-      expect(Boolean(chapterFlight(resumed).guidance)).toBe(approach === "show");
+      expect(needleTrackedObjective(resumed)?.step).toBe("flag");
     },
   );
   it("allows changing the learning approach through Loom without resetting any lit gate", () => {
@@ -412,7 +432,7 @@ describe("Needle chapter runtime", () => {
     expect(choice.context).toBe("needle.learningChange");
     chooseNeedle(context, choice, "independent");
     expect(chapterProgress(context)).toMatchObject({ approach: "independent", practiceLit: 1 });
-    expect(chapterFlight(context).guidance).toBeUndefined();
+    expect(needleTrackedObjective(context)).toMatchObject({ ringIndex: 1, step: "ring" });
   });
   it("uses real flight movement for gate admission with the current engine top speed", () => {
     const context = chapter();
@@ -476,7 +496,7 @@ describe("Needle chapter runtime", () => {
     expect(chapterProgress(context)).toEqual({ ...before, practiceThanked: true });
     expect(context.progress.holodisk).toBe(true);
   });
-  it("keeps lit gates and position on a fast retry, giving actual last-lit guidance without teleporting", () => {
+  it("keeps lit gates and position after a fast miss, guiding back to the missed ring", () => {
     const context = chapter();
     learn(context, "feedback");
     const gates = needleCourses(context.flight)!.practice.gates;
@@ -487,7 +507,12 @@ describe("Needle chapter runtime", () => {
     stepNeedle(context, 0.1, at(gates[1]!, -20));
     expect(chapterProgress(context).practiceLit).toBe(1);
     expect(context.flight.player).toEqual(before);
-    expect(chapterFlight(context).guidance).toEqual(gates[0]!.point);
+    expect(needleTrackedObjective(context)).toEqual({
+      id: "needlePractice",
+      point: gates[1]!.point,
+      ringIndex: 1,
+      step: "ring",
+    });
     expect(chapterFlight(context).chatter.at(-1)?.text).toBe(NEEDLE_LEARNING.tooFast);
     cross(context, gates[1]!, 20);
     expect(chapterProgress(context).practiceLit).toBe(2);

@@ -112,8 +112,6 @@ export const NEEDLE_COPY: Readonly<Record<string, InteractionCopy>> = {
 };
 export const NEEDLE_COURSE_COPY = {
   approach: "Ease off before the ring. When it turns green, glide through.",
-  retry: "Start at the first ring. Slow down until it turns green, then glide through.",
-  start: "Take the rings in order. Slow down before each one and glide through on green.",
 } as const;
 /** Approved practice approaches. These change guidance, never the gate or reward rules. */
 export const NEEDLE_LEARNING = {

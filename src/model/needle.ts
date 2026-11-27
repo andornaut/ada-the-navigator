@@ -144,8 +144,6 @@ export interface NeedlePass {
   readonly lit: number;
   readonly passed: readonly number[];
   readonly missed: boolean;
-  /** Last lit gate, or the first if none; guidance never changes the ship's position. */
-  readonly guidanceGate: number;
 }
 /** Swept centre-plane crossings, in route order. Lighting never uses an endpoint proximity. */
 export function stepNeedleCourse(
@@ -202,7 +200,7 @@ export function stepNeedleCourse(
     count++;
     previousCrossing = t;
   }
-  return { guidanceGate: Math.max(0, count - 1), lit: count, missed, passed };
+  return { lit: count, missed, passed };
 }
 /** Corridor query for central generation, enemy movement and shots. Include each body's radius. */
 export function inNeedleChannel(
@@ -253,15 +251,6 @@ export function needleRimContacts(
       return contact ? [{ ...contact, damage: 0 as const }] : [];
     }),
   );
-}
-/** One first-gate approach cue; no automatic movement or gate completion. */
-export function needleLearningCue(
-  progress: NeedleProgress,
-  course: NeedleCourse,
-): NeedleGate | null {
-  return course.kind === "practice" && progress.approach === "show" && progress.practiceLit === 0
-    ? course.gates[0]!
-    : null;
 }
 /** Feedback is an event response, never a timer or an unsolicited independent-mode message. */
 export function needleLearningFeedback(

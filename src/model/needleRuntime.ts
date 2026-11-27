@@ -1,7 +1,7 @@
 import { NEEDLE_CADENCE } from "../data/capitalBosses.ts";
 import type { ConversationLine } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { NEEDLE, NEEDLE_PLACES } from "../data/needle.ts";
+import { isNeedleCourseStart, NEEDLE, NEEDLE_PLACES } from "../data/needle.ts";
 import { NEEDLE_COPY, NEEDLE_COURSE_COPY, NEEDLE_LEARNING } from "../data/needleCopy.ts";
 import type { CapitalBossProgress } from "./capitalBossEncounter.ts";
 import type { ChapterContext, ChapterResult } from "./chapterProtocol.ts";
@@ -40,12 +40,14 @@ export interface NeedleCue {
   speaker: "loom" | "ada" | "astra";
   text: string;
 }
+type StoryCourse = "practice" | "eye";
 export interface NeedleFlight {
   anchor: Vec;
   chatter: NeedleCue[];
   exitPackPlaced: boolean;
   exitWarned?: boolean;
-  guidance?: Vec;
+  /** The current course can be started with zero cleared gates, including across Continue. */
+  startedCourse?: StoryCourse;
 }
 type ChapterProgress = GalaxyProgress & {
   needle?: NeedleChapterProgress;
@@ -62,9 +64,36 @@ const progressOf = (context: ChapterContext): NeedleChapterProgress =>
     practiceThanked: false,
   });
 const stateOf = (context: ChapterContext) => (context.flight as ChapterFlight).needle;
-type StoryCourse = "practice" | "eye";
 const nearbyStarts = new WeakMap<NeedleFlight, StoryCourse>();
-const attemptedStarts = new WeakMap<NeedleFlight, StoryCourse>();
+
+export type NeedleTrackedObjective = {
+  readonly id: "needlePractice" | "needleEye";
+  readonly point: Readonly<Vec>;
+} & ({ readonly step: "flag" } | { readonly step: "ring"; readonly ringIndex: number });
+
+/** Supplies one revealed course step to the existing tracked story objective. */
+export function needleTrackedObjective(context: ChapterContext): NeedleTrackedObjective | null {
+  const progress = (context.progress as ChapterProgress).needle;
+  if (
+    context.flight.galaxy !== 4 ||
+    !progress?.briefed ||
+    context.progress.holodisk ||
+    context.progress.questComplete
+  ) {
+    return null;
+  }
+  const kind = unfinishedNeedleCourse(progress);
+  const course = kind && needleCourses(context.flight)?.[kind];
+  if (!course) {
+    return null;
+  }
+  const id = kind === "practice" ? "needlePractice" : "needleEye";
+  const ringIndex = kind === "practice" ? progress.practiceLit : progress.eyeLit;
+  if (ringIndex > 0 || stateOf(context)?.startedCourse === kind) {
+    return { id, point: { ...course.gates[ringIndex]!.point }, ringIndex, step: "ring" };
+  }
+  return { id, point: { ...course.path[0]! }, step: "flag" };
+}
 
 function nearCourseStart(context: ChapterContext, course: NeedleCourse): boolean {
   const { player } = context.flight;
@@ -132,7 +161,7 @@ export function initNeedle(context: ChapterContext): void {
   if (context.flight.galaxy !== 4) {
     return;
   }
-  const progress = progressOf(context);
+  progressOf(context);
   let state = stateOf(context);
   if (!state) {
     const loom = ensureDestination(context.content, "elderLoom", context.flight);
@@ -153,9 +182,6 @@ export function initNeedle(context: ChapterContext): void {
       });
     }
     state.exitPackPlaced = true;
-  }
-  if (progress.approach === "show" && !progress.practiceLit) {
-    state.guidance = { ...layout.practice.gates[0]!.point };
   }
 }
 /** Gate attempts use the actual frame displacement, resultant velocity and bought engine top speed. */
@@ -186,6 +212,7 @@ export function stepNeedle(context: ChapterContext, _seconds: number, previous: 
   }
   const course = layout[kind];
   if (nearCourseStart(context, course)) {
+    state.startedCourse = kind;
     if (nearbyStarts.get(state) !== kind) {
       nearbyStarts.set(state, kind);
       state.chatter.push({ speaker: "loom", text: NEEDLE_COURSE_COPY.approach });
@@ -206,11 +233,10 @@ export function stepNeedle(context: ChapterContext, _seconds: number, previous: 
     lit,
   );
   progress[litKey] = attempt.lit;
-  if (attempt.missed) {
-    attemptedStarts.set(state, kind);
-    state.guidance = { ...course.gates[attempt.guidanceGate]!.point };
-  } else if (attempt.passed.length) {
-    delete state.guidance;
+  if (attempt.lit === course.gates.length) {
+    delete state.startedCourse;
+  } else if (attempt.missed || attempt.passed.length) {
+    state.startedCourse = kind;
   }
   const feedback = needleLearningFeedback(progress, attempt);
   if (feedback) {
@@ -257,28 +283,6 @@ export function useNeedle(context: ChapterContext, id: string): ChapterResult | 
   }
   if (id === "holodisk") {
     return canCollect(context) ? { dialogue: panel("collect") } : { useRefused: true };
-  }
-  if (id === "needlePractice" || id === "needleEye") {
-    const kind = id === "needlePractice" ? "practice" : "eye";
-    const state = stateOf(context);
-    const course = needleCourses(context.flight)?.[kind];
-    if (
-      context.progress.holodisk ||
-      !progress.briefed ||
-      unfinishedNeedleCourse(progress) !== kind ||
-      !state ||
-      !course ||
-      !nearCourseStart(context, course)
-    ) {
-      return { useRefused: true };
-    }
-    const litKey = kind === "practice" ? "practiceLit" : "eyeLit";
-    const retry = progress[litKey] > 0 || attemptedStarts.get(state) === kind;
-    progress[litKey] = 0;
-    attemptedStarts.set(state, kind);
-    state.guidance = { ...course.gates[0]!.point };
-    state.chatter.push({ speaker: "loom", text: NEEDLE_COURSE_COPY[retry ? "retry" : "start"] });
-    return {};
   }
   return undefined;
 }
@@ -335,10 +339,6 @@ export function chooseNeedle(
     progress.approach = choice as NeedleApproach;
     progress.briefed = true;
     const state = stateOf(context)!;
-    delete state.guidance;
-    if (choice === "show" && !progress.practiceLit) {
-      state.guidance = { ...needleCourses(context.flight)!.practice.gates[0]!.point };
-    }
     state.chatter.push({ speaker: "loom", text: NEEDLE_LEARNING[progress.approach].response });
     return {};
   }
@@ -396,7 +396,11 @@ export function needleActivityChoices(
     : [];
 }
 export function needleAction(context: ChapterContext, id: string): UseAction | undefined {
-  if (context.flight.galaxy !== 4 || !NEEDLE_PLACES.some((place) => place === id)) {
+  if (
+    context.flight.galaxy !== 4 ||
+    isNeedleCourseStart(id) ||
+    !NEEDLE_PLACES.some((place) => place === id)
+  ) {
     return undefined;
   }
   return id === "elderLoom" ? "talk" : "use";
@@ -429,7 +433,7 @@ export function validNeedleFlight(value: unknown): value is NeedleFlight {
   if (!value || typeof value !== "object") {
     return false;
   }
-  const state = value as NeedleFlight;
+  const state = value as NeedleFlight & { readonly guidance?: unknown };
   const point = (point: unknown): point is Vec =>
     Boolean(point) &&
     typeof point === "object" &&
@@ -440,6 +444,9 @@ export function validNeedleFlight(value: unknown): value is NeedleFlight {
     typeof state.exitPackPlaced === "boolean" &&
     (state.exitWarned === undefined || typeof state.exitWarned === "boolean") &&
     (state.guidance === undefined || point(state.guidance)) &&
+    (state.startedCourse === undefined ||
+      state.startedCourse === "practice" ||
+      state.startedCourse === "eye") &&
     Array.isArray(state.chatter) &&
     state.chatter.length <= 16 &&
     state.chatter.every(

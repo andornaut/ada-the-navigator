@@ -43,7 +43,7 @@ import { carriedItemName, STORY_ITEM_NAMES } from "../data/itemNames.ts";
 import { JOB_TUNING, type JobType } from "../data/jobs.ts";
 import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
 import { canAffordMapJump, MAP_JUMP_COST, travelState } from "../data/mapJump.ts";
-import { NEEDLE } from "../data/needle.ts";
+import { isNeedleCourseStart, NEEDLE } from "../data/needle.ts";
 import { visualNoticeTiming } from "../data/noticeTiming.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { poiAmbientLine, type PoiApproachKind } from "../data/poiDiscoveryLore.ts";
@@ -250,6 +250,7 @@ import {
   NEEDLE_CADENCE_CUES,
   needleCadenceSite,
   needleCadenceTransmission,
+  needleTrackedObjective,
 } from "./needleRuntime.ts";
 import type { PennyMarker, PennyPoint } from "./pennyMarkers.ts";
 import { phantomBossHud, type PhantomContext, phantomWaypoint } from "./phantom.ts";
@@ -1423,6 +1424,7 @@ export class GameModel {
         (o) =>
           ((o.kind === "destination" &&
             o.id !== ANDROMEDA_REDACT.relayId &&
+            (f.galaxy !== 4 || !isNeedleCourseStart(o.id)) &&
             this.current.known.includes(o.id) &&
             !routeBlocked(o.id, f)) ||
             (o.kind === "station" && this.current.stations.includes(o.id))) &&
@@ -1982,6 +1984,7 @@ export class GameModel {
       .filter(
         ({ gap, object }) =>
           context.knownIds.includes(object.id) &&
+          (flight.galaxy !== 4 || !isNeedleCourseStart(object.id)) &&
           !routeBlocked(object.id, flight) &&
           gap <= this.content.tuning.talkRange,
       )
@@ -3777,6 +3780,7 @@ export class GameModel {
         ? (f.objects.find((object) => object.id === objective) ?? f.world.notables[objective])
         : null;
     const context = chapter && this.chapterContext();
+    const needle = context && needleTrackedObjective(context);
     const waypoint = context && f.galaxy === 6 ? phantomWaypoint(context) : null;
     const marked = indicatorTargets(INDICATOR_SOURCES, {
       flight: f,
@@ -3784,7 +3788,11 @@ export class GameModel {
       holodiskWaypoint: this.holodiskWaypoint,
       job: this.jobIndicator(f),
       objective,
-      ...(point ? { objectivePoint: { id: point.id, x: point.x, y: point.y } } : {}),
+      ...(needle
+        ? { objectivePoint: { id: needle.id, ...needle.point } }
+        : point
+          ? { objectivePoint: { id: point.id, x: point.x, y: point.y } }
+          : {}),
       progress: p,
       questItem: questItemDestination(p),
     });
