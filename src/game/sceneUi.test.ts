@@ -455,6 +455,11 @@ describe("conversation exposure under covering cards", () => {
         getBounds: vi.fn(() => ({ height: 34, width: 36, x: 342, y: 163 })),
         visible: true,
       },
+      useCallout: {
+        alpha: 1,
+        getBounds: vi.fn(() => ({ height: 32, width: 26, x: 242, y: 116 })),
+        visible: true,
+      },
     };
     const pennyLayers = new WeakMap([[scene, { place }]]);
     const hud = { height: 30, width: 100, x: 0, y: 0 };
@@ -562,7 +567,7 @@ describe("conversation exposure under covering cards", () => {
     expect(ui.place.mock.lastCall?.[2].blocked).toEqual([ui.hud]);
   });
 
-  it("includes Ada's visible bounds when placing an in-world tracked marker", () => {
+  it("includes the visible ship and Use callout when placing an in-world tracked marker", () => {
     const ui = covered("settings", false);
     ui.scene.settingsOpen = false;
     ui.markers.mockReturnValue([{ ...ui.marker, onScreen: true, trackedLabel: "Ring 1" }]);
@@ -571,7 +576,26 @@ describe("conversation exposure under covering cards", () => {
     expect(ui.place.mock.lastCall?.[2].blocked).toEqual([
       ui.hud,
       ui.scene.ship.getBounds.mock.results[0]?.value,
+      ui.scene.useCallout.getBounds.mock.results[0]?.value,
     ]);
+    expect(ui.scene.useCallout.getBounds).toHaveBeenCalledOnce();
+  });
+
+  it("skips Use callout bounds for edge markers and invisible callouts", () => {
+    const ui = covered("settings", false);
+    ui.scene.settingsOpen = false;
+    ui.update();
+    expect(ui.scene.useCallout.getBounds).not.toHaveBeenCalled();
+
+    ui.markers.mockReturnValue([{ ...ui.marker, onScreen: true, trackedLabel: "Ring 1" }]);
+    ui.scene.useCallout.visible = false;
+    ui.update();
+    expect(ui.scene.useCallout.getBounds).not.toHaveBeenCalled();
+
+    ui.scene.useCallout.visible = true;
+    ui.scene.useCallout.alpha = 0;
+    ui.update();
+    expect(ui.scene.useCallout.getBounds).not.toHaveBeenCalled();
   });
 
   it("retains already painted chatter and markers under UI without advancing knowledge", () => {

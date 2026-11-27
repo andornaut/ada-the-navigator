@@ -256,6 +256,7 @@ export type UiContext = Partial<Pick<GameScene, "fieldLight">> &
     | "towLine"
     | "towSprite"
     | "upgradePickupArt"
+    | "useCallout"
     | "useRefusals"
     | "warpCover"
     | "warpPaint"
@@ -1524,12 +1525,18 @@ export function renderConversation(scene: UiContext): void {
   const markers = paint.markers(flight, scene.settingsOpen, !sceneCovered && !emergency, () =>
     scene.model.targetMarkers(area, scene.litCaches),
   );
-  // Measure HUD ink only for markers to place. A tracked marker above a nearby target also
-  // clears Ada's ship, which may be directly under the target.
+  // Measure HUD ink only for markers to place. In-world markers also clear the ship and
+  // the Use callout, which are already drawn in the same logical game coordinates.
   const blocked =
     markers.length > 0 ? markerFootprints(document, document.getElementById(VIEW_HOST_ID)) : [];
-  if (markers.some((marker) => marker.onScreen) && scene.ship.visible) {
-    blocked.push(scene.ship.getBounds());
+  if (markers.some((marker) => marker.onScreen)) {
+    if (scene.ship.visible) {
+      blocked.push(scene.ship.getBounds());
+    }
+    const callout = scene.useCallout;
+    if (callout?.visible && callout.alpha > 0) {
+      blocked.push(callout.getBounds());
+    }
   }
   penny.place(
     flight?.player ?? { x: 0, y: 0 },
