@@ -1544,7 +1544,26 @@ Shown when the browser holds no install prompt. Title, then steps:
 - Pitch: Explore space. Bring new ideas home.
 - Subline and meta description: Join Ada on space adventures and help her community
   back home with what she learns.
-- Mobile: Move with the left stick. Aim and fire with the right stick. Tap Use to
-  interact. Each named control's icon follows its name.
-- Desktop: Move with WASD. Aim and fire with the arrow keys. Press Space to
-  interact and Escape to pause.
+
+### Controls
+
+#### Flight
+
+| Action           | Input                                                                             |
+| ---------------- | --------------------------------------------------------------------------------- |
+| Thrust           | `W` or `Up Arrow`. Hold `Shift` for low thrust.                                   |
+| Turn             | `A` / `D` or `Left Arrow` / `Right Arrow`                                         |
+| Steer with mouse | Hold the left mouse button and point.                                             |
+| Aim and fire     | `Space` to fire, or hold the right mouse button to aim and fire.                  |
+| Interact         | `E` or `Enter`                                                                    |
+| Fly on touch     | Move with the left stick. Aim and fire with the right stick. Tap Use to interact. |
+
+Each named control's icon follows its name.
+
+#### Menus
+
+| Action            | Input                                                 |
+| ----------------- | ----------------------------------------------------- |
+| Pause or go back  | `Escape`, or click or tap Pause, Menu, Back or Close. |
+| Move focus        | `Tab` or `Shift` + `Tab`                              |
+| Activate a button | Click, tap, or focus and press `Enter` or `Space`.    |
