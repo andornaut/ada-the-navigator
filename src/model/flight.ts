@@ -62,7 +62,6 @@ import {
   ASTEROID_SHAPES,
   bounce,
   placementRadius,
-  reflectDirection,
   sceneryBound,
   scenerySilhouette,
   type Silhouette,
@@ -156,6 +155,13 @@ import {
   recordProjectileImpact,
 } from "./flight/impactFeedback.ts";
 import { armed, layMine, stepMines, strikeMines } from "./flight/mines.ts";
+import {
+  clearPilotHeading,
+  flightChunkKey,
+  type FreshTravel,
+  movePilot,
+  reflectPilotHeading,
+} from "./flight/pilotMovement.ts";
 import { projectileContact, projectileSceneryContact } from "./flight/projectileContact.ts";
 import { resolveScenery, type SceneryContactOf } from "./flight/sceneryResolution.ts";
 import { bounceShipContact } from "./flight/shipContact.ts";
@@ -289,7 +295,7 @@ import { SceneryFrames } from "./sceneryFrames.ts";
 import { sceneryImpact } from "./sceneryImpact.ts";
 import { rechargeShield } from "./shieldRecharge.ts";
 import { shipBody, shipTouches, shipTouchesScreenCircle } from "./shipBody.ts";
-import { direction, stepShipMotion, turnToward } from "./shipPhysics.ts";
+import { direction, turnToward } from "./shipPhysics.ts";
 import {
   worldFitsEncounter,
   worldRegionalEngagementAdmissions,
@@ -348,18 +354,6 @@ export {
 
 const length = (v: Vec) => Math.hypot(v.x, v.y);
 /**
- * Smoothed requested movement direction per flight. It is transient so saves gain
- * no field; a restored or newly pressed stick starts from the velocity heading.
- */
-const movementHeadings = new WeakMap<FlightState, Vec>();
-
-function reflectMovementHeading(flight: FlightState, normal: Vec): void {
-  const heading = movementHeadings.get(flight);
-  if (heading) {
-    movementHeadings.set(flight, reflectDirection(normal, heading));
-  }
-}
-/**
  * Ada's velocity averaged for enemy aim per flight (ENEMY_AIM.velocitySeconds). It is transient
  * like the movement heading: a restored or new flight starts it at her current velocity.
  */
@@ -402,10 +396,6 @@ function random(seed: number): () => number {
     n = (Math.imul(n, 1664525) + 1013904223) >>> 0;
     return n / 4294967296;
   };
-}
-function chunk(flight: FlightState, content: GameContent, point: Vec): string {
-  const grid = periodicWorldGrid(flightWorldContext(flight), content.tuning.chunkSize);
-  return worldCellKey(grid, worldCellAt(grid, point));
 }
 
 /** Whether a point lies inside an existing friendly protected place. */
@@ -551,6 +541,11 @@ function clearOfLandmarks(object: SpaceObject, flight: FlightState): boolean {
 }
 const SCENERY = ["rock", "debris"];
 const sceneryResolution = { ...projectileScenery, kinds: SCENERY };
+const pilotScenery = {
+  contactOf: adaContact,
+  onContact: adaSceneryContact,
+  resolution: sceneryResolution,
+};
 const ASTEROID_SHAPE_LIST = [...ASTEROID_SHAPES.values()];
 /**
  * Push a circle out of overlapping scenery along each contact normal and report every contact
@@ -578,7 +573,7 @@ function adaSceneryContact(
       bumpAda(content, flight, events, object);
     }
     flight.velocity = bounce(sceneryRestitution, sceneryRecoil, normal, surface, flight.velocity);
-    reflectMovementHeading(flight, normal);
+    reflectPilotHeading(flight, normal);
   };
 }
 
@@ -609,7 +604,7 @@ export function bounceShips(
   flight: FlightState,
   object: SpaceObject,
 ): boolean {
-  const closing = bounceShipContact(reflectMovementHeading, content.tuning.flight, flight, object);
+  const closing = bounceShipContact(reflectPilotHeading, content.tuning.flight, flight, object);
   if (closing === null) {
     return false;
   }
@@ -667,15 +662,6 @@ function settleAda(content: GameContent, flight: FlightState): void {
     undefined,
     needleRims(flight),
   );
-}
-
-/** An undo that returns position to where it is now. */
-function returnTo(position: Vec): () => void {
-  const { x, y } = position;
-  return () => {
-    position.x = x;
-    position.y = y;
-  };
 }
 
 /**
@@ -3969,7 +3955,7 @@ export function teleport(content: GameContent, target: string | Vec, flight: Fli
   flight.velocity = { x: 0, y: 0 };
   flight.freshChunk = null;
   beginArrivalGrace(content, flight);
-  const key = chunk(flight, content, arrival);
+  const key = flightChunkKey(content, flight, arrival);
   markVisited(flight.visited, key);
   worldSyncFlightRegion(flightWorldContext(flight), content, flight);
   return true;
@@ -4023,7 +4009,7 @@ export function dockFlight(content: GameContent, id: string, flight: FlightState
     return false;
   }
   flight.velocity = { x: 0, y: 0 };
-  movementHeadings.delete(flight);
+  clearPilotHeading(flight);
   return true;
 }
 /**
@@ -4032,115 +4018,8 @@ export function dockFlight(content: GameContent, id: string, flight: FlightState
  */
 export function undockFlight(content: GameContent, flight: FlightState): void {
   flight.velocity = { x: 0, y: 0 };
-  movementHeadings.delete(flight);
+  clearPilotHeading(flight);
   beginArrivalGrace(content, flight);
-}
-type FreshTravel = (distance: number, seconds: number, point: Vec) => void;
-
-function move(
-  content: GameContent,
-  dt: number,
-  input: FlightInput,
-  events: FlightEvent[],
-  flight: FlightState,
-  freshTravel?: FreshTravel,
-): Vec {
-  const magnitude = Math.min(1, length(input.move));
-  const physics = towing(flight, shipTuning(ECONOMY, content, flight.levels).physics);
-  const top = physics.maxSpeed;
-  const speedFraction =
-    input.throttle === undefined
-      ? movementSpeedFraction(content.tuning, magnitude)
-      : Math.min(1, Math.max(0, input.throttle));
-  const motion = stepShipMotion(
-    physics,
-    dt,
-    { maxSpeed: top },
-    {
-      direction: input.move,
-      speed: speedFraction * top,
-    },
-    { heading: movementHeadings.get(flight) ?? null, velocity: flight.velocity },
-  );
-  if (motion.heading) {
-    movementHeadings.set(flight, motion.heading);
-  } else {
-    movementHeadings.delete(flight);
-  }
-  flight.velocity = motion.velocity;
-  const start = { ...flight.player };
-  const contactOf = adaContact(flight);
-  const onContact = adaSceneryContact(content, events, flight);
-  // Drifting scenery can reach a resting ship, so contacts resolve before any travel.
-  resolveScenery(
-    sceneryResolution,
-    flight,
-    contactOf,
-    onContact,
-    flight.player,
-    undefined,
-    needleRims(flight),
-  );
-  // A current's flow adds drift outside Ada's physics and speed cap.
-  const drift = worldFlowAt(flightWorldContext(flight), flight.galaxy, flight.player);
-  const travel = { x: flight.velocity.x + drift.x, y: flight.velocity.y + drift.y };
-  const steps = Math.max(1, Math.ceil((length(travel) * dt) / 4));
-  for (let i = 0; i < steps; i++) {
-    const before = { ...flight.player };
-    const key = chunk(flight, content, before);
-    flight.player.x += (travel.x * dt) / steps;
-    flight.player.y += (travel.y * dt) / steps;
-    resolveScenery(
-      sceneryResolution,
-      flight,
-      contactOf,
-      onContact,
-      flight.player,
-      () => {
-        flight.player.x = before.x;
-        flight.player.y = before.y;
-      },
-      needleRims(flight),
-    );
-    canonicalPosition(flight, flight.player);
-    const afterKey = chunk(flight, content, flight.player);
-    if (flight.freshChunk === key) {
-      const distance = worldDistance(flightWorldContext(flight), before, flight.player);
-      const previous = flight.freshDistance;
-      flight.freshDistance += distance;
-      if (freshTravel && magnitude > 0 && speedFraction > 0 && flight.freshDistance > previous) {
-        freshTravel(flight.freshDistance - previous, dt / steps, flight.player);
-      }
-    }
-    if (afterKey !== key) {
-      flight.freshChunk = visitedChunk(flight.visited, afterKey) ? null : afterKey;
-      markVisited(flight.visited, afterKey);
-    }
-  }
-  if (
-    input.turn === undefined &&
-    length(input.aim) <= 0.01 &&
-    worldDistance(flightWorldContext(flight), start, flight.player) > 0.001 &&
-    length(flight.velocity)
-  ) {
-    const turnedFrom = flight.facing;
-    const settled = returnTo(flight.player);
-    flight.facing = turnToward(dt, physics.aimTurnSeconds, flight.velocity, flight.facing);
-    // A new heading draws a new outline, which may reach scenery; one wedged in it keeps the old.
-    resolveScenery(
-      sceneryResolution,
-      flight,
-      contactOf,
-      onContact,
-      flight.player,
-      () => {
-        settled();
-        flight.facing = turnedFrom;
-      },
-      needleRims(flight),
-    );
-  }
-  return start;
 }
 /**
  * Whether an enemy presses Ada: engaged, neither returning nor fleeing, within its perception,
@@ -5462,7 +5341,15 @@ export function stepFlight(
     flight.sinceDamage += slice;
     generate(content, flight.player, input.cartwheelHubKnown === true, flight);
     moveDebris(debrisMotion, content, slice, events, flight);
-    const playerBeforeMove = move(content, slice, input, events, flight, freshTravel);
+    const playerBeforeMove = movePilot(
+      pilotScenery,
+      content,
+      slice,
+      input,
+      events,
+      flight,
+      freshTravel,
+    );
     worldSyncFlightRegion(flightWorldContext(flight), content, flight);
     if (warnCartwheelPatrol(flight)) {
       events.push({ type: "cartwheelPatrolWarning" });
