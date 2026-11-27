@@ -1461,15 +1461,22 @@ it.each([
   "equipment:tractor",
   "equipment:paint",
   "cargo:holodisks",
+  "cargo:carrying:spares",
+  "cargo:towing:tug",
   "weapon:laser",
 ])("returns %s details to the same Ship and item context", (item) => {
   const { body, modal, options, pause, root, ship } = cards();
-  pause.setState(state());
+  const populated = {
+    ...SHIP,
+    carrying: [{ id: "spares", name: "Spare parts" }],
+    towing: { id: "tug", name: "Sleepy Tug" },
+  };
+  pause.setState(state({ ship: populated }));
   pause.open();
   button(body.children[0]!, "pause-ship").click();
   const origin = ship.querySelectorAll().find((node) => node.dataset.item === item)!;
   expect(origin).toBeDefined();
-  const snapshot = structuredClone(SHIP);
+  const snapshot = structuredClone(populated);
   origin.click();
   expect(modal.hidden).toBe(true);
   expect(pause.shipOpen()).toBe(true);
@@ -1487,6 +1494,14 @@ it.each([
     expect(quantity.hidden).toBe(false);
     expect(quantity.children.at(-1)?.textContent).toBe("2 of 6");
   }
+  if (item.startsWith("cargo:") && item !== "cargo:holodisks") {
+    const header = detail.querySelector(".ada-detail-header")!;
+    const quantity = detail.querySelector(".ada-detail-quantity")!;
+    expect(header.children.at(-1)?.textContent).toBe(
+      item === "cargo:carrying:spares" ? "Spare parts" : "Sleepy Tug",
+    );
+    expect(quantity.hidden).toBe(true);
+  }
   const dismiss = button(detail, `dismiss-${kind}`);
   expect(dismiss.textContent).toBe("Back");
   expect(detail.querySelector(".ada-actions")?.dataset.footerAction).toBe("back");
@@ -1494,7 +1509,7 @@ it.each([
   expect(pause.shipOpen()).toBe(true);
   expect(modal.hidden).toBe(false);
   expect(focused()).toBe(origin);
-  expect(SHIP).toEqual(snapshot);
+  expect(populated).toEqual(snapshot);
   expect(options.onBackToTitle).not.toHaveBeenCalled();
   expect(options.onGalaxies).not.toHaveBeenCalled();
   origin.click();

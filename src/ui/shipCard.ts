@@ -80,7 +80,7 @@ export interface ShipRow {
   readonly interactive?: boolean;
   readonly icon: ShipIcon;
   readonly label: string;
-  /** An inline hint naming the action of the existing row button. */
+  /** A hint naming the action of the existing row button. */
   readonly actionLabel?: string;
   readonly count?: string;
   readonly level?: string;
@@ -102,7 +102,7 @@ type Labels = Readonly<Record<string, string>>;
 const sprite = (name: string): ShipIcon => ({ frames: 1, sprite: name });
 const equipmentIcon = (key: string): ShipIcon => ({ vector: uiIconUrl(`icon-shop-${key}`) });
 
-/** "Carrying: {item}" or "Towing: {craft}", the Ship card's line and the status pill's label. */
+/** "Carrying: {item}" or "Towing: {craft}", the status pill's label. */
 export function aboardLabel(labels: Labels, aboard: Aboard): string {
   return aboard.kind === "towing"
     ? fill(labels.shipTowing ?? "", { craft: aboard.name })
@@ -156,12 +156,13 @@ export function shipSections(labels: Labels, view: ShipView): ShipSections {
     return true;
   });
   const status = (kind: Aboard["kind"], fact: ShipItemFact | null): ShipRow => ({
+    count: fact?.name ?? labels.shipNothing ?? "",
     icon: sprite(kind === "towing" ? "icon-tow-20" : "icon-cargo-20"),
     item: {
       id: fact?.id === "aboard" ? "aboard" : `${kind}:${fact?.id ?? "empty"}`,
       kind: "cargo",
     },
-    label: aboardLabel(labels, { kind, name: fact?.name ?? labels.shipNothing ?? "" }),
+    label: (kind === "towing" ? labels.shipTowingTitle : labels.shipCarryingTitle) ?? "",
     ...(fact?.questId ? { questId: fact.questId } : {}),
     ...(!fact ? { interactive: false } : {}),
   });
@@ -271,7 +272,7 @@ function rowPart(onItem: (row: ShipRow, origin: HTMLButtonElement) => void, init
     if (row.actionLabel) {
       const action = document.createElement("span");
       action.className = "ada-ship-action-label";
-      action.textContent = ` ${row.actionLabel}`;
+      action.textContent = row.actionLabel;
       label.append(action);
     }
     line.append(shipIconNode(row.icon), content);

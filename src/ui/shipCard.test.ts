@@ -59,19 +59,13 @@ describe("Ship card", () => {
 
   it("lists Stardust and ore with exact grouped counts, then the holodisks, under Cargo", () => {
     const { cargo } = shipSections(LABELS, VIEW);
-    expect(labels(cargo)).toEqual([
-      "Stardust",
-      "Ore",
-      "Holodisks",
-      "Carrying: Nothing",
-      "Towing: Nothing",
-    ]);
+    expect(labels(cargo)).toEqual(["Stardust", "Ore", "Holodisks", "Carrying", "Towing"]);
     expect(cargo.map((row) => row.count)).toEqual([
       "1,234,567",
       "12,500",
       "3 of 6",
-      undefined,
-      undefined,
+      "Nothing",
+      "Nothing",
     ]);
     expect(cargo.map((row) => row.icon)).toEqual([
       { frames: 1, sprite: "icon-stardust-20" },
@@ -88,18 +82,20 @@ describe("Ship card", () => {
       aboard: { kind: "carrying", name: "Spare parts" },
     }).cargo.at(-2);
     expect(carrying).toEqual({
+      count: "Spare parts",
       icon: { frames: 1, sprite: "icon-cargo-20" },
       item: { id: "aboard", kind: "cargo" },
-      label: "Carrying: Spare parts",
+      label: "Carrying",
     });
     const towing = shipSections(LABELS, {
       ...VIEW,
       aboard: { kind: "towing", name: "Sleepy Tug" },
     }).cargo.at(-1);
     expect(towing).toEqual({
+      count: "Sleepy Tug",
       icon: { frames: 1, sprite: "icon-tow-20" },
       item: { id: "aboard", kind: "cargo" },
-      label: "Towing: Sleepy Tug",
+      label: "Towing",
     });
   });
 
@@ -110,7 +106,7 @@ describe("Ship card", () => {
       aboardQuestId: "live-held-job",
     }).cargo.at(-2)!;
     expect(row.questId).toBe("live-held-job");
-    expect(row.label).toBe("Carrying: A different visible label");
+    expect(row).toMatchObject({ count: "A different visible label", label: "Carrying" });
     expect(shipSections(LABELS, VIEW).cargo.every((row) => !row.questId)).toBe(true);
   });
 
@@ -127,10 +123,10 @@ describe("Ship card", () => {
     };
     const before = structuredClone(view);
     const rows = shipSections(LABELS, view).cargo.slice(3);
-    expect(rows.map(({ label }) => label)).toEqual([
-      "Carrying: Supplies",
-      "Carrying: Supplies",
-      "Towing: Sleepy Tug",
+    expect(rows.map(({ count, label }) => [label, count])).toEqual([
+      ["Carrying", "Supplies"],
+      ["Carrying", "Supplies"],
+      ["Towing", "Sleepy Tug"],
     ]);
     expect(rows.map(({ item }) => shipItemKey(item))).toEqual([
       "cargo:carrying:story-item:1:map",
@@ -152,7 +148,10 @@ describe("Ship card", () => {
       carrying: [],
       towing: null,
     }).cargo.slice(3);
-    expect(rows.map(({ label }) => label)).toEqual(["Carrying: Nothing", "Towing: Nothing"]);
+    expect(rows.map(({ count, label }) => [label, count])).toEqual([
+      ["Carrying", "Nothing"],
+      ["Towing", "Nothing"],
+    ]);
     expect(rows.map(({ item }) => shipItemKey(item))).toEqual([
       "cargo:carrying:empty",
       "cargo:towing:empty",
@@ -340,12 +339,12 @@ describe("Ship sections rendering", () => {
       ["Stardust", "1,234,567"],
       ["Ore", "12,500"],
       ["Holodisks", "3 of 6"],
-      ["Carrying: Nothing"],
-      ["Towing: Nothing"],
+      ["Carrying", "Nothing"],
+      ["Towing", "Nothing"],
     ]);
   });
 
-  it("renders the swatch and the inline hint in the same accessible paint button", () => {
+  it("renders the swatch and the complete hint in the same accessible paint button", () => {
     const swatch = "/material/obsidian.svg";
     const root = rendered(
       shipSections(LABELS, { ...VIEW, paint: "Obsidian", paintSwatch: swatch }),
@@ -355,7 +354,7 @@ describe("Ship sections rendering", () => {
     expect(rows.filter(({ dataset }) => dataset.item === "equipment:paint")).toEqual([paint]);
     expect(paint.attributes.get("aria-label")).toBe("Obsidian paint (Click to change)");
     expect(rowText(paint)).toEqual(["Obsidian paint"]);
-    expect(paint.children[1]!.children[0]!.children[0]!.textContent).toBe(" (Click to change)");
+    expect(paint.children[1]!.children[0]!.children[0]!.textContent).toBe("(Click to change)");
     expect(paint.children[0]!.style.background).toContain(swatch);
     expect(paint.children[0]!.attributes.get("aria-hidden")).toBe("true");
   });

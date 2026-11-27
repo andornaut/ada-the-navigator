@@ -1407,11 +1407,11 @@ or replay rewards.
   beam level {n}", "+ {paint} paint", "+ {weapon} ammo" and "+ {craft}" for a towed craft; merged repeats add
   " ×{n}".
 - Ship card: Ship; Cargo: Stardust, Ore, `Holodisks` with the separate value
-  `{n} of {total}`, Carrying: {item} for each actual carried item, or Carrying: Nothing,
-  and independently Towing: {craft name} or Towing: Nothing. Both are always represented; multiple
-  actual carried items retain separate rows and explicit live quest links.
+  `{n} of {total}`. Each carried item has its own `Carrying` row with the item name as a
+  separate right-aligned value. `Towing` shows the craft name as a separate right-aligned
+  value. Each category shows `Nothing` when empty. Live quest links remain on their rows.
   Empty rows offer no action. Equipment: Engine, Shield, Tractor beam and
-  `{paint} paint` with the separate helper `(Click to change)`; Weapons: owned
+  `{paint} paint` with the separate helper `(Click to change)` below the name; Weapons: owned
   weapons with their actual ammunition. All three content columns have equal
   width, excluding divider/gap tracks. Names append [{n}] above level one;
   accessible level descriptions retain Level {n} of 3.

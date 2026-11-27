@@ -445,12 +445,18 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
       questRoot = "ship";
       quests.open(row.questId, "ship", questParentDismissal);
     } else {
+      let title = compactLevelName(row.tier, row.label);
       let text = row.level ?? "";
       let quantity = row.count;
       if (row.item.kind === "resource") {
         text = RESOURCE_DESCRIPTIONS[row.item.id];
-      } else if (row.item.kind === "cargo" && row.item.id === "holodisks") {
-        text = labels.shipRows.holodiskAbout ?? "";
+      } else if (row.item.kind === "cargo") {
+        if (row.item.id === "holodisks") {
+          text = labels.shipRows.holodiskAbout ?? "";
+        } else {
+          title = row.count ?? row.label;
+          quantity = undefined;
+        }
       } else if (row.item.kind === "equipment" && row.item.id !== "paint") {
         text = EQUIPMENT_DESCRIPTIONS[row.item.id];
         if (row.item.id === "shield" && view.shieldHealth) {
@@ -459,7 +465,7 @@ export function createPauseCards(root: HTMLElement, options: PauseOptions) {
           quantity = shield.quantity;
         }
       }
-      shipResource.open(compactLevelName(row.tier, row.label), text, origin, {
+      shipResource.open(title, text, origin, {
         icon: shipIconNode(row.icon),
         ...(quantity ? { quantity } : {}),
       });

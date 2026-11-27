@@ -32,7 +32,7 @@ ${UI_SCOPE} .ada-ship-section h3{
 }
 ${UI_SCOPE} .ada-ship-grid{
   display:grid;
-  row-gap:${units(SPACING.rowGap)};
+  row-gap:${units(SPACING.gap)};
   min-width:0;
   align-content:start
 }
@@ -99,6 +99,7 @@ ${UI_SCOPE} .ada-ship-label{
   overflow-wrap:anywhere
 }
 ${UI_SCOPE} .ada-ship-action-label{
+  display:block;
   font:${font(TYPE.label)}
 }
 ${UI_SCOPE} .ada-ship-count{
