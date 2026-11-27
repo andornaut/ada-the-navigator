@@ -1,13 +1,18 @@
+import "@andornaut/game-kit/runtime/web/ui/dom/actionGroup.css";
+import "./updateDialog.css";
+
+import { ACTION_GAPS } from "@andornaut/game-kit/runtime/ui/actionGroup";
 import type { ControlAvailability } from "@andornaut/game-kit/runtime/ui/controlPresentation";
+import { createActionGroup } from "@andornaut/game-kit/runtime/web/ui/dom/actionGroup";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import type { UpdateOffer } from "../pwa/updateOffer.ts";
 import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { registerAdaAncestorActionScope } from "./actionRegistry.ts";
 import { SCROLL } from "./layout/contentCard.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { createAdaLayoutPorts } from "./layoutTree.ts";
-import { createActions, createCard } from "./modal.ts";
+import { createCard } from "./modal.ts";
 import { createStandardCloseAction } from "./modalClose.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
@@ -56,7 +61,9 @@ export function createUpdateDialog(
   });
   const { body, card, close, frame } = parts;
   card.dataset.dialog = "update";
-  const actions = createActions([]);
+  const group = createActionGroup(root.ownerDocument, { className: "ada-update-actions" });
+  const actions = group.element;
+  actions.dataset.inkTop = "0";
   body.append(actions);
   modal.append(frame);
   root.append(modal);
@@ -100,6 +107,31 @@ export function createUpdateDialog(
   );
   assertAdaActionMetadata(modal);
   const accept = actions.querySelector<HTMLButtonElement>('[data-action="accept-update"]')!;
+  const cancel = actions.querySelector<HTMLButtonElement>('[data-action="cancel-update"]')!;
+  const cancelFace = cancel.parentElement!;
+  const acceptFace = accept.parentElement!;
+  const fitActions = () => {
+    if (modal.hidden) {
+      return;
+    }
+    const [secondary, primary] = group.measure([cancel, accept]);
+    const rowWidth = secondary!.width + ACTION_GAPS.standard.row + primary!.width;
+    group.arrange(
+      {
+        gap: "standard",
+        press: { margin: 0 },
+        variant: "footer",
+        width: Math.min(rowWidth, Math.floor(body.clientWidth / readViewUnit(body))),
+      },
+      [
+        { element: cancelFace, role: "secondary", size: secondary! },
+        { element: acceptFace, role: "primary", size: primary! },
+      ],
+    );
+  };
+  const view = root.ownerDocument.defaultView;
+  view?.addEventListener("resize", fitActions);
+  view?.addEventListener(VIEW_SCALE_EVENT, fitActions);
   const stop = offer.subscribe((visible) => {
     if (disposed || visible === open) {
       return;
@@ -114,6 +146,7 @@ export function createUpdateDialog(
     }
     modal.hidden = !visible;
     if (visible) {
+      fitActions();
       parts.fit();
     }
     if (visible) {
@@ -140,6 +173,9 @@ export function createUpdateDialog(
       stop();
       layer?.dispose();
       headerBinding.dispose();
+      view?.removeEventListener("resize", fitActions);
+      view?.removeEventListener(VIEW_SCALE_EVENT, fitActions);
+      group.dispose();
       mounted.dispose();
       releaseActionScope?.();
       modal.remove();

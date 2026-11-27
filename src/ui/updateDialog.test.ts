@@ -111,6 +111,13 @@ const fixture = vi.hoisted(() => {
     querySelector(selector: string): Node | null {
       return this.querySelectorAll(selector)[0] ?? null;
     }
+    clientWidth = 380;
+    getBoundingClientRect() {
+      return { height: 48, width: this.textContent === "Cancel" ? 70 : 105 };
+    }
+    getClientRects() {
+      return [this.getBoundingClientRect()];
+    }
     children: Node[] = [];
     className = "";
     dataset: Record<string, string> = {};
@@ -184,11 +191,6 @@ const fixture = vi.hoisted(() => {
 });
 vi.mock("./modal.ts", async (original) => ({
   ...(await original<typeof import("./modal.ts")>()),
-  createActions: (actions: { button: InstanceType<typeof fixture.Node>; role: string }[]) => {
-    const row = new fixture.Node();
-    row.append(...actions.map(({ button }) => button));
-    return row;
-  },
   createButton: (label: string, role: string) => {
     const button = Object.assign(new fixture.Node(), { tagName: "BUTTON", type: "button" });
     button.textContent = label;
@@ -207,7 +209,10 @@ vi.mock("./modal.ts", async (original) => ({
     row.dataset.footerAction = action;
   },
 }));
-vi.mock("./layout/viewScale.ts", () => ({ readViewUnit: () => 1 }));
+vi.mock("./layout/viewScale.ts", async (original) => ({
+  ...(await original<typeof import("./layout/viewScale.ts")>()),
+  readViewUnit: () => 1,
+}));
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
   focusTarget: (node: { focus(): void }) => node.focus(),
 }));
@@ -219,6 +224,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.clearAllMocks();
   fixture.card.body.children = [];
+  fixture.card.body.clientWidth = 380;
   fixture.card.title.children = [];
 });
 
@@ -252,7 +258,15 @@ function setup(initial = false, liveOffer?: UpdateOffer, applicationScope = fals
       HTMLElement: fixture.Node,
       Node: fixture.Node,
       clearTimeout,
-      getComputedStyle: () => ({}),
+      getComputedStyle: (node: InstanceType<typeof fixture.Node>) => {
+        const { height, width } = node.getBoundingClientRect();
+        return {
+          boxSizing: "border-box",
+          getPropertyValue: () => "",
+          height: `${height}px`,
+          width: `${width}px`,
+        };
+      },
       performance,
       setTimeout,
     }),
@@ -341,6 +355,30 @@ it("constructs typed Cancel/Update now with synchronous offer notification and p
   expect(f.restore).toHaveBeenCalledOnce();
   f.dialog.dispose();
 });
+it("keeps row faces at their own widths and equalizes only the stack without replacing actions", () => {
+  const f = setup(true);
+  const group = f.root.querySelector(".ui-action-group")!;
+  const cancel = f.button("cancel");
+  const accept = f.button("accept");
+  const secondary = cancel.parentElement!;
+  const primary = accept.parentElement!;
+  expect(group.getAttribute("data-ui-action-axis")).toBe("row");
+  expect(group.getAttribute("data-ui-action-variant")).toBe("footer");
+  expect(secondary.style.setProperty).toHaveBeenCalledWith("--ui-action-width", "70");
+  expect(primary.style.setProperty).toHaveBeenCalledWith("--ui-action-x", "86");
+  expect(primary.style.setProperty).toHaveBeenCalledWith("--ui-action-width", "105");
+
+  fixture.card.body.clientWidth = 135;
+  f.doc.defaultView.dispatchEvent(new Event("resize"));
+  expect(group.getAttribute("data-ui-action-axis")).toBe("stack");
+  expect(secondary.style.setProperty).toHaveBeenCalledWith("--ui-action-x", "15");
+  expect(secondary.style.setProperty).toHaveBeenCalledWith("--ui-action-width", "105");
+  expect(primary.style.setProperty).toHaveBeenCalledWith("--ui-action-y", "56");
+  expect(f.button("cancel")).toBe(cancel);
+  expect(f.button("accept")).toBe(accept);
+  f.dialog.dispose();
+});
+
 it("only Update now accepts; all defer routes retain visibility until notification", () => {
   const f = setup(true);
   f.button("accept").dispatchEvent(new Event("click"));

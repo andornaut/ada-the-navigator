@@ -1,0 +1,11 @@
+/* The typed button component wraps its native face and optional reason. Only the native button
+   owns the press target. Let its face fill the arranged slot while retaining max-content size
+   during the Kit's measurement pass. */
+.ada-update-actions > .ui-action::before {
+  pointer-events: none;
+}
+
+.ada-update-actions:not([data-ui-action-measuring]) > .ui-action > .ui-standard-button {
+  width: 100%;
+  height: 100%;
+}
