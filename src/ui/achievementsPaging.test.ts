@@ -211,13 +211,13 @@ beforeEach(() => {
   active = null;
   corruption.factory = false;
   corruption.row = false;
-  vi.stubGlobal("document", {
-    get activeElement() {
-      return active;
-    },
+  const view = Object.assign(new EventTarget(), { HTMLElement: Element, Node: Element });
+  const page = Object.assign(new EventTarget(), {
     createElement: (tag: string) => new Element(tag),
-    defaultView: { HTMLElement: Element, Node: Element },
+    defaultView: view,
   });
+  Object.defineProperty(page, "activeElement", { get: () => active });
+  vi.stubGlobal("document", page);
   vi.stubGlobal("window", { addEventListener: vi.fn(), removeEventListener: vi.fn() });
   vi.stubGlobal("getComputedStyle", () => ({
     paddingBottom: "16",

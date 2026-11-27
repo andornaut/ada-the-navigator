@@ -150,6 +150,9 @@ function dom(hasActionRoot = true) {
     }
     readonly attributes = new Map<string, string>();
     readonly tag: string;
+    get tabIndex() {
+      return this.tag === "button" ? 0 : -1;
+    }
     constructor(tag: string) {
       this.tag = tag;
       nodes.push(this);
@@ -163,6 +166,14 @@ function dom(hasActionRoot = true) {
         type,
         (this.listeners.get(type) ?? []).filter((value) => value !== callback),
       );
+    }
+    focus() {
+      if (document.activeElement !== this) {
+        document.activeElement = this;
+        for (const callback of this.listeners.get("focus") ?? []) {
+          callback();
+        }
+      }
     }
     click() {
       const event = Object.assign(new Event("click", { cancelable: true }), { detail: 0 });
@@ -248,14 +259,23 @@ function dom(hasActionRoot = true) {
       }
     }
   }
-  const document = {
+  const view = Object.assign(new EventTarget(), {
+    Element: ElementFake,
+    HTMLElement: ElementFake,
+    Node: ElementFake,
+    devicePixelRatio: 2,
+    getComputedStyle: () => ({ display: "block", visibility: "visible" }),
+  });
+  const document = Object.assign(new EventTarget(), {
+    activeElement: null as ElementFake | null,
     createElement: (tag: string) => new ElementFake(tag),
     createElementNS: (_namespace: string, tag: string) => new ElementFake(tag),
-    defaultView: { HTMLElement: ElementFake, Node: ElementFake },
+    defaultView: view,
     hidden: false,
-  };
+  });
+  vi.stubGlobal("Node", ElementFake);
   vi.stubGlobal("document", document);
-  vi.stubGlobal("window", { devicePixelRatio: 2 });
+  vi.stubGlobal("window", view);
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
   vi.stubGlobal(
     "Image",
@@ -863,12 +883,22 @@ it.each(["mouse", "hold"])(
       expect(currentTitle()).toBe("3");
 
       const screen = fixture.nodes.find((node) => node.dataset.dialog === "galaxies")!;
-      const navigate = screen.listeners.get("keydown")!.at(-1)!;
-      navigate(Object.assign(new Event("keydown"), { key: "Tab", shiftKey: false }));
-      expect(focusTarget).toHaveBeenLastCalledWith(marker(1));
-      focus(marker(1));
+      const navigate = (key: string, target: ReturnType<typeof marker>) => {
+        const event = Object.assign(new Event("keydown", { cancelable: true }), {
+          composedPath: () => [target, screen, document, window],
+          key,
+          shiftKey: false,
+        });
+        Object.defineProperty(event, "target", { value: target });
+        document.defaultView!.dispatchEvent(event);
+        if (!event.defaultPrevented) {
+          screen.listeners.get("keydown")!.at(-1)!(event);
+        }
+      };
+      navigate("Tab", screen);
+      expect(document.activeElement).toBe(marker(1));
       expect(onView.mock.calls).toEqual([[3], [3], [1]]);
-      navigate(Object.assign(new Event("keydown"), { key: "ArrowRight", shiftKey: false }));
+      navigate("ArrowRight", marker(1));
       expect(onStep).toHaveBeenCalledExactlyOnceWith(1);
     } finally {
       map.dispose();

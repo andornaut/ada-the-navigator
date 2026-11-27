@@ -8,6 +8,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { canAffordMapJump, MAP_JUMP_COST } from "../data/mapJump.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "../model/flightTopology.ts";
 import { bindAdaAction, resolveAdaHoldAction } from "./actionBinding.ts";
+import { registerForegroundSurface } from "./foregroundInput.ts";
 import { bindAdaActionRoot, bindAdaHoldActions } from "./holdActionsAdapter.ts";
 import { framePoint, turnOf } from "./layout/frameBox.ts";
 import {
@@ -217,9 +218,11 @@ class FixtureDocument extends EventTarget {
     return this.hitTarget;
   }
   defaultView = Object.assign(new EventTarget(), {
+    Element,
     HTMLElement: Element,
     Node: Element,
     clearTimeout: (id: ReturnType<typeof setTimeout>) => clearTimeout(id),
+    getComputedStyle: () => ({ display: "block", visibility: "visible" }),
     performance: { now: () => Date.now() },
     setTimeout: (fn: () => void, delay: number) => setTimeout(fn, delay),
   });
@@ -505,6 +508,7 @@ const FIELD = { height: 100, width: 100, x: 0, y: 0 };
 function spatialFixture(places = [{ id: "a", x: 0, y: 0 }]) {
   const f = fixture(true);
   const select = vi.fn();
+  const onClose = vi.fn();
   const chips = new Map<string, Element>();
   const schedule = vi.fn();
   Object.assign(f.context, {
@@ -521,6 +525,7 @@ function spatialFixture(places = [{ id: "a", x: 0, y: 0 }]) {
     hitAround,
     invalidatePressScope,
     layout: () => ({ field: FIELD, fit: FIELD, inner: FIELD }),
+    options: { onClose },
     panView,
     panelLayout: { dispose: vi.fn() },
     pinch: null,
@@ -530,6 +535,7 @@ function spatialFixture(places = [{ id: "a", x: 0, y: 0 }]) {
     press: null,
     pressedArea,
     refit: vi.fn(),
+    registerForegroundSurface,
     renderQueue: { cancel: vi.fn(), dispose: vi.fn(), schedule },
     select,
     selected: null,
@@ -552,6 +558,8 @@ function spatialFixture(places = [{ id: "a", x: 0, y: 0 }]) {
     f.execute(`const ${name} = ${actual(name)};`);
   }
   f.execute(actual("screen"));
+  f.execute(`const leaveForeground = ${actual("leaveForeground")};`);
+  cleanup.push(() => f.execute("leaveForeground()"));
   f.execute(actual("pointerdown"));
   f.execute(actual("pointermove"));
   f.execute(`
@@ -570,7 +578,7 @@ function spatialFixture(places = [{ id: "a", x: 0, y: 0 }]) {
     return { binding, chip };
   };
   const added = places.map(({ id }) => addChip(id));
-  return { ...f, addChip, added, schedule, select };
+  return { ...f, addChip, added, onClose, schedule, select };
 }
 
 it("takes the topmost expanded hit at pointerdown and holds it across a new projection", () => {
@@ -665,8 +673,25 @@ it.each([
 
 it("disposes the field and chip bindings while a gesture is armed", () => {
   const f = spatialFixture();
+  const escape = () => {
+    const keyboard = (type: string) =>
+      Object.assign(new Event(type, { cancelable: true }), {
+        code: "Escape",
+        key: "Escape",
+      });
+    const down = keyboard("keydown");
+    f.document.defaultView.dispatchEvent(down);
+    f.document.defaultView.dispatchEvent(keyboard("keyup"));
+    return down.defaultPrevented;
+  };
+  expect(escape()).toBe(true);
+  expect(f.onClose).toHaveBeenCalledOnce();
   f.down();
   f.execute("lifecycle.dispose()");
+  // Keep the fixture root visible to prove that disposal released the foreground registration.
+  f.screen.connected = true;
+  expect(escape()).toBe(false);
+  expect(f.onClose).toHaveBeenCalledOnce();
   expect(f.bindings.size).toBe(0);
   expect(resolveAdaHoldAction(f.root as unknown as HTMLElement, f.screen)).toBeNull();
   vi.advanceTimersByTime(600);

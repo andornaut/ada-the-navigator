@@ -32,7 +32,8 @@ const fixture = vi.hoisted(() => {
         doc.removeEventListener = events.removeEventListener.bind(events);
       }
       doc.activeElement ??= null;
-      doc.defaultView ??= {
+      doc.defaultView ??= Object.assign(new EventTarget(), {
+        Element: Node,
         HTMLElement: Node,
         MutationObserver: class {
           disconnect() {}
@@ -43,7 +44,7 @@ const fixture = vi.hoisted(() => {
         },
         Node,
         getComputedStyle: () => ({}),
-      };
+      });
       return document;
     }
     get parentNode() {
@@ -319,10 +320,12 @@ it("reopens with current content and traps Tab on the close control", () => {
   resource.open("Ore", "First", origin as unknown as HTMLElement);
   resource.close();
   resource.open("Stardust", "Second", origin as unknown as HTMLElement);
-  const event = new Event("keydown", { cancelable: true });
-  Object.defineProperty(event, "key", { value: "Tab" });
-  Object.defineProperty(event, "target", { value: document.activeElement });
-  root.dispatchEvent(event);
+  const target = document.activeElement;
+  const event = Object.assign(new Event("keydown", { cancelable: true }), {
+    composedPath: () => [target, document, document.defaultView],
+    key: "Tab",
+  });
+  document.defaultView!.dispatchEvent(event);
   expect(event.defaultPrevented).toBe(true);
   expect(fixture.card.title.textContent).toBe("Stardust");
   expect(fixture.card.body.children[0]!.textContent).toBe("Second");

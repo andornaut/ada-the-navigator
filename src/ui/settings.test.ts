@@ -251,7 +251,7 @@ beforeEach(() => {
     Object.assign(new EventTarget(), {
       activeElement: null as Element | null,
       createElement: (tag: string) => Object.assign(new Element(), { tagName: tag.toUpperCase() }),
-      defaultView: {
+      defaultView: Object.assign(new EventTarget(), {
         HTMLElement: Element,
         MutationObserver: class {
           disconnect() {}
@@ -261,7 +261,7 @@ beforeEach(() => {
           }
         },
         Node: Element,
-      },
+      }),
     }),
   );
   vi.stubGlobal("getComputedStyle", () => ({

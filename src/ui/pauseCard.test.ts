@@ -19,8 +19,7 @@ const focusLog: FakeElement[] = [];
 const focused = () => focusLog.at(-1);
 let lastFocusOptions: unknown;
 
-// The cards' document, where the kit's focusTarget tracks the last input. With no window it
-// tracks touchstart for presses.
+// The cards' document, where the kit tracks input modality.
 function createDocument() {
   return Object.assign(new EventTarget(), {
     activeElement: null as FakeElement | null,
@@ -30,7 +29,8 @@ function createDocument() {
     createElementNS: (): FakeElement => new FakeElement(),
     createTextNode: (text: string): FakeElement =>
       Object.assign(new FakeElement(), { nodeType: 3, nodeValue: text }),
-    defaultView: {
+    defaultView: Object.assign(new EventTarget(), {
+      Element: FakeElement,
       get HTMLElement() {
         return FakeElement;
       },
@@ -38,11 +38,25 @@ function createDocument() {
         return FakeElement;
       },
       getComputedStyle: () => ({}),
-    },
+    }),
     fonts: Object.assign(new EventTarget(), { status: "loaded" }),
   });
 }
-let PAGE = createDocument();
+let PAGE: ReturnType<typeof createDocument>;
+
+function dispatchEscape() {
+  const target = PAGE.activeElement;
+  const event = (type: string) =>
+    Object.assign(new Event(type, { cancelable: true }), {
+      code: "Escape",
+      composedPath: () => [target, PAGE, PAGE.defaultView],
+      key: "Escape",
+    });
+  const down = event("keydown");
+  PAGE.defaultView.dispatchEvent(down);
+  PAGE.defaultView.dispatchEvent(event("keyup"));
+  return down;
+}
 
 // A stand-in for the few DOM members the pause cards and the map screen's construction use.
 class FakeElement {
@@ -1248,10 +1262,7 @@ describe("published modal layer routing", () => {
     expect(pause.shipOpen()).toBe(true);
     expect(modal.children[0]!.hasAttribute("inert")).toBe(true);
     const escape = () => {
-      const event = new Event("keydown", { cancelable: true });
-      Object.defineProperty(event, "key", { value: "Escape" });
-      PAGE.dispatchEvent(event);
-      expect(event.defaultPrevented).toBe(true);
+      expect(dispatchEscape().defaultPrevented).toBe(true);
     };
     escape();
     expect(pause.shipOpen()).toBe(false);
@@ -1325,9 +1336,7 @@ it.each(["close-quests", "quest-close", "Escape", "back"])(
     );
     pause.openQuest("held", "flight");
     if (method === "Escape") {
-      const event = new Event("keydown", { cancelable: true });
-      Object.defineProperty(event, "key", { value: "Escape" });
-      PAGE.dispatchEvent(event);
+      dispatchEscape();
     } else if (method === "back") {
       pause.close();
     } else {
@@ -1370,9 +1379,7 @@ it.each(["close-quests", "quest-back", "Escape", "back"])(
       .find((button) => button.dataset.questId === "held")!
       .click();
     if (method === "Escape") {
-      const event = new Event("keydown", { cancelable: true });
-      Object.defineProperty(event, "key", { value: "Escape" });
-      PAGE.dispatchEvent(event);
+      dispatchEscape();
     } else if (method === "back") {
       pause.closeMap();
     } else {
@@ -1434,9 +1441,7 @@ it.each(["back-ship", "close-ship", "Escape", "back"])(
     expect(footer.tagName).toBe("BUTTON");
     expect(footer.listeners.get("click")).toHaveLength(1);
     if (method === "Escape") {
-      const event = new Event("keydown", { cancelable: true });
-      Object.defineProperty(event, "key", { value: "Escape" });
-      PAGE.dispatchEvent(event);
+      dispatchEscape();
     } else if (method === "back") {
       pause.closeShip();
     } else {

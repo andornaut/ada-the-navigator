@@ -451,7 +451,7 @@ function strictStation() {
   }
   const doc = Object.assign(new EventTarget(), {
     activeElement: null as Node | null,
-    defaultView: {
+    defaultView: Object.assign(new EventTarget(), {
       HTMLElement: Node,
       MutationObserver: class {
         disconnect() {}
@@ -461,7 +461,7 @@ function strictStation() {
         }
       },
       Node,
-    },
+    }),
   });
   vi.stubGlobal("document", doc);
   vi.stubGlobal("HTMLElement", Node);
