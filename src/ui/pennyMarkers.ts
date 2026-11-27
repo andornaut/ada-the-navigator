@@ -212,15 +212,15 @@ export function createPennyMarkerLayer(
       view.place(latest.player, latest.area, latest.directionStyle, latest.markers, false);
     }
   });
-  function createActionEntry(actions: MarkerActions, marker: PennyMarker): Entry {
+  function createActionEntry({ available, open }: MarkerActions, marker: PennyMarker): Entry {
     const node = doc.createElement("button");
     const binding = bindAdaAction(
       {
         click: {
           availability: () => ({ kind: "available" }),
-          run: () => actions.open(item.marker, node),
+          run: () => open(item.marker, node),
         },
-        current: actions.available,
+        current: () => available(),
         slopPx: () => SCROLL.dragThreshold * readViewUnit(node),
       },
       node,
