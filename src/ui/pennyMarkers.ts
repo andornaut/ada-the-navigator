@@ -63,8 +63,10 @@ mask-size:${units(BODY_QUESTION.atlasWidth)} ${units(BODY_QUESTION.atlasHeight)}
 mask-position:${units(-BODY_QUESTION.x)} ${units(-BODY_QUESTION.y)};
 -webkit-mask-position:${units(-BODY_QUESTION.x)} ${units(-BODY_QUESTION.y)}}
 @media (forced-colors:active){
+  button.ada-penny-marker{
+    forced-color-adjust:none;background:ButtonFace;color:ButtonText;border-color:ButtonText}
   button.ada-penny-marker:focus-visible{
-    forced-color-adjust:none;background:Highlight;color:HighlightText;border-color:ButtonText}
+    background:Highlight;color:HighlightText}
 }
 
 `;
