@@ -1029,11 +1029,20 @@ export function createStationView(parent: HTMLElement, options: StationOptions) 
       return;
     }
     confirm = { catalog: "projects", key: row.key, origin };
+    const noStardust = options.balance().stardust === 0;
     const parts = [
       well(row.glyph, true),
       prose("ada-confirm-about", row.projectDetails ?? row.level),
-      contributionLine(row.price ?? 0),
+      contributionLine(noStardust ? 0 : (row.price ?? 0)),
     ];
+    if (noStardust) {
+      const note = prose(
+        "ada-confirm-about",
+        "You have 0 Stardust. Any amount helps when you return.",
+      );
+      note.setAttribute("role", "status");
+      parts.push(note);
+    }
     showConfirmation(row.name, parts, labels.jobAccept);
   };
 

@@ -814,9 +814,10 @@ function constructedStation(
       jobs = jobs.map((job) => (job.id === id ? { ...job, state: "held" } : job));
       return true;
     });
+  const balance = vi.fn(() => ({ ore: 25, stardust: 100 }));
   const options: stationSource.StationOptions = {
     acceptJob,
-    balance: () => ({ ore: 25, stardust: 100 }),
+    balance,
     busyLine: () => "Busy",
     buy,
     dropJob: vi.fn(),
@@ -943,6 +944,7 @@ function constructedStation(
     acceptJob,
     action,
     activate,
+    balance,
     buy,
     context,
     doc,
@@ -1512,6 +1514,25 @@ it("labels a guarded project contribution without authorizing its purchase", () 
   f.activate(f.action("confirm-buy"));
   expect(f.buy).not.toHaveBeenCalled();
   expect(confirmation.frame.hidden).toBe(false);
+  f.activate(f.action("confirm-cancel"));
+  expect(f.doc.activeElement).toBe(row);
+});
+
+it("explains an unfunded project when Ada has zero Stardust", () => {
+  const f = constructedStation("", true, true, undefined, true);
+  f.balance.mockReturnValue({ ore: 25, stardust: 0 });
+  f.request.mockReturnValue({ kind: "refused" });
+  f.station.setOpen(true);
+  f.activate(f.action("open-jobs"));
+  const row = f.parent.querySelector('[data-item="project:orchard"]')!;
+  f.activate(row);
+  const confirmation = f.native.get("confirm-cancel-x")!;
+  expectContribution(confirmation.body, 0);
+  expect(confirmation.body.querySelector('[role="status"]')?.textContent).toBe(
+    "You have 0 Stardust. Any amount helps when you return.",
+  );
+  f.activate(f.action("confirm-buy"));
+  expect(f.buy).not.toHaveBeenCalled();
   f.activate(f.action("confirm-cancel"));
   expect(f.doc.activeElement).toBe(row);
 });
