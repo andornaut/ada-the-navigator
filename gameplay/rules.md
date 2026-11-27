@@ -532,6 +532,15 @@ visits preserve the changed relationships. The hub sells the galaxy's holodisk f
 a provisional 500 Stardust, in its shop. Once discovered, the hub is one of the
 galaxy's discovered stations like any other.
 
+After Ada clears the Hub's required approach guard, the first welcome opens
+only when she chooses Talk and passes the normal docking checks. Quartz
+welcomes Ada in the normal station shell with its service tabs available. Due
+held-job actions and Salvage take priority over Talk, and Talk takes priority
+over ordinary ore Deposit while the welcome is due. A docking refusal or an
+early Undock leaves the unfinished welcome due. Continue restores the docked
+visit with any unfinished welcome still available. Finishing the welcome keeps
+Ada's ore aboard and makes Deposit available after Undock if she carries ore.
+
 Cartwheel's story ships are the miner, two regular visitors and the blocking
 pilot: non-hostile small craft drawn with 16 headings and thrust jets, which
 shots pass through and which never fight. Each scene is a short scripted path
@@ -1611,10 +1620,11 @@ recorded as known and eligible for its own destination entry on the map.
 Visual identification alone does not qualify.
 
 Identification, discovery, approach and station-return lines tied to the visit
-count when first shown. A queued line alone leaves the visit unheard. Automatic
-chapter dialogue for the same place also covers the visit, including the
-Andromeda station introduction and the dark beacon's dent scene. Docked keeper
-greetings follow their own rules.
+count when first shown. A queued line alone leaves the visit unheard. Eligible
+automatic chapter dialogue for the same place also covers the visit. In
+Andromeda, choose Talk for Wick's station introduction and Use to inspect the
+dark beacon. Their passive approach cues cover the corresponding visit when
+first shown. Docked keeper greetings follow their own rules.
 
 The conversation director rechecks a queued line's trigger before showing it.
 An unheard arrival line still needs the live target in Talk range and applicable
