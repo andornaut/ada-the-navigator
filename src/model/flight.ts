@@ -4469,7 +4469,8 @@ function crossbowAttack(
       })
     );
   }
-  if (profile.projectile === "mine" || profile.projectile === "beam" || enemyOnly(profile.weapon)) {
+  const { projectile } = profile;
+  if (projectile === "mine" || projectile === "beam" || enemyOnly(profile.weapon)) {
     return false;
   }
   const definition = weaponAt(profile.weapon, profile.level);
@@ -4487,7 +4488,7 @@ function crossbowAttack(
     });
     return {
       from: origin,
-      screenRadius: Math.max(shotRadius({ projectile: profile.projectile }), launch.blast ?? 0),
+      screenRadius: Math.max(shotRadius({ projectile }), launch.blast ?? 0),
       travel: { x: launch.velocity.x * launch.life, y: launch.velocity.y * launch.life },
     };
   });
