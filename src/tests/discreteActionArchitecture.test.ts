@@ -730,6 +730,48 @@ it.each([
   );
 });
 
+const detachedButtonSource = readFileSync(
+  new URL("../ui/pennyMarkers.ts", import.meta.url),
+  "utf8",
+);
+it.each(["src/ui/pennyMarkers.ts", rawRowPath])(
+  "proves the Game Kit button returned in a detached record in %s",
+  (path) => {
+    expect(constructionFindings(path, detachedButtonSource)).toEqual([]);
+  },
+);
+
+it.each([
+  ["noncanonical registration", "const binding = bindAdaAction(", "const binding = otherBind("],
+  [
+    "publication before registration",
+    "const binding = bindAdaAction(",
+    "layer.append(node); const binding = bindAdaAction(",
+  ],
+  [
+    "element leaked by eager state",
+    "availability: button.hidden",
+    "availability: expose(button) || button.hidden",
+  ],
+  ["indirect state access", "availability: button.hidden", "availability: isHidden(button)"],
+  [
+    "unproven owning document",
+    'const layer = doc.createElement("div")',
+    "const layer = makeLayer()",
+  ],
+  ["disposed before returning", "return item;", "item.dispose?.(); return item;"],
+  ["different returned element", "element: node,", "element: makeElement(),"],
+] as const)("rejects the detached button with %s", (_case, original, replacement) => {
+  const source = detachedButtonSource.replace(original, replacement);
+  expect(source).not.toBe(detachedButtonSource);
+  expect(constructionFindings(rawRowPath, source)).toContainEqual(
+    expect.objectContaining({
+      kind: "unbound-discrete",
+      source: expect.stringContaining("createButton(layer.ownerDocument"),
+    }),
+  );
+});
+
 it("keeps the published text-button factory outside the raw standard findings", () => {
   const path = "src/ui/standardTextAction.ts";
   const source = readFileSync(new URL("../ui/standardTextAction.ts", import.meta.url), "utf8");

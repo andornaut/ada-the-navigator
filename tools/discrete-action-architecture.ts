@@ -1954,6 +1954,83 @@ function scanSource(context: ScanContext, path: string, text: string) {
       literal(node.arguments[0], tag),
     );
 
+  const createdHostDocument = (node: ts.Expression): boolean => {
+    if (!dot(node, "ownerDocument") || !unwritten(node)) {
+      return false;
+    }
+    const host = lexicalDeclaration(node.expression);
+    if (
+      !host ||
+      !ts.isVariableDeclaration(host) ||
+      !isConst(host) ||
+      !host.initializer ||
+      !ts.isCallExpression(host.initializer) ||
+      host.initializer.questionDotToken ||
+      !dot(host.initializer.expression, "createElement") ||
+      !unwritten(host.initializer.expression) ||
+      host.initializer.arguments.length !== 1 ||
+      !literal(host.initializer.arguments[0], "div")
+    ) {
+      return false;
+    }
+    const receiver = host.initializer.expression.expression;
+    const parameter = lexicalDeclaration(receiver);
+    const type = parameter && ts.isParameter(parameter) ? parameter.type : undefined;
+    const sourceType = type && ts.isTypeReferenceNode(type) ? type.typeArguments?.[0] : undefined;
+    const keys = type && ts.isTypeReferenceNode(type) ? type.typeArguments?.[1] : undefined;
+    const globalType = (name: string, candidate: ts.TypeNode | undefined) =>
+      candidate &&
+      ts.isTypeReferenceNode(candidate) &&
+      ts.isIdentifier(candidate.typeName) &&
+      candidate.typeName.text === name &&
+      !context.lexicalDeclarations(candidate.typeName)?.length;
+    return Boolean(
+      globalType("Pick", type) &&
+      globalType("Document", sourceType) &&
+      keys &&
+      (ts.isUnionTypeNode(keys) ? keys.types : [keys]).some(
+        (key) => ts.isLiteralTypeNode(key) && literal(key.literal, "createElement"),
+      ),
+    );
+  };
+
+  // The factory calls getState before handing its element to the caller. A field-only
+  // availability projection cannot publish the fresh element or invoke a callback with it.
+  const readsButtonAvailability = (state: ts.Expression | undefined): boolean => {
+    if (
+      !state ||
+      !ts.isArrowFunction(state) ||
+      !synchronousCallable(state) ||
+      state.parameters.length !== 1 ||
+      !ts.isIdentifier(state.parameters[0]!.name) ||
+      state.parameters[0]!.initializer ||
+      state.parameters[0]!.dotDotDotToken
+    ) {
+      return false;
+    }
+    const body = ts.isParenthesizedExpression(state.body) ? state.body.expression : state.body;
+    const result = ts.isObjectLiteralExpression(body) && fields(body);
+    const readsAvailability = (value: ts.Expression): boolean => {
+      if (ts.isConditionalExpression(value)) {
+        const test = value.condition;
+        return (
+          (dot(test, "hidden") || dot(test, "disabled")) &&
+          lexicalIdentity(test.expression, state.parameters[0]!) &&
+          readsAvailability(value.whenTrue) &&
+          readsAvailability(value.whenFalse)
+        );
+      }
+      const availability = fields(value);
+      const kind = availability?.get("kind");
+      return (
+        availability?.size === 1 &&
+        ["available", "disabled", "omitted"].some((name) => literal(kind, name))
+      );
+    };
+    const availability = result && result.get("availability");
+    return Boolean(result && result.size === 1 && availability && readsAvailability(availability));
+  };
+
   // LayoutTree invokes create synchronously and inserts the returned element. Resolve the
   // actual Kit import and a private, literal component table before using that boundary.
   const layoutPublishesComponent = (constructor: SynchronousCallable): boolean => {
@@ -2068,7 +2145,6 @@ function scanSource(context: ScanContext, path: string, text: string) {
       !isConst(handle) ||
       call.questionDotToken ||
       call.arguments.length !== 2 ||
-      !nativeDocument(call.arguments[0]!) ||
       !clean(`${reference(call.arguments[0]!)}.createElement`, false, writesOnly)
     ) {
       return false;
@@ -2080,11 +2156,14 @@ function scanSource(context: ScanContext, path: string, text: string) {
     const options = fields(call.arguments[1]);
     const content = fields(options?.get("content"));
     const state = options?.get("getState");
+    const native = nativeDocument(call.arguments[0]!);
+    const stateWithoutElement = !state || (ts.isArrowFunction(state) && !state.parameters.length);
     if (
       !literal(fields(options?.get("appearance"))?.get("layout"), "caller") ||
       !literal(content?.get("kind"), "icon") ||
       content?.has("icon") ||
-      (state && (!ts.isArrowFunction(state) || state.parameters.length))
+      (!native && !createdHostDocument(call.arguments[0]!)) ||
+      (!stateWithoutElement && !readsButtonAvailability(state))
     ) {
       return false;
     }
@@ -2284,6 +2363,63 @@ function scanSource(context: ScanContext, path: string, text: string) {
     }
 
     const tail = following.slice(index + 1);
+    // A synchronous detached factory first gives its button away in this returned record.
+    // Its cleanup is deferred to the record's consumer and can only dispose the local handles.
+    const [makeRecord, returnRecord] = tail;
+    const record = makeRecord && singleLocal(makeRecord);
+    const value = record?.initializer;
+    const owner = block.parent;
+    if (
+      tail.length === 2 &&
+      record &&
+      isConst(record) &&
+      value &&
+      ts.isObjectLiteralExpression(value) &&
+      returnRecord &&
+      ts.isReturnStatement(returnRecord) &&
+      returnRecord.expression &&
+      lexicalIdentity(returnRecord.expression, record) &&
+      ts.isFunctionDeclaration(owner) &&
+      synchronousCallable(owner)
+    ) {
+      const element = namedProperty(value, "element");
+      const dispose = namedProperty(value, "dispose");
+      if (
+        element &&
+        ts.isPropertyAssignment(element) &&
+        lexicalIdentity(element.initializer, alias) &&
+        dispose &&
+        ts.isMethodDeclaration(dispose) &&
+        synchronousCallable(dispose) &&
+        !dispose.parameters.length &&
+        dispose.body?.statements.length === 2 &&
+        dispose.body.statements.every((statement, position) => {
+          const cleanup = callStatement(statement);
+          return (
+            cleanup &&
+            !cleanup.questionDotToken &&
+            !cleanup.arguments.length &&
+            dot(cleanup.expression, "dispose") &&
+            lexicalIdentity(cleanup.expression.expression, position === 0 ? binding : handle)
+          );
+        }) &&
+        value.properties.every(
+          (property) =>
+            property === element ||
+            property === dispose ||
+            (ts.isShorthandPropertyAssignment(property) &&
+              !property.objectAssignmentInitializer &&
+              !["dispose", "element", "__proto__"].includes(property.name.text) &&
+              owner.parameters.some((parameter) => declaration(property.name) === parameter)),
+        )
+      ) {
+        return true;
+      }
+    }
+    if (!native || !stateWithoutElement) {
+      return false;
+    }
+
     const publishesLayout = (): boolean => {
       const constructor = block.parent;
       const [setup, initialize, publish] = tail;
