@@ -12,12 +12,14 @@ import { poiAmbientLine, poiApproachPool, poiDiscoveryPool } from "../data/poiDi
 import deck from "../data/poiFlavourCopy.json";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
+import { worldNearestSettlerStation } from "./andromedaPlaces.ts";
 import {
   ConversationDirector,
   type ConversationFacts,
   pennyInstance,
   pennyPoints,
 } from "./conversations.ts";
+import { GAME_AREA, gameAreaPoint, inGameArea } from "./edgeMarkers.ts";
 import { damageEnemy } from "./enemyAi.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import { ensureStation } from "./flight.ts";
@@ -513,4 +515,151 @@ it("uses only recorded chapter or map facts for each ambient anchor and second t
   for (const galaxy of [2, 3, 4, 5, 6] as const) {
     expect(ambientSecondThread(galaxy, p[galaxy])).toBe(true);
   }
+});
+
+function moveTo(model: GameModel, point: { x: number; y: number }): void {
+  const flight = model.state.flight!;
+  flight.player = { ...point };
+  flight.velocity = { x: 0, y: 0 };
+  worldSyncFlightRegion(flightWorldContext(flight), CONTENT, flight);
+  clearFixtureThreats(model);
+}
+
+function markUnknownPoi(model: GameModel, id: string, point: { x: number; y: number }): void {
+  const flight = model.state.flight!;
+  moveTo(model, { x: point.x - 1200, y: point.y });
+  const otherPoints = pennyPoints(
+    model.state.progress[flight.galaxy],
+    false,
+    flightLandmarkSites(flight),
+    flight,
+    flight.topology?.side,
+  ).filter((other) => other !== id);
+  model.state.seenConversations.push(
+    ...otherPoints.map((other) => pennyInstance(flight.galaxy, other)),
+  );
+  model.step(0.05, idle);
+  const line = model.conversation;
+  expect(line?.key).toBe(`${pennyInstance(flight.galaxy, id)}:0`);
+  model.pennyNoticeDisplayed(line!.key);
+  const marker = model.targetMarkers(GAME_AREA).find((candidate) => candidate.id === id);
+  expect(marker).toMatchObject({ id, identified: false, x: point.x, y: point.y });
+  expect(inGameArea(gameAreaPoint(flight.player, marker!))).toBe(false);
+  model.dismissConversation();
+}
+
+it("guides a sensed Pip arrival before introduction and inspection without taking an action", () => {
+  const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
+  model.state.prologueSeen = true;
+  model.state.achievements.unlocked.push("newNavigator");
+  model.state.unlocked.push(5);
+  model.state.progress[5].opened = true;
+  model.state.seenConversations.push(
+    ...CONVERSATIONS.filter(({ trigger }) => trigger.kind !== "penny").map(({ id }) => id),
+  );
+  model.startGalaxy(5);
+  const flight = model.state.flight!;
+  const pip =
+    flight.world.notables[ANDROMEDA_PLACES.pip] ??
+    flight.objects.find(({ id }) => id === ANDROMEDA_PLACES.pip)!;
+  expect(pip).toMatchObject({ id: "pip", kind: "destination" });
+  markUnknownPoi(model, pip.id, pip);
+
+  const beforeIntro = "Ask at a settlers’ station about the guide beacons.";
+  const beforeInspection = "Check the dark guide beacon first.";
+  const near = { x: pip.x + 80, y: pip.y };
+  moveTo(model, near);
+  model.markerTargetDisplayed(pip.id);
+  model.step(0.05, idle);
+  moveTo(model, { x: pip.x - 400, y: pip.y });
+  expect(hear(model)).not.toContain(beforeIntro);
+
+  moveTo(model, near);
+  expect(hear(model).filter((line) => line === beforeIntro)).toEqual([beforeIntro]);
+  expect(model.state.progress[5]).toMatchObject({ introduced: false, questItem: null, stage: 0 });
+  expect(model.state.docked).toBeNull();
+  expect(model.state.dialogue).toBeNull();
+  expect(model.state.tasks[5]).toBeUndefined();
+  expect(model.contextAction).toBeUndefined();
+  expect(hear(model)).not.toContain(beforeIntro);
+
+  const station = worldNearestSettlerStation(flightStationContext(flight), ECONOMY, flight.player);
+  ensureStation(CONTENT, station.id, flight);
+  moveTo(model, station);
+  model.step(0.001, idle);
+  if (!model.state.dialogue) {
+    model.interact();
+  }
+  expect(model.state.dialogue?.context).toBe("andromeda:arrival");
+  model.choose("continue");
+  expect(model.state.progress[5]).toMatchObject({ introduced: true, stage: 1 });
+
+  moveTo(model, { x: pip.x - 1200, y: pip.y });
+  expect(model.targetMarkers(GAME_AREA)).toContainEqual(expect.objectContaining({ id: pip.id }));
+  moveTo(model, near);
+  model.markerTargetDisplayed(pip.id);
+  expect(hear(model).filter((line) => line === beforeInspection)).toEqual([beforeInspection]);
+  expect(model.state.progress[5].stage).toBe(1);
+  expect(model.state.dialogue).toBeNull();
+  expect(model.useTarget).toEqual({ action: "talk", id: pip.id });
+
+  const beacon =
+    flight.objects.find(({ id }) => id === ANDROMEDA_PLACES.beacon) ??
+    flight.world.notables[ANDROMEDA_PLACES.beacon];
+  expect(beacon).toMatchObject({ id: "darkBeacon", kind: "destination" });
+  moveTo(model, beacon!);
+  model.step(0.05, idle);
+  if (!model.state.dialogue) {
+    model.interact();
+  }
+  expect(model.state.dialogue?.context).toBe("andromeda:dent");
+  expect(model.conversation).toBeNull();
+  model.choose("continue");
+  expect(model.state.progress[5].stage).toBe(2);
+
+  moveTo(model, { x: pip.x - 1200, y: pip.y });
+  expect(model.targetMarkers(GAME_AREA)).toContainEqual(expect.objectContaining({ id: pip.id }));
+  moveTo(model, near);
+  const eligible = model.objective;
+  expect(eligible).toBe("Talk with Pip.");
+  expect(hear(model).filter((line) => line === eligible)).toEqual([eligible]);
+  expect(model.state.progress[5].stage).toBe(2);
+  model.interact();
+  expect(model.state.dialogue?.context).toBe("andromeda:confession");
+  model.choose("continue");
+  expect(model.state.progress[5].stage).toBe(3);
+
+  const saved = model.save();
+  const continued = relaunch(CONTENT, saved);
+  expect(continued.state.progress[5]).toMatchObject({ introduced: true, stage: 3 });
+  moveTo(continued, { x: pip.x - 1200, y: pip.y });
+  expect(continued.targetMarkers(GAME_AREA)).toContainEqual(
+    expect.objectContaining({ id: pip.id }),
+  );
+  moveTo(continued, near);
+  const currentObjective = continued.objective;
+  const arrival = hear(continued);
+  expect(arrival.filter((line) => line === currentObjective)).toEqual([currentObjective]);
+  expect(arrival).not.toContain(beforeIntro);
+  expect(arrival).not.toContain(beforeInspection);
+});
+
+it("uses an identified landmark's spoken discovery for its first approach and speaks again on reentry", () => {
+  const { model, target } = newFlight();
+  const words = poiDiscoveryPool(1, { id: target.id, kind: "landmark", symbol: target.kind }).map(
+    ({ lines }) => lines[0]!.text,
+  );
+  markUnknownPoi(model, target.id, target);
+  moveTo(model, target);
+  model.markerTargetDisplayed(target.id);
+  const arrival = hear(model).filter((line) => words.includes(line));
+  expect(arrival).toHaveLength(1);
+  expect(hear(model).filter((line) => words.includes(line))).toEqual([]);
+  const outside = { x: target.x + 400, y: target.y };
+  moveTo(model, outside);
+  model.step(0.001, idle);
+  moveTo(model, target);
+  expect(hear(model).filter((line) => words.includes(line))).toHaveLength(1);
+  expect(model.state.progress[1].charted).not.toContain(target.id);
+  expect(model.drainScanOutcomes()).toEqual([]);
 });

@@ -56,11 +56,13 @@ import { nearestImage } from "./worldGeometry.ts";
 export interface PoiApproach {
   readonly instance: string;
   readonly kind: PoiApproachKind;
+  readonly onFirstShowing?: () => void;
   readonly relevant: () => boolean;
 }
 
 export interface PoiConfirmation {
   readonly cue: PoiLoreCue;
+  readonly onFirstShowing?: () => void;
   readonly relevant?: () => boolean;
 }
 
@@ -107,6 +109,7 @@ export interface ConversationFacts {
   readonly poiAmbient?: () => Conversation | undefined;
   readonly poiApproach?: PoiApproach;
   readonly poiConfirmations?: readonly PoiConfirmation[];
+  readonly poiVisit?: (id: string) => Pick<Request, "onFirstShowing" | "relevant"> | undefined;
   /** Shield over its capacity, 0 to 1. */
   readonly shieldFraction: number;
   readonly stardustInSight: boolean;
@@ -649,7 +652,12 @@ export class ConversationDirector {
   }
 
   /** A confirmed discovery can supply an authored pool without changing the timing or rank. */
-  poiDiscovered(cue: PoiLoreCue, relevant?: () => boolean, replacesMapping = false): boolean {
+  poiDiscovered(
+    cue: PoiLoreCue,
+    relevant?: () => boolean,
+    replacesMapping = false,
+    onFirstShowing?: () => void,
+  ): boolean {
     if (this.galaxy === null) {
       return false;
     }
@@ -676,10 +684,36 @@ export class ConversationDirector {
       holds: always,
       instance,
       optional: "reaction",
+      ...(onFirstShowing ? { onFirstShowing } : {}),
       ...(relevant ? { relevant } : {}),
       variants: variants.map((variant) => ({ ...variant, repeat: "never" })),
     });
     return true;
+  }
+
+  /** A marked arrival uses the existing lore priority and is scoped to its current approach. */
+  poiArrival(
+    instance: string,
+    line: ConversationLine,
+    presentation: Pick<Request, "onFirstShowing" | "relevant">,
+  ): void {
+    if (this.galaxy === null) {
+      return;
+    }
+    const id = `poi:arrival:${this.galaxy}:${instance}`;
+    this.enqueue({
+      conversation: {
+        id,
+        lines: [line],
+        priority: "lore",
+        repeat: "always",
+        trigger: { galaxy: this.galaxy, id, kind: "chapter" },
+      },
+      holds: always,
+      instance: id,
+      optional: "approach",
+      ...presentation,
+    });
   }
 
   /** Moves the active conversation to its next line early; after the last, the box closes. */
@@ -807,11 +841,13 @@ export class ConversationDirector {
       this.request(
         (trigger) =>
           trigger.kind === "meeting" && trigger.galaxy === galaxy && trigger.destination === id,
+        always,
+        facts.poiVisit?.(id),
       );
     }
     if (facts.poiConfirmations) {
-      for (const { cue, relevant } of facts.poiConfirmations) {
-        if (!this.poiDiscovered(cue, relevant)) {
+      for (const { cue, onFirstShowing, relevant } of facts.poiConfirmations) {
+        if (!this.poiDiscovered(cue, relevant, false, onFirstShowing)) {
           this.request((trigger) => trigger.kind === "mapped");
         }
       }
@@ -833,6 +869,7 @@ export class ConversationDirector {
           holds: always,
           instance: approach.instance,
           optional: "approach",
+          ...(approach.onFirstShowing ? { onFirstShowing: approach.onFirstShowing } : {}),
           relevant: approach.relevant,
           variants,
         });
@@ -963,6 +1000,7 @@ export class ConversationDirector {
           conversation: back,
           holds: (now) => now.stationsNear.includes(id),
           instance: `return:${galaxy}:${id}`,
+          ...facts.poiVisit?.(id),
         });
       }
     }
@@ -1006,6 +1044,7 @@ export class ConversationDirector {
   private request(
     matches: (trigger: Conversation["trigger"]) => boolean,
     holds: Holds = always,
+    presentation?: Pick<Request, "onFirstShowing" | "relevant">,
   ): void {
     const pools = new Set<string>();
     for (const conversation of this.conversations) {
@@ -1015,7 +1054,12 @@ export class ConversationDirector {
       if (conversation.pool) {
         pools.add(conversation.pool);
       }
-      this.enqueue({ conversation, holds, instance: conversation.pool ?? conversation.id });
+      this.enqueue({
+        conversation,
+        holds,
+        instance: conversation.pool ?? conversation.id,
+        ...presentation,
+      });
     }
   }
 

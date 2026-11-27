@@ -16,6 +16,7 @@ import {
 import {
   ARCHIE_NAMED,
   CONVERSATION_TUNING,
+  type ConversationLine,
   CONVERSATIONS,
   INTERACTION_COPY,
   type JobMoment,
@@ -46,7 +47,11 @@ import { isNeedleCourseStart, NEEDLE } from "../data/needle.ts";
 import { NEEDLE_COURSE_COPY } from "../data/needleCopy.ts";
 import { visualNoticeTiming } from "../data/noticeTiming.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
-import { poiAmbientLine, type PoiApproachKind } from "../data/poiDiscoveryLore.ts";
+import {
+  poiAmbientLine,
+  type PoiApproachKind,
+  poiDiscoveryPool,
+} from "../data/poiDiscoveryLore.ts";
 import { holodiskInsertion } from "../data/premiseCopy.ts";
 import { galaxyProjects, PROJECT_THANKS } from "../data/projects.ts";
 import { questReward } from "../data/questRewards.ts";
@@ -533,11 +538,18 @@ export interface ConversationView {
 
 export type PickupFeedback = Extract<ItemGain, { readonly kind: "ammo" }>;
 
+interface MarkedPoiVisit {
+  point: Vec;
+  arrived: boolean;
+  heard: boolean;
+}
+
 /** A source of uniform unsigned 32-bit draws, read for each new flight's geography and seed. */
 export type Entropy = () => number;
 
 export class GameModel {
   private readonly markerRegistry = new TargetMarkerRegistry();
+  private readonly poiVisits = new WeakMap<FlightState, Map<string, MarkedPoiVisit>>();
   private readonly scanLeads = new WeakMap<FlightState, ScanActionLead & { origin: Vec }>();
   private readonly markerViews = new WeakMap<
     PennyMarker,
@@ -817,12 +829,23 @@ export class GameModel {
     store.set(id, "identified");
     const object = f.objects.find((candidate) => candidate.id === id);
     const relevant = this.poiNearby(f, point);
-    if (object?.kind === "destination" && id === "holodisk") {
-      this.talk.poiDiscovered({ id, kind: "storyPlace" }, relevant);
-    } else if (!object && !this.current.charted.includes(id)) {
-      const site = flightLandmarkSites(f).find((candidate) => candidate.id === id);
-      if (site) {
-        this.talk.poiDiscovered({ id, kind: "landmark", symbol: site.kind }, relevant);
+    const site =
+      !object && !this.current.charted.includes(id)
+        ? flightLandmarkSites(f).find((candidate) => candidate.id === id)
+        : undefined;
+    const cue =
+      object?.kind === "destination" && id === "holodisk"
+        ? { id, kind: "storyPlace" as const }
+        : site && { id, kind: "landmark" as const, symbol: site.kind };
+    if (cue) {
+      const confirmation = this.poiVisitConfirmation(f, { cue, relevant });
+      if (confirmation) {
+        this.talk.poiDiscovered(
+          confirmation.cue,
+          confirmation.relevant,
+          false,
+          confirmation.onFirstShowing,
+        );
       }
     }
   }
@@ -931,10 +954,164 @@ export class GameModel {
       const distance = closing(id, kind);
       if (distance < best) {
         best = distance;
-        selected = { instance, kind, relevant: () => Number.isFinite(closing(id, kind)) };
+        const relevant = () => Number.isFinite(closing(id, kind));
+        const presentation =
+          kind === "unknown" && flight.galaxy === 5 && id === ANDROMEDA_PLACES.pip
+            ? undefined
+            : this.poiVisitPresentation(flight, id, relevant);
+        selected = { instance, kind, relevant, ...presentation };
       }
     }
     return selected;
+  }
+
+  private poiVisitPresentation(flight: FlightState, id: string, relevant?: () => boolean) {
+    const visits = this.poiVisits.get(flight);
+    const visit = visits?.get(id);
+    if (!visit) {
+      return undefined;
+    }
+    let showing = false;
+    return {
+      onFirstShowing: () => {
+        showing = true;
+        visit.heard = true;
+      },
+      relevant: () =>
+        this.state.flight === flight &&
+        visits?.get(id) === visit &&
+        (showing || !visit.heard) &&
+        relevant?.() !== false,
+    };
+  }
+
+  private poiVisitConfirmation(
+    flight: FlightState,
+    confirmation: PoiConfirmation,
+  ): PoiConfirmation | null {
+    if (confirmation.cue.kind === "cache") {
+      return confirmation;
+    }
+    const { id } = confirmation.cue;
+    if (id === undefined) {
+      return confirmation;
+    }
+    const presentation = this.poiVisitPresentation(flight, id, confirmation.relevant);
+    if (presentation && flight.galaxy === 5 && id === ANDROMEDA_PLACES.pip) {
+      return null;
+    }
+    return { ...confirmation, ...presentation };
+  }
+
+  private poiArrivalLine(
+    flight: FlightState,
+    id: string,
+    point: PennyPoint,
+  ): ConversationLine | undefined {
+    if (flight.galaxy === 5 && id === ANDROMEDA_PLACES.pip) {
+      const progress = this.state.progress[5];
+      const text = !progress.introduced
+        ? "Ask at a settlers’ station about the guide beacons."
+        : progress.stage === 1
+          ? "Check the dark guide beacon first."
+          : this.objectiveFor(flight.galaxy);
+      return text ? { speaker: "astra", text } : undefined;
+    }
+    if (point.symbol === "station") {
+      return poiDiscoveryPool(flight.galaxy, { id, kind: "station" })[0]?.lines[0];
+    }
+    if (point.category === "discovery") {
+      const authored = poiDiscoveryPool(flight.galaxy, {
+        id,
+        kind: "landmark",
+        symbol: point.symbol,
+      })[0]?.lines[0];
+      if (authored) {
+        return authored;
+      }
+      if (!this.scannedSite(id)) {
+        return { speaker: "astra", text: LANDMARK_SCAN_COPY.surveyAbout };
+      }
+      const site = this.scannableSites(flight).find((candidate) => candidate.id === id);
+      return site
+        ? {
+            speaker: "astra",
+            text: LANDMARK_SCAN_COPY.outcomeRemembered.replace(
+              "{target}",
+              landmarkLabel((key) => this.label(key), site),
+            ),
+          }
+        : undefined;
+    }
+    const resolved = resolveTargetObject(flight, id);
+    if (resolved.state !== "present" || resolved.object.kind !== "destination") {
+      return undefined;
+    }
+    const { role } = resolved.object;
+    return poiDiscoveryPool(flight.galaxy, {
+      id,
+      kind: "storyPlace",
+      ...(role === ANDROMEDA_PLACES.settlement ? { role } : {}),
+    })[0]?.lines[0];
+  }
+
+  private cueMarkedPoiArrivals(flight: FlightState): void {
+    const visits = this.poiVisits.get(flight);
+    if (!visits?.size) {
+      return;
+    }
+    const world = flightWorldContext(flight);
+    const range = this.content.tuning.talkRange;
+    const coversFlight = () =>
+      this.state.flight === flight &&
+      this.screen === "space" &&
+      !this.state.dialogue &&
+      !this.state.docked &&
+      !flight.storyScene?.lineDue &&
+      this.suspendedInteraction?.galaxy !== flight.galaxy;
+    const currentPoint = (id: string) => {
+      const point = this.markerPoint(flight, id);
+      return point &&
+        (point.known || this.markerStore(flight).get(id) === "identified") &&
+        point.identifiable !== false &&
+        worldDistance(world, flight.player, point) <= range
+        ? point
+        : null;
+    };
+    for (const [id, visit] of visits) {
+      const distance = worldDistance(world, flight.player, visit.point);
+      if (distance > TARGET_MARKER_RANGE) {
+        visits.delete(id);
+        continue;
+      }
+      // Far marks cannot arrive this frame. The marker projection refreshes their positions.
+      const point = distance <= range + this.content.tuning.chunkSize ? currentPoint(id) : null;
+      if (!point) {
+        if (visit.arrived) {
+          visits.set(id, { arrived: false, heard: false, point: visit.point });
+        }
+        continue;
+      }
+      visit.arrived = true;
+      if (visit.heard || !coversFlight()) {
+        continue;
+      }
+      const line = this.poiArrivalLine(flight, id, point);
+      if (!line) {
+        continue;
+      }
+      const presentation = this.poiVisitPresentation(flight, id, () => {
+        if (!coversFlight()) {
+          return false;
+        }
+        const current = currentPoint(id);
+        const next = current && this.poiArrivalLine(flight, id, current);
+        return next?.text === line.text && next.speaker === line.speaker;
+      });
+      if (presentation) {
+        this.talk.poiArrival(id, line, presentation);
+      }
+    }
   }
 
   /** The active hunt's actual glint uses the same stable target as its sensed contribution. */
@@ -1160,10 +1337,27 @@ export class GameModel {
     if (!f || this.screen !== "space") {
       return [];
     }
-    const markers = this.projectTargetMarkers(f, area, litCaches).markers;
+    const { markers, waypointId } = this.projectTargetMarkers(f, area, litCaches);
+    const visits = this.poiVisits.get(f) ?? new Map<string, MarkedPoiVisit>();
+    this.poiVisits.set(f, visits);
     const view = { area: { ...area }, flight: f, litCaches };
     for (const marker of markers) {
       this.markerViews.set(marker, view);
+      if (
+        marker.id !== waypointId &&
+        !marker.jobType &&
+        !marker.item &&
+        marker.symbol !== "guard" &&
+        marker.symbol !== "heavy" &&
+        marker.symbol !== "enemy"
+      ) {
+        const visit = visits.get(marker.id);
+        if (visit) {
+          visit.point = marker;
+        } else {
+          visits.set(marker.id, { arrived: false, heard: false, point: marker });
+        }
+      }
     }
     return markers;
   }
@@ -3993,6 +4187,7 @@ export class GameModel {
       flightWorldContext(f).worldSide,
     );
     const approach = this.poiApproach(f, unknownPoi, landmarks);
+    this.cueMarkedPoiArrivals(f);
     this.sunflowerBossCues(f);
     this.sounderCues(f);
     if (f.galaxy === 2) {
@@ -4045,7 +4240,11 @@ export class GameModel {
         const second = ambientSecondThread(f.galaxy, this.state.progress[f.galaxy]);
         return second === undefined ? undefined : poiAmbientLine(f.galaxy, second);
       },
-      poiConfirmations,
+      poiConfirmations: poiConfirmations.flatMap((confirmation) => {
+        const covered = this.poiVisitConfirmation(f, confirmation);
+        return covered ? [covered] : [];
+      }),
+      poiVisit: (id) => this.poiVisitPresentation(f, id),
       shieldFraction: this.shieldMax > 0 ? f.shield / this.shieldMax : 1,
       stardustInSight: f.objects.some(
         (object) => carriesStardust(object) && near(CONVERSATION_TUNING.stardustSightRange)(object),
