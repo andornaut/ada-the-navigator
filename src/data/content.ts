@@ -579,7 +579,7 @@ export const CONTENT: GameContent = {
     paintCobalt: "Cobalt",
     paintGraphite: "Crimson",
     paintIris: "Iris",
-    paintSeafoam: "Seafoam",
+    paintSeafoam: "Obsidian",
     pause: "Pause",
     pauseTitle: "Paused",
     phantomFlagship: "Archie's flagship",

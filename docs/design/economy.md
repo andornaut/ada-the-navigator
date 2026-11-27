@@ -27,3 +27,4 @@ prices and pacing.
 | ada-0366 | Double awarded station job and repeatable activity payouts                           | [ada-0366.md](../work/ada-0366.md) |
 | ada-0420 | Spend one Multi-Laser ammo per full volley                                           | [ada-0420.md](../work/ada-0420.md) |
 | ada-0422 | Keep purchases Owned before rotating station stock                                   | [ada-0422.md](../work/ada-0422.md) |
+| ada-0429 | Ship Obsidian and deepen Iris ship paint                                             | [ada-0429.md](../work/ada-0429.md) |

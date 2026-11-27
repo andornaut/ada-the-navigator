@@ -97,3 +97,4 @@ Reference: [UI layout tree](../ui-layout-tree.md), [ship screen](../ship-screen.
 | ada-0421 | Centre Shop row icon wells and price badges                                     | [ada-0421.md](../work/ada-0421.md) |
 | ada-0425 | Match the selected Galaxy Map number outline to its fill                        | [ada-0425.md](../work/ada-0425.md) |
 | ada-0427 | Explain refused Use at Needle objectives                                        | [ada-0427.md](../work/ada-0427.md) |
+| ada-0428 | Render the approved missing destination and project art                         | [ada-0428.md](../work/ada-0428.md) |

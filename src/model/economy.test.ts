@@ -1748,7 +1748,7 @@ describe("shop purchases", () => {
       "unaffordable",
       "forSale",
     ]);
-    // Shield, engine, tractor; then Classic, Cobalt, Seafoam, Crimson, Iris and Amber.
+    // Shield, engine, tractor; then Classic, Cobalt, Obsidian, Crimson, Iris and Amber.
     expect(states("ship")).toEqual([
       "unaffordable",
       "forSale",
@@ -1831,7 +1831,7 @@ describe("shop purchases", () => {
       "Cobalt",
       "Crimson",
       "Iris",
-      "Seafoam",
+      "Obsidian",
     ]);
     expect(labels.inUse).toBe("In use");
     expect(labels.stationWelcome).toBe("Welcome aboard. Trade your Stardust, or take a job.");

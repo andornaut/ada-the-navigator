@@ -122,8 +122,8 @@ describe("item notice wording", () => {
       classic: "#ffffff",
       cobalt: "#6f9ff0",
       graphite: "#d96b73",
-      iris: "#d9ccff",
-      seafoam: "#d4f6ea",
+      iris: "#8455bf",
+      seafoam: "#282d36",
     });
     for (const [scheme, { top }] of Object.entries(ECONOMY.paints)) {
       expect(notice({ kind: "paint", scheme: scheme as "cobalt" }).accent).toBe(top);

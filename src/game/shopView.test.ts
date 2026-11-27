@@ -139,7 +139,7 @@ describe("shop rows on the station view", () => {
     expect(rows.slice(3).map((row) => [row.group, row.name, row.state])).toEqual([
       ["paint", "Classic", "inUse"],
       ["paint", "Cobalt", "unaffordable"],
-      ["paint", "Seafoam", "unaffordable"],
+      ["paint", "Obsidian", "unaffordable"],
       ["paint", "Crimson", "unaffordable"],
       ["paint", "Iris", "unaffordable"],
       ["paint", "Amber", "unaffordable"],

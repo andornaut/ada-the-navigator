@@ -288,8 +288,8 @@ export const ECONOMY: EconomyCatalog = {
     classic: { label: "paintClassic", top: "#ffffff" },
     cobalt: { label: "paintCobalt", top: "#6f9ff0" },
     graphite: { label: "paintGraphite", top: "#d96b73" },
-    iris: { label: "paintIris", top: "#d9ccff" },
-    seafoam: { label: "paintSeafoam", top: "#d4f6ea" },
+    iris: { label: "paintIris", top: "#8455bf" },
+    seafoam: { label: "paintSeafoam", top: "#282d36" },
   },
   rockRelease: { releaseSeconds: 0.24, spread: 7.68 },
   // Shield levels 2 and 3: capacity 15 then 20 HP, empty to full in 45 then 30 s.
