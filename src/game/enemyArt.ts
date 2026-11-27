@@ -1,8 +1,8 @@
+import { type JetTriangle, jetTriangles, type ShipJets } from "../art/index.ts";
 import { shipDirection } from "../art/shipArt.ts";
 import { HULL_DESIGN_KEYS, hullDesignClass, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import type { Vec } from "../model/types.ts";
 import { type EnemyJetFamily, readEnemyJets } from "./enemyJetPalette.ts";
-import { type JetTriangle, jetTriangles, type ShipJets } from "../art/index.ts";
 
 /** An enemy hull heading, hardpoint base or turret top frame from Art's root manifest. */
 export interface EnemyFrame {

@@ -3,9 +3,6 @@ import { describe, expect, it } from "vitest";
 import { RETRO_JET } from "../../art/tools/ship-jet-layers.ts";
 import rearArt from "../../public/art/ship-jets.json";
 import retroArt from "../../public/art/ship-retro-jets.json";
-import { CONTENT } from "../data/content.ts";
-import { createFlight, stepFlight } from "../model/flight.ts";
-import { SHIP_HEADINGS } from "../model/nose.ts";
 import {
   engineJets,
   jetsInFront,
@@ -13,6 +10,9 @@ import {
   readEngineJets,
   shipJetDirection,
 } from "../art/index.ts";
+import { CONTENT } from "../data/content.ts";
+import { createFlight, stepFlight } from "../model/flight.ts";
+import { SHIP_HEADINGS } from "../model/nose.ts";
 
 const rear = readEngineJets(rearArt)!;
 const retro = readEngineJets(retroArt)!;

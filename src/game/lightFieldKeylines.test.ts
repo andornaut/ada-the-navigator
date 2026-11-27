@@ -2,9 +2,9 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it, vi } from "vitest";
 
+import type { JetTriangle } from "../art/index.ts";
 import { KEYLINE_ALPHA, keylineOffsets, LIGHT_FIELD } from "./lightField.ts";
 import { drawCraftJets, drawKeylines, keylineSprite } from "./sceneHud.ts";
-import type { JetTriangle } from "../art/index.ts";
 
 vi.mock("phaser", () => ({
   GameObjects: { Image: class {} },

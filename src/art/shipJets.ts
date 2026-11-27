@@ -1,6 +1,6 @@
-import { type JetProfile, jetShapePolygons, layerAlpha, validJetProfile } from "./jetGeometry.ts";
 import { readShipHeadingContract, SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import type { Vec } from "../model/types.ts";
+import { type JetProfile, jetShapePolygons, layerAlpha, validJetProfile } from "./jetGeometry.ts";
 
 /** The existing thrust cutoff suppresses direction changes while the ship is effectively still. */
 export function shipJetDirection(facing: Vec, velocity: Vec): "forward" | "reverse" | undefined {

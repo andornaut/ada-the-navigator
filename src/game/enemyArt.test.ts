@@ -12,6 +12,7 @@ import frigateJets from "../../public/art/enemies/fleetFrigate-jets.json";
 import interceptorJets from "../../public/art/enemies/fleetInterceptor-jets.json";
 import retaliatorJets from "../../public/art/enemies/fleetRetaliator-jets.json";
 import swarmJets from "../../public/art/enemies/fleetSwarm-jets.json";
+import { jetLength, readShipJets } from "../art/index.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
 import { enemySpeedFraction } from "../model/enemyAi.ts";
@@ -45,7 +46,6 @@ import {
   turretMuzzles,
 } from "./enemyArt.ts";
 import { readEnemyJets, selectEnemyJetPalette } from "./enemyJetPalette.ts";
-import { jetLength, readShipJets } from "../art/index.ts";
 
 const assets = manifest.assets as EnemyFrame[];
 const json = (path: string | undefined): unknown => {

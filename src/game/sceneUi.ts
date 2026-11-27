@@ -8,6 +8,7 @@ import {
   AMMO_PACK_FRAMES,
   type CameraShake,
   EDGE_MARKER_DEPTH,
+  engineJets,
   FALLBACK_SPACE_PALETTE,
   galaxyPalettes,
   hasShipHeadings,
@@ -123,7 +124,6 @@ import {
 import { coverShip, endJump, jumpScene } from "./sceneJump.ts";
 import { type Asset, projectId, TITLE_SCREEN_KEY } from "./sceneShared.ts";
 import { StoryShell } from "./shell.ts";
-import { engineJets } from "../art/index.ts";
 import { shopItemDetail, stationRow } from "./shopView.ts";
 import { staticShipJets } from "./staticShipJets.ts";
 import { aboardGalaxy } from "./storyPresentation.ts";
