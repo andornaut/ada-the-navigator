@@ -124,7 +124,6 @@ import {
   wreckId,
 } from "./flight/destruction.ts";
 import {
-  BEAM_TIMING,
   chargeEnemyBeam,
   rememberEarlyLance,
   restoreEarlyLance,
