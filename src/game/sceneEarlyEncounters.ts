@@ -1,14 +1,18 @@
-import type { SpacePalette } from "../art/spacePalette.ts";
+import type { SpacePalette } from "../art/index.ts";
 import { SUNFLOWER_CAPITAL_BOSS, WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
+import { andromedaCourierMarkers } from "../model/andromeda.ts";
 import { toScreen } from "../model/convex.ts";
 import { mantaEscortPhase } from "../model/earlyEncounterPatterns.ts";
 import { enemyPartOutline } from "../model/enemyBody.ts";
 import { activeCrossbowSector, activeEnemyBeams } from "../model/flight.ts";
+import { flightWorldContext } from "../model/flightTopology.ts";
 import { requiredFrigateEscortId } from "../model/frigateEscorts.ts";
 import type { FlightState, Vec } from "../model/types.ts";
+import { worldDistance, worldPoint } from "../model/worldContacts.ts";
 import { LIGHT_FIELD } from "./lightField.ts";
+import { drawEncounterRoute } from "./scenePhantomBlockade.ts";
 
 interface Segment {
   readonly from: Vec;
@@ -187,17 +191,51 @@ function drawCrossbow(scene: EarlyEncounterScene, flight: FlightState): void {
   ]);
 }
 
+function drawCartwheel(scene: EarlyEncounterScene, flight: FlightState): void {
+  const patrol = flight.cartwheelMiningPatrol;
+  if (
+    patrol?.warnedAt === undefined ||
+    !flight.objects.some(({ hp, id }) => hp > 0 && patrol.actors.includes(id))
+  ) {
+    return;
+  }
+  const world = flightWorldContext(flight);
+  const [a, b] = patrol.plan.bypass;
+  const [entry, exit] =
+    worldDistance(world, flight.player, a) <= worldDistance(world, flight.player, b)
+      ? [a, b]
+      : [b, a];
+  const start = worldPoint(world, flight.player, entry);
+  drawEncounterRoute(scene, flight.player, [start, worldPoint(world, start, exit)]);
+}
+
+function drawCourierEscape(scene: EarlyEncounterScene, flight: FlightState): void {
+  const route = andromedaCourierMarkers(flight)?.escape;
+  if (!route) {
+    return;
+  }
+  const world = flightWorldContext(flight);
+  const start = worldPoint(world, flight.player, route.from);
+  drawEncounterRoute(scene, flight.player, [start, worldPoint(world, start, route.to)]);
+}
+
 /** Existing overlay lifecycle clears these passive marks when no encounter supplies them. */
 export function drawEarlyEncounters(scene: EarlyEncounterScene, flight: FlightState): void {
   switch (flight.galaxy) {
     case 1:
       drawHammer(scene, flight);
       break;
+    case 2:
+      drawCartwheel(scene, flight);
+      break;
     case 3:
       drawManta(scene, flight);
       break;
     case 4:
       drawCrossbow(scene, flight);
+      break;
+    case 5:
+      drawCourierEscape(scene, flight);
       break;
   }
 }

@@ -1,4 +1,4 @@
-import type { SpacePalette } from "../art/spacePalette.ts";
+import type { SpacePalette } from "../art/index.ts";
 import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
 import { SCREEN } from "../data/screen.ts";
 import { flightWorldContext } from "../model/flightTopology.ts";
@@ -7,7 +7,7 @@ import type { Vec } from "../model/types.ts";
 import { worldPoint } from "../model/worldContacts.ts";
 import { LIGHT_FIELD } from "./lightField.ts";
 
-interface BlockadeScene {
+interface EncounterOverlay {
   readonly overlay: {
     lineBetween(x1: number, y1: number, x2: number, y2: number): unknown;
     lineStyle(width: number, colour: number, alpha?: number): unknown;
@@ -20,14 +20,17 @@ type Segment = readonly [Vec, Vec];
 
 const EDGE_INSET = 16;
 
-function warningMark(origin: Vec, site: Vec): Segment[] {
+function edgePoint(origin: Vec, site: Vec): Vec {
   const dx = site.x - origin.x;
   const dy = site.y - origin.y;
   const reach = (offset: number, start: number, limit: number): number =>
     offset === 0 ? Infinity : ((offset > 0 ? limit - EDGE_INSET : EDGE_INSET) - start) / offset;
   const share = Math.min(1, reach(dx, origin.x, SCREEN.width), reach(dy, origin.y, SCREEN.height));
-  const x = origin.x + dx * share;
-  const y = origin.y + dy * share;
+  return { x: origin.x + dx * share, y: origin.y + dy * share };
+}
+
+function warningMark(origin: Vec, site: Vec): Segment[] {
+  const { x, y } = edgePoint(origin, site);
   const a = { x: x - 10, y: y + 8 };
   const b = { x, y: y - 10 };
   const c = { x: x + 10, y: y + 8 };
@@ -104,7 +107,7 @@ function withdrawalMarks(from: Vec, to: Vec): Segment[] {
   return segments;
 }
 
-function stroke(scene: BlockadeScene, colour: number, segments: readonly Segment[]): void {
+function stroke(scene: EncounterOverlay, colour: number, segments: readonly Segment[]): void {
   if (!segments.length) {
     return;
   }
@@ -119,8 +122,33 @@ function stroke(scene: BlockadeScene, colour: number, segments: readonly Segment
   }
 }
 
+/** Mark verified route geometry, or point at its entrance while it is outside the view. */
+export function drawEncounterRoute(
+  scene: EncounterOverlay,
+  player: Vec,
+  [from, to]: Segment,
+): void {
+  const projected = scene.project(player);
+  const start = scene.project(from);
+  const marks = withdrawalMarks(start, scene.project(to));
+  if (!marks.length) {
+    const tip = edgePoint(projected, start);
+    const dx = tip.x - projected.x;
+    const dy = tip.y - projected.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance > 0) {
+      const x = dx / distance;
+      const y = dy / distance;
+      for (const side of [-1, 1]) {
+        marks.push([{ x: tip.x - 10 * x - side * 6 * y, y: tip.y - 10 * y + side * 6 * x }, tip]);
+      }
+    }
+  }
+  stroke(scene, scene.palette.active, marks);
+}
+
 /** Draw steady shapes on the existing world overlay, including with reduced motion. */
-export function drawPhantomBlockades(scene: BlockadeScene, context: PhantomContext): void {
+export function drawPhantomBlockades(scene: EncounterOverlay, context: PhantomContext): void {
   const flight = context.flight;
   if (!flight.phantom?.blockadePhases) {
     return;
