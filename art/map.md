@@ -205,9 +205,8 @@ The first row, left to right, with both parts vertically centred:
 
 Travel here is a secondary `TEXT_BUTTON`, 48 high, on its own left-aligned row
 below the chip and text. The label, Stardust icon and price stay on one line,
-with `TEXT_BUTTON.inset` on each side. Only destinations and stations offer it
-(`MapPlace.travel`). A landmark, the holodisk waypoint or a job's own spot
-shows the chip and text block only.
+with `TEXT_BUTTON.inset` on each side. Every named map place can offer the
+action (`MapPlace.travel`). Its availability still follows the travel rules.
 
 Below the block, `reasonGap` apart, one reason (`TYPE.body`, supporting,
 left-aligned at the inner left) shows while Travel here or Galaxies is
