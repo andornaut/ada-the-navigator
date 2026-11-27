@@ -1,6 +1,9 @@
 import type { GameContent } from "./types.ts";
 import { weaponAt } from "./weaponCatalog.ts";
 
+/** HP lost by each ship in a closing hull impact. */
+export const SHIP_IMPACT_DAMAGE = 1;
+
 /** Shared time between damaging scenery impacts, in seconds. */
 export const SCENERY_IMPACT_SECONDS = 0.5;
 

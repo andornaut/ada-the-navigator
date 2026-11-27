@@ -225,8 +225,8 @@ than 150 world units and loops back beyond 420; `siege`
 advances at half top speed; `escort` circles its leader on a station ring 60
 beyond the leader's spacing radius ([Hulls](#hulls), [Keep moving](#keep-moving)),
 intercepts Ada within 600 and falls back to `hitAndRun` without its leader.
-A ship that touches Ada still bounces off without damage. Finite pursuit and
-return home still apply.
+Hull impacts with Ada follow [Flight and combat](rules.md#flight-and-combat).
+Finite pursuit and return home still apply.
 When an encounter pages back into the same flight, its survivors are restored by
 role, so a destroyed capital never returns as an escort or the reverse. Fresh entry
 resets enemy populations; Continue preserves the existing flight. The first galaxy is mildly

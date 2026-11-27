@@ -1257,6 +1257,10 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   and restarts the shield's recharge delay. A gate rim in
   Needle is the one bump without damage. Attacks and marked hazards also damage
   the shield.
+- A closing hull impact between Ada and an enemy deals 1 damage to Ada's
+  shield and 1 damage to the enemy hull. Arrival protection still protects Ada,
+  and special enemy hull floors still apply. Separating or placement contacts
+  only push ships apart. Enemy-to-enemy avoidance and separation deal no damage.
 - No encounter is placed within 2000 world units of a flight's start or any
   quantum jump arrival, Travel included, so every launch begins calm.
 - Ambient enemy group densities follow [Spawn targets](#spawn-targets), and the

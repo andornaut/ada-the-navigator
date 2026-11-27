@@ -1928,7 +1928,7 @@ describe("ship contact", () => {
     const closing = -separating(flight, normal, object);
     expect(closing).toBeGreaterThan(0);
     const before = { ada: { ...flight.velocity }, enemy: { ...object.enemy!.velocity } };
-    bounceShips(CONTENT, flight, object);
+    expect(bounceShips(CONTENT, flight, object)).toBe(true);
     // Equal masses share the change evenly; they separate at restitution 0.4 along the normal.
     expect(flight.velocity.x - before.ada.x).toBeCloseTo(
       -(object.enemy!.velocity.x - before.enemy.x),
@@ -1971,17 +1971,26 @@ describe("ship contact", () => {
     expect(separating(flight, normal, object)).toBeCloseTo(sceneryRecoil, 9);
   });
 
+  it("pushes apart separating hulls without reporting a new impact", () => {
+    const { flight, normal, object } = contact("fighter", -50, 50);
+    expect(separating(flight, normal, object)).toBeGreaterThan(0);
+    expect(bounceShips(CONTENT, flight, object)).toBe(false);
+    expect(overlapOf(flight, object)?.depth ?? 0).toBeLessThan(0.02);
+  });
+
   it.each(["fighter", "retaliator"] as const)(
-    "bounces Ada's drawn ship off a %s she flies into, without overlap, sticking or damage",
+    "bounces Ada off a %s and deals one HP to each ship on impact",
     (archetype) => {
       // Small craft hold a standoff band, so Ada, faster than these two, closes the gap herself.
       const flight = empty();
       const chaser = ship(archetype, { x: flight.player.x + 60, y: flight.player.y });
       chaser.enemy!.engaged = true;
       flight.objects.push(chaser);
+      const shield = flight.shield;
+      const hull = chaser.hp;
       let touches = 0;
       let overlap = 0;
-      for (let frame = 0; frame < 60 * 6; frame++) {
+      for (let frame = 0; frame < 60 * 6 && flight.shield === shield; frame++) {
         chaser.enemy!.primaryCooldown = 999;
         silence(chaser);
         const toward = { x: chaser.x - flight.player.x, y: chaser.y - flight.player.y };
@@ -1997,7 +2006,14 @@ describe("ship contact", () => {
       }
       expect(touches).toBeGreaterThan(0);
       expect(overlap).toBeLessThan(0.5);
-      expect(flight.shield).toBe(CONTENT.tuning.shieldMax);
+      expect(flight.shield).toBe(shield - 1);
+      expect(flight.sinceDamage).toBeLessThanOrEqual(1 / 60);
+      expect(chaser.hp).toBe(hull - 1);
+      expect(chaser.enemy!.hp).toBe(hull - 1);
+
+      stepFlight(CONTENT, 1 / 60, idle, flight);
+      expect(flight.shield).toBe(shield - 1);
+      expect(chaser.hp).toBe(hull - 1);
     },
   );
 });

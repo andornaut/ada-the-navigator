@@ -10,7 +10,11 @@ import {
   WHIRLPOOL_CAPITAL_BOSS,
 } from "../data/capitalBosses.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
-import { SCENERY_IMPACT_SECONDS, sceneryImpactDamage } from "../data/collisionDamage.ts";
+import {
+  SCENERY_IMPACT_SECONDS,
+  sceneryImpactDamage,
+  SHIP_IMPACT_DAMAGE,
+} from "../data/collisionDamage.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
@@ -567,12 +571,16 @@ function bumpAda(
 }
 
 /**
- * An enemy hull touching Ada bounces both ships by the scenery rule, without damage. Each
+ * Resolve Ada's contact with an enemy hull and report whether the ships were closing. Each
  * reflects against the other's velocity; Ada takes the share m_enemy / (m_ada + m_enemy) of
  * her reflected change and of the push-out, with mass as size ratio squared, and the enemy
  * the rest. Their relative motion then matches a scenery bounce, so they always separate.
  */
-export function bounceShips(content: GameContent, flight: FlightState, object: SpaceObject): void {
+export function bounceShips(
+  content: GameContent,
+  flight: FlightState,
+  object: SpaceObject,
+): boolean {
   const enemy = object.enemy;
   const { sceneryRecoil, sceneryRestitution } = content.tuning.flight;
   // The enemy's drawn hull, or its hull circle without Art's outline, against Ada's drawn ship.
@@ -593,9 +601,12 @@ export function bounceShips(content: GameContent, flight: FlightState, object: S
           object.radius,
         ));
   if (!enemy || !contact) {
-    return;
+    return false;
   }
   const { normal } = contact;
+  const approach =
+    (flight.velocity.x - enemy.velocity.x) * normal.x +
+    (flight.velocity.y - enemy.velocity.y) * normal.y;
   const inward = { x: -normal.x, y: -normal.y };
   const mass = ENEMY_SIZE_RATIOS[enemy.archetype] ** 2;
   const adaShare = mass / (1 + mass);
@@ -625,6 +636,7 @@ export function bounceShips(content: GameContent, flight: FlightState, object: S
   }
   // Ada's push-out may meet scenery, which bounces her by its own rule.
   settleAda(content, flight);
+  return approach < 0;
 }
 
 function touchesAda(flight: FlightState, point: Vec, radius: number): boolean {
@@ -4395,7 +4407,13 @@ function enemies(
     }
     canonicalPosition(flight, object);
     object.enemy.position = { x: object.x, y: object.y };
-    bounceShips(content, flight, object);
+    if (bounceShips(content, flight, object)) {
+      damage(SHIP_IMPACT_DAMAGE, flight);
+      hit(content, SHIP_IMPACT_DAMAGE, null, object, flight, events);
+      if (object.hp <= 0) {
+        continue;
+      }
+    }
     const coverage = { ...viewport, centre: before };
     const rings = new Map<number, Vec[]>();
     // A Multi-Laser volley's bolts share their delay and muzzle, and draw as one fan.
