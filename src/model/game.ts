@@ -4490,8 +4490,10 @@ export class GameModel {
         );
         return {
           ...place,
-          ...(pendingJobLead ? { pendingJobLead: true as const } : {}),
-          taskCategory: category,
+          ...(pendingJobLead
+            ? { label: this.keeperStationName(f.galaxy, place.id), pendingJobLead: true as const }
+            : {}),
+          taskCategory: pendingJobLead && category === "generic" ? "job" : category,
         };
       }),
     };

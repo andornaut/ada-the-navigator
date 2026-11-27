@@ -9,6 +9,7 @@ import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
+import { chipFace } from "../ui/mapScreen.ts";
 import { stationJobsRows, type StationRow } from "../ui/station.ts";
 import { dropRandom, enemyStardust } from "./drops.ts";
 import { createEnemy } from "./enemyAi.ts";
@@ -331,7 +332,14 @@ it("posts an admitted near-route hunt on Scan, then accepts and pays through the
     expect(offer).toMatchObject({ id, station: issuer.id, type: "hunt" });
     const issuerMarker = (game: GameModel) =>
       game.map!.places.find((place) => place.id === issuer.id);
-    expect(issuerMarker(model)).toMatchObject({ pendingJobLead: true, travel: true });
+    const expectedMarker = {
+      label: outcome!.leadStation,
+      pendingJobLead: true,
+      taskCategory: "job",
+      travel: true,
+    };
+    expect(issuerMarker(model)).toMatchObject(expectedMarker);
+    expect(chipFace(issuerMarker(model)!)).toBe("#feae34");
     expect(model.map!.places.filter((place) => place.pendingJobLead).map(({ id }) => id)).toEqual([
       issuer.id,
     ]);
@@ -340,7 +348,8 @@ it("posts an admitted near-route hunt on Scan, then accepts and pays through the
     expect(restoreSave(model.save())?.jobs.boards[1]![issuer.id]).toEqual([offer]);
     const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, model.save());
     resumed.continueGame();
-    expect(issuerMarker(resumed)).toMatchObject({ pendingJobLead: true });
+    expect(issuerMarker(resumed)).toMatchObject(expectedMarker);
+    expect(chipFace(issuerMarker(resumed)!)).toBe("#feae34");
     rerollBoards(1, model.state);
     expect(model.state.jobs.boards[1]![issuer.id]).toEqual([offer]);
 
