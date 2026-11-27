@@ -549,56 +549,71 @@ it("reserves Pip's unmodified seeded route and gates the real fighter pairs thro
   expect(courierActors(model).every(({ enemy }) => !enemy?.engaged)).toBe(true);
   expect(route.flight.shots.some(({ enemy }) => enemy)).toBe(false);
   expect(hit.enemy.hp).toBe(hit.hp);
-  model.step(2.91, idle);
+  model.step(2.88, idle);
+  const placement = questGuardPlacementContext(CONTENT, route.flight);
+  const scenery = () =>
+    route.flight.objects.filter(
+      (object) => object.hp > 0 && (object.kind === "rock" || object.kind === "debris"),
+    );
+  const blocks = (
+    object: ReturnType<typeof scenery>[number],
+    from: { x: number; y: number },
+    to: { x: number; y: number },
+    width = 0,
+  ) =>
+    worldSceneryBlocksSegment(
+      route.world,
+      object,
+      from,
+      worldPoint(route.world, from, to),
+      width,
+      placement.frameOf(object),
+      placement.drawnOf(object),
+    );
+  const occluded = (actor: (typeof actors)[number], player = route.flight.player) =>
+    scenery().some((object) => blocks(object, actor, player));
+  const present = courierActors(model);
+  const [lead, wing] = present;
+  const pairCentre = { x: (lead!.x + wing!.x) / 2, y: (lead!.y + wing!.y) / 2 };
+  const viewpoints = [180, 240, 320, 430, 540].flatMap((radius) =>
+    Array.from({ length: 24 }, (_, index) => {
+      const angle = (index * Math.PI) / 12;
+      return {
+        x: pairCentre.x + radius * Math.cos(angle),
+        y: pairCentre.y + radius * Math.sin(angle),
+      };
+    }),
+  );
+  const inRange = (actor: (typeof actors)[number], point: { x: number; y: number }) => {
+    const distance = worldDistance(route.world, actor, point);
+    return distance > 75 && distance < enemyEquipmentDefinition(5, actor.enemy!).perception;
+  };
+  const free = (point: { x: number; y: number }) =>
+    !scenery().some((object) => blocks(object, point, point, CONTENT.tuning.flight.shipRadius));
+  // Start within the existing wing fighter's sight range, with an actual solid rock in the way.
+  const blindApproach = viewpoints.find(
+    (point) =>
+      inRange(wing!, point) &&
+      scenery().some((object) => object.kind === "rock" && blocks(object, wing!, point)) &&
+      free(point),
+  );
+  expect(blindApproach, "a flyable approach occluded by seeded terrain").toBeDefined();
+  route.flight.player = blindApproach!;
+  route.flight.velocity = { x: 0, y: 0 };
+  worldSyncFlightRegion(route.world, CONTENT, route.flight);
+  model.step(0.03, idle);
   model.step(0.02, idle);
   const firstRelease = ["released", "released", "held", "held"];
   expect(ids.map((id) => andromedaCourierActor(route.flight, id))).toEqual(firstRelease);
-  const placement = questGuardPlacementContext(CONTENT, route.flight);
-  const occluded = (actor: (typeof actors)[number], player = route.flight.player) =>
-    route.flight.objects.some(
-      (object) =>
-        object.hp > 0 &&
-        (object.kind === "rock" || object.kind === "debris") &&
-        worldSceneryBlocksSegment(
-          route.world,
-          object,
-          actor,
-          worldPoint(route.world, actor, player),
-          0,
-          placement.frameOf(object),
-          placement.drawnOf(object),
-        ),
-    );
-  const present = courierActors(model);
-  const [lead, wing] = present;
   expect(wing!.enemy?.engaged).toBe(false);
-  expect(worldDistance(route.world, wing!, route.flight.player)).toBeLessThan(
-    enemyEquipmentDefinition(5, wing!.enemy!).perception,
-  );
+  expect(inRange(wing!, route.flight.player)).toBe(true);
   expect(occluded(wing!)).toBe(true);
 
   // Choose a nearby clear point from the live chart while both pairs remain in sight range.
-  const pairCentre = { x: (lead!.x + wing!.x) / 2, y: (lead!.y + wing!.y) / 2 };
-  const approach = [180, 240, 320, 430, 540]
-    .flatMap((radius) =>
-      Array.from({ length: 24 }, (_, index) => {
-        const angle = (index * Math.PI) / 12;
-        return {
-          x: pairCentre.x + radius * Math.cos(angle),
-          y: pairCentre.y + radius * Math.sin(angle),
-        };
-      }),
-    )
-    .find((point) =>
-      present.every((actor) => {
-        const distance = worldDistance(route.world, actor, point);
-        return (
-          distance > 75 &&
-          distance < enemyEquipmentDefinition(5, actor.enemy!).perception &&
-          !occluded(actor, point)
-        );
-      }),
-    );
+  const approach = viewpoints.find(
+    (point) =>
+      present.every((actor) => inRange(actor, point) && !occluded(actor, point)) && free(point),
+  );
   expect(approach, "a clear approach within perception of both pairs").toBeDefined();
   route.flight.player = approach!;
   route.flight.velocity = { x: 0, y: 0 };
