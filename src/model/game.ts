@@ -1093,7 +1093,8 @@ export class GameModel {
     });
     const held = tracked === f.trackedQuestId ? this.held : undefined;
     if (needle) {
-      return waypoint(needle.id, needle.point, "destination", this.label(needle.id));
+      const label = needle.step === "ring" ? `Ring ${needle.ringIndex + 1}` : this.label(needle.id);
+      return waypoint(needle.id, needle.point, "destination", label);
     }
     if (held?.type === "hunt") {
       return waypoint(`job:${held.id}:search`, held.target, "job", "Search area", held.type);

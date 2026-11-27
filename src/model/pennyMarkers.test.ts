@@ -112,7 +112,7 @@ describe("production unified marker facade", () => {
       ).toMatchObject(flag!);
       expect(first!.point).not.toEqual(flag);
       expect(indicator()).toEqual([{ ...first!.point, id, kind: "objective" }]);
-      expect(markers()).toMatchObject([{ ...first!.point, id, trackedLabel: label }]);
+      expect(markers()).toMatchObject([{ ...first!.point, id, trackedLabel: "Ring 1" }]);
 
       flight.player = {
         x: first!.point.x - first!.tangent.x * 0.1,
@@ -124,10 +124,10 @@ describe("production unified marker facade", () => {
         move: { x: first!.tangent.x * 0.25, y: first!.tangent.y * 0.25 },
       });
       expect(indicator()).toEqual([{ ...second!.point, id, kind: "objective" }]);
-      expect(markers()).toMatchObject([{ ...second!.point, id, trackedLabel: label }]);
+      expect(markers()).toMatchObject([{ ...second!.point, id, trackedLabel: "Ring 2" }]);
       flight.player = { ...second!.point };
       expect(markers()).toMatchObject([
-        { ...second!.point, id, onScreen: true, trackedLabel: label },
+        { ...second!.point, id, onScreen: true, trackedLabel: "Ring 2" },
       ]);
 
       const target = wrapPoint(side, { x: flight.player.x + 6000, y: flight.player.y });
@@ -148,7 +148,7 @@ describe("production unified marker facade", () => {
         { id: "job:needle-hunt:search", trackedLabel: "Search area" },
       ]);
       expect(model.dropJob()).toBe(true);
-      expect(current()).toMatchObject([{ ...second!.point, id, trackedLabel: label }]);
+      expect(current()).toMatchObject([{ ...second!.point, id, trackedLabel: "Ring 2" }]);
     },
   );
 
