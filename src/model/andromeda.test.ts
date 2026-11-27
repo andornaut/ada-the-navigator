@@ -177,6 +177,7 @@ describe("Andromeda chapter runtime", () => {
     expect(useAndromeda(context, "pip")).toBeUndefined();
     // Only the central model commits shared completion and holodisk effects.
     context.progress.questComplete = true;
+    expect(andromedaObjectiveIndex(context.progress)).toBe(6);
     const handover = useAndromeda(context, "pip")!;
     expect(context.progress.holodisk).toBe(false);
     expect(finish(context, handover)).toEqual({ holodisk: { giver: "Pip" } });
@@ -196,9 +197,8 @@ describe("Andromeda chapter runtime", () => {
     const pickup = useAndromeda(context, target)!.dialogue!;
     expect(pickup.context).toBe("andromeda:parts");
     expect(pickup.title).toBe("Astra");
-    expect(pickup.text).toBe(
-      [carriedItemName("beacon parts"), ANDROMEDA_CHAPTER.objectives[6]].join("\n\n"),
-    );
+    const deliveryObjective = ANDROMEDA_CHAPTER.objectives[5];
+    expect(pickup.text).toBe([carriedItemName("beacon parts"), deliveryObjective].join("\n\n"));
     expect(pickup.choices).toEqual([{ id: "continue", label: CONTENT.labels.next }]);
     expect(JSON.stringify(context.progress)).toBe(before);
     expect(useAndromeda(context, target)?.dialogue).toEqual(pickup);
@@ -206,6 +206,9 @@ describe("Andromeda chapter runtime", () => {
     expect(JSON.stringify(context.progress)).toBe(before);
     expect(chooseAndromeda(context, pickup, "continue")).toEqual({});
     expect(context.progress.stage).toBe(5);
+    expect(ANDROMEDA_CHAPTER.objectives[andromedaObjectiveIndex(context.progress)]).toBe(
+      deliveryObjective,
+    );
     expect(context.progress.questItem).toBe(ANDROMEDA_PARTS);
     expect(chooseAndromeda(context, pickup, "continue")).toBeUndefined();
     expect(useAndromeda(context, target)).toBeUndefined();

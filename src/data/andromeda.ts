@@ -160,7 +160,7 @@ export const ANDROMEDA_CONVERSATIONS = {
     ],
   },
   parts: {
-    lines: [{ text: carriedItemName("beacon parts") }, { text: ANDROMEDA_CHAPTER.objectives[6]! }],
+    lines: [{ text: carriedItemName("beacon parts") }, { text: ANDROMEDA_CHAPTER.objectives[5]! }],
     party: "Astra",
   },
   repaired: {
