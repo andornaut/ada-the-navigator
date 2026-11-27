@@ -31,6 +31,7 @@ export const CAPITAL_TOPS = {
   multiLaser: { top: "triple", aim: "target" },
   rapidMissile: { top: "pod", aim: "target" },
   heavyMissile: { top: "rail", aim: "target" },
+  phaser: { top: "dish", aim: "target" },
 } as const satisfies Partial<Record<EnemyWeapon, { top: string; aim: "aft" | "target" }>>;
 
 type CapitalWeapon = keyof typeof CAPITAL_TOPS;

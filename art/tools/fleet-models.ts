@@ -703,6 +703,7 @@ export const CAPITAL_TOP_BUILDERS = {
   triple: tripleTop,
   pod: podTop,
   rail: railTop,
+  dish: dishTop,
 } as Readonly<Record<string, TopBuilder>>;
 export const HEAVY_MOUNT_RADIUS = MOUNT_RADIUS;
 
