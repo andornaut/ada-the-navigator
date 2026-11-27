@@ -19259,6 +19259,294 @@
       "svgSheet": true
     },
     {
+      "id": "enemy-claim-capital-gun-top-0",
+      "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-0",
+      "aimIndex": 0,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "claim",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-claim-capital-gun-top-1",
+      "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-1",
+      "aimIndex": 1,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "claim",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-claim-capital-gun-top-2",
+      "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-2",
+      "aimIndex": 2,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "claim",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-claim-capital-gun-top-3",
+      "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-3",
+      "aimIndex": 3,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "claim",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-claim-capital-gun-top-4",
+      "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-4",
+      "aimIndex": 4,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "claim",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-claim-capital-gun-top-5",
+      "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-5",
+      "aimIndex": 5,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "claim",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-claim-capital-gun-top-6",
+      "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-6",
+      "aimIndex": 6,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "claim",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-claim-capital-gun-top-7",
+      "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-7",
+      "aimIndex": 7,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "claim",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-claim-capital-gun-top-8",
+      "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-8",
+      "aimIndex": 8,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "claim",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-claim-capital-gun-top-9",
+      "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-9",
+      "aimIndex": 9,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "claim",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-claim-capital-gun-top-10",
+      "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-10",
+      "aimIndex": 10,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "claim",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-claim-capital-gun-top-11",
+      "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-11",
+      "aimIndex": 11,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "claim",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-claim-capital-gun-top-12",
+      "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-12",
+      "aimIndex": 12,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "claim",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-claim-capital-gun-top-13",
+      "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-13",
+      "aimIndex": 13,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "claim",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-claim-capital-gun-top-14",
+      "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-14",
+      "aimIndex": 14,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "claim",
+      "svgSheet": true
+    },
+    {
+      "id": "enemy-claim-capital-gun-top-15",
+      "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-15",
+      "aimIndex": 15,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital",
+      "family": "claim",
+      "svgSheet": true
+    },
+    {
       "id": "enemy-claim-retaliator-turret-intact-0",
       "path": "/art/cartwheel/enemies/fleetRetaliator-turret-intact-sheet.svg",
       "width": 32,

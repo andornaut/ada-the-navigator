@@ -6,11 +6,13 @@ import { fileURLToPath } from "node:url";
 
 import { format, resolveConfig } from "prettier";
 
+import { CAPITAL_TOPS, capitalWeapons, fleetCapitalDesign } from "./capital-tops.ts";
 import { DISPLAY_SCALE, jetsFile } from "./crafts.ts";
 import { packHullRoots } from "./hull-roots.ts";
 import { traceEnemyFills } from "./enemy-outline.ts";
 import { ADA_MODEL_SPAN, enemySizeRatio } from "./enemy-size.ts";
 import {
+  CAPITAL_TOP_BUILDERS,
   FLEET_FAMILIES,
   FLEET_JETS,
   FLEET_PAINT,
@@ -302,6 +304,15 @@ function scaled(paint: Paint, craft: FleetCraft): Scaled {
           : []),
       ]),
     ]);
+    // Preserve the installed frame envelope. Each newly assigned top has its own fitted cell.
+    if (craft.archetype === "capital") {
+      result.tops = Object.fromEntries(
+        Object.values(capitalWeaponTops(craft)).map(({ top }) => [
+          top,
+          result.tops![top] ?? scaledTop(paint, CAPITAL_TOP_BUILDERS[top]!, k),
+        ]),
+      );
+    }
   }
   return result;
 }
@@ -719,16 +730,16 @@ export function heavyFrames(craft: Scaled): HeavyFrames {
 // draws and the mounts each pair of route positions arms.
 type HeavyLayout = {
   fill: readonly string[];
-  weaponTops: Readonly<Record<string, { top: string; aim: "target" | "aft" }>>;
   tiers: readonly (readonly [readonly [number, number], number])[];
 };
+const FRIGATE_WEAPON_TOPS = {
+  heavyMissile: { top: "rail", aim: "target" },
+  laser: { top: "gun", aim: "target" },
+} as const;
+
 export const HEAVY_LAYOUTS: Readonly<Record<keyof typeof HEAVY_TOPS, HeavyLayout>> = {
   frigate: {
     fill: ["port", "starboard", "spine", "bow"],
-    weaponTops: {
-      heavyMissile: { top: "rail", aim: "target" },
-      laser: { top: "gun", aim: "target" },
-    },
     tiers: [
       [[1, 2], 2],
       [[3, 4], 3],
@@ -746,11 +757,6 @@ export const HEAVY_LAYOUTS: Readonly<Record<keyof typeof HEAVY_TOPS, HeavyLayout
       "stern-left",
       "stern-right",
     ],
-    weaponTops: {
-      chargedLance: { top: "lance", aim: "target" },
-      mineLayer: { top: "hopper", aim: "aft" },
-      scattershot: { top: "spread", aim: "target" },
-    },
     tiers: [
       [[1, 2], 4],
       [[3, 4], 6],
@@ -758,6 +764,16 @@ export const HEAVY_LAYOUTS: Readonly<Record<keyof typeof HEAVY_TOPS, HeavyLayout
     ],
   },
 };
+
+function capitalWeaponTops(craft: FleetCraft) {
+  const { fill, tiers } = HEAVY_LAYOUTS.capital;
+  return Object.fromEntries(
+    capitalWeapons(fleetCapitalDesign(craft.key), fill, tiers).map((weapon) => [
+      weapon,
+      CAPITAL_TOPS[weapon],
+    ]),
+  );
+}
 
 // Whether the hull hides a weapon mount at one heading: less than half of its intact collar or
 // port shows. A hidden mount's top is not drawn; it still fires.
@@ -775,7 +791,8 @@ const moved = (frames: readonly Frame[], index: number, dx: number, dy: number) 
 // its shot origin in hull frame px, which fires along the heading.
 function heavyHardpoints(craft: Scaled, hull: readonly Frame[], drawn: HeavyFrames): string {
   const layers = [...craft.layers!, ...(craft.lasers ?? [])];
-  const { fill, tiers, weaponTops } = HEAVY_LAYOUTS[craft.archetype as keyof typeof HEAVY_TOPS];
+  const { fill, tiers } = HEAVY_LAYOUTS[craft.archetype as keyof typeof HEAVY_TOPS];
+  const weaponTops = craft.archetype === "capital" ? capitalWeaponTops(craft) : FRIGATE_WEAPON_TOPS;
   const mounts = craft.layers!.filter(({ role }) => role === "turret").map(({ id }) => id);
   if (mounts.join() !== fill.join()) throw new Error(`${craft.key}: mounts are not in fill order`);
   for (const { top } of Object.values(weaponTops)) {

@@ -16354,7 +16354,7 @@
         "archetype": "capital"
       },
       {
-        "id": "enemy-capital-hopper-top-0",
+        "id": "enemy-capital-gun-top-0",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -16363,7 +16363,7 @@
         "displayHeight": 17.5,
         "facing": "world-0",
         "aimIndex": 0,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -16371,7 +16371,7 @@
         "archetype": "capital"
       },
       {
-        "id": "enemy-capital-hopper-top-1",
+        "id": "enemy-capital-gun-top-1",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -16380,7 +16380,7 @@
         "displayHeight": 17.5,
         "facing": "world-1",
         "aimIndex": 1,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -16388,7 +16388,7 @@
         "archetype": "capital"
       },
       {
-        "id": "enemy-capital-hopper-top-2",
+        "id": "enemy-capital-gun-top-2",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -16397,7 +16397,7 @@
         "displayHeight": 17.5,
         "facing": "world-2",
         "aimIndex": 2,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -16405,7 +16405,7 @@
         "archetype": "capital"
       },
       {
-        "id": "enemy-capital-hopper-top-3",
+        "id": "enemy-capital-gun-top-3",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -16414,7 +16414,7 @@
         "displayHeight": 17.5,
         "facing": "world-3",
         "aimIndex": 3,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -16422,7 +16422,7 @@
         "archetype": "capital"
       },
       {
-        "id": "enemy-capital-hopper-top-4",
+        "id": "enemy-capital-gun-top-4",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -16431,7 +16431,7 @@
         "displayHeight": 17.5,
         "facing": "world-4",
         "aimIndex": 4,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -16439,7 +16439,7 @@
         "archetype": "capital"
       },
       {
-        "id": "enemy-capital-hopper-top-5",
+        "id": "enemy-capital-gun-top-5",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -16448,7 +16448,7 @@
         "displayHeight": 17.5,
         "facing": "world-5",
         "aimIndex": 5,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -16456,7 +16456,7 @@
         "archetype": "capital"
       },
       {
-        "id": "enemy-capital-hopper-top-6",
+        "id": "enemy-capital-gun-top-6",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -16465,7 +16465,7 @@
         "displayHeight": 17.5,
         "facing": "world-6",
         "aimIndex": 6,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -16473,7 +16473,7 @@
         "archetype": "capital"
       },
       {
-        "id": "enemy-capital-hopper-top-7",
+        "id": "enemy-capital-gun-top-7",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -16482,7 +16482,7 @@
         "displayHeight": 17.5,
         "facing": "world-7",
         "aimIndex": 7,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -16490,7 +16490,7 @@
         "archetype": "capital"
       },
       {
-        "id": "enemy-capital-hopper-top-8",
+        "id": "enemy-capital-gun-top-8",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -16499,7 +16499,7 @@
         "displayHeight": 17.5,
         "facing": "world-8",
         "aimIndex": 8,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -16507,7 +16507,7 @@
         "archetype": "capital"
       },
       {
-        "id": "enemy-capital-hopper-top-9",
+        "id": "enemy-capital-gun-top-9",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -16516,7 +16516,7 @@
         "displayHeight": 17.5,
         "facing": "world-9",
         "aimIndex": 9,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -16524,7 +16524,7 @@
         "archetype": "capital"
       },
       {
-        "id": "enemy-capital-hopper-top-10",
+        "id": "enemy-capital-gun-top-10",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -16533,7 +16533,7 @@
         "displayHeight": 17.5,
         "facing": "world-10",
         "aimIndex": 10,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -16541,7 +16541,7 @@
         "archetype": "capital"
       },
       {
-        "id": "enemy-capital-hopper-top-11",
+        "id": "enemy-capital-gun-top-11",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -16550,7 +16550,7 @@
         "displayHeight": 17.5,
         "facing": "world-11",
         "aimIndex": 11,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -16558,7 +16558,7 @@
         "archetype": "capital"
       },
       {
-        "id": "enemy-capital-hopper-top-12",
+        "id": "enemy-capital-gun-top-12",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -16567,7 +16567,7 @@
         "displayHeight": 17.5,
         "facing": "world-12",
         "aimIndex": 12,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -16575,7 +16575,7 @@
         "archetype": "capital"
       },
       {
-        "id": "enemy-capital-hopper-top-13",
+        "id": "enemy-capital-gun-top-13",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -16584,7 +16584,7 @@
         "displayHeight": 17.5,
         "facing": "world-13",
         "aimIndex": 13,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -16592,7 +16592,7 @@
         "archetype": "capital"
       },
       {
-        "id": "enemy-capital-hopper-top-14",
+        "id": "enemy-capital-gun-top-14",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -16601,7 +16601,7 @@
         "displayHeight": 17.5,
         "facing": "world-14",
         "aimIndex": 14,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -16609,7 +16609,7 @@
         "archetype": "capital"
       },
       {
-        "id": "enemy-capital-hopper-top-15",
+        "id": "enemy-capital-gun-top-15",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -16618,7 +16618,279 @@
         "displayHeight": 17.5,
         "facing": "world-15",
         "aimIndex": 15,
-        "top": "hopper",
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capital-pod-top-0",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-0",
+        "aimIndex": 0,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capital-pod-top-1",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-1",
+        "aimIndex": 1,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capital-pod-top-2",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-2",
+        "aimIndex": 2,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capital-pod-top-3",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-3",
+        "aimIndex": 3,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capital-pod-top-4",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-4",
+        "aimIndex": 4,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capital-pod-top-5",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-5",
+        "aimIndex": 5,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capital-pod-top-6",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-6",
+        "aimIndex": 6,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capital-pod-top-7",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-7",
+        "aimIndex": 7,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capital-pod-top-8",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-8",
+        "aimIndex": 8,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capital-pod-top-9",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-9",
+        "aimIndex": 9,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capital-pod-top-10",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-10",
+        "aimIndex": 10,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capital-pod-top-11",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-11",
+        "aimIndex": 11,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capital-pod-top-12",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-12",
+        "aimIndex": 12,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capital-pod-top-13",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-13",
+        "aimIndex": 13,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capital-pod-top-14",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-14",
+        "aimIndex": 14,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capital-pod-top-15",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-15",
+        "aimIndex": 15,
+        "top": "pod",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -32123,7 +32395,7 @@
         "archetype": "capital"
       },
       {
-        "id": "enemy-capitalManta-hopper-top-0",
+        "id": "enemy-capitalManta-gun-top-0",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -32132,16 +32404,16 @@
         "displayHeight": 17.5,
         "facing": "world-0",
         "aimIndex": 0,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
         },
         "archetype": "capital",
-        "svgSheetMember": "enemy-capital-hopper-top-0"
+        "svgSheetMember": "enemy-capital-gun-top-0"
       },
       {
-        "id": "enemy-capitalManta-hopper-top-1",
+        "id": "enemy-capitalManta-gun-top-1",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -32150,16 +32422,16 @@
         "displayHeight": 17.5,
         "facing": "world-1",
         "aimIndex": 1,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
         },
         "archetype": "capital",
-        "svgSheetMember": "enemy-capital-hopper-top-1"
+        "svgSheetMember": "enemy-capital-gun-top-1"
       },
       {
-        "id": "enemy-capitalManta-hopper-top-2",
+        "id": "enemy-capitalManta-gun-top-2",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -32168,16 +32440,16 @@
         "displayHeight": 17.5,
         "facing": "world-2",
         "aimIndex": 2,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
         },
         "archetype": "capital",
-        "svgSheetMember": "enemy-capital-hopper-top-2"
+        "svgSheetMember": "enemy-capital-gun-top-2"
       },
       {
-        "id": "enemy-capitalManta-hopper-top-3",
+        "id": "enemy-capitalManta-gun-top-3",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -32186,16 +32458,16 @@
         "displayHeight": 17.5,
         "facing": "world-3",
         "aimIndex": 3,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
         },
         "archetype": "capital",
-        "svgSheetMember": "enemy-capital-hopper-top-3"
+        "svgSheetMember": "enemy-capital-gun-top-3"
       },
       {
-        "id": "enemy-capitalManta-hopper-top-4",
+        "id": "enemy-capitalManta-gun-top-4",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -32204,16 +32476,16 @@
         "displayHeight": 17.5,
         "facing": "world-4",
         "aimIndex": 4,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
         },
         "archetype": "capital",
-        "svgSheetMember": "enemy-capital-hopper-top-4"
+        "svgSheetMember": "enemy-capital-gun-top-4"
       },
       {
-        "id": "enemy-capitalManta-hopper-top-5",
+        "id": "enemy-capitalManta-gun-top-5",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -32222,16 +32494,16 @@
         "displayHeight": 17.5,
         "facing": "world-5",
         "aimIndex": 5,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
         },
         "archetype": "capital",
-        "svgSheetMember": "enemy-capital-hopper-top-5"
+        "svgSheetMember": "enemy-capital-gun-top-5"
       },
       {
-        "id": "enemy-capitalManta-hopper-top-6",
+        "id": "enemy-capitalManta-gun-top-6",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -32240,16 +32512,16 @@
         "displayHeight": 17.5,
         "facing": "world-6",
         "aimIndex": 6,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
         },
         "archetype": "capital",
-        "svgSheetMember": "enemy-capital-hopper-top-6"
+        "svgSheetMember": "enemy-capital-gun-top-6"
       },
       {
-        "id": "enemy-capitalManta-hopper-top-7",
+        "id": "enemy-capitalManta-gun-top-7",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -32258,16 +32530,16 @@
         "displayHeight": 17.5,
         "facing": "world-7",
         "aimIndex": 7,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
         },
         "archetype": "capital",
-        "svgSheetMember": "enemy-capital-hopper-top-7"
+        "svgSheetMember": "enemy-capital-gun-top-7"
       },
       {
-        "id": "enemy-capitalManta-hopper-top-8",
+        "id": "enemy-capitalManta-gun-top-8",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -32276,16 +32548,16 @@
         "displayHeight": 17.5,
         "facing": "world-8",
         "aimIndex": 8,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
         },
         "archetype": "capital",
-        "svgSheetMember": "enemy-capital-hopper-top-8"
+        "svgSheetMember": "enemy-capital-gun-top-8"
       },
       {
-        "id": "enemy-capitalManta-hopper-top-9",
+        "id": "enemy-capitalManta-gun-top-9",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -32294,16 +32566,16 @@
         "displayHeight": 17.5,
         "facing": "world-9",
         "aimIndex": 9,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
         },
         "archetype": "capital",
-        "svgSheetMember": "enemy-capital-hopper-top-9"
+        "svgSheetMember": "enemy-capital-gun-top-9"
       },
       {
-        "id": "enemy-capitalManta-hopper-top-10",
+        "id": "enemy-capitalManta-gun-top-10",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -32312,16 +32584,16 @@
         "displayHeight": 17.5,
         "facing": "world-10",
         "aimIndex": 10,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
         },
         "archetype": "capital",
-        "svgSheetMember": "enemy-capital-hopper-top-10"
+        "svgSheetMember": "enemy-capital-gun-top-10"
       },
       {
-        "id": "enemy-capitalManta-hopper-top-11",
+        "id": "enemy-capitalManta-gun-top-11",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -32330,16 +32602,16 @@
         "displayHeight": 17.5,
         "facing": "world-11",
         "aimIndex": 11,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
         },
         "archetype": "capital",
-        "svgSheetMember": "enemy-capital-hopper-top-11"
+        "svgSheetMember": "enemy-capital-gun-top-11"
       },
       {
-        "id": "enemy-capitalManta-hopper-top-12",
+        "id": "enemy-capitalManta-gun-top-12",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -32348,16 +32620,16 @@
         "displayHeight": 17.5,
         "facing": "world-12",
         "aimIndex": 12,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
         },
         "archetype": "capital",
-        "svgSheetMember": "enemy-capital-hopper-top-12"
+        "svgSheetMember": "enemy-capital-gun-top-12"
       },
       {
-        "id": "enemy-capitalManta-hopper-top-13",
+        "id": "enemy-capitalManta-gun-top-13",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -32366,16 +32638,16 @@
         "displayHeight": 17.5,
         "facing": "world-13",
         "aimIndex": 13,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
         },
         "archetype": "capital",
-        "svgSheetMember": "enemy-capital-hopper-top-13"
+        "svgSheetMember": "enemy-capital-gun-top-13"
       },
       {
-        "id": "enemy-capitalManta-hopper-top-14",
+        "id": "enemy-capitalManta-gun-top-14",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -32384,16 +32656,16 @@
         "displayHeight": 17.5,
         "facing": "world-14",
         "aimIndex": 14,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
         },
         "archetype": "capital",
-        "svgSheetMember": "enemy-capital-hopper-top-14"
+        "svgSheetMember": "enemy-capital-gun-top-14"
       },
       {
-        "id": "enemy-capitalManta-hopper-top-15",
+        "id": "enemy-capitalManta-gun-top-15",
         "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
         "svgSheet": true,
         "width": 40,
@@ -32402,13 +32674,301 @@
         "displayHeight": 17.5,
         "facing": "world-15",
         "aimIndex": 15,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
         },
         "archetype": "capital",
-        "svgSheetMember": "enemy-capital-hopper-top-15"
+        "svgSheetMember": "enemy-capital-gun-top-15"
+      },
+      {
+        "id": "enemy-capitalManta-pod-top-0",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-0",
+        "aimIndex": 0,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "svgSheetMember": "enemy-capital-pod-top-0"
+      },
+      {
+        "id": "enemy-capitalManta-pod-top-1",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-1",
+        "aimIndex": 1,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "svgSheetMember": "enemy-capital-pod-top-1"
+      },
+      {
+        "id": "enemy-capitalManta-pod-top-2",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-2",
+        "aimIndex": 2,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "svgSheetMember": "enemy-capital-pod-top-2"
+      },
+      {
+        "id": "enemy-capitalManta-pod-top-3",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-3",
+        "aimIndex": 3,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "svgSheetMember": "enemy-capital-pod-top-3"
+      },
+      {
+        "id": "enemy-capitalManta-pod-top-4",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-4",
+        "aimIndex": 4,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "svgSheetMember": "enemy-capital-pod-top-4"
+      },
+      {
+        "id": "enemy-capitalManta-pod-top-5",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-5",
+        "aimIndex": 5,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "svgSheetMember": "enemy-capital-pod-top-5"
+      },
+      {
+        "id": "enemy-capitalManta-pod-top-6",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-6",
+        "aimIndex": 6,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "svgSheetMember": "enemy-capital-pod-top-6"
+      },
+      {
+        "id": "enemy-capitalManta-pod-top-7",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-7",
+        "aimIndex": 7,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "svgSheetMember": "enemy-capital-pod-top-7"
+      },
+      {
+        "id": "enemy-capitalManta-pod-top-8",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-8",
+        "aimIndex": 8,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "svgSheetMember": "enemy-capital-pod-top-8"
+      },
+      {
+        "id": "enemy-capitalManta-pod-top-9",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-9",
+        "aimIndex": 9,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "svgSheetMember": "enemy-capital-pod-top-9"
+      },
+      {
+        "id": "enemy-capitalManta-pod-top-10",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-10",
+        "aimIndex": 10,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "svgSheetMember": "enemy-capital-pod-top-10"
+      },
+      {
+        "id": "enemy-capitalManta-pod-top-11",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-11",
+        "aimIndex": 11,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "svgSheetMember": "enemy-capital-pod-top-11"
+      },
+      {
+        "id": "enemy-capitalManta-pod-top-12",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-12",
+        "aimIndex": 12,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "svgSheetMember": "enemy-capital-pod-top-12"
+      },
+      {
+        "id": "enemy-capitalManta-pod-top-13",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-13",
+        "aimIndex": 13,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "svgSheetMember": "enemy-capital-pod-top-13"
+      },
+      {
+        "id": "enemy-capitalManta-pod-top-14",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-14",
+        "aimIndex": 14,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "svgSheetMember": "enemy-capital-pod-top-14"
+      },
+      {
+        "id": "enemy-capitalManta-pod-top-15",
+        "path": "/art/enemies/fleetCapital-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-15",
+        "aimIndex": 15,
+        "top": "pod",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "svgSheetMember": "enemy-capital-pod-top-15"
       }
     ],
     "sidecars": {
@@ -40978,6 +41538,278 @@
         "facing": "world-15",
         "aimIndex": 15,
         "top": "hopper",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capitalForked-gun-top-0",
+        "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-0",
+        "aimIndex": 0,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capitalForked-gun-top-1",
+        "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-1",
+        "aimIndex": 1,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capitalForked-gun-top-2",
+        "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-2",
+        "aimIndex": 2,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capitalForked-gun-top-3",
+        "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-3",
+        "aimIndex": 3,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capitalForked-gun-top-4",
+        "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-4",
+        "aimIndex": 4,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capitalForked-gun-top-5",
+        "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-5",
+        "aimIndex": 5,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capitalForked-gun-top-6",
+        "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-6",
+        "aimIndex": 6,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capitalForked-gun-top-7",
+        "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-7",
+        "aimIndex": 7,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capitalForked-gun-top-8",
+        "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-8",
+        "aimIndex": 8,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capitalForked-gun-top-9",
+        "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-9",
+        "aimIndex": 9,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capitalForked-gun-top-10",
+        "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-10",
+        "aimIndex": 10,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capitalForked-gun-top-11",
+        "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-11",
+        "aimIndex": 11,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capitalForked-gun-top-12",
+        "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-12",
+        "aimIndex": 12,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capitalForked-gun-top-13",
+        "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-13",
+        "aimIndex": 13,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capitalForked-gun-top-14",
+        "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-14",
+        "aimIndex": 14,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital"
+      },
+      {
+        "id": "enemy-capitalForked-gun-top-15",
+        "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+        "svgSheet": true,
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-15",
+        "aimIndex": 15,
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -59706,6 +60538,294 @@
         "facing": "world-15",
         "aimIndex": 15,
         "top": "hopper",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-capital-gun-top-0",
+        "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-0",
+        "aimIndex": 0,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-capital-gun-top-1",
+        "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-1",
+        "aimIndex": 1,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-capital-gun-top-2",
+        "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-2",
+        "aimIndex": 2,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-capital-gun-top-3",
+        "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-3",
+        "aimIndex": 3,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-capital-gun-top-4",
+        "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-4",
+        "aimIndex": 4,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-capital-gun-top-5",
+        "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-5",
+        "aimIndex": 5,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-capital-gun-top-6",
+        "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-6",
+        "aimIndex": 6,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-capital-gun-top-7",
+        "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-7",
+        "aimIndex": 7,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-capital-gun-top-8",
+        "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-8",
+        "aimIndex": 8,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-capital-gun-top-9",
+        "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-9",
+        "aimIndex": 9,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-capital-gun-top-10",
+        "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-10",
+        "aimIndex": 10,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-capital-gun-top-11",
+        "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-11",
+        "aimIndex": 11,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-capital-gun-top-12",
+        "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-12",
+        "aimIndex": 12,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-capital-gun-top-13",
+        "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-13",
+        "aimIndex": 13,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-capital-gun-top-14",
+        "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-14",
+        "aimIndex": 14,
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "claim",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-claim-capital-gun-top-15",
+        "path": "/art/cartwheel/enemies/fleetCapitalOutrigger-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-15",
+        "aimIndex": 15,
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -79532,7 +80652,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-garnet-capital-hopper-top-0",
+        "id": "enemy-garnet-capital-gun-top-0",
         "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -79540,7 +80660,7 @@
         "displayHeight": 17.5,
         "facing": "world-0",
         "aimIndex": 0,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -79550,7 +80670,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-garnet-capital-hopper-top-1",
+        "id": "enemy-garnet-capital-gun-top-1",
         "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -79558,7 +80678,7 @@
         "displayHeight": 17.5,
         "facing": "world-1",
         "aimIndex": 1,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -79568,7 +80688,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-garnet-capital-hopper-top-2",
+        "id": "enemy-garnet-capital-gun-top-2",
         "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -79576,7 +80696,7 @@
         "displayHeight": 17.5,
         "facing": "world-2",
         "aimIndex": 2,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -79586,7 +80706,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-garnet-capital-hopper-top-3",
+        "id": "enemy-garnet-capital-gun-top-3",
         "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -79594,7 +80714,7 @@
         "displayHeight": 17.5,
         "facing": "world-3",
         "aimIndex": 3,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -79604,7 +80724,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-garnet-capital-hopper-top-4",
+        "id": "enemy-garnet-capital-gun-top-4",
         "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -79612,7 +80732,7 @@
         "displayHeight": 17.5,
         "facing": "world-4",
         "aimIndex": 4,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -79622,7 +80742,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-garnet-capital-hopper-top-5",
+        "id": "enemy-garnet-capital-gun-top-5",
         "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -79630,7 +80750,7 @@
         "displayHeight": 17.5,
         "facing": "world-5",
         "aimIndex": 5,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -79640,7 +80760,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-garnet-capital-hopper-top-6",
+        "id": "enemy-garnet-capital-gun-top-6",
         "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -79648,7 +80768,7 @@
         "displayHeight": 17.5,
         "facing": "world-6",
         "aimIndex": 6,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -79658,7 +80778,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-garnet-capital-hopper-top-7",
+        "id": "enemy-garnet-capital-gun-top-7",
         "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -79666,7 +80786,7 @@
         "displayHeight": 17.5,
         "facing": "world-7",
         "aimIndex": 7,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -79676,7 +80796,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-garnet-capital-hopper-top-8",
+        "id": "enemy-garnet-capital-gun-top-8",
         "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -79684,7 +80804,7 @@
         "displayHeight": 17.5,
         "facing": "world-8",
         "aimIndex": 8,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -79694,7 +80814,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-garnet-capital-hopper-top-9",
+        "id": "enemy-garnet-capital-gun-top-9",
         "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -79702,7 +80822,7 @@
         "displayHeight": 17.5,
         "facing": "world-9",
         "aimIndex": 9,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -79712,7 +80832,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-garnet-capital-hopper-top-10",
+        "id": "enemy-garnet-capital-gun-top-10",
         "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -79720,7 +80840,7 @@
         "displayHeight": 17.5,
         "facing": "world-10",
         "aimIndex": 10,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -79730,7 +80850,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-garnet-capital-hopper-top-11",
+        "id": "enemy-garnet-capital-gun-top-11",
         "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -79738,7 +80858,7 @@
         "displayHeight": 17.5,
         "facing": "world-11",
         "aimIndex": 11,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -79748,7 +80868,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-garnet-capital-hopper-top-12",
+        "id": "enemy-garnet-capital-gun-top-12",
         "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -79756,7 +80876,7 @@
         "displayHeight": 17.5,
         "facing": "world-12",
         "aimIndex": 12,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -79766,7 +80886,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-garnet-capital-hopper-top-13",
+        "id": "enemy-garnet-capital-gun-top-13",
         "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -79774,7 +80894,7 @@
         "displayHeight": 17.5,
         "facing": "world-13",
         "aimIndex": 13,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -79784,7 +80904,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-garnet-capital-hopper-top-14",
+        "id": "enemy-garnet-capital-gun-top-14",
         "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -79792,7 +80912,7 @@
         "displayHeight": 17.5,
         "facing": "world-14",
         "aimIndex": 14,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -79802,7 +80922,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-garnet-capital-hopper-top-15",
+        "id": "enemy-garnet-capital-gun-top-15",
         "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -79810,7 +80930,295 @@
         "displayHeight": 17.5,
         "facing": "world-15",
         "aimIndex": 15,
-        "top": "hopper",
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-capital-rail-top-0",
+        "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-48-sheet.svg",
+        "width": 48,
+        "height": 48,
+        "displayWidth": 21,
+        "displayHeight": 21,
+        "facing": "world-0",
+        "aimIndex": 0,
+        "top": "rail",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-capital-rail-top-1",
+        "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-48-sheet.svg",
+        "width": 48,
+        "height": 48,
+        "displayWidth": 21,
+        "displayHeight": 21,
+        "facing": "world-1",
+        "aimIndex": 1,
+        "top": "rail",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-capital-rail-top-2",
+        "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-48-sheet.svg",
+        "width": 48,
+        "height": 48,
+        "displayWidth": 21,
+        "displayHeight": 21,
+        "facing": "world-2",
+        "aimIndex": 2,
+        "top": "rail",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-capital-rail-top-3",
+        "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-48-sheet.svg",
+        "width": 48,
+        "height": 48,
+        "displayWidth": 21,
+        "displayHeight": 21,
+        "facing": "world-3",
+        "aimIndex": 3,
+        "top": "rail",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-capital-rail-top-4",
+        "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-48-sheet.svg",
+        "width": 48,
+        "height": 48,
+        "displayWidth": 21,
+        "displayHeight": 21,
+        "facing": "world-4",
+        "aimIndex": 4,
+        "top": "rail",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-capital-rail-top-5",
+        "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-48-sheet.svg",
+        "width": 48,
+        "height": 48,
+        "displayWidth": 21,
+        "displayHeight": 21,
+        "facing": "world-5",
+        "aimIndex": 5,
+        "top": "rail",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-capital-rail-top-6",
+        "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-48-sheet.svg",
+        "width": 48,
+        "height": 48,
+        "displayWidth": 21,
+        "displayHeight": 21,
+        "facing": "world-6",
+        "aimIndex": 6,
+        "top": "rail",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-capital-rail-top-7",
+        "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-48-sheet.svg",
+        "width": 48,
+        "height": 48,
+        "displayWidth": 21,
+        "displayHeight": 21,
+        "facing": "world-7",
+        "aimIndex": 7,
+        "top": "rail",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-capital-rail-top-8",
+        "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-48-sheet.svg",
+        "width": 48,
+        "height": 48,
+        "displayWidth": 21,
+        "displayHeight": 21,
+        "facing": "world-8",
+        "aimIndex": 8,
+        "top": "rail",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-capital-rail-top-9",
+        "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-48-sheet.svg",
+        "width": 48,
+        "height": 48,
+        "displayWidth": 21,
+        "displayHeight": 21,
+        "facing": "world-9",
+        "aimIndex": 9,
+        "top": "rail",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-capital-rail-top-10",
+        "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-48-sheet.svg",
+        "width": 48,
+        "height": 48,
+        "displayWidth": 21,
+        "displayHeight": 21,
+        "facing": "world-10",
+        "aimIndex": 10,
+        "top": "rail",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-capital-rail-top-11",
+        "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-48-sheet.svg",
+        "width": 48,
+        "height": 48,
+        "displayWidth": 21,
+        "displayHeight": 21,
+        "facing": "world-11",
+        "aimIndex": 11,
+        "top": "rail",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-capital-rail-top-12",
+        "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-48-sheet.svg",
+        "width": 48,
+        "height": 48,
+        "displayWidth": 21,
+        "displayHeight": 21,
+        "facing": "world-12",
+        "aimIndex": 12,
+        "top": "rail",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-capital-rail-top-13",
+        "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-48-sheet.svg",
+        "width": 48,
+        "height": 48,
+        "displayWidth": 21,
+        "displayHeight": 21,
+        "facing": "world-13",
+        "aimIndex": 13,
+        "top": "rail",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-capital-rail-top-14",
+        "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-48-sheet.svg",
+        "width": 48,
+        "height": 48,
+        "displayWidth": 21,
+        "displayHeight": 21,
+        "facing": "world-14",
+        "aimIndex": 14,
+        "top": "rail",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "garnet",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-garnet-capital-rail-top-15",
+        "path": "/art/andromeda/enemies/fleetCapitalBroad-parts-48-sheet.svg",
+        "width": 48,
+        "height": 48,
+        "displayWidth": 21,
+        "displayHeight": 21,
+        "facing": "world-15",
+        "aimIndex": 15,
+        "top": "rail",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -98421,7 +99829,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-needle-capital-hopper-top-0",
+        "id": "enemy-needle-capital-gun-top-0",
         "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -98429,7 +99837,7 @@
         "displayHeight": 17.5,
         "facing": "world-0",
         "aimIndex": 0,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -98439,7 +99847,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-needle-capital-hopper-top-1",
+        "id": "enemy-needle-capital-gun-top-1",
         "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -98447,7 +99855,7 @@
         "displayHeight": 17.5,
         "facing": "world-1",
         "aimIndex": 1,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -98457,7 +99865,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-needle-capital-hopper-top-2",
+        "id": "enemy-needle-capital-gun-top-2",
         "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -98465,7 +99873,7 @@
         "displayHeight": 17.5,
         "facing": "world-2",
         "aimIndex": 2,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -98475,7 +99883,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-needle-capital-hopper-top-3",
+        "id": "enemy-needle-capital-gun-top-3",
         "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -98483,7 +99891,7 @@
         "displayHeight": 17.5,
         "facing": "world-3",
         "aimIndex": 3,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -98493,7 +99901,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-needle-capital-hopper-top-4",
+        "id": "enemy-needle-capital-gun-top-4",
         "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -98501,7 +99909,7 @@
         "displayHeight": 17.5,
         "facing": "world-4",
         "aimIndex": 4,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -98511,7 +99919,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-needle-capital-hopper-top-5",
+        "id": "enemy-needle-capital-gun-top-5",
         "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -98519,7 +99927,7 @@
         "displayHeight": 17.5,
         "facing": "world-5",
         "aimIndex": 5,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -98529,7 +99937,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-needle-capital-hopper-top-6",
+        "id": "enemy-needle-capital-gun-top-6",
         "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -98537,7 +99945,7 @@
         "displayHeight": 17.5,
         "facing": "world-6",
         "aimIndex": 6,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -98547,7 +99955,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-needle-capital-hopper-top-7",
+        "id": "enemy-needle-capital-gun-top-7",
         "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -98555,7 +99963,7 @@
         "displayHeight": 17.5,
         "facing": "world-7",
         "aimIndex": 7,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -98565,7 +99973,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-needle-capital-hopper-top-8",
+        "id": "enemy-needle-capital-gun-top-8",
         "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -98573,7 +99981,7 @@
         "displayHeight": 17.5,
         "facing": "world-8",
         "aimIndex": 8,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -98583,7 +99991,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-needle-capital-hopper-top-9",
+        "id": "enemy-needle-capital-gun-top-9",
         "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -98591,7 +99999,7 @@
         "displayHeight": 17.5,
         "facing": "world-9",
         "aimIndex": 9,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -98601,7 +100009,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-needle-capital-hopper-top-10",
+        "id": "enemy-needle-capital-gun-top-10",
         "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -98609,7 +100017,7 @@
         "displayHeight": 17.5,
         "facing": "world-10",
         "aimIndex": 10,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -98619,7 +100027,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-needle-capital-hopper-top-11",
+        "id": "enemy-needle-capital-gun-top-11",
         "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -98627,7 +100035,7 @@
         "displayHeight": 17.5,
         "facing": "world-11",
         "aimIndex": 11,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -98637,7 +100045,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-needle-capital-hopper-top-12",
+        "id": "enemy-needle-capital-gun-top-12",
         "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -98645,7 +100053,7 @@
         "displayHeight": 17.5,
         "facing": "world-12",
         "aimIndex": 12,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -98655,7 +100063,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-needle-capital-hopper-top-13",
+        "id": "enemy-needle-capital-gun-top-13",
         "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -98663,7 +100071,7 @@
         "displayHeight": 17.5,
         "facing": "world-13",
         "aimIndex": 13,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -98673,7 +100081,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-needle-capital-hopper-top-14",
+        "id": "enemy-needle-capital-gun-top-14",
         "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -98681,7 +100089,7 @@
         "displayHeight": 17.5,
         "facing": "world-14",
         "aimIndex": 14,
-        "top": "hopper",
+        "top": "gun",
         "pivot": {
           "x": 0.5,
           "y": 0.5
@@ -98691,7 +100099,7 @@
         "svgSheet": true
       },
       {
-        "id": "enemy-needle-capital-hopper-top-15",
+        "id": "enemy-needle-capital-gun-top-15",
         "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
         "width": 40,
         "height": 40,
@@ -98699,7 +100107,295 @@
         "displayHeight": 17.5,
         "facing": "world-15",
         "aimIndex": 15,
-        "top": "hopper",
+        "top": "gun",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "needle",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-needle-capital-triple-top-0",
+        "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-0",
+        "aimIndex": 0,
+        "top": "triple",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "needle",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-needle-capital-triple-top-1",
+        "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-1",
+        "aimIndex": 1,
+        "top": "triple",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "needle",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-needle-capital-triple-top-2",
+        "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-2",
+        "aimIndex": 2,
+        "top": "triple",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "needle",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-needle-capital-triple-top-3",
+        "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-3",
+        "aimIndex": 3,
+        "top": "triple",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "needle",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-needle-capital-triple-top-4",
+        "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-4",
+        "aimIndex": 4,
+        "top": "triple",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "needle",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-needle-capital-triple-top-5",
+        "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-5",
+        "aimIndex": 5,
+        "top": "triple",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "needle",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-needle-capital-triple-top-6",
+        "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-6",
+        "aimIndex": 6,
+        "top": "triple",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "needle",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-needle-capital-triple-top-7",
+        "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-7",
+        "aimIndex": 7,
+        "top": "triple",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "needle",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-needle-capital-triple-top-8",
+        "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-8",
+        "aimIndex": 8,
+        "top": "triple",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "needle",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-needle-capital-triple-top-9",
+        "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-9",
+        "aimIndex": 9,
+        "top": "triple",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "needle",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-needle-capital-triple-top-10",
+        "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-10",
+        "aimIndex": 10,
+        "top": "triple",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "needle",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-needle-capital-triple-top-11",
+        "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-11",
+        "aimIndex": 11,
+        "top": "triple",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "needle",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-needle-capital-triple-top-12",
+        "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-12",
+        "aimIndex": 12,
+        "top": "triple",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "needle",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-needle-capital-triple-top-13",
+        "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-13",
+        "aimIndex": 13,
+        "top": "triple",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "needle",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-needle-capital-triple-top-14",
+        "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-14",
+        "aimIndex": 14,
+        "top": "triple",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "archetype": "capital",
+        "family": "needle",
+        "svgSheet": true
+      },
+      {
+        "id": "enemy-needle-capital-triple-top-15",
+        "path": "/art/needle/enemies/fleetCapitalCrossbow-parts-40-sheet.svg",
+        "width": 40,
+        "height": 40,
+        "displayWidth": 17.5,
+        "displayHeight": 17.5,
+        "facing": "world-15",
+        "aimIndex": 15,
+        "top": "triple",
         "pivot": {
           "x": 0.5,
           "y": 0.5

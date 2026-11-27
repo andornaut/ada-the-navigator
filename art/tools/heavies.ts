@@ -20,6 +20,7 @@ import {
   type SignatureTier,
 } from "../../src/data/enemySignatures.ts";
 
+import { CAPITAL_TOPS, capitalWeapons } from "./capital-tops.ts";
 import {
   amber,
   amberSide,
@@ -566,10 +567,11 @@ const FRIGATE_POOL: WeaponKind[] = [
   HEAVY_SIGNATURES.frigate.weapon,
   HEAVY_SIGNATURES.frigate.remaining,
 ];
-const CAPITAL_POOL: WeaponKind[] = [
+// Legacy capital model for the retired profile exporter. Fleet designs use their route loadouts.
+const LEGACY_CAPITAL_POOL: WeaponKind[] = [
   HEAVY_SIGNATURES.capital.lance.weapon,
   HEAVY_SIGNATURES.capital.mine.weapon,
-  HEAVY_SIGNATURES.capital.remaining,
+  "scattershot",
 ];
 
 // The weapon table for a class: each weapon in its pool with its top and aim.
@@ -1114,7 +1116,7 @@ export const capital: HeavyCraft = normalizeHeavy({
   mounts: {
     fill: CAPITAL_FILL,
     tiers: CAPITAL_TIERS,
-    weapons: weapons(CAPITAL_Z, CAPITAL_POOL),
+    weapons: weapons(CAPITAL_Z, LEGACY_CAPITAL_POOL),
   },
 });
 
@@ -1339,7 +1341,14 @@ export const archie: HeavyCraft = normalizeHeavy({
   mounts: {
     fill: CAPITAL_FILL,
     tiers: CAPITAL_TIERS,
-    weapons: weapons(ARCHIE_Z, CAPITAL_POOL),
+    weapons: weapons(
+      ARCHIE_Z,
+      capitalWeapons(
+        "archie",
+        CAPITAL_FILL,
+        CAPITAL_TIERS.map(({ positions, armed }) => [positions, armed]),
+      ),
+    ),
   },
 });
 
@@ -1795,6 +1804,11 @@ export function checkMounts(craft: HeavyCraft, layout: MountLayout): void {
   if (JSON.stringify(Object.keys(weaponTops)) !== JSON.stringify(pool)) fail("weaponTops != pool");
   for (const [kind, { aim, top }] of Object.entries(weaponTops)) {
     if (aim !== "target" && aim !== "aft") fail(`${kind} aim ${aim}`);
+    if (craft.name === "archie") {
+      const expected = CAPITAL_TOPS[kind as keyof typeof CAPITAL_TOPS];
+      if (expected?.top !== top || expected.aim !== aim)
+        fail(`${kind} disagrees with the fleet top contract`);
+    }
     const aims = layout.tops[top];
     if (!aims || aims.length !== ENEMY_HEADINGS) fail(`${kind} top ${top} lacks 16 aims`);
     aims!.forEach(({ collision, index, muzzles }, i) => {
@@ -2002,8 +2016,7 @@ const ownsSidecar = (craft: string, kind: SidecarKind) =>
       name === craft && (kind === "hardpoints" || (kind === "jets" && source === "heavies")),
   );
 
-const PART_GROUPS = { archie: 33 } as const;
-type SheetCraft = keyof typeof PART_GROUPS;
+type SheetCraft = "archie";
 type HeadingSelection = { craft: SheetCraft; section: "part" | "hull" };
 
 // Use the checked Frigate viewport as the ceiling for hull sheet XML.
@@ -2084,7 +2097,11 @@ function heavyHeadingSheets(
 ) {
   const { manifest, prefix, directory } = target;
   const { craft, section } = selection;
-  const expectedGroups = selection.section === "part" ? PART_GROUPS[selection.craft] : 1;
+  const expectedGroups =
+    selection.section === "part"
+      ? archie.hardpoints.reduce((count, { model }) => count + spriteStates(model).length, 0) +
+        Object.keys(archie.mounts!.weapons).length
+      : 1;
   const part = (entry: Entry) => entry.hardpoint !== undefined || entry.top !== undefined;
   const owns = (entry: Entry) => entry.archetype === craft && part(entry) === (section === "part");
   const installed: Entry[] = readManifest(manifest).assets;
@@ -2118,9 +2135,9 @@ function heavyHeadingSheets(
   if (
     groups.size !== expectedGroups ||
     selected.length !== expectedGroups * ENEMY_HEADINGS ||
-    current.length !== selected.length ||
+    (!batch && current.length !== selected.length) ||
     currentById.size !== current.length ||
-    (packed !== 0 && packed !== selected.length)
+    (packed !== 0 && packed !== current.length)
   ) {
     throw new Error(
       `${manifest} must own ${expectedGroups} complete ${craft} ${section} groups, all standalone or all sheets`,
@@ -2132,11 +2149,31 @@ function heavyHeadingSheets(
   const retired = new Set<string>();
   const ownedPaths = new Set<string>();
   const finish = () => {
-    const manifestNames: ManifestFile[] = ["core", ...GALAXIES];
-    const allAssets: Entry[] = manifestNames.flatMap((name) => readManifest(name).assets);
-    const referrer = allAssets.find(
-      ({ id, path }) => !replacements.has(id) && typeof path === "string" && ownedPaths.has(path),
+    const retiredTopIds = new Set(
+      batch
+        ? current
+            .filter(
+              ({ id, top, aimIndex }) =>
+                typeof top === "string" &&
+                typeof aimIndex === "number" &&
+                Number.isInteger(aimIndex) &&
+                aimIndex >= 0 &&
+                aimIndex < ENEMY_HEADINGS &&
+                id === `${prefix}${craft}-${top}-top-${aimIndex}` &&
+                !groups.has(`${craft}-${top}-top`),
+            )
+            .map(({ id }) => id)
+        : [],
     );
+    const manifestNames: ManifestFile[] = ["core", ...GALAXIES];
+    const referrer = manifestNames
+      .flatMap((name) => (readManifest(name).assets as Entry[]).map((entry) => ({ name, entry })))
+      .find(
+        ({ name, entry: { id, path } }) =>
+          !(name === manifest && (replacements.has(id) || retiredTopIds.has(id))) &&
+          typeof path === "string" &&
+          ownedPaths.has(path),
+      )?.entry;
     if (referrer) {
       throw new Error(`${craft} ${section} packing would replace art used by ${referrer.id}`);
     }
@@ -2173,7 +2210,7 @@ function heavyHeadingSheets(
           row.path !== directory + file ||
           !standalone?.startsWith(root) ||
           !standalone.endsWith("</svg>") ||
-          !isDeepStrictEqual(currentById.get(row.id), replacement)
+          (row.top === undefined && !isDeepStrictEqual(currentById.get(row.id), replacement))
         ) {
           throw new Error(`Invalid ${manifest} ${craft} part batch selection or source: ${row.id}`);
         }

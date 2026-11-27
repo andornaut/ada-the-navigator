@@ -697,6 +697,13 @@ export const HEAVY_TOPS: Readonly<
   frigate: { gun: gunTop, rail: railTop },
   capital: { spread: spreadTop, lance: lanceTop, hopper: hopperTop },
 };
+export const CAPITAL_TOP_BUILDERS = {
+  ...HEAVY_TOPS.capital,
+  gun: gunTop,
+  triple: tripleTop,
+  pod: podTop,
+  rail: railTop,
+} as Readonly<Record<string, TopBuilder>>;
 export const HEAVY_MOUNT_RADIUS = MOUNT_RADIUS;
 
 // ------------------------------------------------------------------ retaliators

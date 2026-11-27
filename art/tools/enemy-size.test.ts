@@ -220,12 +220,18 @@ test("heavy top exports contain only the adopted canonical signature weapons", (
   const frigate = heavies.find(({ name }) => name === "frigate")!;
   const capital = heavies.find(({ name }) => name === "capital")!;
   assert.deepEqual(Object.keys(frigate.mounts!.weapons).sort(), ["heavyMissile", "laser"]);
+  assert.deepEqual(Object.keys(capital.mounts!.weapons).sort(), [
+    "chargedLance",
+    "mineLayer",
+    "scattershot",
+  ]);
+  assert.deepEqual(Object.keys(archie.mounts!.weapons).sort(), [
+    "chargedLance",
+    "heavyMissile",
+    "laser",
+    "mineLayer",
+  ]);
   for (const model of [capital, archie]) {
-    assert.deepEqual(Object.keys(model.mounts!.weapons).sort(), [
-      "chargedLance",
-      "mineLayer",
-      "scattershot",
-    ]);
     assert.equal(model.mounts!.weapons.mineLayer!.aim, "aft");
     for (const weapon of Object.values(model.mounts!.weapons)) {
       assert.ok(weapon!.top.muzzles.length > 0);

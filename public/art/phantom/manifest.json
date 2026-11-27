@@ -13576,6 +13576,278 @@
       "archetype": "capital"
     },
     {
+      "id": "enemy-capitalForked-gun-top-0",
+      "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-0",
+      "aimIndex": 0,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalForked-gun-top-1",
+      "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-1",
+      "aimIndex": 1,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalForked-gun-top-2",
+      "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-2",
+      "aimIndex": 2,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalForked-gun-top-3",
+      "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-3",
+      "aimIndex": 3,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalForked-gun-top-4",
+      "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-4",
+      "aimIndex": 4,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalForked-gun-top-5",
+      "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-5",
+      "aimIndex": 5,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalForked-gun-top-6",
+      "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-6",
+      "aimIndex": 6,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalForked-gun-top-7",
+      "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-7",
+      "aimIndex": 7,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalForked-gun-top-8",
+      "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-8",
+      "aimIndex": 8,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalForked-gun-top-9",
+      "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-9",
+      "aimIndex": 9,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalForked-gun-top-10",
+      "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-10",
+      "aimIndex": 10,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalForked-gun-top-11",
+      "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-11",
+      "aimIndex": 11,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalForked-gun-top-12",
+      "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-12",
+      "aimIndex": 12,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalForked-gun-top-13",
+      "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-13",
+      "aimIndex": 13,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalForked-gun-top-14",
+      "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-14",
+      "aimIndex": 14,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
+      "id": "enemy-capitalForked-gun-top-15",
+      "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
+      "svgSheet": true,
+      "width": 40,
+      "height": 40,
+      "displayWidth": 17.5,
+      "displayHeight": 17.5,
+      "facing": "world-15",
+      "aimIndex": 15,
+      "top": "gun",
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "archetype": "capital"
+    },
+    {
       "id": "enemy-capitalForked-prow-left-intact-0",
       "path": "/art/phantom/enemies/fleetCapitalForked-parts-40-sheet.svg",
       "svgSheet": true,

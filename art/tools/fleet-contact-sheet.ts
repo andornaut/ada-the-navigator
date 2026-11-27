@@ -3,10 +3,8 @@
 // capital, every heading of each craft at 1x and 2x display size on the field of each galaxy that
 // flies it, with the 1 px ink keyline. A craft with hardpoints is composed as the game composes it,
 // hull then bases then tops. A retaliator shows once aimed ahead and once aimed 112.5 degrees off
-// the bow; a frigate shows fully armed and aimed ahead, then at route positions 1 to 2 (spine and
-// bow capped) aimed off the bow, then with every hardpoint destroyed. A capital shows its lance
-// profile fully armed and aimed ahead, its mine profile aimed off the bow with the hopper held aft,
-// route positions 1 to 2 (the claw and stern pairs capped), then every hardpoint destroyed.
+// the bow. Frigates show the full and early tiers. Capitals show the named and ordinary route
+// loadouts with their tier's caps and any aft hoppers. Both show a destroyed row.
 // `<dir>/fleet-weapon-tops.svg` shows every weapon top on a mount collar at its 16 aims, at 1x, 2x
 // and 4x. `<dir>/fleet-prow-lasers-{key}.svg` shows each frigate and capital at the even headings,
 // fully armed and aimed ahead, then with its fixed front Lasers destroyed, then armed with a debug
@@ -14,6 +12,7 @@
 // it fires along as a line.
 import { mkdirSync, writeFileSync } from "node:fs";
 
+import { CAPITAL_TOPS, capitalLoadouts, fleetCapitalDesign } from "./capital-tops.ts";
 import { DISPLAY_SCALE } from "./crafts.ts";
 import {
   baseFrame,
@@ -88,24 +87,14 @@ function rows(craft: Scaled): Row[] {
     `<svg x="${x - size / 2}" y="${y - size / 2}" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${inner(svg)}</svg>`;
   if (craft.layers && craft.tops) {
     const drawn = heavyFrames(craft);
-    const { fill, weaponTops } = HEAVY_LAYOUTS[craft.archetype as keyof typeof HEAVY_LAYOUTS];
+    const { fill } = HEAVY_LAYOUTS[craft.archetype as keyof typeof HEAVY_LAYOUTS];
     const capital = craft.archetype === "capital";
-    // The top on each mount: the class's special weapon on `special`, its common one elsewhere.
-    const load = (special: string, top: string, common: string) =>
-      Object.fromEntries(fill.map((id) => [id, id === special ? top : common]));
-    const lance = capital ? load("weapon-left", "lance", "spread") : load("port", "rail", "gun");
-    const mine = load("stern-right", "hopper", "spread");
-    const fixed = new Set(
-      Object.values(weaponTops)
-        .filter(({ aim }) => aim === "aft")
-        .map(({ top }) => top),
-    );
-    const outer = new Set(fill.slice(0, capital ? 4 : 2));
+    const frigate = Object.fromEntries(fill.map((id) => [id, id === "port" ? "rail" : "gun"]));
     const compose = (
       state: (id: string) => string,
       tops: boolean,
       turn: number,
-      armed: Record<string, string> = lance,
+      armed: Record<string, string> = frigate,
     ) =>
       headings.map((yaw) => ({
         silhouette: hulls[yaw]!.silhouette,
@@ -121,21 +110,25 @@ function rows(craft: Scaled): Row[] {
             );
             if (!tops || !pivot || state(id) !== "intact" || hidden(drawn, layer, yaw)) return base;
             const name = armed[id]!;
-            const aim = (yaw + (fixed.has(name) ? ENEMY_HEADINGS / 2 : turn)) % ENEMY_HEADINGS;
+            const aim = (yaw + (name === "hopper" ? ENEMY_HEADINGS / 2 : turn)) % ENEMY_HEADINGS;
             return base + nested(craft.tops![name]!.frame, pivot, drawn.tops.get(name)![aim]!.svg);
           })
           .join(""),
       }));
-    const early = (id: string) =>
-      craft.layers!.find((layer) => layer.id === id)!.role !== "turret" || outer.has(id)
-        ? "intact"
-        : "capped";
-    return [
-      compose(() => "intact", true, 0),
-      ...(capital ? [compose(() => "intact", true, OFF_BOW, mine)] : []),
-      compose(early, true, OFF_BOW),
-      compose(() => "destroyed", false, 0),
-    ];
+    const state = (armed: readonly string[]) => (id: string) =>
+      fill.includes(id) && !armed.includes(id) ? "capped" : "intact";
+    const combat = capital
+      ? capitalLoadouts(fleetCapitalDesign(craft.key), fill, HEAVY_LAYOUTS.capital.tiers).map(
+          ({ weapons }, index) =>
+            compose(
+              state([...weapons.keys()]),
+              true,
+              index === 0 ? 0 : OFF_BOW,
+              loadoutTops(weapons),
+            ),
+        )
+      : [compose(() => "intact", true, 0), compose(state(fill.slice(0, 2)), true, OFF_BOW)];
+    return [...combat, compose(() => "destroyed", false, 0)];
   }
   if (!craft.base || !craft.top) {
     return [hulls.map(({ silhouette, svg }) => ({ silhouette, body: inner(svg) }))];
@@ -157,6 +150,12 @@ function rows(craft: Scaled): Row[] {
   );
 }
 
+function loadoutTops(weapons: ReadonlyMap<string, string>): Record<string, string> {
+  return Object.fromEntries(
+    [...weapons].map(([id, weapon]) => [id, CAPITAL_TOPS[weapon as keyof typeof CAPITAL_TOPS].top]),
+  );
+}
+
 // The prow Lasers' review rows of a frigate or capital at the even headings: armed and aimed
 // ahead, with the Lasers destroyed, and armed with the shot origins and facings marked.
 function prowRows(craft: Scaled): Row[] {
@@ -166,10 +165,13 @@ function prowRows(craft: Scaled): Row[] {
   const layers = [...craft.layers!, ...craft.lasers!];
   const lasers = new Set(craft.lasers!.map(({ id }) => id));
   const { fill } = HEAVY_LAYOUTS[craft.archetype as keyof typeof HEAVY_LAYOUTS];
-  const capital = craft.archetype === "capital";
-  const special = capital ? "weapon-left" : "port";
-  const armed = (id: string) =>
-    id === special ? (capital ? "lance" : "rail") : capital ? "spread" : "gun";
+  const armed =
+    craft.archetype === "capital"
+      ? loadoutTops(
+          capitalLoadouts(fleetCapitalDesign(craft.key), fill, HEAVY_LAYOUTS.capital.tiers)[0]!
+            .weapons,
+        )
+      : Object.fromEntries(fill.map((id) => [id, id === "port" ? "rail" : "gun"]));
   const nested = (size: number, [x, y]: readonly [number, number], svg: string) =>
     `<svg x="${x - size / 2}" y="${y - size / 2}" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${inner(svg)}</svg>`;
   const compose = (destroyed: boolean, marked: boolean) =>
@@ -178,11 +180,19 @@ function prowRows(craft: Scaled): Row[] {
         if (id === "hull") return inner(hulls[index]!.svg);
         const layer = layers.find((entry) => entry.id === id)!;
         const { anchor, pivot } = layerPlacement(craft, layer, yaw);
-        const state = destroyed && lasers.has(id) ? "destroyed" : "intact";
+        const state =
+          destroyed && lasers.has(id)
+            ? "destroyed"
+            : fill.includes(id) && !armed[id]
+              ? "capped"
+              : "intact";
         const base = nested(layer.frame, anchor, drawn.bases.get(`${id}-${state}`)![yaw]!.svg);
         if (!pivot || !fill.includes(id) || hidden(drawn, layer, yaw)) return base;
-        const top = craft.tops![armed(id)]!;
-        return base + nested(top.frame, pivot, drawn.tops.get(armed(id))![yaw]!.svg);
+        const name = armed[id];
+        if (!name) return base;
+        const aim = name === "hopper" ? (yaw + ENEMY_HEADINGS / 2) % ENEMY_HEADINGS : yaw;
+        const top = craft.tops![name]!;
+        return base + nested(top.frame, pivot, drawn.tops.get(name)![aim]!.svg);
       });
       const [fx, fy] = vector(ENEMY_HEADINGS, yaw, [0, -1, 0]);
       const reach = 80 / Math.hypot(fx, fy);
@@ -217,7 +227,8 @@ function archieProw(): { frame: number; rows: Row[] } {
     }[];
   };
   const lasers = new Set(styled.hardpoints.filter(({ model }) => model.muzzle).map(({ id }) => id));
-  const fill = new Set(styled.mounts!.fill);
+  const { fill, tiers } = HEAVY_LAYOUTS.capital;
+  const armed = loadoutTops(capitalLoadouts("archie", fill, tiers)[0]!.weapons);
   const frameOf = (svg: string) => Number(/viewBox="0 0 (\d+)/u.exec(svg)![1]);
   const nested = (file: string, [x, y]: readonly [number, number]) => {
     const svg = files.get(file)!;
@@ -236,9 +247,10 @@ function archieProw(): { frame: number; rows: Row[] } {
         const placed = heading.hardpoints.find((part) => part.id === id)!;
         const state = destroyed && lasers.has(id) ? "destroyed" : "intact";
         const base = nested(`archie-${id}-${state}-${yaw}.svg`, placed.anchor);
-        if (!placed.pivot || !fill.has(id)) return base;
-        const top = id === "weapon-left" ? "lance" : "spread";
-        return base + nested(`archie-${top}-top-${yaw}.svg`, placed.pivot);
+        const top = armed[id];
+        if (!placed.pivot || !top) return base;
+        const aim = top === "hopper" ? (yaw + ENEMY_HEADINGS / 2) % ENEMY_HEADINGS : yaw;
+        return base + nested(`archie-${top}-top-${aim}.svg`, placed.pivot);
       });
       const [fx, fy] = vector(ENEMY_HEADINGS, yaw, [0, -1, 0]);
       const reach = 80 / Math.hypot(fx, fy);
