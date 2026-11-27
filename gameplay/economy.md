@@ -65,8 +65,8 @@ The range is the same in every galaxy. Fighter escorts use the fighter range.
 | Hostile station |             10–20 |      15 |
 
 For a frigate, capital ship or turret platform, salvage pays half the rolled
-value, rounded down. Destroying the hull pays the full roll. The finale flagship pays 44 on salvage. A discovery
-cache pays 4.
+value, rounded down. Destroying the hull pays the full roll. The finale
+flagship pays 44 on salvage. A discovery cache pays 4.
 
 Disabling a heavy does not destroy it. Fleeing, unloading,
 despawning or restoring a survivor does not grant defeat loot, and a released

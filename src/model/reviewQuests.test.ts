@@ -134,8 +134,8 @@ describe("job board review decisions", () => {
     const identity = { id: "field:platform", seed: 1 };
     const destroyed = rollEnemyDrop(ECONOMY, identity, "platform", () => 0.999);
     const salvaged = rollSalvageDrop(ECONOMY, identity, "platform", () => 0.999);
-    expect(destroyed.stardust).toBeGreaterThanOrEqual(4);
-    expect(destroyed.stardust).toBeLessThanOrEqual(10);
+    expect(destroyed.stardust).toBeGreaterThanOrEqual(10);
+    expect(destroyed.stardust).toBeLessThanOrEqual(20);
     expect(salvaged.stardust).toBe(Math.floor(destroyed.stardust / 2));
   });
 });
