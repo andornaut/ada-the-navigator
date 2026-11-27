@@ -10,8 +10,8 @@ import { writeSprites } from "./sprite-sheet.ts";
 type Colours = Readonly<Record<string, string>>;
 
 // Recolours Chibi's control sheets to Ada's dark lavender palette (ui-close is drawn by
-// art/tools/card-close.ts). Only the listed colours change;
-// every other pixel, alpha, frame, tag and slice is copied from the source sheet.
+// art/tools/card-close.ts) and squares the bottom corners of the text button skins.
+// Frame, tag and slice metadata comes from the source sheet.
 // Usage: node art/tools/controls.ts <chibis-way-home checkout>/public/art/sprites
 const RECOLOURS: Readonly<Record<string, Colours>> = {
   "ui-button": { "5a6988": "5f5980", "8b9bb4": "9690b4" },
@@ -46,6 +46,7 @@ const TAG_RECOLOURS: Readonly<Record<string, Readonly<Record<string, Colours>>>>
 
 // Sheets drawn from a differently named source sheet.
 const SOURCES: Readonly<Record<string, string>> = { "ui-button-tile": "ui-button" };
+const SQUARE_BOTTOM_SHEETS = new Set(["ui-button", "ui-button-primary", "ui-button-tile"]);
 
 interface AsepriteData {
   frames: Record<
@@ -98,13 +99,22 @@ async function recolour(
   if (unused.size > 0) {
     throw new RangeError(`${key} lacks source colours ${[...unused].join(", ")}`);
   }
+  const centre = data.meta.slices?.[0]?.keys[0]?.center;
+  if (centre && SQUARE_BOTTOM_SHEETS.has(key)) {
+    for (const frame of frames) {
+      for (const row of frame.slice(centre.y + centre.h)) {
+        const right = row.length - 1;
+        row[0] ??= row[1] ?? null;
+        row[right] ??= row[right - 1] ?? null;
+      }
+    }
+  }
   const durations = Object.values(data.frames).map((frame) => frame.duration);
   const tags: Tag[] = data.meta.frameTags.map(({ from, name, to }) => [
     name,
     frames.slice(from, to + 1),
     durations.slice(from, to + 1),
   ]);
-  const centre = data.meta.slices?.[0]?.keys[0]?.center;
   const [first] = frames;
   const options: { key: string; margins?: Margins } = { key };
   if (centre && first?.[0]) {
