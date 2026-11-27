@@ -183,7 +183,8 @@ function validCartwheelPatrol(value: unknown, time: unknown): boolean {
     [approach, bypass].every(
       (path) => Array.isArray(path) && path.length === 2 && path.every(vector),
     ) &&
-    (warnedAt === undefined || (nonnegative(warnedAt) && finite(time) && warnedAt <= time))
+    (warnedAt === undefined ||
+      (finite(warnedAt) && warnedAt >= 0 && finite(time) && warnedAt <= time))
   );
 }
 
