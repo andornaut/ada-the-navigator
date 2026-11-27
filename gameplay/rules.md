@@ -1063,7 +1063,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
     2 damage at every level. Levels increase its fire rate (every 0.50, 0.40,
     0.30 s) and missile speed.
   - Heavy Missile: one slow straight missile with a large blast (radius 60),
-    every 2.0 s at every level. Damage is 5, 6 and 7 at levels 1, 2 and 3.
+    every 2.0 s at every level. Damage is 5, 7 and 9 at levels 1, 2 and 3.
     Rapid Missile remains faster at every level.
   - Scattershot: the close-range weapon, a shotgun of visual dots across -30 to
     30 degrees, 7 at level 1, then 9, then 11, one volley every 1.0 s. Its range
@@ -1103,7 +1103,7 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   projectiles fly at 0.6 times Ada's level 1 speed for the weapon from forward-gun
   ships and 0.8 times from heavies. An enemy
   fires only while it is inside the visible game area. An enemy Heavy Missile
-  hit removes 5, 6 or 7 HP at levels 1, 2 and 3.
+  hit removes 5, 7 or 9 HP at levels 1, 2 and 3.
 - Laser bolts travel at 500, 600 and 700 world units per second at weapon
   levels 1, 2 and 3; Multi-Laser bolts at 400 at every level. Laser and Multi-Laser bolts and Phaser
   beams, Ada's and enemies' alike, use the same fire-time rounded coverage
