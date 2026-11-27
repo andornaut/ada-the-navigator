@@ -51,13 +51,36 @@ function reachOf(object: SpaceObject): number {
   return silhouetteWorldReach(sceneryShape(object)!.silhouette);
 }
 
+/** A canonical pair is clear on this axis if neither the direct gap nor its seam image fits. */
+function separatedOnAxis(a: number, b: number, reach: number, halfSide?: number): boolean {
+  const gap = Math.abs(a - b);
+  return (
+    gap > reach &&
+    (halfSide === undefined ||
+      (a >= -halfSide &&
+        a < halfSide &&
+        b >= -halfSide &&
+        b < halfSide &&
+        2 * halfSide - gap > reach))
+  );
+}
+
 /** Rock `a`'s drawn outline against rock `b`'s, at their current frames; the contact pushes `a`. */
 export function rocksContact(
   context: RicochetContext,
   a: SpaceObject,
   b: SpaceObject,
 ): Contact | null {
-  if (worldDistance(context.world, a, b) >= reachOf(a) + reachOf(b)) {
+  return rockContact(context, a, b, reachOf(a) + reachOf(b));
+}
+
+function rockContact(
+  context: RicochetContext,
+  a: SpaceObject,
+  b: SpaceObject,
+  reach: number,
+): Contact | null {
+  if (worldDistance(context.world, a, b) >= reach) {
     return null;
   }
   const own = sceneryShape(a)!.silhouette;
@@ -149,6 +172,7 @@ export function ricochetRocks(
   }
   const grid = periodicWorldGrid(context.world, context.chunkSize);
   const maximumReach = Math.max(...rocks.map(reachOf));
+  const halfSide = grid.worldSide === undefined ? undefined : grid.worldSide / 2;
   for (let pass = 0; pass < RICOCHET_PASSES; pass++) {
     const cells = new Map<string, SpaceObject[]>();
     for (const rock of rocks) {
@@ -167,12 +191,22 @@ export function ricochetRocks(
       if (!a.velocity) {
         continue;
       }
-      for (const at of worldCellsNear(grid, reachOf(a) + maximumReach, a)) {
+      const reach = reachOf(a);
+      for (const at of worldCellsNear(grid, reach + maximumReach, a)) {
         for (const b of cells.get(worldCellKey(grid, at)) ?? []) {
           if (b === a || (moving.has(a) && moving.has(b) && b.id < a.id)) {
             continue;
           }
-          const contact = rocksContact(context, a, b);
+          const combinedReach = reach + reachOf(b);
+          // Leave floating-point boundary decisions and aliases to the original distance check.
+          const limit = combinedReach * (1 + 4 * Number.EPSILON);
+          if (
+            separatedOnAxis(a.x, b.x, limit, halfSide) ||
+            separatedOnAxis(a.y, b.y, limit, halfSide)
+          ) {
+            continue;
+          }
+          const contact = rockContact(context, a, b, combinedReach);
           if (contact) {
             ricochet(context, tuning, contact, a, b);
             touched = true;

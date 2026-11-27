@@ -12,6 +12,8 @@ import {
   rocksContact,
 } from "./rockRicochet.ts";
 import type { FlightInput, FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
+import { worldDelta } from "./worldContacts.ts";
+import { wrapCoordinate } from "./worldGeometry.ts";
 
 const RULES = CONTENT.tuning.flight.rockRicochet;
 const context: RicochetContext = {
@@ -193,6 +195,32 @@ describe("rock ricochet", () => {
     expect(overlapping(rocks)).not.toEqual([]);
     ricochetRocks(context, RULES, rocks);
     expect(overlapping(rocks)).toEqual([]);
+  });
+
+  it.each([0, 4096])("resolves the same contact across the seam with a %i-unit alias", (alias) => {
+    const still = rock("still", smallest, { x: 0, y: 0 });
+    const moving = mover("a", smallest, { x: 0, y: 0 }, { x: -40, y: 0 });
+    touching(moving, still);
+    const near = [still, moving];
+    const world = { worldSide: 4096 };
+    const origin = { x: world.worldSide / 2 - 10, y: 0 };
+    const seam = structuredClone(near);
+    for (const object of seam) {
+      object.x = wrapCoordinate(world.worldSide, object.x + origin.x);
+    }
+    expect(seam[0]!.x).toBeGreaterThan(0);
+    expect(seam[1]!.x).toBeLessThan(0);
+    seam[1]!.x += alias;
+    ricochetRocks(context, RULES, near);
+    ricochetRocks({ ...context, world }, RULES, seam);
+    for (const [index, object] of seam.entries()) {
+      const local = worldDelta(world, origin, object);
+      expect(local.x).toBeCloseTo(near[index]!.x, 9);
+      expect(local.y).toBeCloseTo(near[index]!.y, 9);
+      expect(object.velocity!.x).toBeCloseTo(near[index]!.velocity!.x, 9);
+      expect(object.velocity!.y).toBeCloseTo(near[index]!.velocity!.y, 9);
+      expect(object.settle).toBe(near[index]!.settle);
+    }
   });
 
   it("ignores rocks outside the moving rocks' neighbourhood", () => {
