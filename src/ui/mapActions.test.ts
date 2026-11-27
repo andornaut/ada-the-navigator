@@ -432,12 +432,15 @@ it("never invokes an unavailable standard action outside its current live view",
   let current = true;
   const run = vi.fn();
   const refuse = vi.fn();
+  const availability = vi.fn(() => ({ kind: "unavailable" as const, reason: "Danger" }));
   const action = createStandardTextAction(root, "Travel here", {
-    availability: () => ({ kind: "unavailable", reason: "Danger" }),
+    availability,
     current: () => current && inCurrentView(root, action.element),
     refuse,
     run,
   });
+  expect(availability).toHaveBeenCalledExactlyOnceWith(action.element);
+  expect(action.element.getAttribute("aria-disabled")).toBe("true");
   f.attach(action.element);
   const button = action.element as unknown as Element;
   f.click(0);

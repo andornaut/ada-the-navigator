@@ -7,7 +7,7 @@ import { readViewUnit } from "./layout/viewScale.ts";
 
 interface StandardTextActionOptions {
   readonly availability: (
-    button: HTMLButtonElement | undefined,
+    button: HTMLButtonElement,
   ) => ControlAvailability | { readonly kind: "disabled" };
   readonly current: () => boolean;
   readonly run: () => void;
@@ -24,7 +24,6 @@ export function createStandardTextAction(
   label: string,
   options: StandardTextActionOptions,
 ) {
-  const state: { button?: HTMLButtonElement } = {};
   const tryRefusal = () => {
     // Kit can report an unavailable click even when getAction returned null.
     if (options.availability(kit.element).kind !== "unavailable") {
@@ -47,8 +46,8 @@ export function createStandardTextAction(
       const action = resolveAdaHoldAction(root, kit.element);
       return action?.available() ? action : null;
     },
-    getState: () => {
-      const availability = options.availability(state.button);
+    getState: (button) => {
+      const availability = options.availability(button);
       return {
         availability:
           options.refuse && options.pointerRefusal && availability.kind === "unavailable"
@@ -65,7 +64,6 @@ export function createStandardTextAction(
     ...(options.reason ? { reason: options.reason } : {}),
     rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: SCROLL.dragThreshold },
   });
-  state.button = kit.element;
   const registered = bindAdaAction(
     {
       click: {
