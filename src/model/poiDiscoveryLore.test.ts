@@ -592,8 +592,12 @@ it("guides a sensed Pip arrival before introduction and inspection without takin
   expect(model.state.docked).toBeNull();
   expect(model.state.dialogue).toBeNull();
   expect(model.state.tasks[5]).toBeUndefined();
-  expect(model.contextAction).toBeUndefined();
+  expect(model.contextAction).toBe("use");
+  expect(model.state.notice).toBe("");
   expect(hear(model)).not.toContain(beforeIntro);
+  model.interact();
+  expect(model.state.notice).toBe(beforeIntro);
+  expect(model.state.dialogue).toBeNull();
 
   const station = worldNearestSettlerStation(flightStationContext(flight), ECONOMY, flight.player);
   ensureStation(CONTENT, station.id, flight);

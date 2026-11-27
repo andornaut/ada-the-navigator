@@ -200,6 +200,7 @@ export function andromedaAction(
       worldStationById(flightStationContext(flight), ECONOMY, 5, destination)) ||
     (progress.stage === 3 && destination === target?.station) ||
     (progress.stage === 4 && destination === target?.settlement) ||
+    (progress.stage === 6 && destination === ANDROMEDA_PLACES.beacon) ||
     (destination === ANDROMEDA_PLACES.pip &&
       (relevant(progress, "confession") || relevant(progress, "holodisk")))
   ) {
@@ -533,6 +534,7 @@ export function stepAndromeda(
 }
 
 export const ANDROMEDA_RUNTIME: ChapterRuntime = {
+  action: andromedaAction,
   afterStep: stepAndromeda,
   beforeStep: pageAndromedaWorld,
   choose: chooseAndromeda,

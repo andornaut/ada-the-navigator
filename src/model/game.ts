@@ -3,7 +3,7 @@ import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
 import { ACTIVITIES, MINING_CONTRACT_DEPOSITS, SUPPLY_ITEMS } from "../data/activities.ts";
-import { ANDROMEDA_LANE_COURIER, ANDROMEDA_PLACES } from "../data/andromeda.ts";
+import { ANDROMEDA_CHAPTER, ANDROMEDA_LANE_COURIER, ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import {
   type CapitalBossHud,
   CARTWHEEL_CLAIM,
@@ -423,6 +423,7 @@ export type { JobRow } from "./game/jobBoard.ts";
 export { newProgress } from "./progress.ts";
 
 // The dialogue marker that holds the flight under the holodisk moment's story pages.
+const ANDROMEDA_STATION_HINT = "Ask at a settlers’ station about the guide beacons.";
 const HOLODISK_MOMENT = "holodiskMoment";
 const NAMED_CAPITAL_IDS: Partial<Record<GalaxyNumber, string>> = {
   1: SUNFLOWER_CAPITAL_BOSS.id,
@@ -1011,7 +1012,7 @@ export class GameModel {
     if (flight.galaxy === 5 && id === ANDROMEDA_PLACES.pip) {
       const progress = this.state.progress[5];
       const text = !progress.introduced
-        ? "Ask at a settlers’ station about the guide beacons."
+        ? ANDROMEDA_STATION_HINT
         : progress.stage === 1
           ? "Check the dark guide beacon first."
           : this.objectiveFor(flight.galaxy);
@@ -2386,7 +2387,7 @@ export class GameModel {
   }
 
   /** What Use does here, or undefined with nothing in reach. */
-  get contextAction(): UseAction | undefined {
+  private get availableContextAction(): UseAction | undefined {
     if (
       this.suspendedInteraction?.galaxy === this.state.flight?.galaxy &&
       !this.state.dialogue &&
@@ -2429,7 +2430,72 @@ export class GameModel {
     if (this.state.flight?.galaxy === 1 && id === questItemDestination(this.current)) {
       return "deliver";
     }
-    return "talk";
+    return context?.flight.galaxy === 5 ? undefined : "talk";
+  }
+
+  /** A known Andromeda place without a current material action still responds to Use. */
+  private andromedaUseHintTarget(): string | undefined {
+    const flight = this.state.flight;
+    if (
+      flight?.galaxy !== 5 ||
+      this.screen !== "space" ||
+      this.state.docked ||
+      this.state.dialogue
+    ) {
+      return undefined;
+    }
+    const place = this.nearest();
+    if (place !== undefined) {
+      return place;
+    }
+    if (!this.current.charted.length && !this.current.explorationSites) {
+      return undefined;
+    }
+    const world = flightWorldContext(flight);
+    return this.scannableSites(flight)
+      .filter((site) => this.scannedSite(site.id))
+      .map((site) => ({ gap: worldDistance(world, flight.player, site), id: site.id }))
+      .filter(({ gap }) => gap <= this.content.tuning.talkRange)
+      .sort((a, b) => a.gap - b.gap)[0]?.id;
+  }
+
+  get contextAction(): UseAction | undefined {
+    const action = this.availableContextAction;
+    if (action !== undefined) {
+      return action;
+    }
+    return this.andromedaUseHintTarget() && !this.contextQuestDetails ? "use" : undefined;
+  }
+
+  private showAndromedaUseHint(id: string): void {
+    const flight = this.state.flight;
+    if (!flight) {
+      return;
+    }
+    if (this.scannedSite(id)) {
+      const site = this.scannableSites(flight).find((candidate) => candidate.id === id);
+      if (site) {
+        this.notify(
+          fill(LANDMARK_SCAN_COPY.outcomeRemembered, {
+            target: landmarkLabel((key) => this.label(key), site),
+          }),
+        );
+        return;
+      }
+    }
+    const progress = this.state.progress[5];
+    const objective = this.objectiveId(5);
+    const known =
+      objective && (progress.known.includes(objective) || progress.stations.includes(objective));
+    const text =
+      progress.stage === 0
+        ? id === ANDROMEDA_PLACES.pip
+          ? ANDROMEDA_STATION_HINT
+          : ANDROMEDA_CHAPTER.objectives[0]
+        : known && objective !== id && !progress.questComplete
+          ? this.objectiveFor(5)
+          : MAPPED_PLACE_RETURN_LINE.text;
+    this.notify(text ?? MAPPED_PLACE_RETURN_LINE.text);
   }
   /**
    * The destination or station Use acts on and its action, for the Use callout above it;
@@ -2440,7 +2506,12 @@ export class GameModel {
     if (action === undefined || action === "tow" || this.suspendedInteraction) {
       return undefined;
     }
-    const id = action === "scan" ? this.nearestScan()?.id : this.nearest();
+    const id =
+      action === "scan"
+        ? this.nearestScan()?.id
+        : action === "use" && this.availableContextAction === undefined
+          ? this.andromedaUseHintTarget()
+          : this.nearest();
     return id === undefined ? undefined : { action, id };
   }
   /** Read-only Use fallback. Every available interaction takes priority on every visit. */
@@ -2452,8 +2523,8 @@ export class GameModel {
       this.state.dialogue ||
       this.state.docked ||
       this.suspendedInteraction ||
-      this.contextAction !== undefined ||
-      this.nearest() !== undefined
+      this.availableContextAction !== undefined ||
+      (flight.galaxy !== 5 && this.nearest() !== undefined)
     ) {
       return null;
     }
@@ -2468,6 +2539,11 @@ export class GameModel {
       ),
       ...(task ? { task } : {}),
     };
+    const hintTarget = this.andromedaUseHintTarget();
+    if (hintTarget !== undefined) {
+      const quests = questsForObject(context, hintTarget);
+      return quests.length ? { quests, targetId: hintTarget } : null;
+    }
     const world = flightWorldContext(flight);
     const candidates = [
       ...flight.objects.map((object) => ({ gap: distance(flight.player, object), object })),
@@ -4898,8 +4974,15 @@ export class GameModel {
       this.stepJob(this.state.flight);
       return;
     }
-    const id = this.nearest();
     const f = this.state.flight;
+    if (f?.galaxy === 5 && this.availableContextAction === undefined) {
+      const id = this.andromedaUseHintTarget();
+      if (id !== undefined && !this.contextQuestDetails) {
+        this.showAndromedaUseHint(id);
+      }
+      return;
+    }
+    const id = this.nearest();
     if (!id || !f) {
       return;
     }

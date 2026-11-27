@@ -253,24 +253,58 @@ describe("repaired Andromeda lane", () => {
 });
 
 describe("mounted Andromeda chapter", () => {
-  it.each([0, 3, 4, 5, 6])("withholds Talk when Pip has no conversation at stage %s", (stage) => {
+  it.each([0, 3, 4, 5, 6])(
+    "answers Use at Pip without advancing an unavailable stage %s",
+    (stage) => {
+      const model = launch();
+      const progress = model.state.progress[5];
+      Object.assign(progress, {
+        holodisk: stage === 6,
+        introduced: stage > 0,
+        questComplete: stage === 6,
+        stage,
+      });
+      visit(model, "pip");
+      expect(progress.known).toContain("pip");
+      expect(model.state.notice).not.toBe("Ask at a settlers’ station about the guide beacons.");
+      expect(model.state.notice).not.toBe("Saved to the map. We can come back any time.");
+      expect(model.contextAction).toBe("use");
+      expect(model.useTarget).toEqual({ action: "use", id: "pip" });
+      const before = structuredClone(progress);
+      const economy = structuredClone(model.state.economy);
+      for (let press = 0; press < 2; press += 1) {
+        model.step(0.001, { ...idle, use: true });
+        expect(model.state.notice).toBe(
+          stage === 0
+            ? "Ask at a settlers’ station about the guide beacons."
+            : "Saved to the map. We can come back any time.",
+        );
+        expect(model.state.dialogue).toBeNull();
+        expect(progress).toEqual(before);
+        expect(model.state.economy).toEqual(economy);
+        expect(model.state.tasks[5]).toBeUndefined();
+        model.state.notice = "";
+      }
+    },
+  );
+
+  it("answers at a real settlement before the parts are due without creating a quest", () => {
     const model = launch();
+    const flight = model.state.flight!;
+    const settlement = nearestSettlement(ECONOMY, flight.player);
+    flight.player = { x: settlement.x, y: settlement.y };
+    model.step(0.001, idle);
     const progress = model.state.progress[5];
-    Object.assign(progress, {
-      holodisk: stage === 6,
-      introduced: stage > 0,
-      questComplete: stage === 6,
-      stage,
-    });
-    visit(model, "pip");
-    expect(progress.known).toContain("pip");
-    expect(model.contextAction).toBeUndefined();
-    expect(model.useTarget).toBeUndefined();
+    expect(progress.known).toContain(settlement.id);
+    expect(model.useTarget).toEqual({ action: "use", id: settlement.id });
+    expect(model.contextQuestDetails).toBeNull();
+    expect(model.state.notice).not.toBe("Explore the galaxy.");
     const before = structuredClone(progress);
-    model.step(0.001, { ...idle, use: true });
+    model.interact();
+    expect(model.state.notice).toBe("Explore the galaxy.");
     expect(model.state.dialogue).toBeNull();
+    expect(model.state.docked).toBeNull();
     expect(progress).toEqual(before);
-    expect(model.state.tasks[5]).toBeUndefined();
   });
 
   it.each([false, true])("uses the approved Pip introduction after inspection=%s", (inspected) => {
