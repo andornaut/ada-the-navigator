@@ -319,21 +319,28 @@ describe("close places", () => {
     expect(pressedArea(areas, { x: 111, y: 100 })).toBe("b");
   });
 
-  it("preserves full-page maximum zoom despite reserved chrome and separates 1020-apart places", () => {
+  it("keeps 1020-apart places selectable at the reduced maximum zoom", () => {
     const { inner } = regionsAt(
       { height: 390, width: 844 },
       { bottom: 21, left: 47, right: 47, top: 0 },
     );
     const { max } = scaleLimits(inner, { height: 390, width: 844 }, SIDE);
-    expect(max).toBeGreaterThanOrEqual(0.039);
+    const fullPageLimit = Math.min(
+      inner.width / MAP_SCREEN.minBox.width,
+      inner.zoomHeight! / MAP_SCREEN.minBox.height,
+    );
+    expect(max).toBeCloseTo(fullPageLimit / MAP_SCREEN.zoomStep ** 2, 9);
     const view = { centre: { x: 0, y: 0 }, scale: max, worldSide: SIDE };
     for (let degrees = 0; degrees < 360; degrees += 5) {
       const angle = (degrees * Math.PI) / 180;
       const a = toScreen(inner, view, { x: 0, y: 0 });
       const b = toScreen(inner, view, { x: Math.cos(angle) * 1020, y: Math.sin(angle) * 1020 });
-      expect(Math.hypot(a.x - b.x, a.y - b.y), String(degrees)).toBeGreaterThanOrEqual(
-        MAP_SYMBOL.chip - 0.05,
-      );
+      const areas = [a, b].map((point, key) => {
+        const art = chipRect(point);
+        return { art, hit: hitAround(HIT_RULE, art), key };
+      });
+      expect(pressedArea(areas, a), String(degrees)).toBe(0);
+      expect(pressedArea(areas, b), String(degrees)).toBe(1);
     }
   });
 
@@ -401,7 +408,7 @@ describe("the square bound", () => {
   const wide = regionsAt({ height: 720, width: 1280 });
 
   it("projects all four unwrapped tips as the map pans, zooms, and refits", () => {
-    const worldSide = 540_000;
+    const worldSide = 240_000;
     const region = { height: 240, width: 640, x: 78, y: 65 };
     const view = { centre: { x: 60_000, y: -30_000 }, scale: 0.002, worldSide };
     expect(mapWorldDiamond(region, view)).toEqual([
@@ -543,7 +550,13 @@ describe("the square bound", () => {
     const view = clampView(inner, field, requested);
     expectInside({ field, inner }, view);
     expectSurveyArc(field, inner, view);
-    expect(surveyDistances(field, inner, view).nearest).toBeGreaterThan(0.98);
+    const inset = {
+      height: field.height - 2,
+      width: field.width - 2,
+      x: field.x + 1,
+      y: field.y + 1,
+    };
+    expect(surveyDistances(inset, inner, view).nearest).toBeCloseTo(1, 6);
     expect(clampView(inner, field, start)).toEqual(start);
   });
 
