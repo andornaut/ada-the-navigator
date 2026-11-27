@@ -24,7 +24,6 @@ import { svgText } from "./svg-text.ts";
 import { type V2, visibleFragments } from "./visible.ts";
 
 const WHITE: Tones = ["#ffffff", "#cfd3e0", "#9da2b8"];
-const CREAM: Tones = ["#ead4aa", "#c2ad86", "#978565"];
 const AMBER: Tones = ["#f0bd68", "#b98a40", "#8a6630"];
 const CORAL: Tones = ["#d68b72", "#a8654f", "#7f4b3d"];
 const DARK: Tones = ["#2a2433", "#1e1a26", "#16131c"];
@@ -32,11 +31,19 @@ const BLINK: Tones = ["#ffffff", "#ffffff", "#e8e8f0"];
 // The coral family's salvage plate (art/enemies.md) as a material.
 const PLATE: Tones = ["#e6a890", "#b98774", "#8f6859"];
 
-// A missile's materials: Ada's white body with amber and cream parts, or the enemy's coral body
-// with white and plate parts.
+// Missile materials in lit, mid and shade order.
 type MissileTones = { body: Tones; fins: Tones; warhead: Tones };
-const ADA_RAPID: MissileTones = { body: WHITE, fins: AMBER, warhead: WHITE };
-const ADA_HEAVY: MissileTones = { body: WHITE, fins: CREAM, warhead: AMBER };
+const RAPID_GOLD: Tones = ["#ffda48", "#eab52f", "#ae751c"];
+const ADA_RAPID: MissileTones = {
+  body: RAPID_GOLD,
+  fins: ["#bc831d", "#9e6215", "#744412"],
+  warhead: RAPID_GOLD,
+};
+const ADA_HEAVY: MissileTones = {
+  body: ["#4d5d52", "#2e3b33", "#1b2620"],
+  fins: ["#3e4c42", "#2d382f", "#222d25"],
+  warhead: ["#bfc8c9", "#8a9a9a", "#606e72"],
+};
 const ENEMY_RAPID: MissileTones = { body: CORAL, fins: WHITE, warhead: CORAL };
 const ENEMY_HEAVY: MissileTones = { body: CORAL, fins: PLATE, warhead: WHITE };
 

@@ -147,19 +147,19 @@ heading from the nose.
 | Heavy fins    | Three fin blocks 1.4 px thick: roots 13.2 to 8.6 behind the nose, swept to 14.4 to 12.6, reaching 6 (5.4 upright)                     |
 | Heavy flame   | A wedge 5.6 px wide, 16.8 `f` px long (11.8 `f` in frame 1), with an inner wedge half as wide and half as long                        |
 
-| Part             | Ada's | Enemy's          |
-| ---------------- | ----- | ---------------- |
-| Bodies and cones | White | Coral            |
-| Rapid fins       | Amber | White            |
-| Heavy warhead    | Amber | White            |
-| Heavy fins       | Cream | Plate            |
-| Flame            | Amber | Coral `obstacle` |
-| Inner flame      | Cream | `plate`          |
+| Part                | Ada's lit, mid and shade        | Enemy's          |
+| ------------------- | ------------------------------- | ---------------- |
+| Rapid body and nose | `#ffda48`, `#eab52f`, `#ae751c` | Coral            |
+| Rapid fins          | `#bc831d`, `#9e6215`, `#744412` | White            |
+| Heavy body          | `#4d5d52`, `#2e3b33`, `#1b2620` | Coral            |
+| Heavy fins          | `#3e4c42`, `#2d382f`, `#222d25` | Plate            |
+| Heavy warhead       | `#bfc8c9`, `#8a9a9a`, `#606e72` | White            |
+| Flame               | Amber `#f0bd68`                 | Coral `obstacle` |
+| Inner flame         | Cream `#ead4aa`                 | `plate`          |
 
-Material tones, top, left and right: white `#ffffff`, `#cfd3e0`, `#9da2b8`;
-cream `#ead4aa`, `#c2ad86`, `#978565`; amber `#f0bd68`, `#b98a40`,
-`#8a6630`; coral `#d68b72`, `#a8654f`, `#7f4b3d`; plate `#e6a890`,
-`#b98774`, `#8f6859`; dark `#2a2433`, `#1e1a26`, `#16131c`.
+Other solid tones in lit, mid and shade order are white `#ffffff`, `#cfd3e0`,
+`#9da2b8`, coral `#d68b72`, `#a8654f`, `#7f4b3d`, plate `#e6a890`,
+`#b98774`, `#8f6859`, and dark `#2a2433`, `#1e1a26`, `#16131c`.
 
 Flicker: two frames looping, 50 ms each for the Rapid and 90 ms for the Heavy.
 Reduced motion holds frame 0. On a light field or Phantom the frame takes the
