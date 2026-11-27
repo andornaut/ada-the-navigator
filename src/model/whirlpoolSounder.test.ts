@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
@@ -8,7 +8,7 @@ import { readStory, relaunch } from "../testing/launch.ts";
 import { mantaEscortMayFire, mantaEscortPhase } from "./earlyEncounterPatterns.ts";
 import { damageEnemy } from "./enemyAi.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
-import { routeBlocked, syncFlightRegion } from "./flight.ts";
+import { routeBlocked, stepFlight, syncFlightRegion } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import type { SpaceObject } from "./types.ts";
@@ -53,6 +53,8 @@ function clearWhaleDebris(model: GameModel): void {
   const debris = flight.objects.filter(({ id }) => id.startsWith("whale-debris:"));
   expect(debris).toHaveLength(CONTENT.tuning.whaleDebris.count);
   for (const rock of debris) {
+    // This story case needs the destruction event. The separate flight test covers each rock's full HP.
+    rock.hp = 1;
     flyTo(model, { x: rock.x - 100, y: rock.y });
     const present = () => flight.objects.some(({ id }) => id === rock.id);
     for (let shot = 0; shot < 400 && present(); shot++) {
@@ -63,7 +65,7 @@ function clearWhaleDebris(model: GameModel): void {
   expect(progressOf(model).stage).toBe(2);
 }
 
-it("keeps the family's disk blocked by Sounder and collectible once after resolution and return", () => {
+function revealSounder() {
   const seeds = [173, 301];
   let model = new GameModel(CONTENT, () => seeds.shift()!, SAVE_RESTORE);
   model.state.unlocked = [1, 3];
@@ -122,59 +124,109 @@ it("keeps the family's disk blocked by Sounder and collectible once after resolu
   expect(progressOf(model).holodisk).toBe(false);
   expect(waypoint(model)).toMatchObject(diskSite);
 
-  const flight = flightOf(model);
-  const boss = stationPopulationObjects(flight).find(({ id }) => id === WHIRLPOOL_CAPITAL_BOSS.id)!;
+  return { diskSite, model, whale };
+}
+
+function sounderActor(model: GameModel): SpaceObject {
+  const boss = stationPopulationObjects(flightOf(model)).find(
+    ({ id }) => id === WHIRLPOOL_CAPITAL_BOSS.id,
+  )!;
   expect(boss).toBeDefined();
-  flyTo(model, { x: boss.x + 300, y: boss.y });
-  model.step(0.01, idle);
-  expect(model.bossHud()).toMatchObject({
-    captain: "Captain Sounder",
-    id: boss.id,
-    ship: "Manta Dreadnought",
-  });
-  const escortId = (index: number) => `${boss.id}:escort:${index}`;
-  const escort = (index: number) =>
-    stationPopulationObjects(flight).find(({ id }) => id === escortId(index))!;
-  const first = escort(0);
-  const second = escort(1);
+  return boss;
+}
+
+function escortClock(boss: SpaceObject) {
+  const clock = boss.enemy?.earlyEncounter;
+  if (clock?.kind !== "manta") {
+    throw new Error("Expected the active Manta escort clock");
+  }
+  return clock;
+}
+
+function flyMantaPass(model: GameModel, frames: number) {
+  const flight = flightOf(model);
+  const boss = sounderActor(model);
+  const escorts = [0, 1].map((index) =>
+    stationPopulationObjects(flight).find(({ id }) => id === `${boss.id}:escort:${index}`)!,
+  );
+  const first = escorts[0]!;
   const beforeCrossing = { x: first.x, y: first.y };
-  const clock = () => {
-    const current = boss.enemy?.earlyEncounter;
-    expect(current?.kind).toBe("manta");
-    return current?.kind === "manta" ? current : undefined;
-  };
-  expect(mantaEscortPhase(clock()!.elapsed)).toMatchObject({ escort: 0, kind: "approach" });
-  expect(model.conversation).toMatchObject({
-    speaker: "astra",
-    text: "The escorts are taking turns. Use the gap between passes.",
-  });
-  expect(first.enemy!.tactic.volleys).toBe(0);
-  expect(second.enemy!.tactic.volleys).toBe(0);
   const emitted = new Set<number>();
-  for (let frame = 0; frame < 350; frame++) {
-    const time = clock()!.elapsed;
+  // The scene's maximum update still advances flight in 1/60-second slices.
+  const seconds = 0.05;
+  for (let frame = 0; frame < frames; frame++) {
+    const time = escortClock(boss).elapsed;
     const phase = mantaEscortPhase(time);
-    const active = phase.escort === 1 ? second : first;
+    const active = escorts[phase.escort ?? 0]!;
     flight.player = { x: active.x + 125, y: active.y };
     flight.velocity = { x: 0, y: 0 };
     flight.shield = model.shieldMax;
-    const volleys = [first.enemy!.tactic.volleys, second.enemy!.tactic.volleys];
-    model.step(0.02, idle);
-    for (const [index, actor] of [first, second].entries()) {
+    const volleys = escorts.map((actor) => actor.enemy!.tactic.volleys);
+    stepFlight(CONTENT, seconds, idle, flight);
+    for (const [index, actor] of escorts.entries()) {
       if (actor.enemy!.tactic.volleys > volleys[index]!) {
-        expect(
-          mantaEscortMayFire(time + 0.02, index === 0 ? 0 : 1) ||
-            mantaEscortMayFire(time, index === 0 ? 0 : 1),
-        ).toBe(true);
+        const escort = index === 0 ? 0 : 1;
+        expect(mantaEscortMayFire(time + seconds, escort) || mantaEscortMayFire(time, escort)).toBe(
+          true,
+        );
         emitted.add(index);
       }
     }
   }
-  expect(first).not.toMatchObject(beforeCrossing);
-  expect(emitted).toEqual(new Set([0, 1]));
-  const resumed = relaunch(CONTENT, model.save());
-  const resumedBoss = stationPopulationObjects(flightOf(resumed)).find(({ id }) => id === boss.id);
-  expect(resumedBoss?.enemy?.earlyEncounter).toEqual(clock());
+  return { beforeCrossing, emitted, first };
+}
+
+let revealed: { diskSite: Vec; save: string; whale: Vec };
+
+beforeAll(() => {
+  const { diskSite, model, whale } = revealSounder();
+  revealed = { diskSite, save: model.save(), whale };
+});
+
+describe("Manta escort passes", () => {
+  let intermission: { clock: ReturnType<typeof escortClock>; save: string };
+
+  beforeAll(() => {
+    const model = relaunch(CONTENT, revealed.save);
+    const boss = sounderActor(model);
+    flyTo(model, { x: boss.x + 300, y: boss.y });
+    model.step(0.01, idle);
+    expect(model.bossHud()).toMatchObject({
+      captain: "Captain Sounder",
+      id: boss.id,
+      ship: "Manta Dreadnought",
+    });
+    expect(mantaEscortPhase(escortClock(boss).elapsed)).toMatchObject({
+      escort: 0,
+      kind: "approach",
+    });
+    expect(model.conversation).toMatchObject({
+      speaker: "astra",
+      text: "The escorts are taking turns. Use the gap between passes.",
+    });
+    const { beforeCrossing, emitted, first } = flyMantaPass(model, 70);
+    expect(first).not.toMatchObject(beforeCrossing);
+    expect(emitted).toEqual(new Set([0]));
+    const clock = escortClock(boss);
+    expect(mantaEscortPhase(clock.elapsed).kind).toBe("reposition");
+    // The second pass starts from the actual intermission saved by the first.
+    intermission = { clock, save: model.save() };
+  });
+
+  it("fires on each pass and resumes the second escort from the saved intermission", () => {
+    const model = relaunch(CONTENT, intermission.save);
+    expect(escortClock(sounderActor(model))).toEqual(intermission.clock);
+    expect(flyMantaPass(model, 80).emitted).toEqual(new Set([1]));
+  });
+});
+
+it("keeps the family's disk blocked by Sounder and collectible once after resolution and return", () => {
+  const { diskSite, whale } = revealed;
+  let model = relaunch(CONTENT, revealed.save);
+  const flight = flightOf(model);
+  const boss = sounderActor(model);
+  flyTo(model, { x: boss.x + 300, y: boss.y });
+  model.step(0.01, idle);
   disableWeapons(boss);
   model.step(0.01, idle);
   expect(progressOf(model).sounder).toEqual({ outcome: "disabled", phase: "resolved" });
