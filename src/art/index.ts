@@ -43,6 +43,20 @@ export {
   viewStars,
   viewStreaks,
 } from "./backdropLayers.ts";
+export {
+  type CartwheelAsset,
+  craftArt,
+  craftFrameSets,
+  galaxyAsset,
+  HUB_PROJECT_ART,
+  type HubArt,
+  hubLayers,
+  readBuoyArt,
+  readCraftNose,
+  readHubArt,
+  storyCraftSets,
+  storyNoses,
+} from "./cartwheelArt.ts";
 export { readStreakSpec, streakMarks, type StreakSpec } from "./currentStreaks.ts";
 export {
   type DebrisArt,
@@ -310,6 +324,20 @@ export {
   type TextureFilter,
   vectorRaster,
 } from "./textures.ts";
+export {
+  craftFrame,
+  craftHeading,
+  readStrandedCraft,
+  readTowLine,
+  STRANDED_CRAFT,
+  type StrandedCraftArt,
+  strandedCraftId,
+  towClamp,
+  towCurve,
+  type TowFrame,
+  type TowLine,
+  towOffset,
+} from "./towArt.ts";
 export {
   ADA_MISSILES,
   beam,

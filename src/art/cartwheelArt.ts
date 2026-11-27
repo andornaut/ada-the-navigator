@@ -1,9 +1,10 @@
-import { ENEMY_HEADINGS, type EnemyArt, type EnemyFrame, readShipJets } from "../art/index.ts";
-import type { StationArt, StationFrame } from "../art/stationArt.ts";
 import { STORY_SHIP_CRAFT, type StoryShipId } from "../data/storyShips.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { StoryNoses } from "../model/storyShips.ts";
 import type { Vec } from "../model/types.ts";
+import { ENEMY_HEADINGS, type EnemyArt, type EnemyFrame } from "./enemyArt.ts";
+import { readShipJets } from "./shipJets.ts";
+import type { StationArt, StationFrame } from "./stationArt.ts";
 
 // Art's Cartwheel hub, mooring buoy, story craft and props (art/cartwheel.md,
 // art/cartwheel-props.md), and which galaxy's flights load each asset.

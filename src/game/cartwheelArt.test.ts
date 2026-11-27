@@ -3,24 +3,25 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { readGalaxyBackdrop } from "../art/backdropLayers.ts";
-import { enemyJetsPath, readSidecars } from "../art/index.ts";
-import { PROJECTS } from "../data/projects.ts";
-import { STORY_SHIP_CRAFT } from "../data/storyShips.ts";
-import type { GalaxyNumber } from "../data/types.ts";
-import { ART_MANIFEST, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 import {
   type CartwheelAsset,
   craftArt,
   craftFrameSets,
+  enemyJetsPath,
   galaxyAsset,
   HUB_PROJECT_ART,
   hubLayers,
   readBuoyArt,
   readCraftNose,
   readHubArt,
+  readSidecars,
   storyCraftSets,
   storyNoses,
-} from "./cartwheelArt.ts";
+} from "../art/index.ts";
+import { PROJECTS } from "../data/projects.ts";
+import { STORY_SHIP_CRAFT } from "../data/storyShips.ts";
+import type { GalaxyNumber } from "../data/types.ts";
+import { ART_MANIFEST, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 
 const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public${path}`, import.meta.url), "utf8"));

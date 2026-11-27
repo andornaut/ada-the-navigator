@@ -2,10 +2,6 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { JOB_POOL, JOB_TUNING } from "../data/jobs.ts";
-import type { GalaxyNumber } from "../data/types.ts";
-import { ART_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
-import { keylineWidth, LIGHT_FIELD } from "./lightField.ts";
 import {
   craftFrame,
   craftHeading,
@@ -18,7 +14,11 @@ import {
   towCurve,
   type TowFrame,
   towOffset,
-} from "./towArt.ts";
+} from "../art/index.ts";
+import { JOB_POOL, JOB_TUNING } from "../data/jobs.ts";
+import type { GalaxyNumber } from "../data/types.ts";
+import { ART_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
+import { keylineWidth, LIGHT_FIELD } from "./lightField.ts";
 
 const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public${path}`, import.meta.url), "utf8"));

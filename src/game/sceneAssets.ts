@@ -8,6 +8,8 @@ import {
   BAND_AREA,
   composedArchetypes,
   type CoreManifest,
+  craftArt,
+  craftFrameSets,
   type DebrisArt,
   decorationRasterSize,
   drawnRockId,
@@ -35,10 +37,13 @@ import {
   readBackdropBand,
   readBackdropHaze,
   readBackdropRules,
+  readBuoyArt,
+  readCraftNose,
   readDebrisArt,
   readGalaxyBackdrop,
   readGalaxyManifest,
   readGalaxyStationArt,
+  readHubArt,
   readJobArt,
   readMarloArt,
   readShardPalettePack,
@@ -47,7 +52,9 @@ import {
   readShipMaterialPalettes,
   readShipMaterials,
   readSidecars,
+  readStrandedCraft,
   readStreakSpec,
+  readTowLine,
   readWhaleArt,
   readWhirlpoolProjects,
   rockArt,
@@ -55,6 +62,8 @@ import {
   type ShardData,
   ShipMaterialSources,
   type Sidecars,
+  storyCraftSets,
+  storyNoses,
   type SvgRequest,
   type TextureFilter,
   vectorRaster,
@@ -77,20 +86,10 @@ import { flightWorldContext } from "../model/flightTopology.ts";
 import { SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
 import { worldDelta } from "../model/worldContacts.ts";
-import {
-  craftArt,
-  craftFrameSets,
-  readBuoyArt,
-  readCraftNose,
-  readHubArt,
-  storyCraftSets,
-  storyNoses,
-} from "./cartwheelArt.ts";
 import { sceneFit } from "./playCamera.ts";
 import { readQuantumJump } from "./quantumJump.ts";
 import type { GameScene } from "./scene.ts";
 import type { Asset } from "./sceneShared.ts";
-import { readStrandedCraft, readTowLine } from "./towArt.ts";
 
 interface MaterialCache {
   readonly poses: Map<string, ReadonlyMap<string, string>>;

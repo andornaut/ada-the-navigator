@@ -13,6 +13,7 @@ import phantom from "../../public/art/phantom/manifest.json";
 import sunflower from "../../public/art/sunflower/manifest.json";
 import {
   composedArchetypes,
+  craftFrameSets,
   ENEMY_HEADINGS,
   type EnemyArt,
   enemyArt,
@@ -30,6 +31,7 @@ import {
   galaxyManifestKey,
   galaxyTowKey,
   mergeEnemyAssets,
+  readCraftNose,
   readGalaxyManifest,
   readShardPalettePack,
   readShards,
@@ -45,7 +47,6 @@ import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import { enemyAssetKey, hullDesign, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { publicJson } from "../testing/publicArt.ts";
-import { craftFrameSets, readCraftNose } from "./cartwheelArt.ts";
 import type { Asset } from "./sceneShared.ts";
 
 const m1 = ASTEROID_ART.asteroids.find(({ id }) => id === "asteroid-m1")!;

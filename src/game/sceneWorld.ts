@@ -7,6 +7,8 @@ import {
   boundsOnScreen,
   buoyFrame,
   buoyPlaces,
+  craftFrame,
+  craftHeading,
   dashes,
   type EffectShape,
   enemyJetTriangles,
@@ -25,7 +27,12 @@ import {
   revealAlpha,
   selectEnemyFrame,
   stationFrame,
+  strandedCraftId,
   streakMarks,
+  towClamp,
+  towCurve,
+  type TowLine,
+  towOffset,
   whalesCurrent,
 } from "../art/index.ts";
 import { CURRENTS } from "../data/galaxyFeatures.ts";
@@ -42,15 +49,6 @@ import { drawCraftJets, keylineEdges, keylineSprite } from "./sceneHud.ts";
 import { LANDMARK_DEPTH, STORY_SHIP } from "./sceneShared.ts";
 import { objectSprite } from "./sceneSprites.ts";
 import { acknowledgePrimitiveGlint, acknowledgePrimitiveTarget } from "./sceneTargetMarkers.ts";
-import {
-  craftFrame,
-  craftHeading,
-  strandedCraftId,
-  towClamp,
-  towCurve,
-  type TowLine,
-  towOffset,
-} from "./towArt.ts";
 
 /** The scene state and methods this module's functions use. */
 export type WorldContext = Partial<Pick<GameScene, "fieldLight">> &

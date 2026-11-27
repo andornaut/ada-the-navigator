@@ -15,6 +15,7 @@ import {
   type CacheArt,
   clipBehind,
   type CoreManifest,
+  craftFrameSets,
   type DebrisArt,
   type DestructionData,
   type DrawnBox,
@@ -46,6 +47,7 @@ import {
   hitFlashAlpha,
   hitFlashBands,
   HitFlashes,
+  type HubArt,
   impactEffect,
   type JetDisplay,
   jetOccluderRegions,
@@ -85,8 +87,10 @@ import {
   staleSpriteKeys,
   type StardustArt,
   type StationArt,
+  type StrandedCraftArt,
   type StreakSpec,
   SvgRasters,
+  type TowLine,
   travelJets,
   type UpgradePickupArt,
   type WeaponSolids,
@@ -132,7 +136,6 @@ import type { BoxOccupant } from "../ui/notice.ts";
 import { createRestartCard } from "../ui/restartCard.ts";
 import { createStationView } from "../ui/station.ts";
 import { createStorybook } from "../ui/storybook.ts";
-import { craftFrameSets, type HubArt } from "./cartwheelArt.ts";
 import { EmergencyReturn, returnedOnDepletion } from "./emergencyReturn.ts";
 import {
   FORWARD_FLIGHT_KEY,
@@ -203,7 +206,6 @@ import { drawCurrents, drawJobs, drawStoryShips, drawWhirlpoolProjects } from ".
 import { StoryShell } from "./shell.ts";
 import { aboardGalaxy, storyCoversScene } from "./storyPresentation.ts";
 import { preloadTouchChrome } from "./touchChrome.ts";
-import type { StrandedCraftArt, TowLine } from "./towArt.ts";
 
 const ENGINE_ONE_FLIGHT_JET_COLORS = {
   core: [0x64caff, 0x64caff],
