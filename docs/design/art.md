@@ -124,3 +124,4 @@ Reference: [art](../../art/README.md).
 | ada-0386 | Redesign the points of interest and friendly space objects from scratch   | [ada-0386.md](../work/ada-0386.md) |
 | ada-0387 | Polish Ada's ship and jets                                                | [ada-0387.md](../work/ada-0387.md) |
 | ada-0388 | Review every art asset and polish or redesign the weak ones               | [ada-0388.md](../work/ada-0388.md) |
+| ada-0449 | Recolor Ada's Rapid and Heavy Missiles                                    | [ada-0449.md](../work/ada-0449.md) |
