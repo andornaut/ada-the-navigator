@@ -218,6 +218,7 @@ describe("DOM UI sizes", () => {
         "layout/bootSplashColours.ts",
         "layout/mapScreen.ts",
         "modal.ts",
+        "modal/style.ts",
       ]),
     ); // One token per colour value.
     const values = [...Object.values(COLOURS), ...Object.values(UNLISTED_COLOURS)].map((value) =>
