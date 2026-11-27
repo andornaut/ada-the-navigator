@@ -704,33 +704,31 @@ remain available at any station through `heldTask`; only new job offers require
 | Cartwheel | Flint, Shale, Chert   | Pebble, Copper, Ridge        |
 | Phantom   | Dew, Puddle, Wisp     | Ripple, Drift, Glow          |
 
-Use the galaxy's Station welcome pools for generic keepers. On the first
-visit, introduce the full keeper name and add a galaxy-specific arrival line.
-On later visits, use a return line from that galaxy. Only stations that offer
-Jobs add a job-board line. The mining hub and authored keeper roles have
-their own welcome variants. Existing story dialogue uses its existing scenes.
+The station header names the location and the speaker tab names the keeper.
+Keeper dialogue uses local references such as here unless the station name
+helps identify a destination.
 
-Each station's keeper has short station-specific introduction and return lines,
-including at stations without jobs. The mining hub's lines still mention the
-hub. In the compact Dock card, the generated keeper's name tab shows
-"{givenName} {familyName}" on one line. The full unique name, including
-"of {station}", stays in the greeting templates that use it. Keeper identity
-remains station-derived. Authored keeper labels, including Quartz, retain their
-authored names. A bounded name-part and flavor pool uses the approved
-station-name and service templates above without inventing individual NPC
-histories. Portrait assignments use the finite existing
-assets separately from the named story identities. Story destinations keep their
-story characters' arrival lines; landmarks have no greeter. The first time Ada
-docks at a station, its keeper's greeting forms one paragraph on
-the Station welcome. Later dockings show the selected return line. Available
-actions are usable immediately, and there is no Next or Skip on a normal
-welcome. The existing ordering of mandatory interactions and guards applies
+On the first ordinary docking, the Station welcome joins the common intro,
+the galaxy’s flavor and one service line in a single paragraph. Use the
+station’s specialty or, where there is none, Exchange. Later dockings cycle
+through the three shared return lines in order, tracked per station. The
+approved copy is in [Greeters](player-copy.md#greeters).
+
+The compact Dock card shows the generated keeper’s personal name,
+"{givenName} {familyName}", on one line. The full identity retains the
+station qualifier "of {station}". Authored keeper labels, including Quartz,
+retain their names. Portrait assignments use the finite existing assets
+separately from the named story identities. Quartz’s mining hub keeps its
+authored welcome. Story destinations keep their story characters’ arrival
+lines, and landmarks have no greeter.
+
+Available actions are usable immediately, and there is no Next or Skip on a
+normal welcome. The existing ordering of mandatory interactions and guards applies
 before the welcome. The first time Ada comes within Talk range of a settlement, its
 settler's two-line greeting plays in the conversation box. Greetings seen are
 saved per place, and Restart clears them. Phantom also follows the distinct
-station-keeper contract; Admiral Archie's named finale identity, dialogue and
-portrait remain story content, not one keeper identity repeated at every
-station. Existing authored lines are in [the player copy](player-copy.md#greeters).
+station-keeper contract. Admiral Archie's named finale identity, dialogue and
+portrait remain part of the finale.
 
 ### Galaxy six, Phantom: the finale
 

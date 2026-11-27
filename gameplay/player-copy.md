@@ -1249,8 +1249,38 @@ Formation positions, firing warnings and route markers carry the timing.
 Normal Dock opens the Station welcome. It shows the keeper paragraph and the
 services available at that station. See [Stations](economy.md#stations).
 
-Station keepers, first docking (three lines), then later dockings (one line, in
-turn):
+### Ordinary station welcome
+
+The approved successor copy uses one paragraph on first docking. Start with
+"Come on in.", then add the galaxy’s flavor and the station’s specialty line.
+Use the Exchange line when the station has no specialty.
+
+| Galaxy    | Flavor                                      |
+| --------- | ------------------------------------------- |
+| Sunflower | We hum while we work.                       |
+| Whirlpool | The currents are calmer by the docks.       |
+| Needle    | Take your time. There’s no hurry here.      |
+| Andromeda | We leave a light on for travelers.          |
+| Cartwheel | Mind the dust. It gets into everything.     |
+| Phantom   | It’s quiet here. You can catch your breath. |
+
+| Service          | Line                               |
+| ---------------- | ---------------------------------- |
+| Equipment        | Need anything for your ship?       |
+| Weapons and ammo | Need weapons or ammo?              |
+| Jobs             | Looking for work? Check the board. |
+| Exchange         | Got ore or Stardust to trade?      |
+
+Later dockings cycle through one line per visit in this order, per station.
+
+1. "Good to see you again."
+2. "Back to trade?"
+3. "How was the flight in?"
+
+### Retained keeper and scene copy
+
+The generic keeper pools remain exported as legacy data. The mining hub
+welcome and settlement approach greeting retain their existing uses.
 
 Sunflower, a Bumble keeper:
 
@@ -1286,9 +1316,6 @@ Andromeda, a Munix keeper:
 - Later: "Welcome back! Our lamps are always lit for you." / "Hello again,
   traveler. Safe flying out there?" / "Back again! Come in, out of the dark."
 
-Cartwheel, Cobble keepers. Lines that mention the hub play only at the mining
-hub.
-
 The mining hub, Quartz:
 
 - "Welcome to the hub! Mind the dust. I'm the keeper here."
@@ -1298,7 +1325,7 @@ The mining hub, Quartz:
   Find any good rocks out there?" / "Back again. There's always room at the
   hub."
 
-Every other Cartwheel station, Slate or Garnet:
+Cartwheel, Slate or Garnet:
 
 - "Welcome! Mind the dust. I'm the keeper here."
 - "We Cobbles are made of stone, so a little bump never bothers us."
@@ -1306,7 +1333,7 @@ Every other Cartwheel station, Slate or Garnet:
 - Later: "Welcome back! Wipe your boots. Well, your thrusters." / "Hello again!
   Find any good rocks out there?" / "Back again. There's always room here."
 
-Phantom, Admiral Archie as keeper once the chapter is complete:
+Phantom, Admiral Archie’s post-chapter keeper data:
 
 - "Ah. The navigator. Welcome to the Blurbs' station."
 - "I am helping mend their docks. It is slower than conquering, and better."
