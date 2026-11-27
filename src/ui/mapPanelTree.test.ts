@@ -3,7 +3,7 @@ import { expect, it } from "vitest";
 
 import { mapPanelTree } from "./mapPanelTree.ts";
 
-it("composes the original chip, name, two detail lines and native travel action without wrappers", () => {
+it("groups the place content separately from the native travel action", () => {
   const tree = mapPanelTree();
   validateLayoutTree({ group: ["content"], leaf: [] }, tree);
   expect(tree).toMatchObject({
@@ -14,10 +14,19 @@ it("composes the original chip, name, two detail lines and native travel action 
           props: "row",
           slots: {
             content: [
-              { props: "chip" },
               {
-                props: "text",
-                slots: { content: [{ props: "name" }, { props: "detail0" }, { props: "detail1" }] },
+                props: "place",
+                slots: {
+                  content: [
+                    { props: "chip" },
+                    {
+                      props: "text",
+                      slots: {
+                        content: [{ props: "name" }, { props: "detail0" }, { props: "detail1" }],
+                      },
+                    },
+                  ],
+                },
               },
               { props: "travel" },
             ],
@@ -39,6 +48,7 @@ it("retains all native visibility targets and stable keys without selection or p
   for (const key of [
     "panel",
     "row",
+    "place",
     "text",
     "reason",
     "chip",

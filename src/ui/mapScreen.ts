@@ -653,8 +653,8 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
 }
 .ada-controls .ada-map-row{
   min-height:${units(MAP_PANEL.row)};
-  display:grid;
-  grid-template-columns:auto minmax(0,1fr) max-content;
+  display:flex;
+  flex-wrap:wrap;
   align-items:center;
   gap:${units(MAP_PANEL.markGap)}
 }
@@ -662,11 +662,19 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
 .ada-controls .ada-map-row[hidden]{
   display:none
 }
+.ada-controls .ada-map-place-content{
+  display:flex;
+  align-items:center;
+  gap:${units(MAP_PANEL.markGap)};
+  flex:1 1 max-content;
+  min-width:0
+}
 .ada-controls .ada-map-row .ada-map-place{
   position:relative;
   flex:none
 }
 .ada-controls .ada-map-text{
+  flex:1;
   min-width:0;
   display:grid;
   padding:${units(MAP_PANEL.textTop)} 0;
@@ -679,25 +687,14 @@ ${hudDiscStyle(".ada-controls .ada-map-tool", ".ada-disc")}
   font:${font(TYPE.label)};
   color:${MAP_COLORS.cream}
 }
+/* Use the name's intrinsic width to decide when to wrap the action. Details wrap within that line. */
+.ada-controls .ada-map-detail{
+  contain:inline-size
+}
 .ada-controls .ada-map-row .ada-button{
+  flex:none;
   min-width:max-content;
   white-space:nowrap
-}
-.ada-controls .ada-map-panel[data-above-footer] .ada-map-row{
-  grid-template-columns:auto minmax(0,1fr)
-}
-.ada-controls .ada-map-panel[data-above-footer] .ada-map-row .ada-button{
-  grid-column:1 / -1;
-  justify-self:start
-}
-@media ${COMPACT_VIEWPORT}{
-  .ada-controls .ada-map-row{
-    grid-template-columns:auto minmax(0,1fr)
-  }
-  .ada-controls .ada-map-row .ada-button{
-    grid-column:1 / -1;
-    justify-self:start
-  }
 }
 .ada-controls .ada-map-travel-cost{
   display:inline-flex;
@@ -1080,6 +1077,8 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   panel.hidden = true;
   const row = document.createElement("div");
   row.className = "ada-map-row";
+  const placeContent = document.createElement("div");
+  placeContent.className = "ada-map-place-content";
   const panelChip = document.createElement("span");
   panelChip.setAttribute("aria-hidden", "true");
   const text = document.createElement("div");
@@ -1140,7 +1139,13 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
   const empty = document.createElement("p");
   empty.className = "ada-map-empty";
   empty.textContent = labels.travelEmpty;
-  const panelGroups: Readonly<Record<MapPanelGroup, HTMLElement>> = { panel, reason, row, text };
+  const panelGroups: Readonly<Record<MapPanelGroup, HTMLElement>> = {
+    panel,
+    place: placeContent,
+    reason,
+    row,
+    text,
+  };
   const panelLeaves: Readonly<Record<MapPanelLeaf, HTMLElement>> = {
     ...reasons,
     chip: panelChip,
@@ -1617,7 +1622,9 @@ export function createMapScreen(root: HTMLElement, options: MapScreenOptions) {
     empty.hidden = place !== null || !mapShowsEmpty(places());
     if (place) {
       dressChip(panelChip, place);
-      name.textContent = place.label;
+      if (name.textContent !== place.label) {
+        name.textContent = place.label;
+      }
       const lines = detailLines(place);
       detail.forEach((line, index) => {
         line.textContent = lines[index] ?? "";
