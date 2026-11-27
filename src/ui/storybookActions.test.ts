@@ -627,6 +627,7 @@ function useFixture() {
   });
   const declarations = [
     "exitPresentation",
+    "navigationPresentation",
     "createExit",
     "exit",
     "exitButton",
