@@ -72,6 +72,7 @@ import { stationShopCategories, stationSpecialty } from "../model/stationService
 import { currentPage, openingScene, resolutionScene } from "../model/storybook.ts";
 import { readStoryCursor } from "../model/storyCursor.ts";
 import { canReplayEarthChapter, resolveStoryScene } from "../model/storyScenes.ts";
+import { isCartwheelDockingTalkPage } from "../model/storyShips.ts";
 import type {
   AmmoCounts,
   AnyRequiredEncounterPlan,
@@ -1558,7 +1559,15 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
           nonnegative(f.storyScene.at) &&
           typeof f.storyScene.lineDue === "boolean" &&
           typeof f.storyScene.id === "string" &&
-          Object.hasOwn(CARTWHEEL_STORY_SHIPS.scenes, f.storyScene.id)
+          Object.hasOwn(CARTWHEEL_STORY_SHIPS.scenes, f.storyScene.id) &&
+          (f.storyScene.talkPage === undefined ||
+            (f.galaxy === 2 &&
+              f.storyScene.id === "docking" &&
+              f.storyScene.lineDue &&
+              isCartwheelDockingTalkPage(f.storyScene.talkPage) &&
+              typeof f.time === "number" &&
+              Number.isFinite(f.time) &&
+              f.time >= Number(f.storyScene.at) + CARTWHEEL_STORY_SHIPS.scenes.docking.duration))
         )
       ) {
         return null;

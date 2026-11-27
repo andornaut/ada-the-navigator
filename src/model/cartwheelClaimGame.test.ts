@@ -3,6 +3,7 @@ import { expect, it } from "vitest";
 import { CARTWHEEL_CLAIM, CARTWHEEL_CLAIM_CUES } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import type { ConversationLine } from "../data/conversations.ts";
+import { ECONOMY } from "../data/economy.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
@@ -16,10 +17,12 @@ import { enemyStardust } from "./drops.ts";
 import { damageEnemy } from "./enemyAi.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
+import { ensureStation } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { ORE_FIELD_ROLE, worldOreFieldsNear } from "./oreFields.ts";
+import { flightStationContext, worldStationsNear } from "./stations.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -356,38 +359,207 @@ it.each(["defeated", "salvaged"] as const)(
   },
 );
 
-it("keeps buying and inserting Cartwheel's disk independent of an unresolved Claim", () => {
-  const model = beginClaim();
-  const progress = model.state.progress[2];
-  const flight = model.state.flight!;
-  const visit = (id: string) => {
+it("hosts the authored docking exchange in station Talk through replay and Continue", () => {
+  let model = beginClaim();
+  let flight = model.state.flight!;
+  const goTo = (id: string) => {
     const object = flight.objects.find((object) => object.id === id)!;
     flyTo(model, object);
-    model.step(0.001, idle);
-    model.interact();
   };
   flight.freshDistance =
     CONTENT.tuning.introFreshDistance + 4 * CONTENT.tuning.encounterFreshDistance;
   model.step(0.001, idle);
-  visit("visitors");
+  goTo("visitors");
+  model.step(0.001, idle);
+  model.interact();
   expect(model.state.dialogue?.context).toBe("visitors");
   model.choose("continue");
-  expect(progress.stage).toBe(4);
-  flight.cargo = CONTENT.tuning.miningMilestones[2] - progress.deposited;
-  visit("hub");
-  model.choose("continue");
-  expect(progress.questComplete).toBe(true);
-  const scene = flight.storyScene!;
-  flight.time = scene.at + CARTWHEEL_STORY_SHIPS.scenes.docking.duration;
-  model.step(0.001, idle);
-  for (let page = 0; page < 4 && model.state.dialogue; page++) {
-    model.choose("continue");
+  goTo("hub");
+  expect(model.state.progress[2].stage).toBe(4);
+  // Read the earlier blocked-approach reaction before asserting ordinary Dock readiness.
+  for (let step = 0; step < 40 && flight.storyScene?.lineDue; step++) {
+    if (model.conversation) {
+      model.dismissConversation();
+    }
+    model.step(0.05, idle);
   }
-  visit("hub");
+  expect(flight.storyScene).toMatchObject({ id: "blocked", lineDue: false });
+  expect(model.contextAction).toBe("dock");
+  const finalDeposit = CONTENT.tuning.miningMilestones[2];
+  flight.cargo = finalDeposit - model.state.progress[2].deposited;
+  expect(model.contextAction).toBe("deposit");
+  model.interact();
+  expect(model.state.dialogue?.context).toBe("deposit");
+  expect(model.state.progress[2]).toMatchObject({
+    deposited: finalDeposit,
+    questComplete: true,
+    stage: 5,
+  });
+  model.choose("continue");
+
+  const scene = flight.storyScene!;
+  const { duration } = CARTWHEEL_STORY_SHIPS.scenes.docking;
+  expect(scene).toEqual({ at: flight.time, id: "docking", lineDue: true });
+  const money = model.state.economy.stardust;
+  flight.time = scene.at + duration / 2;
+  model.step(0.001, idle);
+  expect(model.contextAction).toBeUndefined();
+  model.interact();
+  expect(model.state.dialogue).toBeNull();
+
+  model = relaunch(CONTENT, model.save());
+  flight = model.state.flight!;
+  expect(flight.storyScene).toEqual(scene);
+  expect(model.contextAction).toBeUndefined();
+  flight.dangerFor = 0;
+  model.returnHome();
+  expect(model.state.progress[2].replayScene).toBe("docking");
+
+  model = new GameModel(CONTENT, () => 907, SAVE_RESTORE, model.save());
+  model.startGalaxy(2);
+  flight = model.state.flight!;
+  expect(model.state.progress[2].replayScene).toBe("docking");
+  goTo("hub");
+  expect(flight.storyScene).toBeUndefined();
+  expect(model.contextAction).toBeUndefined();
+  model.interact();
+  expect(model.state.docked).toBeNull();
+  model.step(0.001, idle);
+  const replay = flight.storyScene!;
+  expect(replay).toEqual({ at: flight.time, id: "docking", lineDue: true });
+  expect(model.state.progress[2].replayScene).toBeUndefined();
+
+  flight.time = replay.at + duration - 0.001;
+  expect(model.contextAction).toBeUndefined();
+  model.step(0.002, idle);
+  expect(model.state.dialogue).toBeNull();
+  expect(flight.storyScene).toBe(replay);
+  expect(replay.lineDue).toBe(true);
+  expect(model.contextAction).toBe("talk");
+
+  const other = worldStationsNear(
+    flightStationContext(flight),
+    ECONOMY,
+    2,
+    40_000,
+    flight.player,
+  ).find(
+    (site) =>
+      Math.hypot(site.x - flight.player.x, site.y - flight.player.y) > 2 * CONTENT.tuning.talkRange,
+  )!;
+  const station = ensureStation(CONTENT, other.id, flight)!;
+  model.state.progress[2].stations.push(other.id);
+  flyTo(model, station);
+  flight.dangerFor = 0;
+  expect(model.contextAction).toBe("dock");
+  model.interact();
+  expect(model.state.docked).toBe(other.id);
+  expect(model.state.dialogue).toBeNull();
+  expect(replay.lineDue).toBe(true);
+  model.undock();
+
+  goTo("hub");
+  flight.cargo = 2;
+  expect(model.contextAction).toBe("deposit");
+  model.interact();
+  expect(model.state.dialogue?.context).toBe("deposit");
+  model.choose("continue");
+  expect(model.state.progress[2].deposited).toBe(finalDeposit + 2);
+  expect(model.contextAction).toBe("talk");
+
+  model = relaunch(CONTENT, model.save());
+  flight = model.state.flight!;
+  const time = flight.time;
+  model.step(0.002, idle);
+  expect(flight.time).toBeGreaterThan(time);
+  expect(model.state.dialogue).toBeNull();
+  expect(model.contextAction).toBe("talk");
+  model.step(0.001, { ...idle, use: true });
   expect(model.state.docked).toBe("hub");
+  expect(model.state.dialogue).toBeNull();
+  expect(model.stationServices).toMatchObject({
+    equipment: true,
+    exchange: true,
+    jobs: true,
+    weaponsAmmo: true,
+  });
+  const start = model.stationTalk!.panel!;
+  expect(start).toMatchObject({
+    context: "approach",
+    text: CONTENT.chapters[2]!.dialogue.approach!.text,
+  });
+  expect(model.stationTalk?.panel).toBe(start);
+  expect(model.shopGroups()).toBeDefined();
+  expect(model.jobBoard().length).toBeGreaterThan(0);
+  expect(model.stationTalk?.panel).toBe(start);
+  expect(flight.storyScene?.talkPage).toBeUndefined();
+
+  const oldSave = relaunch(CONTENT, model.save());
+  expect(oldSave.state.dialogue).toBeNull();
+  expect(oldSave.stationTalk?.panel).toEqual(start);
+  model.chooseStationTalk(start, "continue");
+  const narration = model.stationTalk!.panel!;
+  expect(narration).toMatchObject({
+    context: "approachDocking",
+    text: CONTENT.chapters[2]!.dialogue.approachDocking!.text,
+  });
+  expect(model.state.dialogue).toBeNull();
+  expect(flight.storyScene).toMatchObject({ lineDue: true, talkPage: "approachDocking" });
+  model.chooseStationTalk(start, "continue");
+  expect(model.stationTalk?.panel).toBe(narration);
+
+  const saved = model.saveDocument();
+  expect(restoreSave(saved)?.flight?.storyScene).toEqual(flight.storyScene);
+  for (const bad of [
+    { ...saved.flight!.storyScene, talkPage: "other" },
+    { ...saved.flight!.storyScene, talkPage: "approach" },
+    { ...saved.flight!.storyScene, lineDue: false },
+    { ...saved.flight!.storyScene, id: "blocked" },
+    { ...saved.flight!.storyScene, at: flight.time },
+  ]) {
+    expect(restoreSave({ ...saved, flight: { ...saved.flight, storyScene: bad } })).toBeNull();
+  }
+
+  model = relaunch(CONTENT, saved);
+  flight = model.state.flight!;
+  expect(model.state.docked).toBe("hub");
+  expect(model.state.dialogue).toBeNull();
+  expect(model.stationTalk?.panel).toEqual(narration);
+  model.undock();
+  expect(model.stationTalk).toBeNull();
+  expect(model.contextAction).toBe("talk");
+  model.interact();
+  expect(model.stationTalk?.panel).toEqual(narration);
+  expect(model.stationTalk?.panel).not.toBe(narration);
+
+  model.chooseStationTalk(model.stationTalk!.panel!, "continue");
+  const thanks = model.stationTalk!.panel!;
+  expect(thanks).toMatchObject({
+    context: "approachThanks",
+    text: CONTENT.chapters[2]!.dialogue.approachThanks!.text,
+  });
+  expect(relaunch(CONTENT, model.save()).stationTalk?.panel).toEqual(thanks);
+  model.chooseStationTalk(thanks, "continue");
+  model.chooseStationTalk(thanks, "continue");
+  expect(model.state.dialogue).toBeNull();
+  expect(model.stationTalk?.panel).toBeNull();
+  expect(flight.storyScene?.lineDue).toBe(false);
+  expect(flight.storyScene?.talkPage).toBeUndefined();
+  expect(model.state.economy.stardust).toBe(money);
+  expect(model.state.progress[2]).toMatchObject({
+    deposited: finalDeposit + 2,
+    questComplete: true,
+    stage: 5,
+  });
+
+  model.undock();
+  expect(model.contextAction).toBe("dock");
+  model.interact();
+  expect(model.state.docked).toBe("hub");
+  expect(model.stationTalk?.panel).toBeNull();
   model.state.economy.stardust = HOLODISKS.hubPrice;
   expect(model.buy({ kind: "holodisk" })).toEqual({ kind: "bought", price: HOLODISKS.hubPrice });
   readStory(model);
-  expect(progress.holodisk).toBe(true);
-  expect(progress.claim?.phase).toBe("active");
+  expect(model.state.progress[2].holodisk).toBe(true);
+  expect(model.state.progress[2].claim?.phase).toBe("active");
 });

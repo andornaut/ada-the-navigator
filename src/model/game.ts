@@ -379,6 +379,7 @@ import {
   visitRoomScene,
   waitingEarthScene,
 } from "./storyScenes.ts";
+import { isCartwheelDockingTalkPage } from "./storyShips.ts";
 import {
   resolveTargetObject,
   type TargetContribution,
@@ -599,7 +600,7 @@ export class GameModel {
   // screen shows so nothing in flight runs or shows; save() writes it back unchanged and
   // Continue restores it.
   private heldFlight: HeldFlight | null = null;
-  private wickVisit: {
+  private stationTalkVisit: {
     readonly flight: FlightState;
     readonly stationId: string;
     readonly panel: DialogueState;
@@ -2497,6 +2498,9 @@ export class GameModel {
       if (flight.cargo > 0) {
         return "deposit";
       }
+      if (this.readyHubDockingScene) {
+        return "talk";
+      }
       return this.hubSceneDue ? undefined : "dock";
     }
     if (progress.stations.includes(id)) {
@@ -3167,8 +3171,7 @@ export class GameModel {
   selectPaint(scheme: string): boolean {
     return selectPaint(ECONOMY, scheme, this.state.economy);
   }
-  /** Eligible docked Talk stays separate from flight dialogue. The saved berth and stage
-   * reconstruct any due Wick panel when Continue restores the visit. */
+  /** The berth and committed story state reconstruct the due panel on Continue. */
   get stationTalk(): { readonly stationId: string; readonly panel: DialogueState | null } | null {
     const { docked, flight } = this.state;
     if (
@@ -3180,24 +3183,44 @@ export class GameModel {
     ) {
       return null;
     }
+    if (flight.galaxy === 2 && docked === HUB_STATION) {
+      const scene = this.readyHubDockingScene;
+      const key = scene?.talkPage ?? CARTWHEEL_STORY_SHIPS.scenes.docking.line;
+      const entry = scene && this.chapter.dialogue[key];
+      if (!entry) {
+        return { panel: null, stationId: docked };
+      }
+      if (
+        this.stationTalkVisit?.flight !== flight ||
+        this.stationTalkVisit.stationId !== docked ||
+        this.stationTalkVisit.panel.context !== key
+      ) {
+        this.stationTalkVisit = {
+          flight,
+          panel: this.dialoguePanel(key, entry.text, entry.speaker),
+          stationId: docked,
+        };
+      }
+      return { panel: this.stationTalkVisit.panel, stationId: docked };
+    }
     if (flight.galaxy !== 5) {
       return { panel: null, stationId: docked };
     }
     const context = { content: this.content, flight, progress: this.current };
     const topic = andromedaStationTopic(context, docked);
     if (!topic) {
-      this.wickVisit = null;
+      this.stationTalkVisit = null;
       return { panel: null, stationId: docked };
     }
     if (
-      this.wickVisit?.flight !== flight ||
-      this.wickVisit.stationId !== docked ||
-      this.wickVisit.panel.context !== `andromeda:${topic}`
+      this.stationTalkVisit?.flight !== flight ||
+      this.stationTalkVisit.stationId !== docked ||
+      this.stationTalkVisit.panel.context !== `andromeda:${topic}`
     ) {
       const panel = useAndromeda(context, docked)?.dialogue;
-      this.wickVisit = panel ? { flight, panel, stationId: docked } : null;
+      this.stationTalkVisit = panel ? { flight, panel, stationId: docked } : null;
     }
-    return { panel: this.wickVisit?.panel ?? null, stationId: docked };
+    return { panel: this.stationTalkVisit?.panel ?? null, stationId: docked };
   }
 
   chooseStationTalk(panel: DialogueState, id: string): void {
@@ -3208,11 +3231,26 @@ export class GameModel {
       return;
     }
     const flight = this.state.flight;
+    const scene = this.readyHubDockingScene;
+    if (scene && this.state.docked === HUB_STATION) {
+      if (id !== "continue") {
+        return;
+      }
+      const next = this.chapter.dialogue[panel.context]?.then;
+      if (isCartwheelDockingTalkPage(next)) {
+        scene.talkPage = next;
+      } else if (panel.context === "approachThanks") {
+        this.stationTalkVisit = null;
+        scene.lineDue = false;
+        delete scene.talkPage;
+      }
+      return;
+    }
     const result =
       flight &&
       chooseAndromeda({ content: this.content, flight, progress: this.current }, panel, id);
     if (result) {
-      this.wickVisit = null;
+      this.stationTalkVisit = null;
       this.applyChapterResult(result);
     }
   }
@@ -3224,7 +3262,7 @@ export class GameModel {
     }
     this.state.docked = null;
     this.greeting = null;
-    this.wickVisit = null;
+    this.stationTalkVisit = null;
   }
   /**
    * A docking's keeper greeting (gameplay/rules.md "Species and greeters"): the full greeting the
@@ -3332,7 +3370,7 @@ export class GameModel {
       return;
     }
     this.state.docked = id;
-    this.wickVisit = null;
+    this.stationTalkVisit = null;
     if (this.state.stationRestock) {
       const supply = this.shopSupply();
       if (supply?.visit) {
@@ -3353,12 +3391,23 @@ export class GameModel {
       held.carrying = true;
     }
   }
-  /**
-   * Whether a Cartwheel story scene near the hub or its line is still to play: Dock waits until
-   * both have ended (gameplay/rules.md).
-   */
+  /** Dock waits for the hub scene and its dialogue, including a docking replay yet to start. */
   private get hubSceneDue(): boolean {
-    return Boolean(this.state.flight?.storyScene?.lineDue);
+    const flight = this.state.flight;
+    return Boolean(
+      flight?.storyScene?.lineDue ||
+      (flight?.galaxy === 2 && this.current.replayScene === "docking"),
+    );
+  }
+  private get readyHubDockingScene(): FlightState["storyScene"] {
+    const flight = this.state.flight;
+    const scene = flight?.storyScene;
+    return flight?.galaxy === 2 &&
+      scene?.id === "docking" &&
+      scene.lineDue &&
+      flight.time >= scene.at + CARTWHEEL_STORY_SHIPS.scenes.docking.duration
+      ? scene
+      : undefined;
   }
   /** Whether a carried supply run is bound for this station, so Use delivers it there. */
   private supplyDue(id: string): boolean {
@@ -3366,13 +3415,16 @@ export class GameModel {
     const activity = f && heldActivity(f.galaxy, this.state);
     return activity?.id === "supplyRun" && activity.carrying === true && activity.target?.id === id;
   }
-  private panel(context: string, text: string, title = this.chapter.name): void {
-    this.state.dialogue = {
+  private dialoguePanel(context: string, text: string, title = this.chapter.name): DialogueState {
+    return {
       choices: [{ id: "continue", label: this.label("continue") }],
       context,
       text,
       title,
     };
+  }
+  private panel(context: string, text: string, title?: string): void {
+    this.state.dialogue = this.dialoguePanel(context, text, title);
   }
   /**
    * Talk at a story place once its galaxy's chapter is complete (gameplay/quests.md "Repeatable
@@ -4658,18 +4710,6 @@ export class GameModel {
       f.storyScene = { at: f.time, id: replay, lineDue: true };
       delete this.current.replayScene;
     }
-    // The approach conversation still needs its own scene and speaker handoffs.
-    const scene = f.storyScene;
-    if (
-      scene?.id === "docking" &&
-      scene.lineDue &&
-      !this.state.dialogue &&
-      f.time >= scene.at + CARTWHEEL_STORY_SHIPS.scenes.docking.duration
-    ) {
-      scene.lineDue = false;
-      this.exchange(CARTWHEEL_STORY_SHIPS.scenes.docking.line);
-      return;
-    }
     const intro = first(f.galaxy);
     if (
       f.galaxy !== 1 &&
@@ -5178,7 +5218,8 @@ export class GameModel {
       return;
     }
     const f = this.state.flight;
-    if (!id || this.availablePlaceAction(id) === undefined) {
+    const action = id === undefined ? undefined : this.availablePlaceAction(id);
+    if (!id || action === undefined) {
       const hint = this.useHintTarget(id);
       if (hint !== undefined && !this.inRangeQuestDetails(f, hint)) {
         this.showUseHint(hint);
@@ -5268,10 +5309,8 @@ export class GameModel {
         this.talkAt(id, dialogueKeys[id] ?? id);
       }
     } else if (f.galaxy === 2) {
-      if (id === HUB_STATION && f.cargo === 0) {
-        if (!this.hubSceneDue) {
-          this.dock(id, f);
-        }
+      if (id === HUB_STATION && (action === "dock" || action === "talk")) {
+        this.dock(id, f);
       } else if (id === HUB_STATION) {
         const load = f.cargo;
         p.deposited += load;
@@ -6116,7 +6155,7 @@ export class GameModel {
     if (this.heldFlight) {
       Object.assign(this.state, this.heldFlight);
       this.heldFlight = null;
-      this.wickVisit = null;
+      this.stationTalkVisit = null;
       const { docked, flight } = this.state;
       if (flight) {
         const claim = this.current.claim;

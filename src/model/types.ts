@@ -24,6 +24,7 @@ import type { PhantomFlight, PhantomProgress } from "./phantom.ts";
 import type { ProjectileFade } from "./playerProjectiles.ts";
 import type { StationRestockState } from "./stationRestock.ts";
 import type { StoryCursor } from "./storyCursor.ts";
+import type { StorySceneState } from "./storyShips.ts";
 import type { TargetKnowledgeRecord } from "./targetMarkers.ts";
 
 /** What Use does here: the disc's symbol, and its name the disc's accessible name. */
@@ -217,7 +218,7 @@ export interface FlightState {
   trackedQuestId?: string;
   time: number;
   /** Cartwheel's story ship scene started this flight, if any. */
-  storyScene?: { at: number; id: StorySceneId; lineDue: boolean };
+  storyScene?: StorySceneState;
   player: Vec;
   velocity: Vec;
   facing: Vec;

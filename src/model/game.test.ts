@@ -304,6 +304,10 @@ function recoverHolodisk(model: GameModel) {
     arrive(model, "hub");
     model.interact();
     expect(model.state.docked).toBe("hub");
+    for (let line = 0; line < 3 && model.stationTalk?.panel; line++) {
+      model.chooseStationTalk(model.stationTalk.panel, "continue");
+    }
+    expect(model.stationTalk?.panel).toBeNull();
     expect(model.buy({ kind: "holodisk" })).toEqual({ kind: "bought", price: HOLODISKS.hubPrice });
   }
   if (model.state.dialogue?.context === "holodiskHandover") {

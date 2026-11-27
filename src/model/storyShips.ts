@@ -16,11 +16,18 @@ export interface StoryShip extends Vec {
   thrust: boolean;
 }
 
-/** The scene playing in a flight: which, the flight time it started, and whether its line is due. */
+type CartwheelDockingTalkPage = "approachDocking" | "approachThanks";
+
+export function isCartwheelDockingTalkPage(value: unknown): value is CartwheelDockingTalkPage {
+  return value === "approachDocking" || value === "approachThanks";
+}
+
+/** The scene playing in flight, with the committed docking exchange page when advanced. */
 export interface StorySceneState {
   at: number;
   id: StorySceneId;
   lineDue: boolean;
+  talkPage?: CartwheelDockingTalkPage;
 }
 
 const STAGE_DOCKED = 5;
