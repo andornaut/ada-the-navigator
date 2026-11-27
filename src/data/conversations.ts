@@ -215,6 +215,11 @@ const pool = (
 
 const WOOF = happy("penny", "Woof! Woof!");
 
+export const MAPPED_PLACE_RETURN_LINE = line(
+  "astra",
+  "Saved to the map. We can come back any time.",
+);
+
 export const CONVERSATIONS: readonly Conversation[] = [
   ...(
     [
@@ -348,10 +353,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
     [line("astra", "New place mapped."), happy("ada", "Our map is growing!")],
     [line("astra", "Marking it on the map."), happy("ada", "We're real explorers.")],
     [happy("ada", "Astra, put that on the map!"), line("astra", "Already done, Navigator.")],
-    [
-      line("astra", "Saved to the map. We can come back any time."),
-      happy("ada", "Good. I want to visit again."),
-    ],
+    [MAPPED_PLACE_RETURN_LINE, happy("ada", "Good. I want to visit again.")],
   ]),
   ...pool(
     "reaction:station",

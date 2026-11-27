@@ -20,6 +20,7 @@ import {
   CONVERSATIONS,
   INTERACTION_COPY,
   type JobMoment,
+  MAPPED_PLACE_RETURN_LINE,
   type Mood,
   type NoticeRank,
   SPEAKERS,
@@ -1060,11 +1061,23 @@ export class GameModel {
       return undefined;
     }
     const { role } = resolved.object;
-    return poiDiscoveryPool(flight.galaxy, {
+    const authored = poiDiscoveryPool(flight.galaxy, {
       id,
       kind: "storyPlace",
       ...(role === ANDROMEDA_PLACES.settlement ? { role } : {}),
     })[0]?.lines[0];
+    if (authored) {
+      return authored;
+    }
+    // Visual identification alone does not put a destination on the map.
+    if (
+      !this.current.known.includes(id) ||
+      stationForMapDestination(flight.galaxy, id) !== null ||
+      (flight.galaxy === 4 && id === "holodisk")
+    ) {
+      return undefined;
+    }
+    return MAPPED_PLACE_RETURN_LINE;
   }
 
   private cueMarkedPoiArrivals(flight: FlightState): void {

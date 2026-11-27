@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { COURIER } from "../data/activities.ts";
 import { CONTENT } from "../data/content.ts";
+import { CONVERSATION_TUNING } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { BUILT, GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
@@ -28,6 +29,7 @@ import { placementRadius, worldSceneryBlocksSegment } from "./asteroids.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { interactionCopy } from "./conversations.ts";
 import { closestOnSegment, outlineContact, worldParts } from "./convex.ts";
+import { GAME_AREA, gameAreaPoint, inGameArea } from "./edgeMarkers.ts";
 import { damageEnemy } from "./enemyAi.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
@@ -421,9 +423,55 @@ describe("mounted Andromeda chapter", () => {
       ]);
       expect(model.map?.places.some((place) => place.id === id)).toBe(false);
 
+      if (outcome === "salvaged") {
+        // The return visit starts with the introductory tutorials already heard.
+        for (const id of ["lesson:move", "lesson:aim", "lesson:stardust"] as const) {
+          if (!model.state.seenConversations.includes(id)) {
+            model.state.seenConversations.push(id);
+          }
+        }
+      }
       model = relaunch(CONTENT, model.save());
       flight = model.state.flight!;
       expect(model.flightLog).toEqual([entry]);
+      if (outcome === "salvaged") {
+        const world = flightWorldContext(flight);
+        flight.player = worldPoint(world, active.relay, {
+          x: active.relay.x + 1200,
+          y: active.relay.y,
+        });
+        flight.velocity = { x: 0, y: 0 };
+        worldSyncFlightRegion(world, CONTENT, flight);
+        const marker = model.targetMarkers(GAME_AREA).find(({ id }) => id === relayId);
+        expect(marker).toMatchObject({ id: relayId, identified: true });
+        expect(inGameArea(gameAreaPoint(flight.player, marker!))).toBe(false);
+        model.flightMarkerShown(marker!);
+
+        visit(model, relayId);
+        expect(model.useTarget).toBeUndefined();
+        const arrivals = [];
+        // Leave the restored reveal in the normal queue and isolate it from passing patrols.
+        const quietLimit = CONVERSATION_TUNING.cooldownSeconds * 2 + 5;
+        for (let elapsed = 0; elapsed < quietLimit; elapsed += 0.5) {
+          flight.objects = flight.objects.filter(({ kind }) => kind !== "enemy");
+          flight.shots = flight.shots.filter(({ enemy }) => !enemy);
+          flight.dangerFor = 0;
+          model.step(0.5, idle);
+          const line = model.conversation;
+          if (line?.key.startsWith(`poi:arrival:5:${relayId}:`)) {
+            arrivals.push({ speaker: line.speaker, text: line.text });
+          }
+          if (line) {
+            model.dismissConversation();
+          }
+        }
+        expect(arrivals).toEqual([
+          { speaker: "astra", text: "Saved to the map. We can come back any time." },
+        ]);
+        expect(model.state.dialogue).toBeNull();
+        expect(model.state.docked).toBeNull();
+        expect(model.state.progress[5].discoveries).toBe(discoveries + 1);
+      }
       flight.dangerFor = 0;
       model.state.economy.stardust = 50;
       expect(model.teleport(relayId)).toBe(true);
