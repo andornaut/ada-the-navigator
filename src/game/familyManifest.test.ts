@@ -59,10 +59,13 @@ const source = ts.createSourceFile(
 const names = new Set([
   "PHANTOM_CRAFT_JETS_KEY",
   "PHANTOM_CRAFT_JETS_PATH",
+  "arrivalLoads",
+  "arrivalQueues",
   "coralSidecars",
   "enemyArtKey",
   "enemyJetCacheKey",
   "ensureEnemyFamilyManifest",
+  "followArrivalLoad",
   "loadEnemyParts",
   "loadGalaxyArt",
   "loadGalaxyAsset",
@@ -144,10 +147,13 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
       [6, { assets: [], links: {}, sidecars: new Map() }],
     ]),
     load: {
+      inflight: new Set(),
       json,
+      list: new Set<{ key: string; type: string }>(),
       off: events.off.bind(events),
       on: events.on.bind(events),
       once: events.once.bind(events),
+      queue: new Set(),
       scene: { events: life, sys: { isActive: () => true } },
       spritesheet: vi.fn(),
       start,
@@ -173,7 +179,7 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     GALAXY_NUMBERS,
     GameObjects: { Image: class {} },
     INDUSTRIAL_BODY_KEYS,
-    Loader: { Events: { COMPLETE: "complete", FILE_COMPLETE: "filecomplete" } },
+    Loader: { Events: { ADD: "addfile", COMPLETE: "complete", FILE_COMPLETE: "filecomplete" } },
     PHANTOM_ALLIES_ART,
     Scenes: { Events: { DESTROY: "destroy", SHUTDOWN: "shutdown" } },
     composedArchetypes,
@@ -219,6 +225,11 @@ function fixture(family: EnemyFamily | undefined = claim, useRealSvg = false) {
     context.loadSvg = svg;
   }
   return {
+    arrivalLoads: context.arrivalLoads as (value: typeof scene) => {
+      dispose(): void;
+      pending(): boolean;
+      queue(work: () => void): void;
+    },
     artKey: context.enemyArtKey as (value: typeof scene, archetype: string, id?: string) => string,
     backdrop,
     cache,
@@ -1025,4 +1036,37 @@ describe("deferred core capital sheets", () => {
     expect(f.svg).not.toHaveBeenCalled();
     expect(f.readArt).not.toHaveBeenCalled();
   });
+});
+
+it("waits for the chosen galaxy and its queued descendants while another batch is active", () => {
+  const f = fixture();
+  const { load } = f.scene;
+  const queued = (key: string) => {
+    const file = { key, type: "json" };
+    load.list.add(file);
+    f.events.emit("addfile", key, file.type, load, file);
+    return file;
+  };
+  queued("unrelated");
+  const key = galaxyManifestKey(2);
+  f.json.mockImplementation(queued);
+  f.backdrop.mockImplementation(() => {
+    queued("backdrop-2");
+  });
+  const arrival = f.arrivalLoads(f.scene);
+  arrival.queue(() => f.loadWorld(f.scene, 2));
+  expect(arrival.pending()).toBe(true);
+  f.cache.set(key, { assets: [], sidecars: {}, version: 1 });
+  const manifest = [...load.list].find((file) => file.key === key)!;
+  load.list.delete(manifest);
+  f.events.emit(`filecomplete-json-${key}`);
+  expect(arrival.pending()).toBe(true);
+  load.list.delete([...load.list].find((file) => file.key === "backdrop-2")!);
+  // A failed initial attempt's retry has the same key and a different File.
+  arrival.queue(() => {
+    queued(key);
+  });
+  expect(arrival.pending()).toBe(false);
+  expect(load.list.size).toBe(2);
+  arrival.dispose();
 });

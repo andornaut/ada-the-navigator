@@ -1,11 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { JET_PROFILE } from "../../art/tools/ship-jet-layers.ts";
 import { plumePolygon } from "../../art/tools/ship-plume.ts";
 import manifest from "../../public/art/manifest.json";
 import data from "../../public/art/quantum-jump.json";
 import jetData from "../../public/art/ship-jets.json";
-import { type SheetArt, sheetFrame } from "../ui/jumpOverlay.ts";
+import { createJumpOverlay, type SheetArt, sheetFrame } from "../ui/jumpOverlay.ts";
 import { AUTHORED_JET_LENGTH, jetShapePolygons } from "./jetGeometry.ts";
 import {
   canvasFit,
@@ -311,3 +311,84 @@ describe("quantum jump data", () => {
     expect(sheetFrame(sheet("quantum-jump-star"), "jump")).not.toBeNull();
   });
 });
+
+it.each([false, true])(
+  "holds the covered arrival until ready (reduced motion %s)",
+  (reducedMotion) => {
+    let render: FrameRequestCallback = () => {};
+    const cancel = vi.fn();
+    const remove = vi.fn();
+    const fillRect = vi.fn();
+    const canvas = {
+      getContext: () => ({
+        clearRect: vi.fn(),
+        fillRect,
+        restore: vi.fn(),
+        save: vi.fn(),
+        setTransform: vi.fn(),
+      }),
+      remove,
+      setAttribute: vi.fn(),
+      style: {},
+    };
+    const host = { append: vi.fn(), clientHeight: 160, clientWidth: 320 } as unknown as HTMLElement;
+    vi.stubGlobal("document", { createElement: () => canvas, hidden: false });
+    vi.stubGlobal("window", { devicePixelRatio: 1 });
+    vi.stubGlobal("Image", class {});
+    vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "" }));
+    vi.stubGlobal("cancelAnimationFrame", cancel);
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+      render = callback;
+      return 1;
+    });
+    try {
+      const overlay = createJumpOverlay(() => 0, host, {
+        field: sheet("quantum-jump-field"),
+        glow: sheet("quantum-jump-glow"),
+        jump,
+        star: sheet("quantum-jump-star"),
+        tunnel: sheet("quantum-jump-tunnel"),
+      });
+      const onSwitch = vi.fn();
+      const onDone = vi.fn();
+      const arrivalReady = vi.fn(() => false);
+      const source = { center: { x: 160, y: 80 }, heading: null, specks: [] };
+      const cover = switchMs(jump, reducedMotion);
+      overlay.play({
+        arrivalReady,
+        destination: () => source,
+        emergency: false,
+        onCover: vi.fn(),
+        onDone,
+        onSwitch,
+        reducedMotion,
+        source,
+      });
+      render(cover);
+      expect(onSwitch).not.toHaveBeenCalled();
+      expect(fillRect).toHaveBeenCalledOnce();
+      render(cover + 16);
+      expect(onSwitch).toHaveBeenCalledOnce();
+      render(cover + 1000);
+      expect(overlay.active()).toBe(true);
+      expect(fillRect).toHaveBeenCalledTimes(3);
+      expect(onDone).not.toHaveBeenCalled();
+      if (reducedMotion) {
+        // The offline path must finish even while the optional loader stays busy.
+        render(cover + 2500);
+        expect(arrivalReady).toHaveReturnedWith(false);
+      } else {
+        arrivalReady.mockReturnValue(true);
+        render(cover + 1016);
+        expect(overlay.active()).toBe(true);
+        expect(fillRect).toHaveBeenCalledTimes(3);
+        render(cover + 2000);
+      }
+      expect(remove).toHaveBeenCalledOnce();
+      expect(onSwitch).toHaveBeenCalledOnce();
+      expect(onDone).toHaveBeenCalledOnce();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  },
+);

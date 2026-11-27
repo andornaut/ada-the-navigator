@@ -11,6 +11,8 @@ import type { Asset } from "./sceneShared.ts";
 import { vectorSheetKey } from "./svgSheet.ts";
 
 const names = new Set([
+  "arrivalQueues",
+  "followArrivalLoad",
   "queueEagerSvgSheets",
   "svgSheets",
   "loadGalaxyAsset",

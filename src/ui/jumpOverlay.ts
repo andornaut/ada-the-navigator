@@ -54,6 +54,8 @@ export interface JumpScene {
   readonly specks: readonly Vec[];
 }
 export interface JumpPlay {
+  /** Lets the covered destination finish its first draws and optional asset batch. */
+  readonly arrivalReady?: () => boolean;
   readonly destination: () => JumpScene;
   readonly emergency: boolean;
   /** Called once, as the warp ship first draws, so the scene hides its own ship until done. */
@@ -90,6 +92,9 @@ export function sheetFrame(
     y: Math.floor(index / columns) * sheet.frameHeight,
   };
 }
+
+// Optional art can fail offline or retry in the background after the reveal.
+const MAX_ARRIVAL_HOLD_MS = 2500;
 
 const ready = (image: HTMLImageElement) => image.complete && image.naturalWidth > 0;
 
@@ -136,7 +141,9 @@ export function createJumpOverlay(
   let poses = new Map<string, HTMLImageElement>();
   let sprites: readonly (HTMLImageElement | null)[] = [];
   let rasters = new Map<string, HTMLCanvasElement>();
-  let running: (JumpPlay & { covered: boolean; start: number; switched: boolean }) | null = null;
+  let running:
+    | (JumpPlay & { coverStartedAt?: number; covered: boolean; start: number; switched: boolean })
+    | null = null;
   let request = 0;
 
   const raster = (image: HTMLImageElement, pixels: number, white: boolean): HTMLCanvasElement => {
@@ -383,10 +390,30 @@ export function createJumpOverlay(
       return;
     }
     const play = running;
-    const ms = now - play.start + (play.emergency ? emergencyStartMs(play.reducedMotion, jump) : 0);
-    if (!play.switched && ms >= switchMs(jump, play.reducedMotion)) {
-      play.switched = true;
-      play.onSwitch();
+    let ms = now - play.start + (play.emergency ? emergencyStartMs(play.reducedMotion, jump) : 0);
+    const switchAt = switchMs(jump, play.reducedMotion);
+    const hold = () => {
+      play.start += ms - switchAt;
+      ms = switchAt;
+    };
+    if (!play.switched && ms >= switchAt) {
+      if (play.arrivalReady && play.coverStartedAt === undefined) {
+        // Present the cover before running the synchronous destination transaction.
+        play.coverStartedAt = now;
+        hold();
+      } else {
+        play.switched = true;
+        play.onSwitch();
+      }
+    }
+    const holding =
+      play.coverStartedAt !== undefined &&
+      (!play.switched ||
+        (now - play.coverStartedAt < MAX_ARRIVAL_HOLD_MS && !play.arrivalReady?.()));
+    if (holding) {
+      hold();
+    } else {
+      delete play.coverStartedAt;
     }
     const done = play.reducedMotion ? reducedWeights(jump, ms) === null : !jumpStepAt(jump, ms);
     if (done) {
@@ -416,6 +443,11 @@ export function createJumpOverlay(
     // Everything below is in view logical px.
     context.setTransform(ratio * s, 0, 0, ratio * s, 0, 0);
     const view = { height: height / s, width: width / s };
+    if (holding) {
+      // The art can itself still be decoding. Keep the destination hidden even in that case.
+      context.fillStyle = COLOURS.baseField;
+      context.fillRect(0, 0, view.width, view.height);
+    }
     const scene = play.switched ? play.destination() : play.source;
     let drewShip = false;
     if (play.reducedMotion) {

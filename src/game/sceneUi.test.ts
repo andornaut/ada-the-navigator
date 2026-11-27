@@ -22,6 +22,7 @@ import { UPGRADE_WEAPONS } from "../model/weapons.ts";
 import { createAdaSaves, SAVE_KEYS, SAVE_RESTORE } from "../saving/index.ts";
 import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import type { CheatAction } from "../ui/cheatActions.ts";
+import type { JumpPlay } from "../ui/jumpOverlay.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { NO_INSETS, safeGameArea } from "../ui/layout/playView.ts";
 import { createCoveredPaint } from "../ui/modalScenePaint.ts";
@@ -133,13 +134,34 @@ function navigation(model: GameModel) {
     }),
     focusGalaxies: vi.fn(),
   };
-  const scene = { controls, galaxies: { jump: vi.fn() }, jumping: false, model, quantum: {} };
-  const jumpThen = vi.fn((action: () => void) => action());
-  const context = createContext({ apply: (action: () => void) => action(), jumpThen, scene });
+  const scene = {
+    controls,
+    emergencyReturn: { active: false },
+    entryCurrent: () => true,
+    galaxies: { jump: vi.fn() },
+    jumping: false,
+    model,
+    quantum: {},
+    settingsOpen: model.galaxyMapShownInFlight,
+  };
+  const loadGalaxyArt = vi.fn();
+  const jumpThen = vi.fn((action: () => void, prepare?: () => void) => {
+    prepare?.();
+    action();
+  });
+  const context = createContext({
+    apply: (action: () => void) => action(),
+    jumpThen,
+    loadGalaxyArt,
+    newer: false,
+    requiredReady: () => true,
+    scene,
+  });
+  context.jumpAvailable = runInContext(callback("jumpAvailable"), context);
   context.closeGalaxyMap = runInContext(callback("closeGalaxyMap"), context);
   context.leaveFlight = runInContext(callback("leaveFlight"), context);
   const onJump = runInContext(callback("onJump"), context) as () => void;
-  return { controls, jumpThen, localMapOpen: () => localMapOpen, onJump, scene };
+  return { controls, jumpThen, loadGalaxyArt, localMapOpen: () => localMapOpen, onJump, scene };
 }
 
 it("passes the live balance to Map and charges Travel here only at the quantum switch", () => {
@@ -147,10 +169,12 @@ it("passes the live balance to Map and charges Travel here only at the quantum s
   const live = model.state.flight!;
   const target = ensureDestination(CONTENT, "growers", live);
   model.state.progress[1].known.push(target.id);
-  const jumpThen = vi.fn<(action: () => void) => void>();
+  const jumpThen = vi.fn<(action: () => void, prepare: () => void) => void>();
+  const preloadTravelArt = vi.fn();
+  const scene = { model };
   const onTravel = runInContext(
     callback("onTravel"),
-    createContext({ jumpThen, scene: { model } }),
+    createContext({ jumpThen, preloadTravelArt, scene }),
   ) as (id: string) => void;
   const before = { ...live.player };
 
@@ -158,11 +182,19 @@ it("passes the live balance to Map and charges Travel here only at the quantum s
   expect(pauseView(model).stardust).toBe(49);
   onTravel(target.id);
   expect(jumpThen).not.toHaveBeenCalled();
+  expect(preloadTravelArt).not.toHaveBeenCalled();
 
   model.state.economy.stardust = 50;
   expect(pauseView(model).stardust).toBe(50);
   onTravel(target.id);
   expect(jumpThen).toHaveBeenCalledOnce();
+  jumpThen.mock.calls[0]![1]();
+  expect(preloadTravelArt).toHaveBeenCalledExactlyOnceWith(
+    scene,
+    live,
+    expect.objectContaining({ x: target.x, y: target.y }),
+    undefined,
+  );
   expect(live.player).toEqual(before);
   expect(model.state.economy.stardust).toBe(50);
   model.state.economy.stardust = 49;
@@ -176,6 +208,86 @@ it("passes the live balance to Map and charges Travel here only at the quantum s
   expect(live.player).toEqual({ x: target.x, y: target.y });
   expect(model.state.economy.stardust).toBe(0);
 });
+
+it.each(["entry", "flight", "refused", "story", "no flight"] as const)(
+  "ends the cover when the confirmed switch has no drawing flight (%s)",
+  (blocked) => {
+    const source = { center: { x: 0, y: 0 }, heading: null, specks: [] };
+    const play = vi.fn<(options: JumpPlay) => void>();
+    const state = { flight: {}, mode: "space" };
+    const model = { galaxyMapOpen: true, state, storyView: null as unknown };
+    const scene = {
+      emergencyReturn: { active: false },
+      entryCurrent: vi.fn(() => true),
+      galaxies: { show: vi.fn() },
+      jumping: false,
+      model,
+      quantum: { play },
+      reducedMotion: false,
+      settingsOpen: false,
+    };
+    const requiredReady = vi.fn(() => false);
+    const prepare = vi.fn();
+    const pending = vi.fn(() => true);
+    const dispose = vi.fn();
+    const action = vi.fn(() => {
+      if (blocked === "story") {
+        model.storyView = {};
+      }
+      if (blocked === "no flight") {
+        state.mode = "home";
+      }
+      return blocked !== "refused";
+    });
+    const preloadTravelArt = vi.fn();
+    const fields = createContext({
+      activeArrival: undefined,
+      apply: (doAction: () => void) => {
+        if (requiredReady()) {
+          doAction();
+        }
+      },
+      arrivalLoads: () => ({ dispose, pending, queue: (work: () => void) => work() }),
+      coverShip: vi.fn(),
+      endJump: () => {
+        scene.jumping = false;
+      },
+      jumpScene: () => source,
+      newer: false,
+      preloadTravelArt,
+      refreshScene: vi.fn(),
+      requiredReady,
+      scene,
+    });
+    fields.jumpAvailable = runInContext(callback("jumpAvailable"), fields);
+    const run = runInContext(callback("jumpThen"), fields) as (
+      commit: () => boolean,
+      prepare: () => void,
+    ) => void;
+    run(action, prepare);
+    expect(prepare).not.toHaveBeenCalled();
+    requiredReady.mockReturnValue(true);
+    run(action, prepare);
+    expect(prepare).toHaveBeenCalledOnce();
+    expect(action).not.toHaveBeenCalled();
+    const options = play.mock.calls[0]![0];
+    if (blocked === "entry") {
+      requiredReady.mockReturnValue(false);
+    }
+    if (blocked === "flight") {
+      state.flight = {};
+    }
+    options.onSwitch();
+    expect(action).toHaveBeenCalledTimes(blocked === "entry" || blocked === "flight" ? 0 : 1);
+    expect(options.arrivalReady?.()).toBe(true);
+    expect(pending).not.toHaveBeenCalled();
+    expect(preloadTravelArt).not.toHaveBeenCalled();
+    options.onDone();
+    expect(dispose).toHaveBeenCalledOnce();
+    expect(scene.galaxies.show).toHaveBeenCalledExactlyOnceWith(null);
+    expect(scene.jumping).toBe(false);
+  },
+);
 
 describe("in-flight weapon selection", () => {
   it("keeps the active controls through consecutive swaps and honors the modal and readiness fences", () => {
@@ -830,6 +942,7 @@ describe("galaxy map UI navigation", () => {
     expect(ui.localMapOpen()).toBe(false);
     expect(ui.jumpThen).toHaveBeenCalledOnce();
     expect(ui.scene.galaxies.jump).toHaveBeenCalledOnce();
+    expect(ui.loadGalaxyArt).toHaveBeenCalledExactlyOnceWith(ui.scene, 3);
   });
 
   it("a locked marker refuses Jump without closing either map", () => {
@@ -844,6 +957,7 @@ describe("galaxy map UI navigation", () => {
     expect(ui.localMapOpen()).toBe(true);
     expect(ui.jumpThen).not.toHaveBeenCalled();
     expect(ui.scene.galaxies.jump).not.toHaveBeenCalled();
+    expect(ui.loadGalaxyArt).not.toHaveBeenCalled();
   });
 
   it("boarding still starts the selected flight rather than returning to a local map", () => {

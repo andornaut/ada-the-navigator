@@ -99,15 +99,19 @@ import { readQuantumJump } from "./quantumJump.ts";
 import { markerHue, readRouteArt, readRouteMarkers, routePreviews } from "./routeArt.ts";
 import type { GameScene } from "./scene.ts";
 import {
+  arrivalLoads,
   loadAsteroidArt,
+  loadGalaxyArt,
   materialClassicShipFrame,
   materialShipFrames,
   materialShipHeading,
   materialWarpPoses,
   paintInUse,
   paintSwatch,
+  preloadTravelArt,
   publishCoreShards,
   readEnemyArt,
+  readGalaxyArt,
 } from "./sceneAssets.ts";
 import { coverShip, endJump, jumpScene } from "./sceneJump.ts";
 import { type Asset, projectId, TITLE_SCREEN_KEY } from "./sceneShared.ts";
@@ -458,22 +462,99 @@ export function buildScene(scene: UiContext): void {
     () => scene.game.loop.actualFps,
   );
   partial.push(() => scene.fpsCounter.dispose());
-  // Every quantum jump plays Art's effect; the game switches once the source is covered.
-  const jumpThen = (action: () => void): void => {
-    if (scene.jumping) {
+  const jumpAvailable = () =>
+    !scene.jumping &&
+    scene.entryCurrent() &&
+    requiredReady() &&
+    !newer &&
+    !scene.emergencyReturn.active;
+  let activeArrival: ReturnType<typeof arrivalLoads> | undefined;
+  partial.push(() => activeArrival?.dispose());
+  // The source stays covered through the model transaction and the first usable destination draw.
+  const jumpThen = (action: () => boolean | void, prepare?: () => void): void => {
+    if (!jumpAvailable()) {
       return;
     }
+    const sourceModel = scene.model;
+    const sourceFlight = sourceModel.state.flight;
     if (!scene.quantum) {
+      prepare?.();
       apply(action);
       return;
     }
+    const loads = prepare && arrivalLoads(scene);
+    activeArrival = loads;
+    let destinationFlight: FlightState | undefined;
+    let readyFrame: number | undefined;
     scene.jumping = true;
+    if (loads && prepare) {
+      loads.queue(prepare);
+    }
+    const arrivalReady = () => {
+      if (
+        !loads ||
+        !destinationFlight ||
+        scene.model !== sourceModel ||
+        scene.model.state.flight !== destinationFlight ||
+        !scene.entryCurrent() ||
+        !requiredReady() ||
+        scene.settingsOpen ||
+        newer
+      ) {
+        return true;
+      }
+      if (loads.pending()) {
+        return false;
+      }
+      if (readyFrame === undefined) {
+        // Publish the destination package even if unrelated work delays the loader's COMPLETE.
+        if (loads.requested) {
+          readGalaxyArt(scene);
+        }
+        const flight = destinationFlight;
+        loads.queue(() => preloadTravelArt(scene, flight, flight.player));
+        if (loads.pending()) {
+          return false;
+        }
+        readyFrame = scene.game.loop.frame;
+      }
+      return scene.game.loop.frame > readyFrame;
+    };
     scene.quantum.play({
+      ...(loads ? { arrivalReady } : {}),
       destination: () => jumpScene(scene),
       emergency: false,
       onCover: () => coverShip(scene),
-      onDone: () => endJump(scene),
-      onSwitch: () => apply(action),
+      onDone: () => {
+        loads?.dispose();
+        activeArrival = undefined;
+        endJump(scene);
+        if (scene.entryCurrent() && scene.model.galaxyMapOpen) {
+          // A refused or cancelled switch leaves the map open. Restore its hidden actions.
+          scene.galaxies.show(null);
+          if (requiredReady()) {
+            refreshScene(scene);
+          }
+        }
+      },
+      onSwitch: () => {
+        if (
+          scene.settingsOpen ||
+          scene.model !== sourceModel ||
+          sourceModel.state.flight !== sourceFlight
+        ) {
+          return;
+        }
+        apply(() => {
+          if (action() && loads && scene.model.state.mode === "space" && !scene.model.storyView) {
+            const flight = scene.model.state.flight;
+            if (flight) {
+              destinationFlight = flight;
+              loads.queue(() => preloadTravelArt(scene, flight, flight.player));
+            }
+          }
+        });
+      },
       reducedMotion: scene.reducedMotion,
       source: jumpScene(scene),
     });
@@ -485,11 +566,11 @@ export function buildScene(scene: UiContext): void {
   };
   // Leaving the flight from the galaxy map closes the Paused card and the local map under it, so
   // the jump plays over the flight.
-  const leaveFlight = (action: () => void): void => {
+  const leaveFlight = (action: () => boolean | void, prepare?: () => void): void => {
     if (scene.model.galaxyMapShownInFlight) {
       scene.controls.closePause();
     }
-    jumpThen(action);
+    jumpThen(action, prepare);
   };
   // The galaxy map's back and Escape, and Stay, one step back: in flight the local map again, focus
   // back on its Galaxies; at boarding the Welcome back page, whose page focuses its Next.
@@ -693,7 +774,21 @@ export function buildScene(scene: UiContext): void {
       onGalaxies: () => scene.openGalaxies(),
       onTravel: (id) => {
         if (scene.model.canTeleport(id)) {
-          jumpThen(() => scene.model.teleport(id));
+          jumpThen(
+            () => scene.model.teleport(id),
+            () => {
+              const flight = scene.model.state.flight;
+              const arrival = scene.model.map?.places.find((place) => place.id === id);
+              if (flight && arrival) {
+                const active = flight.objects.find((object) => object.id === id);
+                const retained = active ? undefined : (flight.world.notables[id] ?? undefined);
+                const object = active ?? retained;
+                const point =
+                  object?.kind === "destination" || object?.kind === "station" ? object : arrival;
+                preloadTravelArt(scene, flight, point, retained);
+              }
+            },
+          );
         }
       },
       paint: {
@@ -1056,16 +1151,22 @@ export function buildScene(scene: UiContext): void {
     },
     onFlightEnd: () => apply(() => scene.model.finishRouteFlight()),
     onJump: () => {
+      if (!jumpAvailable()) {
+        return;
+      }
       const selected = scene.model.galaxyMapSelection;
       if (scene.model.galaxyMapStays) {
         // Stay here returns to the local map that opened this galaxy map.
         closeGalaxyMap();
       } else if (selected !== null && scene.model.isUnlocked(selected)) {
         // The map is the jump's source: its panel and destination action go at once.
-        if (scene.quantum && !scene.jumping) {
+        if (scene.quantum) {
           scene.galaxies.jump();
         }
-        leaveFlight(() => scene.model.jump());
+        leaveFlight(
+          () => scene.model.galaxyMapSelection === selected && scene.model.jump(),
+          () => loadGalaxyArt(scene, selected),
+        );
       } else {
         apply(() => scene.model.jump());
       }

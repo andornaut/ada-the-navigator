@@ -8,6 +8,7 @@ import {
   BAND_AREA,
   type DebrisArt,
   decorationRasterSize,
+  drawnRockId,
   paintBand,
   paintFrames,
   PHANTOM_ALLIES_ART,
@@ -23,16 +24,25 @@ import {
   readStreakSpec,
   readWhaleArt,
   readWhirlpoolProjects,
+  rockArt,
   RockFrames,
   whaleFrameAsset,
   whaleViewBox,
 } from "../art/index.ts";
 import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
+import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
+import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
 import { enemyAssetKey, hullDesign, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { GALAXY_ID, GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
+import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
+import { scenerySilhouette } from "../model/asteroids.ts";
+import { flightWorldContext } from "../model/flightTopology.ts";
 import { SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
+import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
+import { worldDelta } from "../model/worldContacts.ts";
 import {
   type CoreManifest,
   galaxyLoadsAtOnce,
@@ -221,8 +231,9 @@ function queueEagerSvgSheets(
       queue(xml);
       continue;
     }
-    scene.load.once(`filecomplete-xml-${key}`, () =>
-      queue(scene.cache.xml.get(key) as Document | undefined),
+    scene.load.once(
+      `filecomplete-xml-${key}`,
+      followArrivalLoad(scene, () => queue(scene.cache.xml.get(key) as Document | undefined)),
     );
     scene.load.xml(key, path);
   }
@@ -452,9 +463,82 @@ function queueFamilyShards(
   }
 }
 
+interface ArrivalQueue {
+  readonly include: (keys: ReadonlySet<string>) => void;
+  readonly run: (work: () => void) => void;
+}
+const arrivalQueues = new WeakMap<AssetsContext, ArrivalQueue>();
+
+/** Track the file instances queued for this arrival, including their dependent SVG frames. */
+export function arrivalLoads(scene: AssetsContext) {
+  const loader = scene.load;
+  const files = new Set<Loader.File>();
+  const attempted = new Set<string>();
+  let active = true;
+  const add = (key: string, type: string, _loader: Loader.LoaderPlugin, file: Loader.File) => {
+    const request = `${type}:${key}`;
+    if (!attempted.has(request)) {
+      attempted.add(request);
+      files.add(file);
+    }
+  };
+  const queue: ArrivalQueue = {
+    include: (keys) => {
+      for (const batch of [loader.list, loader.inflight, loader.queue]) {
+        for (const file of batch) {
+          if (keys.has(file.key)) {
+            add(file.key, file.type, loader, file);
+          }
+        }
+      }
+    },
+    run: (work) => {
+      if (!active || arrivalQueues.get(scene) === queue) {
+        work();
+        return;
+      }
+      arrivalQueues.set(scene, queue);
+      loader.on(Loader.Events.ADD, add);
+      try {
+        work();
+      } finally {
+        loader.off(Loader.Events.ADD, add);
+        arrivalQueues.delete(scene);
+      }
+    },
+  };
+  return {
+    dispose: () => {
+      active = false;
+      attempted.clear();
+      files.clear();
+    },
+    pending: () => {
+      for (const file of files) {
+        if (!loader.list.has(file) && !loader.inflight.has(file) && !loader.queue.has(file)) {
+          files.delete(file);
+        }
+      }
+      return files.size > 0;
+    },
+    queue: queue.run,
+    get requested() {
+      return attempted.size > 0;
+    },
+  };
+}
+
+function followArrivalLoad<Args extends unknown[]>(
+  scene: AssetsContext,
+  callback: (...args: Args) => void,
+): (...args: Args) => void {
+  const queue = arrivalQueues.get(scene);
+  return queue ? (...args) => queue.run(() => callback(...args)) : callback;
+}
+
 /**
- * Loads a galaxy's own art the first time one of its flights draws: SVGs (loadSvg), the nugget
- * sheet and the data files, then reads them. Until then its objects keep their placeholders.
+ * Queues one galaxy's art on confirmed Jump or its first draw. Optional art keeps its normal
+ * placeholders if unavailable.
  */
 export function loadGalaxyArt(scene: AssetsContext, galaxy: GalaxyNumber): void {
   if (scene.galaxyLoads.has(galaxy)) {
@@ -475,8 +559,9 @@ export function loadGalaxyArt(scene: AssetsContext, galaxy: GalaxyNumber): void 
   if (scene.galaxyManifests.has(galaxy) || !path) {
     queueGalaxyArt(scene, galaxy);
   } else {
-    scene.load.once(`filecomplete-json-${galaxyManifestKey(galaxy)}`, () =>
-      queueGalaxyArt(scene, galaxy),
+    scene.load.once(
+      `filecomplete-json-${galaxyManifestKey(galaxy)}`,
+      followArrivalLoad(scene, () => queueGalaxyArt(scene, galaxy)),
     );
     scene.load.json(galaxyManifestKey(galaxy), path);
   }
@@ -484,6 +569,73 @@ export function loadGalaxyArt(scene: AssetsContext, galaxy: GalaxyNumber): void 
   // The galaxy's first flight waits on its own art.
   scene.loads?.waitFor("galaxy");
   scene.load.start();
+}
+
+/**
+ * Warm visible art from the active region and the confirmed marker's retained actor, if any.
+ * A remote region's other objects are available after the model places Ada there.
+ */
+export function preloadTravelArt(
+  scene: AssetsContext,
+  flight: FlightState,
+  arrival: Vec,
+  retained?: SpaceObject,
+): void {
+  const world = flightWorldContext(flight);
+  const parts = new Set<string>();
+  const rocks = new Set<AsteroidArt>();
+  const objects = retained ? [...flight.objects, retained] : flight.objects;
+  for (const object of objects) {
+    const hullReach = object.enemy
+      ? ENEMY_SIZE_RATIOS[object.enemy.archetype] * CONTENT.tuning.flight.shipRadius * 2
+      : 0;
+    const reach = Math.max(object.radius, hullReach, scenerySilhouette(object)?.reach ?? 0) + 60;
+    const { x, y } = worldDelta(world, arrival, object);
+    if (
+      Math.abs(x - y) > SCREEN.width / 2 + reach ||
+      Math.abs((x + y) / 2) > SCREEN.height / 2 + reach
+    ) {
+      continue;
+    }
+    if (object.enemy) {
+      parts.add(
+        object.id === PHANTOM_FLAGSHIP
+          ? "archie"
+          : enemyArtKey(scene, object.enemy.archetype, object.id),
+      );
+    }
+    if (object.asteroid) {
+      const art = rockArt(
+        drawnRockId(scene.asteroidArt.crystals, {
+          asteroid: object.asteroid,
+          crystals: object.crystals,
+        }),
+      );
+      if (art) {
+        rocks.add(art);
+      }
+    }
+  }
+  const rockFiles = new Set<string>();
+  for (const art of rocks) {
+    rockFrameTexture(scene, art, 0);
+    for (const { file } of art.frames) {
+      if (!scene.textures.exists(file)) {
+        rockFiles.add(file);
+        const frame = rockSheetFrames.get(file);
+        if (frame) {
+          rockFiles.add(vectorSheetKey(frame.path));
+        }
+      }
+    }
+  }
+  if (rockFiles.size) {
+    arrivalQueues.get(scene)?.include(rockFiles);
+  }
+  for (const archetype of parts) {
+    loadEnemyParts(scene, archetype);
+  }
+  startRockLoads(scene);
 }
 
 /** Queues one of a galaxy manifest's SVGs or sheets; whale frames and part frames wait. */
@@ -717,27 +869,30 @@ export function queueBackdrop(
   if (!path || scene.galaxyBackdrops.has(galaxy) || scene.cache.json.exists(key)) {
     return;
   }
-  scene.load.once(`filecomplete-json-${key}`, () => {
-    const backdrop = readGalaxyBackdrop(scene.cache.json.get(key));
-    if (!backdrop) {
-      return;
-    }
-    scene.galaxyBackdrops.set(galaxy, backdrop);
-    if (backdrop.fixed.includes("backdropHaze")) {
-      queueHaze(scene, galaxy, manifest);
-    }
-    if (backdrop.fixed.includes("needleBand")) {
-      queueBand(scene, galaxy, manifest);
-    }
-    for (const id of backdrop.far.flatMap((far) => (far.look === "nebula" ? far.assets : []))) {
-      const asset = manifest.assets.find((entry) => entry.id === id);
-      if (!asset || scene.textures.exists(id)) {
-        continue;
+  scene.load.once(
+    `filecomplete-json-${key}`,
+    followArrivalLoad(scene, () => {
+      const backdrop = readGalaxyBackdrop(scene.cache.json.get(key));
+      if (!backdrop) {
+        return;
       }
-      scene.load.once(`filecomplete-image-${id}`, () => filterTexture(scene, id, "linear"));
-      scene.load.image(id, asset.path);
-    }
-  });
+      scene.galaxyBackdrops.set(galaxy, backdrop);
+      if (backdrop.fixed.includes("backdropHaze")) {
+        queueHaze(scene, galaxy, manifest);
+      }
+      if (backdrop.fixed.includes("needleBand")) {
+        queueBand(scene, galaxy, manifest);
+      }
+      for (const id of backdrop.far.flatMap((far) => (far.look === "nebula" ? far.assets : []))) {
+        const asset = manifest.assets.find((entry) => entry.id === id);
+        if (!asset || scene.textures.exists(id)) {
+          continue;
+        }
+        scene.load.once(`filecomplete-image-${id}`, () => filterTexture(scene, id, "linear"));
+        scene.load.image(id, asset.path);
+      }
+    }),
+  );
   scene.load.json(key, path);
 }
 
@@ -755,22 +910,25 @@ export function queueHaze(
   if (!path || scene.backdrops.has(galaxy) || scene.cache.json.exists(key)) {
     return;
   }
-  scene.load.once(`filecomplete-json-${key}`, () => {
-    const haze = readBackdropHaze(manifest.assets, scene.cache.json.get(key));
-    if (!haze) {
-      return;
-    }
-    const ready = () => {
-      filterTexture(scene, haze.asset, "linear");
-      scene.backdrops.set(galaxy, haze);
-    };
-    if (scene.textures.exists(haze.asset)) {
-      ready();
-    } else {
-      scene.load.once(`filecomplete-image-${haze.asset}`, ready);
-      scene.load.image(haze.asset, haze.path);
-    }
-  });
+  scene.load.once(
+    `filecomplete-json-${key}`,
+    followArrivalLoad(scene, () => {
+      const haze = readBackdropHaze(manifest.assets, scene.cache.json.get(key));
+      if (!haze) {
+        return;
+      }
+      const ready = () => {
+        filterTexture(scene, haze.asset, "linear");
+        scene.backdrops.set(galaxy, haze);
+      };
+      if (scene.textures.exists(haze.asset)) {
+        ready();
+      } else {
+        scene.load.once(`filecomplete-image-${haze.asset}`, ready);
+        scene.load.image(haze.asset, haze.path);
+      }
+    }),
+  );
   scene.load.json(key, path);
 }
 
@@ -860,8 +1018,7 @@ export function readGalaxyArt(scene: AssetsContext): void {
   );
   const whaleData: unknown = scene.cache.json.get("whales");
   const whaleFrames = scene.manifest.assets.filter(whaleFrameAsset);
-  const linkedPhantom =
-    scene.model.state.flight?.galaxy === 6 && scene.galaxyManifests.get(6)?.links.whales;
+  const linkedPhantom = scene.galaxyManifests.get(6)?.links.whales;
   scene.whaleArt =
     readWhaleArt(whaleData, whaleFrames) ??
     (linkedPhantom ? readMarloArt(whaleData, whaleFrames) : undefined);
@@ -936,12 +1093,15 @@ function queueRockSheetFrame(scene: AssetsContext, file: string, frame: RockShee
   const requested = [file];
   loading.set(path, requested);
   // The loader's existing automatic retry repeats the XML request with the same key.
-  scene.load.once(`filecomplete-xml-${key}`, (_key: string, _type: string, source: Document) => {
-    loading.delete(path);
-    for (const logicalFile of requested) {
-      queueFrame(logicalFile, source);
-    }
-  });
+  scene.load.once(
+    `filecomplete-xml-${key}`,
+    followArrivalLoad(scene, (_key: string, _type: string, source: Document) => {
+      loading.delete(path);
+      for (const logicalFile of requested) {
+        queueFrame(logicalFile, source);
+      }
+    }),
+  );
   scene.load.xml(key, path);
   scene.rockQueued = true;
 }
@@ -1148,16 +1308,20 @@ export function ensureEnemyFamilyManifest(
   }
   const path = scene.galaxyManifestPaths[galaxy];
   if (!path || scene.galaxyLoads.has(galaxy)) {
+    arrivalQueues.get(scene)?.include(new Set([key]));
     return false;
   }
   // Share the existing in-flight manifest marker; a later own flight still queues its world art.
   scene.galaxyLoads.add(galaxy);
-  scene.load.once(`filecomplete-json-${key}`, () => {
-    queueGalaxyAssets(scene, subset, galaxy);
-    if (scene.galaxyManifests.has(galaxy)) {
-      scene.galaxyLoads.delete(galaxy);
-    }
-  });
+  scene.load.once(
+    `filecomplete-json-${key}`,
+    followArrivalLoad(scene, () => {
+      queueGalaxyAssets(scene, subset, galaxy);
+      if (scene.galaxyManifests.has(galaxy)) {
+        scene.galaxyLoads.delete(galaxy);
+      }
+    }),
+  );
   scene.load.once(Loader.Events.COMPLETE, () => readGalaxyArt(scene));
   scene.load.json(key, path);
   scene.load.start();
@@ -1176,7 +1340,7 @@ function queueEnemyPartSheets(scene: AssetsContext, parts: readonly Asset[]): vo
     events.off(Scenes.Events.DESTROY, dispose);
     scene.load.off(Loader.Events.FILE_COMPLETE, complete);
   };
-  const queueFrames = (key: string, xml: Document | undefined): void => {
+  const queueFrames = followArrivalLoad(scene, (key: string, xml: Document | undefined): void => {
     const sheet = sheets.get(key);
     if (!sheet) {
       return;
@@ -1206,7 +1370,7 @@ function queueEnemyPartSheets(scene: AssetsContext, parts: readonly Asset[]): vo
       // Optional art keeps the heavy placeholder when a delivered sheet has invalid frames.
       console.warn(error);
     }
-  };
+  });
   const complete = (key: string, type: string): void => {
     if (type === "xml" && sheets.has(key)) {
       queueFrames(key, scene.cache.xml.get(key) as Document | undefined);
@@ -1265,11 +1429,22 @@ export function loadEnemyParts(scene: AssetsContext, archetype: string): void {
     return;
   }
   const key = `${family?.family ?? "coral"}:${archetype}`;
+  const arrival = arrivalQueues.get(scene);
+  if (arrival && parts.length) {
+    arrival.include(
+      new Set(
+        parts.flatMap((part) => (part.svgSheet ? [part.id, vectorSheetKey(part.path)] : [part.id])),
+      ),
+    );
+  }
   if (parts.some((part) => part.svgSheet)) {
     if (!scene.partLoads.has(key)) {
       scene.partLoads.add(key);
       queueEnemyPartSheets(scene, parts);
     }
+    return;
+  }
+  if (arrival && scene.partLoads.has(key)) {
     return;
   }
   scene.partLoads.add(key);
@@ -1280,10 +1455,10 @@ export function loadEnemyParts(scene: AssetsContext, archetype: string): void {
     loadSvg(scene, part);
   }
   scene.load.once(Loader.Events.COMPLETE, () => {
-    scene.shipAssets = [
-      ...scene.shipAssets,
-      ...parts.filter((part) => scene.textures.exists(part.id)),
-    ];
+    scene.shipAssets = mergeEnemyAssets(
+      scene.shipAssets,
+      parts.filter(({ id }) => scene.textures.exists(id)),
+    );
     readEnemyArt(scene);
   });
   scene.load.start();
