@@ -349,19 +349,20 @@ describe("held story title consumer", () => {
     },
   );
 
-  it("retains asked questions and Previous through reload and a visible Continue click", () => {
+  it("retains completed, replayable topics and Previous through reload and a visible Continue click", () => {
     const model = opening();
     model.storyChoose(0);
     for (let turn = 0; turn < 60 && !model.storyView?.page.questions?.length; turn++) {
       model.storyNext();
     }
     expect(model.storyView?.page.questions?.length).toBeGreaterThan(0);
-    const questions = model.storyView!.choices.length;
+    const topics = model.storyView!.choices;
     model.storyChoose(0);
+    const answer = model.storyView!.page;
     model.storyNext();
     const before = structuredClone(model.storyView);
     const state = structuredClone(model.state);
-    expect(before!.choices.length).toBe(questions - 1);
+    expect(before!.choices).toEqual([{ ...topics[0], completed: true }, ...topics.slice(1)]);
     model.backToTitle();
     const active = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, model.save());
     continueFromTitle(active);
@@ -371,6 +372,11 @@ describe("held story title consumer", () => {
     expect(active.storyView?.canGoBack).toBe(true);
     active.storyPrevious();
     expect(active.storyView?.page.id).toContain(":answer:");
+    expect(active.storyView?.page).toEqual(answer);
+    active.storyPrevious();
+    expect(active.storyView?.choices).toEqual(before?.choices);
+    active.storyChoose(0);
+    expect(active.storyView?.page).toEqual(answer);
     expect(active.state.started).toBe(false);
     expect(active.state.prologueSeen).toBe(false);
   });

@@ -6,6 +6,7 @@ import { type Insets, playView, safeRect, type Size } from "./playView.ts";
 export { STORY_BACKGROUND, STORY_PANEL } from "../../data/layout.ts";
 
 export const STORY_CHOICE_GAP = 16;
+export const STORY_CHOICE_QUEST_ICON_SIZE = 16;
 export const STORY_TOPIC_PREVIOUS_MIN = 96;
 export const STORY_TOPIC_PREVIOUS_SHARE = 0.38;
 

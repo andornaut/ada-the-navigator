@@ -58,23 +58,29 @@ describe("Story Back to title and Continue", () => {
     expect(loaded.state.progress[1].opened).toBe(false);
   });
 
-  it("retains asked questions and Previous history through title and reload", () => {
+  it("retains completed, replayable topics and Previous history through title and reload", () => {
     const model = opening();
     model.storyChoose(0);
     while (model.storyView && !model.storyView.page.questions?.length) {
       model.storyNext();
     }
-    const count = model.storyView!.choices.length;
+    const topics = model.storyView!.choices;
     model.storyChoose(0);
+    const answer = model.storyView!.page;
     model.storyNext();
     const before = model.storyView!;
-    expect(before.choices).toHaveLength(count - 1);
+    expect(before.choices).toEqual([{ ...topics[0], completed: true }, ...topics.slice(1)]);
     const loaded = resume(model);
     expect(loaded.storyView?.page).toEqual(before.page);
     expect(loaded.storyView?.choices).toEqual(before.choices);
     expect(loaded.storyView?.canGoBack).toBe(true);
     loaded.storyPrevious();
     expect(loaded.storyView?.page.id).toContain(":answer:");
+    expect(loaded.storyView?.page).toEqual(answer);
+    loaded.storyPrevious();
+    expect(loaded.storyView?.choices).toEqual(before.choices);
+    loaded.storyChoose(0);
+    expect(loaded.storyView?.page).toEqual(answer);
     expect(loaded.state.prologueSeen).toBe(false);
   });
 

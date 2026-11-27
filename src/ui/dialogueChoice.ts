@@ -1,12 +1,13 @@
 import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { units } from "./layout/css.ts";
+import { STORY_CHOICE_QUEST_ICON_SIZE } from "./layout/storyPage.ts";
 
 function questMarker(): HTMLImageElement {
   const image = document.createElement("img");
   image.alt = "";
   image.src = uiIconUrl("map-destination");
-  image.style.width = units(16);
-  image.style.height = units(16);
+  image.style.width = units(STORY_CHOICE_QUEST_ICON_SIZE);
+  image.style.height = units(STORY_CHOICE_QUEST_ICON_SIZE);
   return image;
 }
 
