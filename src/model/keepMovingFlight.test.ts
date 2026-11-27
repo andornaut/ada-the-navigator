@@ -244,7 +244,7 @@ describe("keep moving in flight", () => {
   });
 
   it("traces a qualifying rock with a Mining Freighter and keeps its tracing through a save", () => {
-    const point = { x: 30000, y: 5000 };
+    const point = { x: 32000, y: 8000 };
     const model = flightModel(1, { x: point.x, y: point.y + 900 });
     const flight = model.state.flight!;
     const shape = [...ASTEROID_SHAPES.values()].find((entry) => entry.size === "large")!;

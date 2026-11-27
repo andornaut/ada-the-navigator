@@ -99,19 +99,20 @@ describe("required chapter encounters", () => {
 
   it("clears the whole drift footprint while preserving story destinations", () => {
     const flight = launched();
+    const point = { x: 10000, y: 10000 };
     flight.objects = [
       {
         hp: 1,
         id: "drift",
         kind: "rock",
-        orbit: { phase: 0, radius: 1000, rate: 0, x: 0, y: 0 },
+        orbit: { ...point, phase: 0, radius: 1000, rate: 0 },
         radius: 10,
-        x: 1000,
-        y: 0,
+        x: point.x + 1000,
+        y: point.y,
       },
-      { hp: 1, id: "site", kind: "destination", radius: 30, x: 0, y: 0 },
+      { ...point, hp: 1, id: "site", kind: "destination", radius: 30 },
     ];
-    spawnChapterEnemy(CONTENT, "frigate", "chapter:clear", { x: 0, y: 0 }, flight);
+    spawnChapterEnemy(CONTENT, "frigate", "chapter:clear", point, flight);
     expect(flight.objects.map((o) => o.id)).toEqual([
       "site",
       "chapter:clear",

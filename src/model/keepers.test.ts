@@ -194,7 +194,12 @@ describe("a keeper's greeting at the station card", () => {
 
   it("greets the first docking with three lines a tap apart, the last staying", () => {
     const { model, station } = beside();
-    const keeper = stationKeeper(ECONOMY, 1, station.id)!;
+    const keeper = worldStationKeeper(
+      flightStationContext(model.state.flight!),
+      ECONOMY,
+      1,
+      station.id,
+    )!;
     const lines = dockAndRead(model);
     expect(lines).toHaveLength(3);
     expect(lines[0]).toMatch(
@@ -225,7 +230,7 @@ describe("a keeper's greeting at the station card", () => {
     const full = model.stationGreeting!;
     const compact = model.dockGreeting()!;
     expect(compact.displayName).toMatch(/^(Pollen|Petal|Amber) (Goldwing|Bloom|Honeycomb)$/);
-    expect(full.displayName).toBe(`${compact.displayName} of Sunflower Glimmer Station`);
+    expect(full.displayName).toBe(`${compact.displayName} of ${model.dockedStationName}`);
     expect(full.line).toContain(full.displayName);
     expect(compact).toEqual({ ...full, displayName: compact.displayName });
     expect(model.state.docked).toBe(station.id);
@@ -242,7 +247,12 @@ describe("a keeper's greeting at the station card", () => {
 
   it("restores the actual keeper and greeting on a docked reload without counting another visit", () => {
     const { model, station } = beside();
-    const keeper = stationKeeper(ECONOMY, 1, station.id)!;
+    const keeper = worldStationKeeper(
+      flightStationContext(model.state.flight!),
+      ECONOMY,
+      1,
+      station.id,
+    )!;
     model.interact();
     const first = model.stationGreeting!.line;
     const displayName = model.stationGreeting!.displayName;
@@ -282,6 +292,9 @@ describe("a keeper's greeting at the station card", () => {
       model.startGalaxy(galaxy);
       const flight = model.state.flight!;
       const personalNames = new Set<string>();
+      const keys = KEEPERS[galaxy]!.keepers;
+      const expected = galaxy === 2 ? [keys[1], keys[2], keys[1]] : keys;
+      const shown = [];
       for (const station of nearest(galaxy, 3, flight)) {
         model.undock();
         model.state.dialogue = null;
@@ -302,9 +315,18 @@ describe("a keeper's greeting at the station card", () => {
           model.interact();
         }
         expect(model.state.docked).toBe(station.id);
-        expect(model.stationGreeting?.keeper).toBe(stationKeeper(ECONOMY, galaxy, station.id)!.key);
+        const keeper = worldStationKeeper(
+          flightStationContext(flight),
+          ECONOMY,
+          galaxy,
+          station.id,
+        );
+        expect(keeper).not.toBeNull();
+        expect(model.stationGreeting?.keeper).toBe(keeper!.key);
+        shown.push(model.stationGreeting!.keeper);
         personalNames.add(model.stationGreeting!.displayName.split(" of ")[0]!);
       }
+      expect(shown).toEqual(expected);
       expect(personalNames.size).toBeGreaterThan(1);
     },
   );
@@ -313,16 +335,17 @@ describe("a keeper's greeting at the station card", () => {
     const { model, station } = beside();
     dockAndRead(model);
     const keeperName = model.stationGreeting!.displayName;
+    const stationName = model.dockedStationName;
     const later: string[][] = [];
     for (let docking = 0; docking < 4; docking++) {
       model.undock();
       later.push(dockAndRead(model));
     }
     expect(later).toEqual([
-      ["Welcome back to Sunflower Glimmer Station, Navigator."],
+      [`Welcome back to ${stationName}, Navigator.`],
       [`${keeperName} here. You can trade ore and Stardust here.`],
-      ["Back at Sunflower Glimmer Station! What do you need today?"],
-      ["Welcome back to Sunflower Glimmer Station, Navigator."],
+      [`Back at ${stationName}! What do you need today?`],
+      [`Welcome back to ${stationName}, Navigator.`],
     ]);
     expect(model.state.progress[1].greetings[station.id]).toBe(5);
   });
@@ -330,14 +353,13 @@ describe("a keeper's greeting at the station card", () => {
   it("saves the greetings per station across a relaunch, and Restart clears them", () => {
     const { model, station } = beside();
     dockAndRead(model);
+    const stationName = model.dockedStationName;
     model.undock();
     const reloaded = relaunch(CONTENT, model.save());
     expect(reloaded.state.progress[1].greetings).toEqual({ [station.id]: 1 });
     reloaded.state.flight!.player = { x: station.x, y: station.y };
     reloaded.state.dialogue = null;
-    expect(dockAndRead(reloaded)).toEqual([
-      "Welcome back to Sunflower Glimmer Station, Navigator.",
-    ]);
+    expect(dockAndRead(reloaded)).toEqual([`Welcome back to ${stationName}, Navigator.`]);
     reloaded.undock();
     reloaded.backToTitle();
     reloaded.restart();

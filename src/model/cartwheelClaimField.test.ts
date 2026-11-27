@@ -13,12 +13,15 @@ import { readRequiredRolePlan } from "./requiredRolePlans.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
 import { worldDistance } from "./worldContacts.ts";
 
-function launchCartwheel() {
+function launchCartwheel(hubPoint?: { x: number; y: number }) {
   const seeds = [173, 301];
   const model = new GameModel(CONTENT, () => seeds.shift()!, SAVE_RESTORE);
   model.state.unlocked = [1, 3, 4, 5, 2];
   model.state.prologueSeen = true;
   model.state.progress[2].opened = true;
+  if (hubPoint) {
+    model.state.progress[2].requiredSites = { hub: hubPoint };
+  }
   model.startGalaxy(2);
   const flight = model.state.flight!;
   const hub = readRequiredRolePlan(flight, "hub")!.site;
@@ -36,7 +39,8 @@ function launchCartwheel() {
 }
 
 it("selects a seeded field that ordinary flight populates while leaving the required hub plan intact", () => {
-  const { context, flight, model } = launchCartwheel();
+  // A retained hub site with a real gap in the smaller chart's seeded ore grid.
+  const { context, flight, model } = launchCartwheel({ x: -4975, y: -12010 });
   const before = model.save();
   const field = selectCartwheelClaimField(context)!;
   expect(field).not.toBeNull();

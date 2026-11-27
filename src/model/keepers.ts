@@ -3,7 +3,13 @@ import type { EconomyCatalog } from "../data/economy.ts";
 import { type KeeperGreetings, KEEPERS, PHANTOM_KEEPER_GREETINGS } from "../data/keepers.ts";
 import { KEEPER_NAME_PARTS } from "../data/stationCopy.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { HUB_STATION, stationById, worldLegacyStationsNear } from "./stations.ts";
+import {
+  HUB_STATION,
+  type StationPlacementContext,
+  worldLegacyStationsNear,
+  worldStationById,
+  worldStationsNear,
+} from "./stations.ts";
 
 // Which keeper greets at a station (gameplay/rules.md "Species and greeters"): a station's rank by
 // distance from its galaxy's origin picks one of the galaxy's three keepers in turn, so the nearest
@@ -14,7 +20,7 @@ import { HUB_STATION, stationById, worldLegacyStationsNear } from "./stations.ts
 export type KeeperKey = CastKey | "archie";
 
 /** The model supplies completion only after the approved Phantom aftermath is complete. */
-export interface StationKeeperContext {
+export interface StationKeeperContext extends StationPlacementContext {
   readonly phantomComplete?: boolean;
 }
 
@@ -38,20 +44,31 @@ export interface StationKeeper {
  * A generated station's rank in its galaxy: how many of the galaxy's stations sit nearer the
  * origin, ties broken by id. Null for an id no station of the galaxy has.
  */
+function worldStationRank(
+  context: StationPlacementContext,
+  catalog: EconomyCatalog,
+  galaxy: GalaxyNumber,
+  id: string,
+): number | null {
+  const site = worldStationById(context, catalog, galaxy, id);
+  if (!site) {
+    return null;
+  }
+  const reach = Math.hypot(site.x, site.y);
+  const stationsNear =
+    context.worldSide === undefined ? worldLegacyStationsNear : worldStationsNear;
+  return stationsNear(context, catalog, galaxy, reach, { x: 0, y: 0 }).filter((other) => {
+    const near = Math.hypot(other.x, other.y);
+    return near < reach || (near === reach && other.id < site.id);
+  }).length;
+}
+
 export function stationRank(
   catalog: EconomyCatalog,
   galaxy: GalaxyNumber,
   id: string,
 ): number | null {
-  const site = stationById(catalog, galaxy, id);
-  if (!site) {
-    return null;
-  }
-  const reach = Math.hypot(site.x, site.y);
-  return worldLegacyStationsNear({}, catalog, galaxy, reach, { x: 0, y: 0 }).filter((other) => {
-    const near = Math.hypot(other.x, other.y);
-    return near < reach || (near === reach && other.id < site.id);
-  }).length;
+  return worldStationRank({}, catalog, galaxy, id);
 }
 
 /** The authored hub label or the personal name selected from the station's stable seed. */
@@ -77,7 +94,8 @@ export function worldStationKeeper(
   id: string,
 ): StationKeeper | null {
   if (galaxy === 6) {
-    return context.phantomComplete === true && stationById(catalog, galaxy, id) !== null
+    return context.phantomComplete === true &&
+      worldStationById(context, catalog, galaxy, id) !== null
       ? { greetings: PHANTOM_KEEPER_GREETINGS, key: "archie" }
       : null;
   }
@@ -89,7 +107,7 @@ export function worldStationKeeper(
   if (galaxy === 2 && id === HUB_STATION) {
     return { greetings: keepers.hub ?? greetings, key: keys[0] };
   }
-  const rank = stationRank(catalog, galaxy, id);
+  const rank = worldStationRank(context, catalog, galaxy, id);
   if (rank === null) {
     return null;
   }

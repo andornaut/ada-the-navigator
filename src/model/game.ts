@@ -2774,9 +2774,11 @@ export class GameModel {
    * first time, then one later line in turn. The docking counts as greeted at once.
    */
   private keeperAt(galaxy: GalaxyNumber, id: string) {
+    const { flight } = this.state;
     const progress = this.state.progress[galaxy];
     return worldStationKeeper(
       {
+        ...(flight && flight.galaxy === galaxy ? flightStationContext(flight) : {}),
         phantomComplete:
           progress.phantom?.aftermathComplete === true &&
           progress.questComplete &&
