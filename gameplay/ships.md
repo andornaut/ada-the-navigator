@@ -363,24 +363,38 @@ for that weapon; projectiles from heavies (frigates, capitals, the flagship,
 platforms and hostile stations) fly at 0.8 times, with no level speed scaling. Enemies
 carry no ammunition.
 
-| Archetype       | Weapon signature                                                                  |
-| --------------- | --------------------------------------------------------------------------------- |
-| `swarm`         | Laser                                                                             |
-| `fighter`       | Multi-Laser                                                                       |
-| `interceptor`   | One Phaser                                                                        |
-| `retaliator`    | Rapid Missile                                                                     |
-| `frigate`       | One Heavy Missile on `port`; other active mounts Laser; one fixed front Laser     |
-| `capital`       | One charged lance or mine layer; other mounts Scattershot; two fixed front Lasers |
-| `platform`      | Laser on every active mount                                                       |
-| Hostile station | Ring burst on `weapon-5`; other active mounts Rapid Missile                       |
+| Archetype       | Weapon signature                                                                                  |
+| --------------- | ------------------------------------------------------------------------------------------------- |
+| `swarm`         | Laser                                                                                             |
+| `fighter`       | Multi-Laser                                                                                       |
+| `interceptor`   | One Phaser                                                                                        |
+| `retaliator`    | Rapid Missile                                                                                     |
+| `frigate`       | One Heavy Missile on `port`; other active mounts Laser; one fixed front Laser                     |
+| `capital`       | One Charged Lance or Mine Layer, two Scattershot, remaining turrets Laser; two fixed front Lasers |
+| `platform`      | Laser on every active mount                                                                       |
+| Hostile station | Ring burst on `weapon-5`; other active mounts Rapid Missile                                       |
 
-A capital uses charged lance on `weapon-left` at route positions 1–4. In
-Cartwheel and Phantom, an independent stable per-ship profile gives equal weight
-to Scattershot plus charged lance and Scattershot plus mine layer. The mine
-variant places its single mine layer on `stern-right`. Each capital carries
-exactly two weapon types, never both specialized weapons together. Profile
-selection uses a dedicated stream keyed by route position and ship ID, separate
+An ordinary capital uses Charged Lance on `weapon-left` at route positions 1–4.
+In Cartwheel and Phantom, an independent stable per-ship draw chooses Charged
+Lance or Mine Layer with equal weight. The Mine Layer uses `stern-right`. Each
+profile keeps two Scattershot turrets and fills its remaining turret slots with
+Lasers. The profile stream is keyed by route position and ship ID, separate
 from the equipped-level roll.
+
+Named bosses use these fixed turret loadouts in addition to two fixed front
+Lasers. The four-type limit counts the whole ship, including the front Lasers.
+
+| Boss                      | Turrets                                                 |
+| ------------------------- | ------------------------------------------------------- |
+| Hammer                    | 1 Charged Lance, 2 Scattershot, 1 Rapid Missile         |
+| Manta Dreadnought         | 1 Charged Lance, 3 Rapid Missile                        |
+| Crossbow                  | 2 Charged Lance, 2 Multi-Laser, 2 Scattershot           |
+| Broad Wing                | 1 Charged Lance, 3 Heavy Missile, 2 Scattershot         |
+| Outrigger Carrier         | 2 Mine Layer, 4 Laser, 2 Scattershot                    |
+| Admiral Archie's flagship | 2 Mine Layer, 2 Heavy Missile, 2 Charged Lance, 2 Laser |
+
+Turrets and front mounts use the established firing clocks and stagger order.
+A ship can have at most four active mines across all its Mine Layers.
 
 Platform active mounts are `port` and `starboard` in Cartwheel, plus `aft` in
 Phantom. Hostile stations use the first six, seven or eight mounts of the
