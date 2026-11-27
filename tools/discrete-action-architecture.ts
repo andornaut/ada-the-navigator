@@ -2419,9 +2419,38 @@ function scanSource(context: ScanContext, path: string, text: string) {
     );
   };
 
-  // The factory calls getState before handing its element to the caller. A field-only
-  // availability projection cannot publish the fresh element or invoke a callback with it.
-  const readsButtonAvailability = (state: ts.Expression | undefined): boolean => {
+  const readsAvailability = (value: ts.Expression, button: ts.ParameterDeclaration): boolean => {
+    if (
+      ts.isParenthesizedExpression(value) ||
+      (ts.isAsExpression(value) &&
+        ts.isTypeReferenceNode(value.type) &&
+        ts.isIdentifier(value.type.typeName) &&
+        value.type.typeName.text === "const")
+    ) {
+      return readsAvailability(value.expression, button);
+    }
+    if (ts.isConditionalExpression(value)) {
+      const test = value.condition;
+      return (
+        (dot(test, "hidden") || dot(test, "disabled")) &&
+        lexicalIdentity(test.expression, button) &&
+        readsAvailability(value.whenTrue, button) &&
+        readsAvailability(value.whenFalse, button)
+      );
+    }
+    const availability = fields(value);
+    const kind = availability?.get("kind");
+    return (
+      availability?.size === 1 &&
+      ["available", "disabled", "omitted"].some((name) => literal(kind, name))
+    );
+  };
+  // The factory calls getState before handing its element to the caller. The only
+  // supported delegation reads native match/visibility state and returns literal availability.
+  const readsButtonAvailability = (
+    state: ts.Expression | undefined,
+    delegated = false,
+  ): boolean => {
     if (
       !state ||
       !ts.isArrowFunction(state) ||
@@ -2435,25 +2464,118 @@ function scanSource(context: ScanContext, path: string, text: string) {
     }
     const body = ts.isParenthesizedExpression(state.body) ? state.body.expression : state.body;
     const result = ts.isObjectLiteralExpression(body) && fields(body);
-    const readsAvailability = (value: ts.Expression): boolean => {
-      if (ts.isConditionalExpression(value)) {
-        const test = value.condition;
-        return (
-          (dot(test, "hidden") || dot(test, "disabled")) &&
-          lexicalIdentity(test.expression, state.parameters[0]!) &&
-          readsAvailability(value.whenTrue) &&
-          readsAvailability(value.whenFalse)
-        );
-      }
-      const availability = fields(value);
-      const kind = availability?.get("kind");
-      return (
-        availability?.size === 1 &&
-        ["available", "disabled", "omitted"].some((name) => literal(kind, name))
-      );
-    };
     const availability = result && result.get("availability");
-    return Boolean(result && result.size === 1 && availability && readsAvailability(availability));
+    if (!result || result.size !== 1 || !availability) {
+      return false;
+    }
+    if (!delegated || !ts.isCallExpression(availability)) {
+      return readsAvailability(availability, state.parameters[0]!);
+    }
+    const helper = lexicalDeclaration(availability.expression);
+    const evaluate = helper && ts.isVariableDeclaration(helper) && helper.initializer;
+    if (
+      availability.questionDotToken ||
+      availability.arguments.length !== 1 ||
+      !lexicalIdentity(availability.arguments[0]!, state.parameters[0]!) ||
+      !helper ||
+      !ts.isVariableDeclaration(helper) ||
+      !isConst(helper) ||
+      !evaluate ||
+      !ts.isArrowFunction(evaluate) ||
+      !synchronousCallable(evaluate) ||
+      evaluate.parameters.length !== 1 ||
+      !ts.isIdentifier(evaluate.parameters[0]!.name) ||
+      evaluate.parameters[0]!.initializer ||
+      evaluate.parameters[0]!.dotDotDotToken ||
+      !ts.isBlock(evaluate.body) ||
+      evaluate.body.statements.length !== 2
+    ) {
+      return false;
+    }
+    const [guard, otherwise] = evaluate.body.statements;
+    if (
+      !guard ||
+      !ts.isIfStatement(guard) ||
+      guard.elseStatement ||
+      !ts.isBlock(guard.thenStatement) ||
+      guard.thenStatement.statements.length !== 1
+    ) {
+      return false;
+    }
+    const check = guard.expression;
+    const returned = (statement: ts.Statement | undefined) =>
+      statement &&
+      ts.isReturnStatement(statement) &&
+      statement.expression &&
+      readsAvailability(statement.expression, evaluate.parameters[0]!);
+    return Boolean(
+      ts.isCallExpression(check) &&
+      !check.questionDotToken &&
+      dot(check.expression, "matches") &&
+      unwritten(check.expression) &&
+      lexicalIdentity(check.expression.expression, evaluate.parameters[0]!) &&
+      check.arguments.length === 1 &&
+      literal(check.arguments[0], ":disabled") &&
+      returned(guard.thenStatement.statements[0]) &&
+      returned(otherwise),
+    );
+  };
+
+  // A detached factory can resolve its action from the canonical registry by the same
+  // root and the button Kit supplies. Only an available result may be handed back.
+  const resolvesFactoryRoot = (port: ts.Expression | undefined, document: ts.Expression) => {
+    if (
+      !dot(document, "ownerDocument") ||
+      !domHost(document.expression) ||
+      !unwritten(document) ||
+      !port ||
+      !ts.isArrowFunction(port) ||
+      !synchronousCallable(port) ||
+      port.parameters.length !== 1 ||
+      !ts.isIdentifier(port.parameters[0]!.name) ||
+      port.parameters[0]!.initializer ||
+      port.parameters[0]!.dotDotDotToken ||
+      !ts.isBlock(port.body) ||
+      port.body.statements.length !== 2
+    ) {
+      return false;
+    }
+    const owned = singleLocal(port.body.statements[0]!);
+    const resolve = owned?.initializer;
+    const returned = port.body.statements[1];
+    if (
+      !owned ||
+      !isConst(owned) ||
+      !resolve ||
+      !ts.isCallExpression(resolve) ||
+      resolve.questionDotToken ||
+      !ts.isIdentifier(resolve.expression) ||
+      !unwritten(resolve.expression) ||
+      resolve.arguments.length !== 2 ||
+      !lexicalIdentity(resolve.arguments[0]!, lexicalDeclaration(document.expression)!) ||
+      !lexicalIdentity(resolve.arguments[1]!, port.parameters[0]!) ||
+      !returned ||
+      !ts.isReturnStatement(returned) ||
+      !returned.expression ||
+      !ts.isConditionalExpression(returned.expression)
+    ) {
+      return false;
+    }
+    const imported = localValueImport(context, resolve.expression);
+    const { condition, whenFalse, whenTrue } = returned.expression;
+    return Boolean(
+      imported &&
+      imported.target === context.actionBinding?.getSourceFile() &&
+      imported.name === "resolveAdaHoldAction" &&
+      ts.isCallExpression(condition) &&
+      !condition.arguments.length &&
+      ts.isPropertyAccessExpression(condition.expression) &&
+      condition.expression.questionDotToken &&
+      condition.expression.name.text === "available" &&
+      lexicalIdentity(condition.expression.expression, owned) &&
+      lexicalIdentity(whenTrue, owned) &&
+      whenFalse.kind === ts.SyntaxKind.NullKeyword,
+    );
   };
 
   // LayoutTree invokes create synchronously and inserts the returned element. Resolve the
@@ -2936,6 +3058,10 @@ function scanSource(context: ScanContext, path: string, text: string) {
     const content = fields(options?.get("content"));
     const state = options?.get("getState");
     const native = nativeDocument(call.arguments[0]!);
+    const rootResolution =
+      literal(content?.get("kind"), "icon") &&
+      resolvesFactoryRoot(options?.get("getAction"), call.arguments[0]!) &&
+      readsButtonAvailability(state, true);
     const detachedClick = literal(content?.get("kind"), "icon")
       ? detachedFactoryClick(alias, block)
       : undefined;
@@ -2949,8 +3075,8 @@ function scanSource(context: ScanContext, path: string, text: string) {
       !literal(fields(options?.get("appearance"))?.get("layout"), "caller") ||
       (!textButton && !literal(content?.get("kind"), "icon")) ||
       content?.has("icon") ||
-      (!native && !detachedClick && !createdHostDocument(call.arguments[0]!)) ||
-      (!stateWithoutElement && !readsButtonAvailability(state))
+      (!native && !detachedClick && !rootResolution && !createdHostDocument(call.arguments[0]!)) ||
+      (!stateWithoutElement && !rootResolution && !readsButtonAvailability(state))
     ) {
       return false;
     }
@@ -3169,6 +3295,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
       (ts.isFunctionDeclaration(owner) || ts.isArrowFunction(owner)) &&
       synchronousCallable(owner) &&
       (listeners ||
+        rootResolution ||
         (getAction &&
           ts.isArrowFunction(getAction) &&
           synchronousCallable(getAction) &&

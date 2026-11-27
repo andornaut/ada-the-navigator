@@ -649,6 +649,71 @@ function constructionFindings(path: string, text: string) {
   );
 }
 
+const rootCloseSource = readFileSync(new URL("../ui/modalClose.ts", import.meta.url), "utf8");
+const rootCloseFixture = "src/ui/rootCloseFixture.ts";
+const rootCloseConstructor = expect.objectContaining({
+  kind: "unbound-discrete",
+  source: expect.stringContaining("createButton(root.ownerDocument,"),
+});
+const rootCloseMetadata = expect.objectContaining({
+  kind: "unbound-discrete",
+  source: "button.dataset.action = action",
+});
+
+it.each(["src/ui/modalClose.ts", rootCloseFixture])(
+  "proves the detached close with the same canonical action root in %s",
+  (path) => {
+    expect(constructionFindings(path, rootCloseSource)).toEqual([]);
+  },
+);
+
+it.each([
+  ["missing registration", "const binding = bindAdaAction(", "const binding = anotherBind("],
+  [
+    "conditional registration",
+    "const binding = bindAdaAction(",
+    "const binding = enabled && bindAdaAction(",
+  ],
+  [
+    "early return",
+    "const binding = bindAdaAction(",
+    "if (enabled) return { element: button }; const binding = bindAdaAction(",
+  ],
+  [
+    "wrong action root",
+    "resolveAdaHoldAction(root, button)",
+    "resolveAdaHoldAction(other, button)",
+  ],
+  ["wrong binding element", "    button,\n  );", "    anotherButton,\n  );"],
+  ["alternate click owner", 'nativeClickOwner: "factory"', 'nativeClickOwner: "registry"'],
+  [
+    "additional native click",
+    "  return {\n    dispose()",
+    '  button.addEventListener("click", options.run);\n  return {\n    dispose()',
+  ],
+  [
+    "duplicate binding",
+    "  return {\n    dispose()",
+    "  bindAdaAction({}, button);\n  return {\n    dispose()",
+  ],
+  [
+    "leaking eager state",
+    'if (button.matches(":disabled"))',
+    'if (publish(button) || button.matches(":disabled"))',
+  ],
+  [
+    "early disposal",
+    "  return {\n    dispose()",
+    "  binding.dispose();\n  return {\n    dispose()",
+  ],
+] as const)("retains detached close findings for %s", (_case, original, replacement) => {
+  const source = rootCloseSource.replace(original, replacement);
+  expect(source).not.toBe(rootCloseSource);
+  expect(constructionFindings(rootCloseFixture, source)).toEqual(
+    expect.arrayContaining([rootCloseConstructor, rootCloseMetadata]),
+  );
+});
+
 const returnedButtonSource = readFileSync(new URL("../ui/station.ts", import.meta.url), "utf8");
 const returnedButtonFixture = "src/ui/returnedButtonFixture.ts";
 const returnedButtonFinding = expect.objectContaining({
