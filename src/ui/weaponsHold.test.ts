@@ -7,8 +7,10 @@ import { createWeaponSelector, type WeaponLabels } from "./weapons.ts";
 let activeDocument: FixtureDocument;
 const disposers: (() => void)[] = [];
 class Element extends EventTarget {
-  constructor(readonly tag = "div") {
+  readonly tag: string;
+  constructor(tag = "div") {
     super();
+    this.tag = tag;
   }
 
   parentElement: Element | null = null;

@@ -4,8 +4,10 @@ import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { createWeaponSelector, type WeaponLabels } from "./weapons.ts";
 
 class Element extends EventTarget {
-  constructor(readonly tag = "div") {
+  readonly tag: string;
+  constructor(tag = "div") {
     super();
+    this.tag = tag;
   }
 
   readonly attributes = new Map<string, string>();
