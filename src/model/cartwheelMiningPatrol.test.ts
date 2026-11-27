@@ -3,7 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
-import { restoreSave,SAVE_RESTORE } from "../saving/index.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
+import { visitCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { placementRadius } from "./asteroids.ts";
 import {
@@ -231,7 +232,11 @@ function discoverMiningPatrol(knowHub: boolean) {
   model.state.flight = flight;
   planRequiredCartwheelRoute(CONTENT, progress, flight);
   if (knowHub) {
-    progress.known.push("hub");
+    visitCartwheelHubFixture(CONTENT, model);
+    expect(progress.known).toContain("hub");
+    if (model.state.dialogue) {
+      model.choose("continue");
+    }
   }
   const world = flightWorldContext(flight);
   const ore = worldOreFieldInCell(world, 2, { x: -1, y: 4 })!;
