@@ -4,7 +4,7 @@ import { nosePoint } from "../nose.ts";
 import { planPlayerVolley, type PlayerVolley } from "../playerProjectiles.ts";
 import type { PlayerWeaponCoverageContext } from "../playerWeaponCoverage.ts";
 import type { FlightEvent, FlightState, Shot, Vec } from "../types.ts";
-import { impactFamily, type ImpactFamily } from "../weaponImpacts.ts";
+import { type ImpactFamily, impactFamily } from "../weaponImpacts.ts";
 import { ensureOwnedWeapons, spendAmmo } from "../weapons.ts";
 
 type Strike = (
