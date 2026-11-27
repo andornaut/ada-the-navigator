@@ -248,7 +248,13 @@ export const CONVERSATIONS: readonly Conversation[] = [
   },
   {
     id: "lesson:aim",
-    lines: [line("astra", "Aim and fire with the {aim}.", "Left-click to aim and fire. Hold to keep firing.")],
+    lines: [
+      line(
+        "astra",
+        "Aim and fire with the {aim}.",
+        "Left-click to aim and fire. Hold to keep firing.",
+      ),
+    ],
     priority: "lesson",
     repeat: "never",
     trigger: { kind: "lesson", lesson: "aim" },
