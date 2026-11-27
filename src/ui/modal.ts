@@ -1,5 +1,6 @@
 import { setControlPlacement } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 
+import { bindAdaAction } from "./actionBinding.ts";
 import { CARD_CONTENT, cardHeaderLayout, listCardHeader } from "./layout/cardFrame.ts";
 import { type CardSize, SCROLL } from "./layout/contentCard.ts";
 import { type ButtonTag, FOCUS_RING } from "./layout/controls.ts";
@@ -226,13 +227,23 @@ export function switchState(on: boolean): {
 // whole row is the press target. show sets its state.
 export function createSwitchRow(options: {
   readonly align?: "top" | "center";
+  readonly current: () => boolean;
   readonly icon: HTMLElement;
   readonly id: string;
   readonly label: string;
   readonly note?: string | undefined;
-}): { readonly row: HTMLButtonElement; show(on: boolean): void } {
+  readonly run: () => void;
+}) {
   const row = document.createElement("button");
   row.type = "button";
+  const action = bindAdaAction(
+    {
+      click: { availability: () => ({ kind: "available" }), run: () => options.run() },
+      current: () => options.current(),
+      slopPx: () => SCROLL.dragThreshold * readViewUnit(row),
+    },
+    row,
+  );
   row.className = "ada-row";
   setControlPlacement(options.align ?? "top", row);
   row.setAttribute("role", "switch");
@@ -256,6 +267,7 @@ export function createSwitchRow(options: {
   const parts = { icon: options.icon, switch: toggle, text };
   row.append(...SWITCH_ROW_PARTS.map((part) => parts[part]));
   return {
+    dispose: action.dispose,
     row,
     show(on) {
       const state = switchState(on);

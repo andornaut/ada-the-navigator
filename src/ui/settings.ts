@@ -6,11 +6,7 @@ import { CONTENT } from "../data/content.ts";
 import { FPS_COUNTER_LABEL, SETTINGS_STATE_LABELS } from "../data/settingsCopy.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
 import type { InstallStepsKind } from "../pwa/index.ts";
-import {
-  assertAdaActionBindings,
-  assertAdaActionMetadata,
-  bindAdaAction,
-} from "./actionBinding.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { applyAdaControlTheme, createAdaPageDivider } from "./buttonPresentation.ts";
 import {
   type ControlVisibility,
@@ -300,18 +296,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     setButtonRole(role, button);
     return button;
   };
-  const registerAction = (element: HTMLElement, run: () => void) => {
-    actionBindings.push(
-      bindAdaAction(
-        {
-          click: { availability: () => ({ kind: "available" }), run },
-          current: () => !disposed,
-          slopPx: () => SCROLL.dragThreshold * readViewUnit(element),
-        },
-        element,
-      ),
-    );
-  };
   const closeControl = (action: string, run: () => void) => {
     const close = createStandardCloseAction(root, action, options.labels.close, {
       current: () => !disposed,
@@ -342,13 +326,29 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   const feedback = () => ({ reducedMotion: settings.reducedMotion, sound: settings.sound });
   // A control row, as in Chibi: icon, label (and note) and switch; the whole row is the switch.
   const switchRow = (setting: DeviceSetting, label: string, note?: string) => {
-    const { row, show } = createSwitchRow({
+    const control = createSwitchRow({
       align: "top",
+      current: () => !disposed,
       icon: settingsIcon(SETTING_ICONS[setting]),
       id: setting,
       label,
       note,
+      run: () => {
+        settings[setting] = !settings[setting];
+        update();
+        writeSetting(storage, setting, settings[setting]);
+        fitSettings();
+        if (setting === "fpsCounter") {
+          options.fpsCounter.set(settings.fpsCounter);
+        } else if (setting === "aim" || setting === "move") {
+          options.onVisibilityChange(visibility());
+        } else {
+          options.onFeedbackChange?.(feedback());
+        }
+      },
     });
+    actionBindings.push(control);
+    const { row, show } = control;
     row.dataset.setting = setting;
     const currentState = document.createElement("span");
     currentState.className = "ada-setting-state";
@@ -359,7 +359,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     toggleStack.className = "ada-setting-toggle";
     toggleStack.append(toggle, currentState);
     row.append(toggleStack);
-    const update = () => {
+    const update = (): void => {
       const on = settings[setting];
       show(on);
       currentState.textContent =
@@ -372,19 +372,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
             : (options.labels.stateOff ?? SETTINGS_STATE_LABELS.off);
     };
     update();
-    registerAction(row, () => {
-      settings[setting] = !settings[setting];
-      update();
-      writeSetting(storage, setting, settings[setting]);
-      fitSettings();
-      if (setting === "fpsCounter") {
-        options.fpsCounter.set(settings.fpsCounter);
-      } else if (setting === "aim" || setting === "move") {
-        options.onVisibilityChange(visibility());
-      } else {
-        options.onFeedbackChange?.(feedback());
-      }
-    });
     return row;
   };
   const leftColumn = document.createElement("div");
