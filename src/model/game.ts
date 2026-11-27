@@ -1291,8 +1291,9 @@ export class GameModel {
       return null;
     }
     const { category, id, identified, item, symbol } = current;
+    const distance = worldDistance(flightWorldContext(flight), flight.player, current);
     if (!identified) {
-      return { kind: "point", point: { category, identified, symbol } };
+      return { kind: "point", point: { category, distance, identified, symbol } };
     }
     const task = this.state.tasks[flight.galaxy];
     const entries = this.quests;
@@ -1322,7 +1323,10 @@ export class GameModel {
         (symbol === "holodisk" ? this.label("mapHolodiskWaypoint") : "") ||
         (category === "station" ? this.label("station") : "") ||
         (id.startsWith("settlement:") ? this.label("settlement") : "");
-    return { kind: "point", point: { category, identified, symbol, ...(label ? { label } : {}) } };
+    return {
+      kind: "point",
+      point: { category, distance, identified, symbol, ...(label ? { label } : {}) },
+    };
   }
 
   /** Retained presentation facade; all targets now use the same registry. */

@@ -161,14 +161,6 @@ class ElementFixture {
       width = 720 * viewUnit;
       height = 360 * viewUnit;
     }
-    if (this.className === "ada-penny-tracked-tag" && this.parent) {
-      this.boundsReads++;
-      const body = this.parent.getBoundingClientRect();
-      width = 120 * viewUnit;
-      height = 20 * viewUnit;
-      x = body.x + (body.width - width) / 2;
-      y = body.y - 4 * viewUnit - height;
-    }
     if (this.className === "ada-penny-glyph" && this.parent) {
       const body = this.parent.getBoundingClientRect();
       width = (this.parent.dataset.symbol === protruding ? 24 : 20) * viewUnit;
@@ -206,7 +198,6 @@ class ElementFixture {
       },
     };
   }
-  boundsReads = 0;
   pulses = 0;
   cancelledPulses = 0;
   textContent = "";
@@ -587,32 +578,21 @@ it("keeps one registry node across the tracked edge, world and label transitions
   ui.place(player, area, undefined, [target]);
   const layer = root.children[0]!;
   const node = layer.children[0]!;
-  const tag = node.lastElementChild!;
-  expect(node.firstElementChild?.className).toBe("ada-penny-glyph");
+  expect(node.children.map(({ className }) => className)).toEqual(["ada-penny-glyph"]);
+  expect(node.dataset.tracked).toBe("true");
   expect(node.properties.get("--glyph")).toContain(uiIconUrl("map-station"));
-  expect(tag.children.map(({ className }) => className)).toEqual([
-    "ada-penny-quest-badge",
-    "ada-penny-tracked-label",
-  ]);
-  expect(PENNY_MARKERS_STYLE).toContain(uiIconUrl("map-job"));
-  expect(tag.lastElementChild?.textContent).toBe("Practice Channel");
-  expect(tag.boundsReads).toBe(1);
   const edge = node.style.left;
-  expect(edge).toBe("647px");
   expect(node.pulses).toBe(1);
 
   const onScreen = { ...target, onScreen: true, x: 10, y: 0 };
   ui.place(player, area, undefined, [onScreen]);
   expect(layer.children).toEqual([node]);
-  expect(node.lastElementChild).toBe(tag);
-  expect(node.style.left).toBe("358px");
-  expect(node.style.top).toBe("157px");
+  expect(node.children).toEqual([node.firstElementChild]);
+  expect(node.style.left).not.toBe(edge);
   expect(node.pulses).toBe(1);
-  expect(tag.boundsReads).toBe(2);
 
   ui.place(player, area, undefined, [{ ...onScreen, trackedLabel: "Ring 2" }]);
-  expect(node.lastElementChild).toBe(tag);
-  expect(tag.lastElementChild?.textContent).toBe("Ring 2");
+  expect(node.children).toEqual([node.firstElementChild]);
   expect(node.pulses).toBe(2);
   ui.place(player, area, { color: "black", light: true, reducedMotion: true }, [
     { ...onScreen, trackedLabel: "Ring 3" },
@@ -620,10 +600,8 @@ it("keeps one registry node across the tracked edge, world and label transitions
   expect(node.pulses).toBe(2);
   expect(node.cancelledPulses).toBe(2);
 
-  const reads = tag.boundsReads;
   ui.place(player, area, undefined, [{ ...onScreen, identified: false }]);
   expect(node.children).toEqual([node.firstElementChild]);
   expect(node.dataset).not.toHaveProperty("tracked");
   expect(node.dataset).not.toHaveProperty("target");
-  expect(tag.boundsReads).toBe(reads);
 });

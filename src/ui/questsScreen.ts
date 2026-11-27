@@ -138,6 +138,7 @@ export function createQuestsScreen(
     readonly reducedMotion: () => boolean;
     readonly tracking?: {
       readonly canTrack: (questId: string) => boolean;
+      readonly current?: () => string | null;
       readonly track: (questId: string) => boolean;
     };
   },
@@ -459,7 +460,9 @@ export function createQuestsScreen(
           quest: {
             create(initial) {
               const item = initial.entry;
-              const action = createStandardTextAction(root, item.line.text, {
+              const tracked = tracking?.current?.() === item.id;
+              const label = tracked ? `${item.line.text} · Tracked` : item.line.text;
+              const action = createStandardTextAction(root, label, {
                 availability: (button) =>
                   button?.disabled ? { kind: "disabled" } : { kind: "available" },
                 current: () => !disposed && !modal.hidden && inCurrentView(root, action.element),
@@ -823,7 +826,13 @@ export function createQuestsScreen(
       currentGalaxy?: GalaxyNumber,
       nextFlightLog: readonly QuestFlightLogEntry[] = [],
     ): void {
-      const revision = JSON.stringify([next, knownPlaces, currentGalaxy, nextFlightLog]);
+      const revision = JSON.stringify([
+        next,
+        knownPlaces,
+        currentGalaxy,
+        nextFlightLog,
+        tracking?.current?.(),
+      ]);
       flightLog = nextFlightLog;
       if (!flightLog.length) {
         showingFlightLog = false;

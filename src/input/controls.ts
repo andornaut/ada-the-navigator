@@ -174,6 +174,10 @@ export interface Controls {
   registerBack(layer: BackLayer): () => void;
   dispose(): void;
   openSettings(): void;
+  openMarkerDetails(
+    details: ContextQuestDetails | { readonly title: string; readonly description: string },
+    origin: HTMLElement,
+  ): void;
   /** The DOM layer that holds the controls and modal cards. */
   readonly overlay: HTMLElement;
   // The play layout in effect: the logical view and its safe insets.
@@ -1095,6 +1099,16 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     layout: () => layout,
     navigationCovered,
     openAchievements: () => achievements.open(),
+    openMarkerDetails(details, origin) {
+      if (!state.accepts() || modalOpen()) {
+        return;
+      }
+      if ("quests" in details) {
+        pause.openContextQuests(details);
+      } else {
+        resource.open(details.title, details.description, origin);
+      }
+    },
     openSettings: () => {
       cheats.close();
       settings.open();

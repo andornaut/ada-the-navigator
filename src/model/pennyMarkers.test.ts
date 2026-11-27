@@ -336,7 +336,7 @@ describe("production unified marker facade", () => {
     const before = structuredClone(model.state);
     expect(model.markerDetails(sensed!)).toEqual({
       kind: "point",
-      point: { category: "discovery", identified: false, symbol: sensed!.symbol },
+      point: { category: "discovery", distance: 2000, identified: false, symbol: sensed!.symbol },
     });
     expect(model.state).toEqual(before);
     expect(model.markerDetails({ ...sensed!, identified: true })).toBeNull();
@@ -351,7 +351,13 @@ describe("production unified marker facade", () => {
     const [identified] = model.targetMarkers(GAME_AREA);
     expect(model.markerDetails(identified!)).toEqual({
       kind: "point",
-      point: { category: "discovery", identified: true, label: "Stardust", symbol: sensed!.symbol },
+      point: {
+        category: "discovery",
+        distance: 2000,
+        identified: true,
+        label: "Stardust",
+        symbol: sensed!.symbol,
+      },
     });
     expect(progress.known).toEqual([]);
     expect(progress.charted).toEqual([]);

@@ -26,6 +26,7 @@ export interface MarkerPointDetails extends Pick<
   PennyMarker,
   "category" | "identified" | "symbol"
 > {
+  readonly distance: number;
   readonly label?: string;
 }
 

@@ -73,13 +73,13 @@ import { createJumpOverlay, type SheetArt } from "../ui/jumpOverlay.ts";
 import { VIEW_HOST_ID } from "../ui/layout/css.ts";
 import { fogColor } from "../ui/layout/mapScreen.ts";
 import { safeGameArea } from "../ui/layout/playView.ts";
-import { type MapField, mapScreenLabels } from "../ui/mapScreen.ts";
+import { mapDistance, type MapField, mapScreenLabels } from "../ui/mapScreen.ts";
 import { markerFootprints } from "../ui/markerFootprints.ts";
 import { createCoveredPaint } from "../ui/modalScenePaint.ts";
 import { navigationEntry } from "../ui/navigationEntry.ts";
 import { BOX_OCCUPANT, boxOccupant } from "../ui/notice.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
-import { createPennyMarkerLayer } from "../ui/pennyMarkers.ts";
+import { createPennyMarkerLayer, markerName } from "../ui/pennyMarkers.ts";
 import { questContextIcon } from "../ui/questsScreen.ts";
 import { createRestartCard } from "../ui/restartCard.ts";
 import { createScanFeedbackView } from "../ui/scanFeedbackView.ts";
@@ -315,7 +315,36 @@ export function buildScene(scene: UiContext): void {
   partial.push(() => scene.scale.off(Scale.Events.RESIZE, followZoom));
   const host = document.getElementById(VIEW_HOST_ID);
   if (host) {
-    const penny = createPennyMarkerLayer(document, host);
+    const mapLabels = mapScreenLabels(CONTENT.labels);
+    const penny = createPennyMarkerLayer(document, host, {
+      available: () =>
+        scene.enabled &&
+        !scene.startShown &&
+        !scene.settingsOpen &&
+        !scene.model.state.dialogue &&
+        !scene.model.state.docked,
+      open: (marker, origin) => {
+        const details = scene.model.markerDetails(marker);
+        if (details?.kind === "quest") {
+          scene.controls.openMarkerDetails(details.details, origin);
+        } else if (details?.kind === "point") {
+          const { point } = details;
+          const kind = markerName(point);
+          scene.controls.openMarkerDetails(
+            {
+              description: [
+                point.label && point.label !== kind ? kind : "",
+                mapDistance(mapLabels, point.distance),
+              ]
+                .filter(Boolean)
+                .join(" · "),
+              title: point.label ?? kind,
+            },
+            origin,
+          );
+        }
+      },
+    });
     pennyLayers.set(scene, penny);
     partial.push(() => {
       penny.destroy();
@@ -689,6 +718,7 @@ export function buildScene(scene: UiContext): void {
       },
       questTracking: {
         canTrack: (id) => scene.model.canTrackQuest(id),
+        current: () => scene.model.trackedQuestId,
         track: (id) => {
           if (!scene.model.trackQuest(id)) {
             return false;
