@@ -281,7 +281,12 @@ import {
 } from "./questObjectLinks.ts";
 import { readRequiredRolePlan } from "./requiredRolePlans.ts";
 import { SAVE_VERSION, type SaveRestore } from "./saveSchema.ts";
-import { immutableScanOutcome, type ScanCompletion, type ScanOutcome } from "./scanOutcomes.ts";
+import {
+  immutableScanOutcome,
+  type ScanActionLead,
+  type ScanCompletion,
+  type ScanOutcome,
+} from "./scanOutcomes.ts";
 import { canRechargeShield } from "./shieldRecharge.ts";
 import { SHIP_REACH } from "./shipBody.ts";
 import {
@@ -554,6 +559,7 @@ export type Entropy = () => number;
 
 export class GameModel {
   private readonly markerRegistry = new TargetMarkerRegistry();
+  private readonly scanLeads = new WeakMap<FlightState, ScanActionLead & { origin: Vec }>();
   private readonly markerViews = new WeakMap<
     PennyMarker,
     { area: Rect; flight: FlightState; litCaches: ReadonlySet<string> | undefined }
@@ -1185,6 +1191,23 @@ export class GameModel {
     const tracked = this.trackedMarker(f, known, tasks.storyTargets, job, needle);
     const categories = new Map<string, NonNullable<PennyMarker["taskCategory"]>>();
     const contributions: TargetContribution[] = known.map((id) => ({ id, source: "ordinary" }));
+    const lead = this.scanLeads.get(f);
+    const leadTarget = lead && resolveTargetObject(f, lead.targetId);
+    const activeLead =
+      lead &&
+      leadTarget?.state === "present" &&
+      this.scanLeadAvailable(f, lead.origin, leadTarget.object, lead.kind)
+        ? lead
+        : undefined;
+    if (activeLead) {
+      contributions.push({
+        disclosed: activeLead.kind === "salvage",
+        id: activeLead.targetId,
+        source: "scan",
+      });
+    } else if (lead && !readOnly) {
+      this.scanLeads.delete(f);
+    }
     for (const id of candidates) {
       const links = tasks.links(id);
       const indicator = indicators.get(id);
@@ -1224,7 +1247,11 @@ export class GameModel {
       if (!waypoint && f.galaxy === 4 && isNeedleCourseStart(id)) {
         return { state: "unresolved" };
       }
-      const point = waypoint ?? this.markerPoint(f, id, litCaches);
+      const current = waypoint ?? this.markerPoint(f, id, litCaches);
+      const point =
+        current && activeLead?.kind === "salvage" && activeLead.targetId === id
+          ? { ...current, symbol: "wreck" as const }
+          : current;
       if (!point) {
         return { state: "unresolved" };
       }
@@ -2280,6 +2307,55 @@ export class GameModel {
     this.scanOutcomes = [];
     return outcomes;
   }
+  private scanLeadAvailable(
+    flight: FlightState,
+    origin: Vec,
+    object: SpaceObject,
+    kind: ScanActionLead["kind"],
+  ): boolean {
+    const enemy = object.enemy;
+    if (!enemy || object.hp <= 0) {
+      return false;
+    }
+    const world = flightWorldContext(flight);
+    if (
+      worldDistance(world, origin, object) > TARGET_MARKER_RANGE ||
+      worldDistance(world, flight.player, object) > TARGET_MARKER_RANGE
+    ) {
+      return false;
+    }
+    return kind === "salvage"
+      ? enemy.disabled === true && !enemy.salvaged
+      : !enemy.disabled && enemy.packId?.startsWith("pack:") === true;
+  }
+
+  private scanActionLead(
+    flight: FlightState,
+    site: LandmarkSite,
+    leadStation: string | undefined,
+  ): ScanActionLead | undefined {
+    const wreck = flight.objects.find((object) => object.id === `${site.id}:salvage`);
+    if (wreck && this.scanLeadAvailable(flight, site, wreck, "salvage")) {
+      return { kind: "salvage", targetId: wreck.id };
+    }
+    if (leadStation !== undefined) {
+      return undefined;
+    }
+    const store = this.markerStore(flight);
+    const world = flightWorldContext(flight);
+    const patrol = flight.objects
+      .filter(
+        (object) =>
+          store.get(object.id) === "identified" &&
+          this.scanLeadAvailable(flight, site, object, "patrol"),
+      )
+      .sort(
+        (a, b) =>
+          worldDistance(world, site, a) - worldDistance(world, site, b) || a.id.localeCompare(b.id),
+      )[0];
+    return patrol ? { kind: "patrol", targetId: patrol.id } : undefined;
+  }
+
   private emitScanOutcome(
     flight: FlightState,
     targetId: string,
@@ -2291,7 +2367,17 @@ export class GameModel {
     if (!site) {
       return;
     }
+    const actionLead =
+      source === "scan" ? this.scanActionLead(flight, site, leadStation) : undefined;
+    if (source === "scan") {
+      if (actionLead) {
+        this.scanLeads.set(flight, { ...actionLead, origin: { x: site.x, y: site.y } });
+      } else {
+        this.scanLeads.delete(flight);
+      }
+    }
     const outcome = immutableScanOutcome({
+      ...(actionLead ? { actionLead } : {}),
       completions,
       galaxy: flight.galaxy,
       ...(leadStation === undefined ? {} : { leadStation }),

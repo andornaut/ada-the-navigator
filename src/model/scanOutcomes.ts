@@ -2,6 +2,11 @@ import type { MapSymbol } from "../data/destinations.ts";
 import type { JobType } from "../data/jobs.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 
+export interface ScanActionLead {
+  readonly kind: "salvage" | "patrol";
+  readonly targetId: string;
+}
+
 export interface ScanQuestIdentity {
   readonly id: string;
   readonly name: string;
@@ -21,6 +26,7 @@ export interface ScanOutcome {
   readonly target: { readonly id: string; readonly name: string; readonly symbol: MapSymbol };
   readonly completions: readonly ScanCompletion[];
   readonly leadStation?: string;
+  readonly actionLead?: ScanActionLead;
 }
 
 /** Outcome facts are detached from mutable quest state before the once-only presentation drain. */
@@ -40,6 +46,7 @@ export function immutableScanOutcome(value: ScanOutcome): ScanOutcome {
   });
   return Object.freeze({
     ...value,
+    ...(value.actionLead ? { actionLead: Object.freeze({ ...value.actionLead }) } : {}),
     completions: Object.freeze(completions),
     target: Object.freeze({ ...value.target }),
   });

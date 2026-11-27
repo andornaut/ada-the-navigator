@@ -152,6 +152,37 @@ it("admits an optional Scan from fresh piloting and retains its exact map identi
   expect(progress).toMatchObject(before);
 });
 
+it("points a scan to a known live patrol and retires its cue when it leaves", () => {
+  const { candidate, flight, model } = fixture("resources");
+  const id = "scan-known-patrol";
+  const at = { x: candidate.x + 900, y: candidate.y };
+  const definition = enemyDefinition(1, "fighter", id);
+  const patrol: SpaceObject = {
+    ...at,
+    enemy: createEnemy(definition, { archetype: "fighter", id, packId: "pack:scan", phase: 0 }, at),
+    hp: definition.hp,
+    id,
+    kind: "enemy",
+    radius: 12,
+  };
+  flight.objects.push(patrol);
+  flight.player = { x: candidate.x, y: candidate.y };
+  model.markerTargetDisplayed(id);
+  expect(model.contextAction).toBe("scan");
+  model.interact();
+  const [outcome] = model.drainScanOutcomes();
+  expect(outcome?.actionLead).toEqual({ kind: "patrol", targetId: id });
+  expect(scanOutcomeLines(outcome!).at(-1)?.text).toBe(
+    "Drones are patrolling nearby. Give them room.",
+  );
+  const markers = () => model.targetMarkers({ height: 360, width: 720, x: 0, y: 0 });
+  expect(markers().find((entry) => entry.id === id)).toHaveProperty("onScreen");
+  patrol.x += 12000;
+  expect(markers().some((entry) => entry.id === id)).toBe(false);
+  patrol.x = at.x;
+  expect(markers().find((entry) => entry.id === id)).not.toHaveProperty("onScreen");
+});
+
 it("admits salvage sites among Andromeda's planned enemy groups", () => {
   // Enemy groups keep out of each salvage wreck's local neighbourhood, so every site that
   // seeds 12 to 63 place near the dark beacon route admits.

@@ -235,6 +235,19 @@ resumes it, and a fresh entry starts it at zero.
   destinations, required hulls and landmark spacing. A failed search keeps the
   site pending; placing it resets the counter.
 
+### Actionable scan results
+
+Astra's scan receipt describes the next action backed by the site. Use one cue
+per scan. A site with a live disabled hull points to that hull and says
+“There's a disabled ship here. Get close and use Salvage.” Salvaging it follows
+the existing wreck payout. If a scan posts a station job, use its existing
+issuer cue and mark that known station's Jobs & Projects entry. If an existing
+known patrol is nearby and no salvage or job lead applies, point to its known
+area and say “Drones are patrolling nearby. Give them room.” Use only the normal
+known-target range. Drop the cue when the patrol is no longer there. Sites with
+no live actionable lead keep their ordinary scan receipt. Scanning awards no
+extra loot, exposes no hidden target and accepts no job.
+
 ### Site kinds
 
 | Region               | Resources | Salvage | Job lead |

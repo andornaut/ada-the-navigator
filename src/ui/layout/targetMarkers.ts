@@ -163,7 +163,7 @@ export function layoutTargetMarkers<T extends PresentedTargetMarker>(
       };
       const destination = gameAreaPoint(context.player, target);
       const tracked = target.identified && Boolean(target.trackedLabel);
-      const inWorld = tracked && target.onScreen === true;
+      const inWorld = target.identified && target.onScreen === true;
       const anchor = inWorld
         ? {
             x: clamp(rect.x, rect.x + rect.width, destination.x),
@@ -174,7 +174,7 @@ export function layoutTargetMarkers<T extends PresentedTargetMarker>(
             ),
           }
         : edgePoint(rect, 0, centre, destination);
-      const blocked = tracked ? blockedCentres(size, context.gap, context.blocked) : [];
+      const blocked = tracked || inWorld ? blockedCentres(size, context.gap, context.blocked) : [];
       const at = !blocked.length
         ? anchor
         : inWorld

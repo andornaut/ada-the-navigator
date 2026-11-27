@@ -9,11 +9,17 @@ export function scanOutcomeLines(outcome: ScanOutcome): readonly ConversationLin
     outcome.source === "scan"
       ? LANDMARK_SCAN_COPY.outcomeScan
       : LANDMARK_SCAN_COPY.outcomeRemembered;
+  const lead =
+    outcome.actionLead?.kind === "salvage"
+      ? LANDMARK_SCAN_COPY.outcomeSalvage
+      : outcome.leadStation !== undefined
+        ? fill(LANDMARK_SCAN_COPY.outcomeLead, { station: outcome.leadStation })
+        : outcome.actionLead?.kind === "patrol"
+          ? LANDMARK_SCAN_COPY.outcomePatrol
+          : undefined;
   return [
     fill(intro, { target: outcome.target.name }),
-    ...(outcome.leadStation === undefined
-      ? []
-      : [fill(LANDMARK_SCAN_COPY.outcomeLead, { station: outcome.leadStation })]),
+    ...(lead === undefined ? [] : [lead]),
     ...outcome.completions.map((completion) =>
       completion.kind === "task"
         ? fill(LANDMARK_SCAN_COPY.outcomeTask, { task: completion.task.text })

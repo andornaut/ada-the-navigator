@@ -13,7 +13,7 @@ export type TargetKnowledge = "sensed" | "identified";
 /** Galaxy-scoped knowledge; positions and existence are reconstructed from world authority. */
 export type TargetKnowledgeRecord = Record<string, TargetKnowledge>;
 export type TargetSymbol = EdgeMarkerKind | MapSymbol;
-export type TargetContributor = "ordinary" | "sensed" | "quest" | "encounter";
+export type TargetContributor = "ordinary" | "sensed" | "quest" | "encounter" | "scan";
 export type TargetContribution = {
   readonly disclosed?: boolean;
   readonly id: string;
@@ -144,7 +144,8 @@ export class TargetMarkerRegistry {
       const group = grouped.get(id) ?? [];
       const sensed = group.some(({ source }) => source === "sensed");
       const disclosed = group.some(
-        ({ disclosed, source }) => disclosed && (source === "quest" || source === "encounter"),
+        ({ disclosed, source }) =>
+          disclosed && (source === "quest" || source === "encounter" || source === "scan"),
       );
       const seen = resolution.state === "present" && resolution.identified;
       const known = store.get(id);
@@ -197,7 +198,8 @@ export class TargetMarkerRegistry {
         at.x <= area.x + area.width &&
         at.y >= area.y &&
         at.y <= area.y + area.height;
-      if (onScreen && !tracked) {
+      const scanLead = group.some(({ source }) => source === "scan");
+      if (onScreen && !tracked && !scanLead) {
         continue;
       }
       entry.marker = {
@@ -205,6 +207,7 @@ export class TargetMarkerRegistry {
         identified: Boolean(tracked || knowledge === "identified"),
         symbol: resolution.symbol,
         ...(resolution.taskCategory ? { taskCategory: resolution.taskCategory } : {}),
+        ...(scanLead ? { onScreen } : {}),
         ...(tracked ? { onScreen, trackedLabel: tracked.label } : {}),
         x: point.x,
         y: point.y,

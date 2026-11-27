@@ -121,6 +121,15 @@ describe("unified authoritative target registry", () => {
     f.put("a", 1000);
     expect(f.run()[0]?.identified).toBe(false);
   });
+  it("pins a known scan lead without making it the tracked quest", () => {
+    const f = fixture();
+    f.put("patrol", 100, true);
+    expect(f.run({ id: "patrol", source: "scan" })).toMatchObject([
+      { id: "patrol", identified: true, onScreen: true },
+    ]);
+    expect(f.run({ id: "patrol", source: "scan" })[0]).not.toHaveProperty("trackedLabel");
+    expect(f.run()).toEqual([]);
+  });
   it("adds a known tracked target to the same entry across the wrapped edge and on screen", () => {
     const f = fixture();
     const tracked = { id: "station", label: "Station" };
