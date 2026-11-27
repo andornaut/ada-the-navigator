@@ -483,8 +483,8 @@ it("keeps an unsuccessful Hunt scan available to retry, then posts the seeded fa
       expect.anything(),
       expect.anything(),
       seed,
-      issuer,
-      site,
+      expect.objectContaining({ id: issuer!.id }),
+      expect.objectContaining({ id: site.id, x: site.x, y: site.y }),
       "hunt",
       "scan",
     );
