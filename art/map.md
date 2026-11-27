@@ -273,24 +273,25 @@ type line. Each place is a round chip: a `chip` disc in the symbol's face
 colour with a 1 ink edge inside it, and the symbol's 20 glyph in ink, centred. Ada is her arrow. The objective carries the flight's direction
 indicator.
 
-Place chips are native buttons with `aria-pressed` for selection. The Map
-field handles pointer selection and dragging; the chip handles keyboard and
+Place chips are native buttons. The current selected place alone has
+`aria-pressed="true"` and supplies the Place panel's content. The Map field
+handles pointer selection and dragging; the chip handles keyboard and
 assistive activation. Apply the [button state rules](controls.md#buttons) to
-the chip's face or glyph for focus, press and selection. Use the face when
-a chip has no glyph. Keep its permanent ink edge, place or job identity,
+the chip's face or glyph for focus and press. Use the face when a chip has
+no glyph. Keep its permanent ink edge, place or job identity,
 target, selected stacking and current keep-clear reservations. Decorative chips, Ada's keyline, objective marks
 and search dashes keep their authored geometry.
 
-The former ring geometry below still sets the 19 px keep-clear reservation.
+The Local Map selection ring uses the existing 19 logical px keep-clear reservation.
 
 | Token                         | Value | Rule                                                            |
 | ----------------------------- | ----- | --------------------------------------------------------------- |
 | `MAP_SYMBOL.chip`             | 28    | Disc diameter                                                   |
 | `MAP_SYMBOL.edge`             | 1     | Ink `#181425` edge inside the disc; face radius 13              |
 | `MAP_SYMBOL.glyph`            | 20    | Ink glyph mask, centred; every glyph pixel lies inside the face |
-| `MAP_SYMBOL.ring.radius`      | 17    | Reserved band centre radius                                     |
-| `MAP_SYMBOL.ring.band`        | 2     | Reserved band width                                             |
-| `MAP_SYMBOL.ring.fringe`      | 1     | Reserved fringe per side, giving a 19 px outer radius           |
+| `MAP_SYMBOL.ring.radius`      | 17    | Band centre radius                                              |
+| `MAP_SYMBOL.ring.band`        | 2     | Active mint `#65C9BF` band width                                |
+| `MAP_SYMBOL.ring.fringe`      | 1     | Ink `#181425` fringe per side, giving a 19 px outer radius      |
 | `MAP_SYMBOL.objective.tip`    | 23    | Indicator tip above the chip centre                             |
 | `MAP_SYMBOL.objective.stroke` | 2     | Lavender `#C4AFCC` (`pointOfInterest`) stroke, opaque           |
 | `MAP_SYMBOL.objective.ink`    | 4     | Ink stroke under it on the same path, round joins               |
@@ -323,12 +324,12 @@ The former ring geometry below still sets the 19 px keep-clear reservation.
   `map-job-survey`, `map-job-delivery`, `map-job-rescue` or `map-job-hunt`
   (the board row's [job icons](shop-icons.md#job-icons)). A hunt also draws its
   [search area](#search-area).
-- Keyboard focus lightens the resting face. Selection darkens the face and
-  uses a cream glyph. When a selected chip also has focus, its face lightens
-  and its glyph turns white. These cues stay inside the 28 px chip and keep
-  its inset edge. In forced colors focus uses `Highlight` and `HighlightText`,
-  selection uses `ButtonText` and `ButtonFace`, and combined focus and
-  selection uses a `ButtonFace` and `Highlight` mix with `ButtonText` ink.
+- Selection adds a ring in the [space palette's active mint](space-palette.md)
+  around the chip and keeps its category face and ink glyph. Keyboard focus
+  lightens the face as usual, with the ring still visible when the chip is
+  also selected. In forced colors use `ButtonFace` and `ButtonText` for the
+  resting face and glyph, and `Highlight` and `HighlightText` for the focused
+  pair. Use system colors that keep the selection ring distinct in both states.
 - Objective indicator: the flight's arrow and circle
   (`src/game/scene.ts` `drawIndicators`, with `u` pointing down), above the
   chip at `(x, y)`: tip `(x, y - 23)` (`objective.tip`), base corners
@@ -345,7 +346,7 @@ The former ring geometry below still sets the 19 px keep-clear reservation.
 - Ada is not a press target.
 
 Draw order, bottom to top: field, fog, the search area, landmark chips, other chips, the
-objective indicator, the selected chip, Ada, then the header,
+objective indicator, the selected chip and its ring, Ada, then the header,
 footer, tools and panel. Within a layer, later places in the map's order draw on top.
 
 ### Glyphs
@@ -429,14 +430,14 @@ Whirlpool are light fields (`tint.light`); Phantom is dark.
 | Search area dash          | `#FEAE34` | 1.12                | 1.35                | 1.11                | 4.64              |
 | Ada hull                  | `#ffffff` | 1.65                | 2.51                | 1.65                | 8.62              |
 | Objective stroke          | `#C4AFCC` | 1.22                | 1.23                | 1.22                | 4.25              |
-| Current selection band    | `#ead4aa` | 1.14                | 1.73                | 1.14                | 5.95              |
+| Selection band            | `#65C9BF` | 1.19                | 1.27                | 1.18                | 4.37              |
 | Ink edge, keyline, fringe | `#181425` | 10.89               | 7.17                | 10.86               | 2.08              |
 | Tool disc face            | `#262b44` | 8.40                | 5.53                | 8.37                | 1.61              |
 
 - Light-field keyline rule: on a light field (`tint.light`) every face and the
-  stroke fall below 2:1, and Ada's hull is 2.51:1 or less, so the
+  stroke and selection band fall below 2:1, and Ada's hull is 2.51:1 or less, so the
   ink parts carry each mark at 7.17:1 or more (Cartwheel; 10.89:1 on
-  Sunflower): the chip's edge, Ada's keyline and the indicator's ink stroke.
+  Sunflower): the chip's edge, the ring's fringes, Ada's keyline and the indicator's ink stroke.
   On Phantom the colours carry it
   (2.97:1 or more) and the ink parts are outlines. Every mark draws its ink parts on
   every field, so a mark has one look across galaxies; a map mark with no ink
@@ -618,7 +619,7 @@ and take presses first; a chip under them takes no press there.
 
 ## States
 
-Selected chips use the in-face selection cue described under [Symbols](#symbols).
+The selected Local Map chip uses the teal ring described under [Symbols](#symbols).
 
 | State                 | Field and symbols                            | Panel                                                                           |
 | --------------------- | -------------------------------------------- | ------------------------------------------------------------------------------- |
