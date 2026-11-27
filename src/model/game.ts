@@ -351,6 +351,7 @@ import {
   type TargetKnowledgeStore,
   TargetMarkerRegistry,
   type TargetResolution,
+  type TrackedTarget,
 } from "./targetMarkers.ts";
 import type {
   Aboard,
@@ -1035,7 +1036,7 @@ export class GameModel {
     const questContext = {
       galaxy: f.galaxy,
       knownIds: known,
-      quests: (task || story ? (quests ?? this.quests) : []).filter(
+      quests: (task || story ? (quests ?? this.questLines(f.galaxy)) : []).filter(
         ({ galaxy, line }) => galaxy === f.galaxy && (line.kind === "story" ? story : task),
       ),
       storyTargets,
@@ -1054,7 +1055,74 @@ export class GameModel {
           Boolean(task && (currentJob || (task.kind === "job" && id === `job:${task.id}`))),
         ),
       links: (id: string) => questsForObject(questContext, id),
+      storyTargets,
     };
+  }
+
+  private trackedMarker(
+    f: FlightState,
+    known: readonly string[],
+    storyTargets: readonly string[],
+    job: IndicatorTarget | null,
+  ): (TrackedTarget & { readonly waypoint?: PennyPoint }) | undefined {
+    const tracked = this.trackedQuestId;
+    if (tracked === null) {
+      return undefined;
+    }
+    const waypoint = (
+      id: string,
+      point: Vec,
+      symbol: PennyPoint["symbol"],
+      label: string,
+      jobType?: JobType,
+    ) => ({
+      id,
+      label,
+      revealed: true,
+      waypoint: {
+        category: "objective" as const,
+        id,
+        known: true,
+        symbol,
+        x: point.x,
+        y: point.y,
+        ...(jobType ? { jobType } : {}),
+      },
+    });
+    const held = tracked === f.trackedQuestId ? this.held : undefined;
+    if (held?.type === "hunt") {
+      return waypoint(`job:${held.id}:search`, held.target, "job", "Search area", held.type);
+    }
+    if (held?.type === "rescue" && !f.tow && job) {
+      return waypoint(job.id, job, "job", held.item, held.type);
+    }
+    const id = held ? job?.id : (storyTargets[1] ?? storyTargets[0]);
+    if (id && known.includes(id)) {
+      const site = landmarkById(f.galaxy, id);
+      const label = this.current.stations.includes(id)
+        ? this.label("station")
+        : site
+          ? landmarkLabel((key) => this.label(key), site)
+          : this.destinationLabel(id);
+      return { id, label };
+    }
+    if (held) {
+      return undefined;
+    }
+    if (!id || id === "holodisk") {
+      const disk = this.whirlpoolDiskWaypoint(f);
+      if (disk) {
+        return waypoint("holodisk", disk, "holodisk", this.label("mapHolodiskWaypoint"));
+      }
+    }
+    if (id === PHANTOM_FLAGSHIP) {
+      const context = this.chapterContext();
+      const point = context && phantomWaypoint(context);
+      if (point) {
+        return waypoint(id, point, "heavy", this.label(id));
+      }
+    }
+    return undefined;
   }
 
   /** One merged registry for ordinary, sensed, quest and active encounter targets. */
@@ -1083,9 +1151,11 @@ export class GameModel {
       f.phantom.enemyIds.includes(PHANTOM_FLAGSHIP)
         ? [PHANTOM_FLAGSHIP]
         : [];
-    const indicators = new Map(this.indicatorTargets.map(({ id, kind }) => [id, kind]));
+    const job = this.jobIndicator(f);
+    const indicators = new Map(this.flightIndicators(f, job).map(({ id, kind }) => [id, kind]));
     const candidates = new Set([...known, ...store.ids(), ...indicators.keys(), ...encounterIds]);
     const tasks = this.markerTaskContext(f, known);
+    const tracked = this.trackedMarker(f, known, tasks.storyTargets, job);
     const categories = new Map<string, NonNullable<PennyMarker["taskCategory"]>>();
     const contributions: TargetContribution[] = known.map((id) => ({ id, source: "ordinary" }));
     for (const id of candidates) {
@@ -1122,21 +1192,36 @@ export class GameModel {
       if (resolved.state === "removed") {
         return { state: "removed" };
       }
-      const point = this.markerPoint(f, id, litCaches);
+      const waypoint = tracked?.id === id ? tracked.waypoint : undefined;
+      const point = waypoint ?? this.markerPoint(f, id, litCaches);
       if (!point) {
         return { state: "unresolved" };
       }
       points.set(id, point);
       return {
-        identified: point.known || store.get(id) === "identified",
+        identified: (!waypoint && point.known) || store.get(id) === "identified",
         point,
         state: "present",
         symbol: point.symbol,
-        taskCategory: categories.get(id) ?? "generic",
+        taskCategory: waypoint
+          ? waypoint.jobType
+            ? "job"
+            : "story"
+          : (categories.get(id) ?? "generic"),
       };
     };
     return this.markerRegistry
-      .evaluate({ area, player: f.player, resolve, store, ...flightWorldContext(f) }, contributions)
+      .evaluate(
+        {
+          area,
+          player: f.player,
+          resolve,
+          store,
+          ...flightWorldContext(f),
+          ...(tracked ? { tracked } : {}),
+        },
+        contributions,
+      )
       .flatMap((marker) => {
         const point = points.get(marker.id);
         return point ? [{ ...point, ...marker }] : [];
@@ -2023,17 +2108,21 @@ export class GameModel {
     return [
       ...this.current.known.map((id) => ({
         id,
-        label:
-          this.label(id) ||
-          (id.startsWith("settlement:")
-            ? this.label("settlement")
-            : (this.chapter.dialogue[dialogueKeys[id] ?? id]?.speaker ?? this.chapter.name)),
+        label: this.destinationLabel(id),
       })),
       ...this.current.stations
         .filter((id) => !this.current.known.includes(id))
         .filter((id) => !this.state.flight || this.stationSite(this.state.flight, id) !== null)
         .map((id) => ({ id, label: this.label("station") })),
     ];
+  }
+  private destinationLabel(id: string): string {
+    return (
+      this.label(id) ||
+      (id.startsWith("settlement:")
+        ? this.label("settlement")
+        : (this.chapter.dialogue[dialogueKeys[id] ?? id]?.speaker ?? this.chapter.name))
+    );
   }
   /** Ada's shield capacity with bought upgrades. */
   get shieldMax(): number {
@@ -3772,6 +3861,9 @@ export class GameModel {
     if (!f || this.state.mode !== "space") {
       return [];
     }
+    return this.flightIndicators(f, this.jobIndicator(f));
+  }
+  private flightIndicators(f: FlightState, job: IndicatorTarget | null): IndicatorTarget[] {
     const p = this.current;
     const chapter = chapterRuntime(f.galaxy);
     const objective = this.objectiveId(f.galaxy);
@@ -3786,7 +3878,7 @@ export class GameModel {
       flight: f,
       galaxy: f.galaxy,
       holodiskWaypoint: this.holodiskWaypoint,
-      job: this.jobIndicator(f),
+      job,
       objective,
       ...(needle
         ? { objectivePoint: { id: needle.id, ...needle.point } }
@@ -4594,6 +4686,7 @@ export class GameModel {
     const dropped = dropJob(this.state.selectedGalaxy, this.state);
     if (dropped && this.state.flight) {
       if (held && this.state.flight.galaxy === this.state.selectedGalaxy) {
+        delete this.state.flight.trackedQuestId;
         this.markerRegistry.forget(
           { store: this.markerStore(this.state.flight) },
           `job:${held.id}`,
@@ -4606,6 +4699,37 @@ export class GameModel {
   /** The held job's objective, shown beside the story objective and labelled Job. */
   get jobObjective(): string | null {
     return this.taskObjective(this.state.selectedGalaxy);
+  }
+  /** Only the currently held station job is selectable. Story is the default. */
+  canTrackQuest(id: string): boolean {
+    const flight = this.state.flight;
+    if (!flight || this.state.mode !== "space" || flight.galaxy !== this.state.selectedGalaxy) {
+      return false;
+    }
+    const held = heldJob(flight.galaxy, this.state);
+    return held !== undefined && this.taskQuestId(flight.galaxy, held) === id;
+  }
+  trackQuest(id: string): boolean {
+    const flight = this.state.flight;
+    if (!flight || !this.canTrackQuest(id)) {
+      return false;
+    }
+    flight.trackedQuestId = id;
+    return true;
+  }
+  get trackedQuestId(): string | null {
+    const flight = this.state.flight;
+    if (!flight || this.state.mode !== "space") {
+      return null;
+    }
+    const id = flight.trackedQuestId;
+    if (id !== undefined && this.canTrackQuest(id)) {
+      return id;
+    }
+    const progress = this.state.progress[flight.galaxy];
+    return BUILT.has(flight.galaxy) && progress.introduced && !progress.resolved
+      ? `story:${flight.galaxy}:${progress.stage}`
+      : null;
   }
   private taskObjective(galaxy: GalaxyNumber): string | null {
     const task = this.state.tasks[galaxy];
@@ -4637,23 +4761,53 @@ export class GameModel {
     }
     return null;
   }
+  private questLines(galaxy: GalaxyNumber): Omit<QuestEntry, "locations">[] {
+    const progress = this.state.progress[galaxy];
+    const task = this.state.tasks[galaxy];
+    const flight = this.state.flight?.galaxy === galaxy ? this.state.flight : undefined;
+    const details = questDetails(
+      {
+        galaxy,
+        jobText: (job) => this.jobTextIn(galaxy, job),
+        label: (key) => this.label(key),
+        miningMilestones: this.content.tuning.miningMilestones,
+        placeLabel: (id) => this.placeLabelIn(galaxy, id),
+      },
+      { flight: flight ?? { cargo: 0 }, progress, ...(task ? { task } : {}) },
+    );
+    const entries: Omit<QuestEntry, "locations">[] = [];
+    if (BUILT.has(galaxy) && progress.introduced && !progress.resolved) {
+      entries.push({
+        galaxy,
+        id: `story:${galaxy}:${progress.stage}`,
+        line: {
+          ...details.storyDetails,
+          kind: "story",
+          target: null,
+          text: this.objectiveFor(galaxy),
+        },
+      });
+    }
+    const text = this.taskObjective(galaxy);
+    if (task && text) {
+      entries.push({
+        galaxy,
+        id: this.taskQuestId(galaxy, task),
+        ...(task.kind === "job" ? { jobType: task.type } : {}),
+        line: { ...details.jobDetails, kind: "job", target: null, text },
+      });
+    }
+    return entries;
+  }
+
   /** All accepted tasks and introduced, unresolved story quests, derived without switching galaxies. */
   get quests(): readonly QuestEntry[] {
-    const entries: QuestEntry[] = [];
-    for (const galaxy of GALAXY_NUMBERS) {
+    return GALAXY_NUMBERS.flatMap((galaxy) => {
+      const lines = this.questLines(galaxy);
+      if (!lines.length) {
+        return [];
+      }
       const progress = this.state.progress[galaxy];
-      const task = this.state.tasks[galaxy];
-      const flight = this.state.flight?.galaxy === galaxy ? this.state.flight : undefined;
-      const details = questDetails(
-        {
-          galaxy,
-          jobText: (job) => this.jobTextIn(galaxy, job),
-          label: (key) => this.label(key),
-          miningMilestones: this.content.tuning.miningMilestones,
-          placeLabel: (id) => this.placeLabelIn(galaxy, id),
-        },
-        { flight: flight ?? { cargo: 0 }, progress, ...(task ? { task } : {}) },
-      );
       const locations = [
         ...new Set([...progress.known, ...progress.stations, ...progress.charted]),
       ].map((id) => {
@@ -4671,31 +4825,8 @@ export class GameModel {
           ...(symbol ? { symbol } : {}),
         };
       });
-      if (BUILT.has(galaxy) && progress.introduced && !progress.resolved) {
-        entries.push({
-          galaxy,
-          id: `story:${galaxy}:${progress.stage}`,
-          line: {
-            ...details.storyDetails,
-            kind: "story",
-            target: null,
-            text: this.objectiveFor(galaxy),
-          },
-          locations,
-        });
-      }
-      const text = this.taskObjective(galaxy);
-      if (task && text) {
-        entries.push({
-          galaxy,
-          id: this.taskQuestId(galaxy, task),
-          ...(task.kind === "job" ? { jobType: task.type } : {}),
-          line: { ...details.jobDetails, kind: "job", target: null, text },
-          locations,
-        });
-      }
-    }
-    return entries;
+      return lines.map((entry) => ({ ...entry, locations }));
+    });
   }
   get aboardQuestId(): string | null {
     if (!this.aboard) {
@@ -4893,6 +5024,7 @@ export class GameModel {
     }
     const reward = completeJob(this.jobContext(flight), this.jobStation(held), this.state);
     if (this.held?.id !== held.id) {
+      delete flight.trackedQuestId;
       this.markerRegistry.forget({ store: this.markerStore(flight) }, `job:${held.id}`);
     }
     delete flight.tow;

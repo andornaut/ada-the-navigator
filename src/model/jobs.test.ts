@@ -618,10 +618,13 @@ describe("jobs in play", () => {
     const store = markerKnowledgeStore(model.state.progress[1], flight, () => false);
     const id = "job:other-galaxy-job";
     store.set(id, "identified");
+    const tracked = `job:1:${held.id}`;
+    expect(model.trackQuest(tracked)).toBe(true);
     model.state.selectedGalaxy = 3;
     expect(model.dropJob()).toBe(true);
     expect(model.state.tasks[1]?.id).toBe(held.id);
     expect(store.get(id)).toBe("identified");
+    expect(flight.trackedQuestId).toBe(tracked);
   });
 
   it("show the held job at the top of every board in its galaxy, marked Active", () => {
@@ -666,6 +669,8 @@ describe("jobs in play", () => {
   it("complete a survey on charting its landmark: notice, reward, refill and a lore line", () => {
     const { model } = docked();
     const held = take(model, "survey");
+    Object.assign(model.state.progress[1], { introduced: true, stage: 1 });
+    expect(model.trackQuest(`job:1:${held.id}`)).toBe(true);
     const stardust = model.state.economy.stardust;
     expectJobIndicatorRange(model, held.target);
     flyTo(model, held.target);
@@ -677,6 +682,8 @@ describe("jobs in play", () => {
     expect(model.state.achievements.jobs).toBe(1);
     expect(model.state.achievements.unlocked).toContain("helpingHand");
     expect(model.state.tasks[1]).toBeUndefined();
+    expect(model.trackedQuestId).toBe("story:1:1");
+    expect(model.state.flight!.trackedQuestId).toBeUndefined();
     expect(model.state.economy.stardust).toBe(stardust + questReward(held.reward));
     expect(model.state.notice).toBe(`Job complete: +${questReward(held.reward)} Stardust`);
     const board = model.state.jobs.boards[1]![held.station]!;

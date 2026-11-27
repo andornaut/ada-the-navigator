@@ -1381,6 +1381,7 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
           "weaponSwitchFor",
         ].every((k) => nonnegative(f[k])) ||
         !rechargeState(f) ||
+        (f.trackedQuestId !== undefined && typeof f.trackedQuestId !== "string") ||
         !Number.isSafeInteger(f.cargo) ||
         !ammoCounts(f.ammo) ||
         (f.lastBump !== undefined && !Number.isFinite(f.lastBump)) ||

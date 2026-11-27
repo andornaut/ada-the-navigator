@@ -206,6 +206,8 @@ export interface FlightState {
   /** Independent enemy identity seed; absent legacy flights use their existing seed. */
   encounterSeed?: number;
   markerActors?: { encounterSeed: number; knowledge: TargetKnowledgeRecord };
+  /** The accepted job Ada chose to highlight during this visit. */
+  trackedQuestId?: string;
   time: number;
   /** Cartwheel's story ship scene started this flight, if any. */
   storyScene?: { at: number; id: StorySceneId; lineDue: boolean };

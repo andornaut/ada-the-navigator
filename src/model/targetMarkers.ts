@@ -57,11 +57,20 @@ export interface TargetMarker extends Vec {
   readonly identified: boolean;
   readonly symbol: TargetSymbol;
   readonly taskCategory?: TaskCategory;
+  readonly trackedLabel?: string;
+  readonly onScreen?: boolean;
+}
+export interface TrackedTarget {
+  readonly id: string;
+  readonly label: string;
+  /** A route briefing can disclose a waypoint without identifying a world object. */
+  readonly revealed?: boolean;
 }
 interface TargetRegistryView {
   readonly area: Rect;
   readonly player: Vec;
   readonly resolve: (id: string) => TargetResolution;
+  readonly tracked?: TrackedTarget;
   readonly worldSide?: number;
 }
 export interface TargetKnowledgeStore {
@@ -121,6 +130,9 @@ export class TargetMarkerRegistry {
       grouped.set(contribution.id, group);
     }
     const ids = new Set([...store.ids(), ...this.targets.keys(), ...grouped.keys()]);
+    if (context.tracked) {
+      ids.add(context.tracked.id);
+    }
     const markers: TargetMarker[] = [];
     for (const id of ids) {
       const resolution = context.resolve(id);
@@ -136,11 +148,18 @@ export class TargetMarkerRegistry {
       );
       const seen = resolution.state === "present" && resolution.identified;
       const known = store.get(id);
-      if (!known && !sensed && !disclosed && !seen) {
+      const tracked =
+        context.tracked?.id === id &&
+        (known === "identified" || seen || disclosed || context.tracked.revealed)
+          ? context.tracked
+          : undefined;
+      if (!known && !sensed && !disclosed && !seen && !tracked) {
+        this.targets.delete(id);
         continue;
       }
-      const knowledge = known === "identified" || disclosed || seen ? "identified" : "sensed";
-      if (knowledge !== known) {
+      const knowledge =
+        known === "identified" || disclosed || seen ? "identified" : sensed ? "sensed" : known;
+      if (knowledge && knowledge !== known) {
         store.set(id, knowledge);
       }
       let entry = this.targets.get(id);
@@ -166,25 +185,27 @@ export class TargetMarkerRegistry {
       );
       if (
         !far &&
+        !tracked &&
         Math.hypot(point.x - context.player.x, point.y - context.player.y) > TARGET_MARKER_RANGE
       ) {
         continue;
       }
       const at = gameAreaPoint(context.player, point);
       const { area } = context;
-      if (
+      const onScreen =
         at.x >= area.x &&
         at.x <= area.x + area.width &&
         at.y >= area.y &&
-        at.y <= area.y + area.height
-      ) {
+        at.y <= area.y + area.height;
+      if (onScreen && !tracked) {
         continue;
       }
       entry.marker = {
         id,
-        identified: store.get(id) === "identified",
+        identified: Boolean(tracked || knowledge === "identified"),
         symbol: resolution.symbol,
         ...(resolution.taskCategory ? { taskCategory: resolution.taskCategory } : {}),
+        ...(tracked ? { onScreen, trackedLabel: tracked.label } : {}),
         x: point.x,
         y: point.y,
       };

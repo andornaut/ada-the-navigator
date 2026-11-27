@@ -16,5 +16,7 @@ export interface PennyPoint extends Vec {
 }
 export interface PennyMarker extends PennyPoint {
   readonly identified: boolean;
+  readonly onScreen?: boolean;
   readonly taskCategory?: TaskCategory;
+  readonly trackedLabel?: string;
 }

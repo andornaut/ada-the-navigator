@@ -5,11 +5,13 @@ import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
+import { GALAXY_SIDE } from "../data/world.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createFlight, ensureDestinationAt, spawnChapterEnemy } from "./flight.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { markerKnowledgeStore } from "./markerBindings.ts";
 import type { SpaceObject } from "./types.ts";
@@ -49,6 +51,107 @@ function boss(id: string, archetype: "capital" | "fighter" | "frigate" | "platfo
 }
 
 describe("production unified marker facade", () => {
+  it("tracks only the current known story step and keeps an ordinary marker at the same ID", () => {
+    const { flight, model, progress } = fixture();
+    flight.topology = CURRENT_FLIGHT_TOPOLOGY;
+    Object.assign(progress, { introduced: true, questItem: "food", stage: 1 });
+    const workshop = ensureDestinationAt(
+      CONTENT,
+      "workshop",
+      { x: -GALAXY_SIDE / 2 + 5000, y: 0 },
+      flight,
+    );
+    const growers = ensureDestinationAt(CONTENT, "growers", { x: 90000, y: 0 }, flight);
+    flight.player = { x: GALAXY_SIDE / 2 - 100, y: 0 };
+    progress.known.push(growers.id);
+    expect(model.trackedQuestId).toBe("story:1:1");
+    expect(model.targetMarkers(GAME_AREA)).toEqual([]);
+    progress.known.push(workshop.id);
+    expect(model.targetMarkers(GAME_AREA)).toMatchObject([
+      {
+        id: workshop.id,
+        onScreen: false,
+        symbol: "workshop",
+        trackedLabel: "Workshop",
+        x: workshop.x + GALAXY_SIDE,
+      },
+    ]);
+    flight.player = { x: workshop.x, y: workshop.y };
+    expect(model.targetMarkers(GAME_AREA)).toMatchObject([
+      { id: workshop.id, onScreen: true, trackedLabel: "Workshop" },
+    ]);
+    progress.questItem = null;
+    expect(model.targetMarkers(GAME_AREA)).toMatchObject([
+      { id: growers.id, onScreen: false, trackedLabel: "Grower" },
+    ]);
+  });
+
+  it("updates a tracked delivery from its known destination to its issuer and falls back on drop", () => {
+    const { flight, model, progress } = fixture();
+    Object.assign(progress, { introduced: true, questItem: "food", stage: 1 });
+    const workshop = ensureDestinationAt(CONTENT, "workshop", { x: 8000, y: 0 }, flight);
+    const growers = ensureDestinationAt(CONTENT, "growers", { x: 7100, y: 0 }, flight);
+    const salvagers = ensureDestinationAt(CONTENT, "salvagers", { x: 8500, y: 0 }, flight);
+    progress.known.push(workshop.id, growers.id, salvagers.id);
+    model.state.tasks[1] = {
+      carrying: true,
+      id: "delivery",
+      item: "seeds",
+      kind: "job",
+      reward: 17,
+      station: growers.id,
+      target: salvagers,
+      type: "delivery",
+    };
+    expect(model.trackQuest("job:1:delivery")).toBe(true);
+    expect(model.targetMarkers(GAME_AREA)).toMatchObject([
+      { id: salvagers.id, symbol: "salvagers", trackedLabel: "Salvager" },
+    ]);
+    model.state.tasks[1].carrying = false;
+    expect(model.targetMarkers(GAME_AREA)).toMatchObject([
+      { id: growers.id, symbol: "growers", trackedLabel: "Grower" },
+    ]);
+    expect(model.dropJob()).toBe(true);
+    expect(model.trackedQuestId).toBe("story:1:1");
+    expect(model.targetMarkers(GAME_AREA)).toMatchObject([
+      { id: workshop.id, symbol: "workshop", trackedLabel: "Workshop" },
+    ]);
+  });
+
+  it("guides to a tracked hunt's disclosed area and never to its hidden pickup", () => {
+    const { flight, model, progress, store } = fixture();
+    flight.objects = [];
+    model.state.tasks[1] = {
+      id: "hunt",
+      item: "a ring",
+      kind: "job",
+      reward: 17,
+      spot: { x: 8700, y: 0 },
+      station: "station:unknown",
+      target: { id: "", x: 8200, y: 0 },
+      type: "hunt",
+    };
+    const before = structuredClone(progress);
+    expect(model.trackQuest("job:1:hunt")).toBe(true);
+    expect(model.targetMarkers(GAME_AREA)).toMatchObject([
+      {
+        id: "job:hunt:search",
+        jobType: "hunt",
+        onScreen: false,
+        symbol: "job",
+        taskCategory: "job",
+        trackedLabel: "Search area",
+        x: 8200,
+      },
+    ]);
+    expect(store.get("job:hunt")).toBeUndefined();
+    expect(store.get("job:hunt:search")).toBeUndefined();
+    expect(progress).toEqual(before);
+    flight.player = { x: 8200, y: 0 };
+    expect(model.targetMarkers(GAME_AREA)).toMatchObject([
+      { id: "job:hunt:search", onScreen: true, x: 8200 },
+    ]);
+  });
   it.each([false, true])(
     "binds the actual destination cue to only its stable direct guard (already identified=%s)",
     (identified) => {
