@@ -106,6 +106,7 @@ import { settlementsNear } from "./andromedaPlaces.ts";
 import { selectCartwheelClaimField } from "./cartwheelClaimField.ts";
 import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
+import { beamPoint, outlineBeamStrike, rayCircle, sampleBeam } from "./flight/beamContact.ts";
 import { inBattle, inDanger } from "./flight/danger.ts";
 import {
   destroyEnemy,
@@ -235,7 +236,7 @@ import { carriesStardust } from "./drops.ts";
 import { enemyHull, enemyPartOutline, enemyPhysicalBody } from "./enemyBody.ts";
 import { enemyBeamReach, planEnemyProjectile } from "./enemyProjectiles.ts";
 import { landmarkSites } from "./landmarks.ts";
-import { MINE_REACH } from "./mineShape.ts";
+import { MINE_PARTS } from "./mineShape.ts";
 import { activeNeedleCourses } from "./needle.ts";
 import {
   clearNeedleEnemies,
@@ -293,7 +294,6 @@ import type {
   FlightInput,
   FlightState,
   GalaxyProgress,
-  Mine,
   RequiredRoleEncounterPlan,
   Shot,
   SpaceObject,
@@ -5037,35 +5037,6 @@ function coversFallbackRock(offset: Vec, widthRadius: number, blastRadius: numbe
 }
 
 /**
- * Where a ray from `origin` along unit `direction` first meets a circle, as a distance along
- * the ray within `range`, or null. An origin inside the circle meets it at 0.
- */
-export function rayCircle(
-  origin: Vec,
-  direction: Vec,
-  range: number,
-  center: Vec,
-  radius: number,
-): number | null {
-  const along = (center.x - origin.x) * direction.x + (center.y - origin.y) * direction.y;
-  const square = (center.x - origin.x) ** 2 + (center.y - origin.y) ** 2 - along * along;
-  if (square > radius * radius) {
-    return null;
-  }
-  const half = Math.sqrt(radius * radius - square);
-  if (along + half < 0) {
-    return null;
-  }
-  const entry = Math.max(0, along - half);
-  return entry <= range ? entry : null;
-}
-
-/**
- * Resolves a hitscan beam at once along the aim: it stops at the first enemy or obstacle
- * within range and damages only that enemy. Its flash ends at the hit point, or at full range
- * on a miss. A multipart ship blocks it only at a live hardpoint.
- */
-/**
  * Where a beam first meets a scenery object where it is drawn (its silhouette, else its circle),
  * within the beam half-width: the bounding circle's entry, refined in 2-unit steps.
  */
@@ -5088,9 +5059,8 @@ function sceneryEntry(
     return entry;
   }
   const exit = Math.min(range, entry + 2 * bound);
-  for (let at = entry; at <= exit; at = at < exit && at + 2 > exit ? exit : at + 2) {
-    const point = { x: origin.x + direction.x * at, y: origin.y + direction.y * at };
-    if (
+  return (
+    sampleBeam(origin, direction, entry, exit, (point) =>
       halfWidth === BEAM.halfWidth
         ? outlineContact(drawn.frames[frame] ?? drawn.frames[0]!, imageObject, point, halfWidth)
         : worldSceneryContact(
@@ -5100,12 +5070,9 @@ function sceneryEntry(
             halfWidth,
             frame,
             drawn,
-          )
-    ) {
-      return at;
-    }
-  }
-  return null;
+          ),
+    )?.at ?? null
+  );
 }
 
 function fireBeam(
@@ -5122,144 +5089,91 @@ function fireBeam(
   if (!span || range <= 0) {
     return;
   }
-  const direction = { x: aim.x / span, y: aim.y / span };
-  let first: { object: SpaceObject; part: string | null; at: number } | null = null;
-  const nearer = (object: SpaceObject, part: string | null, at: number | null) => {
-    if (at !== null && (!first || at < first.at)) {
-      first = { at, object, part };
+  const heading = { x: aim.x / span, y: aim.y / span };
+  const world = flightWorldContext(flight);
+  const halfWidth = BEAM.halfWidth;
+  type Contact = { at: number; part: string | null; point: Vec };
+  const line = { halfWidth, heading, origin, range };
+  const outlineStrike = (center: Vec, outline: Parts) =>
+    outlineBeamStrike(line, worldPoint(world, origin, center), outline);
+  const circleStrike = (center: Vec, radius: number) => {
+    const image = worldPoint(world, origin, center);
+    const at = rayCircle(origin, heading, range, image, radius + halfWidth);
+    if (at === null) {
+      return null;
     }
+    const point = beamPoint(origin, heading, at);
+    const normal = { x: point.x - image.x, y: point.y - image.y };
+    return { at, point: beamPoint(image, length(normal) ? direction(normal) : heading, radius) };
   };
-  const consider = (object: SpaceObject, part: string | null, center: Vec, radius: number) =>
-    nearer(
-      object,
-      part,
-      rayCircle(
-        origin,
-        direction,
-        range,
-        worldPoint(flightWorldContext(flight), origin, center),
-        radius + BEAM.halfWidth,
-      ),
-    );
-  // Where the beam first meets a drawn outline, within its half-width, refined in 2-unit steps.
-  const drawn = (object: SpaceObject, part: string | null, outline: Parts) => {
-    const bound = partsReach(worldParts(outline)) + BEAM.halfWidth;
-    const image = worldPoint(flightWorldContext(flight), origin, object);
-    const entry = rayCircle(origin, direction, range, image, bound);
-    if (entry === null) {
-      return;
-    }
-    const exit = Math.min(range, entry + 2 * bound);
-    for (let at = entry; at <= exit; at = at < exit && at + 2 > exit ? exit : at + 2) {
-      const point = { x: origin.x + direction.x * at, y: origin.y + direction.y * at };
-      if (outlineContact(outline, image, point, BEAM.halfWidth)) {
-        nearer(object, part, at);
-        return;
-      }
-    }
-  };
+  const strikes: (Contact & { object: SpaceObject })[] = [];
   for (const object of flight.objects) {
     if (object.hp <= 0) {
       continue;
     }
     if (SCENERY.includes(object.kind)) {
-      nearer(
+      const at = sceneryEntry(
+        flight,
+        origin,
+        heading,
+        range,
+        frameOf(flight, object),
+        drawnOf(flight, object),
         object,
-        null,
-        sceneryEntry(
-          flight,
-          origin,
-          direction,
-          range,
-          frameOf(flight, object),
-          drawnOf(flight, object),
-          object,
-        ),
       );
+      if (at !== null) {
+        const sample = beamPoint(origin, heading, at);
+        const point = projectileContact(projectileScenery, flight, object, sample, halfWidth);
+        strikes.push({ at, object, part: null, point });
+      }
     } else if (object.kind === "enemy" && object.enemy && !object.enemy.salvaged) {
-      // A heavy's live hardpoints take the beam first, then its hull.
+      const position = ROUTE_POSITION[flight.galaxy];
+      const hull = enemyHull(object.enemy, position);
+      const body = hull ? outlineStrike(object, hull) : circleStrike(object, object.radius);
+      let first: Contact | null = body && { ...body, part: null };
       for (const part of liveParts(content, flight.galaxy, object)) {
-        const outline = enemyPartOutline(ROUTE_POSITION[flight.galaxy], object.enemy, part.id);
-        if (outline) {
-          drawn(object, part.id, outline);
-        } else {
-          consider(object, part.id, part, partReach(content));
+        const outline = enemyPartOutline(position, object.enemy, part.id);
+        const strike = outline
+          ? outlineStrike(object, outline)
+          : circleStrike(part, partReach(content));
+        // A live hardpoint wins a tie with its hull, as for the original beam.
+        if (
+          strike &&
+          (!first || strike.at < first.at || (strike.at === first.at && first.part === null))
+        ) {
+          first = { ...strike, part: part.id };
         }
       }
-      const hull = enemyHull(object.enemy, ROUTE_POSITION[flight.galaxy]);
-      if (hull) {
-        drawn(object, null, hull);
-      } else {
-        consider(object, null, object, object.radius);
+      if (first) {
+        strikes.push({ ...first, object });
       }
     }
   }
-  const struck = first as {
-    object: SpaceObject;
-    part: string | null;
-    at: number;
-  } | null;
-  // A mine nearer than whatever else the beam meets pops and stops it.
-  let popped: { at: number; mine: Mine } | null = null;
+  const impacts = [];
   for (const mine of flight.mines) {
-    const at = armed(mine)
-      ? rayCircle(
-          origin,
-          direction,
-          struck?.at ?? range,
-          worldPoint(flightWorldContext(flight), origin, mine),
-          MINE_REACH + BEAM.halfWidth,
-        )
-      : null;
-    if (at !== null && (!popped || at < popped.at)) {
-      popped = { at, mine };
+    const strike = armed(mine) && outlineStrike(mine, MINE_PARTS);
+    if (strike) {
+      mine.end = { age: 0, kind: "pop" };
+      impacts.push({ ...strike.point, targetId: mine.id });
     }
   }
-  if (popped) {
-    popped.mine.end = { age: 0, kind: "pop" };
-    recordBeamFlash(flight, {
-      age: 0,
-      from: origin,
-      hit: true,
-      to: { x: origin.x + direction.x * popped.at, y: origin.y + direction.y * popped.at },
-    });
-    return;
+  const amount = content.tuning.flight.playerShotDamage * definition.damageRatio;
+  for (const strike of strikes.sort((a, b) => a.at - b.at)) {
+    impacts.push({ ...strike.point, targetId: strike.object.id });
+    hit(content, amount, strike.part, strike.object, flight, events);
   }
-  const reach = struck ? struck.at : range;
-  const end = { x: origin.x + direction.x * reach, y: origin.y + direction.y * reach };
-  const contact = struck
-    ? projectileContact(
-        projectileScenery,
-        flight,
-        struck.object,
-        end,
-        BEAM.halfWidth,
-        end,
-        struck.part,
-      )
-    : end;
   recordBeamFlash(flight, {
     age: 0,
     from: origin,
-    hit: struck !== null,
-    to: contact,
+    impacts,
+    to: beamPoint(origin, heading, range),
   });
-  if (struck) {
-    hit(
-      content,
-      content.tuning.flight.playerShotDamage * definition.damageRatio,
-      struck.part,
-      struck.object,
-      flight,
-      events,
-    );
-  }
 }
 
 /**
  * An enemy Phaser or charged lance shot and its tell: a Phaser's aim line is fixed where it
  * started; a lance's line follows its ship and tracks Ada, then holds still. The beam fires
- * along the line. `end` stops at the first obstacle, and at Ada once the beam hits her.
+ * along the line. Only the lance can stop early. A Phaser keeps its impact separate.
  * View-only timing, never saved: a restored flight drops a shot still in its tell.
  */
 export interface EnemyBeam {
@@ -5269,13 +5183,14 @@ export interface EnemyBeam {
   direction: Vec;
   /**
    * A fired Phaser's visible beam this step: from its ship's current muzzle along the weapon's
-   * current aim at the length it fired with. `muzzle` and `end` keep the fire-time line, where
-   * the hit landed. Null before it fires, and always for a lance.
+   * current aim at the length it fired with. `muzzle` and `end` keep the fire-time line.
+   * Null before it fires, and always for a lance.
    */
   drawn: { from: Vec; to: Vec } | null;
   end: Vec;
   fired: boolean;
   hardpointId: string | null;
+  impact?: Vec;
   kind: "lance" | "phaser";
   muzzle: Vec;
   /** The muzzle's offset from its ship, which a lance's line follows while it tracks. */
@@ -5415,9 +5330,8 @@ function lanceHolds(beam: EnemyBeam, flight: FlightState): SpaceObject | undefin
 /**
  * Ages each enemy Phaser and lance shot. A lance's line follows its ship and aims at Ada while
  * it tracks, then holds still, and runs as far as the game area is wide on screen; it goes out
- * if its ship or mount can no longer fire. Each line stops at the first obstacle. When its tell
- * ends the beam fires along it and damages Ada where it first meets her drawn ship within the
- * beam half-width. Each shows for its beam and spark, then goes.
+ * if its ship or mount can no longer fire. Only the lance stops at an obstacle. Each beam
+ * checks Ada once when the tell ends and keeps its fire-time impact fixed.
  */
 function stepEnemyBeams(
   content: GameContent,
@@ -5455,27 +5369,38 @@ function stepEnemyBeams(
       beam.range = viewportWidth / projectedLength(beam.direction);
     }
     const halfWidth = beam.kind === "lance" ? LANCE_HIT_RADIUS : BEAM.halfWidth;
-    const stop = obstacleStop(beam.muzzle, beam.direction, beam.range, flight, halfWidth);
+    const stop =
+      beam.kind === "lance"
+        ? obstacleStop(beam.muzzle, beam.direction, beam.range, flight, halfWidth)
+        : beam.range;
     let reach = stop;
     if (beam.age >= BEAM_TIMING[beam.kind].fires) {
       beam.fired = true;
-      for (let at = 0; at <= stop; at = at < stop && at + 2 > stop ? stop : at + 2) {
-        const point = {
-          x: beam.muzzle.x + beam.direction.x * at,
-          y: beam.muzzle.y + beam.direction.y * at,
-        };
-        if (touchesAda(flight, point, halfWidth)) {
-          reach = at;
+      if (beam.kind === "lance") {
+        const strike = sampleBeam(beam.muzzle, beam.direction, 0, stop, (point) =>
+          touchesAda(flight, point, halfWidth) ? true : null,
+        );
+        if (strike) {
+          reach = strike.at;
           damage(beam.damage, flight);
-          break;
+        }
+      } else {
+        const world = flightWorldContext(flight);
+        const ship = worldPoint(world, beam.muzzle, flight.player);
+        const body = shipBody(flight.facing);
+        const strike = outlineBeamStrike(
+          { halfWidth, heading: beam.direction, origin: beam.muzzle, range: stop },
+          ship,
+          body,
+        );
+        if (strike) {
+          beam.impact = strike.point;
+          damage(beam.damage, flight);
         }
       }
     }
     beam.stopped = reach < beam.range;
-    beam.end = {
-      x: beam.muzzle.x + beam.direction.x * reach,
-      y: beam.muzzle.y + beam.direction.y * reach,
-    };
+    beam.end = beamPoint(beam.muzzle, beam.direction, reach);
     if (beam.fired && beam.kind === "phaser") {
       beam.drawn = { from: { ...beam.muzzle }, to: { ...beam.end } };
     }

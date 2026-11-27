@@ -879,8 +879,8 @@ function charge(
 
 /**
  * What the scene knows of one charged lance or enemy Phaser shot: its turret's muzzle and the
- * line's end on screen, already stopped at the first obstacle (or, for the lance, the game-area
- * edge), the ms since its tell began, and whether an obstacle or Ada stopped the line.
+ * line's end on screen, the ms since its tell began, and whether the lance stopped early.
+ * A Phaser carries a separate contact without shortening its line.
  */
 export interface TellView {
   readonly ageMs: number;
@@ -890,6 +890,7 @@ export interface TellView {
    */
   readonly beam?: { readonly from: Vec; readonly to: Vec };
   readonly end: Vec;
+  readonly impact?: Vec;
   readonly muzzle: Vec;
   readonly stopped: boolean;
 }
@@ -1005,25 +1006,25 @@ export function enemyPhaser(
     return { edged: [...line, chevron, disc[0]!], shapes: [...line, chevron, ...disc] };
   }
   const beamMs = t - spec.aimMs;
-  const taper = view.stopped ? 0 : spec.missFade;
+  const { impact } = view;
   // The beam stays on the turret's muzzle and aim; its hit stays at the fire-time contact.
   const beam = enemyBeam(
     art,
     spec,
     view.beam?.from ?? muzzle,
     view.beam?.to ?? end,
-    taper,
+    spec.missFade,
     reducedMotion,
     beamMs,
   );
-  if (!view.stopped) {
+  if (!impact) {
     return beam;
   }
   const hitShapes =
     beamMs < 0 || beamMs >= spec.spark.ms
       ? []
       : impactEffect(
-          { at: end, reducedMotion },
+          { at: impact, reducedMotion },
           {
             age: ((beamMs / spec.spark.ms) * SPARK_MS * IMPACT_STYLE.compactBright.duration) / 1000,
             direction: fromScreen({ x: end.x - muzzle.x, y: end.y - muzzle.y }),
@@ -1036,11 +1037,12 @@ export function enemyPhaser(
 // ---------------------------------------------------------------------------------------------
 // The model's view
 
-/** A charged lance or enemy Phaser tell in world units, its `end` already stopped as drawn. */
+/** A charged lance or enemy Phaser tell in world units, its `end` and optional Phaser impact separate. */
 export interface WorldTell {
   readonly ageMs: number;
   readonly beam?: { readonly from: Vec; readonly to: Vec };
   readonly end: Vec;
+  readonly impact?: Vec;
   readonly muzzle: Vec;
   readonly stopped: boolean;
 }

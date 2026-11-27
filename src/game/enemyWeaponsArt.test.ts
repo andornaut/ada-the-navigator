@@ -268,11 +268,12 @@ describe("charged lance", () => {
 });
 
 describe("enemy Phaser", () => {
-  const view = (ageMs: number, stopped = false) => ({
+  const view = (ageMs: number, hit = false) => ({
     ageMs,
     end: { x: 100, y: 0 },
     muzzle: { x: 0, y: 0 },
-    stopped,
+    ...(hit ? { impact: { x: 80, y: 0 } } : {}),
+    stopped: false,
   });
 
   it("shows a still 1.5 px dashed aim line, solid pale coral for its last 100 ms, and a chevron", () => {
@@ -295,14 +296,14 @@ describe("enemy Phaser", () => {
     expect(polygons(solid.shapes)[0]).toMatchObject({ colour: PLATE });
   });
 
-  it("tapers a missing beam over its last 28 px and sparks a hit", () => {
+  it("tapers the full beam over its last 28 px and sparks a separate hit", () => {
     const miss = enemyPhaser(art, view(420), false).shapes;
     expect(tapered(miss)).toHaveLength(3);
     expect(polygons(miss).map(({ colour }) => colour)).toEqual([CORAL, PLATE, WHITE]);
     // Coral 8 to 5, plate 4.6 to 2.8 and white 2.2 to 1.3 times w.
     expect(polygons(miss)[1]!.points[0]!.y).toBeCloseTo(-2.3, 9);
     const hit = enemyPhaser(art, view(420, true), false).shapes;
-    expect(tapered(hit)).toEqual([]);
+    expect(tapered(hit)).toEqual(tapered(miss));
     expect(hit.length).toBeGreaterThan(miss.length);
     expect(enemyPhaser(art, view(400 + 160), false).shapes).toEqual([]);
   });

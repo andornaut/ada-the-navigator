@@ -32,6 +32,7 @@ import {
   activeBlastFlashes,
   activeEnemyBeams,
   activeRingEmissions,
+  beginArrivalGrace,
   bounceShips,
   createFlight,
   createUnpopulatedFlight,
@@ -634,7 +635,7 @@ describe("integrated combat", () => {
     expect(beam!.fired).toBe(false);
     expect(flight.shield).toBe(shield);
     stepFlight(CONTENT, 0.15, idle, flight);
-    expect(beam).toMatchObject({ fired: true, stopped: true });
+    expect(beam).toMatchObject({ fired: true, stopped: false });
     expect(flight.shield).toBeCloseTo(
       shield - weaponAt("phaser", 1).damageRatio * CONTENT.tuning.flight.playerShotDamage,
       9,
@@ -669,8 +670,13 @@ describe("integrated combat", () => {
     // The aim line stays where it started.
     expect(beam).toMatchObject({ drawn: null, fired: false, muzzle: aimLine.muzzle });
     stepFlight(CONTENT, 0.15, idle, flight);
-    expect(beam).toMatchObject({ fired: true, stopped: true });
-    const hit = { end: { ...beam!.end }, muzzle: { ...beam!.muzzle } };
+    expect(beam).toMatchObject({ fired: true, stopped: false });
+    const hit = {
+      end: { ...beam!.end },
+      impact: { ...beam!.impact! },
+      muzzle: { ...beam!.muzzle },
+    };
+    expect(hit.impact.x).toBeLessThan(20);
     const reach = Math.hypot(hit.end.x - hit.muzzle.x, hit.end.y - hit.muzzle.y);
     const shield = flight.shield;
     expect(shield).toBeLessThan(CONTENT.tuning.shieldMax);
@@ -695,31 +701,61 @@ describe("integrated combat", () => {
     expect(drawn.to.x).toBeCloseTo(line.origin.x + line.aim.x * reach, 9);
     expect(drawn.to.y).toBeCloseTo(line.origin.y + line.aim.y * reach, 9);
     // The hit stays where it landed and lands once.
-    expect(beam).toMatchObject({ end: hit.end, muzzle: hit.muzzle, stopped: true });
+    expect(beam).toMatchObject({
+      end: hit.end,
+      impact: hit.impact,
+      muzzle: hit.muzzle,
+      stopped: false,
+    });
     expect(flight.shield).toBe(shield);
   });
 
-  it("stops an enemy Phaser's aim line and beam at the first obstacle", () => {
-    const flight = createFlight(CONTENT, 6, 173, progress);
-    flight.objects = [];
-    flight.player = { x: 0, y: 0 };
-    const target = ship(
-      "interceptor",
-      { x: 220, y: 0 },
-      enemyDefinition(6, "interceptor", "phaser-proof"),
-      "phaser-proof",
-    );
-    target.enemy!.facing = { x: -1, y: 0 };
-    flight.objects.push(target);
-    stepFlight(CONTENT, 1 / 60, idle, flight);
-    // A rock rolls between them after the line appears: the line and beam stop at it.
-    flight.objects.push({ hp: 99, id: "wall", kind: "rock", radius: 25, x: 80, y: 0 });
-    stepFlight(CONTENT, 0.45, idle, flight);
-    const [beam] = activeEnemyBeams(flight);
-    expect(beam).toMatchObject({ fired: true, stopped: true });
-    expect(beam!.end.x).toBeGreaterThan(80);
-    expect(flight.shield).toBe(CONTENT.tuning.shieldMax);
-  });
+  it.each([false, true])(
+    "keeps the full enemy Phaser beam through obstacles with Ada protected=%s",
+    (protectedAda) => {
+      const flight = createFlight(CONTENT, 6, 173, progress);
+      flight.objects = [];
+      flight.player = { x: 0, y: 0 };
+      const target = ship(
+        "interceptor",
+        { x: 220, y: 0 },
+        enemyDefinition(6, "interceptor", "phaser-proof"),
+        "phaser-proof",
+      );
+      target.enemy!.facing = { x: -1, y: 0 };
+      flight.objects.push(target);
+      stepFlight(CONTENT, 1 / 60, idle, flight);
+      const end = { ...activeEnemyBeams(flight)[0]!.end };
+      if (protectedAda) {
+        beginArrivalGrace(CONTENT, flight);
+      }
+      // A rock rolls between them after the line appears and remains undamaged.
+      flight.objects.push({ hp: 99, id: "wall", kind: "rock", radius: 25, x: 80, y: 0 });
+      const friendly = ship(
+        "retaliator",
+        { x: 140, y: 0 },
+        enemyDefinition(6, "retaliator"),
+        "ally",
+      );
+      const friendlyHp = friendly.hp;
+      flight.objects.push(friendly);
+      flight.mines = [{ age: 1, damage: 2, id: "beam-mine", ownerId: "layer", x: 50, y: 0 }];
+      stepFlight(CONTENT, 0.3, idle, flight);
+      expect(activeEnemyBeams(flight)[0]).toMatchObject({ end, fired: false, stopped: false });
+      stepFlight(CONTENT, 0.15, idle, flight);
+      const [beam] = activeEnemyBeams(flight);
+      expect(beam).toMatchObject({ fired: true, stopped: false });
+      expect(beam!.end).toEqual(end);
+      expect(beam!.impact).toBeDefined();
+      expect(flight.objects.find(({ id }) => id === "wall")?.hp).toBe(99);
+      expect(friendly.hp).toBe(friendlyHp);
+      expect(flight.mines[0]!.end).toBeUndefined();
+      expect(flight.shield).toBeCloseTo(
+        CONTENT.tuning.shieldMax - (protectedAda ? 0 : beam!.damage),
+        9,
+      );
+    },
+  );
 
   it("releases a capital mount's three Scattershot rows at its shared weapon level", () => {
     const flight = emptyIn(6);

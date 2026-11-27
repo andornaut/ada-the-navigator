@@ -11,7 +11,7 @@ export const WEAPON_DETAIL_LINES = {
   laser: ["Fires one laser bolt at a time.", "Each level fires faster and hits harder."],
   multiLaser: ["Fires a fan of {count} laser bolts.", "Each level adds a bolt."],
   phaser: [
-    "Fires an instant beam that nothing can dodge.",
+    "Fires an instant beam through targets in its path.",
     "Fires slowly but hits hard.",
     "Each level hits harder.",
   ],

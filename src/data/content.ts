@@ -359,7 +359,7 @@ export const CONTENT: GameContent = {
   labels: {
     aboutHeavyMissile: "One slow missile with a big blast.",
     aboutMultiLaser: "A fan of laser bolts that grows with each level.",
-    aboutPhaser: "An instant beam that strikes the first thing in its path.",
+    aboutPhaser: "An instant beam that pierces targets in its path.",
     aboutRapidMissile: "Quick missiles with a small blast.",
     aboutScattershot: "A shotgun spread, strongest up close.",
     achievement: "Achievement: {name}",

@@ -45,14 +45,21 @@ describe("shared enemy hit hooks", () => {
     const view = {
       ageMs: art.phaser.aimMs,
       end: { x: 100, y: 60 },
+      impact: { x: 80, y: 60 },
       muzzle: { x: 0, y: 60 },
-      stopped: true,
+      stopped: false,
     };
+    const { impact, ...miss } = view;
     const hit = enemyPhaser(art, view, false);
     // The beam's coral band and bloom disc, then the spark's core and six rays.
     expect(hit.edged.filter((shape) => shape.kind === "disc")).toHaveLength(2);
     expect(hit.edged.filter((shape) => shape.kind === "polygon")).toHaveLength(7);
-    expect(enemyPhaser(art, { ...view, stopped: false }, false).edged).toHaveLength(2);
+    expect(enemyPhaser(art, miss, false).edged).toHaveLength(2);
+    expect(
+      hit.edged.some(
+        (shape) => shape.kind === "disc" && shape.at.x === impact.x && shape.at.y === impact.y,
+      ),
+    ).toBe(true);
     expect(
       enemyPhaser(art, { ...view, ageMs: view.ageMs + art.phaser.spark.ms }, false).edged,
     ).toEqual([]);
@@ -64,8 +71,9 @@ describe("shared enemy hit hooks", () => {
     const fireTime = {
       ageMs: art.phaser.aimMs + 40,
       end: { x: 100, y: 60 },
+      impact: { x: 80, y: 60 },
       muzzle: { x: 0, y: 60 },
-      stopped: true,
+      stopped: false,
     };
     const beam = { from: { x: 20, y: 90 }, to: { x: 110, y: 130 } };
     const drawn = enemyPhaser(art, { ...fireTime, beam }, false);

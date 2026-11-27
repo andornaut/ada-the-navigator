@@ -1779,7 +1779,7 @@ describe("shop purchases", () => {
     expect(about("rapidMissile")).toBe("Quick missiles with a small blast.");
     expect(about("multiLaser")).toBe("A fan of laser bolts that grows with each level.");
     expect(about("scattershot")).toBe("A shotgun spread, strongest up close.");
-    expect(about("phaser")).toBe("An instant beam that strikes the first thing in its path.");
+    expect(about("phaser")).toBe("An instant beam that pierces targets in its path.");
     expect(itemAbout(ECONOMY, labels, { kind: "track", track: "shield" })).toBe("");
     expect(itemAbout(ECONOMY, labels, { kind: "ammo", weapon: "heavyMissile" })).toBe("×75");
     expect(labels.aboutMissiles).toBeUndefined();

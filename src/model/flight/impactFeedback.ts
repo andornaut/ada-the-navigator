@@ -8,12 +8,12 @@ import { worldPoint } from "../worldContacts.ts";
 
 /**
  * A hitscan beam's visible flash, view-only and never saved: `from` and `to` are the fire-time
- * line, where the hit landed; a hit also shows a spark at `to`.
+ * full line. Individual contacts are fire-time surfaces, independent of the beam endpoint.
  */
 export interface BeamFlash {
   from: Vec;
   to: Vec;
-  hit: boolean;
+  impacts: readonly (Vec & { readonly targetId: string })[];
   age: number;
 }
 
@@ -22,7 +22,7 @@ function beamEndpoint(flight: FlightState, flash: BeamFlash): Vec {
   return worldPoint(flightWorldContext(flight), flight.player, flash.to);
 }
 
-/** Ada's current nose to the original contact or miss endpoint. */
+/** Ada's current nose to the original coverage boundary. */
 export function drawnBeamFlash(flight: FlightState, flash: BeamFlash): { from: Vec; to: Vec } {
   return { from: nosePoint(flight.facing, flight.player), to: beamEndpoint(flight, flash) };
 }
@@ -77,18 +77,15 @@ export function activeWeaponImpacts(flight: FlightState): readonly WeaponImpact[
       family: "missile",
       id: impactViewId(flash),
     })),
-    ...activeBeamFlashes(flight).flatMap((flash): WeaponImpact[] =>
-      flash.hit
-        ? [
-            {
-              ...beamEndpoint(flight, flash),
-              age: flash.age,
-              direction: { x: flash.to.x - flash.from.x, y: flash.to.y - flash.from.y },
-              family: "phaserRings",
-              id: impactViewId(flash),
-            },
-          ]
-        : [],
+    ...activeBeamFlashes(flight).flatMap((flash) =>
+      flash.impacts.map((impact): WeaponImpact => ({
+        ...worldPoint(flightWorldContext(flight), flight.player, impact),
+        age: flash.age,
+        direction: { x: flash.to.x - flash.from.x, y: flash.to.y - flash.from.y },
+        family: "phaserRings",
+        id: impactViewId(impact),
+        targetId: impact.targetId,
+      })),
     ),
   ];
 }

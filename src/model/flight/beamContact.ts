@@ -1,0 +1,75 @@
+import { outlineContact, type Parts, partsReach, worldParts } from "../convex.ts";
+import { impactSurface } from "../projectileImpact.ts";
+import type { Vec } from "../types.ts";
+
+export function beamPoint(origin: Vec, direction: Vec, at: number): Vec {
+  return { x: origin.x + direction.x * at, y: origin.y + direction.y * at };
+}
+
+/** Use the same two-unit samples for beam bodies, including the exact end of the segment. */
+export function sampleBeam<T>(
+  origin: Vec,
+  direction: Vec,
+  start: number,
+  end: number,
+  contactAt: (point: Vec) => T | null,
+): { at: number; contact: T; point: Vec } | null {
+  for (let at = start; at <= end; at = at < end && at + 2 > end ? end : at + 2) {
+    const point = beamPoint(origin, direction, at);
+    const contact = contactAt(point);
+    if (contact !== null) {
+      return { at, contact, point };
+    }
+  }
+  return null;
+}
+
+/**
+ * Where a ray from `origin` along unit `direction` first meets a circle, as a distance along
+ * the ray within `range`, or null. An origin inside the circle meets it at 0.
+ */
+export function rayCircle(
+  origin: Vec,
+  direction: Vec,
+  range: number,
+  center: Vec,
+  radius: number,
+): number | null {
+  const along = (center.x - origin.x) * direction.x + (center.y - origin.y) * direction.y;
+  const square = (center.x - origin.x) ** 2 + (center.y - origin.y) ** 2 - along * along;
+  if (square > radius * radius) {
+    return null;
+  }
+  const half = Math.sqrt(radius * radius - square);
+  if (along + half < 0) {
+    return null;
+  }
+  const entry = Math.max(0, along - half);
+  return entry <= range ? entry : null;
+}
+
+/** Locate the first sampled contact and its actual drawn surface. */
+export function outlineBeamStrike(
+  line: { origin: Vec; heading: Vec; range: number; halfWidth: number },
+  center: Vec,
+  outline: Parts,
+): { at: number; point: Vec } | null {
+  const { halfWidth, heading, origin, range } = line;
+  const bound = partsReach(worldParts(outline)) + halfWidth;
+  const entry = rayCircle(origin, heading, range, center, bound);
+  if (entry === null) {
+    return null;
+  }
+  const hit = sampleBeam(origin, heading, entry, Math.min(range, entry + 2 * bound), (point) =>
+    outlineContact(outline, center, point, halfWidth),
+  );
+  return (
+    hit && {
+      at: hit.at,
+      point: impactSurface(
+        { contact: hit.contact, projected: false, radius: halfWidth },
+        hit.point,
+      ),
+    }
+  );
+}

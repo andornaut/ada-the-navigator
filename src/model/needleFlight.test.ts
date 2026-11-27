@@ -435,7 +435,8 @@ describe("mounted Needle flight physics", () => {
     expect(beam.stopped).toBe(false);
     stepFlight(CONTENT, PHASER_AIM_SECONDS, idle, flight);
     expect(beam.fired).toBe(true);
-    expect(beam.stopped).toBe(true);
+    expect(beam.stopped).toBe(false);
+    expect(beam.impact).toBeDefined();
     expect(flight.shield).toBeLessThan(shield);
   });
 });

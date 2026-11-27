@@ -1325,7 +1325,7 @@ export class GameScene extends Scene {
       const effect = beam(
         this.project(drawn.from),
         this.project(drawn.to),
-        flash.hit,
+        false,
         this.reducedMotion,
         flash.age * 1000,
       );

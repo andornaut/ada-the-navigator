@@ -479,6 +479,7 @@ export function enemyWeaponsView(flight: FlightState): EnemyWeaponsView {
         ageMs: beam.age * 1000,
         ...(beam.drawn ? { beam: beam.drawn } : {}),
         end: beam.end,
+        ...(beam.impact ? { impact: beam.impact } : {}),
         muzzle: beam.muzzle,
         stopped: beam.stopped,
       }));
@@ -534,6 +535,7 @@ export function drawEnemyWeapons(
         ? { beam: { from: scene.project(tell.beam.from), to: scene.project(tell.beam.to) } }
         : {}),
       end: scene.project(tell.end),
+      ...(tell.impact ? { impact: scene.project(tell.impact) } : {}),
       muzzle: scene.project(tell.muzzle),
     });
     for (const tell of view.lances) {

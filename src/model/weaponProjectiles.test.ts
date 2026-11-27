@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { enemyCatalog } from "../data/enemyCatalog.ts";
+import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import type { Weapon } from "../data/types.ts";
 import { BEAM, WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
@@ -9,7 +9,7 @@ import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
 import { outlineContact, worldParts } from "./convex.ts";
 import { createEnemy } from "./enemyAi.ts";
-import { enemyHull } from "./enemyBody.ts";
+import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import {
   activeBeamFlashes,
   activeBlastFlashes,
@@ -17,12 +17,13 @@ import {
   drawnBeamFlash,
   stepFlight,
 } from "./flight.ts";
-import { recordBeamFlash } from "./flight/impactFeedback.ts";
+import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { noseOffset, nosePoint } from "./nose.ts";
 import { projectileOpacity } from "./playerProjectiles.ts";
 import { playerWeaponCoverage } from "./playerWeaponCoverage.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
+import { worldDistance } from "./worldContacts.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function launched(weapon: Weapon) {
@@ -119,22 +120,27 @@ describe("Phaser hitscan beam", () => {
   const STURDY = 30;
   const sturdy = (id: string, x: number, y: number) => retaliator(id, x, y, STURDY);
 
-  it("strikes only the nearest enemy along its line, for four damage", () => {
+  it("strikes both enemies along its line for four damage each", () => {
     const flight = beam([sturdy("far", 200, nose.y), sturdy("near", 100, nose.y)]);
     expect(hp(flight, "near")).toBe(STURDY - 4);
-    expect(hp(flight, "far")).toBe(STURDY);
+    expect(hp(flight, "far")).toBe(STURDY - 4);
+    expect(activeWeaponImpacts(flight).map(({ targetId }) => targetId)).toEqual(["near", "far"]);
     expect(flight.shots.filter((shot) => !shot.enemy)).toHaveLength(0);
     expect(flight.fireCooldown).toBeCloseTo(2, 9);
   });
 
-  it("stops at a rock in front, sparing the enemy behind it", () => {
+  it("damages a rock and the enemy behind it at separate surfaces", () => {
     const flight = beam([
       sturdy("behind", 150, nose.y),
       { hp: 10, id: "rock", kind: "rock", radius: 20, x: 80, y: nose.y },
     ]);
-    expect(hp(flight, "behind")).toBe(STURDY);
+    expect(hp(flight, "behind")).toBe(STURDY - 4);
     expect(hp(flight, "rock")).toBe(10 - 4);
-    expect(activeBeamFlashes(flight)[0]!.to.x).toBeCloseTo(80 - 20, 9);
+    const [rock, enemy] = activeWeaponImpacts(flight);
+    expect(rock).toMatchObject({ targetId: "rock", x: 60 });
+    expect(enemy!.targetId).toBe("behind");
+    expect(enemy!.x).toBeGreaterThan(rock!.x);
+    expect(activeBeamFlashes(flight)[0]!.to.x).toBeCloseTo(ahead(playerRange), 9);
   });
 
   it("grazes an enemy's drawn hull within the beam half-width and misses one just beyond it", () => {
@@ -160,28 +166,27 @@ describe("Phaser hitscan beam", () => {
     const end = { x: ahead(range), y: nose.y };
     const farthest = edgeOf((t) => beamTouches({ x: end.x + t, y: nose.y }, end));
     const edge = end.x + farthest - 0.5;
-    const struck = beam([sturdy("enemy", edge, nose.y)], level);
+    const struck = beam([sturdy("enemy", edge, nose.y), sturdy("near", 100, nose.y)], level);
+    expect(hp(struck, "near")).toBe(STURDY - damage);
     expect(hp(struck, "enemy")).toBe(STURDY - damage);
     expect(hp(beam([sturdy("enemy", edge + 1, nose.y)], level), "enemy")).toBe(STURDY);
     // Only level 3 exceeds a retaliator's own 8 hit points.
     expect(alive(beam([retaliator("enemy", edge, nose.y)], level), "enemy")).toBe(level < 3);
   });
 
-  it("flashes from the nose to the hit point, or to full range on a miss, spark included", () => {
+  it("flashes at full range on hit or miss and sparks at the hit surface", () => {
     const hitFlight = beam([retaliator("enemy", 100, nose.y)]);
     const flash = activeBeamFlashes(hitFlight)[0]!;
     expect(flash.from).toEqual(nose);
     // The spark sits on the actual drawn hull surface, rather than the inflated beam ray.
     const target = retaliator("probe", 100, nose.y);
-    expect(outlineContact(enemyHull(target.enemy!)!, target, flash.to, 0.01)).not.toBeNull();
-    expect(flash.to.x).toBeLessThan(target.x);
-    expect(flash.hit).toBe(true);
-    expect(activeWeaponImpacts(hitFlight)).toMatchObject([
-      { ...flash.to, age: flash.age, family: "phaserRings" },
-    ]);
+    const [impact] = activeWeaponImpacts(hitFlight);
+    expect(outlineContact(enemyHull(target.enemy!)!, target, impact!, 0.01)).not.toBeNull();
+    expect(impact!.x).toBeLessThan(target.x);
+    expect(impact).toMatchObject({ age: flash.age, family: "phaserRings", targetId: "enemy" });
+    expect(flash.to.x).toBeCloseTo(ahead(playerRange), 9);
     const miss = beam([]);
     expect(activeBeamFlashes(miss)[0]!.to.x).toBeCloseTo(ahead(playerRange), 9);
-    expect(activeBeamFlashes(miss)[0]!.hit).toBe(false);
     expect(activeWeaponImpacts(miss)).toEqual([]);
     // The flash shows 0.15 s and a hit's spark 0.16 s, so both last until the spark ends.
     miss.fireCooldown = 100;
@@ -205,7 +210,7 @@ describe("Phaser hitscan beam", () => {
       stepFlight(CONTENT, 1 / 60, turn, flight);
     }
     expect(activeBeamFlashes(flight)).toEqual([flash]);
-    expect(flash).toMatchObject({ from: fired.from, hit: true, to: fired.to });
+    expect(flash).toMatchObject({ from: fired.from, impacts: fired.impacts, to: fired.to });
     expect(flight.player.y).toBeGreaterThan(0);
     expect(flight.facing.y).toBeGreaterThan(0.05);
     const drawn = drawnBeamFlash(flight, flash);
@@ -236,27 +241,76 @@ describe("Phaser hitscan beam", () => {
     expect(activeWeaponImpacts(flight)).toEqual([]);
   });
 
-  it("projects the anchored beam endpoint and spark together across the world seam", () => {
+  it("anchors separate real hits and the full beam endpoint across the seam", () => {
     const { flight } = launched("phaser");
     const side = flight.topology!.side;
-    flight.player = { x: side / 2 - 20, y: 0 };
-    const flash = {
-      age: 0,
-      from: nosePoint({ x: 1, y: 0 }, flight.player),
-      hit: true,
-      to: { x: side / 2 + 80, y: 10 },
-    };
-    recordBeamFlash(flight, flash);
-    expect(drawnBeamFlash(flight, flash).to).toEqual(flash.to);
-    const initialImpact = activeWeaponImpacts(flight)[0]!;
-    flight.player.x = -side / 2 + 10;
-    const localEnd = { x: -side / 2 + 80, y: 10 };
-    expect(drawnBeamFlash(flight, flash)).toEqual({
-      from: nosePoint(flight.facing, flight.player),
-      to: localEnd,
-    });
-    expect(activeWeaponImpacts(flight)).toEqual([{ ...initialImpact, ...localEnd }]);
-    expect(flash.to).toEqual({ x: side / 2 + 80, y: 10 });
+    const seam = side / 2;
+    flight.ownedWeapons = ["phaser"];
+    flight.facing = { x: 1, y: 0 };
+    flight.player = { x: seam - 30, y: 0 };
+    flight.objects = [
+      sturdy("across", -seam + 100, nose.y),
+      { hp: 12, id: "rock", kind: "rock", radius: 5, x: -seam + 25, y: nose.y },
+    ];
+    stepFlight(CONTENT, 1 / 60, right, flight);
+    expect(hp(flight, "across")).toBe(STURDY - 4);
+    expect(hp(flight, "rock")).toBe(8);
+    const flash = activeBeamFlashes(flight)[0]!;
+    const impacts = activeWeaponImpacts(flight);
+    expect(impacts.map(({ targetId }) => targetId)).toEqual(["rock", "across"]);
+    expect(new Set(impacts.map(({ id }) => id)).size).toBe(2);
+    flight.player.x = -seam + 10;
+    const local = drawnBeamFlash(flight, flash);
+    expect(local.from).toEqual(nosePoint(flight.facing, flight.player));
+    expect(local.to.x).toBeCloseTo(flash.to.x - side, 8);
+    expect(activeWeaponImpacts(flight)).toEqual(
+      impacts.map((impact) => ({ ...impact, x: expect.closeTo(impact.x - side, 8) })),
+    );
+    expect(worldDistance(flightWorldContext(flight), impacts[0]!, impacts[1]!)).toBeGreaterThan(0);
+  });
+
+  it("pops armed mines without blocking later hits and skips a mine still in flight", () => {
+    const { flight } = launched("phaser");
+    flight.ownedWeapons = ["phaser"];
+    flight.facing = { x: 1, y: 0 };
+    flight.objects = [sturdy("behind", 200, nose.y)];
+    flight.mines = [
+      { age: 1, damage: 2, id: "first", ownerId: "layer", x: 70, y: nose.y },
+      { age: -1, damage: 2, id: "unarmed", ownerId: "layer", x: 105, y: nose.y },
+      { age: 1, damage: 2, id: "second", ownerId: "layer", x: 150, y: nose.y },
+    ];
+    stepFlight(CONTENT, 1 / 60, right, flight);
+    expect(flight.mines.map(({ end }) => end?.kind)).toEqual(["pop", undefined, "pop"]);
+    expect(hp(flight, "behind")).toBe(STURDY - 4);
+    expect(activeWeaponImpacts(flight).map(({ targetId }) => targetId)).toEqual([
+      "first",
+      "second",
+      "behind",
+    ]);
+  });
+
+  it("deals one hit to a multipart ship and sparks on the chosen hull or live hardpoint", () => {
+    const id = "heavy";
+    const definition = enemyDefinition(1, "capital", id);
+    const heavy = sturdy(id, 230, nose.y);
+    heavy.enemy = createEnemy(
+      definition,
+      { archetype: "capital", id, packId: null, phase: 0 },
+      heavy,
+    );
+    heavy.hp = heavy.enemy.hp;
+    heavy.radius = CONTENT.tuning.flight.shipRadius * definition.sizeRatio;
+    const before = heavy.enemy;
+    const flight = beam([heavy]);
+    const after = heavy.enemy;
+    const damaged = before.hardpoints.filter(
+      ({ hp, id }, index) => after.hardpoints[index]!.id === id && after.hardpoints[index]!.hp < hp,
+    );
+    expect(Number(after.hp < before.hp) + damaged.length).toBe(1);
+    const [impact] = activeWeaponImpacts(flight);
+    expect(activeWeaponImpacts(flight)).toHaveLength(1);
+    const outline = damaged[0] ? enemyPartOutline(1, before, damaged[0].id) : enemyHull(before, 1);
+    expect(outlineContact(outline!, heavy, impact!, 0.01)).not.toBeNull();
   });
 
   it("strikes an obstacle at the nose at once", () => {
@@ -269,7 +323,8 @@ describe("Phaser hitscan beam", () => {
     const flash = activeBeamFlashes(flight)[0]!;
     const from = nosePoint({ x: 1, y: 0 }, flight.player);
     expect(flash.from).toEqual(from);
-    expect(Math.hypot(flash.to.x - 12, flash.to.y - nose.y)).toBeCloseTo(2, 5);
+    const [impact] = activeWeaponImpacts(flight);
+    expect(Math.hypot(impact!.x - 12, impact!.y - nose.y)).toBeCloseTo(2, 5);
   });
 
   it("hits once per shot and keeps no projectile or save state", () => {
