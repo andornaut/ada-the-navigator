@@ -104,8 +104,8 @@ describe("projectile contact positions and detonation", () => {
     flight.objects = [direct, near, far];
     flight.shots = [missile()];
     stepFlight(CONTENT, 0.02, idle, flight);
-    expect(direct.hp).toBe(98.5);
-    expect(near.hp).toBe(8.5);
+    expect(direct.hp).toBe(98);
+    expect(near.hp).toBe(8);
     expect(far.hp).toBe(10);
     expect(activeBlastFlashes(flight)).toHaveLength(1);
   });

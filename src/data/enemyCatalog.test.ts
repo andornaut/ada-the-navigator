@@ -104,7 +104,7 @@ describe("enemy weapon damage", () => {
       5, 6, 7,
     ]);
     expect(levels.map((level) => fireDamageRatio({ level, weapon: "phaser" }))).toEqual([4, 6, 8]);
-    expect(fireDamageRatio({ level: 1, weapon: "rapidMissile" })).toBe(1.5);
+    expect(fireDamageRatio({ level: 1, weapon: "rapidMissile" })).toBe(2);
     expect(fireDamageRatio({ level: 1, weapon: "multiLaser" })).toBe(0.7);
     expect(fireDamageRatio({ level: 1, weapon: "scattershot" })).toBeCloseTo(0.8, 9);
   });
@@ -206,11 +206,11 @@ describe("enemy fire profiles", () => {
     expect(fire(1, "swarm")).toEqual(["laser", 1, 0.3 / 0.25, 300]);
     expect(fire(1, "fighter")).toEqual(["multiLaser", 1, 0.4 / 0.25, 240]);
     expect(fire(1, "interceptor")).toEqual(["phaser", 1, 2 / 0.25, 0]);
-    expect(fire(1, "retaliator")).toEqual(["rapidMissile", 1, 0.3 / 0.4, 300]);
+    expect(fire(1, "retaliator")).toEqual(["rapidMissile", 1, 0.5 / 0.4, 300]);
     expect(fire(4, "swarm")).toEqual(["laser", 1, 0.3 / 0.35, 300]);
     expect(fire(4, "fighter")).toEqual(["multiLaser", 1, 0.4 / 0.35, 240]);
     expect(fire(4, "interceptor")).toEqual(["phaser", 1, 2 / 0.35, 0]);
-    expect(fire(4, "retaliator")).toEqual(["rapidMissile", 1, 0.3 / 0.5, 300]);
+    expect(fire(4, "retaliator")).toEqual(["rapidMissile", 1, 0.5 / 0.5, 300]);
     expect(fire(6, "fighter")).toEqual(["multiLaser", 1, 0.4 / 0.45, 240]);
     expect(fire(6, "interceptor")).toEqual(["phaser", 1, 2 / 0.45, 0]);
     expect(enemyFire("frigate", { level: 1, weapon: "heavyMissile" }).interval).toBe(

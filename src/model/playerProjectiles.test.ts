@@ -14,12 +14,14 @@ const context: VolleyContext = {
 
 describe("pure player projectile volleys", () => {
   it.each([
-    ["rapidMissile", 0.3, 500 / 600, 1.5, 30],
-    ["heavyMissile", 2, 400 / 600, 5, 60],
+    ["rapidMissile", 1, 0.5, 500 / 600, 2, 30],
+    ["rapidMissile", 2, 0.4, 600 / 600, 2, 30],
+    ["rapidMissile", 3, 0.3, 700 / 600, 2, 30],
+    ["heavyMissile", 1, 2, 400 / 600, 5, 60],
   ] as const)(
-    "plans one straight %s at interval %f, speed x%f, damage x%f and blast %i",
-    (weapon, interval, speed, damage, blast) => {
-      const volley = planPlayerVolley(WEAPON_CATALOG[weapon][0], context);
+    "plans one straight %s at level %i with interval %f, speed x%f, damage x%f and blast %i",
+    (weapon, level, interval, speed, damage, blast) => {
+      const volley = planPlayerVolley(WEAPON_CATALOG[weapon][level - 1]!, context);
       expect(volley.interval).toBe(interval);
       expect(volley.projectiles).toHaveLength(1);
       const missile = volley.projectiles[0]!;

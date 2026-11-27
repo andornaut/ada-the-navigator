@@ -44,7 +44,7 @@ it("uses the standard Rapid Missile fraction and the fixed Ring Burst interval",
     }
     return part.fire;
   };
-  expect(weapon("weapon-0").interval).toBeCloseTo(0.2 / 0.35, 12);
+  expect(weapon("weapon-0").interval).toBeCloseTo(0.3 / 0.35, 12);
   expect(weapon("weapon-5").interval).toBe(3);
   expect(station).toBe(enemyActorDefinition(5, "hostileStation", "another", 3));
   expect(station).not.toBe(enemyActorDefinition(5, "hostileStation", "station", 1));

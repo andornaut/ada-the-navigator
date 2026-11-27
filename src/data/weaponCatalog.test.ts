@@ -74,17 +74,17 @@ describe("weapon levels", () => {
     ]);
   });
 
-  it("grows Rapid Missile's output by fire rate alone, 1.2 then 1.5 times level 1", () => {
+  it("grows Rapid Missile's output by fire rate alone, 1.25 then 5/3 times level 1", () => {
     const [first, second, third] = WEAPON_CATALOG.rapidMissile.map(output) as [
       number,
       number,
       number,
     ];
-    expect(second / first).toBeCloseTo(1.2, 9);
-    expect(third / first).toBeCloseTo(1.5, 9);
-    expect(WEAPON_CATALOG.rapidMissile.map((level) => level.damageRatio)).toEqual([1.5, 1.5, 1.5]);
+    expect(second / first).toBeCloseTo(1.25, 9);
+    expect(third / first).toBeCloseTo(5 / 3, 9);
+    expect(WEAPON_CATALOG.rapidMissile.map((level) => level.damageRatio)).toEqual([2, 2, 2]);
     WEAPON_CATALOG.rapidMissile.forEach((level, index) =>
-      expect(level.intervalSeconds).toBeCloseTo([0.3, 0.25, 0.2][index]!, 9),
+      expect(level.intervalSeconds).toBe([0.5, 0.4, 0.3][index]),
     );
   });
 
@@ -102,7 +102,7 @@ describe("weapon levels", () => {
       expect(perSecond(level)).toBeCloseTo([2.5, 3, 3.5][index]!, 9),
     );
     WEAPON_CATALOG.rapidMissile.forEach((level, index) =>
-      expect(perSecond(level)).toBeCloseTo([5, 6, 7.5][index]!, 9),
+      expect(perSecond(level)).toBeCloseTo([4, 5, 20 / 3][index]!, 9),
     );
   });
 
@@ -120,8 +120,8 @@ describe("weapon levels", () => {
     const laser = weaponAt("laser", 1);
     expect(weaponAt("rapidMissile", 1)).toMatchObject({
       blastRadius: 30,
-      damageRatio: 1.5,
-      intervalSeconds: 0.3,
+      damageRatio: 2,
+      intervalSeconds: 0.5,
     });
     expect([1, 2, 3].map((level) => weaponAt("rapidMissile", level).blastRadius)).toEqual([
       30, 30, 30,
@@ -225,7 +225,7 @@ describe("weapon levels", () => {
       perSecond("scattershot"),
       perSecond("phaser"),
     ];
-    [3.33, 1.75, 5, 2.5, 8.8, 2].forEach((value, index) =>
+    [3.33, 1.75, 4, 2.5, 8.8, 2].forEach((value, index) =>
       expect(ladder[index]).toBeCloseTo(value, 1),
     );
     // Multi-Laser's full fan of 3 bolts deals 5.25 a second, more than Laser.
@@ -243,7 +243,7 @@ describe("weapon levels", () => {
       perSecond("scattershot"),
       perSecond("phaser"),
     ];
-    [1.75, 5, 2.5, 8.8, 2].forEach((expected, index) =>
+    [1.75, 4, 2.5, 8.8, 2].forEach((expected, index) =>
       expect(ladder[index]).toBeCloseTo(expected, 9),
     );
     expect(perSecond("laser")).toBeGreaterThan(perSecond("multiLaser", 1));

@@ -51,7 +51,7 @@ const flies = (worldSpeed: number) => worldSpeed / BASE_PROJECTILE_SPEED;
  */
 const BOLT_REACH = 370;
 /** Rapid Missile damage per hit at every level. */
-const RAPID_DAMAGE = 1.5;
+const RAPID_DAMAGE = 2;
 /** Rapid and Heavy Missiles reach 220 world units at every level and speed. */
 const MISSILE_REACH = 220;
 /** Heavy Missile's blast radius in screen px, the same at every level. */
@@ -113,7 +113,7 @@ const rapidMissileBase = {
   anglesDegrees: [0],
   blastRadius: 30,
   damageRatio: RAPID_DAMAGE,
-  intervalSeconds: 0.3,
+  intervalSeconds: 0.5,
   projectileKind: "missile",
   rangeWorld: MISSILE_REACH,
 } as const;
@@ -195,9 +195,7 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
       damageRatio: 8,
     },
   ],
-  // Fixed RAPID_DAMAGE and a small blast at every level; fire rate grows 1.2 then 1.5 (every 0.30,
-  // 0.25 and 0.20 s) and the missile flies 500, 600 and 700 world units per second, reaching
-  // 220 at each.
+  // Fixed damage, blast and reach. Higher levels fire and travel faster.
   rapidMissile: [
     {
       ...rapidMissileBase,
@@ -205,12 +203,12 @@ export const WEAPON_CATALOG: Readonly<Record<Weapon, WeaponLevels>> = {
     },
     {
       ...rapidMissileBase,
-      intervalSeconds: rapidMissileBase.intervalSeconds / 1.2,
+      intervalSeconds: 0.4,
       speedRatio: flies(600),
     },
     {
       ...rapidMissileBase,
-      intervalSeconds: rapidMissileBase.intervalSeconds / 1.5,
+      intervalSeconds: 0.3,
       speedRatio: flies(700),
     },
   ],
