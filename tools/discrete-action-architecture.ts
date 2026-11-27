@@ -1865,6 +1865,420 @@ function scanSource(context: ScanContext, path: string, text: string) {
     return end >= 0 && (!metadata || metadata.end <= end);
   };
 
+  const kitButtonFactory = (callee: ts.Expression): boolean => {
+    const item = lexicalDeclaration(callee);
+    if (!item || !ts.isImportSpecifier(item) || item.isTypeOnly || item.parent.parent.isTypeOnly) {
+      return false;
+    }
+    const statement = item.parent.parent.parent;
+    return (
+      ts.isStringLiteral(statement.moduleSpecifier) &&
+      statement.moduleSpecifier.text === "@andornaut/game-kit/runtime/web/ui/dom/button" &&
+      (item.propertyName?.text ?? item.name.text) === "createButton"
+    );
+  };
+  const fields = (node: ts.Expression | undefined) => {
+    if (!node || !ts.isObjectLiteralExpression(node)) {
+      return undefined;
+    }
+    const result = new Map<string, ts.Expression>();
+    for (const property of node.properties) {
+      if (
+        !ts.isPropertyAssignment(property) ||
+        !ts.isIdentifier(property.name) ||
+        property.name.text === "__proto__" ||
+        result.has(property.name.text)
+      ) {
+        return undefined;
+      }
+      result.set(property.name.text, property.initializer);
+    }
+    return result;
+  };
+  const dot = (
+    node: ts.Expression | undefined,
+    name: string,
+  ): node is ts.PropertyAccessExpression =>
+    Boolean(
+      node &&
+      ts.isPropertyAccessExpression(node) &&
+      !node.questionDotToken &&
+      node.name.text === name,
+    );
+  const literal = (node: ts.Expression | undefined, value: string) =>
+    Boolean(node && ts.isStringLiteral(node) && node.text === value);
+  const callStatement = (node: ts.Statement | undefined) =>
+    node && ts.isExpressionStatement(node) && ts.isCallExpression(node.expression)
+      ? node.expression
+      : undefined;
+  const writesOnly = new Set<string>();
+  const unwritten = (node: ts.Expression) => clean(reference(node), false, writesOnly);
+  const domHost = (node: ts.Expression) => {
+    const owner = lexicalDeclaration(node);
+    const type = owner && ts.isParameter(owner) ? owner.type : undefined;
+    return Boolean(
+      type &&
+      ts.isTypeReferenceNode(type) &&
+      ts.isIdentifier(type.typeName) &&
+      type.typeName.text === "HTMLElement" &&
+      !context.lexicalDeclarations(type.typeName)?.length,
+    );
+  };
+  const nativeDocument = (node: ts.Expression) => {
+    const local = lexicalDeclaration(node);
+    if (
+      local &&
+      ts.isVariableDeclaration(local) &&
+      isConst(local) &&
+      dot(local.initializer, "ownerDocument")
+    ) {
+      return domHost(local.initializer.expression) && unwritten(local.initializer);
+    }
+    return ts.isIdentifier(node) && node.text === "document" && !local;
+  };
+  const createsNative = (node: ts.Expression | undefined, tag: string) =>
+    Boolean(
+      node &&
+      ts.isCallExpression(node) &&
+      !node.questionDotToken &&
+      dot(node.expression, "createElement") &&
+      nativeDocument(node.expression.expression) &&
+      unwritten(node.expression) &&
+      node.arguments.length === 1 &&
+      literal(node.arguments[0], tag),
+    );
+
+  // Prove first publication within the construction block, independently of when it runs.
+  // The Kit caller-layout icon factory calls getState with the fresh element while creating it.
+  const registeredKitElement = (call: ts.CallExpression): boolean => {
+    const handle = call.parent;
+    if (
+      !ts.isVariableDeclaration(handle) ||
+      !isConst(handle) ||
+      call.questionDotToken ||
+      call.arguments.length !== 2 ||
+      !nativeDocument(call.arguments[0]!) ||
+      !clean(`${reference(call.arguments[0]!)}.createElement`, false, writesOnly)
+    ) {
+      return false;
+    }
+    const creation = handle.parent.parent;
+    if (singleLocal(creation) !== handle || !ts.isBlock(creation.parent)) {
+      return false;
+    }
+    const options = fields(call.arguments[1]);
+    const content = fields(options?.get("content"));
+    const state = options?.get("getState");
+    if (
+      !literal(fields(options?.get("appearance"))?.get("layout"), "caller") ||
+      !literal(content?.get("kind"), "icon") ||
+      content?.has("icon") ||
+      (state && (!ts.isArrowFunction(state) || state.parameters.length))
+    ) {
+      return false;
+    }
+    const block = creation.parent;
+    const following = block.statements.slice(block.statements.indexOf(creation) + 1);
+    const first = following[0];
+    const alias = first && singleLocal(first);
+    if (
+      !alias ||
+      !isConst(alias) ||
+      !ts.isIdentifier(alias.name) ||
+      !dot(alias.initializer, "element") ||
+      !lexicalIdentity(alias.initializer.expression, handle) ||
+      !unwritten(alias.initializer)
+    ) {
+      return false;
+    }
+
+    const children = new Set<ts.Declaration>();
+    const deferred = new Set<ts.Declaration>();
+    const reads = (node: ts.Identifier) =>
+      ts.isShorthandPropertyAssignment(node.parent) ? declaration(node) : lexicalDeclaration(node);
+    const isDeferred = (node: ts.Expression) => {
+      const local = ts.isIdentifier(node) && reads(node);
+      return Boolean(local && deferred.has(local));
+    };
+    const readsPrivate = (node: ts.Node): true | undefined => {
+      if (ts.isIdentifier(node)) {
+        const local = reads(node);
+        if (
+          node.text === "eval" ||
+          local === handle ||
+          local === alias ||
+          (local && (children.has(local) || deferred.has(local)))
+        ) {
+          return true;
+        }
+      }
+      return ts.forEachChild(node, readsPrivate);
+    };
+    const face = (node: ts.Expression) =>
+      dot(node, "face") && lexicalIdentity(node.expression, handle);
+    const localChild = (node: ts.Expression) => {
+      const local = lexicalDeclaration(node);
+      return local !== undefined && children.has(local);
+    };
+    const isDeferredDeclaration = (local: ts.VariableDeclaration | undefined) =>
+      local && isConst(local) && local.initializer && ts.isArrowFunction(local.initializer);
+    const staging = (statement: ts.Statement): boolean => {
+      if (ts.isIfStatement(statement)) {
+        return (
+          !statement.elseStatement &&
+          !readsPrivate(statement.expression) &&
+          ts.isBlock(statement.thenStatement) &&
+          statement.thenStatement.statements.every(staging)
+        );
+      }
+      const local = singleLocal(statement);
+      if (local) {
+        if (isConst(local) && createsNative(local.initializer, "span")) {
+          children.add(local);
+          return true;
+        }
+        if (isDeferredDeclaration(local)) {
+          deferred.add(local);
+          return true;
+        }
+        return !local.initializer;
+      }
+      if (privateDomEdit(statement, children)) {
+        return true;
+      }
+      const edit = ts.isExpressionStatement(statement) && statement.expression;
+      if (!edit) {
+        return false;
+      }
+      if (
+        ts.isBinaryExpression(edit) &&
+        edit.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+        ts.isPropertyAccessExpression(edit.left) &&
+        dot(edit.left.expression, "dataset")
+      ) {
+        return lexicalIdentity(edit.left.expression.expression, alias) && !readsPrivate(edit.right);
+      }
+      const invocation = callStatement(statement);
+      const method = invocation?.expression;
+      if (
+        !invocation ||
+        invocation.questionDotToken ||
+        !method ||
+        !ts.isPropertyAccessExpression(method) ||
+        method.questionDotToken ||
+        !unwritten(method)
+      ) {
+        return false;
+      }
+      const { expression: target, name } = method;
+      const args = invocation.arguments;
+      switch (name.text) {
+        case "append":
+          return lexicalIdentity(target, alias) && args.every(localChild);
+        case "addEventListener":
+          return (
+            lexicalIdentity(target, alias) &&
+            args.length === 2 &&
+            ts.isStringLiteral(args[0]!) &&
+            isDeferred(args[1]!)
+          );
+        case "setAttribute":
+          return (
+            face(target) &&
+            args.length === 2 &&
+            args.every(ts.isStringLiteral) &&
+            !/^on/i.test((args[0] as ts.StringLiteral).text)
+          );
+        case "setProperty":
+          return (
+            dot(target, "style") &&
+            face(target.expression) &&
+            args.length === 2 &&
+            ts.isStringLiteral(args[0]!) &&
+            !readsPrivate(args[1]!)
+          );
+        default:
+          return false;
+      }
+    };
+    const inertOptions = (node: ts.Expression): boolean => {
+      if (!ts.isObjectLiteralExpression(node)) {
+        return ts.isArrowFunction(node) || !readsPrivate(node) || isDeferred(node);
+      }
+      return node.properties.every((property) => {
+        if (ts.isSpreadAssignment(property)) {
+          const value = property.expression;
+          const branch = ts.isParenthesizedExpression(value) ? value.expression : value;
+          return (
+            ts.isConditionalExpression(branch) &&
+            !readsPrivate(branch.condition) &&
+            [branch.whenTrue, branch.whenFalse].every((value) => {
+              const branchFields = fields(value);
+              return (
+                branchFields &&
+                [...branchFields.keys()].every((name) => name === "hold") &&
+                inertOptions(value)
+              );
+            })
+          );
+        }
+        return (
+          (ts.isPropertyAssignment(property) &&
+            ts.isIdentifier(property.name) &&
+            property.name.text !== "__proto__" &&
+            inertOptions(property.initializer)) ||
+          (ts.isShorthandPropertyAssignment(property) &&
+            !property.objectAssignmentInitializer &&
+            inertOptions(property.name))
+        );
+      });
+    };
+    const hoistedEscape = (node: ts.Node): true | undefined =>
+      (ts.isFunctionDeclaration(node) && readsPrivate(node)) ||
+      ts.forEachChild(node, hoistedEscape);
+
+    const index = following.findIndex((statement) => {
+      const value = singleLocal(statement)?.initializer;
+      return value && ts.isCallExpression(value) && canonicalBindingCall(value);
+    });
+    const binding = following[index] && singleLocal(following[index]!);
+    if (
+      !binding ||
+      !isConst(binding) ||
+      !following.slice(1, index).every(staging) ||
+      hoistedEscape(block)
+    ) {
+      return false;
+    }
+    const registration = binding.initializer as ts.CallExpression;
+    const action = registration.arguments[0];
+    if (
+      registration.arguments.length !== 2 ||
+      !lexicalIdentity(registration.arguments[1]!, alias) ||
+      !action ||
+      !ts.isObjectLiteralExpression(action) ||
+      !inertOptions(action)
+    ) {
+      return false;
+    }
+    const owners = action.properties.filter(
+      (property) => property.name?.getText(source) === "nativeClickOwner",
+    );
+    if (
+      owners.length !== 1 ||
+      !ts.isPropertyAssignment(owners[0]!) ||
+      !literal(owners[0]!.initializer, "factory")
+    ) {
+      return false;
+    }
+
+    const attempt = following
+      .slice(index + 1)
+      .find((statement) => !isDeferredDeclaration(singleLocal(statement)));
+    if (
+      !attempt ||
+      !ts.isTryStatement(attempt) ||
+      attempt.finallyBlock ||
+      attempt.tryBlock.statements.length !== 3
+    ) {
+      return false;
+    }
+    const assertion = (step: ts.CallExpression | undefined, kind: RuntimeAssertionKind) => {
+      const target = step && canonicalCall(step);
+      return Boolean(
+        target &&
+        context.assertions.get(target) === kind &&
+        step?.arguments.length === 1 &&
+        lexicalIdentity(step.arguments[0]!, alias),
+      );
+    };
+    const [metadata, mount, live] = attempt.tryBlock.statements.map(callStatement);
+    if (
+      !assertion(metadata, "metadata") ||
+      !assertion(live, "live-root") ||
+      !mount ||
+      mount.questionDotToken ||
+      !dot(mount.expression, "append") ||
+      !unwritten(mount.expression) ||
+      mount.arguments.length !== 1 ||
+      !lexicalIdentity(mount.arguments[0]!, alias)
+    ) {
+      return false;
+    }
+    const host = lexicalDeclaration(mount.expression.expression);
+    if (
+      !domHost(mount.expression.expression) &&
+      !(
+        host &&
+        ts.isVariableDeclaration(host) &&
+        isConst(host) &&
+        createsNative(host.initializer, "div")
+      )
+    ) {
+      return false;
+    }
+
+    const failed = attempt.catchClause;
+    const rethrow = failed?.block.statements.at(-1);
+    if (
+      !failed?.variableDeclaration ||
+      !rethrow ||
+      !ts.isThrowStatement(rethrow) ||
+      !rethrow.expression ||
+      !lexicalIdentity(rethrow.expression, failed.variableDeclaration)
+    ) {
+      return false;
+    }
+    // Failure may remove this button or dispose its private handles, then must rethrow.
+    const rollback = (statement: ts.Statement, followLocal: boolean): boolean => {
+      const invocation = callStatement(statement);
+      if (!invocation) {
+        return false;
+      }
+      const { arguments: args, expression: callee } = invocation;
+      if (ts.isPropertyAccessExpression(callee)) {
+        const target = lexicalDeclaration(callee.expression);
+        return (
+          unwritten(callee) &&
+          ((target === alias &&
+            ((dot(callee, "remove") && !args.length) ||
+              (dot(callee, "removeEventListener") &&
+                args.length === 2 &&
+                ts.isStringLiteral(args[0]!) &&
+                isDeferred(args[1]!)))) ||
+            ((target === binding || target === handle) && dot(callee, "dispose") && !args.length))
+        );
+      }
+      const local = lexicalDeclaration(callee);
+      if (args.length || !local || !ts.isVariableDeclaration(local)) {
+        return false;
+      }
+      if (!followLocal) {
+        // A cancellation slot declared empty before registration cannot run on construction failure.
+        return Boolean(
+          invocation.questionDotToken &&
+          !local.initializer &&
+          local.pos > alias.pos &&
+          local.pos < binding.pos,
+        );
+      }
+      const cleanup = local.initializer;
+      return (
+        isConst(local) &&
+        local.pos > binding.pos &&
+        local.pos < attempt.pos &&
+        Boolean(
+          cleanup &&
+          ts.isArrowFunction(cleanup) &&
+          !cleanup.parameters.length &&
+          ts.isBlock(cleanup.body) &&
+          cleanup.body.statements.every((step) => rollback(step, false)),
+        )
+      );
+    };
+    return failed.block.statements.slice(0, -1).every((step) => rollback(step, true));
+  };
+
   const certifiedMemberMetadata = (node: ts.Expression): boolean => {
     const alias = lexicalDeclaration(node);
     if (
@@ -3150,12 +3564,17 @@ function scanSource(context: ScanContext, path: string, text: string) {
           record("unresolved-event", node);
         }
       }
-      if (createsButton(node)) {
+      const kitButton = kitButtonFactory(callee);
+      if (kitButton || createsButton(node)) {
         const target =
           ts.isVariableDeclaration(node.parent) && ts.isIdentifier(node.parent.name)
             ? node.parent.name
             : node;
-        if (!hasBinding(target, true) && !capturedConstruction(target)) {
+        if (
+          kitButton
+            ? !registeredKitElement(node)
+            : !hasBinding(target, true) && !capturedConstruction(target)
+        ) {
           record(
             "unbound-discrete",
             node,

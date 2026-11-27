@@ -2270,3 +2270,126 @@ it.each([
     }),
   );
 });
+
+const kitAliasSource = `
+  import {createButton} from "@andornaut/game-kit/runtime/web/ui/dom/button";
+  import {assertAdaActionBindings, assertAdaActionMetadata} from "./actionBinding.ts";
+  function render(host: HTMLElement) {
+    const document = host.ownerDocument;
+    const row = document.createElement("div");
+    for (const choice of choices) {
+      if (choice.new) {
+        const kit = createButton(document, {
+          appearance: {layout: "caller", face: {className: "disc"}},
+          content: {kind: "icon", name: choice.name},
+          getAction: (button) => actionFor(button),
+          getState: () => ({availability: {kind: "available"}}),
+          rule: {holdMs: 500, slopPx: 10},
+        });
+        const button = kit.element;
+        button.dataset.weapon = choice.id;
+        kit.face.style.setProperty("--glyph", choice.glyph);
+        if (choice.hasCount) {
+          const count = document.createElement("span");
+          count.setAttribute("aria-hidden", "true");
+          button.append(count);
+        }
+        const available = () => !button.disabled;
+        const clickGuard = (event) => event.stopPropagation();
+        button.addEventListener("pointerdown", clickGuard);
+        const binding = bindAdaAction({
+          click: {availability: available, run: () => run(button)},
+          nativeClickOwner: "factory",
+          ...(hasHold ? {hold: {availability: available, run: () => details(button)}} : {}),
+        }, button);
+        const cleanup = () => { binding.dispose(); kit.dispose(); };
+        try {
+          assertAdaActionMetadata(button);
+          row.append(button);
+          assertAdaActionBindings(button);
+        } catch (error) {
+          cleanup();
+          button.remove();
+          throw error;
+        }
+      }
+    }
+  }
+`;
+
+it("proves a private aliased Kit element registered within its render branch", () => {
+  expect(scanWithRegistry("src/ui/freshControls.ts", kitAliasSource)).toEqual([
+    expect.objectContaining({ classification: "suppressor", kind: "non-action" }),
+  ]);
+});
+
+it.each([
+  ["mutable handle", "const kit =", "let kit ="],
+  ["mutable element alias", "const button = kit.element;", "let button = kit.element;"],
+  ["wrong member", "kit.element;", "kit.face;"],
+  ["impostor factory", "const kit =", "const createButton = fake; const kit ="],
+  [
+    "constructor callback publishes element",
+    "getState: () =>",
+    "getState: (element) => expose(element) ||",
+  ],
+  ["early attachment", "button.dataset.weapon", "row.append(button); button.dataset.weapon"],
+  ["opaque element escape", "button.dataset.weapon", "publish({button}); button.dataset.weapon"],
+  ["opaque handle escape", "button.dataset.weapon", "publish(kit); button.dataset.weapon"],
+  [
+    "hoisted publication",
+    "button.dataset.weapon",
+    "expose(); function expose(){row.append(button);} button.dataset.weapon",
+  ],
+  ["eager staged callback", "const binding =", "available(); const binding ="],
+  ["eager binding options", "availability: available, run", "availability: publish(button), run"],
+  ["wrong registration target", "}, button);", "}, other);"],
+  [
+    "conditional registration",
+    "const binding = bindAdaAction(",
+    "const binding = ready && bindAdaAction(",
+  ],
+  ["second native action owner", 'nativeClickOwner: "factory"', 'nativeClickOwner: "registry"'],
+  [
+    "eager disposal",
+    "assertAdaActionMetadata(button);",
+    "cleanup(); assertAdaActionMetadata(button);",
+  ],
+  ["wrong audited element", "assertAdaActionMetadata(button);", "assertAdaActionMetadata(other);"],
+  ["cleanup publishes after removal", "button.remove();", "button.remove(); row.append(button);"],
+] as const)("retains the Kit construction finding for %s", (_name, search, replacement) => {
+  const malformed = kitAliasSource.replace(search, replacement);
+  expect(malformed).not.toBe(kitAliasSource);
+  expect(scanWithRegistry("src/ui/freshControls.ts", malformed)).toContainEqual(
+    expect.objectContaining({
+      kind: "unbound-discrete",
+      source: expect.stringContaining("createButton(document"),
+    }),
+  );
+});
+
+it("keeps a separate click action visible beside a proven Kit construction", () => {
+  const withAction = kitAliasSource.replace(
+    "throw error;\n        }",
+    'throw error;\n        }\n        button.addEventListener("click", run);',
+  );
+  expect(scanWithRegistry("src/ui/freshControls.ts", withAction).map(({ kind }) => kind)).toEqual([
+    "non-action",
+    "raw-discrete",
+  ]);
+});
+
+it("removes only the actual weapon Kit constructor from the local census", () => {
+  const path = "src/ui/weapons.ts";
+  const text = readFileSync(new URL("../ui/weapons.ts", import.meta.url), "utf8");
+  const { findings } = scanDiscreteActionProject([canonicalRegistry, { path, text }]);
+  expect(
+    findings
+      .filter((finding) => finding.path === path)
+      .map(({ kind, source }) => ({ kind, source })),
+  ).toEqual([
+    { kind: "non-action", source: 'root.addEventListener("click", stopWeaponClick)' },
+    { kind: "non-action", source: 'button.addEventListener("pointerdown", stopPointerDown)' },
+    { kind: "gesture-review", source: 'button.addEventListener("keydown", cancelOnKeyDown)' },
+  ]);
+});
