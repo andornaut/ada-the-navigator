@@ -165,6 +165,12 @@ import {
 } from "./flight/projectileContact.ts";
 import { recordRingEmission, stepRingEmissions } from "./flight/ringEmissions.ts";
 import {
+  guardPack,
+  routeBlocked,
+  type RouteGuardPlanResult,
+  routeGuardPlanResult,
+} from "./flight/routeGuards.ts";
+import {
   resolveScenery,
   sceneryBlocksFlightSegment,
   type SceneryContactOf,
@@ -191,7 +197,6 @@ import {
   packMemberId,
   persistentObject,
   recordUnloadedPackMember,
-  retainedRouteBlocked,
   worldActivateFlightRegion,
   worldActivateRouteEncounter,
   worldPrunePackState,
@@ -337,6 +342,7 @@ export {
   type Loadout,
 } from "./flight/lifecycle.ts";
 export { activeRingEmissions, type RingEmission } from "./flight/ringEmissions.ts";
+export { routeBlocked, type RouteGuardPlanResult, routeGuardPlanResult };
 export { inBattle, inDanger, movementSpeedFraction, shipSpeedFraction, towing };
 export {
   activeBeamFlashes,
@@ -2961,52 +2967,7 @@ function releaseSummonedGuards(viewportWidth: number, flight: FlightState): void
   }
 }
 
-export type RouteGuardPlanResult = ReturnType<typeof routeGuardEvidence>;
-
-/** Only actual actor or tombstone evidence establishes a required guard's outcome. */
-export function routeGuardPlanResult(flight: FlightState, id: string): RouteGuardPlanResult {
-  return routeGuardEvidence(flight, id);
-}
-
-/** A guard blocks its route until it is disabled or destroyed (gameplay/rules.md). */
-export function routeBlocked(id: string, flight: FlightState): boolean {
-  // A guard loaded or dormant alike: a disabled one has stopped counting, as when retained.
-  return (
-    retainedRouteBlocked(id, flight) ||
-    flight.objects.some(
-      (object) => object.routeId === id && liveEnemy(object) && !object.enemy?.disabled,
-    )
-  );
-}
-
-/**
- * The holodisk leader's pack. Its members persist so the fight cannot reroll, but only the
- * leader blocks the route, so a fleeing member never strands the holodisk.
- */
-function guardPack(
-  content: GameContent,
-  leader: Vec,
-  flight: FlightState,
-  packId = "route:holodisk:pack",
-  spread = 90,
-): void {
-  const { pack, packSize } = HOLODISKS.guard;
-  for (let i = 0; i < packSize; i++) {
-    const angle = (i * Math.PI * 2) / packSize;
-    const member = spawnEnemy(
-      content,
-      flight,
-      pack,
-      `${packId}:${i}`,
-      { x: leader.x + Math.cos(angle) * spread, y: leader.y + Math.sin(angle) * spread },
-      packId,
-      angle,
-    );
-    member.persistent = true;
-    flight.objects.push(member);
-  }
-  combat(flight).initialPackSizes[packId] = packSize;
-}
+const routeGuardPackContext = { combat, spawnEnemy };
 
 const huntingPackContext = { combat, hash, random, spawnEnemy };
 
@@ -3105,7 +3066,7 @@ export function ensureRouteEncounter(
   canonicalObject(flight, object);
   flight.objects.push(object);
   if (holodisk) {
-    guardPack(content, point, flight);
+    guardPack(routeGuardPackContext, content, point, flight);
   }
   relocateRouteGuards(content, flight);
   installFrigateEscorts(content, flight, object);
@@ -3469,7 +3430,7 @@ function planSounderFormation(
     };
     // Use the existing swarm with enough space for the larger hull and its two escorts.
     const spread = Math.max(...escorts.map((escort) => worldDistance(world, leader, escort))) + 90;
-    guardPack(content, leader, draft, swarmPack, spread);
+    guardPack(routeGuardPackContext, content, leader, draft, swarmPack, spread);
     const placed = placeWhirlpoolFormation(
       content,
       projection,
