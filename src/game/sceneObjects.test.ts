@@ -16,7 +16,10 @@ import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { rockFrame } from "../model/asteroids.ts";
 import { debrisPieceIndex } from "../model/debrisBody.ts";
 import { carriesStardust } from "../model/drops.ts";
+import { seededRockOre } from "../model/flight/destruction.ts";
+import { ORE_FIELD_ROLE } from "../model/oreFields.ts";
 import { orePickupFrameSize } from "../model/pickupBody.ts";
+import { MOVING_ROCK_PREFIX } from "../model/rockRicochet.ts";
 import type { SpaceObject } from "../model/types.ts";
 
 // Execute the production render boundary without starting Phaser's DOM renderer.
@@ -26,7 +29,13 @@ const source = ts.createSourceFile(
   ts.ScriptTarget.Latest,
   true,
 );
-const names = ["drawObject", "drawTravelingDebris", "drawAsteroidSprite", "drawAsteroid"];
+const names = [
+  "cartwheelWheelRim",
+  "drawObject",
+  "drawTravelingDebris",
+  "drawAsteroidSprite",
+  "drawAsteroid",
+];
 const renderCode = source.statements
   .filter((node) => ts.isFunctionDeclaration(node) && names.includes(node.name?.text ?? ""))
   .map((node) => node.getText(source).replace(/^export /u, ""))
@@ -83,6 +92,8 @@ function fixture(galaxy = 1, ready = true, reducedMotion = false) {
   const drawStardust = vi.fn();
   const context = createContext({
     DEBRIS_STONES: ASTEROID_ART.asteroids.filter(({ size }) => size === "small"),
+    MOVING_ROCK_PREFIX,
+    ORE_FIELD_ROLE,
     PhaserMath: {
       Vector2: class {
         x: number;
@@ -95,6 +106,7 @@ function fixture(galaxy = 1, ready = true, reducedMotion = false) {
     },
     SCREEN: { height: 360, width: 720 },
     carriesStardust,
+    cartwheelRim: new WeakMap(),
     debrisFrame,
     debrisMarks,
     debrisPiece,
@@ -111,6 +123,7 @@ function fixture(galaxy = 1, ready = true, reducedMotion = false) {
     rockFrame,
     rockFrameTexture,
     scenerySilhouette: () => undefined,
+    seededRockOre,
     spaceObjectColor: () => 0xe4574e,
   });
   runInContext(
@@ -131,6 +144,13 @@ const debris = (id = "ballistic:0,0:1"): SpaceObject => ({
   x: 40,
   y: 80,
 });
+
+function plannedMover(ore: boolean): SpaceObject {
+  return Array.from({ length: 32 }, (_, index) => ({
+    ...debris(`${MOVING_ROCK_PREFIX}rock:0,0:${index}`),
+    asteroid: "asteroid-s1",
+  })).find((object) => seededRockOre(314, object) > 0 === ore)!;
+}
 
 describe("traveling debris rendering", () => {
   it("draws Sunflower ballistic debris with neutral stone at its existing footprint radius", () => {
@@ -205,6 +225,50 @@ describe("traveling debris rendering", () => {
       expect(f.ink.strokeEllipse).not.toHaveBeenCalled();
     },
   );
+
+  it("binds Cartwheel rim art at a non-ore mover's existing radius", () => {
+    const f = fixture(2, true, true);
+    const object = plannedMover(false);
+    const before = structuredClone(object);
+    const art = f.scene.debrisArt.get(2)!;
+    const piece = art.pieces[0]!;
+    const scale = object.radius / (piece.radius! * art.displayScale);
+    f.context.drawObject(f.scene, object);
+    expect(f.objectSprite).toHaveBeenCalledExactlyOnceWith(
+      f.scene,
+      object.id,
+      "cartwheel-debris-0",
+    );
+    expect(f.sprite.setDisplaySize).toHaveBeenCalledWith(
+      piece.display.width * scale,
+      piece.display.height * scale,
+    );
+    expect(f.ink.lineBetween).toHaveBeenCalledTimes(art.marks.dashes.length);
+    expect(f.rockFrameTexture).not.toHaveBeenCalled();
+    expect(object).toEqual(before);
+  });
+
+  it("retains asteroid art for ore cues, ore payout, missing rim assets and other galaxies", () => {
+    const barren = plannedMover(false);
+    const oreBearing = plannedMover(true);
+    const crystal = { ...barren, crystals: "full" } as const;
+    const oreField = { ...barren, role: ORE_FIELD_ROLE };
+    for (const [galaxy, object] of [
+      [2, oreBearing],
+      [2, crystal],
+      [2, oreField],
+      [3, barren],
+    ] as const) {
+      const f = fixture(galaxy);
+      f.context.drawObject(f.scene, object);
+      expect(f.rockFrameTexture).toHaveBeenCalledOnce();
+      expect(f.ink.lineBetween).not.toHaveBeenCalled();
+    }
+    const unloaded = fixture(2);
+    unloaded.scene.debrisArt.delete(2);
+    unloaded.context.drawObject(unloaded.scene, barren);
+    expect(unloaded.rockFrameTexture).toHaveBeenCalledOnce();
+  });
 
   it("renders the selected ballistic asteroid shape even where current debris has its own atlas", () => {
     const f = fixture(2);

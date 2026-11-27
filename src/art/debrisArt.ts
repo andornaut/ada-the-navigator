@@ -14,6 +14,7 @@ export interface DebrisPiece {
   }[];
   readonly id: string;
   readonly pivot: Vec;
+  readonly radius?: number;
 }
 
 export interface DebrisArt {
@@ -70,6 +71,7 @@ function readPiece(value: unknown): DebrisPiece | undefined {
     })),
     id: entry.id,
     pivot: { x: pivot[0] as number, y: pivot[1] as number },
+    ...(positive(entry.radius) ? { radius: entry.radius } : {}),
   };
 }
 

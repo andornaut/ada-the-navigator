@@ -63,8 +63,11 @@ import { toScreen } from "../model/convex.ts";
 import { debrisPieceIndex } from "../model/debrisBody.ts";
 import { carriesStardust } from "../model/drops.ts";
 import { enemyHull } from "../model/enemyBody.ts";
+import { seededRockOre } from "../model/flight/destruction.ts";
 import { flightWorldContext } from "../model/flightTopology.ts";
+import { ORE_FIELD_ROLE } from "../model/oreFields.ts";
 import { orePickupFrameSize, stardustPickupFrameSize } from "../model/pickupBody.ts";
+import { MOVING_ROCK_PREFIX } from "../model/rockRicochet.ts";
 import { discoveryCacheGroup } from "../model/stardustPlacement.ts";
 import { hubBay, hubWorn } from "../model/storyShips.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
@@ -201,6 +204,25 @@ export type ObjectsContext = Partial<Pick<GameScene, "fieldLight">> &
 
 const DEBRIS_STONES = ASTEROID_ART.asteroids.filter(({ size }) => size === "small");
 
+const cartwheelRim = new WeakMap<SpaceObject, boolean>();
+
+/** Loose non-ore movers can wear the rim art while keeping the rock they were placed from. */
+function cartwheelWheelRim(seed: number, object: SpaceObject): boolean {
+  if (
+    !object.id.startsWith(MOVING_ROCK_PREFIX) ||
+    object.crystals !== undefined ||
+    object.role === ORE_FIELD_ROLE
+  ) {
+    return false;
+  }
+  let eligible = cartwheelRim.get(object);
+  if (eligible === undefined) {
+    eligible = seededRockOre(seed, object) === 0;
+    cartwheelRim.set(object, eligible);
+  }
+  return eligible;
+}
+
 /** Traveling debris uses its galaxy's authored pieces, or neutral stone in Sunflower. */
 export function drawTravelingDebris(
   scene: ObjectsContext,
@@ -209,7 +231,10 @@ export function drawTravelingDebris(
 ): boolean {
   const flight = scene.model.state.flight!;
   const art = scene.debrisArt.get(flight.galaxy);
-  if (!object.velocity || object.orbit || object.asteroid) {
+  if (!object.velocity || object.orbit) {
+    return false;
+  }
+  if (object.asteroid && (!art || flight.galaxy !== 2 || !cartwheelWheelRim(flight.seed, object))) {
     return false;
   }
   if (!art) {
@@ -222,6 +247,13 @@ export function drawTravelingDebris(
     return true;
   }
   const piece = debrisPiece(art, object.id);
+  let scale = 1;
+  if (object.asteroid) {
+    if (piece.radius === undefined) {
+      return false;
+    }
+    scale = object.radius / (piece.radius * art.displayScale);
+  }
   const frame = debrisFrame(art, piece, object.id, scene.reducedMotion, flight.time);
   const velocity = {
     x: object.velocity.x - object.velocity.y,
@@ -231,14 +263,14 @@ export function drawTravelingDebris(
   for (const dash of debrisMarks(art, piece, frame, velocity)) {
     scene.ink.lineStyle(art.marks.width, mark, dash.alpha);
     scene.ink.lineBetween(
-      point.x + dash.from.x,
-      point.y + dash.from.y,
-      point.x + dash.to.x,
-      point.y + dash.to.y,
+      point.x + dash.from.x * scale,
+      point.y + dash.from.y * scale,
+      point.x + dash.to.x * scale,
+      point.y + dash.to.y * scale,
     );
   }
   const sprite = objectSprite(scene, object.id, `${piece.id}-${frame}`)
-    .setDisplaySize(piece.display.width, piece.display.height)
+    .setDisplaySize(piece.display.width * scale, piece.display.height * scale)
     .setOrigin(piece.pivot.x, piece.pivot.y)
     .setPosition(point.x, point.y)
     .setDepth(playDepth(point.y));

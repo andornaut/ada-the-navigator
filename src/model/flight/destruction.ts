@@ -1,9 +1,10 @@
+import type { AsteroidSize } from "../../data/asteroidCatalog.ts";
 import { ASTEROID_LOOT, CRYSTAL_MINIMUM_ORE } from "../../data/asteroidLoot.ts";
 import { ECONOMY } from "../../data/economy.ts";
 import { WRECK_ID_PREFIX } from "../../data/enemyIdentity.ts";
 import { PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../../data/phantom.ts";
 import type { GameContent, Vec, Weapon } from "../../data/types.ts";
-import { rollAsteroidLoot } from "../asteroidLoot.ts";
+import { type AsteroidLoot, rollAsteroidLoot } from "../asteroidLoot.ts";
 import { asteroidSize } from "../asteroids.ts";
 import {
   dropRandom,
@@ -25,6 +26,23 @@ import {
 import type { FlightState, PickupRelease, SpaceObject } from "../types.ts";
 import { worldDistance } from "../worldContacts.ts";
 
+const rockDropId = (id: string): string =>
+  id.startsWith(MOVING_ROCK_PREFIX) ? id.slice(MOVING_ROCK_PREFIX.length) : id;
+
+function rockLoot(size: AsteroidSize, crystal: boolean, next: () => number): AsteroidLoot {
+  const rolled = rollAsteroidLoot(ASTEROID_LOOT, size, next);
+  return crystal ? { ...rolled, ore: Math.max(CRYSTAL_MINIMUM_ORE, rolled.ore) } : rolled;
+}
+
+/** The rock's seeded ore content before any ammo replacement. */
+export function seededRockOre(seed: number, object: SpaceObject): number {
+  return rockLoot(
+    asteroidSize(object),
+    object.crystals !== undefined,
+    dropRandom(seed, rockDropId(object.id)),
+  ).ore;
+}
+
 /**
  * An ammo outcome replaces the destroyed asteroid's combined ore/Stardust payout. A crystal rock
  * skips the ammo roll and gives at least `CRYSTAL_MINIMUM_ORE`; further ore and Stardust roll as
@@ -34,9 +52,7 @@ import { worldDistance } from "../worldContacts.ts";
 export function dropFromRock(content: GameContent, object: SpaceObject, flight: FlightState): void {
   const size = asteroidSize(object);
   const crystal = object.crystals !== undefined;
-  const id = object.id.startsWith(MOVING_ROCK_PREFIX)
-    ? object.id.slice(MOVING_ROCK_PREFIX.length)
-    : object.id;
+  const id = rockDropId(object.id);
   if (
     !crystal &&
     rollRockAmmoDrop(ECONOMY, ammoOwned(flight), size, dropRandom(flight.seed, `ammo:${id}`))
@@ -45,8 +61,7 @@ export function dropFromRock(content: GameContent, object: SpaceObject, flight: 
     return;
   }
   const next = dropRandom(flight.seed, id);
-  const rolled = rollAsteroidLoot(ASTEROID_LOOT, size, next);
-  const loot = crystal ? { ...rolled, ore: Math.max(CRYSTAL_MINIMUM_ORE, rolled.ore) } : rolled;
+  const loot = rockLoot(size, crystal, next);
   const amounts = splitResourcePickup(loot.ore);
   const orePieces = amounts.length;
   const widths = amounts.map(orePickupSize);
