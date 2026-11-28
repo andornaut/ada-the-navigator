@@ -334,6 +334,22 @@ describe("Captain Tally in Sunflower", () => {
       .filter(({ role }) => role === "stardust")
       .reduce((total, object) => total + (object.amount ?? 0), 0);
 
+  function fireAtHammer(model: GameModel): void {
+    const flight = flightOf(model);
+    const { x, y } = actorOf(model);
+    flight.shots.push({
+      damage: 1000,
+      enemy: false,
+      hitIds: [],
+      id: `fixture-hammer:${flight.shots.length}`,
+      life: 1,
+      piercing: false,
+      velocity: { x: 0, y: 0 },
+      x,
+      y,
+    });
+  }
+
   function flyTo(model: GameModel, x: number, y: number): void {
     const flight = flightOf(model);
     flight.player = { x, y };
@@ -392,13 +408,8 @@ describe("Captain Tally in Sunflower", () => {
       ...SUNFLOWER_BOSS_CUES.approach,
       name: "Captain Tally",
     });
-    const damagedPart = definition.hardpoints[0]!;
-    boss.enemy = damageEnemy(
-      definition,
-      { amount: damagedPart.hp, hardpointId: damagedPart.id },
-      boss.enemy!,
-    );
-    boss.enemy = damageEnemy(definition, { amount: 1, hardpointId: null }, boss.enemy);
+    const mount = definition.hardpoints[0]!;
+    boss.enemy = damageEnemy(definition, { amount: 1, hardpointId: mount.id }, boss.enemy!);
     boss.hp = boss.enemy.hp;
 
     const home = flightOf(model).objects.find(({ id }) => id === "growers")!;
@@ -407,10 +418,10 @@ describe("Captain Tally in Sunflower", () => {
     expect(model.bossHud()).toBeNull();
     model = relaunch(CONTENT, model.save());
     expect(model.state.progress[1].capitalBoss?.phase).toBe("active");
-    expect(actorOf(model).enemy?.hardpoints.find(({ id }) => id === damagedPart.id)?.hp).toBe(0);
+    expect(actorOf(model).enemy?.hardpoints.find(({ id }) => id === mount.id)?.hp).toBe(mount.hp);
     approach(model);
     expect(model.bossHud()?.hull).toBe(definition.hp - 1);
-    expect(model.conversation).toMatchObject(SUNFLOWER_BOSS_CUES.hardpoint);
+    expect(model.state.seenConversations).not.toContain(`${id}:hardpoint`);
 
     flyTo(model, home.x, home.y);
     flightOf(model).dangerFor = 0;
@@ -426,7 +437,7 @@ describe("Captain Tally in Sunflower", () => {
     expect(flight.objects.filter((object) => object.id === id)).toHaveLength(1);
     expect(flight.world.notables).not.toHaveProperty(id);
     expect(model.conversation?.text).not.toBe(SUNFLOWER_BOSS_CUES.approach.text);
-    expect(model.conversation?.text).not.toBe(SUNFLOWER_BOSS_CUES.hardpoint.text);
+    expect(model.state.seenConversations).not.toContain(`${id}:hardpoint`);
   });
 
   it("holds Hammer's mounts during a real tell and restores its lock before firing once", () => {
@@ -468,35 +479,20 @@ describe("Captain Tally in Sunflower", () => {
     ).toEqual([beam()]);
   });
 
-  it("salvages via Use, marks a normal-flight route and allows exactly one Ore claim across flights", () => {
+  it("marks a flight route after defeat and allows exactly one Ore claim across flights", () => {
     let model = traded();
     approach(model);
-    const boss = actorOf(model);
-    const definition = enemyEquipmentDefinition(1, boss.enemy!);
-    for (const part of definition.hardpoints.filter(({ kind }) => kind === "weapon")) {
-      boss.enemy = damageEnemy(definition, { amount: part.hp, hardpointId: part.id }, boss.enemy!);
-    }
-    expect(boss.enemy?.disabled).toBe(true);
-    expect(model.bossHud()).toBeNull();
-    flyTo(model, boss.x + CONTENT.tuning.talkRange - 1, boss.y);
-    expect(model.contextAction).toBe("salvage");
-    expect(model.bossHud()).toMatchObject({ disabled: true, id });
-    const flight = flightOf(model);
-    const oldStardust = stardustDropped(flight);
-    model.interact();
+    fireAtHammer(model);
+    model.step(1 / 60, idle);
+    expect(model.flightEvents).toContainEqual({ id, type: "enemyDestroyed" });
     expect(model.bossHud()).toBeNull();
     expect(model.state.progress[1].capitalBoss).toMatchObject({
       cacheClaimed: false,
-      outcome: "salvaged",
+      outcome: "defeated",
       phase: "resolved",
     });
-    expect(stardustDropped(flight) - oldStardust).toBe(
-      Math.floor(enemyStardust({ id, seed: flight.seed }, "capital") / 2),
-    );
-    model.interact();
-    expect(stardustDropped(flight) - oldStardust).toBe(
-      Math.floor(enemyStardust({ id, seed: flight.seed }, "capital") / 2),
-    );
+    model.step(1 / 60, idle);
+    expect(model.flightEvents).not.toContainEqual({ id, type: "enemyDestroyed" });
     model = relaunch(CONTENT, model.save());
     const waypoint = model.map!.places.find((place) => place.id === routeId)!;
     expect(waypoint).toMatchObject({ label: "Safer route and supply cache", travel: true });
@@ -532,7 +528,7 @@ describe("Captain Tally in Sunflower", () => {
     expect(model.conversation?.text).not.toBe(SUNFLOWER_BOSS_CUES.resolved.text);
   });
 
-  it("uses the destruction reward once and selects the resolution cue over a hardpoint beat", () => {
+  it("uses one destruction reward and resolution cue for two lethal shots", () => {
     const model = traded();
     approach(model);
     expect(model.conversation?.speaker).toBe("astra");
@@ -541,24 +537,9 @@ describe("Captain Tally in Sunflower", () => {
     expect(model.conversation).toMatchObject(SUNFLOWER_BOSS_CUES.approach);
     model.dismissConversation();
     const flight = flightOf(model);
-    const boss = actorOf(model);
-    // Simulate the first part loss and lethal hull contact in the same step's outcome.
-    const definition = enemyEquipmentDefinition(1, boss.enemy!);
-    const first = definition.hardpoints[0]!;
-    boss.enemy = damageEnemy(definition, { amount: first.hp, hardpointId: first.id }, boss.enemy!);
     const oldStardust = stardustDropped(flight);
-    const shot = {
-      damage: 1000,
-      enemy: false,
-      hitIds: [],
-      id: "lethal-hull-hit",
-      life: 1,
-      piercing: false,
-      velocity: { x: 0, y: 0 },
-      x: boss.x,
-      y: boss.y,
-    };
-    flight.shots.push(shot, { ...shot, hitIds: [], id: "second-ship-hit" });
+    fireAtHammer(model);
+    fireAtHammer(model);
     model.step(1 / 60, idle);
     expect(model.flightEvents.filter(({ type }) => type === "enemyDestroyed")).toEqual([
       { id, type: "enemyDestroyed" },
