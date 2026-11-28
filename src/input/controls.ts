@@ -882,7 +882,14 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   };
   const leaveEscape = registerGameEscape(document, gameEscape);
   const keyDown = (event: KeyboardEvent) => {
-    if (event.defaultPrevented || !requiredReady()) {
+    if (
+      event.defaultPrevented ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.isComposing ||
+      !requiredReady()
+    ) {
       return;
     }
     // Q exits from the bare start screen, wherever Exit shows.

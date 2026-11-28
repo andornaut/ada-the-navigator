@@ -84,20 +84,27 @@ function harness(required?: () => boolean) {
     `const ${actual("requiredReady")};`,
     `const ${actual("reset")};`,
     `const ${actual("keyDown")};`,
+    `const ${actual("keyUp")};`,
     `const ${actual("gameEscape")};`,
-    `({keyDown, gameEscape, ${actual("sample", true)}, ${actual("setEnabled", true)}})`,
+    `({keyDown, keyUp, gameEscape, ${actual("sample", true)}, ${actual("setEnabled", true)}})`,
   ].join("\n");
   const adapter = runInContext(
     ts.transpileModule(text, { compilerOptions: { target: ts.ScriptTarget.ES2023 } }).outputText,
     sandbox,
   ) as {
     keyDown(event: object): void;
+    keyUp(event: object): void;
     gameEscape(): (() => void) | undefined;
     sample(frame?: object): ControlSample;
     setEnabled(value: boolean): void;
   };
-  const key = (code: string, repeat = false, target: object | null = null) => {
-    const event = { code, preventDefault: vi.fn(), repeat, target };
+  const key = (
+    code: string,
+    repeat = false,
+    target: object | null = null,
+    flags: KeyboardEventInit = {},
+  ) => {
+    const event = { ...flags, code, preventDefault: vi.fn(), repeat, target };
     adapter.keyDown(event);
     return event;
   };
@@ -193,6 +200,37 @@ describe("required-entry controls fence", () => {
     h.key("KeyW");
     expect(h.adapter.sample().move.y).toBe(-1);
   });
+});
+
+it.each(["altKey", "ctrlKey", "metaKey", "isComposing"] as const)(
+  "passes %s through before bare Start Exit or coarse-pointer gameplay handling",
+  (flag) => {
+    const h = harness(() => true);
+    h.state.setUseAvailable(true);
+    const flags = { [flag]: true };
+    const exit = h.key("KeyQ", false, null, flags);
+    const move = h.key("KeyW", false, null, flags);
+    const use = h.key("Space", false, null, flags);
+    const sample = h.adapter.sample();
+    expect({
+      exit: h.exit.mock.calls.length,
+      move: sample.move,
+      prevented: [exit, move, use].map((event) => event.preventDefault.mock.calls.length),
+      use: sample.use,
+    }).toEqual({ exit: 0, move: { x: 0, y: 0 }, prevented: [0, 0, 0], use: false });
+  },
+);
+
+it("keeps bare Q, Shift with movement, fresh Space Use and modifier-independent keyup", () => {
+  const h = harness(() => true);
+  h.state.setUseAvailable(true);
+  expect(h.key("KeyQ").preventDefault).toHaveBeenCalledOnce();
+  expect(h.exit).toHaveBeenCalledOnce();
+  expect(h.key("KeyW", false, null, { shiftKey: true }).preventDefault).toHaveBeenCalledOnce();
+  expect(h.key("Space").preventDefault).toHaveBeenCalledOnce();
+  expect(h.adapter.sample()).toMatchObject({ move: { x: 0, y: -1 }, use: true });
+  h.adapter.keyUp({ code: "KeyW", ctrlKey: true, isComposing: true });
+  expect(h.adapter.sample()).toMatchObject({ move: { x: 0, y: 0 }, use: false });
 });
 
 it("attaches one UI-scoped root with the canonical readiness ports independently of gameplay acceptance", () => {
