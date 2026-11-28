@@ -11,7 +11,7 @@ export {
   INLINE_CONTROL,
   TEXT_BUTTON,
   WHOLE_PX_EDGES,
-} from "./controls.ts";
+} from "../layout/controls.ts";
 export {
   frameBoxIn,
   frameDeviceOrigin,
@@ -28,4 +28,4 @@ export {
   type PlayLayout,
   readViewUnit,
   VIEW_SCALE_EVENT,
-} from "./viewScale.ts";
+} from "./viewScaleBridge.ts";

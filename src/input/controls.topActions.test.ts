@@ -9,7 +9,7 @@ import * as actionBinding from "../ui/actionBinding.ts";
 import { createBackStack, pressBack } from "../ui/backStack.ts";
 import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
 import { SCROLL } from "../ui/layout/contentCard.ts";
-import { readViewUnit } from "../ui/layout/viewScale.ts";
+import { readViewUnit } from "../ui/layoutDom/viewScaleBridge.ts";
 import { createHudNavigationButton } from "../ui/pauseButton.ts";
 import { enterPressView, inCurrentView, rootPressGuard } from "../ui/pressScope.ts";
 import { EXIT_SHOWN_ATTRIBUTE } from "../ui/settings/index.ts";

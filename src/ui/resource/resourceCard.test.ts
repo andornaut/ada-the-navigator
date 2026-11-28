@@ -239,7 +239,7 @@ vi.mock("../modal.ts", async (original) => ({
     row.dataset.footerAction = action;
   },
 }));
-vi.mock("../layout/viewScale.ts", () => ({ readViewUnit: () => 1 }));
+vi.mock("../layoutDom/viewScaleBridge.ts", () => ({ readViewUnit: () => 1 }));
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", async (original) => ({
   ...(await original<typeof import("@andornaut/game-kit/runtime/web/ui/dom/focusModality")>()),
   focusTarget: (node: { focus(): void }) => node.focus(),

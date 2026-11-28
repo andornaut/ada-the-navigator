@@ -188,7 +188,10 @@ vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
     active = node;
   },
 }));
-vi.mock("../layout/viewScale.ts", () => ({ VIEW_SCALE_EVENT: "scale", readViewUnit: () => 1 }));
+vi.mock("../layoutDom/viewScaleBridge.ts", () => ({
+  VIEW_SCALE_EVENT: "scale",
+  readViewUnit: () => 1,
+}));
 vi.mock("../modal.ts", async (original) => ({
   ...(await original<typeof import("../modal.ts")>()),
   createCard: ({ close }: { close: Element }) => {

@@ -45,7 +45,6 @@ import type { DeviceStorage } from "../ui/deviceSettings.ts";
 import { registerForegroundSurface, registerGameEscape } from "../ui/foregroundInput.ts";
 import { bindAdaActionRoot, foregroundPressGuard } from "../ui/holdActionsAdapter.ts";
 import { createItemNotices, type NoticePlaces, type PaintSwatch } from "../ui/itemNotice.ts";
-import { createViewScaleBridge, type PlayLayout, readViewUnit } from "../ui/layout/dom.ts";
 import {
   HUD_BUTTON,
   HUD_ROW,
@@ -62,6 +61,7 @@ import {
   usePressed,
   VIEW_HOST_ID,
 } from "../ui/layout/index.ts";
+import { createViewScaleBridge, type PlayLayout, readViewUnit } from "../ui/layoutDom/index.ts";
 import { createMenuCard } from "../ui/menu/index.ts";
 import { activateNavigation, createNavigationButton } from "../ui/navigationButton.ts";
 import {

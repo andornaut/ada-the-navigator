@@ -139,6 +139,16 @@ export default defineConfig(
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
   { files: SOURCE_FILES, plugins, rules: sourceRules },
   {
+    files: ["src/ui/layout/**/*.ts", "src/ui/map/layout/**/*.ts"],
+    ignores: TEST_FILES,
+    rules: {
+      "no-restricted-globals": [
+        "error",
+        { checkGlobalObject: true, globals: ["document", "getComputedStyle", "window"] },
+      ],
+    },
+  },
+  {
     files: ["src/{data,model}/**/*.ts"],
     ignores: TEST_FILES,
     rules: {

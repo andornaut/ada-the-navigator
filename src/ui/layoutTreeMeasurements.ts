@@ -11,7 +11,7 @@ import type {
   MountedLayout,
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { frameRect, type PageBox, turnOf } from "./layout/dom.ts";
+import { frameRect, type PageBox, turnOf } from "./layoutDom/index.ts";
 
 interface PhysicalNode {
   readonly element: HTMLElement;

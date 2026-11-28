@@ -3083,7 +3083,10 @@ it.each([
 });
 
 const switchSource = readFileSync(new URL("../ui/modal.ts", import.meta.url), "utf8");
-const viewScaleSource = readFileSync(new URL("../ui/layout/viewScale.ts", import.meta.url), "utf8");
+const viewScaleSource = readFileSync(
+  new URL("../ui/layoutDom/viewScaleBridge.ts", import.meta.url),
+  "utf8",
+);
 const switchConstructor = expect.objectContaining({
   kind: "unbound-discrete",
   source: expect.stringContaining("createButton(document,"),
@@ -3093,7 +3096,7 @@ function switchFindings(text: string, path = "src/ui/modal.ts") {
   return scanDiscreteActionProject([
     canonicalRegistry,
     { path, text },
-    { path: "src/ui/layout/viewScale.ts", text: viewScaleSource },
+    { path: "src/ui/layoutDom/viewScaleBridge.ts", text: viewScaleSource },
   ]).findings.filter((finding) => finding.path === path);
 }
 

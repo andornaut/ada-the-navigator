@@ -8,7 +8,7 @@ import {
   bindAdaAction,
   resolveAdaHoldAction,
 } from "./actionBinding.ts";
-import { readViewUnit } from "./layout/dom.ts";
+import { readViewUnit } from "./layoutDom/index.ts";
 import { type PauseFrame, pauseFrames, pausePose } from "./pause.ts";
 
 const UI_ROOT = "/art/ui/";

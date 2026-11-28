@@ -49,17 +49,6 @@ export const LAYOUT_MODULES: Readonly<Record<string, Readonly<Record<string, unk
   "viewScale.ts": viewScale,
 };
 
-/**
- * Exported functions the dump does not call, by module, with the reason. Both need a live DOM;
- * the layout they apply is playLayout and viewProperties, which the dump covers.
- */
-export const UNDUMPED_FUNCTIONS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
-  "viewScale.ts": {
-    createViewScaleBridge: "Measures and writes a live DOM host",
-    readViewUnit: "Reads a live element's computed style",
-  },
-};
-
 /** CSS display sizes: desktop, the base view, wide and narrow phones, portrait, fractional. */
 export const VIEWPORTS: readonly playView.Size[] = [
   { height: 720, width: 1280 },

@@ -29,7 +29,7 @@ import { bindAdaRecoveryActionRoot } from "./holdActionsAdapter.ts";
 import { COLOURS } from "./layout/colours.ts";
 import { CARD_WIDTH_CAPS, SCROLL } from "./layout/contentCard.ts";
 import { pixels } from "./layout/css.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
+import { readViewUnit } from "./layoutDom/viewScaleBridge.ts";
 import { rootPressGuard } from "./pressScope.ts";
 
 // Recovery uses the primary control face, lip and cream text without game resources.

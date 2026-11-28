@@ -1,6 +1,6 @@
 import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { INLINE_CONTROL } from "./layout/dom.ts";
 import { units } from "./layout/index.ts";
+import { INLINE_CONTROL } from "./layoutDom/index.ts";
 
 // Text with inline control icons (gameplay/rules.md, art/settings-icons.md "Inline controls"):
 // each {move}, {aim} or {use} token in player copy becomes the control's name, then Art's 16 by 16

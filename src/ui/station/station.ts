@@ -25,8 +25,8 @@ import {
   renderItemDetailHeader,
 } from "../itemDetailContent.ts";
 import { keeperName } from "../keeperBlock.ts";
-import { readViewUnit } from "../layout/dom.ts";
 import { CONFIRM_ITEM, SCROLL } from "../layout/index.ts";
+import { readViewUnit } from "../layoutDom/index.ts";
 import { createActions, createCard, isTap } from "../modal.ts";
 import { createStandardCloseAction } from "../modalClose.ts";
 import { createModalLayer } from "../modalLayer.ts";

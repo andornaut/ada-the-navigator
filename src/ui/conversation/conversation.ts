@@ -43,7 +43,6 @@ export {
   TAB_COLOURS,
 } from "../dialoguePortraits.ts";
 import { controlHelpText, createControlHelp } from "../controlHelp.ts";
-import { readViewUnit } from "../layout/dom.ts";
 import {
   CARD_CLOSE,
   CONVERSATION_BOX,
@@ -58,6 +57,7 @@ import {
   VIEW_HOST_ID,
   VIEW_PROPERTIES,
 } from "../layout/index.ts";
+import { readViewUnit } from "../layoutDom/index.ts";
 import { TEXT_TOKENS } from "../modal.ts";
 import { CONVERSATION_SLOT, FLIGHT_PANEL_BACKGROUND } from "../notice.ts";
 import { invalidatePressScope } from "../pressScope.ts";

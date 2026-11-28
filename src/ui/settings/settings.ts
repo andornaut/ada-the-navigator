@@ -18,13 +18,6 @@ import {
 } from "../deviceSettings.ts";
 import { type InstallPort, startInstall, watchInstallRow } from "../installRow.ts";
 import {
-  CONTROL_ROW,
-  frameSize,
-  readViewUnit,
-  VIEW_SCALE_EVENT,
-  WHOLE_PX_EDGES,
-} from "../layout/dom.ts";
-import {
   CARD_CONTENT,
   font,
   fromHudEdge,
@@ -42,6 +35,13 @@ import {
   USE_DISC,
   viewStyle,
 } from "../layout/index.ts";
+import {
+  CONTROL_ROW,
+  frameSize,
+  readViewUnit,
+  VIEW_SCALE_EVENT,
+  WHOLE_PX_EDGES,
+} from "../layoutDom/index.ts";
 import {
   BUTTON_FACE,
   type ButtonRole,

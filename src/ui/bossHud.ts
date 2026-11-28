@@ -2,7 +2,6 @@ import type { CapitalBossHud } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATION_BOX, SHIELD_PILL } from "../data/layout.ts";
 import { TAB_COLOURS } from "./dialoguePortraits.ts";
-import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/dom.ts";
 import {
   COLOURS,
   font,
@@ -13,6 +12,7 @@ import {
   TYPE,
   units,
 } from "./layout/index.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "./layoutDom/index.ts";
 import { STATUS_COLOURS } from "./statusPill.ts";
 
 const { bar, bars } = SHIELD_PILL;

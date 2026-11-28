@@ -21,8 +21,8 @@ import {
 import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import type { Vec } from "../model/types.ts";
-import { readViewUnit } from "./layout/dom.ts";
 import { COLOURS } from "./layout/index.ts";
+import { readViewUnit } from "./layoutDom/index.ts";
 import { drawShipJets, drawShipTail } from "./shipJetCanvas.ts";
 
 // Draws Art's quantum jump over the play area (art/quantum-jump.md). The real scene shows through

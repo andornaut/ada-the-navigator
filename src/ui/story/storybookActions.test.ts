@@ -12,7 +12,7 @@ import { registerAdaActionRoot } from "../actionRegistry.ts";
 import { bindAdaActionRoot } from "../holdActionsAdapter.ts";
 import { NO_INSETS } from "../layout/playView.ts";
 import { useDiscLayout, usePressed } from "../layout/touchControls.ts";
-import { readViewUnit } from "../layout/viewScale.ts";
+import { readViewUnit } from "../layoutDom/viewScaleBridge.ts";
 import { enterPressView, rootPressGuard } from "../pressScope.ts";
 import { createStorybook, type StoryPageView } from "./storybook.ts";
 

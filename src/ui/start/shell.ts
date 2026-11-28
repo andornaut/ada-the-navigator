@@ -11,8 +11,8 @@ import {
   assertAdaActionMetadata,
   bindAdaAction,
 } from "../actionBinding.ts";
-import { readViewUnit } from "../layout/dom.ts";
 import { SCROLL } from "../layout/index.ts";
+import { readViewUnit } from "../layoutDom/index.ts";
 import { createStartScreen } from "./startScreen.ts";
 import type { TitleScreenArt } from "./titleScreen.ts";
 

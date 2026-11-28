@@ -7,7 +7,6 @@ import { SCREEN } from "../../data/screen.ts";
 import { assertAdaActionBindings, assertAdaActionMetadata } from "../actionBinding.ts";
 import { COMPLETION_INDICATOR, createCompletionIndicator } from "../completionIndicator.ts";
 import { registerForegroundSurface } from "../foregroundInput.ts";
-import { readViewUnit, TEXT_BUTTON, VIEW_SCALE_EVENT } from "../layout/dom.ts";
 import {
   CARD_WIDTH_CAPS,
   cardWidth,
@@ -17,6 +16,7 @@ import {
   TYPE,
   units,
 } from "../layout/index.ts";
+import { readViewUnit, TEXT_BUTTON, VIEW_SCALE_EVENT } from "../layoutDom/index.ts";
 import { createActions, createCard, setFooterAction, TEXT_TOKENS, UI_SCOPE } from "../modal.ts";
 import { createStandardCloseAction } from "../modalClose.ts";
 import { enterPressView } from "../pressScope.ts";

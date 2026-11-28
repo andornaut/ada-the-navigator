@@ -6,7 +6,7 @@ import type { PressGuard } from "@andornaut/game-kit/runtime/web/ui/dom/domPress
 
 import { SCROLL } from "../data/layout.ts";
 import { bindAdaAction } from "./actionBinding.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
+import { readViewUnit } from "./layoutDom/viewScaleBridge.ts";
 
 export interface ViewDismissal {
   readonly backdrop: HTMLElement;

@@ -10,7 +10,6 @@ import {
   assertAdaActionMetadata,
   bindAdaAction,
 } from "./actionBinding.ts";
-import { frameGridOrigin, readViewUnit, VIEW_SCALE_EVENT } from "./layout/dom.ts";
 import {
   COLOURS,
   countSlot,
@@ -30,6 +29,7 @@ import {
   TYPE,
   units,
 } from "./layout/index.ts";
+import { frameGridOrigin, readViewUnit, VIEW_SCALE_EVENT } from "./layoutDom/index.ts";
 import { createShieldDrawing } from "./shieldDrawing.ts";
 
 // The HUD status pill (art/layout.md "Status pill", art/controls.md "Status pill"): one ink pill

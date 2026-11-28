@@ -13,8 +13,8 @@ import {
 
 import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { presentAdaButtonContent } from "./buttonPresentation.ts";
-import { readViewUnit } from "./layout/dom.ts";
 import { type CardSize, SCROLL } from "./layout/index.ts";
+import { readViewUnit } from "./layoutDom/index.ts";
 import { type ButtonRole, createActions, createCard, setFooterAction } from "./modal.ts";
 import { createStandardCloseAction } from "./modalClose.ts";
 import { createProse } from "./prose.ts";

@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 // A portrait touch screen turns the page frame a quarter turn (game-kit frameTurn), and
 // getBoundingClientRect measures on the page, so its width and height swap and its edges move to
-// other sides. Layout reads boxes through src/ui/layout/frameBox.ts; only the uses below read
+// other sides. Layout reads boxes through src/ui/layoutDom/frameBox.ts; only the uses below read
 // page boxes, each for the reason given.
 
 const SRC = new URL("../../", import.meta.url).pathname;
@@ -13,7 +13,7 @@ const SRC = new URL("../../", import.meta.url).pathname;
 const PAGE_BOX_USES: Readonly<Record<string, string>> = {
   "input/controls.ts":
     "Maps a pointer's client point into the game through pageToGame and the turn",
-  "ui/layout/frameBox.ts": "The frame measurement helpers",
+  "ui/layoutDom/frameBox.ts": "The frame measurement helpers",
   "ui/layoutTreeMeasurements.ts": "Turns every box into the host's frame axes with frameRect",
   "ui/map/mapRenderQueue.ts": "A change key for re-rendering, compared and never laid out",
   "ui/map/mapScreen.ts": "Maps a pointer's client point into the map's frame with framePoint",
@@ -49,7 +49,7 @@ describe("turned-frame measurements", () => {
   it("never take a page box's size or edge straight off getBoundingClientRect", () => {
     const direct = /\.getBoundingClientRect\(\)\??\.(?:width|height|top|bottom|left|right|x|y)\b/u;
     const offenders = files
-      .filter(({ file, text }) => file !== "ui/layout/frameBox.ts" && direct.test(text))
+      .filter(({ file, text }) => file !== "ui/layoutDom/frameBox.ts" && direct.test(text))
       .map(({ file }) => file);
     expect(offenders).toEqual([]);
   });

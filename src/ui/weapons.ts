@@ -14,7 +14,6 @@ import {
   resolveAdaHoldAction,
 } from "./actionBinding.ts";
 import { AmmoFeedbackQueue } from "./ammoFeedback.ts";
-import { readViewUnit } from "./layout/dom.ts";
 import {
   COLOURS,
   EQUIPPED_WEAPON_RING_WIDTH,
@@ -31,6 +30,7 @@ import {
   TYPE,
   units,
 } from "./layout/index.ts";
+import { readViewUnit } from "./layoutDom/index.ts";
 import { invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 

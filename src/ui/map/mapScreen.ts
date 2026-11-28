@@ -30,16 +30,6 @@ import {
 } from "../actionBinding.ts";
 import { registerForegroundSurface } from "../foregroundInput.ts";
 import {
-  BUTTON_SLICE,
-  CARD_SLICE,
-  frameBoxIn,
-  framePoint,
-  frameSize,
-  readViewUnit,
-  turnOf,
-  VIEW_SCALE_EVENT,
-} from "../layout/dom.ts";
-import {
   BUTTON_GAP,
   CARD_CLOSE,
   COLOURS,
@@ -57,6 +47,16 @@ import {
   UNLISTED_COLOURS,
   VIEW_PROPERTIES,
 } from "../layout/index.ts";
+import {
+  BUTTON_SLICE,
+  CARD_SLICE,
+  frameBoxIn,
+  framePoint,
+  frameSize,
+  readViewUnit,
+  turnOf,
+  VIEW_SCALE_EVENT,
+} from "../layoutDom/index.ts";
 import { BUTTON_FACE, MODAL_LAYER, TEXT_TOKENS } from "../modal.ts";
 import { createStandardCloseAction } from "../modalClose.ts";
 import { galaxiesAvailable, mapShowsEmpty } from "../pause.ts";

@@ -7,7 +7,7 @@ import { type CardSize, SCROLL } from "./layout/contentCard.ts";
 import { type ButtonTag, FOCUS_RING } from "./layout/controls.ts";
 import { units } from "./layout/css.ts";
 import { TYPE } from "./layout/tokens.ts";
-import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "./layoutDom/viewScaleBridge.ts";
 
 // Ada's modal cards and their controls, as art/controls.md sets them (Chibi's control rules in
 // the dark lavender palette) and art/layout.md sizes them: Settings, the install steps, the update

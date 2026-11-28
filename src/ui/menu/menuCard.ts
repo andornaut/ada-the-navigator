@@ -2,8 +2,8 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { assertAdaActionBindings, assertAdaActionMetadata } from "../actionBinding.ts";
-import { readViewUnit, VIEW_SCALE_EVENT } from "../layout/dom.ts";
 import { CARD_CONTENT, SCROLL, SPACING, STACK_BUTTON_GAP, units } from "../layout/index.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "../layoutDom/index.ts";
 import { createAdaLayoutPorts } from "../layoutTree.ts";
 import { createCard } from "../modal.ts";
 import { createStandardCloseAction } from "../modalClose.ts";

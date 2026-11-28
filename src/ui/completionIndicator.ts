@@ -1,5 +1,5 @@
-import { FRAME_LINE } from "./layout/dom.ts";
 import { COLOURS, units } from "./layout/index.ts";
+import { FRAME_LINE } from "./layoutDom/index.ts";
 import { UI_SCOPE } from "./modal.ts";
 import { STATUS_COLOURS } from "./statusPill.ts";
 

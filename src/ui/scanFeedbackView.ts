@@ -5,7 +5,6 @@ import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import type { ScanOutcome } from "../model/scanOutcomes.ts";
 import { createCompletionIndicator } from "./completionIndicator.ts";
-import { measureFrame, readViewUnit, VIEW_SCALE_EVENT } from "./layout/dom.ts";
 import {
   font,
   fromHudEdge,
@@ -17,6 +16,7 @@ import {
   units,
   VIEW_PROPERTIES,
 } from "./layout/index.ts";
+import { measureFrame, readViewUnit, VIEW_SCALE_EVENT } from "./layoutDom/index.ts";
 import { TEXT_TOKENS } from "./modal.ts";
 import {
   type ScanFeedbackContent,

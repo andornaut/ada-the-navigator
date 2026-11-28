@@ -209,8 +209,8 @@ vi.mock("./modal.ts", async (original) => ({
     row.dataset.footerAction = action;
   },
 }));
-vi.mock("./layout/viewScale.ts", async (original) => ({
-  ...(await original<typeof import("./layout/viewScale.ts")>()),
+vi.mock("./layoutDom/viewScaleBridge.ts", async (original) => ({
+  ...(await original<typeof import("./layoutDom/viewScaleBridge.ts")>()),
   readViewUnit: () => 1,
 }));
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({

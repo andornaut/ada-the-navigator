@@ -3,8 +3,8 @@ import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 
 import { ADA_ACTION_HOLD_MS, bindAdaAction, resolveAdaHoldAction } from "./actionBinding.ts";
 import { adaActionOwnedBy, adaActionRootAllows } from "./actionRegistry.ts";
-import { readViewUnit } from "./layout/dom.ts";
 import { SCROLL } from "./layout/index.ts";
+import { readViewUnit } from "./layoutDom/index.ts";
 
 interface StandardTextActionOptions {
   readonly availability: (

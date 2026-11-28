@@ -1,15 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { createViewScaleBridge } from "../layoutDom/viewScaleBridge.ts";
 import { fitRegion, mapQuestsRect } from "../map/layout/mapScreen.ts";
 import { VIEW_PROPERTIES, viewStyle } from "./css.ts";
 import { controlsBottom, hudRect, NO_INSETS, SAFE_MARGIN, safeRect } from "./playView.ts";
 import { stickTargets, useDiscLayout } from "./touchControls.ts";
-import {
-  createViewScaleBridge,
-  playLayout,
-  VIEW_SCALE_EVENT,
-  viewProperties,
-} from "./viewScale.ts";
+import { playLayout, VIEW_SCALE_EVENT, viewProperties } from "./viewScale.ts";
 
 afterEach(() => vi.unstubAllGlobals());
 

@@ -41,13 +41,6 @@ import {
 } from "../dialoguePortraits.ts";
 import { registerForegroundSurface } from "../foregroundInput.ts";
 import {
-  BUTTON_SLICE,
-  frameBoxIn,
-  frameSize,
-  readViewUnit,
-  VIEW_SCALE_EVENT,
-} from "../layout/dom.ts";
-import {
   COLOURS,
   CONVERSATION_BOX,
   font,
@@ -72,6 +65,13 @@ import {
   units,
   VIEW_PROPERTIES,
 } from "../layout/index.ts";
+import {
+  BUTTON_SLICE,
+  frameBoxIn,
+  frameSize,
+  readViewUnit,
+  VIEW_SCALE_EVENT,
+} from "../layoutDom/index.ts";
 import { FOCUS_STYLE, TEXT_TOKENS } from "../modal.ts";
 import { createStandardTextAction } from "../standardTextAction.ts";
 import { type TitleScreenArt, titleShipView } from "../start/index.ts";

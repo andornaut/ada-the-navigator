@@ -10,8 +10,8 @@ import { CURRENT_FLIGHT_TOPOLOGY } from "../../model/world/index.ts";
 import { bindAdaAction, resolveAdaHoldAction } from "../actionBinding.ts";
 import { registerForegroundSurface } from "../foregroundInput.ts";
 import { bindAdaActionRoot, bindAdaHoldActions } from "../holdActionsAdapter.ts";
-import { framePoint, turnOf } from "../layout/frameBox.ts";
 import { VIEW_SCALE_EVENT } from "../layout/viewScale.ts";
+import { framePoint, turnOf } from "../layoutDom/frameBox.ts";
 import {
   enterPressView,
   inCurrentView,

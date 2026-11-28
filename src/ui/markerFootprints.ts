@@ -1,7 +1,7 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
-import { frameRect, readViewUnit, turnOf } from "./layout/dom.ts";
 import { VIEW_PROPERTIES } from "./layout/index.ts";
+import { frameRect, readViewUnit, turnOf } from "./layoutDom/index.ts";
 
 const MARKER_SELECTORS = [
   ".ada-status",

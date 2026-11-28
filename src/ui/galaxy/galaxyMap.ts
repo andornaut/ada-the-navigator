@@ -20,7 +20,6 @@ import {
   bindAdaAction,
 } from "../actionBinding.ts";
 import { registerForegroundSurface } from "../foregroundInput.ts";
-import { BUTTON_SLICE, CARD_SLICE, readViewUnit } from "../layout/dom.ts";
 import {
   COLOURS,
   COMPACT_VIEWPORT,
@@ -53,6 +52,7 @@ import {
   UNLISTED_COLOURS,
   unlockFlightSeconds,
 } from "../layout/index.ts";
+import { BUTTON_SLICE, CARD_SLICE, readViewUnit } from "../layoutDom/index.ts";
 import { mapCloseActionStyle } from "../mapCloseAction.ts";
 import { BUTTON_FACE, MODAL_LAYER, TEXT_TOKENS } from "../modal.ts";
 import { createStandardCloseAction } from "../modalClose.ts";

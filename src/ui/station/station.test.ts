@@ -28,7 +28,7 @@ import { units } from "../layout/css.ts";
 import { CONFIRM_ITEM } from "../layout/shopCard.ts";
 import { STATION_STYLE } from "../layout/stationStyle.ts";
 import { BUTTON_GAP } from "../layout/tokens.ts";
-import { readViewUnit } from "../layout/viewScale.ts";
+import { readViewUnit } from "../layoutDom/viewScaleBridge.ts";
 import { isTap } from "../modal.ts";
 import { createStandardCloseAction } from "../modalClose.ts";
 import { createModalLayer } from "../modalLayer.ts";

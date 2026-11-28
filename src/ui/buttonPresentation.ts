@@ -9,8 +9,8 @@ import {
   setPageDivider,
 } from "@andornaut/game-kit/runtime/web/ui/dom/controlPresentation";
 
-import { BUTTON_METRICS, TEXT_BUTTON } from "./layout/dom.ts";
 import { PAGE_DIVIDER_STYLE } from "./layout/index.ts";
+import { BUTTON_METRICS, TEXT_BUTTON } from "./layoutDom/index.ts";
 export { PAGE_DIVIDER_STYLE } from "./layout/index.ts";
 import type { AdaButtonPresentation, AdaButtonProps } from "./layoutTree.ts";
 

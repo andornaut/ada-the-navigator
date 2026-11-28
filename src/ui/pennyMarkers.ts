@@ -14,7 +14,6 @@ import {
   assertAdaActionMetadata,
   bindAdaAction,
 } from "./actionBinding.ts";
-import { frameDeviceOrigin, frameRect, readViewUnit, turnOf } from "./layout/dom.ts";
 import {
   layoutTargetMarkers,
   PENNY_MARKER,
@@ -26,6 +25,7 @@ import {
   units,
   VIEW_PROPERTIES,
 } from "./layout/index.ts";
+import { frameDeviceOrigin, frameRect, readViewUnit, turnOf } from "./layoutDom/index.ts";
 import { chipGlyph, MAP_COLORS, MAP_FACES, MAP_SYMBOL } from "./map/index.ts";
 const { question: BODY_QUESTION, size: SIZE } = PENNY_MARKER;
 /** The enemy markers, each a filled threat disc; a hostile station draws the heavy disc. */

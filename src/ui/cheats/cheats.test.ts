@@ -180,7 +180,7 @@ vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
   focusTarget: (node: Element) => node.focus(),
 }));
 
-vi.mock("../layout/viewScale.ts", () => ({
+vi.mock("../layoutDom/viewScaleBridge.ts", () => ({
   VIEW_SCALE_EVENT: "ada-view-scale",
   readViewUnit: () => 1,
 }));
