@@ -1,1 +1,21 @@
-export * from "./geometry.ts";
+export {
+  activeNeedleCourses,
+  createNeedleCourse,
+  inNeedleChannel,
+  type NeedleCourse,
+  needleCourses,
+  needleDebris,
+  type NeedleDebrisDescriptor,
+  type NeedleGate,
+  needleGateOrientation,
+  needleGateReadiness,
+  needleLearningFeedback,
+  type NeedlePass,
+  type NeedleProgress,
+  needleRimContacts,
+  needleRimParts,
+  needleSlow,
+  setNeedleActivity,
+  stepNeedleCourse,
+  unfinishedNeedleCourse,
+} from "./geometry.ts";

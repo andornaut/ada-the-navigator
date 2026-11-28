@@ -1,5 +1,5 @@
 import type { Vec } from "../data/types.ts";
-import type { EnemyState } from "../model/enemyAi.ts";
+import type { EnemyState } from "../model/ai/index.ts";
 
 interface PositionedSprite {
   frame: { displayHeight?: number; displayWidth?: number; pivot: Vec };

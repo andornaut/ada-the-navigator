@@ -9,7 +9,7 @@ import type { EnemyActorKind } from "../data/enemyActors.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import { SCREEN } from "../data/screen.ts";
 import { COLOURS } from "../data/uiColours.ts";
-import type { EnemyState } from "../model/enemyAi.ts";
+import type { EnemyState } from "../model/ai/index.ts";
 
 const COMPACT_HULLS = new Set<EnemyActorKind>(["platform", "frigate", "capital", "hostileStation"]);
 const NAMED_BOSSES = new Set<string>([
