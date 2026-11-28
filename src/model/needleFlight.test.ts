@@ -20,7 +20,12 @@ import {
 } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { MINE_PARTS, MINE_REACH } from "./mineShape.ts";
-import { activeNeedleCourses, inNeedleChannel, needleCourses, needleDebris } from "./needle.ts";
+import {
+  activeNeedleCourses,
+  inNeedleChannel,
+  needleCourses,
+  needleDebris,
+} from "./needle/index.ts";
 import { newProgress } from "./progress.ts";
 import { direction } from "./shipPhysics.ts";
 import type { FlightInput, SpaceObject, Vec } from "./types.ts";

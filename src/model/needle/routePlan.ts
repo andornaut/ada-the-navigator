@@ -1,11 +1,11 @@
-import { encounterTable, type EnemyArchetype } from "../data/enemyCatalog.ts";
-import { NEEDLE } from "../data/needle.ts";
-import { closestOnSegment } from "./convex.ts";
-import { dropRandom } from "./drops.ts";
-import { rollEncounter } from "./encounterRoll.ts";
-import { inNeedleChannel, type needleCourses } from "./needle.ts";
-import type { Vec } from "./types.ts";
-import { type WorldContext, worldDelta, worldDistance, worldPoint } from "./world/index.ts";
+import { encounterTable, type EnemyArchetype } from "../../data/enemyCatalog.ts";
+import { NEEDLE } from "../../data/needle.ts";
+import { closestOnSegment } from "../convex.ts";
+import { dropRandom } from "../drops.ts";
+import { rollEncounter } from "../encounterRoll.ts";
+import type { Vec } from "../types.ts";
+import { type WorldContext, worldDelta, worldDistance, worldPoint } from "../world/index.ts";
+import { inNeedleChannel, type needleCourses } from "./geometry.ts";
 
 /** Authored spawn descriptors are neither active actors nor discovery/quest associations. */
 export interface NeedleExitSpawn {

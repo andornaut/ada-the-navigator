@@ -199,7 +199,7 @@ import {
   type StationMaterialization,
 } from "./hostileStations/placement.ts";
 import { queueHostileStationReward } from "./hostileStations/reward.ts";
-import type { NeedleCadencePlacement } from "./needleExitPlan.ts";
+import type { NeedleCadencePlacement } from "./needle/routePlan.ts";
 import { activePhantomSong, phantomSongSpeed, stepPhantomAllies } from "./phantomAllies.ts";
 import {
   nextPhantomBatchReserved,
@@ -263,8 +263,8 @@ import { debrisSilhouette } from "./debrisBody.ts";
 import { enemyHull, enemyPhysicalBody } from "./enemyBody.ts";
 import { enemyBeamReach, planEnemyProjectile } from "./enemyProjectiles.ts";
 import { landmarkSites } from "./landmarks.ts";
-import { activeNeedleCourses } from "./needle.ts";
-import { clearNeedleEnemies, ensureNeedleDebris, needleChannelContains } from "./needleFlight.ts";
+import { clearNeedleEnemies, ensureNeedleDebris, needleChannelContains } from "./needle/contact.ts";
+import { activeNeedleCourses } from "./needle/index.ts";
 import {
   ORE_FIELD_CLEAR_RADIUS,
   ORE_FIELD_ROLE,

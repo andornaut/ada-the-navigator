@@ -8,14 +8,14 @@ import { supportEntropy } from "../testing/launchSeeds.ts";
 import { createUnpopulatedFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
-import { planNeedleExit } from "./needleExitPlan.ts";
+import { planNeedleExit } from "./needle/routePlan.ts";
 import {
   initNeedle,
   NEEDLE_CADENCE,
   needleCadenceSite,
   needleCadenceTransmission,
   needleCourses,
-} from "./needleRuntime.ts";
+} from "./needle/runtime.ts";
 
 it("keeps authored swarm identities and ring geometry invariant under an anchor translation", () => {
   const center = { x: 4000, y: -2000 };

@@ -35,10 +35,10 @@ import {
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
-import { inNeedleChannel, needleCourses, type NeedleGate } from "./needle.ts";
-import { NEEDLE_ACTIVITY_TARGET } from "./needleActivity.ts";
-import { isNeedleRim, needleRimContact } from "./needleFlight.ts";
-import { NEEDLE_CADENCE, needleTrackedObjective } from "./needleRuntime.ts";
+import { NEEDLE_ACTIVITY_TARGET } from "./needle/activity.ts";
+import { isNeedleRim, needleRimContact } from "./needle/contact.ts";
+import { inNeedleChannel, needleCourses, type NeedleGate } from "./needle/index.ts";
+import { NEEDLE_CADENCE, needleTrackedObjective } from "./needle/runtime.ts";
 import { shipBody } from "./shipBody.ts";
 import { stationsNear } from "./stations/index.ts";
 import {

@@ -1,5 +1,5 @@
-import { NEEDLE } from "../data/needle.ts";
-import type { Vec } from "./types.ts";
+import { NEEDLE } from "../../data/needle.ts";
+import type { Vec } from "../types.ts";
 
 export type NeedleApproach = "show" | "feedback" | "independent";
 export interface NeedleProgress {

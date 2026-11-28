@@ -7,9 +7,9 @@ import { GAME_AREA } from "./edgeMarkers.ts";
 import { createUnpopulatedFlight, populateRequiredChapterFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
-import { needleCourses } from "./needle.ts";
-import { planNeedleExit } from "./needleExitPlan.ts";
-import { initNeedle } from "./needleRuntime.ts";
+import { needleCourses } from "./needle/index.ts";
+import { planNeedleExit } from "./needle/routePlan.ts";
+import { initNeedle } from "./needle/runtime.ts";
 
 it("initializes authored G4 sites and swarm before any optional chunks without changing known sites", () => {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);

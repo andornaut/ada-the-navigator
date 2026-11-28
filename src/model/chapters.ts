@@ -13,7 +13,7 @@ import {
   needleObjectiveIndex,
   stepNeedle,
   useNeedle,
-} from "./needleRuntime.ts";
+} from "./needle/runtime.ts";
 import {
   afterStepPhantom,
   beforeStepPhantom,

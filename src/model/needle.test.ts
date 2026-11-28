@@ -19,7 +19,7 @@ import {
   needleSlow,
   setNeedleActivity,
   stepNeedleCourse,
-} from "./needle.ts";
+} from "./needle/index.ts";
 import {
   chooseNeedle,
   initNeedle,
@@ -30,14 +30,14 @@ import {
   needleTrackedObjective,
   stepNeedle,
   useNeedle,
-} from "./needleRuntime.ts";
+} from "./needle/runtime.ts";
 import {
   type NeedleChapterProgress,
   type NeedleFlight,
   readNeedleChapterProgress,
   readNeedleProgress,
   validNeedleFlight,
-} from "./needleState.ts";
+} from "./needle/state.ts";
 import type { FlightState, GalaxyProgress, Vec } from "./types.ts";
 const anchor = { x: 300, y: -800 };
 const course = (kind: NeedleCourse["kind"] = "eye") => createNeedleCourse({ anchor }, kind);

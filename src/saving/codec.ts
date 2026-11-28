@@ -60,7 +60,7 @@ import {
   validMarkerActors,
   validTargetKnowledge,
 } from "../model/markerKnowledge.ts";
-import { readNeedleChapterProgress, validNeedleFlight } from "../model/needleState.ts";
+import { readNeedleChapterProgress, validNeedleFlight } from "../model/needle/state.ts";
 import { worldOreFieldsNear } from "../model/oreFields.ts";
 import { pendingPhantomEncounterUnshared } from "../model/phantomRequiredPlans.ts";
 import { validPhantomFlight, validPhantomProgress } from "../model/phantomState.ts";

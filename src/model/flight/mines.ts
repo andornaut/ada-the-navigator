@@ -4,7 +4,7 @@ import { MISSILE_HIT_RADIUS } from "../../data/weaponCatalog.ts";
 import type { FireIntent } from "../ai/index.ts";
 import { outlineContact, type Parts } from "../convex.ts";
 import { MINE_PARTS, MINE_REACH, mineTouches } from "../mineShape.ts";
-import { needleChannelContains } from "../needleFlight.ts";
+import { needleChannelContains } from "../needle/contact.ts";
 import { impactSurface } from "../projectileImpact.ts";
 import { shipBody } from "../shipBody.ts";
 import type { FlightEvent, FlightState, Mine, Shot, Vec } from "../types.ts";

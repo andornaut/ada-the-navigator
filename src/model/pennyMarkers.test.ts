@@ -14,7 +14,7 @@ import { GAME_AREA } from "./edgeMarkers.ts";
 import { createFlight, ensureDestinationAt, spawnChapterEnemy } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { markerKnowledgeStore } from "./markerBindings.ts";
-import { needleCourses } from "./needle.ts";
+import { needleCourses } from "./needle/index.ts";
 import type { SpaceObject } from "./types.ts";
 import { CURRENT_FLIGHT_TOPOLOGY, wrapPoint } from "./world/index.ts";
 

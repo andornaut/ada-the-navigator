@@ -5,7 +5,7 @@ import type { EnemyAttackOpportunity } from "../ai/index.ts";
 import { crossbowAllowsAttack, crossbowSector } from "../earlyEncounterPatterns.ts";
 import { EARLY_LANCE_SECONDS } from "../earlyEncounterRuntime.ts";
 import { enemyBeamReach, planEnemyProjectile } from "../enemyProjectiles.ts";
-import { needleCourses } from "../needle.ts";
+import { needleCourses } from "../needle/index.ts";
 import { fanHeading } from "../playerProjectiles.ts";
 import type { PlayerWeaponCoverageContext } from "../playerWeaponCoverage.ts";
 import { direction } from "../shipPhysics.ts";

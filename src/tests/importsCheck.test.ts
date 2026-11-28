@@ -200,13 +200,14 @@ describe("layers", () => {
 
     expect(reached).toContain("src/saving/codec.ts");
     expect(reached).toContain("src/saving/integrity.ts");
+    expect(reached).toContain("src/model/needle/state.ts");
     const gameplayEntries = [
       "src/model/andromeda.ts",
       "src/model/chapters.ts",
       "src/model/flight.ts",
       "src/model/game.ts",
       "src/model/hostileStations/materialization.ts",
-      "src/model/needleRuntime.ts",
+      "src/model/needle/runtime.ts",
       "src/model/phantom.ts",
     ];
     expect(gameplayEntries.filter((path) => reached.has(path))).toEqual([]);

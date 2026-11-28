@@ -2,7 +2,7 @@ import { ANDROMEDA_REDACT } from "../../data/capitalBosses.ts";
 import { ARCHIE_NAMED } from "../../data/conversations.ts";
 import { andromedaRelayWaypoint } from "../andromedaRedact.ts";
 import { holodisksHeld } from "../conversations.ts";
-import { needleCadenceTransmission } from "../needleRuntime.ts";
+import { needleCadenceTransmission } from "../needle/runtime.ts";
 import type { FlightLogEntry, GameState } from "../types.ts";
 
 /** Read the existing intercepted entries in their display order. */

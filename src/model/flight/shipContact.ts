@@ -6,7 +6,7 @@ import type { GameContent } from "../../data/types.ts";
 import { bounce, reflectDirection, worldSceneryBodyContact } from "../asteroids.ts";
 import { outlinesContact } from "../convex.ts";
 import { enemyHull } from "../enemyBody.ts";
-import { isNeedleRim, needleRimContact, needleRims } from "../needleFlight.ts";
+import { isNeedleRim, needleRimContact, needleRims } from "../needle/contact.ts";
 import { sceneryImpact } from "../sceneryImpact.ts";
 import { shipBody, shipCircleContact } from "../shipBody.ts";
 import type { FlightEvent, FlightState, SpaceObject, Vec } from "../types.ts";

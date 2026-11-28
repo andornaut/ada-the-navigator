@@ -2,7 +2,7 @@ import { ECONOMY } from "../../data/economy.ts";
 import type { GameContent } from "../../data/types.ts";
 import { reflectDirection } from "../asteroids.ts";
 import { worldFlowAt } from "../currents.ts";
-import { needleRims } from "../needleFlight.ts";
+import { needleRims } from "../needle/contact.ts";
 import { stepShipMotion, turnToward } from "../shipPhysics.ts";
 import type { FlightEvent, FlightInput, FlightState, SpaceObject, Vec } from "../types.ts";
 import { shipTuning } from "../upgrades.ts";

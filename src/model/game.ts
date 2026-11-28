@@ -291,20 +291,20 @@ import {
 } from "./map.ts";
 import { markerKnowledgeStore } from "./markerBindings.ts";
 import { markerActorTracked } from "./markerKnowledge.ts";
-import { needleCourses, setNeedleActivity, stepNeedleCourse } from "./needle.ts";
 import {
   ensureNeedleActivityPatrols,
   NEEDLE_ACTIVITY_TARGET,
   retireNeedleActivityPatrols,
-} from "./needleActivity.ts";
-import { clearNeedleEnemies, ensureNeedleDebris } from "./needleFlight.ts";
+} from "./needle/activity.ts";
+import { clearNeedleEnemies, ensureNeedleDebris } from "./needle/contact.ts";
+import { needleCourses, setNeedleActivity, stepNeedleCourse } from "./needle/index.ts";
 import {
   NEEDLE_CADENCE,
   NEEDLE_CADENCE_CUES,
   needleCadenceSite,
   type NeedleTrackedObjective,
   needleTrackedObjective,
-} from "./needleRuntime.ts";
+} from "./needle/runtime.ts";
 import type { MarkerDetails, PennyMarker, PennyPoint } from "./pennyMarkers.ts";
 import {
   phantomBlockadeAdmits,
