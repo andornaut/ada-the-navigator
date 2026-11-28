@@ -7,10 +7,11 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+import { packAtlas } from "@andornaut/art-kit/build/atlasLayout";
 import { encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/build/png";
 import { blankImage } from "@andornaut/art-kit/build/rgbaImage";
 
-import { linkData, placeEntries } from "./manifest.ts";
+import { linkData, placeEntries, readManifest } from "./manifest.ts";
 import { blend, grey, rgba, type RgbaImage, type Xy } from "./paint.ts";
 import { json, SHIP_HEADINGS } from "./projection.ts";
 import { SPACE_BG } from "./palette.ts";
@@ -628,6 +629,22 @@ function render(
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${vw}" height="${vh}" viewBox="${view.x0} ${view.y0} ${vw} ${vh}"><defs>${doc.defs.join("")}</defs>${shown.join("")}</svg>\n`;
 }
 
+const ids = [0, 1, 2, 3].map((k) => `aboard-holodisk-${k}`);
+const sheetFile = "aboard-holodisk-sheet.svg";
+const sheetPath = `/art/${sheetFile}`;
+const installed = readManifest("core").assets.filter(
+  (row): row is { id: string; path?: unknown; svgSheet?: unknown } => ids.includes(row.id),
+);
+const selected = installed.some((row) => row.svgSheet === true || row.path === sheetPath);
+if (
+  selected &&
+  (installed.length !== ids.length ||
+    new Set(installed.map(({ id }) => id)).size !== ids.length ||
+    installed.some((row) => row.svgSheet !== true || row.path !== sheetPath))
+) {
+  throw new Error("Invalid aboard holodisk sheet selection");
+}
+
 writeFileSync(`${art}aboard.svg`, render());
 writeFileSync(`${art}aboard-emergency.svg`, render({ emergency: true }));
 
@@ -680,7 +697,7 @@ const edgeLevels = ({
     const alpha = a.alpha + ((s - a.offset) / (b.offset - a.offset)) * (b.alpha - a.alpha);
     return alpha * 255 * (1 - hazeAt(y));
   });
-for (const frame of [0, 1, 2, 3]) {
+const frames = ids.map((id, frame) => {
   const { glows, box: added } = holodisk(new Doc(), frame);
   const edge = Math.max(0, ...glows.flatMap(edgeLevels));
   console.log(`holodisk ${frame}: glow edge ${edge.toFixed(2)} levels at full contrast`);
@@ -695,7 +712,31 @@ for (const frame of [0, 1, 2, 3]) {
       `Holodisk frame ${frame} reaches ${JSON.stringify(added)}, ${edge} of a level at the edge, past the overlay box`,
     );
   }
-  writeFileSync(`${art}aboard-holodisk-${frame}.svg`, render({ holodisk: frame }, frameBox, RIM));
+  return { id, root: render({ holodisk: frame }, frameBox, RIM) };
+});
+
+if (selected) {
+  const { width, height } = HOLODISK_BOX;
+  const wide = width * frames.length;
+  const page = packAtlas({ compare: () => 0, extrude: 0, maxSize: wide, widths: [wide] }, [
+    { rectangles: frames.map(() => ({ width, height })), value: sheetFile },
+  ])?.pages[0];
+  const slots = page?.placed[0]?.at;
+  if (!page || slots?.length !== frames.length) {
+    throw new Error("Cannot pack aboard holodisk overlays");
+  }
+  // Storybook must extract each root independently. The crop origin and local paint
+  // definitions belong to the frame, while x and y only place it inside the sheet.
+  const children = frames.map(({ id, root }, index) => {
+    const { x, y } = slots[index]!;
+    return `<svg id="${id}" x="${x}" y="${y}" ${root.slice("<svg ".length)}`;
+  });
+  writeFileSync(
+    art + sheetFile,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${wide}" height="${page.height}" viewBox="0 0 ${wide} ${page.height}">${children.join("")}</svg>\n`,
+  );
+} else {
+  for (const { id, root } of frames) writeFileSync(`${art}${id}.svg`, root);
 }
 
 const round1 = (v: number) => Math.round(v * 10) / 10;
@@ -713,9 +754,9 @@ const background = (id: string) => ({
   // The canopy's centre in canvas logical px: where a quantum jump from aboard centres.
   focus: { x: round1(CANOPY_CENTRE[0]), y: round1(CANOPY_CENTRE[1]) },
 });
-const overlay = (k: number) => ({
-  id: `aboard-holodisk-${k}`,
-  path: `/art/aboard-holodisk-${k}.svg`,
+const overlay = (id: string) => ({
+  id,
+  path: `/art/${id}.svg`,
   width: HOLODISK_BOX.width,
   height: HOLODISK_BOX.height,
   displayWidth: HOLODISK_BOX.width,
@@ -727,12 +768,13 @@ const overlay = (k: number) => ({
 placeEntries("core", "aboard", [
   background("aboard"),
   background("aboard-emergency"),
-  ...[0, 1, 2, 3].map(overlay),
+  ...ids.map((id) =>
+    selected ? { ...overlay(id), path: sheetPath, svgSheet: true } : overlay(id),
+  ),
 ]);
 
 // The holodisk sequence, in story-overnight.json's step schema: each overlay step fades its
 // overlay in over the one before, then holds; the last holds until the page changes.
-const ids = [0, 1, 2, 3].map((k) => `aboard-holodisk-${k}`);
 const HOLDS = [400, 250, 400, 600];
 writeFileSync(
   `${art}aboard-holodisk.json`,
