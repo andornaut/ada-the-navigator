@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { resolveAdaHoldAction } from "./actionBinding.ts";
-import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
-import { rootPressGuard } from "./pressScope.ts";
+import { resolveAdaHoldAction } from "../actionBinding.ts";
+import { bindAdaActionRoot } from "../holdActionsAdapter.ts";
+import { rootPressGuard } from "../pressScope.ts";
 import { createStartScreen } from "./startScreen.ts";
 import type { TitleScreenArt } from "./titleScreen.ts";
 
-vi.mock("./uiSkin.ts", () => ({ applyButtonSkin: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("../uiSkin.ts", () => ({ applyButtonSkin: vi.fn().mockResolvedValue(undefined) }));
 
 class Element {
   readonly tag: string;

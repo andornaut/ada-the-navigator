@@ -26,7 +26,7 @@ import { NOTICE_STYLE } from "./notice.ts";
 import { PENNY_MARKERS_STYLE } from "./pennyMarkers.ts";
 import { RESTART_STYLE } from "./restart/index.ts";
 import { SETTINGS_STYLE } from "./settings/index.ts";
-import { START_SCREEN_STYLE } from "./startScreen.ts";
+import { START_SCREEN_STYLE } from "./start/index.ts";
 import { STATUS_PILL_STYLE } from "./statusPill.ts";
 import { STORYBOOK_STYLE } from "./story/index.ts";
 import { WEAPON_STYLE } from "./weapons.ts";

@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import { jetPolygons, type TitleScreenArt } from "./titleScreen.ts";
-import { titleShipView } from "./titleShipView.ts";
+import { titleShipView } from "./start/index.ts";
+import { jetPolygons, type TitleScreenArt } from "./start/titleScreen.ts";
 
 afterEach(() => vi.unstubAllGlobals());
 

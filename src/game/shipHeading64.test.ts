@@ -41,7 +41,7 @@ import {
 import { shipBody, shipTouches } from "../model/shipBody.ts";
 import { SHIP_HEADING_CONTRACT } from "../model/shipHeadingContract.ts";
 import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
-import { readTitleScreen } from "../ui/titleScreen.ts";
+import { readTitleScreen } from "../ui/start/index.ts";
 
 const paints = ECONOMY.paintOrder.filter((paint) => paint !== ECONOMY.defaultPaint);
 const forward = readEngineJets(mainData)!;

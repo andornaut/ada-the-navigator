@@ -124,7 +124,7 @@ import { safeGameArea, VIEW_HOST_ID } from "../ui/layout/index.ts";
 import { markerFootprints } from "../ui/markerFootprints.ts";
 import { navigationEntry } from "../ui/navigationEntry.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
-import { readTitleScreen, type TitleScreenArt } from "../ui/titleScreen.ts";
+import { readTitleScreen, StoryShell, type TitleScreenArt } from "../ui/start/index.ts";
 import { fitPlayCamera, sceneFit, shakeIntensity } from "./playCamera.ts";
 import type { GameScene } from "./scene.ts";
 import {
@@ -144,7 +144,6 @@ import {
 } from "./sceneAssets.ts";
 import { coverShip, endJump, jumpScene } from "./sceneJump.ts";
 import { type Asset, projectId, TITLE_SCREEN_KEY } from "./sceneShared.ts";
-import { StoryShell } from "./shell.ts";
 
 const scanViews = new WeakMap<
   object,

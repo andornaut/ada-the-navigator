@@ -1,18 +1,18 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { CONTENT } from "../data/content.ts";
-import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
-import { GameModel } from "../model/game.ts";
-import { SAVE_RESTORE } from "../saving/index.ts";
-import { endArrivalGrace } from "../testing/arrivalGrace.ts";
-import { supportEntropy } from "../testing/launchSeeds.ts";
-import { resolveAdaHoldAction } from "../ui/actionBinding.ts";
-import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
-import { rootPressGuard } from "../ui/pressScope.ts";
+import { CONTENT } from "../../data/content.ts";
+import { OVERNIGHT_SLEEP } from "../../data/storybook.ts";
+import { GameModel } from "../../model/game.ts";
+import { SAVE_RESTORE } from "../../saving/index.ts";
+import { endArrivalGrace } from "../../testing/arrivalGrace.ts";
+import { supportEntropy } from "../../testing/launchSeeds.ts";
+import { resolveAdaHoldAction } from "../actionBinding.ts";
+import { bindAdaActionRoot } from "../holdActionsAdapter.ts";
+import { rootPressGuard } from "../pressScope.ts";
 import { StoryShell } from "./shell.ts";
 
-vi.mock("../ui/uiSkin.ts", () => ({ applyButtonSkin: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("../uiSkin.ts", () => ({ applyButtonSkin: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({ focusTarget: vi.fn() }));
 
 class Element extends EventTarget {

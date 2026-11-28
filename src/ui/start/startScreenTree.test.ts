@@ -1,7 +1,7 @@
 import { validateLayoutTree } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import { expect, it } from "vitest";
 
-import { BUTTON_GAP } from "./layout/tokens.ts";
+import { BUTTON_GAP } from "../layout/tokens.ts";
 import { startScreenTree } from "./startScreenTree.ts";
 
 it("preserves caller action facts without callbacks and places a known note after the row", () => {

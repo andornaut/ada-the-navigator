@@ -74,8 +74,7 @@ import {
 } from "../layout/index.ts";
 import { FOCUS_STYLE, TEXT_TOKENS } from "../modal.ts";
 import { createStandardTextAction } from "../standardTextAction.ts";
-import type { TitleScreenArt } from "../titleScreen.ts";
-import { titleShipView } from "../titleShipView.ts";
+import { type TitleScreenArt, titleShipView } from "../start/index.ts";
 import { bedroomBackground, bedroomSideOffset, bedroomTop } from "./bedroom.ts";
 import {
   breathKeyframes,

@@ -2,17 +2,23 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { JET_LENGTH, plumeReach } from "../../art/tools/ship-jet-layers.ts";
-import { FRAME, mouthEdgeJetMouths } from "../../art/tools/ship-model.ts";
-import { plumePolygon } from "../../art/tools/ship-plume.ts";
-import { engineJets, jetLength, layerColor, readEngineJets, readJetMouths } from "../art/index.ts";
-import { fromAreaLeft, fromAreaTop, units } from "./layout/css.ts";
-import { START_SCREEN } from "./layout/startScreen.ts";
+import { JET_LENGTH, plumeReach } from "../../../art/tools/ship-jet-layers.ts";
+import { FRAME, mouthEdgeJetMouths } from "../../../art/tools/ship-model.ts";
+import { plumePolygon } from "../../../art/tools/ship-plume.ts";
+import {
+  engineJets,
+  jetLength,
+  layerColor,
+  readEngineJets,
+  readJetMouths,
+} from "../../art/index.ts";
+import { fromAreaLeft, fromAreaTop, units } from "../layout/css.ts";
+import { START_SCREEN } from "../layout/startScreen.ts";
 import { START_SCREEN_CLASS, START_SCREEN_STYLE } from "./startScreen.ts";
 import { jetPolygons, readTitleScreen, type TitleAsset, titleShip } from "./titleScreen.ts";
 
 const publicJson = (path: string): unknown =>
-  JSON.parse(readFileSync(new URL(`../../public${path}`, import.meta.url), "utf8"));
+  JSON.parse(readFileSync(new URL(`../../../public${path}`, import.meta.url), "utf8"));
 const manifest = publicJson("/art/manifest.json") as { assets: TitleAsset[]; titleScreen: string };
 const data = publicJson(manifest.titleScreen) as Record<string, unknown>;
 // The title ship's jets draw at Engine level 1.

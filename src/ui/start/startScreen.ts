@@ -1,7 +1,7 @@
 import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { assertAdaActionBindings } from "./actionBinding.ts";
+import { assertAdaActionBindings } from "../actionBinding.ts";
 import {
   BUTTON_GAP,
   font,
@@ -11,13 +11,13 @@ import {
   type StartAction,
   TYPE,
   units,
-} from "./layout/index.ts";
-import { TEXT_TOKENS } from "./modal.ts";
-import { createStandardTextAction } from "./standardTextAction.ts";
+} from "../layout/index.ts";
+import { TEXT_TOKENS } from "../modal.ts";
+import { createStandardTextAction } from "../standardTextAction.ts";
+import { applyButtonSkin } from "../uiSkin.ts";
 import { type StartScreenSchema, startScreenTree } from "./startScreenTree.ts";
 import type { TitleScreenArt } from "./titleScreen.ts";
 import { TITLE_SHIP_STYLE, titleShipView } from "./titleShipView.ts";
-import { applyButtonSkin } from "./uiSkin.ts";
 
 // The start screen (art/layout.md "Start screen"): a full-screen HTML view over the canvas, after
 // Chibi's, with Ada's ship and its jets above the wordmark and the action row, all in play-view

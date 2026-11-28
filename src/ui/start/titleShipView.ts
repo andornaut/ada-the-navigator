@@ -1,5 +1,5 @@
-import { fromAreaLeft, fromAreaTop, START_SCREEN, units } from "./layout/index.ts";
-import { createShipTailView } from "./shipTailView.ts";
+import { fromAreaLeft, fromAreaTop, START_SCREEN, units } from "../layout/index.ts";
+import { createShipTailView } from "../shipTailView.ts";
 import { jetPolygons, type TitleScreenArt, titleShip } from "./titleScreen.ts";
 
 const { ship } = START_SCREEN;

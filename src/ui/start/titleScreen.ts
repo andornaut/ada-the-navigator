@@ -4,10 +4,10 @@ import {
   jetsInFront,
   readJetMouths,
   type ShipJets,
-} from "../art/index.ts";
-import { readShipHeadingContract, SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
-import type { Vec } from "../model/types.ts";
-import { START_SCREEN } from "./layout/index.ts";
+} from "../../art/index.ts";
+import { readShipHeadingContract, SHIP_HEADINGS } from "../../model/shipHeadingContract.ts";
+import type { Vec } from "../../model/types.ts";
+import { START_SCREEN } from "../layout/index.ts";
 
 // Art's start screen art (art/title-screen.md), from the core manifest and title-screen.json, which
 // it links as titleScreen: the field, the wordmark, each paint's ship-52 and the speed jets

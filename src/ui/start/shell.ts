@@ -2,19 +2,19 @@ import type { NetworkPlayNotice } from "@andornaut/game-kit/runtime/web/pwa/buil
 import type { RequiredUpdateState } from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
-import { CONTENT } from "../data/content.ts";
-import { ECONOMY } from "../data/economy.ts";
-import type { Screen } from "../model/game.ts";
-import type { GameState } from "../model/types.ts";
+import { CONTENT } from "../../data/content.ts";
+import { ECONOMY } from "../../data/economy.ts";
+import type { Screen } from "../../model/game.ts";
+import type { GameState } from "../../model/types.ts";
 import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
-} from "../ui/actionBinding.ts";
-import { readViewUnit } from "../ui/layout/dom.ts";
-import { SCROLL } from "../ui/layout/index.ts";
-import { createStartScreen } from "../ui/startScreen.ts";
-import type { TitleScreenArt } from "../ui/titleScreen.ts";
+} from "../actionBinding.ts";
+import { readViewUnit } from "../layout/dom.ts";
+import { SCROLL } from "../layout/index.ts";
+import { createStartScreen } from "./startScreen.ts";
+import type { TitleScreenArt } from "./titleScreen.ts";
 
 export interface ShellActions {
   continueGame: () => void;
