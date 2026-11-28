@@ -64,7 +64,11 @@ import { observeInstallation, presentInstallationFailure } from "../pwa/installa
 import { mountStartupFailure } from "../ui/loadingFailure.ts";
 import { type EntryRecoveryPhase, EntryReloadRequired } from "./entryRecovery.ts";
 import { type RequiredGame, startLoading, startupFence } from "./startup.ts";
-const presentation = { mountFailure: mountStartupFailure, mountLoading: progress.mount };
+const presentation = {
+  mountFailure: mountStartupFailure,
+  mountLoading: progress.mount,
+  reloadDocument: vi.fn<(host: HTMLElement) => void>(),
+};
 const root = (size = { height: 360, width: 720 }) =>
   ({
     clientHeight: size.height,
@@ -433,9 +437,7 @@ it.each(["module-import", "unavailable-retirement"] as const)(
     const required = createRequiredLoading(),
       entry = game(),
       reload = vi.fn();
-    const events = Object.assign(new EventTarget(), { location: { reload } });
     const host = root();
-    Object.defineProperty(host.ownerDocument, "defaultView", { value: events });
     const terminal = new EntryReloadRequired(phase, new Error("original failure"));
     const load =
       phase === "module-import"
@@ -448,16 +450,17 @@ it.each(["module-import", "unavailable-retirement"] as const)(
       required,
       { stopGameOnCrash: vi.fn() },
       load,
-      presentation,
+      { ...presentation, reloadDocument: reload },
       host,
     );
     await settle();
     expect(required.state.kind).toBe("failed");
     expect(reload).not.toHaveBeenCalled();
     await view.retry!();
-    expect(reload).toHaveBeenCalledOnce();
+    expect(reload).toHaveBeenCalledExactlyOnceWith(host);
+    expect(required.state.kind).toBe("disposed");
     expect(load).toHaveBeenCalledOnce();
-    expect(view.dispose).toHaveBeenCalledOnce();
+    expect(view.dispose).toHaveBeenCalledBefore(reload);
     expect(progress.mount).toHaveBeenCalledOnce();
     await view.retry!();
     stop();
@@ -465,6 +468,31 @@ it.each(["module-import", "unavailable-retirement"] as const)(
     expect(view.dispose).toHaveBeenCalledOnce();
   },
 );
+
+it("reports a reload error after retiring the failed document attempt", async () => {
+  const required = createRequiredLoading();
+  const error = new Error("reload failed");
+  const report = vi.fn();
+  vi.stubGlobal("reportError", report);
+  const reloadDocument = vi.fn(() => {
+    throw error;
+  });
+  const stop = await startLoading(
+    required,
+    { stopGameOnCrash: vi.fn() },
+    async () => {
+      throw new EntryReloadRequired("module-import", new Error("import failed"));
+    },
+    { ...presentation, reloadDocument },
+    root(),
+  );
+  await view.retry!();
+  expect(view.dispose).toHaveBeenCalledBefore(reloadDocument);
+  expect(report).toHaveBeenCalledExactlyOnceWith(error);
+  expect(required.state.kind).toBe("disposed");
+  stop();
+  expect(view.dispose).toHaveBeenCalledOnce();
+});
 
 it("sizes recovery from the viewport when failed boot CSS leaves the app unlaid out", async () => {
   const required = createRequiredLoading();

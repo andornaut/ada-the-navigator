@@ -42,7 +42,10 @@ export const loadingFailureChrome = {
   styleFrame: styleLoadingFailureFrame,
 };
 
-export const mountStartupFailure: MountStartupFailure = ({ onRetry, subscribeRequired }, root) => {
+export const mountStartupFailure: MountStartupFailure<HTMLElement> = (
+  { onRetry, subscribeRequired },
+  root,
+) => {
   const frame = root.ownerDocument.createElement("div");
   styleLoadingFailureFrame(frame);
   root.ownerDocument.body.append(frame);

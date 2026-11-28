@@ -72,11 +72,22 @@ it("starts the original resource observer and import when the supported launch r
   expect(fixture.startLoading).toHaveBeenCalledOnce();
   const { mountStartupFailure } = await import("../ui/loadingFailure.ts");
   expect(fixture.startLoading.mock.calls[0]!.slice(3)).toEqual([
-    { mountFailure: mountStartupFailure, mountLoading: fixture.mountLoading },
+    {
+      mountFailure: mountStartupFailure,
+      mountLoading: fixture.mountLoading,
+      reloadDocument: expect.any(Function),
+    },
     fixture.app,
   ]);
   expect(fixture.subscribe).toHaveBeenCalledOnce();
   expect(fixture.requireFonts).toHaveBeenCalledOnce();
   expect(fixture.requireUi).toHaveBeenCalledOnce();
   expect(fixture.importGame).toHaveBeenCalledOnce();
+  const { reloadDocument } = fixture.startLoading.mock.calls[0]![3];
+  const location = { reload: vi.fn() };
+  const ownerDocument = { defaultView: { location } };
+  expect(location.reload).not.toHaveBeenCalled();
+  reloadDocument({ ownerDocument });
+  expect(location.reload).toHaveBeenCalledOnce();
+  expect(location.reload.mock.contexts).toEqual([location]);
 });

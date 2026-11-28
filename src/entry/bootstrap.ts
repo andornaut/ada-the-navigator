@@ -77,7 +77,11 @@ async function startSupportedLaunch(app: HTMLElement, launched: Promise<LaunchRe
           prepare: (required, attempt) => game.prepareGame(required, attempt, boot),
         };
       },
-      { mountFailure: mountStartupFailure, mountLoading },
+      {
+        mountFailure: mountStartupFailure,
+        mountLoading,
+        reloadDocument: (root) => root.ownerDocument.defaultView!.location.reload(),
+      },
       app,
     );
   } catch (error) {

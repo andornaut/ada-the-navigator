@@ -20,12 +20,12 @@ export interface RequiredGame {
   dispose(): void;
 }
 
-export type MountStartupFailure = (
+export type MountStartupFailure<Host> = (
   context: {
     readonly onRetry: () => Promise<void>;
     readonly subscribeRequired: (invalidate: () => void) => () => void;
   },
-  root: HTMLElement,
+  root: Host,
 ) => {
   update(state: LoadingAttemptState): void;
   /** Revoke Retry and unsubscribe before retiring the providers. */
@@ -35,20 +35,21 @@ export type MountStartupFailure = (
 };
 
 /** One page owns the registry, failure presenter and existing bar through every Retry. */
-export async function startLoading(
+export async function startLoading<Host>(
   required: RequiredLoading,
   crash: Pick<CrashScreen, "stopGameOnCrash">,
   loadGame: () => Promise<RequiredGame>,
   presentation: {
-    readonly mountFailure: MountStartupFailure;
-    readonly mountLoading: (root: HTMLElement) => () => void;
+    readonly mountFailure: MountStartupFailure<Host>;
+    readonly mountLoading: (root: Host) => () => void;
+    readonly reloadDocument: (root: Host) => void;
   },
-  root: HTMLElement,
+  root: Host,
 ): Promise<() => void> {
   const stop = presentation.mountLoading(root);
   let game: RequiredGame | undefined;
   let installation: InstallationPresentation | undefined;
-  let failure: ReturnType<MountStartupFailure>;
+  let failure: ReturnType<MountStartupFailure<Host>>;
   try {
     failure = presentation.mountFailure(
       {
@@ -62,7 +63,7 @@ export async function startLoading(
             );
             if (needsDocument) {
               dispose();
-              root.ownerDocument.defaultView!.location.reload();
+              presentation.reloadDocument(root);
               return;
             }
             // One Retry resumes a failed first install and retries a failed required load.
