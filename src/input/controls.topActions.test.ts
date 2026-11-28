@@ -4,7 +4,7 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { afterEach, expect, it, vi } from "vitest";
 
-import { PHONE_BACK_PRESSED } from "../pwa/events.ts";
+import { PHONE_BACK_PRESSED } from "../pwa/back/index.ts";
 import * as actionBinding from "../ui/actions/actionBinding.ts";
 import { bindAdaActionRoot } from "../ui/actions/holdActionsAdapter.ts";
 import { enterPressView, inCurrentView, rootPressGuard } from "../ui/actions/pressScope.ts";

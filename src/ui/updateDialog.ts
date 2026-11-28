@@ -6,7 +6,7 @@ import type { ControlAvailability } from "@andornaut/game-kit/runtime/ui/control
 import { createActionGroup } from "@andornaut/game-kit/runtime/web/ui/dom/actionGroup";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import type { UpdateOffer } from "../pwa/updateOffer.ts";
+import type { UpdateOffer } from "../pwa/index.ts";
 import {
   assertAdaActionBindings,
   assertAdaActionMetadata,

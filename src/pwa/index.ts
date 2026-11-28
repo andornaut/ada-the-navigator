@@ -47,12 +47,13 @@ import {
   requiredUpdateActivity,
   updateProgressActivity,
 } from "../loading/index.ts";
-import { CACHE_POLICY } from "./cachePolicy.ts";
-import { dispatchPhoneBack } from "./events.ts";
-import { presentInstallationFailure } from "./installationPresentation.ts";
+import { dispatchPhoneBack } from "./back/index.ts";
+import { CACHE_POLICY } from "./cache/index.ts";
+import { presentInstallationFailure } from "./installation/index.ts";
 import { createUpdateOffer } from "./updateOffer.ts";
 
-export { PHONE_BACK_PRESSED } from "./events.ts";
+export { PHONE_BACK_PRESSED } from "./back/index.ts";
+export type { UpdateOffer } from "./updateOffer.ts";
 export type { InstallOutcome } from "@andornaut/game-kit/runtime/web/pwa/dom/installFlow";
 export {
   type InstallState,

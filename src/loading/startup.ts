@@ -7,10 +7,7 @@ import {
 import type { ProgressHandle } from "@andornaut/game-kit/runtime/progressState";
 import type { CrashScreen } from "@andornaut/game-kit/runtime/web/crash/dom/crashScreen";
 
-import {
-  type InstallationPresentation,
-  observeInstallation,
-} from "../pwa/installationPresentation.ts";
+import { type InstallationPresentation, observeInstallation } from "../pwa/installation/index.ts";
 import { EntryReloadRequired } from "./entryRecovery.ts";
 import { loadingProgress } from "./progress.ts";
 

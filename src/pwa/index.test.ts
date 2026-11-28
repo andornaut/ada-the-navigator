@@ -296,7 +296,7 @@ describe("launch", () => {
   it("shows a failed first install's Loading failed and resumes it on Retry", async () => {
     stubDevice({});
     const pwa = await import("./index.ts");
-    const { observeInstallation } = await import("./installationPresentation.ts");
+    const { observeInstallation } = await import("./installation/index.ts");
     void pwa.launchPhoneApp(loadingFailureChrome);
     const views: { kind: string }[] = [];
     let latest: { retry: () => Promise<void> } | undefined;

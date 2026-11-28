@@ -60,10 +60,7 @@ vi.mock("@andornaut/game-kit/runtime/web/progress/dom/loadingFailure", () => ({
     };
   },
 }));
-import {
-  observeInstallation,
-  presentInstallationFailure,
-} from "../pwa/installationPresentation.ts";
+import { observeInstallation, presentInstallationFailure } from "../pwa/installation/index.ts";
 import { mountStartupFailure } from "../ui/loadingFailure.ts";
 import { type EntryRecoveryPhase, EntryReloadRequired } from "./entryRecovery.ts";
 import { type RequiredGame, startLoading, startupFence } from "./startup.ts";

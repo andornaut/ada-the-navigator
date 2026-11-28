@@ -29,8 +29,8 @@ import type { ItemGain } from "../model/itemGains.ts";
 import type { ContextQuestDetails } from "../model/questObjectLinks.ts";
 import { weaponName } from "../model/shop.ts";
 import type { UseAction } from "../model/types.ts";
-import { PHONE_BACK_PRESSED } from "../pwa/events.ts";
-import type { UpdateOffer } from "../pwa/updateOffer.ts";
+import { PHONE_BACK_PRESSED } from "../pwa/back/index.ts";
+import type { UpdateOffer } from "../pwa/index.ts";
 import {
   type AchievementEntry,
   type AchievementsLabels,

@@ -14,7 +14,7 @@ import { PROJECTS } from "../../data/projects.ts";
 import { GALAXIES } from "../../data/storybook.ts";
 import { uiIconUrl } from "../../data/uiIconUrl.ts";
 import { SHIP_HEADINGS } from "../../model/nose.ts";
-import { CACHE_POLICY } from "../../pwa/cachePolicy.ts";
+import { CACHE_POLICY } from "../../pwa/cache/index.ts";
 import { SHIPPED_SHIP_SOURCES } from "../../testing/shippedShipSources.ts";
 import { aboardLooseOmissions, ART_DIRECTORY, artUrls } from "./precacheArt.ts";
 
