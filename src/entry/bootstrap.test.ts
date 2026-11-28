@@ -20,7 +20,7 @@ vi.mock("../pwa/index.ts", () => ({ preparePhoneLaunch: fixture.prepare }));
 vi.mock("../ui/loadingBar.ts", () => ({ mountLoading: fixture.mountLoading }));
 vi.mock("../loading/required.ts", () => ({ requiredLoading: { subscribe: fixture.subscribe } }));
 vi.mock("../ui/requiredFonts.ts", () => ({ requireBootFonts: fixture.requireFonts }));
-vi.mock("../loading/requiredUi.ts", () => ({ requireBootUi: fixture.requireUi }));
+vi.mock("../ui/requiredUi.ts", () => ({ requireBootUi: fixture.requireUi }));
 vi.mock("../loading/startup.ts", () => ({ startLoading: fixture.startLoading }));
 vi.mock("./main.ts", () => {
   fixture.importGame();

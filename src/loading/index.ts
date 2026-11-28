@@ -5,8 +5,8 @@ export {
   requiredLoading,
   type RequiredReady,
   requiredReady,
+  type RequiredUi,
 } from "./required.ts";
-export { requireBootUi } from "./requiredUi.ts";
 export { type MountStartupFailure, startLoading, startupFence } from "./startup.ts";
 
 // Startup first imports progress after the required resource registry is initialized.

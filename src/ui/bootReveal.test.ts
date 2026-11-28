@@ -1,8 +1,8 @@
 import { createRequiredLoading } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import { afterEach, expect, it, vi } from "vitest";
 vi.mock("./requiredFonts.ts", () => ({ requireBootFonts: () => () => {} }));
-import { requireBootUi } from "../loading/requiredUi.ts";
 import { prepareBootReveal } from "./bootReveal.ts";
+import { requireBootUi } from "./requiredUi.ts";
 async function settle() {
   for (let n = 0; n < 30; n++) {
     // eslint-disable-next-line no-await-in-loop

@@ -4,6 +4,8 @@ import {
   type RequiredLoading,
 } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 
+import type { RequiredUi } from "../loading/index.ts";
+
 interface UiPage {
   readonly document: Pick<Document, "baseURI" | "createElement">;
   readonly window: Pick<Window, "clearTimeout" | "fetch" | "setTimeout">;
@@ -168,7 +170,5 @@ export function requireBootUi(required: RequiredLoading, page: UiPage) {
     manifestReady,
     requireImage,
     urls,
-  };
+  } satisfies RequiredUi & { manifestReady: Promise<void>; urls: Set<string> };
 }
-
-export type RequiredUi = ReturnType<typeof requireBootUi>;
