@@ -134,17 +134,17 @@ export function createStationTalk(
     if (state.hasPrevious) {
       add(CONTENT.labels.previous ?? "", () => state.previous(), "navigation");
     }
-    for (const [index, topic] of state.topics.entries()) {
+    for (const topic of state.topics) {
       add(
         topic.label,
-        () => state.topic(index),
+        state.topicAction(topic.id),
         "choice",
         false,
-        state.completedTopic(index) ? "completed" : undefined,
+        state.completedTopic(topic.id) ? "completed" : undefined,
       );
     }
     if (state.topicExitLabel) {
-      add(state.topicExitLabel, () => state.leaveTopics(), "choice", true);
+      add(state.topicExitLabel, state.topicExitAction(), "choice", true);
     } else if (state.nextAction === "page") {
       add(CONTENT.labels.next ?? "", () => state.advance(), "navigation", true);
     } else if (state.nextAction === "continue") {

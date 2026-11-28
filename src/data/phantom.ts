@@ -1,4 +1,9 @@
-import type { ConversationLine, InteractionCopy, Mood } from "./conversations.ts";
+import type {
+  ConversationLine,
+  InteractionCopy,
+  InteractionTopicReturn,
+  Mood,
+} from "./conversations.ts";
 import type { ChapterContent, PremiseLine } from "./types.ts";
 export const PHANTOM_DESTINATIONS = [
   "phantomSettlement1",
@@ -82,8 +87,10 @@ export interface PhantomCopy {
   readonly lines: readonly PhantomLine[];
   readonly topicExit?: InteractionCopy["topicExit"];
   readonly topics?: readonly {
-    question: string;
+    id: string;
     lines: readonly PhantomLine[];
+    question: string;
+    returnTo: InteractionTopicReturn;
   }[];
 }
 const line = (speaker: string, text: string, mood?: Mood): PhantomLine => ({
@@ -114,12 +121,16 @@ export const PHANTOM_COPY: Readonly<Record<string, PhantomCopy>> = {
     topicExit: { label: "Show the Admiral the map", target: "show-map" },
     topics: [
       {
+        id: "map-contents",
         lines: [line("astra", "Every coordinate. There are galaxies past galaxies.")],
         question: "What is on the map?",
+        returnTo: "topics",
       },
       {
+        id: "docks-repair",
         lines: [line("archie", "The Blurbs' docks. My blockades cracked them.")],
         question: "Where will you start?",
+        returnTo: "topics",
       },
     ],
   },
@@ -147,8 +158,18 @@ export const PHANTOM_COPY: Readonly<Record<string, PhantomCopy>> = {
     ],
     topicExit: { label: "Bring the holodisk aboard", target: "recover-memory" },
     topics: [
-      { lines: [line("astra", "The last piece of my memory.")], question: "What can we collect?" },
-      { lines: [line("astra", "Yes. Its weapons are down.")], question: "Is it disabled?" },
+      {
+        id: "salvage-contents",
+        lines: [line("astra", "The last piece of my memory.")],
+        question: "What can we collect?",
+        returnTo: "topics",
+      },
+      {
+        id: "disabled-weapons",
+        lines: [line("astra", "Yes. Its weapons are down.")],
+        question: "Is it disabled?",
+        returnTo: "topics",
+      },
     ],
   },
   phantomSettlement1: {
@@ -161,12 +182,16 @@ export const PHANTOM_COPY: Readonly<Record<string, PhantomCopy>> = {
     topicExit: { label: "Ask if they can leave", target: "leave-homes" },
     topics: [
       {
+        id: "blurb-neighbors",
         lines: [line("blurbs", "We Blurbs wobble, but we always hold together.")],
         question: "Who lives here?",
+        returnTo: "topics",
       },
       {
+        id: "blockade-source",
         lines: [line("blurbs", "The Admiral's drones. They're gone now.")],
         question: "What kept you inside?",
+        returnTo: "topics",
       },
     ],
   },
@@ -180,10 +205,17 @@ export const PHANTOM_COPY: Readonly<Record<string, PhantomCopy>> = {
     topicExit: { label: "Ask about stranded travelers", target: "ask-travelers" },
     topics: [
       {
+        id: "travel-home",
         lines: [line("blurbs", "Yes. The blockade is broken.")],
         question: "Can travelers return?",
+        returnTo: "topics",
       },
-      { lines: [line("blurbs", "The Admiral's drones.")], question: "Who blocked the way?" },
+      {
+        id: "route-blockade",
+        lines: [line("blurbs", "The Admiral's drones.")],
+        question: "Who blocked the way?",
+        returnTo: "topics",
+      },
     ],
   },
   phantomSettlement3: {
@@ -196,10 +228,17 @@ export const PHANTOM_COPY: Readonly<Record<string, PhantomCopy>> = {
     topicExit: { label: "Ask where to find the flagship", target: "find-flagship" },
     topics: [
       {
+        id: "flagship-location",
         lines: [line("dollop", "Past the dark nebula. His flagship waits there.")],
         question: "Where should I look?",
+        returnTo: "topics",
       },
-      { lines: [line("dollop", "Everyone you've helped.")], question: "Who will you tell?" },
+      {
+        id: "settlement-message",
+        lines: [line("dollop", "Everyone you've helped.")],
+        question: "Who will you tell?",
+        returnTo: "topics",
+      },
     ],
   },
 };

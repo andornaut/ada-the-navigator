@@ -48,6 +48,7 @@ export const NEEDLE_COPY: Readonly<Record<string, InteractionCopy>> = {
     topicExit: { label: "Ask about the disk", target: "looking-for-disk" },
     topics: [
       {
+        id: "avi-pilots",
         label: "Who flies here?",
         lines: [
           {
@@ -55,10 +56,13 @@ export const NEEDLE_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "We Avi fly between the star clouds through channels thin as thread.",
           },
         ],
+        returnTo: "topics",
       },
       {
+        id: "pilot-training",
         label: "How do pilots learn?",
         lines: [{ speaker: "loom", text: "Every pilot learns them one gate at a time." }],
+        returnTo: "topics",
       },
     ],
   },
@@ -81,6 +85,7 @@ export const NEEDLE_COPY: Readonly<Record<string, InteractionCopy>> = {
     topicExit: { label: "Ask for a shorter course", target: "shorter-course" },
     topics: [
       {
+        id: "practice-purpose",
         label: "Why practice?",
         lines: [
           {
@@ -88,10 +93,13 @@ export const NEEDLE_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "The Eye is our narrowest channel. Learn the gates here first.",
           },
         ],
+        returnTo: "topics",
       },
       {
+        id: "practice-gate-count",
         label: "How many practice gates?",
         lines: [{ speaker: "loom", text: "Four. One gate at a time." }],
+        returnTo: "topics",
       },
     ],
   },
@@ -106,12 +114,16 @@ export const NEEDLE_COPY: Readonly<Record<string, InteractionCopy>> = {
     topicExit: { label: "Talk about the Eye", target: "short-channel-helped" },
     topics: [
       {
+        id: "disk-location",
         label: "Where is the disk?",
         lines: [{ speaker: "loom", text: "In the Eye, our narrowest channel." }],
+        returnTo: "topics",
       },
       {
+        id: "safe-pace",
         label: "Should I hurry now?",
         lines: [{ speaker: "loom", text: "No. The channels cannot be rushed." }],
+        returnTo: "topics",
       },
     ],
   },

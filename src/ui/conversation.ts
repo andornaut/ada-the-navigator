@@ -613,17 +613,17 @@ export function createInteractionCard(
       if (state.hasPrevious) {
         add(CONTENT.labels.previous ?? "", () => state.previous());
       }
-      for (const [index, topic] of state.topics.entries()) {
+      for (const topic of state.topics) {
         add(
           topic.label,
-          () => state.topic(index),
+          state.topicAction(topic.id),
           true,
           false,
-          state.completedTopic(index) ? "completed" : undefined,
+          state.completedTopic(topic.id) ? "completed" : undefined,
         );
       }
       if (state.topicExitLabel) {
-        add(state.topicExitLabel, () => state.leaveTopics(), true, true);
+        add(state.topicExitLabel, state.topicExitAction(), true, true);
       } else if (state.nextAction === "page") {
         add(CONTENT.labels.next ?? "", () => state.advance(), false, true);
       } else if (state.nextAction === "continue") {

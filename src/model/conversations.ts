@@ -1297,7 +1297,7 @@ function interactionNextPage(frame: InteractionFrame): InteractionPage | undefin
     if (page.index + 1 < topic.lines.length) {
       return { ...page, index: page.index + 1 };
     }
-    return topic.choices?.length ? { kind: "fork", thread: page.thread } : { kind: "topics" };
+    return topic.choices ? { kind: "fork", thread: page.thread } : { kind: topic.returnTo };
   }
   if (page.kind === "main" && !interactionAtOutcome(frame)) {
     return page.index === 0 && topicExit
@@ -1314,12 +1314,43 @@ function interactionNextAction(frame: InteractionFrame): "page" | "continue" | u
   return interactionAtOutcome(frame) ? linearDialogueContinuation(frame.panel.choices) : undefined;
 }
 
+/** Reject an ambiguous or incomplete path before offering its topic menu. */
+function validInteractionTopics(
+  topics: readonly InteractionTopic[],
+  ancestors: readonly InteractionTopic[] = [],
+): boolean {
+  const ids = new Set<string>();
+  for (const topic of topics) {
+    if (!topic.id?.trim() || ids.has(topic.id) || !topic.label.trim()) {
+      return false;
+    }
+    ids.add(topic.id);
+    if (topic.choices) {
+      if (
+        topic.returnTo !== undefined ||
+        !topic.choices.length ||
+        ancestors.includes(topic) ||
+        !validInteractionTopics(topic.choices, [...ancestors, topic])
+      ) {
+        return false;
+      }
+    } else if (topic.returnTo !== "topics" || !topic.lines.length) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /** Validate the authored edge before displaying or dispatching it. */
 function interactionTopicExit(copy: InteractionCopy): ResolvedTopicExit | undefined {
   const edge = copy.topicExit;
   if (copy.topics.length && edge?.label.trim() && edge.target.trim()) {
     const index = copy.lines.findIndex(({ id }) => id === edge.target);
-    if (index > 0 && copy.lines.findLastIndex(({ id }) => id === edge.target) === index) {
+    if (
+      index > 0 &&
+      copy.lines.findLastIndex(({ id }) => id === edge.target) === index &&
+      validInteractionTopics(copy.topics)
+    ) {
       return { index, label: edge.label };
     }
   }
@@ -1390,7 +1421,7 @@ export class InteractionConversation {
     if (past) {
       if (past.id === id) {
         this.history.push(this.frame);
-        this.frame = past.next;
+        this.frame = { ...past.next };
       }
     } else if (!this.afterAppliedOutcome) {
       this.choosing = id;
@@ -1481,7 +1512,10 @@ export class InteractionConversation {
   }
 
   previous(): void {
-    this.frame = this.history.pop() ?? this.frame;
+    const previous = this.history.pop();
+    if (previous) {
+      this.frame = { ...previous };
+    }
   }
 
   private showPage(page: InteractionPage): void {
@@ -1491,31 +1525,46 @@ export class InteractionConversation {
     }
   }
 
-  private topicKey(index: number): string {
-    const parent = this.page.kind === "fork" ? this.page.thread.at(-1)?.key : this.panel?.context;
-    return JSON.stringify([parent, index]);
+  private topicKey(id: string): string {
+    const ancestors =
+      this.page.kind === "fork" ? this.page.thread.map(({ topic }) => topic.id) : [];
+    return JSON.stringify([this.panel?.context, ...ancestors, id]);
   }
 
-  completedTopic(index: number): boolean {
-    return this.completed.has(this.topicKey(index));
+  completedTopic(id: string): boolean {
+    return this.topics.some((topic) => topic.id === id) && this.completed.has(this.topicKey(id));
   }
 
-  topic(index: number): void {
-    const topic = this.topics[index];
-    if (topic) {
-      const parents = this.page.kind === "fork" ? this.page.thread : [];
-      const thread = [...parents, { key: this.topicKey(index), topic }];
-      this.showPage(
-        topic.lines.length > 0 ? { index: 0, kind: "answer", thread } : { kind: "fork", thread },
-      );
-    }
+  /** A control's selection is valid only on the page that offered it. */
+  private onCurrentPage(run: () => void): () => void {
+    const frame = this.frame;
+    return () => {
+      if (frame && this.frame === frame) {
+        run();
+      }
+    };
   }
 
-  leaveTopics(): void {
-    const exit = this.currentTopicExit;
-    if (exit) {
-      this.showPage({ index: exit.index, kind: "main" });
-    }
+  topicAction(id: string): () => void {
+    return this.onCurrentPage(() => {
+      const topic = this.topics.find((option) => option.id === id);
+      if (topic) {
+        const parents = this.page.kind === "fork" ? this.page.thread : [];
+        const thread = [...parents, { key: this.topicKey(id), topic }];
+        this.showPage(
+          topic.lines.length > 0 ? { index: 0, kind: "answer", thread } : { kind: "fork", thread },
+        );
+      }
+    });
+  }
+
+  topicExitAction(): () => void {
+    return this.onCurrentPage(() => {
+      const exit = this.currentTopicExit;
+      if (exit) {
+        this.showPage({ index: exit.index, kind: "main" });
+      }
+    });
   }
 
   advance(): void {
@@ -1539,7 +1588,7 @@ export class InteractionConversation {
     if (from && next) {
       this.history.push(from);
       while (next) {
-        this.frame = next.next;
+        this.frame = { ...next.next };
         next = this.applied.get(this.frame.panel);
       }
     }
@@ -1614,9 +1663,11 @@ export function interactionCopy(
       lines: copy.lines.map(({ speaker, ...line }) => ({ ...line, speaker: speaker ?? "" })),
       party: copy.party,
       ...(copy.topicExit && { topicExit: copy.topicExit }),
-      topics: (copy.questions ?? []).map(({ label, speaker, text }) => ({
+      topics: (copy.questions ?? []).map(({ id, label, returnTo, speaker, text }) => ({
+        id,
         label,
         lines: [{ speaker: speaker ?? "", text }],
+        returnTo,
       })),
     };
   }

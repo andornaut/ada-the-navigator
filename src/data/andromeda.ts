@@ -1,3 +1,4 @@
+import type { InteractionTopicReturn } from "./conversations.ts";
 import { carriedItemName } from "./itemNames.ts";
 import type { ChapterContent } from "./types.ts";
 
@@ -53,7 +54,13 @@ export interface AndromedaLine {
 export interface AndromedaConversation {
   readonly party: string;
   readonly lines: readonly AndromedaLine[];
-  readonly questions?: readonly (AndromedaLine & { readonly label: string })[];
+  readonly questions?: readonly {
+    readonly id: string;
+    readonly label: string;
+    readonly returnTo: InteractionTopicReturn;
+    readonly speaker?: string;
+    readonly text: string;
+  }[];
   readonly topicExit?: { readonly label: string; readonly target: string };
 }
 
@@ -76,7 +83,9 @@ export const ANDROMEDA_CONVERSATIONS = {
     party: "Wick",
     questions: [
       {
+        id: "beacon-purpose",
         label: "What do beacons do?",
+        returnTo: "topics",
         speaker: "Wick",
         text: "They guide ships between the settlements.",
       },
@@ -105,12 +114,16 @@ export const ANDROMEDA_CONVERSATIONS = {
     party: "Pip",
     questions: [
       {
+        id: "pip-cargo",
         label: "What do you carry?",
+        returnTo: "topics",
         speaker: "Pip",
         text: "Mail between the settlements. I'm good at it, mostly. I just hurry.",
       },
       {
+        id: "pip-company",
         label: "Will you come with me?",
+        returnTo: "topics",
         speaker: "Pip",
         text: "Yes. I'll tell them what happened.",
       },
@@ -135,9 +148,17 @@ export const ANDROMEDA_CONVERSATIONS = {
     ],
     party: "Pip",
     questions: [
-      { label: "Where did you find it?", speaker: "Pip", text: "Floating by the beacon." },
       {
+        id: "disk-location",
+        label: "Where did you find it?",
+        returnTo: "topics",
+        speaker: "Pip",
+        text: "Floating by the beacon.",
+      },
+      {
+        id: "kept-disk",
         label: "Why did you keep it?",
+        returnTo: "topics",
         speaker: "Pip",
         text: "It was so strange and shiny. I should have given it back.",
       },
@@ -160,9 +181,17 @@ export const ANDROMEDA_CONVERSATIONS = {
     ],
     party: "Wick",
     questions: [
-      { label: "Where are the parts?", speaker: "Pip", text: "At the settlement. Come with me." },
       {
+        id: "parts-location",
+        label: "Where are the parts?",
+        returnTo: "topics",
+        speaker: "Pip",
+        text: "At the settlement. Come with me.",
+      },
+      {
+        id: "beacon-damage",
         label: "What needs fixing?",
+        returnTo: "topics",
         speaker: "Wick",
         text: "The dark guide beacon. Ships need its light.",
       },
@@ -183,12 +212,16 @@ export const ANDROMEDA_CONVERSATIONS = {
     party: "Wick",
     questions: [
       {
+        id: "restored-travel",
         label: "Can ships travel now?",
+        returnTo: "topics",
         speaker: "Wick",
         text: "Yes. The beacon can guide them again.",
       },
       {
+        id: "repaired-damage",
         label: "What was damaged?",
+        returnTo: "topics",
         speaker: "Wick",
         text: "The beacon Pip clipped. The parts have repaired it.",
       },

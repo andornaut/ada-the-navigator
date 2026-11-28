@@ -818,11 +818,22 @@ export interface InteractionLine {
   readonly speaker: string;
   readonly text: string;
 }
-export interface InteractionTopic {
+/** Optional answer leaves explicitly rejoin the root topic menu. */
+export type InteractionTopicReturn = "topics";
+export type InteractionTopic = {
+  readonly id: string;
   readonly label: string;
   readonly lines: readonly InteractionLine[];
-  readonly choices?: readonly InteractionTopic[];
-}
+} & (
+  | {
+      readonly choices: readonly [InteractionTopic, ...InteractionTopic[]];
+      readonly returnTo?: never;
+    }
+  | {
+      readonly choices?: never;
+      readonly returnTo: InteractionTopicReturn;
+    }
+);
 
 export interface InteractionCopy {
   readonly party: string;
@@ -843,10 +854,17 @@ export function holodiskHandoverCopy(party: string): InteractionCopy {
     topicExit: { label: "Ask Astra about the holodisk", target: "ask-astra" },
     topics: [
       {
+        id: "disk-origin",
         label: "Where was it?",
         lines: [{ speaker: party, text: "Drifting near our outposts." }],
+        returnTo: "topics",
       },
-      { label: "What does it hold?", lines: [{ speaker: "Astra", text: "Part of my memory." }] },
+      {
+        id: "disk-memory",
+        label: "What does it hold?",
+        lines: [{ speaker: "Astra", text: "Part of my memory." }],
+        returnTo: "topics",
+      },
     ],
   };
 }
@@ -893,11 +911,13 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
                   : ARCHIE_NAMED.name,
           ...(copy.topicExit && { topicExit: copy.topicExit }),
           topics: (copy.topics ?? []).map((topic) => ({
+            id: topic.id,
             label: topic.question,
             lines: topic.lines.map((line) => ({
               speaker: displayChapterSpeaker(line.speaker),
               text: line.text,
             })),
+            returnTo: topic.returnTo,
           })),
         },
       ]),
@@ -926,6 +946,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
     topicExit: { label: "Discuss the repairs", target: "repairs" },
     topics: [
       {
+        id: "another-delivery",
         label: "Need another delivery?",
         lines: [
           {
@@ -933,8 +954,10 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Not for this repair. We can arrange the next exchange ourselves.",
           },
         ],
+        returnTo: "topics",
       },
       {
+        id: "disk-holder",
         label: "Who has the holodisk?",
         lines: [
           {
@@ -942,6 +965,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Ask at any of our outposts. We have something for you.",
           },
         ],
+        returnTo: "topics",
       },
     ],
   },
@@ -969,6 +993,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
     topicExit: { label: "Ask who can help", target: "ask-for-help" },
     topics: [
       {
+        id: "grower-needs",
         label: "What do you need?",
         lines: [
           {
@@ -976,8 +1001,10 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Help with the equipment. We could grow more if it worked.",
           },
         ],
+        returnTo: "topics",
       },
       {
+        id: "outpost-relationships",
         label: "Do you know the others?",
         lines: [
           {
@@ -985,6 +1012,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "We haven't spoken much with the other outposts.",
           },
         ],
+        returnTo: "topics",
       },
     ],
   },
@@ -1012,6 +1040,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
     topicExit: { label: "Ask about spare parts", target: "spare-parts" },
     topics: [
       {
+        id: "salvage-materials",
         label: "What do you salvage?",
         lines: [
           {
@@ -1019,8 +1048,10 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Things people have lost or left behind. Plenty can be used again.",
           },
         ],
+        returnTo: "topics",
       },
       {
+        id: "food-contact",
         label: "Who will ask for food?",
         lines: [
           {
@@ -1028,6 +1059,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "We will. You've shown us who to ask.",
           },
         ],
+        returnTo: "topics",
       },
     ],
   },
@@ -1055,6 +1087,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
     topicExit: { label: "Ask about the repair", target: "repair" },
     topics: [
       {
+        id: "workshop-repairs",
         label: "What do you repair?",
         lines: [
           {
@@ -1062,8 +1095,10 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Tools, ships and growing equipment. Spare parts really help!",
           },
         ],
+        returnTo: "topics",
       },
       {
+        id: "tool-kit-purpose",
         label: "Why a tool kit?",
         lines: [
           {
@@ -1071,6 +1106,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Useful tools for them, spare parts for us.",
           },
         ],
+        returnTo: "topics",
       },
     ],
   },
@@ -1098,6 +1134,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
     topicExit: { label: "Reassure Mica", target: "reassure-mica" },
     topics: [
       {
+        id: "stay-nearby",
         label: "Should we move away?",
         lines: [
           {
@@ -1105,8 +1142,10 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Stay nearby. There's room for everyone.",
           },
         ],
+        returnTo: "topics",
       },
       {
+        id: "mica-needs",
         label: "What does Mica need?",
         lines: [
           {
@@ -1114,6 +1153,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Room to dock and company on the approach.",
           },
         ],
+        returnTo: "topics",
       },
     ],
   },
@@ -1145,6 +1185,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
     topicExit: { label: "Ask where to find ore", target: "find-ore" },
     topics: [
       {
+        id: "hub-users",
         label: "Who uses the hub?",
         lines: [
           {
@@ -1152,8 +1193,10 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Independent miners. There's docking space for everyone.",
           },
         ],
+        returnTo: "topics",
       },
       {
+        id: "ore-for-shields",
         label: "Should I keep some ore?",
         lines: [
           {
@@ -1161,6 +1204,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Yes. Above ten percent shield, recharge needs ore.",
           },
         ],
+        returnTo: "topics",
       },
     ],
   },
@@ -1188,6 +1232,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
     topicExit: { label: "Hear Mica out", target: "mica-explains" },
     topics: [
       {
+        id: "docking-help",
         label: "Do you need docking help?",
         lines: [
           {
@@ -1195,8 +1240,10 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "I know how to dock. I just need them to stop blocking me.",
           },
         ],
+        returnTo: "topics",
       },
       {
+        id: "approach-company",
         label: "What would help?",
         lines: [
           {
@@ -1204,6 +1251,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Company on the approach. Stay nearby.",
           },
         ],
+        returnTo: "topics",
       },
     ],
   },
@@ -1231,6 +1279,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
     topicExit: { label: "Hear what Opal saw", target: "opal-explains" },
     topics: [
       {
+        id: "mica-wants-company",
         label: "Does Mica want company?",
         lines: [
           {
@@ -1238,8 +1287,10 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Yes. I asked, and Mica said it would help.",
           },
         ],
+        returnTo: "topics",
       },
       {
+        id: "approach-plan",
         label: "What will we do?",
         lines: [
           {
@@ -1247,6 +1298,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Come in together. Make room and stay nearby.",
           },
         ],
+        returnTo: "topics",
       },
     ],
   },
@@ -1274,6 +1326,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
     topicExit: { label: "Tell them about Marlo", target: "marlo-news" },
     topics: [
       {
+        id: "missing-whale",
         label: "Who are you seeking?",
         lines: [
           {
@@ -1281,8 +1334,10 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "The whale traveling alone. We want to be together again.",
           },
         ],
+        returnTo: "topics",
       },
       {
+        id: "shared-coordinates",
         label: "What should I share?",
         lines: [
           {
@@ -1290,6 +1345,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Our coordinates. Then Marlo will know where to go.",
           },
         ],
+        returnTo: "topics",
       },
     ],
   },
@@ -1317,6 +1373,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
     topicExit: { label: "Ask where Marlo will go", target: "marlo-plans" },
     topics: [
       {
+        id: "family-search",
         label: "Will they be looking?",
         lines: [
           {
@@ -1324,8 +1381,10 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "They'll be searching for me too.",
           },
         ],
+        returnTo: "topics",
       },
       {
+        id: "marlo-preferences",
         label: "What do you like?",
         lines: [
           {
@@ -1333,6 +1392,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Familiar voices and finding places I haven't seen before. The young ones learn our routes from us.",
           },
         ],
+        returnTo: "topics",
       },
     ],
   },
@@ -1358,6 +1418,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
     party: "Whale family",
     topics: [
       {
+        id: "disk-location",
         label: "Where is the disk?",
         lines: [
           {
@@ -1365,8 +1426,10 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Ahead on the current. Follow our song.",
           },
         ],
+        returnTo: "topics",
       },
       {
+        id: "disk-guard",
         label: "Is it guarded?",
         lines: [
           {
@@ -1374,6 +1437,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Drones guard it. Take care on your way.",
           },
         ],
+        returnTo: "topics",
       },
     ],
   },
@@ -1401,6 +1465,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
     topicExit: { label: "Follow the song", target: "follow-song" },
     topics: [
       {
+        id: "disk-location",
         label: "Where is the disk?",
         lines: [
           {
@@ -1408,8 +1473,10 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Ahead on the current. Follow our song.",
           },
         ],
+        returnTo: "topics",
       },
       {
+        id: "disk-guard",
         label: "Is it guarded?",
         lines: [
           {
@@ -1417,6 +1484,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Drones guard it. Take care on your way.",
           },
         ],
+        returnTo: "topics",
       },
     ],
   },
@@ -1444,6 +1512,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
     topicExit: { label: "Hear Marlo’s reaction", target: "marlo-reacts" },
     topics: [
       {
+        id: "reach-family",
         label: "Can you reach them?",
         lines: [
           {
@@ -1451,8 +1520,10 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Yes. The rocks are clear, and now I know where they are.",
           },
         ],
+        returnTo: "topics",
       },
       {
+        id: "after-reunion",
         label: "What happens next?",
         lines: [
           {
@@ -1460,6 +1531,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "I'll swim back to my family.",
           },
         ],
+        returnTo: "topics",
       },
     ],
   },
@@ -1487,6 +1559,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
     topicExit: { label: "Ask how to help", target: "whale-surprise" },
     topics: [
       {
+        id: "travel-routes",
         label: "Where do you travel?",
         lines: [
           {
@@ -1494,8 +1567,10 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "We travel through space together. There are places we visit and currents we follow.",
           },
         ],
+        returnTo: "topics",
       },
       {
+        id: "blocked-by-rocks",
         label: "Are you stuck?",
         lines: [
           {
@@ -1503,6 +1578,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "These rocks block my way. Clear them so I can move again.",
           },
         ],
+        returnTo: "topics",
       },
     ],
   },
@@ -1530,6 +1606,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
     topicExit: { label: "Ask how to help", target: "whale-surprise" },
     topics: [
       {
+        id: "travel-routes",
         label: "Where do you travel?",
         lines: [
           {
@@ -1537,8 +1614,10 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "We travel through space together. There are places we visit and currents we follow.",
           },
         ],
+        returnTo: "topics",
       },
       {
+        id: "blocked-by-rocks",
         label: "Are you stuck?",
         lines: [
           {
@@ -1546,6 +1625,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "These rocks block my way. Clear them so I can move again.",
           },
         ],
+        returnTo: "topics",
       },
     ],
   },
@@ -1565,6 +1645,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
     topicExit: { label: "Talk about keeping ore", target: "shield-ore" },
     topics: [
       {
+        id: "keep-ore",
         label: "Why keep ore?",
         lines: [
           {
@@ -1572,8 +1653,10 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Above ten percent shield, recharge needs ore. Without ore, it won't charge higher.",
           },
         ],
+        returnTo: "topics",
       },
       {
+        id: "recharge-timing",
         label: "When does recharge start?",
         lines: [
           {
@@ -1581,6 +1664,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Thirty seconds after our last hit. Keep ore for recharge above ten percent.",
           },
         ],
+        returnTo: "topics",
       },
     ],
   },
@@ -1600,6 +1684,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
     topicExit: { label: "Take what we need", target: "take-parts" },
     topics: [
       {
+        id: "salvage-yield",
         label: "What can we collect?",
         lines: [
           {
@@ -1607,8 +1692,10 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Parts from this disabled ship.",
           },
         ],
+        returnTo: "topics",
       },
       {
+        id: "disabled-weapons",
         label: "Is it disabled?",
         lines: [
           {
@@ -1616,6 +1703,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
             text: "Yes. Its weapons are down.",
           },
         ],
+        returnTo: "topics",
       },
     ],
   },

@@ -6,6 +6,7 @@ import {
   CONVERSATION_TUNING,
   CONVERSATIONS,
   INTERACTION_COPY,
+  type InteractionTopic,
   lineDuration,
 } from "../data/conversations.ts";
 import { type EnemyArchetype, enemyCatalog } from "../data/enemyCatalog.ts";
@@ -1359,7 +1360,14 @@ describe("Use conversation paging", () => {
     ],
     party: "Clover",
     topicExit: { label: "Read last line", target: "last" },
-    topics: [{ label: "Question", lines: [{ speaker: "Clover", text: "Answer" }] }],
+    topics: [
+      {
+        id: "question",
+        label: "Question",
+        lines: [{ speaker: "Clover", text: "Answer" }],
+        returnTo: "topics",
+      },
+    ] satisfies InteractionTopic[],
   };
   const panel = {
     choices: [
@@ -1424,11 +1432,17 @@ describe("Use conversation paging", () => {
 
   it("retraces scoped forks and marks only a completed optional thread", () => {
     const run = new InteractionConversation();
-    const child = { label: "Nested choice", lines: [{ speaker: "Ada", text: "Nested answer" }] };
+    const child = {
+      id: "details",
+      label: "Nested choice",
+      lines: [{ speaker: "Ada", text: "Nested answer" }],
+      returnTo: "topics",
+    } as const;
+    const { id, label, lines } = copy.topics[0]!;
     run.show(
       {
         ...copy,
-        topics: [{ ...copy.topics[0]!, choices: [child] }],
+        topics: [{ choices: [child], id, label, lines }],
       },
       panel,
     );
@@ -1436,36 +1450,102 @@ describe("Use conversation paging", () => {
     run.advance();
     expect(run).toMatchObject({ canSkip: false, hasPrevious: true, nextAction: undefined });
     expect(run.topics.map(({ label }) => label)).toEqual(["Question"]);
-    run.topic(0);
+    run.topicAction("question")();
     expect(run).toMatchObject({ canSkip: false, nextAction: "page" });
     run.advance();
     expect(run).toMatchObject({ canSkip: false, nextAction: undefined });
     expect(run.topics).toEqual([child]);
-    run.topic(0);
+    run.topicAction("details")();
     expect(run.line?.text).toBe("Nested answer");
     run.previous();
     expect(run.topics).toEqual([child]);
-    expect(run.completedTopic(0)).toBe(false);
+    expect(run.completedTopic("details")).toBe(false);
     run.previous();
     expect(run.line?.text).toBe("Answer");
     run.previous();
-    expect(run.completedTopic(0)).toBe(false);
+    expect(run.completedTopic("question")).toBe(false);
 
-    run.topic(0);
+    run.topicAction("question")();
     run.advance();
-    run.topic(0);
+    run.topicAction("details")();
     run.advance();
     expect(run.topics.map(({ label }) => label)).toEqual(["Question"]);
-    expect(run.completedTopic(0)).toBe(true);
+    expect(run.completedTopic("question")).toBe(true);
     run.previous();
     expect(run.line?.text).toBe("Nested answer");
     run.advance();
-    expect(run.completedTopic(0)).toBe(true);
-    run.leaveTopics();
+    expect(run.completedTopic("question")).toBe(true);
+    run.topicExitAction()();
     expect(run.choices).toEqual(panel.choices);
     run.previous();
-    expect(run.completedTopic(0)).toBe(true);
+    expect(run.completedTopic("question")).toBe(true);
     expect(panel.choices).toHaveLength(2);
+  });
+
+  it("scopes shared child IDs to their branch and rejects stale actions after Previous", () => {
+    const run = new InteractionConversation();
+    const answer = (id: string, text: string) => ({
+      id,
+      label: "Details",
+      lines: [{ speaker: "Ada", text }],
+      returnTo: "topics" as const,
+    });
+    run.show(
+      {
+        ...copy,
+        topics: [
+          { choices: [answer("details", "First answer")], id: "first", label: "First", lines: [] },
+          {
+            choices: [answer("details", "Second answer")],
+            id: "second",
+            label: "Second",
+            lines: [],
+          },
+        ],
+      },
+      panel,
+    );
+    run.advance();
+    run.topicAction("first")();
+    const stale = run.topicAction("details");
+    stale();
+    expect(run.line?.text).toBe("First answer");
+    run.previous();
+    stale();
+    expect(run.topics.map(({ id }) => id)).toEqual(["details"]);
+    expect(run.completedTopic("details")).toBe(false);
+    run.topicAction("details")();
+    run.advance();
+    expect(run.completedTopic("first")).toBe(true);
+    expect(run.completedTopic("second")).toBe(false);
+    run.topicAction("second")();
+    stale();
+    expect(run.topics.map(({ id }) => id)).toEqual(["details"]);
+    expect(run.completedTopic("details")).toBe(false);
+    run.topicAction("details")();
+    expect(run.line?.text).toBe("Second answer");
+    run.advance();
+    expect(run.completedTopic("second")).toBe(true);
+  });
+
+  it("does not offer duplicate IDs, missing returns, or invalid nested choices", () => {
+    const option = copy.topics[0]!;
+    const invalid = [
+      [option, { ...option, label: "Collision" }],
+      [{ ...option, id: " " }],
+      [{ ...option, returnTo: "missing" }],
+      [{ ...option, lines: [] }],
+      [{ choices: [option, option], id: "branch", label: "Branch", lines: [] }],
+    ];
+    for (const topics of invalid) {
+      const run = new InteractionConversation();
+      run.show({ ...copy, topics: topics as InteractionTopic[] }, panel);
+      run.advance();
+      expect(run.topicExitLabel).toBeUndefined();
+      expect(run.topics).toEqual([]);
+      expect(run.line?.text).toBe("Last");
+      expect(run.choices).toEqual(panel.choices);
+    }
   });
 
   it("uses the declared main line after a topic without applying an outcome", () => {
@@ -1483,15 +1563,15 @@ describe("Use conversation paging", () => {
       panel,
     );
     run.advance();
-    run.topic(0);
+    run.topicAction("question")();
     run.advance();
-    expect(run.completedTopic(0)).toBe(true);
+    expect(run.completedTopic("question")).toBe(true);
     expect(run.topicExitLabel).toBe("Ask about the answer");
-    run.leaveTopics();
+    run.topicExitAction()();
     expect(run.line?.id).toBe("answer");
     expect(run.choices).toEqual(panel.choices);
     run.previous();
-    expect(run.completedTopic(0)).toBe(true);
+    expect(run.completedTopic("question")).toBe(true);
     expect(run.topicExitLabel).toBe("Ask about the answer");
   });
 
@@ -1522,7 +1602,7 @@ describe("Use conversation paging", () => {
       expect(run.topicExitLabel).toBeUndefined();
       expect(run.topics).toEqual([]);
       expect(run.line?.text).toBe("Last");
-      run.leaveTopics();
+      run.topicExitAction()();
       expect(run.line?.text).toBe("Last");
       expect(run.nextAction).toBe("page");
     },
@@ -1547,20 +1627,20 @@ describe("Use conversation paging", () => {
       run.advance();
     };
     open();
-    run.topic(0);
+    run.topicAction("question")();
     run.advance();
-    expect(run.completedTopic(0)).toBe(true);
+    expect(run.completedTopic("question")).toBe(true);
     run.hide();
     open();
-    expect(run.completedTopic(0)).toBe(true);
+    expect(run.completedTopic("question")).toBe(true);
     run.setDocked(undefined);
     open();
-    expect(run.completedTopic(0)).toBe(false);
-    run.topic(0);
+    expect(run.completedTopic("question")).toBe(false);
+    run.topicAction("question")();
     run.advance();
     run.hide();
     open();
-    expect(run.completedTopic(0)).toBe(false);
+    expect(run.completedTopic("question")).toBe(false);
   });
 
   it("returns from a model fork to its actual preceding page without replaying an applied outcome", () => {
@@ -1708,7 +1788,7 @@ describe("Use conversation paging", () => {
     const run = new InteractionConversation();
     run.show(copy, panel);
     run.advance();
-    run.leaveTopics();
+    run.topicExitAction()();
     run.show(copy, panel);
     expect(run.line?.text).toBe("Last");
     run.show(copy, { ...panel });
@@ -1747,14 +1827,15 @@ describe("Use copy resolution", () => {
       run.advance();
       expect(run.topicExitLabel).toBe(edge?.label);
       expect(run.canSkip).toBe(false);
-      run.topic(0);
+      const topic = copy.topics[0]!;
+      run.topicAction(topic.id)();
       run.advance();
-      expect(run.completedTopic(0)).toBe(true);
-      run.leaveTopics();
+      expect(run.completedTopic(topic.id)).toBe(true);
+      run.topicExitAction()();
       expect(run.line).toBe(copy.lines[1]);
       run.previous();
       expect(run.topicExitLabel).toBe(edge?.label);
-      expect(run.completedTopic(0)).toBe(true);
+      expect(run.completedTopic(topic.id)).toBe(true);
     }
     for (const variant of variants) {
       assertExit(variant.context, variant.panel);
@@ -1790,6 +1871,32 @@ describe("Use copy resolution", () => {
     expect(lead.topicExit).toBeUndefined();
   });
 
+  it("keeps the completed Hub topic attached to the authored option after reordering", () => {
+    const hub = { ...panel, context: "hub" };
+    const copy = interactionCopy(2, hub);
+    const run = new InteractionConversation();
+    run.setDocked("hub");
+    run.show(copy, hub);
+    run.advance();
+    const stale = run.topicAction("hub-users");
+    const staleExit = run.topicExitAction();
+    stale();
+    expect(run.line?.text).toContain("Independent miners");
+    run.advance();
+    run.hide();
+    run.show({ ...copy, topics: [...copy.topics].reverse() }, { ...hub });
+    run.advance();
+    expect(run.topics.map(({ id }) => id)).toEqual(["ore-for-shields", "hub-users"]);
+    stale();
+    staleExit();
+    expect(run.topicExitLabel).toBe("Ask where to find ore");
+    expect(run.completedTopic("ore-for-shields")).toBe(false);
+    expect(run.completedTopic("hub-users")).toBe(true);
+    run.topicAction("ore-for-shields")();
+    expect(run.line?.speaker).toBe("Astra");
+    expect(run.line?.text).toContain("ten percent shield");
+  });
+
   it("offers Wick's main question once and leads from his answer to the beacon", () => {
     const arrival = { ...panel, context: "andromeda:arrival", title: "Wick" };
     const run = new InteractionConversation();
@@ -1798,10 +1905,10 @@ describe("Use copy resolution", () => {
     expect(run.topicExitLabel).toBe("What's happening to the ships?");
     expect(run.topics.map(({ label }) => label)).toEqual(["What do beacons do?"]);
     expect(run.canSkip).toBe(false);
-    run.topic(0);
+    run.topicAction("beacon-purpose")();
     run.advance();
-    expect(run.completedTopic(0)).toBe(true);
-    run.leaveTopics();
+    expect(run.completedTopic("beacon-purpose")).toBe(true);
+    run.topicExitAction()();
     expect(run.line).toMatchObject({
       speaker: "Wick",
       text: "They keep getting lost. It must be Archie's drones. Everyone is scared to fly.",
@@ -1816,7 +1923,7 @@ describe("Use copy resolution", () => {
     run.previous();
     run.previous();
     expect(run.topicExitLabel).toBe("What's happening to the ships?");
-    expect(run.completedTopic(0)).toBe(true);
+    expect(run.completedTopic("beacon-purpose")).toBe(true);
   });
 
   it("keeps the addressed outpost as party while Ada and Astra speak as themselves", () => {
