@@ -12,7 +12,7 @@ import {
   TYPE,
 } from "../../data/layout.ts";
 import { cardHeaderLayout } from "./cardFrame.ts";
-import { conversationSpeakerLayout } from "./conversationBox.ts";
+import { conversationSpeakerLayout, conversationTextTop } from "./conversationBox.ts";
 import { type Insets, safeRect, type Size } from "./playView.ts";
 
 // The station card (art/layout.md "Station card"), in logical px: header, the balance, the
@@ -39,7 +39,7 @@ export const KEEPER_BLOCK = {
 export function keeperPips(lineCount: number): { readonly x: number; readonly y: number } {
   const lines = Math.min(Math.max(lineCount, 1), CONVERSATION_BOX.lines);
   const { lineHeight } = CONVERSATION_BOX.text;
-  const textTop = (KEEPER_BLOCK.height - lines * lineHeight) / 2;
+  const textTop = conversationTextTop(lines);
   return {
     x: TEXT.x + KEEPER_BLOCK.textWithPips + KEEPER_BLOCK.pips.offset,
     y: textTop + (lines - 1) * lineHeight + (lineHeight - KEEPER_PIP.disc) / 2,
