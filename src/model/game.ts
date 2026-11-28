@@ -211,6 +211,7 @@ import {
   projectJobScenery,
 } from "./game/jobNavigation.ts";
 import { projectJobText, projectPlaceLabel } from "./game/jobText.ts";
+import { projectMarkerDetails } from "./game/markerDetails.ts";
 import {
   type ContextQuestLookup,
   projectContextQuestDetails,
@@ -1616,43 +1617,18 @@ export class GameModel {
     ) {
       return null;
     }
-    const { category, id, identified, item, symbol } = current;
-    const distance = worldDistance(flightWorldContext(flight), flight.player, current);
-    if (!identified) {
-      return { kind: "point", point: { category, distance, identified, symbol } };
-    }
-    const task = this.state.tasks[flight.galaxy];
-    const entries = this.quests;
-    const quests =
-      id === waypointId
-        ? entries.filter((entry) => entry.id === this.trackedQuestId)
-        : questsForObject(
-            {
-              galaxy: flight.galaxy,
-              knownIds: known,
-              quests: entries,
-              storyTargets,
-              ...(task ? { task } : {}),
-            },
-            id,
-          );
-    if (quests.length) {
-      return { details: { quests, targetId: id }, kind: "quest" };
-    }
-    const site =
-      category === "discovery"
-        ? this.scannableSites(flight).find((site) => site.id === id)
-        : undefined;
-    const label = site
-      ? landmarkLabel((key) => this.label(key), site)
-      : this.label(item ?? id) ||
-        (symbol === "holodisk" ? this.label("mapHolodiskWaypoint") : "") ||
-        (category === "station" ? this.label("station") : "") ||
-        (id.startsWith("settlement:") ? this.label("settlement") : "");
-    return {
-      kind: "point",
-      point: { category, distance, identified, symbol, ...(label ? { label } : {}) },
-    };
+    return projectMarkerDetails(
+      {
+        label: (key) => this.label(key),
+        quests: () => this.quests,
+        scannableSites: () => this.scannableSites(flight),
+        task: () => this.state.tasks[flight.galaxy],
+        trackedQuestId: () => this.trackedQuestId,
+      },
+      flight,
+      { known, storyTargets, waypointId },
+      current,
+    );
   }
 
   /** Retained presentation facade; all targets now use the same registry. */
