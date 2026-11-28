@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { enemyDefinition } from "../data/enemyCatalog.ts";
+import { questReward } from "../data/questRewards.ts";
 import type { GameContent } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
@@ -11,14 +11,16 @@ import {
   visitCartwheelHubFixture,
 } from "../testing/cartwheelFixture.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
-import { createEnemy } from "./enemyAi.ts";
-import { activateRequiredRoute, ensureDestination } from "./flight.ts";
+import { activateRequiredRoute, ensureDestination, ensureStation } from "./flight.ts";
+import { hit } from "./flight/hitResolution.ts";
+import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
+import { worldRecordObjectRemoval } from "./geography.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
 import type { FlightState } from "./types.ts";
 
-/** Test support: admit the saved required encounter, then disable its actual noncombat-fixture guard. */
-function disableStoryGuard(content: GameContent, flight: FlightState, id: string): void {
+/** Clears the actual required guard so the fixture can reach the story choice. */
+function defeatStoryGuard(content: GameContent, flight: FlightState, id: string): void {
   const encounter = activateRequiredRoute(content, id, flight);
   if (encounter.status === "resolved") {
     return;
@@ -30,7 +32,9 @@ function disableStoryGuard(content: GameContent, flight: FlightState, id: string
   if (guard.routeId !== id || guard.enemy?.archetype !== "frigate") {
     throw new Error(`Expected the actual required frigate for ${id}`);
   }
-  guard.enemy.disabled = true;
+  hit(content, guard.hp, null, guard, flight, []);
+  worldRecordObjectRemoval(flightWorldContext(flight), content, guard, flight);
+  flight.objects = flight.objects.filter((object) => object !== guard);
 }
 
 function offer() {
@@ -54,7 +58,7 @@ function offer() {
       (site) => Math.hypot(site.x - place.x, site.y - place.y) >= 3000,
     )!.id,
   ];
-  disableStoryGuard(CONTENT, flight, "growers");
+  defeatStoryGuard(CONTENT, flight, "growers");
   model.interact();
   expect(model.state.dialogue).not.toBeNull();
   expect(model.state.dialogue?.choices.map(({ id }) => id)).toEqual(["take", "skip"]);
@@ -141,43 +145,46 @@ describe("Use card suspension", () => {
 });
 
 describe("mechanical outcome retention", () => {
-  it("salvages a heavy once while Close/reopen only restores Astra's card", () => {
+  it("credits one delivery while Close and Use reopen the original outcome card", () => {
     const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.startGalaxy(1);
     const flight = model.state.flight!;
-    flight.player = { x: 0, y: 0 };
-    const definition = enemyDefinition(1, "frigate");
-    const point = { x: 100, y: 0 };
-    const enemy = createEnemy(
-      definition,
-      { archetype: "frigate", id: "salvage-fixture", packId: null, phase: 0 },
-      point,
-    );
-    enemy.disabled = true;
-    flight.objects = [
-      {
-        ...point,
-        enemy,
-        hp: definition.hp,
-        id: "salvage-fixture",
-        kind: "enemy",
-        radius: definition.sizeRatio * CONTENT.tuning.flight.shipRadius,
-      },
-    ];
+    const [issuer, target] = worldStationsNear(flightStationContext(flight), ECONOMY, 1, 40000, {
+      x: 0,
+      y: 0,
+    });
+    flight.objects = [];
+    ensureStation(CONTENT, target!.id, flight);
+    flight.player = { x: target!.x, y: target!.y };
+    model.state.progress[1].stations = [issuer!.id, target!.id];
+    const reward = 17;
+    model.state.tasks[1] = {
+      carrying: true,
+      id: "delivery-fixture",
+      item: "seeds",
+      kind: "job",
+      reward,
+      station: issuer!.id,
+      target: { id: target!.id, x: target!.x, y: target!.y },
+      type: "delivery",
+    };
+    expect(model.useTarget).toEqual({ action: "deliver", id: target!.id });
+    const before = model.state.economy.stardust;
     model.interact();
-    expect(model.state.dialogue).toMatchObject({ context: "salvage", title: "Astra" });
-    expect(enemy.salvaged).toBe(true);
-    const drops = structuredClone(flight.objects);
-    const nextId = flight.nextId;
-    expect(model.state.dialogue).not.toBeNull();
+    const panel = model.state.dialogue;
+    expect(panel).toMatchObject({ context: "deliver", title: "Astra" });
+    expect(model.state.tasks[1]).toBeUndefined();
+    expect(model.state.economy.stardust).toBe(before + questReward(reward));
     model.closeInteraction();
+    expect(model.state.dialogue).toBeNull();
     model.interact();
-    expect(flight.objects).toEqual(drops);
-    expect(flight.nextId).toBe(nextId);
-    expect(model.state.dialogue).not.toBeNull();
+    expect(model.state.dialogue).toBe(panel);
+    expect(model.state.economy.stardust).toBe(before + questReward(reward));
+    expect(model.state.tasks[1]).toBeUndefined();
     model.choose("continue");
     model.interact();
-    expect(flight.objects).toEqual(drops);
+    expect(model.state.docked).toBe(target!.id);
+    expect(model.state.economy.stardust).toBe(before + questReward(reward));
   });
 
   it("retains a closed pending choice through an emergency return, save and new flight", () => {

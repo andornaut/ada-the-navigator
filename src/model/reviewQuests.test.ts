@@ -4,7 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
-import { rollEnemyDrop, rollSalvageDrop } from "./drops.ts";
+import { dropRandom, enemyStardust, rollEnemyDrop } from "./drops.ts";
 import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { type BoardContext, type JobBook, rerollBoards, stationBoard } from "./jobs.ts";
@@ -130,12 +130,21 @@ describe("job board review decisions", () => {
     expect(model.state.tasks[1]).toBeUndefined();
   });
 
-  it("pays the full platform roll on destruction and half on salvage", () => {
-    const identity = { id: "field:platform", seed: 1 };
-    const destroyed = rollEnemyDrop(ECONOMY, identity, "platform", () => 0.999);
-    const salvaged = rollSalvageDrop(ECONOMY, identity, "platform", () => 0.999);
-    expect(destroyed.stardust).toBeGreaterThanOrEqual(15);
-    expect(destroyed.stardust).toBeLessThanOrEqual(25);
-    expect(salvaged.stardust).toBe(Math.floor(destroyed.stardust / 2));
+  it("pays the platform's full rolled Stardust or one replacement upgrade", () => {
+    const seed = 1;
+    const ids = Array.from({ length: 64 }, (_, index) => `field:platform:${index}`);
+    const normal = ids.find((id) => dropRandom(seed, `salvage:${id}`)() >= 0.1)!;
+    const upgraded = ids.find((id) => dropRandom(seed, `salvage:${id}`)() < 0.1)!;
+    const amount = enemyStardust({ id: normal, seed }, "platform");
+    expect(amount).toBeGreaterThanOrEqual(15);
+    expect(amount).toBeLessThanOrEqual(25);
+    expect(rollEnemyDrop(ECONOMY, { id: normal, seed }, "platform", () => 0.999)).toEqual({
+      stardust: amount,
+      upgrade: false,
+    });
+    expect(rollEnemyDrop(ECONOMY, { id: upgraded, seed }, "platform", () => 0.999)).toEqual({
+      stardust: 0,
+      upgrade: true,
+    });
   });
 });

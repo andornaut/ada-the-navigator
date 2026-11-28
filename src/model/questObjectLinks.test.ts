@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { JOB_TUNING } from "../data/jobs.ts";
 import { LANDMARK_SCAN_COPY } from "../data/landmarkScanCopy.ts";
@@ -10,7 +9,6 @@ import { ControlState } from "../input/state.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { consumeContextQuestUse } from "../ui/contextQuestUse.ts";
-import { createEnemy, damageEnemy } from "./enemyAi.ts";
 import { createFlight } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
@@ -47,13 +45,20 @@ function landmarkContext() {
   return { model, site };
 }
 
-function salvageByPip() {
+function scanByPip() {
   const model = new GameModel(CONTENT, () => 173, SAVE_RESTORE);
   Object.assign(model.state, { prologueSeen: true, started: true, unlocked: [...GALAXY_NUMBERS] });
   model.state.progress[5].opened = true;
   model.startGalaxy(5);
   const flight = model.state.flight!;
   const pip = flight.objects.find(({ id }) => id === "pip")!;
+  const site = flightLandmarkSites(flight)[0]!;
+  const range = CONTENT.tuning.talkRange;
+  flight.player = { x: site.x - range + 0.25, y: site.y };
+  // Put Pip just behind Ada, slightly farther away than Scan's separate target.
+  pip.x = flight.player.x - range + 0.125;
+  pip.y = site.y;
+  flight.objects = [pip];
   model.state.progress[5].known.push(pip.id);
   const world = flightWorldContext(flight);
   const station = worldStationsNear(flightStationContext(flight), ECONOMY, 5, 20000, pip).find(
@@ -71,18 +76,7 @@ function salvageByPip() {
     target: { id: pip.id, x: pip.x, y: pip.y },
     type: "delivery",
   };
-  flight.player = { x: pip.x + 90, y: pip.y };
-  const at = { x: flight.player.x + CONTENT.tuning.talkRange - 0.25, y: pip.y };
-  const id = "disabled-frigate";
-  const definition = enemyDefinition(5, "frigate", id);
-  let enemy = createEnemy(definition, { archetype: "frigate", id, packId: null, phase: 0 }, at);
-  for (const part of definition.hardpoints.filter(({ kind }) => kind === "weapon")) {
-    enemy = damageEnemy(definition, { amount: part.hp, hardpointId: part.id }, enemy);
-  }
-  expect(enemy.disabled).toBe(true);
-  const heavy = { ...at, enemy, hp: enemy.hp, id, kind: "enemy" as const, radius: 40 };
-  flight.objects = [pip, heavy];
-  return { flight, heavy, model, pip, world };
+  return { flight, model, pip, site, world };
 }
 
 describe("canonical quest object associations", () => {
@@ -133,21 +127,25 @@ describe("canonical quest object associations", () => {
 });
 
 describe("contextual Use quest fallback", () => {
-  it("offers Salvage without placing its callout over a different POI", () => {
-    const { heavy, model } = salvageByPip();
-    expect(model.contextAction).toBe("salvage");
-    expect(model.useTarget).toBeUndefined();
+  it("offers Scan with the landmark label instead of the nearby quest POI", () => {
+    const { model, pip, site } = scanByPip();
+    expect(model.contextAction).toBe("scan");
+    expect(model.useTarget).toEqual({ action: "scan", id: site.id });
     expect(model.contextQuestDetails).toBeNull();
     model.interact();
-    expect(heavy.enemy.salvaged).toBe(true);
-    expect(model.state.dialogue?.context).toBe("salvage");
+    const expectedName = landmarkLabel((key) => CONTENT.labels[key] ?? "", site);
+    expect(model.drainScanOutcomes()).toMatchObject([
+      { target: { id: site.id, name: expectedName } },
+    ]);
+    expect(model.state.progress[5].charted).toContain(site.id);
+    expect(model.state.progress[5].charted).not.toContain(pip.id);
   });
 
   it("dispatches the linked quest once when movement makes it win after Use sampling", () => {
-    const { flight, heavy, model, pip, world } = salvageByPip();
-    expect(model.contextAction).toBe("salvage");
+    const { flight, model, pip, site, world } = scanByPip();
+    expect(model.contextAction).toBe("scan");
     expect(model.contextQuestDetails).toBeNull();
-    expect(worldDistance(world, flight.player, heavy)).toBeCloseTo(CONTENT.tuning.talkRange - 0.25);
+    expect(worldDistance(world, flight.player, site)).toBeCloseTo(CONTENT.tuning.talkRange - 0.25);
     flight.velocity = { x: -60, y: 0 };
     const task = structuredClone(model.state.tasks[5]);
     const economy = structuredClone(model.state.economy);
@@ -164,7 +162,7 @@ describe("contextual Use quest fallback", () => {
       );
     const open = vi.fn();
     model.step(0.05, sample(), open);
-    expect(worldDistance(world, flight.player, heavy)).toBeGreaterThan(CONTENT.tuning.talkRange);
+    expect(worldDistance(world, flight.player, site)).toBeGreaterThan(CONTENT.tuning.talkRange);
     expect(worldDistance(world, flight.player, pip)).toBeLessThan(CONTENT.tuning.talkRange);
     expect(model.contextAction).toBeUndefined();
     const current = model.contextQuestDetails;
@@ -173,7 +171,8 @@ describe("contextual Use quest fallback", () => {
     expect(open).toHaveBeenCalledExactlyOnceWith(current);
     model.step(0.001, sample(), open);
     expect(open).toHaveBeenCalledTimes(1);
-    expect(flight.objects.find(({ id }) => id === heavy.id)?.enemy?.salvaged).toBe(false);
+    expect(model.drainScanOutcomes()).toEqual([]);
+    expect(model.state.progress[5].charted).not.toContain(site.id);
     expect(model.state.dialogue).toBeNull();
     expect(model.state.tasks[5]).toEqual(task);
     expect(model.state.economy).toEqual(economy);
