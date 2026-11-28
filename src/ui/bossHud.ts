@@ -10,6 +10,7 @@ import { STATUS_COLOURS } from "./statusPill.ts";
 
 const { bar, bars } = SHIELD_PILL;
 const { name, panel, tab } = CONVERSATION_BOX;
+const SURRENDERED = "Surrendered";
 
 export const BOSS_HUD_STYLE = `
 .ada-controls .ada-boss-hud{
@@ -23,11 +24,18 @@ export const BOSS_HUD_STYLE = `
   width:var(--ada-boss-width);
   pointer-events:none
 }
+.ada-controls .ada-boss-hud-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:${units(SPACING.markGap)}
+}
 .ada-controls .ada-boss-hud-badge{
   position:relative;
   z-index:1;
   display:block;
   width:max-content;
+  min-width:0;
   max-width:100%;
   box-sizing:border-box;
   height:${units(tab.height)};
@@ -45,6 +53,14 @@ export const BOSS_HUD_STYLE = `
 }
 .ada-controls .ada-boss-hud[data-compact] .ada-boss-hud-badge{
   font-size:${units(TYPE.count.size)}
+}
+.ada-controls .ada-boss-hud-status{
+  font:${font(TYPE.count)};
+  color:${COLOURS.cream};
+  background:${COLOURS.ink};
+  border-radius:${units(tab.radius)};
+  padding-inline:${units(SPACING.markGap)};
+  white-space:nowrap
 }
 .ada-controls .ada-boss-hud-meter{
   --shield-bar:100%;
@@ -87,8 +103,16 @@ export function createBossHud(parent: HTMLElement): {
   root.className = "ada-boss-hud";
   root.hidden = true;
 
+  const heading = document.createElement("div");
+  heading.className = "ada-boss-hud-heading";
   const badge = document.createElement("span");
   badge.className = "ada-boss-hud-badge";
+  const status = document.createElement("span");
+  status.className = "ada-boss-hud-status";
+  status.hidden = true;
+  status.textContent = SURRENDERED;
+  status.setAttribute("aria-hidden", "true");
+  heading.append(badge, status);
 
   const meter = document.createElement("div");
   meter.className = "ada-status-bar ada-boss-hud-meter";
@@ -102,7 +126,7 @@ export function createBossHud(parent: HTMLElement): {
   track.className = "ada-boss-hud-track";
   track.append(fill);
   meter.append(track);
-  root.append(badge, meter);
+  root.append(heading, meter);
   parent.append(root);
 
   const left = Array.from(parent.querySelectorAll<HTMLElement>(".ada-pause,.ada-status"));
@@ -162,8 +186,11 @@ export function createBossHud(parent: HTMLElement): {
       if (badge.textContent !== label) {
         badge.textContent = label;
       }
-      if (view.disabled && CONTENT.labels.disabledBanner) {
-        setAttribute(meter, "aria-valuetext", CONTENT.labels.disabledBanner);
+      const surrendered = view.surrendered === true;
+      status.hidden = !surrendered;
+      const valueText = surrendered ? SURRENDERED : view.disabled && CONTENT.labels.disabledBanner;
+      if (valueText) {
+        setAttribute(meter, "aria-valuetext", valueText);
       } else if (meter.hasAttribute("aria-valuetext")) {
         meter.removeAttribute("aria-valuetext");
       }

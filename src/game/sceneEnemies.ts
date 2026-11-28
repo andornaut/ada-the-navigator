@@ -319,7 +319,8 @@ export function drawEnemySprite(
     drawSalvaged(scene, id, enemy.archetype, sprites, point);
     return;
   }
-  const banner = showsBanner(enemy) ? bannerOffset(art, frame) : undefined;
+  const banner =
+    enemy.surrendered !== true && showsBanner(enemy) ? bannerOffset(art, frame) : undefined;
   if (banner) {
     scene.banners.push({ at: { x: point.x + banner.x, y: point.y + banner.y }, id });
   }
