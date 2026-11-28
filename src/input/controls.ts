@@ -4,7 +4,6 @@ import {
   onPageControl,
   type PagePointerEvent,
 } from "@andornaut/game-kit/runtime/web/input/dom/pagePresses";
-import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import type { GameObjects, Scene } from "phaser";
 
@@ -37,12 +36,7 @@ import {
   type AchievementsLabels,
   createAchievementsCard,
 } from "../ui/achievementsCard.ts";
-import {
-  ADA_ACTION_HOLD_MS,
-  assertAdaActionBindings,
-  bindAdaAction,
-  resolveAdaHoldAction,
-} from "../ui/actionBinding.ts";
+import { assertAdaActionBindings, bindAdaAction } from "../ui/actionBinding.ts";
 import { type BackLayer, createBackStack, pressBack } from "../ui/backStack.ts";
 import type { CheatAction } from "../ui/cheatActions.ts";
 import { type CheatLabels, createCheats } from "../ui/cheats.ts";
@@ -67,7 +61,7 @@ import { stickTargets, useDiscLayout, usePressed } from "../ui/layout/touchContr
 import { createViewScaleBridge, type PlayLayout, readViewUnit } from "../ui/layout/viewScale.ts";
 import { createMenuCard } from "../ui/menuCard.ts";
 import { activateNavigation, createNavigationButton } from "../ui/navigationButton.ts";
-import { mountNavigationPose } from "../ui/pauseButton.ts";
+import { createHudNavigationButton } from "../ui/pauseButton.ts";
 import {
   createPauseCards,
   type PauseLabels,
@@ -334,9 +328,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     storage: options.storage,
     useButton,
   });
-  const exitPresentation: { pose: ReturnType<typeof mountNavigationPose> | undefined } = {
-    pose: undefined,
-  };
   let pressedStoryButton: HTMLElement | undefined;
   const navigationPresentation: {
     showPress?: (element: HTMLElement | null) => void;
@@ -357,11 +348,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
               ? element
               : undefined;
           pressedStoryButton?.setAttribute("data-story-pressed", "");
-          const pose = exitPresentation.pose;
-          if (pose) {
-            const present = element === exitButton ? pose.press : pose.rest;
-            present();
-          }
         },
         pointerTarget: document,
         resolvePointer: (event) => resolveUsePointer(event),
@@ -432,66 +418,6 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     },
   });
   settings.root.classList.add("ada-no-settings-button");
-  // The start screen's Exit disc at the top right, where it shows; it follows the Menu in Tab order.
-  const createExit = (label: string) => {
-    const kit = createButton(settings.root.ownerDocument, {
-      appearance: { className: "ada-exit-open", face: {}, layout: "caller" },
-      content: { kind: "icon", name: label },
-      getAction: (button) => {
-        const owned = resolveAdaHoldAction(settings.root, button);
-        return owned?.available() ? owned : null;
-      },
-      getState: (button) => ({
-        availability: button.hidden
-          ? { kind: "omitted" }
-          : button.disabled
-            ? { kind: "disabled" }
-            : { kind: "available" },
-      }),
-      rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: SCROLL.dragThreshold },
-    });
-    const button = kit.element;
-    // The HUD paints the navigation pose and focus on the button's pseudo-element.
-    kit.face.hidden = true;
-    const action = bindAdaAction(
-      {
-        click: {
-          availability: () =>
-            button.disabled || button.closest("[hidden], [inert]")
-              ? { kind: "omitted" }
-              : { kind: "available" },
-          run: () => {
-            pose.rest();
-            options.exit?.onExit();
-          },
-        },
-        current: () => !disposed && button.isConnected && inCurrentView(settings.root, button),
-        nativeClickOwner: "factory",
-        slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
-      },
-      button,
-    );
-    button.dataset.action = "exit";
-    button.title = label;
-    button.hidden = true;
-    const pose = mountNavigationPose(button);
-    return {
-      action: {
-        activate: () => action.activate(),
-        dispose() {
-          action.dispose();
-          kit.dispose();
-        },
-      },
-      button,
-      pose,
-    };
-  };
-  const exit = options.exit ? createExit(options.exit.label) : undefined;
-  const exitButton = exit?.button;
-  const exitAction = exit?.action;
-  const exitPose = exit?.pose;
-  exitPresentation.pose = exitPose;
   const menu = createMenuCard(settings.root, {
     closeLabel: options.pause.labels.close,
     labels: {
@@ -540,10 +466,23 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     openNavigation,
   );
   const pauseButton = navigation.button;
-  navigationPresentation.showPress = (element) => navigation.setPressed(element === pauseButton);
-  if (exitButton) {
-    pauseButton.after(exitButton);
-  }
+  // Mount the optional Start Exit immediately after Menu to keep the tab order.
+  const exit = options.exit
+    ? createHudNavigationButton(
+        settings.root,
+        {
+          action: "exit",
+          current: (button) => !disposed && inCurrentView(settings.root, button),
+        },
+        options.exit.label,
+        () => options.exit?.onExit(),
+      )
+    : undefined;
+  const exitButton = exit?.button;
+  navigationPresentation.showPress = (element) => {
+    navigation.setPressed(element === pauseButton);
+    exit?.setPressed(element === exitButton);
+  };
   const navigationCovered = (): boolean =>
     returningToParent ||
     Boolean(returnToMenu || returnToPause) ||
@@ -827,11 +766,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     desktop,
   );
   const stopDesktopScope = subscribePressScope(() => desktop.reset(), settings.root);
-  for (const button of [exitButton, useButton]) {
-    if (button) {
-      assertAdaActionBindings(button);
-    }
-  }
+  assertAdaActionBindings(useButton);
   // Where the item notice's chip and destinations sit now, in HUD rect px.
   const noticePlaces = (): NoticePlaces => {
     const view = canvasSize(sceneFit(scene));
@@ -960,7 +895,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
         (event.target.closest("input,textarea,select") ||
           (event.target instanceof HTMLElement && event.target.isContentEditable))
       ) &&
-      exitAction?.activate()
+      exit?.activate()
     ) {
       event.preventDefault();
       return;
@@ -1113,8 +1048,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
       weapons.dispose();
       cheats.dispose();
       update?.dispose();
-      exitAction?.dispose();
-      exitPose?.dispose();
+      exit?.dispose();
       achievements.dispose();
       pause.dispose();
       settings.dispose();
@@ -1222,7 +1156,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     setExitButton(shown) {
       if (exitButton) {
         if (!shown && !exitButton.hidden) {
-          exitPose?.rest();
+          exit?.setPressed(false);
         }
         exitButton.hidden = !shown;
         settings.root.toggleAttribute(EXIT_SHOWN_ATTRIBUTE, shown);

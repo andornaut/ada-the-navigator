@@ -1,4 +1,4 @@
-import { createPauseButton } from "./pauseButton.ts";
+import { createHudNavigationButton } from "./pauseButton.ts";
 
 /** The same Pause hit target carries the three-line Menu glyph outside pausable play. */
 export function createNavigationButton(
@@ -6,7 +6,7 @@ export function createNavigationButton(
   labels: { readonly menu: string; readonly pause: string },
   activate: () => void,
 ) {
-  const entry = createPauseButton(root, labels.pause, activate);
+  const entry = createHudNavigationButton(root, { action: "pause" }, labels.pause, activate);
   entry.button.setAttribute("aria-haspopup", "dialog");
   return {
     ...entry,

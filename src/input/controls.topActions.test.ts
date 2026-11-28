@@ -1,24 +1,21 @@
 import { readFileSync } from "node:fs";
 import { createContext, runInContext } from "node:vm";
 
-import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 import ts from "typescript";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { PHONE_BACK_PRESSED } from "../pwa/events.ts";
-import {
-  ADA_ACTION_HOLD_MS,
-  assertAdaActionBindings,
-  bindAdaAction,
-  resolveAdaHoldAction,
-} from "../ui/actionBinding.ts";
+import * as actionBinding from "../ui/actionBinding.ts";
 import { createBackStack, pressBack } from "../ui/backStack.ts";
 import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
 import { SCROLL } from "../ui/layout/contentCard.ts";
 import { readViewUnit } from "../ui/layout/viewScale.ts";
+import { createHudNavigationButton } from "../ui/pauseButton.ts";
 import { enterPressView, inCurrentView, rootPressGuard } from "../ui/pressScope.ts";
 import { EXIT_SHOWN_ATTRIBUTE } from "../ui/settings.ts";
 import { isMenuExitKey } from "./desktop.ts";
+
+const { assertAdaActionBindings, bindAdaAction: bindAction, resolveAdaHoldAction } = actionBinding;
 
 const source = ts.createSourceFile(
   "controls.ts",
@@ -54,12 +51,8 @@ function actualLeaves(): string {
   const variable = (node: ts.Statement, name: string) =>
     ts.isVariableStatement(node) &&
     node.declarationList.declarations.some((d) => d.name.getText(source) === name);
-  const exit = statements.filter(
-    (node) =>
-      ["exitPose", "createExit", "exit", "exitButton", "exitAction"].some((name) =>
-        variable(node, name),
-      ) ||
-      (ts.isIfStatement(node) && node.expression.getText(source) === "exitButton"),
+  const exit = statements.filter((node) =>
+    ["exit", "exitButton"].some((name) => variable(node, name)),
   );
   const use = statements.find((node) => variable(node, "useAction"));
   const updateBack = statements.find(
@@ -68,9 +61,8 @@ function actualLeaves(): string {
       node.expression.getText(source) === "update" &&
       node.thenStatement.getText(source).includes("backStack.register("),
   );
-  const audits = statements.filter(
-    (node) =>
-      ts.isForOfStatement(node) && node.getText(source).includes("assertAdaActionBindings("),
+  const audit = statements.find(
+    (node) => node.getText(source) === "assertAdaActionBindings(useButton);",
   );
   const keys = ["requiredReady", "menuContext", "onBack", "keyDown", "gameEscape"].map((name) => {
     const statement = statements.find((node) => variable(node, name));
@@ -87,18 +79,18 @@ function actualLeaves(): string {
   const cleanup =
     disposal?.body?.statements.filter((n) =>
       [
-        "exitAction?.dispose();",
-        "exitPose?.dispose();",
+        "exit?.dispose();",
         "useAction.dispose();",
         "for (const leave of leaveBack) {\n        leave();\n      }",
         ...listen.map((statement) => statement.replace("addEventListener", "removeEventListener")),
       ].includes(n.getText(source)),
     ) ?? [];
   if (
-    exit.length !== 6 ||
+    exit.length !== 2 ||
     !use ||
+    !audit ||
     !updateBack ||
-    cleanup.length !== 6 ||
+    cleanup.length !== 5 ||
     listeners.length !== 2 ||
     !updateExit ||
     !updateContext
@@ -109,7 +101,7 @@ function actualLeaves(): string {
     "let disposed = false; const foregroundRoot = settings.root;",
     ...exit.map((n) => n.getText(source)),
     use.getText(source),
-    ...audits.map((n) => n.getText(source)),
+    audit.getText(source),
     updateBack.getText(source),
     ...keys,
     ...listeners.map((n) => n.getText(source)),
@@ -168,8 +160,8 @@ class Element extends EventTarget {
   before(node: Element) {
     node.parentElement = this.parentElement;
   }
-  after(node: Element) {
-    node.parentElement = this.parentElement;
+  remove() {
+    this.parentElement = null;
   }
   contains(node: unknown): boolean {
     return (
@@ -252,6 +244,7 @@ afterEach(() => {
   }
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 function fixture(
   exit = true,
@@ -261,15 +254,15 @@ function fixture(
 ) {
   vi.useFakeTimers();
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "1" }));
+  vi.stubGlobal("fetch", () => Promise.reject(new Error("No pose asset in this fixture")));
   const document = new FixtureDocument(),
     root = document.createElement(),
-    pauseButton = document.createElement("button"),
     useButton = document.createElement("button");
   root.connected = true;
   useButton.hidden = true;
-  root.append(pauseButton, useButton);
-  const register: typeof bindAdaAction = (options, element) => {
-    const binding = bindAdaAction(options, element);
+  root.append(useButton);
+  const register: typeof bindAction = (options, element) => {
+    const binding = bindAction(options, element);
     const kind =
       element === (useButton as unknown as HTMLElement)
         ? "use"
@@ -282,6 +275,7 @@ function fixture(
     stops.push(binding.dispose);
     return binding;
   };
+  vi.spyOn(actionBinding, "bindAdaAction").mockImplementation(register);
   let ready = true,
     notify = () => {};
   const host = root as unknown as HTMLElement;
@@ -308,7 +302,6 @@ function fixture(
     ts.transpileModule(actualLeaves(), { compilerOptions: { target: ts.ScriptTarget.ES2023 } })
       .outputText,
     createContext({
-      ADA_ACTION_HOLD_MS,
       CONTROL_KEYS: new Set(),
       EXIT_SHOWN_ATTRIBUTE,
       Element,
@@ -318,19 +311,15 @@ function fixture(
       assertAdaActionBindings,
       backStack,
       bindAdaAction: register,
-      createButton,
+      createHudNavigationButton,
       document,
       inCurrentView,
       isMenuExitKey,
       leaveBack: [],
-      mountNavigationPose: () => ({ dispose() {}, press() {}, rest() {} }),
       openNavigation,
       options,
-      // The Menu, which Exit follows in the root.
-      pauseButton,
       pressBack,
       readViewUnit,
-      resolveAdaHoldAction,
       settings: { root },
       state: { accepts: () => false },
       update,

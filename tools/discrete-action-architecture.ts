@@ -4126,6 +4126,23 @@ function scanSource(context: ScanContext, path: string, text: string) {
     ) {
       return false;
     }
+    // A published command may forward the canonical binding's activation directly.
+    let activationOwner: ts.Expression | undefined;
+    for (const property of mountedRecord.properties) {
+      if (!ts.isPropertyAssignment(property) || lexicalIdentity(property.initializer, alias)) {
+        continue;
+      }
+      const port = property.initializer;
+      if (
+        activationOwner ||
+        !dot(port, "activate") ||
+        !lexicalIdentity(port.expression, binding) ||
+        !unwritten(port)
+      ) {
+        return false;
+      }
+      activationOwner = port.expression;
+    }
     const unsafe = (site: ts.Node): true | undefined => {
       if (ts.isIdentifier(site)) {
         const value = reads(site);
@@ -4133,6 +4150,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
           site.text === "eval" ||
           (value === binding &&
             site !== binding.name &&
+            site !== activationOwner &&
             site.parent.parent !== callStatement(unbind)) ||
           (value === handle &&
             site !== handle.name &&

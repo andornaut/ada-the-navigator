@@ -606,7 +606,7 @@ function useFixture() {
     },
     now: () => Date.now(),
     onPageControl: (target: unknown) => target !== canvas && target !== parent,
-    options: { exit: undefined, subscribeRequired: () => () => {} },
+    options: { subscribeRequired: () => () => {} },
     parent,
     point: (event: PointerEvent) => ({ x: event.clientX, y: event.clientY }),
     readViewUnit,
@@ -626,11 +626,7 @@ function useFixture() {
     window,
   });
   const declarations = [
-    "exitPresentation",
     "navigationPresentation",
-    "createExit",
-    "exit",
-    "exitButton",
     "resolveUsePointer",
     "useAction",
     "actionRoot",

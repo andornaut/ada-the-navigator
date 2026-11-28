@@ -725,6 +725,8 @@ it.each([
   ["wrong mounted root", "    root.append(button);", "    otherRoot.append(button);"],
   ["missing live audit", "    assertAdaActionBindings(button);", "    check(button);"],
   ["omitted action cleanup", "    action.dispose();", "    kit.dispose();"],
+  ["foreign activation handle", "activate: action.activate,", "activate: other.activate,"],
+  ["eager activation", "activate: action.activate,", "activate: action.activate(),"],
 ] as const)("rejects mounted factory construction with %s", (_case, original, replacement) => {
   const source = mountedRootSource.replace(original, replacement);
   expect(source).not.toBe(mountedRootSource);

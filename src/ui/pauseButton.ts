@@ -14,7 +14,7 @@ import { type PauseFrame, pauseFrames, pausePose } from "./pause.ts";
 const UI_ROOT = "/art/ui/";
 
 /** Presents the shared navigation poses without owning an activation. */
-export function mountNavigationPose(button: HTMLButtonElement) {
+function mountNavigationPose(button: HTMLButtonElement) {
   let disposed = false;
   let frames: Readonly<Record<"held" | "press" | "rest", readonly PauseFrame[]>> | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -64,12 +64,22 @@ export function mountNavigationPose(button: HTMLButtonElement) {
   };
 }
 
-// Chibi's touch pause button (ui-pause): rest, then its press frames once on a press, then held
-// until release, each frame drawn as its pose's vector art. Activating it pauses. Its tags and
-// timing come from the UI manifest's sheet; until they load it shows the rest pose.
-export function createPauseButton(root: HTMLElement, label: string, onPause: () => void) {
+/** Mounts one HUD disc with the press and held poses from the UI manifest. */
+export function createHudNavigationButton(
+  root: HTMLElement,
+  options: {
+    readonly action: "pause" | "exit";
+    readonly current?: (button: HTMLButtonElement) => boolean;
+  },
+  label: string,
+  activate: () => void,
+) {
   const kit = createButton(root.ownerDocument, {
-    appearance: { className: "ada-pause", face: {}, layout: "caller" },
+    appearance: {
+      className: options.action === "exit" ? "ada-exit-open" : "ada-pause",
+      face: {},
+      layout: "caller",
+    },
     content: { kind: "icon", name: label },
     getAction: (button) => {
       const owned = resolveAdaHoldAction(root, button);
@@ -87,7 +97,7 @@ export function createPauseButton(root: HTMLElement, label: string, onPause: () 
   const button = kit.element;
   // The HUD paints the pose and focus on the button's pseudo-element.
   kit.face.hidden = true;
-  button.dataset.action = "pause";
+  button.dataset.action = options.action;
   button.title = label;
   button.hidden = true;
   let disposed = false;
@@ -101,10 +111,10 @@ export function createPauseButton(root: HTMLElement, label: string, onPause: () 
             : { kind: "available" },
         run: () => {
           pose?.rest();
-          onPause();
+          activate();
         },
       },
-      current: () => !disposed && button.isConnected,
+      current: () => !disposed && button.isConnected && (options.current?.(button) ?? true),
       nativeClickOwner: "factory",
       slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
     },
@@ -130,6 +140,7 @@ export function createPauseButton(root: HTMLElement, label: string, onPause: () 
     throw error;
   }
   return {
+    activate: action.activate,
     button,
     dispose,
     setMode(mode: "pause" | "menu", label: string) {

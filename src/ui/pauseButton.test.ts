@@ -3,7 +3,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import * as actionBinding from "./actionBinding.ts";
 import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
 import { activateNavigation, createNavigationButton } from "./navigationButton.ts";
-import { createPauseButton } from "./pauseButton.ts";
+import { createHudNavigationButton } from "./pauseButton.ts";
 import { enterPressView } from "./pressScope.ts";
 class Element extends EventTarget {
   dataset: Record<string, string> = {};
@@ -238,7 +238,7 @@ it("audits Pause binding metadata before mounting into a detached parent", () =>
       return binding;
     });
   try {
-    expect(() => createPauseButton(root, "Pause", () => {})).toThrow(
+    expect(() => createHudNavigationButton(root, { action: "pause" }, "Pause", () => {})).toThrow(
       "no registered action binding",
     );
     expect(parent.children).toHaveLength(0);
@@ -254,9 +254,14 @@ it("rolls back a connected Pause button when the live root audit fails", () => {
   const parent = new Element(document);
   parent.connected = true;
   const append = vi.spyOn(parent, "append");
-  expect(() => createPauseButton(parent as unknown as HTMLElement, "Pause", () => {})).toThrow(
-    "no live action root",
-  );
+  expect(() =>
+    createHudNavigationButton(
+      parent as unknown as HTMLElement,
+      { action: "pause" },
+      "Pause",
+      () => {},
+    ),
+  ).toThrow("no live action root");
   const button = append.mock.calls[0]![0];
   expect(parent.children).toEqual([]);
   expect(button.parentElement).toBeNull();

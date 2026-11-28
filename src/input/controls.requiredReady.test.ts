@@ -62,7 +62,7 @@ function harness(required?: () => boolean) {
     desktopBinding: { active: () => false, touchActive: () => false },
     disposed: false,
     document: { hidden: false },
-    exitAction: {
+    exit: {
       activate() {
         exit();
         return true;
