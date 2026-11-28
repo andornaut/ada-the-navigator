@@ -32,3 +32,4 @@ prices and pacing.
 | ada-0453 | Increase heavy salvage and encounter rewards                                         | [ada-0453.md](../work/ada-0453.md) |
 | ada-0463 | Guarantee minimum resource payouts by asteroid size                                  | [ada-0463.md](../work/ada-0463.md) |
 | ada-0464 | Increase asteroid and small-ship ammunition drop odds                                | [ada-0464.md](../work/ada-0464.md) |
+| ada-0465 | Tune enemy hull HP and Stardust rewards                                              | [ada-0465.md](../work/ada-0465.md) |
