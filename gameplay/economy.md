@@ -30,14 +30,13 @@ Exploring finds a station every few minutes.
 
 ## Earning Stardust
 
-A hostile station pays its full roll on its first disable or destruction in the
-encounter. Destruction after disable pays nothing further, and Continue
-preserves whether the payout already happened. Defenders retain their ordinary
-drops. Site and encounter lifetimes follow
+A hostile station resolves its ordinary heavy reward on first hull destruction
+in the encounter. Continue preserves prior payment or claim, including legacy
+station payouts. Defenders retain their ordinary drops. Site and encounter lifetimes follow
 [Rules](rules.md#hostile-station-sites-and-map-knowledge) and
 [Ships](ships.md#hostile-station-defenders-and-encounter-lifetime).
 
-Destroyed enemy ships release Stardust as small glinting pickups. Destroyed
+Enemy ships release their Stardust drops as small glinting pickups. Destroyed
 asteroids release either an eligible ammo pack alone or a size-weighted resource
 yield. On the resource branch, only small asteroids can yield zero units.
 Ada's ship has a tractor beam, with no visual of its own, that draws every
@@ -46,12 +45,10 @@ a hunt job's lost item) within its pull radius toward her at its pull speed,
 all kinds alike. A pickup collects within 20 world units of Ada's drawn ship, the
 one pickup rule (see [Rules](rules.md)). Base pull radius is 60 world units and
 base pull speed is 120 world units per second; levels 2 and 3 raise them to 90
-and 160, then 120 and 200. Enemy ships are
-destroyed, not teleported: a defeated ship breaks apart in a short effect and drops
-its Stardust. A heavy is destroyed when its hull HP reaches 0.
-Each whole-number payout in the listed destruction range is equally likely.
-Each enemy class uses the same range in every galaxy, regardless of hull HP,
-part HP or mount count. Fighter escorts use the fighter range.
+and 160, then 120 and 200. A destroyed ship breaks apart in a short effect.
+Each whole-number Stardust payout in the listed range is equally likely.
+Each enemy class uses the same range in every galaxy, regardless of hull HP
+or mount count. Fighter escorts use the fighter range.
 
 | Enemy           | Destruction range | Average |
 | --------------- | ----------------: | ------: |
@@ -64,15 +61,19 @@ part HP or mount count. Fighter escorts use the fighter range.
 | Turret platform |             15–25 |      20 |
 | Hostile station |             20–30 |      25 |
 
-For a frigate, capital ship or turret platform, salvage pays half the rolled
-value, rounded down. The sole exception to that salvage rule is the finale
-flagship (`PHANTOM_FLAGSHIP`, object ID `phantomFlagship`), which pays exactly
-50 Stardust on salvage. Destroying the hull pays the full roll. A discovery
-cache pays 4.
+An ordinary heavy's first hull destruction yields the full class Stardust roll
+unless the upgrade roll succeeds. One upgrade pickup then replaces the entire
+Stardust payout. The chance is 10% for a frigate or turret platform and 20% for
+an ordinary capital or hostile station. Fleeing, unloading, despawning or
+restoring a survivor grants no defeat loot. Continue preserves already paid
+or claimed outcomes.
 
-Disabling a heavy does not destroy it. Fleeing, unloading,
-despawning or restoring a survivor does not grant defeat loot, and a released
-wreck never pays again.
+The active finale flagship (`PHANTOM_FLAGSHIP`, object ID `phantomFlagship`)
+awards the last holodisk and exactly 50 Stardust once on surrender, outside the
+ordinary heavy roll. Existing environmental wrecks yield their site's existing
+loot once through [Scan](quests.md#actionable-scan-results). A discovery cache
+pays 4 Stardust.
+
 Discovery caches are rare. Resource-yield asteroids first roll a total using
 these relative weights. Each array follows the listed total-unit range in
 ascending order and sums to 100. The maximum chances in this table describe
@@ -154,8 +155,8 @@ of pickups is the drop's value, capped at 8 for small craft, 16 for frigates and
 destroyed capital's, splits into pickups worth more than 1 Stardust.
 
 Upgrades are sold at stations and are also rare drops, at the same rates in every
-galaxy: 0.25% of destroyed small ships and 20% of salvaged frigates, platforms and
-capitals drop an upgrade pickup. Rocks never drop one. A destroyed heavy drops none. An upgrade drop
+galaxy. Destroyed small ships have a 0.25% upgrade chance. Ordinary heavies use
+the exclusive upgrade rates above. Rocks never drop an upgrade. An upgrade drop
 gives one level, as buying the next level does, and only something Ada can still
 use. The game picks a category, then an item within it. Weapons, Shield, Engine
 tuning and Tractor beam have equal relative weight. Paint is shop-only and

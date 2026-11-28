@@ -280,7 +280,7 @@ resolved, and its stations, shops, jobs, activities and any unfinished quests
 stay available. Completing a quest invites a return to Earth without forcing
 immediate exit from space.
 
-Story and quest interactions in space (Talk, Deliver, Tow, Salvage and Deposit)
+Story and quest interactions in space (Talk, Deliver, Tow and Deposit)
 open the conversation card: the storybook's story panel over the
 paused, dimmed space view. Each line shows its actual speaker's name tab and
 portrait. An interaction with no person to address uses Astra. Previous retraces
@@ -503,11 +503,11 @@ Once placed, Broad Wing appears on the local map and uses its usual Travel here 
 boss hull meter carries the "Captain Redact" badge. It clears on disengagement
 and restores the current hull on re-entry.
 [Redact's exchange](player-copy.md#captain-redact-and-broad-wing) covers the
-approach, first hardpoint loss while the ship remains active, and resolution.
+approach and resolution.
 
-Destroy the hull or disable and Salvage Broad Wing to reveal one "Hidden
+Destroy Broad Wing's hull to reveal one "Hidden
 relay" waypoint on the local map and add one matching flight log entry. The
-relay uses the usual map jump rules. The standard heavy Stardust payout and
+relay uses the usual map jump rules. The [ordinary heavy reward](economy.md#earning-stardust) and
 relay discovery each occur once. Continue preserves encounter and damage
 state. Returning to Andromeda preserves the encounter's progress and the
 relay stays discovered once revealed.
@@ -535,7 +535,7 @@ galaxy's discovered stations like any other.
 After Ada clears the Hub's required approach guard, the first welcome opens
 only when she chooses Talk and passes the normal docking checks. Quartz
 welcomes Ada in the normal station shell with its service tabs available. Due
-held-job actions and Salvage take priority over Talk, and Talk takes priority
+held-job actions take priority over Talk, and Talk takes priority
 over ordinary ore Deposit while the welcome is due. A docking refusal or an
 early Undock leaves the unfinished welcome due. Continue restores the docked
 visit with any unfinished welcome still available. Finishing the welcome keeps
@@ -595,18 +595,13 @@ holodisk purchase follow their existing steps independently of the encounter.
 While the carrier is engaged, its hull meter carries the "Captain Claim"
 badge. It clears on disengagement and returns with current hull health on
 re-entry. [Claim's exchange](player-copy.md#captain-claim-and-outrigger-carrier)
-covers the approach, first hardpoint loss while the carrier remains active,
-and resolution. When Ada disables a Mine Layer while the carrier remains
-active, that mount stops laying mines. Astra says “That side won't lay new
-mines. Watch for the ones already there.” Existing mines expire or can be
-cleared as usual. Use the disabled mount's actual side, keep the other
-launchers active, and retain the existing damage and mine cap. If the same
-hit resolves the encounter, use the resolution cue.
+covers the approach. The carrier keeps its Mine Layers until destruction.
+Existing mines expire or can be cleared as usual.
 
-Destroy the hull or disable and Salvage the carrier to open the same seeded
-field for ordinary mining and replace the boss's map waypoint with "Ore field".
-Both waypoints use the usual Travel here rules while visible. Use the ordinary heavy Stardust payout
-once, full on destruction or half rounded down on Salvage. The encounter's
+Destroy the carrier's hull to open the same seeded field for ordinary mining
+and replace the boss's map waypoint with "Ore field". Both waypoints use the
+usual Travel here rules while visible. Resolve the
+[ordinary heavy reward](economy.md#earning-stardust) once. The encounter's
 state persists through Continue and return. Once resolved, the field stays
 open and the carrier does not return.
 
@@ -769,8 +764,8 @@ space story runs in three acts:
 1. **Blockades.** Three Blurb settlements, story destinations placed like
    Sunflower's outposts, each sit inside a blockade: a `frigate` and two `fighter`
    groups from Phantom's roster, holding within 600 world units of the
-   settlement. A blockade breaks when all its ships are destroyed, disabled or
-   fled. The direction indicator marks the nearest unbroken blockade. A freed
+   settlement. A blockade breaks when all its ships have been destroyed or
+   have fled. The direction indicator marks the nearest unbroken blockade. A freed
    settlement's Blurb thanks Ada through Talk; the third, Dollop, tells her where
    the flagship waits and sends word to her friends. The flagship's position then
    shows as a waypoint, marked like the holodisk waypoint, at least 6000 world
@@ -785,21 +780,21 @@ space story runs in three acts:
 2. **Fleet battle.** When Ada comes within 1500 world units of the waypoint, the
    battle begins: her allies jump in beside her (see
    [Ships](ships.md#finale-allies)), and three waves of drones come, each two
-   encounters drawn from the ambient roster. The next wave
-   arrives when the last is destroyed, disabled or fled. The flagship and its
-   escorts hold back until the third wave is gone.
+   encounters drawn from the ambient roster. The next wave arrives when all
+   ships in the previous wave have been destroyed or have fled. The flagship
+   and its escorts hold back until the third wave is gone.
 3. **The flagship.** Archie's own capital ([Ships](ships.md#archies-flagship))
    then attacks. While engaged, the boss hull meter carries the "Admiral Archie"
-   badge. It clears on disengagement and
-   returns with the current hull on re-entry. Astra reacts once when the first
-   hardpoint is destroyed and the flagship stays active. Continue retains the
-   cue until its first display. If the first hardpoint loss also disables the
-   flagship on that hit, the fight goes straight to surrender.
-   The flagship can be beaten only by disabling it. Its hull never drops below
-   1 HP. When Use offers Salvage, Ada can recover the last holodisk. Archie surrenders the disk, Astra's memory is complete, and
-   at Ada's request Astra shows him her whole map: galaxies past galaxies, without
-   end. He relents and stays in Phantom to help the Blurbs mend the docks his
-   blockades broke.
+   badge. It clears on disengagement and returns with the current hull on
+   re-entry. Any damage, including a closing ram, that would leave the active
+   flagship at or below 16 of its 320 hull HP pins it at 16. It surrenders,
+   stops firing and stays damage-immune and noncombat. The large HUD reads
+   "Surrendered". The [surrender exchange](player-copy.md#chapter-six-the-garden-party)
+   plays in order in the nonblocking flight overlay. Surrender awards the last
+   holodisk and exactly 50 Stardust once, without a Use action or pickup modal.
+   At Ada's request, the restored Astra shows him her whole map, with galaxies
+   past galaxies, without end. He relents and stays in Phantom to help the Blurbs
+   mend the docks his blockades broke.
 
 If the shield fails during the fleet battle or the flagship fight, the emergency
 jump works as usual: broken blockades and freed settlements stay, and the battle
@@ -810,8 +805,8 @@ battle is tuned to be winnable with none. Objectives are in
 Once the chapter is complete, Phantom's drones stand down: it places no new
 encounters, and Archie helps mend the Blurbs' docks. Drones in the other
 galaxies are beyond his signal and keep their last orders, so their space stays
-as dangerous as before. The salvaged flagship stays at the waypoint as a passable
-hulk with its lights on. The Blurb settlements' docks show cracks from the blockades
+as dangerous as before. After the aftermath, the flagship remains at the
+waypoint as a passable hulk with its lights on. The Blurb settlements' docks show cracks from the blockades
 until the chapter is complete, then show mended, Archie's work. The "dark nebula"
 in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
 
@@ -881,10 +876,9 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   speakers up close.
 - Talk range is 160 world units, centre to centre: from Ada's position to the
   object's, with no hull or drawn-size radius. It is one value for Use at a
-  settlement, outpost, station or the hub, Dock included, and for Salvage on a
-  disabled heavy; when several are in range, the nearest wins, and a destination
-  on a blocked route is excluded. Other ranges are their own values: tow attach
-  120, and station discovery uses its own 320.
+  settlement, outpost, station or the hub, Dock included. When several are in
+  range, the nearest wins, and a destination on a blocked route is excluded.
+  Other ranges are their own values: tow attach 120 and station discovery 320.
 - Back returns one step to the screen that opened the current page. A page
   opened from Menu or Pause returns to that same menu with its state and pause
   status intact. Close dismisses one dialog to the view underneath it. Resume
@@ -1115,8 +1109,8 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   - Phaser: a long-range hitscan beam that reaches the fire-time rounded
     coverage boundary through ships, obstacles and mines. Each eligible
     object it intersects takes one hit at full damage, with its own fixed
-    contact effect. A multipart ship takes one hit at the first eligible
-    contact on its hull or a live hardpoint. An armed mine in the beam pops.
+    contact effect. Each enemy takes one hull hit at its first eligible contact.
+    An armed mine in the beam pops.
     The beam fires once every 2.0 s and deals 4, 6 or 8 damage at levels 1, 2
     and 3. Normal target eligibility and protection still apply.
 - Rapid and Heavy Missiles have a full collision width of 12 world units
@@ -1133,8 +1127,8 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   eligible target whose drawn shape overlaps the circle, including at the edge,
   takes the missile's full damage once. For friendly blasts this includes
   destructible asteroids, even when the missile misses the rock itself.
-  When a ship's turret is in reach, the nearest turret takes the
-  damage. Mines inside the circle are destroyed. Friendly blasts spare Ada.
+  An enemy's hit applies to hull HP. Mines inside the circle are destroyed.
+  Friendly blasts spare Ada.
   Enemy missile blasts damage Ada and spare other enemies.
 - Damage and hit points share one unit: 1 damage removes 1 HP, and a level 1
   Laser shot deals 1 damage. Enemies fire the same six weapons at their
@@ -1210,7 +1204,9 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   and prediction rules. Physical contact uses the existing collision rules.
 - Admiral Archie's uncrewed drone fleet is the recurring hostile faction in every
   galaxy, searching for the same holodisks.
-- Defeated enemy ships are destroyed and drop Stardust, the game's currency.
+- Ordinary enemy ships are destroyed at 0 hull HP. Loot follows
+  [Economy](economy.md#earning-stardust). The active finale flagship surrenders
+  at 16 HP.
 - One rechargeable shield of 10 HP, 15 and 20 at shield levels 2 and 3. No hull
   resource.
 - At every shield level, recharge starts 20 seconds after Ada last took damage
@@ -1227,9 +1223,9 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
 - Ada is in battle while an enemy that is chasing or attacking her is inside the
   battle square: centred on Ada, reaching half the game area's width plus 64
   world units along each axis (424 on the 720-wide view). Idle enemies,
-  retaliators not yet hit, fleeing or returning enemies and disabled heavies do
-  not count. Ada is in danger while she is in battle or while an enemy shot is in
-  flight inside the battle square.
+  retaliators not yet hit, fleeing or returning enemies and the surrendered
+  flagship do not count. Ada is in danger while she is in battle or while an
+  enemy shot is in flight inside the battle square.
   Danger disables Travel here, Galaxies and Dock; Back to title stays available.
   Ada must break contact before she docks.
 - No post-hit invulnerability. The arrival grace under [Protection](#protection)
@@ -1272,11 +1268,16 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   character format as the count ("+44.4k"). Ore spent on shield recharge shows
   a "−10" tick under the ore count for each 10 ore paid, mirroring the gain
   ticks.
-- A boss hull meter has one dialogue-style name badge attached above its left
-  edge. Use the captain's name when available and the ship's name otherwise.
-  Hammer's badge reads "Captain Tally". Nothing appears below the meter.
-  When the disabled ship offers Salvage, the meter's accessible value text
-  reads "Disabled".
+- Visible engaged ordinary platforms, frigates, capitals and hostile stations
+  use compact hull bars attached to their on-screen hulls. Named bosses use
+  only the existing large hull HUD,
+  with one dialogue-style badge above its left edge. Use the captain's name
+  when available and the ship's name otherwise. Hammer's badge reads
+  "Captain Tally". Nothing appears below the meter. The flagship's large HUD
+  reads "Surrendered" on surrender.
+  Keep existing boss engagement behavior. Remove hardpoint meters and target
+  routing, and retire the Disabled and Salvage prompts. The HUD changes are
+  pending at combat revision `1d059acf6`.
 - Weapon equip notice: when Ada's equipped weapon changes in flight, show its
   name in the [scan notice style](quests.md#completion-presentation). Center it
   below the top HUD icon row, clear of any visible boss bar. When it overlaps
@@ -1333,7 +1334,8 @@ in Dollop's line is flavour: smoke banks near the waypoint, scenery only.
   the shield.
 - A closing hull impact between Ada and an enemy deals 1 damage to Ada's
   shield and 1 damage to the enemy hull. Arrival protection still protects Ada,
-  and special enemy hull floors still apply. Separating or placement contacts
+  and a closing ram can trigger the active finale flagship's surrender.
+  Separating or placement contacts
   only push ships apart. Enemy-to-enemy avoidance and separation deal no damage.
 - No encounter is placed within 2000 world units of a flight's start or any
   quantum jump arrival, Travel included, so every launch begins calm.
@@ -1349,7 +1351,7 @@ can target her: enemies do not aim, fire or chase at her, and sight aggression
 does not latch. Enemy shots and collisions with enemies deal her no damage.
 
 - Docked, in a station menu (the Station welcome and the Shop, Jobs and Exchange
-  opened from it) and in a conversation card (Talk, Deliver, Tow, Salvage and
+  opened from it) and in a conversation card (Talk, Deliver, Tow and
   Deposit), play is paused, so nothing moves, fires or deals damage. The
   in-flight speech box and notices never pause play and give no protection.
 - Arrival grace: for 3 seconds after a flight's start (launch), a quantum jump
@@ -1382,7 +1384,7 @@ does not latch. Enemy shots and collisions with enemies deal her no damage.
   friendly destination's 160. No rock, moving-rock path or enemy group is placed
   in either, and enemy ships steer and move outside them. The 160-world-unit
   arrival clearance keeps rocks off each launch and arrival point, and the
-  2000-world-unit calm radius above keeps encounters off it. Salvage sites keep
+  2000-world-unit calm radius above keeps encounters off it. Environmental wrecks keep
   their own exclusion zone ([Spawn targets](#spawn-targets)).
 
 ## Interactions and navigation
@@ -1415,8 +1417,10 @@ Sensing, seeing and tutorial playback do not chart the landmark. Scan needs no
 additional confirmation. Explicit Scan alone charts the landmark
 and commits its survey and achievement progress once. Flying over it, seeing it
 on screen or sensing it with Penny does not chart it or grant a discovery
-reward. An already charted landmark cannot pay again. The Use target, callout,
-map and direction indicator refer to the same landmark and charted state.
+reward. An already charted landmark cannot pay again. Existing loot at
+environmental wreck sites follows the [wreck Scan rules](quests.md#actionable-scan-results).
+The Use target, callout, map and direction indicator refer to the same landmark
+and charted state.
 
 Required events and undiscovered quest destinations spawn ahead of Ada in chunks
 she approaches. Tune fresh-chunk exploration distance between encounters so continued
@@ -1449,7 +1453,10 @@ Fresh entry creates a separate encounter identity and resets the enemy populatio
 including heavy ships, hostile stations, escorts, damage, casualties, wreck outcomes
 and enemy retention records. Required guards still follow the current story gates;
 resolved story encounters do not return. Within a flight, paging and Continue retain
-the existing enemy state and equipped weapon levels. Uncollected pickups remain
+the existing hull damage, equipped weapon levels and claimed outcomes. Continue
+preserves completed progress and paid or claimed loot. Legacy part damage and
+unclaimed disabled encounters need compatible restoration without duplicate
+rewards or blocked progression. Uncollected pickups remain
 run-local as specified below.
 
 Saves reset before version 1. While the game's version is below 1, a stored save
@@ -1515,7 +1522,7 @@ exploration. Compact visited information can grow with visited chunks; meaningfu
 persistent history can also grow with interactions and important encounters.
 
 Within one flight, retain frigates and capital ships independently of disposable
-chunks, including mutable hardpoints, AI state and destroyed-ship tombstones.
+chunks, including hull damage, mount clocks, AI state and destroyed-ship tombstones.
 Interacted NPC state, story, quests, routes and destinations also persist
 independently of those chunks. Important guards must not reroll or disappear on
 paging or Continue to bypass a required fight. Fresh entry resets enemy retention
@@ -1596,7 +1603,7 @@ plays the drone warning), and quiet stretches without combat, which draw unseen 
 galaxy's pool. Astra shares lore and flavor about places and alien species; Ada
 asks questions and reacts. Seen conversations are saved so they do not repeat. A repeating
 trigger (warnings, sightings, Penny's sense, a newly mapped place, a station
-return and the first disabled heavy each flight) has a pool of variants on one
+return) has a pool of variants on one
 theme and draws them in a shuffled order, never the same variant twice in a row,
 starting a new shuffle once all have played.
 
@@ -1641,8 +1648,7 @@ Astra's drone-arrival line is the only cue.
 Edge markers draw under the HUD. [Unified target markers](quests.md#unified-target-markers)
 defines eligibility, persistence and bearing-first placement. Map and Quests
 retain long-range guidance.
-Known enemies, heavies, guards and stations retain their distinct marker art;
-a disabled route guard uses its heavy marker once it stops blocking the route.
+Known enemies, heavies, guards and stations retain their distinct marker art.
 The local map is the only galaxy map; there is no minimap. Discovery caches
 light within 160 world units; the holodisk collects on contact like other pickups.
 These are approved design rules; source presence does not establish rendered
@@ -1750,9 +1756,8 @@ or pack losses
 ([Retreat policy](ships.md#bounded-retreat-follow-up)). Behavior selection and tuning belong in data wherever
 practical; reusable code handles the underlying behavior operations.
 
-[Ships](ships.md#heavy-hull-and-disabling) defines heavy hull and hardpoint
-damage, disabling, salvage and engines. Keep weapon mounts and command areas
-visually distinct, and keep the hull and hardpoints readable during combat.
+[Ships](ships.md#heavy-hull-and-defeat) defines hull-only damage and heavy
+defeat. Keep the hull, weapon mounts and command areas readable during combat.
 
 Missile launchers fire straight-flying missiles, visually distinct from ordinary
 shots. No missile homes.
@@ -1760,15 +1765,15 @@ shots. No missile homes.
 Every enemy ship that can move keeps moving at all times, at least at a quarter
 of its top speed: on a patrol, holding its band, circling its station or, for the
 Mining Freighter, tracing the edges of nearby asteroids. Arriving home, losing
-sight of Ada and blocking a peer never stop it. Only destroyed, disabled,
-salvaged and engineless ships, platforms and hostile stations come to rest
+sight of Ada and blocking a peer never stop it. Destroyed ships, the surrendered
+flagship, fixed platforms and hostile stations are outside this movement rule
 ([Keep moving](ships.md#keep-moving)).
 
 Enemy speeds are fixed in world units and the same in every galaxy (see
 [Ships](ships.md#values)); pursuit range is finite. Frigates and capital ships can
 block required quest routes in the first five galaxies. A required story or quest
-guard frigate must always be present and blocks its route until defeated or
-disabled. Only its support fighters may number zero to two, within existing
+guard frigate must always be present and blocks its route until destroyed.
+Only its support fighters may number zero to two, within existing
 caps. General ambient frigates retain two mandatory escorts; see
 [Ships](ships.md#required-guard-frigates-and-support-fighters).
 
@@ -1784,8 +1789,8 @@ production lifecycle checks and acceptance are not established by this rule.
 
 ### Spawn targets
 
-One seeded planner places salvage wrecks, ambient enemy groups, static rocks and
-moving rocks, after the required sites and guards above. It plans salvage sites
+One seeded planner places environmental wrecks, ambient enemy groups, static
+rocks and moving rocks, after the required sites and guards above. It plans wrecks
 first, then enemy groups, then static rocks (features, then slot rocks), then
 moving rocks, which it chooses only from placed slot and feature rocks.
 All placements share one spatial index. The planner reads its targets from one
@@ -1793,7 +1798,7 @@ catalog. The ambient admission budgets, archetype limits and capital allowance
 in [Ships](ships.md#ambient-admission) apply to the planner's output.
 
 - A spawn is accepted only when its footprint is at least 20 world units (Ada's
-  diameter) from every placed footprint. Required hulls and salvage wrecks are
+  diameter) from every placed footprint. Required hulls and environmental wrecks are
   placed footprints of their spacing radius r, so rocks keep r + 20 from their
   centres. Hostile stations are footprints of their r too. A slot or feature rock gets 48 seeded positions; a rock
   with no clear position is dropped.
@@ -1818,16 +1823,16 @@ in [Ships](ships.md#ambient-admission) apply to the planner's output.
   Phantom about 147. Escorts sit on a ring the largest of the leader's r + 60
   (the escort station), the leader's r + the escort's r + 20, and the radius
   that keeps neighbouring escorts 20 apart.
-- Stations and points of interest other than salvage sites never block a
+- Stations and points of interest other than wreck sites never block a
   spawn. The existing exclusion zones still apply, including the arrival calm
   radius, station and destination exclusion zones, the Needle channel, currents
   and ore fields.
-- A salvage site is a point of interest whose disabled frigate wreck Ada can
-  salvage. Each salvage site has its own exclusion zone, and enemy groups avoid
-  it as they avoid a required hull: a circle around the wreck reaching twice the
+- Ada recovers an environmental wreck's existing loot through
+  [Scan](quests.md#actionable-scan-results). Enemy groups avoid its exclusion
+  zone as they avoid a required hull: a circle around the wreck reaching twice the
   900-world-unit local admission radius beyond the wreck's footprint. Rocks
   keep the usual 20-world-unit gap from the wreck's footprint. Local admission
-  (budget, archetype limit and capital count) does not apply to salvage wrecks
+  (budget, archetype limit and capital count) does not apply to environmental wrecks
   ([Ships](ships.md#ambient-admission)).
 - Slot rock requests use weights of 42% Small, 38% Medium, 16% Large and 4% Huge.
   Each chunk orders seeded draws by footprint, largest first. When its slot

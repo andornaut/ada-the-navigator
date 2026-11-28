@@ -38,7 +38,8 @@ availability and play verification are separate:
   Andromeda, Cartwheel and Phantom.
 - Needle's arrival, practice and practice-complete exchanges have runtime steps.
   Andromeda and Phantom have authored runtime source, including their essential
-  exchanges, Phantom's final-holodisk Salvage variant and map-and-docks exchange.
+  exchanges and Phantom's map-and-docks exchange. The approved finale surrender
+  overlay and handover remain pending at combat revision `1d059acf6`.
 - Rivet's "Spare parts really help!", Quartz's "There's docking space for
   everyone." and Mica's "I'd like some company next time. That would help."
   responses are present in runtime copy.
@@ -63,7 +64,7 @@ household cats; Penny remains her dog.
 | Needle quest                           | Elder Loom                                                                                       |
 | Andromeda quest                        | Wick (story Settler), Pip                                                                        |
 | Cartwheel quest                        | Quartz (hub Station), Mica (Miner), Opal (first Regular visitor), Jasper (final Regular visitor) |
-| Nonperson Use actions                  | Astra (guide, including Salvage and ore Deposit)                                                 |
+| Nonperson Use actions                  | Astra (guide, including Scan and ore Deposit)                                                    |
 | Phantom quest                          | Blurbs (first and second freed settlements), Dollop (third), Admiral Archie                      |
 | Sunflower Dock                         | Saffron, Bramble, Nectar                                                                         |
 | Whirlpool Dock                         | Ripple, Coral, Brine                                                                             |
@@ -423,8 +424,6 @@ These [Whirlpool boss cues](quests.md#captain-sounder) appear in the small
 conversation box after the family reveals the disk waypoint.
 
 - Approach, Captain Sounder: "I followed their calls. Stay out of this current."
-- First hardpoint lost, Astra: "One hardpoint down. Ride the current around the
-  escorts."
 - Resolved, Astra: "Sounder's out of the way. The disk is where the family said
   it would be."
 
@@ -568,7 +567,6 @@ current memory progress.
 
 - Approach, Captain Cadence: "Hold at the channel mouth. Fire when they come
   through."
-- First hardpoint lost, Ada: "There's a pause between shots. I can use that."
 - Resolved, Astra: "I picked up a transmission. I've saved it to our flight
   log."
 - Flight log before the third holodisk memory: "Orders from fleet command:
@@ -710,8 +708,6 @@ conversation box. The relay entry and local map label are both "Hidden relay".
 
 - Approach, Captain Redact: "That beacon's lit again. All patrols, move away
   from the light."
-- First hardpoint lost, Astra: "One mount's down. I'm recording where the
-  patrols are heading."
 - Resolved, Astra: "Their flight log points to a hidden relay. I've added it to
   the map."
 
@@ -833,10 +829,8 @@ conversation box.
 
 - Approach, Captain Claim: "This field is under fleet claim. Miners, clear the
   area."
-- First hardpoint lost, Ada: "The miners warned us about this side. One mount's
-  down."
-- Resolved, Astra: "The field is clear. The carrier's salvage can help pay for
-  the disk."
+
+Claim's resolution line is pending approved copy.
 
 ## Chapter six: the garden party
 
@@ -901,11 +895,14 @@ Battle chatter stays in the small box:
 - With allies: Astra: "That's his flagship. And Ada, look." Ada: "Everyone came!" (happy)
 - Without allies: Astra: "That's his flagship. It's just us." Ada: "Just us is enough."
 - Admiral Archie, as the flagship attacks: "Astra. Come home, and bring my disks. No one needs to get hurt." Astra: "No one will. But I'm not yours."
-- Astra, first hardpoint lost while the flagship stays active: "One hardpoint down. Keep aiming for the glowing parts."
-- Admiral Archie, flagship disabled: "Enough! Take it. Take the last disk."
 
-Salvage the last holodisk uses Astra's short brief below and the existing
-holodisk outcome. After the sixth memory line:
+On surrender, play these lines in order in the in-flight overlay.
+
+1. Ada: "Archie, stand down. This is over."
+2. Admiral Archie: "All right. Take the disk."
+
+Award the last holodisk and exactly 50 Stardust once. Keep the existing
+holodisk outcome and sixth memory line, then play the map-and-docks exchange.
 
 ### Phantom copy anchor: map and docks: PARTY Admiral Archie
 
@@ -950,9 +947,9 @@ Objectives, in order:
 2. Break the drone blockades.
 3. Talk with the freed Blurbs.
 4. Fly to Archie's flagship.
-5. Destroy the flagship’s weapon hardpoints to disable it.
-6. Use Salvage at the flagship to recover the last holodisk.
-7. Go home to Earth when ready.
+5. Bring Archie's flagship to surrender so he hands over the last holodisk
+   (exact objective wording pending).
+6. Go home to Earth when ready.
 
 ## Repeated mechanical Use briefs
 
@@ -962,23 +959,6 @@ keep their own speaker names and portraits if they have a line. These short
 exchanges describe existing actions; they add no quest stage, reward or choice.
 When available, Skip reaches the same existing action outcome once and leaves any
 pending choice for the player. Named-person deliveries use that person's PARTY.
-
-### Salvage: PARTY Astra
-
-Disabled heavy:
-
-- Astra: "Its weapons are down. I can salvage parts."
-- Ada: "Let's take what we need and go."
-
-Last holodisk, after the flagship is disabled:
-
-- Astra: "The last holodisk is here. I can bring it aboard."
-- Ada: "Let's get your memory back."
-
-Optional topics for the relevant salvage:
-
-- "What can we collect?" Astra: "Parts from this disabled ship." For the flagship's last holodisk: Astra: "The last piece of my memory."
-- "Is it disabled?" Astra: "Yes. Its weapons are down."
 
 ### Tow: PARTY Astra
 
@@ -1037,30 +1017,7 @@ Drones arrive:
 - Astra: "Incoming drones." Penny: "Grr..." (upset)
 - Astra: "Here they come." Ada: "We can handle this."
 
-Frigate sighted:
-
-- Astra: "A frigate. Its guns are the glowing parts." Ada: "Then that's where
-  I'll aim."
-- Ada: "That one's bigger than a drone." Astra: "A frigate. Knock out its guns
-  to stop it."
-- Astra: "Frigate ahead. Take out its weapons first." Ada: "Got it."
-
-Capital ship sighted:
-
-- Ada: "That ship is huge!" Astra: "No crew aboard. Aim for the glowing parts."
-- Ada: "Look at the size of that!" Astra: "Big, but empty. Hit the glowing
-  parts."
-- Astra: "A capital ship. Nobody aboard, just machines." Ada: "Then let's find
-  its glowing parts."
-
-A heavy disabled, first time each flight:
-
-- Astra: "Its weapons are down. We could salvage parts and let it go." Ada: "No
-  need to wreck it." (happy)
-- Astra: "Its guns are out. We can salvage it, or finish it." Ada: "Salvage.
-  It can't hurt anyone now." (happy)
-- Astra: "Disabled. Come close and I can salvage parts." Ada: "Let's take what
-  we need and go."
+Frigate and capital sighting variants need approved copy for hull-only combat.
 
 Penny senses a point of interest (Penny's line is always the same, so players
 learn it). The displayed notice identifies the exact target for the direction
@@ -1130,8 +1087,8 @@ A guard still blocks the destination Ada reached, one variant in turn:
   Penny."
 - Astra: "We can't visit yet. A guard ship is watching." Ada: "Then let's deal
   with it."
-- Astra: "A guard is blocking the way in. Stop its weapons first." Ada: "Okay.
-  I'm ready."
+
+The route-guard variant that referred to weapon damage needs approved copy.
 
 Sunflower:
 
@@ -1224,8 +1181,6 @@ conversation box.
 
 - Approach, Captain Tally: "Food, parts, repairs. I counted three outposts. I
   didn't count on them working together."
-- First hardpoint lost, Astra: "That's one hardpoint down. The others are still
-  live."
 - Resolved, Astra: "The patrol's clear. I marked a supply cache and a safer
   route between the outposts."
 
@@ -1235,14 +1190,14 @@ These one-time in-flight Astra cues accompany the
 [authored encounter patterns](ships.md#authored-encounter-difficulty).
 Formation positions, firing warnings and route markers carry the timing.
 
-| Encounter         | Trigger                              | Astra                                                                          |
-| ----------------- | ------------------------------------ | ------------------------------------------------------------------------------ |
-| Hammer            | First charged-lance tell             | "Wait for the aim line to stop moving. Then dodge. Aim for the glowing mount." |
-| Manta Dreadnought | First escort crossing                | "The escorts are taking turns. Use the gap between passes."                    |
-| Crossbow          | First sector warning                 | "Crossbow fires to one side at a time. Look for the marked lane."              |
-| Andromeda         | Courier ambush warning               | "Fighters on both sides. Keep going toward the settlement."                    |
-| Cartwheel         | Mining approach warning              | "Patrol ahead. Use the rocks for cover or take the marked route around."       |
-| Phantom           | Fighter groups resolve at a blockade | "Pull back and recharge if you need to. The frigate waits ahead."              |
+| Encounter         | Trigger                              | Astra                                                                    |
+| ----------------- | ------------------------------------ | ------------------------------------------------------------------------ |
+| Hammer            | First charged-lance tell             | "Wait for the aim line to stop moving. Then dodge."                      |
+| Manta Dreadnought | First escort crossing                | "The escorts are taking turns. Use the gap between passes."              |
+| Crossbow          | First sector warning                 | "Crossbow fires to one side at a time. Look for the marked lane."        |
+| Andromeda         | Courier ambush warning               | "Fighters on both sides. Keep going toward the settlement."              |
+| Cartwheel         | Mining approach warning              | "Patrol ahead. Use the rocks for cover or take the marked route around." |
+| Phantom           | Fighter groups resolve at a blockade | "Pull back and recharge if you need to. The frigate waits ahead."        |
 
 ## Greeters
 
@@ -1358,8 +1313,9 @@ Runtime strings are in `src/data/landmarkScanCopy.ts`.
 | `outcomeLead`       | `Someone needs help. The job is at {station}.` | The posted lead's issuing station display name     |
 
 Astra receives one dialogue receipt per actual outcome. Select exactly one intro
-from source `scan` or `remembered`, then append only actual completion sentences
-in event order. An empty completions array adds no completion sentence. Do not
+from source `scan` or `remembered`, using the wreck recovery receipt below
+when applicable. Append only actual completion sentences in event order.
+An empty completions array adds no completion sentence. Do not
 repeat the intro for each completion or infer tasks, quests or labels from the
 nearest/current quest. The current single-condition Survey emits a quest
 completion only, never a synthetic task completion.
@@ -1367,6 +1323,11 @@ completion only, never a synthetic task completion.
 A Scan that posts an [exploration lead](quests.md#posted-leads) appends
 `outcomeLead` after the intro. It names the station whose board now holds the
 job and claims no acceptance or reward.
+
+A first Scan that recovers an environmental wreck's existing loot uses Astra's
+brief in-flight receipt “I recovered supplies from the wreck.” A repeat uses
+`outcomeRemembered`. Neither opens a modal. The recovery receipt is approved
+and pending at combat revision `1d059acf6`.
 
 The receipt has notice priority in the conversation priority order
 ([Rules](rules.md#astra-and-penny-in-flight)): a warning, such as "Drones ahead.",
@@ -1391,7 +1352,7 @@ or replay rewards.
 - Galaxy map Earth button: Earth.
 - Earth with nothing new: Narration: "Penny thumps her tail. Ready for another adventure?" then Pick up the rock.
 - Use actions, each the disc's accessible name and drawn as a symbol: Talk,
-  Deliver, Deposit, Tow, Salvage, Dock, Scan, Quest details, and Use for any other
+  Deliver, Deposit, Tow, Dock, Scan, Quest details, and Use for any other
   interaction. Available real actions, including repeatable Dock, take priority.
 - Dialogue buttons follow the shared [navigation rules](rules.md#dialogue-navigation).
   Next advances a linear page with a single forward choice. For multiple options,
@@ -1414,7 +1375,7 @@ or replay rewards.
 - Exchange: Buy ore and Sell ore offer immediate amounts 1, 10 and 100.
   No amount input or confirmation. Rates remain buy 2 and sell 1 Stardust per ore.
 - Scan outcome copy follows [Scan feedback](#canonical-astra-outcome-copy).
-- Disabled heavy banner: Disabled.
+- Active finale flagship's large hull HUD on surrender: Surrendered.
 - Status labels: Shield, Cargo, Stardust, Ore.
 - Weapon detail header: the existing compact weapon name, with no suffix at
   level 1 and `[2]` or `[3]` at upgraded levels, beside its canonical glyph.

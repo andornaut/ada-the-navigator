@@ -60,10 +60,9 @@ after losing actual line of sight, and resume patrol there. Returning craft inve
 patrol instead of stopping within five world units. Patrol and investigation use
 smooth seeded routes, with tuning relative to each ship's existing combat speed
 ([Enemy navigation](#patrol-and-investigation)). Platforms remain
-stationary; disabled or salvaged ships do not navigate, and ships with no working
-engines coast to rest. Each turret's aim starts on its first target and then
-turns with `aimTurnSeconds`. Hardpoint hit areas and fire origins rotate with the
-hull. An enemy's facing is saved with its other state.
+stationary. The surrendered flagship stops navigating. Each turret's aim starts
+on its first target and then turns with `aimTurnSeconds`. Mount bases and fire
+origins rotate with the hull. An enemy's facing is saved with its other state.
 
 ## Values
 
@@ -231,7 +230,7 @@ When an encounter pages back into the same flight, its survivors are restored by
 role, so a destroyed capital never returns as an escort or the reverse. Fresh entry
 resets enemy populations; Continue preserves the existing flight. The first galaxy is mildly
 more aggressive than the base catalog, and difficulty rises along the route (see
-[Difficulty](#difficulty)). Escorts also fall back when their leader is disabled.
+[Difficulty](#difficulty)). Escorts also fall back when their leader leaves combat.
 
 ## Difficulty
 
@@ -247,8 +246,8 @@ a new Ada at position 1.
 One tuning value, `difficultyScale` (1), multiplies every enemy hit point and the
 encounter rate at every position. Weapon cadence uses the explicit intervals
 and shares in [Enemy weapons](#enemy-weapons). Enemy Stardust payouts follow
-[Economy](economy.md#earning-stardust), independently of hull HP, part HP and
-mount counts. It is not a player setting: there is one forgiving difficulty.
+[Economy](economy.md#earning-stardust), independently of hull HP and mount
+counts. There is one forgiving difficulty with no player setting.
 
 Damage and hit points share one unit: 1 damage removes 1 HP. A level 1 Laser shot
 deals 1 damage.
@@ -269,14 +268,14 @@ Small craft:
 
 Heavies:
 
-| Position | Hardpoint | `frigate` hull | Frigate weapons | `capital` hull | Capital weapons | Heavy share | Turret platform hull | Hostile station hull |
-| -------: | --------: | -------------: | --------------: | -------------: | --------------: | ----------: | -------------------: | -------------------: |
-|        1 |        10 |             40 |               2 |             80 |               4 |          ×1 |                   60 |               Absent |
-|        2 |        10 |             45 |               2 |            100 |               4 |          ×1 |                   65 |               Absent |
-|        3 |        12 |             50 |               3 |            120 |               6 |        ×1.2 |                   70 |               Absent |
-|        4 |        12 |             55 |               3 |            140 |               6 |        ×1.3 |                   75 |                  175 |
-|        5 |        14 |             60 |               4 |            160 |               8 |        ×1.4 |                   80 |                  200 |
-|        6 |        14 |             65 |               4 |            180 |               8 |        ×1.5 |                   85 |                  225 |
+| Position | `frigate` hull | Frigate weapons | `capital` hull | Capital weapons | Heavy share | Turret platform hull | Hostile station hull |
+| -------: | -------------: | --------------: | -------------: | --------------: | ----------: | -------------------: | -------------------: |
+|        1 |             40 |               2 |             80 |               4 |          ×1 |                   60 |               Absent |
+|        2 |             45 |               2 |            100 |               4 |          ×1 |                   65 |               Absent |
+|        3 |             50 |               3 |            120 |               6 |        ×1.2 |                   70 |               Absent |
+|        4 |             55 |               3 |            140 |               6 |        ×1.3 |                   75 |                  175 |
+|        5 |             60 |               4 |            160 |               8 |        ×1.4 |                   80 |                  200 |
+|        6 |             65 |               4 |            180 |               8 |        ×1.5 |                   85 |                  225 |
 
 - Small-craft columns are hull HP. Outside Sunflower's staged ambient roster,
   the group bonus adds to both ends of each `swarm` and `fighter` group range. Lead is how much of Ada's movement enemy
@@ -286,12 +285,8 @@ Heavies:
 - Frigates carry one fixed front Laser and capitals, the flagship included, carry
   two, in addition to the weapon counts above. Each fires the shared Laser at the
   equipped level, at heavy shot speed and the ship's Laser rate (frigate 1,
-  capital 1.5), only along the facing within the 20-degree nose arc. Each is a
-  weapon part with hardpoint HP and counts toward disabling the ship. Art places
-  them on each hull's prow.
-- Every heavy hardpoint (weapon, engine, command and platform turret) has the
-  position's hardpoint HP: 10, 10, 12, 12, 14 and 14 along the route. The
-  flagship's parts have 18 HP.
+  capital 1.5), only along the facing within the 20-degree nose arc. Art
+  places these weapons on each hull's prow.
 - Heavy share multiplies the ambient roster's `frigate` weights before
   normalization. Placed platforms have no weight.
 
@@ -354,9 +349,9 @@ Frigate, capital and hostile-station weapon clocks initialize on their first
 eligible firing step, in stable mount fill order excluding engine, command and
 capped mounts. This includes the flagship and the station's Ring Burst mount.
 Mount index i of N starts after (i / N) times its own final interval. Ineligible
-time pauses cooldowns and burst positions. Disabling a mount never reindexes
-the others. Initialized clocks and burst state persist through saves; later
-coincident shots are allowed. Turret platforms use continuous clocks.
+time pauses cooldowns and burst positions. Initialized clocks and burst state
+persist through saves. Later coincident shots are allowed. Turret platforms
+use continuous clocks.
 
 Shared weapon damage is 100% of the player's damage at the equipped level.
 Blast, spread and reach use that level's canonical weapon definition; more fan
@@ -440,42 +435,30 @@ shot can hit Ada once and preserves the existing no-friendly-fire and
 protection rules. The ring burst has no warning; its emission shows only
 as it fires.
 
-### Heavy hull and disabling
+### Heavy hull and defeat
 
-Frigates, capitals and platforms have hull HP and hardpoints.
-
-- **Damage:** a hardpoint hit damages only that part, with no hull damage or
-  overflow. A hull hit damages only the hull. The flagship retains its hull floor of 1.
-- **Destroyed:** at 0 hull HP the ship breaks apart and drops its full Stardust roll
-  and no upgrade (see [Economy](economy.md#earning-stardust)).
-- **Disabled:** when every weapon hardpoint is destroyed, the ship is disabled,
-  whatever its hull HP. It stops attacking and steering, coasts to rest, no longer
-  counts for battle, and shows a red "Disabled" banner above its hull.
-- **Salvage:** within Talk range of a disabled heavy, Use offers Salvage. It can
-  yield a heavy upgrade and pays half the rolled Stardust, rounded down, for
-  ordinary heavies. [Archie's flagship](#archies-flagship) has a fixed payout.
-  The ship survives: it powers down, its banner goes, it is drawn dimmed,
-  and shots and Ada pass through it. Ada can instead keep shooting a disabled ship
-  until its hull breaks, for more Stardust and no upgrade.
-- **Engines and command:** each engine still provides an equal share of thrust.
-  A heavy that loses all its engines coasts to rest like a disabled heavy,
-  keeping its momentum and slowing to a stop. Command parts never fire and do not count toward disabling.
-- **Mounts:** Art draws each heavy hull once, with every weapon mount it can
-  carry, and a turret for each weapon a mount can hold. A mount the position
-  leaves unused is drawn as a capped plate with no hardpoint. Admiral Archie's flagship has its own, more threatening design.
-- **State:** hull HP, hardpoints, disabled and salvaged states persist within the
-  flight, across paging and Continue. Fresh galaxy entry resets enemy populations
-  without reopening resolved story. Within the flight, a salvaged heavy stays where
-  Ada left it: like a destroyed one, it no longer holds the spacing kept between
-  capital ships, and nothing moves it.
+- **Damage.** All damage goes to hull HP, including hits on a drawn mount. Each
+  area damage event applies one normal hull hit per enemy.
+- **Weapons.** Keep the original loadout, aim, timing and muzzle locations. All
+  equipped mounts keep firing under their usual eligibility rules until hull
+  destruction or the active finale flagship's surrender. Engines and command
+  areas have no independent combat HP. Unused mounts are drawn as capped plates.
+- **Defeat.** An ordinary heavy breaks apart at 0 hull HP and yields its
+  [ordinary heavy reward](economy.md#earning-stardust) once. The
+  [active finale flagship](#archies-flagship) surrenders. Routine combat has
+  no disabled state or manual Salvage action.
+- **State.** Hull HP, mount clocks and surrender persist across paging and
+  Continue. Preserve completed encounters and paid or claimed states. Legacy
+  mount damage has no effect on weapons or thrust. Legacy disabled,
+  unclaimed encounters must resume or resolve without a softlock or duplicate
+  reward. Fresh entry resets enemy populations without reopening resolved story.
 
 ## Hostile station hull
 
 Hostile stations have six active weapon parts in Andromeda, seven in Cartwheel
 and eight in Phantom. Their hull HP is set by [Difficulty](#difficulty).
-Part hits damage only the selected part, with no hull damage or overflow.
-Hull hits damage only the hull. A station has no hull floor: zero hull destroys
-it, and disabling every weapon disables it. Friendly stations retain one HP.
+A hostile station takes hull damage and is destroyed at 0 hull HP.
+Friendly stations retain one HP.
 
 Each galaxy has one hostile station design: two six-sided decks in Andromeda, an
 eight-sided wheel over a deck in Cartwheel and four arms over four in Phantom.
@@ -494,8 +477,7 @@ HP, weapon rolls, clocks and defender casualties. Fresh galaxy entry resets
 combat actors and casualties while preserving seeded site geography and known
 sites. Site identity and knowledge are separate from encounter-epoch actor state.
 
-Keep the existing size ratio 7, active weapon parts 6/7/8, and approved part HP,
-weapon mix and rates unchanged.
+Keep the existing size ratio 7, active weapon parts 6/7/8, weapon mix and rates.
 See [Rules](rules.md#hostile-station-sites-and-map-knowledge) for geography and
 map knowledge, and [Economy](economy.md#earning-stardust) for the station payout.
 These policies are approved and their policy primitives are present in the
@@ -529,16 +511,14 @@ never a singleton. Escorts consume budget slots.
 
 First-sight admission uses a 900-world-unit local radius. It conservatively counts
 live neighbouring hulls whose footprints could share that neighbourhood, including
-required guards, old packs and pursuing ships. Disabled hulls still count;
-salvaged ships do not. One nonstacking local allowance adds two slots near a
-capital ship or a hostile station. Multiple qualifying ships and stations never
-add more than two slots, and friendly stations do not qualify.
+required guards, old packs and pursuing ships. One nonstacking local allowance
+adds two slots near a capital ship or a hostile station. Multiple qualifying
+ships and stations never add more than two slots, and friendly stations do not
+qualify.
 
-Local admission does not apply to salvage wrecks: no budget, archetype limit or
-capital count check. A salvage site's disabled frigate is placed without those
-checks and then counts as a disabled hull toward other groups' budgets; its exclusion zone keeps
-ambient groups out of its neighbourhood
-([Spawn targets](rules.md#spawn-targets)).
+Environmental wrecks are placed outside the combat budget, archetype limits
+and capital count. Their exclusion zones keep ambient groups out of their
+neighbourhood ([Spawn targets](rules.md#spawn-targets)).
 
 Other groups and all mandatory escorts remain atomic: unaffordable groups are
 excluded rather than trimmed, and admission never raises the cap.
@@ -554,10 +534,10 @@ exclusion zones before optional rocks/ambient encounters, then fit support
 under existing caps. Never turn failed placement into an empty route plan,
 raise caps, remotely summon a guard toward Ada or reveal hidden targets.
 Guards patrol near their station/objective outside its exclusion zone and block
-the route until defeated or disabled. Support is not an independent blocker.
+the route until destroyed. Support is not an independent blocker.
 Persistent identities, surviving followers and casualties do not replenish or
-duplicate on revisit/Continue. A disabled or destroyed leader retains the
-existing escort fallback. Capital formations and legacy compatibility remain
+duplicate on revisit/Continue. A destroyed leader triggers the existing escort
+fallback. Capital formations and legacy compatibility remain
 unchanged. Existing required-guard assertions remain required.
 
 Ambient enemy group densities by galaxy and region are in
@@ -708,19 +688,17 @@ turrets fire while it advances, with no speed to advance.
 - **Placement:** one platform stands at the edge of at most half of the ore
   fields, chosen by the seed, so unguarded ore is always available. Its hull is one drawn frame
   that never rotates and has no thrust jets.
-- **Parts:** two turrets, each with the position's hardpoint HP, and a hull with
-  the position's turret platform HP ([Difficulty](#difficulty)).
-  Hit areas, turret mounts and muzzles come from Art's drawn hardpoints, as for
-  the frigate and capital, and hull hits test its drawn outline ([Hulls](#hulls)).
-- **Fire:** each live turret aims independently with `aimTurnSeconds` and fires
+- **Hull and mounts:** two turrets and the position's platform hull HP
+  ([Difficulty](#difficulty)). The drawn geometry supplies the hit outline,
+  mounts and muzzles ([Hulls](#hulls)).
+- **Fire:** each turret aims independently with `aimTurnSeconds` and fires
   a two-shot Laser burst with 0.15 seconds between shots while Ada is within
   520 world units. Burst frequency follows [Enemy weapons](#enemy-weapons).
   It stops firing beyond 520 and never pursues.
-- **State:** retained like a frigate within one flight and across Continue, so
-  destroyed turrets and a disabled, salvaged or destroyed platform remain exact.
-  Fresh entry resets the platform with the enemy population while retaining its
-  ore-field geography. Ada bounces off it on contact until it is salvaged. It drops Stardust by the heavy
-  rule and has the heavy upgrade chance.
+- **State:** retain hull damage, mount clocks and destruction within one flight
+  and across Continue. Fresh entry resets the platform with the enemy population
+  while retaining its ore-field geography. Ada bounces off the intact platform
+  on contact. It uses the [platform reward](economy.md#earning-stardust).
 
 ## Phantom roster
 
@@ -743,16 +721,19 @@ chapter is complete, Phantom places no new encounters.
 Admiral Archie's flagship is a `capital` in his own design, the only crewed ship in
 his fleet.
 
-- **Hull and parts:** 320 hull HP; command, two engines, 8 weapon mounts and two
-  fixed front Lasers, each hardpoint 18 HP. Its weapons follow the capital signature at position 6, as for any
-  capital ([Enemy weapons](#enemy-weapons)). Its hull never drops below 1 HP, so
-  it is beaten only by disabling.
+- **Hull and mounts:** 320 hull HP, command, two engines, 8 weapon mounts and
+  two fixed front Lasers. Keep its [position 6 loadout](#enemy-weapons).
+- **Surrender:** after the existing story gates and three waves, any damage
+  that would leave the active flagship at or below 16 HP (5%), including a
+  closing ram, pins it at 16. It stops firing, becomes noncombat and remains
+  damage-immune.
 - **Movement:** `siege` at a quarter of its top speed, staying within 1000 world
   units of the waypoint.
 - **Escorts:** 8 `escort` fighters, which hold back with it until the third wave
   is gone.
-- **Salvage:** salvaging it gives the last holodisk and the fixed Stardust payout
-  in [Economy](economy.md#earning-stardust), then the story scene plays. It never regenerates.
+- **Handover:** surrender triggers the [finale sequence](rules.md#galaxy-six-phantom-the-finale)
+  and awards the last holodisk and exactly 50 Stardust once. The flagship never
+  regenerates.
 
 ## Finale allies
 
@@ -772,7 +753,7 @@ completing a galaxy's repeatable activity at least once makes its quest ally:
   effect when the battle begins. Incoming craft start in their existing escort
   ring slots, including chasers. Incoming whales start at their follow positions.
   These positions apply to the first arrival and each rotation, in normal and
-  reduced motion. Allies jump out when the flagship is salvaged or the flight
+  reduced motion. Allies jump out when the flagship surrenders or the flight
   ends. At most 8 allies are on screen at once. The rest rotate in: at the
   start of each later wave and of the flagship fight, allies that have not yet
   flown jump in and replace ones that have, so every ally takes part. Those that
@@ -790,8 +771,8 @@ completing a galaxy's repeatable activity at least once makes its quest ally:
   starting behind her and turn with her heading. Each escort leaves its slot to
   intercept a drone within 600 of her and returns to it.
 - **`chase` against turrets:** chases the nearest heavy and aims at its weapon
-  hardpoints. With no heavy present, it takes an escort slot and fights as an
-  escort.
+  mounts, with hits damaging the hull. With no heavy present, it takes an
+  escort slot and fights as an escort.
 - **Whale:** a whale never fires and follows 150 world units behind Ada, moving
   like the calf. Two whales fly side by side, their drawn whales at least 16
   world units apart.
@@ -824,7 +805,7 @@ swarm craft, a baseline fighter, a long narrow interceptor and a broad heavy
 retaliator. Enemy ships read as hostile and stay distinct from Ada's white and
 blue ship. Enemy craft are drawn with 16 heading frames: the model facing
 stays continuous and the nearest frame is drawn. A ship drawn with frames and
-hardpoints uses the drawn frame's facing for its hardpoint hit areas and muzzles.
+mounts uses the drawn frame's facing for its contact geometry and muzzles.
 Hits test the drawn convex outline at the current heading, so they match what is
 drawn; the spacing radius ([Hulls](#hulls)) serves only spacing and placement.
 Sprites keep their drawn sizes.
@@ -847,8 +828,8 @@ engagement, lead with the ordinary charged-lance tell from weapon-left.
 Keep its existing 0.7-second tracking line and 0.3-second fixed warning.
 Once that tell starts, hold its other mounts until the tell fires or is
 cancelled. Give Astra's cue once at the start of the tell and emphasize the
-existing weapon-left hardpoint outline during it. A destroyed or unavailable
-lance never holds the fight open. After this first tell, use the existing mount
+existing weapon-left mount outline during it. An unavailable lance never holds
+the fight open. After this first tell, use the existing mount
 schedule. No tutorial requirement gates the outposts or their holodisk.
 
 ### Whirlpool: Manta Dreadnought
@@ -932,7 +913,7 @@ fire and pursuit during the break. Fighters counted as fled end their
 blockade pursuit. Use the existing required-group
 placement and settlement gate. A settlement opens only when both phases
 resolve under the existing blocker rules. Keep liberation order and the
-separate three-wave finale, disable, Salvage and emergency reset.
+separate three-wave finale, flagship surrender and emergency reset.
 
 ### Encounter verification
 
@@ -973,30 +954,25 @@ an optional equipped weapon level. The adapter resolves one equipped level at
 spawn through its dedicated per-ship stream. An absent saved level means level 1;
 reconstructing a saved definition does not reroll it. The rules consume no
 randomness and do not mutate supplied state. Serialize phase, age, engagement, flee latch, velocity, hull
-HP, hardpoint HP, cooldowns, burst positions, initialized fire phases, home
+HP, surrender, mount cooldowns, burst positions, initialized fire phases, home
 position, last-seen position and age, pursuit elapsed time, returning latch and
 time since return began. The optional retreat record preserves its kind,
 origin, fixed away direction, start age and completion age through save/load.
 Preserve initial pack sizes separately through losses
 and save/load. No functions, maps, clocks or runtime objects belong in saved state.
 
-`damageEnemy(definition, hit, state)` applies finite positive damage to the named
-hardpoint or to the hull with a null ID. Unknown part IDs do nothing. A valid hit
-latches retaliation even when the target is currently unseen. Individual hull damage
+`damageEnemy(definition, hit, state)` applies finite positive damage to the hull
+regardless of the contact's mount ID. A valid hit latches retaliation even when
+the target is currently unseen. Individual hull damage
 can trigger a bounded morale retreat without killing a craft. Pack losses can
 trigger the same retreat for survivors. Active morale retreat suppresses fire, and
 a forward-gun ship in either retreat also turns to its travel direction;
 recovery can resume aggression under the observation and admission rules below.
 
-`enemyEffects(definition, state)` derives destroyed part IDs, disablement and
-destruction. A hit on a heavy's hardpoint damages only that hardpoint, without
-spill into the hull. A hull hit damages only the hull. Hull HP at 0 destroys the ship. Destroying every weapon
-hardpoint disables it while its hull survives: it emits no intents, steers no
-more and coasts to rest. A destroyed weapon emits no further shots. Each engine provides an equal share of thrust: a
-ship's top speed scales with the fraction of its engines still working, and
-with all of them destroyed it has no thrust and coasts to rest from its current
-momentum, like a disabled heavy. Other weapons keep firing independently. No primary hull weapon substitutes for a
-lost hardpoint. Disabled entities must leave the adapter's active peer snapshot.
+`enemyEffects(definition, state)` reports defeat and treats the surrendered
+flagship and legacy salvaged hulls as inactive. Damage to the hull leaves mount
+fire eligibility and thrust intact. The adapter latches the active flagship's
+surrender at 16 HP and excludes it from active peers.
 
 ### Observation and intents
 
@@ -1010,15 +986,15 @@ chase or fire permission. It does not classify space as unreachable.
 The adapter must supply actual observation and targeting permission, not infer them
 from hidden runtime state. Targeting permission is false exactly while Ada is
 protected ([Protection](rules.md#protection)) and never depends on where Ada or
-the enemy is. Active peers contain live, nonsalvaged, enabled
-actors, including self exactly once for an active actor. Disabled hulls remain
-physical and saved but do not influence steering or escort observation.
-The adapter supplies transient `loadedPackMembers` counts from the full live,
-nonsalvaged pre-movement snapshot, including disabled survivors. Morale adds the
-existing dormant survivor counts. If the loaded count field is absent, pure
-callers retain the peer-count fallback; a supplied map with no pack entry means
-zero loaded survivors. Preserve initial pack counts through unloading and
-Continue. Neither unloading nor disablement is a casualty.
+the enemy is. Active peers contain live combat actors, including self exactly
+once for an active actor. The surrendered flagship and legacy salvaged hulls
+do not influence steering or escort observation. The adapter supplies transient
+`loadedPackMembers` counts from the full live pre-movement snapshot, excluding
+legacy salvaged bodies. Morale adds the existing dormant survivor counts.
+If the loaded count field is absent, pure callers retain the peer-count
+fallback. A supplied map with no pack entry means zero loaded survivors.
+Preserve initial pack counts through unloading and Continue. Unloading is not
+a casualty.
 
 The result contains updated state, desired velocity, aim, fire intents and effects.
 A forward-gun ship's aim is its hull facing; it keeps no separate weapon aim.
@@ -1049,8 +1025,8 @@ Hardpoint ID identifies the emitting weapon; a null ID identifies the hull
 weapon. `fireClockPolicy` is `staggered-and-paused` for frigates, capitals and
 hostile stations. Weapon clocks initialize on first firing eligibility in stable
 active-mount fill order, with phase `(i / N) * ownInterval`. Ineligible time
-preserves cooldowns and burst positions. Disabling a mount leaves survivor
-phases intact. Other actors, including platforms, use `continuous` clocks.
+preserves cooldowns and burst positions. Other actors, including platforms,
+use `continuous` clocks.
 Initialized phases, cooldowns and burst positions survive Continue.
 
 Catch-up shots have explicit delays; advance each new projectile for only
@@ -1059,8 +1035,9 @@ integration error. There is no spawn warning; Astra's drone-arrival line is the
 arrival cue. Weapon-specific tells are separate: Phaser uses a fixed 0.4-second
 aim line along the interceptor's facing; charged lance tracks for 0.7 seconds
 and locks for 0.3 seconds before firing. Only the lance's tell and beam stop
-at obstacles. Each fired beam damages Ada at most once. Disabling a weapon prevents future fire and cancels an active
-lance tell, but does not delete already emitted projectiles.
+at obstacles. Each fired beam damages Ada at most once. Destruction or
+surrender ends the ship's firing. The flagship's active beam ends on surrender,
+and already emitted projectiles keep their normal lifetimes.
 
 `stepDebris(dt, debris)` advances position by constant velocity times dt. Debris has
 no AI, pursuit, morale, aim or weapon. The adapter owns seeded region placement and
@@ -1087,23 +1064,22 @@ around home with its patrol radii widened by the 180 approach radius. The Mining
 Freighter traces the edges of nearby asteroids ([Miners](#miners)) and patrols
 home when no asteroid qualifies.
 
-Platforms have no navigation and remain stationary. Disabled or salvaged ships
-do not patrol or investigate. A ship with every engine destroyed has no thrust
-and coasts to rest. Every other ship keeps moving ([Keep moving](#keep-moving)).
+Platforms have no navigation and remain stationary. The surrendered flagship
+and legacy salvaged hulls do not patrol or investigate. Active mobile ships
+keep moving ([Keep moving](#keep-moving)).
 Patrol changes neither aggression, engagement admission, pursuit leashes nor
 targeting permission.
 
 ### Keep moving
 
 Every enemy ship that can move keeps moving at all times: patrolling, holding a
-band, circling a station, tracing asteroid edges or travelling. Only a destroyed,
-disabled or salvaged ship, a ship with every engine destroyed, a fixed `platform`
-and a hostile station come to rest. Story ships, allies and whales are not
+band, circling a station, tracing asteroid edges or travelling. Destroyed ships,
+the surrendered flagship, legacy salvaged hulls, fixed platforms and hostile
+stations are outside this movement rule. Story ships, allies and whales are not
 enemies and keep their own waiting behaviour.
 
 - **Minimum speed:** a ship's requested speed never falls below 0.25 of its
-  current top speed: its class `maxSpeed` times its working engine share, slowed
-  by Marlo's song where that applies. The floor lies below every directional cap,
+  current top speed: its class `maxSpeed`, slowed by Marlo's song where that applies. The floor lies below every directional cap,
   including the forward-gun sideways (0.8) and backing-off (0.6) strafe limits,
   so a request is clamped between the floor and its cap. Patrol and
   investigation paces already exceed the floor, except a `siege` patrol at
@@ -1165,7 +1141,7 @@ enemies and keep their own waiting behaviour.
   such as a Phantom blockade's 600 reach, never holds a ship still: at the limit
   it turns along it.
 - **Stand-down:** when Phantom's drones stand down after the flagship is
-  salvaged, they stop firing and patrol home.
+  surrendered, they stop firing and patrol home.
 
 | Value              | Setting                                                                                                    |
 | ------------------ | ---------------------------------------------------------------------------------------------------------- |
@@ -1268,8 +1244,7 @@ within five world units. A returning ship re-engages when it visibly observes Ad
 either clears the return latch and resets its pursuit clock. Unknown
 observation never re-engages it. After a retreat, sight recovery also requires
 engagement admission and the home leash; return recovery keeps its existing
-`rearmSeconds` delay. A damaged engine still takes precedence over
-return movement. Save and restore the latch, the pursuit clock, unseen time and
+`rearmSeconds` delay. Save and restore the latch, the pursuit clock, unseen time and
 time since the return began; unloading or resetting them must not renew a
 pursuit. Observation is supplied by the runtime; last-seen state never reads
 hidden target coordinates.
@@ -1318,19 +1293,18 @@ shield damage, projectile collisions and danger tracking remain in the flight mo
 Only actual targeting threats and projectiles should extend danger, not
 unengaged patrolling retaliators. Suppress all intents after defeat.
 
-Route player-shot collisions to explicit hardpoint hit volumes before hull damage.
-Apply one hit per collision policy, preserve piercing hit IDs at the appropriate
-entity/part granularity, and recalculate effects immediately. Do not filter multipart
-enemies out while hull HP remains. Emit `enemyDisabled` exactly once when the
-last weapon hardpoint is destroyed, and the destroyed event exactly once when hull
-HP reaches 0. Preserve disabled part state while
-other parts remain active. No parallel flight loop is provided here.
+Use the drawn contact geometry and route each accepted hit to hull HP. Track
+projectile hits by entity and apply one normal hull hit per enemy per area event.
+Recalculate effects immediately. Report ordinary destruction once at 0 HP.
+Report `enemySurrendered` once when the active finale flagship reaches its
+16 HP threshold. Later contacts leave its hull and outcome unchanged. Preserve
+Ada's shield damage and collision motion on a closing ram.
 
 ### Integrated verification required
 
-The canonical regression path is `src/model/enemyAi.test.ts`. Runtime source and
-tests remain under `src/`. The integrated isolated gate typechecks, lints, tests
-and builds the source, including
+The existing AI regression path is `src/model/enemyAi.test.ts`. The hull-only
+combat scenarios are in `src/model/flight/hullCombat.test.ts`. The integrated
+isolated gate typechecks, lints, tests and builds the source, including
 actual intents and adapter commands in the following scenarios:
 
 - Identical saved state, snapshot and timestep produce identical JSON and intents;
@@ -1350,13 +1324,13 @@ actual intents and adapter commands in the following scenarios:
   arriving home, lost line of sight, a band hold, an escort station, a turret
   hold, an idle pack, peer contact, an obstacle with no clear course and a
   position limit. A Mining Freighter traces one rock's edge for its dwell, then
-  moves to another. Destroyed, disabled, salvaged and engineless ships, platforms
-  and hostile stations still come to rest.
-- A destroyed frigate weapon stops firing while the other weapon continues. A
-  heavy with every engine lost keeps its prior momentum and coasts to rest.
-- Capital hull HP reaching zero destroys it, whatever its hardpoints. Destroying
-  every weapon hardpoint first disables it once, and salvaging or destroying a
-  disabled heavy produces one outcome event.
+  moves to another. Fixed platforms and hostile stations remain stationary.
+- Hull hits leave original weapons, muzzles and thrust intact, including with
+  legacy mount damage. Defeat and its exclusive reward resolve once for an
+  ordinary heavy at 0 hull HP.
+- Any damage path, including an actual ram, can trigger the active finale
+  flagship's surrender. It stays at 16 HP, stops firing and ignores further
+  hits in the same step and after Continue.
 - Each archetype's actual velocity stays within its maximum speed, including
   saved momentum.
 - An interceptor on a crossing pass keeps its nose on Ada and fires only while
@@ -1368,4 +1342,11 @@ actual intents and adapter commands in the following scenarios:
   on Ada and its requested speed within its sideways and backing-off limits.
 - A turret ship's turret fires at Ada astern while its hull faces its travel.
 - Quiet encounter placement, exclusion zones, state protection, collision
-  routing, offscreen hardpoints, danger tracking and once-only defeat events pass the real integrated flight loop.
+  routing, offscreen fire eligibility, danger tracking and once-only defeat events
+  must pass the integrated flight loop.
+
+Qualified combat source `1d059acf6` covers hull damage, exclusive heavy defeat
+rewards and the active flagship's surrender latch, including an actual ram
+and retention of the latch through Continue. Finale handover and aftermath
+wiring, environmental wreck Scan, hull HUD presentation and end-to-end
+legacy progress and payout reconciliation remain pending at that revision.

@@ -119,8 +119,8 @@ A job pays Stardust and a lore line, on top of ordinary earnings from asteroids
 and drones met on the way. All existing Stardust quest-completion rewards use
 `questReward(base) = 2 * ceil(2 * base / 25) * 25`: double the payout after
 the existing calculation and rounding. This covers station jobs, repeatable activities and any
-existing story-quest Stardust payout. Current main-story outcomes do not award
-Stardust; this rule adds none. Ordinary drops, discovery caches, shop prices,
+existing story-quest Stardust payout. The finale's fixed 50 Stardust remains
+separate from job rewards. Ordinary drops, discovery caches, shop prices,
 Exchange, donations and nonquest achievement bonuses keep their own rules.
 Pacing, kill-time and ore-income simulations remain deferred; [Economy](economy.md)
 records the approved job-assisted pacing.
@@ -212,10 +212,10 @@ In-flight lines, each played once per save:
 Fresh piloting places optional exploration sites near Ada. Each site offers
 Use (Scan) within the 160 world unit Talk range. An explicit Scan records the
 site once and shows [Astra's scan receipt](player-copy.md#canonical-astra-outcome-copy).
-A site pays no discovery reward, does not chart a landmark and does not count
-toward mapping progress. Sites and their scanned state persist with the galaxy,
-and Restart clears them. The pacing counter belongs to the flight: Continue
-resumes it, and a fresh entry starts it at zero.
+A site does not chart a landmark or count toward mapping progress. Wreck sites
+yield their existing loot. Other sites pay no discovery reward. Sites and
+their scanned state persist with the galaxy, and Restart clears them. Continue
+resumes the flight's pacing counter, and a fresh entry starts it at zero.
 
 ### Lead pacing
 
@@ -237,27 +237,29 @@ resumes it, and a fresh entry starts it at zero.
 
 ### Actionable scan results
 
-Astra's scan receipt describes the next action backed by the site. Use one cue
-per scan. A site with a live disabled hull points to that hull and says
-“There's a disabled ship here. Get close and use Salvage.” Salvaging it follows
-the existing wreck payout. If a scan posts a station job, use its existing
-issuer cue and mark that known station's Jobs & Projects entry. If an existing
-known patrol is nearby and no salvage or job lead applies, point to its known
-area and say “Drones are patrolling nearby. Give them room.” Use only the normal
-known-target range. Drop the cue when the patrol is no longer there. Sites with
-no live actionable lead keep their ordinary scan receipt. Scanning awards no
-extra loot, exposes no hidden target and accepts no job.
+Astra gives one actionable cue per scan. At an existing environmental wreck,
+one Scan recovers that site's existing loot and shows Astra's brief in-flight
+receipt, “I recovered supplies from the wreck.” There is no modal. A repeat
+uses the existing remembered receipt and pays nothing. A scan that posts a
+station job uses its existing issuer cue and marks that known station's Jobs &
+Projects entry. If neither a wreck recovery nor a job lead applies and an
+existing known patrol is nearby, point to its known area and say “Drones are
+patrolling nearby. Give them room.” Use only the normal known-target range.
+Drop the cue when the patrol is no longer there. Other sites keep their
+ordinary scan receipt. Scan exposes no hidden target and accepts no job.
+The wreck recovery and receipt are approved and pending at combat revision
+`1d059acf6`.
 
 ### Site kinds
 
-| Region               | Resources | Salvage | Job lead |
-| -------------------- | --------: | ------: | -------: |
-| Near-route envelope  |      0.50 |    0.35 |     0.15 |
-| Outside the envelope |         – |    0.70 |     0.30 |
+| Region               | Resources | Wreck | Job lead |
+| -------------------- | --------: | ----: | -------: |
+| Near-route envelope  |      0.50 |  0.35 |     0.15 |
+| Outside the envelope |         – |  0.70 |     0.30 |
 
 - A resources site is a scannable place with no added objects.
-- A salvage site also holds one disabled frigate of the galaxy, salvaged with
-  the existing Use (Salvage). It takes no job and no task slot.
+- A wreck site holds one environmental frigate wreck from the galaxy. Its
+  existing loot uses Scan and takes no job or task slot.
 - A job lead is a rescue or a lost-item hunt from the galaxy's job pool. Near
   routes offer both; outside the envelope only rescue. Phantom offers only
   rescue. A site becomes a job lead only while Ada has discovered a station with
@@ -288,7 +290,7 @@ extra loot, exposes no hidden target and accepts no job.
   the shortest wrapped distance. Heavy proximity cannot prevent placement
   or posting of the Hunt lead. If Hunt Scan cannot place a safe target,
   Astra gives a brief retry notice. Scan stays available to retry.
-- A site posts at most one lead. A scanned site offers no further Scan.
+- A job lead posts at most once. A scanned job lead offers no further Scan.
 
 ## Captain Tally
 
@@ -299,17 +301,13 @@ holodisk handover remains independent. Ada flies to the detour normally.
 
 While Hammer is engaged, the hull meter carries the "Captain Tally" badge.
 It clears on disengagement and restores the current hull on re-entry.
-[Tally's approach and Astra's first-hardpoint
-reaction](player-copy.md#captain-tally-and-hammer) are shown once each. If
-the same hit would trigger both a hardpoint and a final resolution cue, the
-resolution takes priority.
+[Tally's approach and resolution](player-copy.md#captain-tally-and-hammer)
+are shown once each.
 
-Disabling Hammer and using Salvage resolves the encounter and awards half its
-rolled Stardust, rounded down. Destroying the hull resolves it and drops the
-full roll through the ordinary wreck payout. Either outcome also reveals a
-normal-flight waypoint labeled "Safer route and supply cache" and a single Ore
-pickup. Collecting the Ore once changes the waypoint label to "Safer route".
-Astra's resolution line is shared by both outcomes.
+Destroying Hammer resolves the encounter once with the [ordinary heavy reward](economy.md#earning-stardust).
+It also reveals a normal-flight waypoint labeled "Safer route and supply cache"
+and a single Ore pickup. Collecting the Ore once changes the waypoint label to
+"Safer route".
 
 The encounter retains its actor, damage and shown cues through Continue and
 leaving and returning to Sunflower. The resolved encounter stays resolved, and
@@ -327,13 +325,12 @@ Manta Dreadnought guards the disk site with two fighter escorts and four swarm
 ships. Currents carry Ada and the small ships around the capital. While
 Manta Dreadnought is engaged, its hull meter carries the "Captain Sounder"
 badge. It clears on disengagement and returns with the current hull on
-re-entry. The approach, first hardpoint and resolution use [Sounder's exchange](player-copy.md#captain-sounder-and-manta-dreadnought).
+re-entry. The approach and resolution use [Sounder's exchange](player-copy.md#captain-sounder-and-manta-dreadnought).
 
-Disable all of the capital's weapon hardpoints or destroy its hull to release
-the disk. The escorts and swarm are separate threats. Ada can collect the disk after
-either resolution without using Salvage. Heavy destruction and optional
-Salvage use their ordinary Stardust rules. The disk is a separate pickup at
-the family's waypoint and can be collected only once.
+Destroy the capital's hull to release the disk and resolve the
+[ordinary heavy reward](economy.md#earning-stardust) once. The escorts and
+swarm are separate threats. The disk is a separate pickup at the family's
+waypoint and can be collected only once.
 
 Continue preserves the encounter, current flight damage and shown cues.
 Leaving Whirlpool during the unresolved encounter retains the surviving
@@ -352,15 +349,14 @@ practice, the Eye, and collection of the disk follow their existing steps.
 
 While Crossbow is engaged, its hull meter carries the "Captain Cadence"
 badge. It clears when Ada disengages and restores the current hull on
-re-entry. The approach, first hardpoint loss while the
-ship remains active, and resolution use
+re-entry. The approach and resolution use
 [Cadence's exchange](player-copy.md#captain-cadence-and-crossbow).
 
-Destroy the hull or disable and Salvage Crossbow to record one transmission
+Destroy Crossbow's hull to record one transmission
 in the flight log. Before the third holodisk memory finishes, the entry
 attributes the orders to fleet command. After the memory, the same entry names
 Admiral Archie. Continue and return preserve damage and encounter progress.
-Resolution and the normal heavy Stardust payout occur once.
+Resolution and the [ordinary heavy reward](economy.md#earning-stardust) occur once.
 
 ## Landmarks
 
