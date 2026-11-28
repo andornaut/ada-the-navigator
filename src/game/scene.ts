@@ -487,12 +487,18 @@ export class GameScene extends Scene {
 
   readonly initialSave: StoreLoadResult<GameSave>;
   readonly entropy: Entropy;
+  readonly frameTurn: Parameters<typeof createControls>[1]["frameTurn"];
   bootUiManifest?: unknown;
 
-  constructor(entropy: Entropy, initialSave: StoreLoadResult<GameSave>) {
+  constructor(
+    entropy: Entropy,
+    initialSave: StoreLoadResult<GameSave>,
+    frameTurn: GameScene["frameTurn"],
+  ) {
     super("game");
     this.initialSave = initialSave;
     this.entropy = entropy;
+    this.frameTurn = frameTurn;
   }
 
   preload(): void {

@@ -12,7 +12,10 @@ import type {
   RequiredLoading,
 } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import { MAX_RENDER_SCALE } from "@andornaut/game-kit/runtime/view/renderScale";
-import { lockGameOrientation } from "@andornaut/game-kit/runtime/web/view/dom/watchFrameTurn";
+import {
+  lockGameOrientation,
+  watchFrameTurn,
+} from "@andornaut/game-kit/runtime/web/view/dom/watchFrameTurn";
 import { followFrameTurn } from "@andornaut/game-kit/runtime/web/view/phaser/followFrameTurn";
 import { Core, Game, Scale, Scenes, WEBGL } from "phaser";
 
@@ -37,9 +40,9 @@ import { registerForegroundSurface } from "../ui/foregroundInput.ts";
 import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
 import { loadingFailureChrome } from "../ui/loadingFailure.ts";
 import { rootPressGuard } from "../ui/pressScope.ts";
-import { FRAME_TURN } from "../view/frameTurn.ts";
 import { followPageVisibility } from "./lifecycle.ts";
 
+const frameTurn = watchFrameTurn("landscape", window);
 const mount = document.getElementById("game-canvas");
 if (!mount) {
   throw new Error("Missing game canvas mount");
@@ -172,7 +175,7 @@ async function enterGame(attempt: LoadingAttempt): Promise<void> {
   if (!attempt.isCurrent() || crashed) {
     return;
   }
-  const scene = new GameScene(browserEntropy, initialSave);
+  const scene = new GameScene(browserEntropy, initialSave, frameTurn.turn);
   scene.bootUiManifest = boot?.uiManifest;
   let owned: Game | undefined;
   let constructScene: (() => void) | undefined;
@@ -294,7 +297,7 @@ async function enterGame(attempt: LoadingAttempt): Promise<void> {
                 deviceResolution: { max: MAX_RENDER_SCALE },
                 gameSize: bootedGame.scale.gameSize,
                 parent,
-                watch: FRAME_TURN,
+                watch: frameTurn,
               },
               bootedGame,
             );

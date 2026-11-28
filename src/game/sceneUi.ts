@@ -208,6 +208,7 @@ export type UiContext = Partial<Pick<GameScene, "fieldLight">> &
     | "feedback"
     | "feedbackSound"
     | "fpsCounter"
+    | "frameTurn"
     | "galaxies"
     | "galaxyBackdrops"
     | "galaxyLoads"
@@ -708,6 +709,7 @@ export function buildScene(scene: UiContext): void {
     contextQuestDetails: () => scene.model.contextQuestDetails,
     exit: exitShown() ? { label: CONTENT.labels.exit ?? "", onExit: exitGame } : undefined,
     fpsCounter: scene.fpsCounter,
+    frameTurn: scene.frameTurn,
     install: {
       port: {
         install: installApp,

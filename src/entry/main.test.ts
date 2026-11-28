@@ -2,6 +2,7 @@ import { EventEmitter } from "node:events";
 import { readFileSync } from "node:fs";
 
 import { createLoadingAttempts } from "@andornaut/game-kit/runtime/load/loadingAttempts";
+import { type FrameTurn, pageToGame } from "@andornaut/game-kit/runtime/view/pagePoint";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import type { AdaActionRootOptions } from "../ui/holdActionsAdapter.ts";
@@ -15,6 +16,7 @@ const boot = vi.hoisted(() => ({
   construct: vi.fn(),
   constructorThrows: false,
   crash: undefined as (() => void) | undefined,
+  followFrame: vi.fn(),
   foregroundLeave: vi.fn(),
   foregroundRegister: vi.fn(),
   game: vi.fn(),
@@ -36,6 +38,7 @@ const boot = vi.hoisted(() => ({
   startup: { crashed: false },
   stopFrame: vi.fn(),
   stopVisibility: vi.fn(),
+  watchFrame: vi.fn(),
 }));
 vi.mock("virtual:ada-ui.css", () => ({}));
 vi.mock("../ui/foregroundInput.ts", () => ({
@@ -89,8 +92,8 @@ vi.mock("../game/scene.ts", () => ({
       },
     };
     textures = { exists: () => boot.ship };
-    constructor(entropy: () => number, save: unknown) {
-      boot.scene(entropy, save);
+    constructor(entropy: () => number, save: unknown, turn: () => FrameTurn) {
+      boot.scene(entropy, save, turn);
     }
   },
 }));
@@ -137,13 +140,42 @@ vi.mock("../pwa/index.ts", () => ({
 vi.mock("../loading/startup.ts", () => ({ startupFence: boot.startup }));
 vi.mock("../loading/bootReveal.ts", () => ({ prepareBootReveal: () => boot.reveal }));
 vi.mock("./lifecycle.ts", () => ({ followPageVisibility: () => boot.stopVisibility }));
-vi.mock("../view/frameTurn.ts", () => ({ FRAME_TURN: {} }));
-vi.mock("@andornaut/game-kit/runtime/web/view/dom/watchFrameTurn", () => ({
-  lockGameOrientation: vi.fn(),
-}));
+vi.mock("@andornaut/game-kit/runtime/web/view/dom/watchFrameTurn", async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import("@andornaut/game-kit/runtime/web/view/dom/watchFrameTurn")
+    >();
+  return {
+    lockGameOrientation: vi.fn(),
+    watchFrameTurn: (...args: Parameters<typeof actual.watchFrameTurn>) => {
+      const watch = actual.watchFrameTurn(...args);
+      boot.watchFrame(...args, watch);
+      return watch;
+    },
+  };
+});
 vi.mock("@andornaut/game-kit/runtime/web/view/phaser/followFrameTurn", () => ({
-  followFrameTurn: () => boot.stopFrame,
+  followFrameTurn: (options: unknown, instance: unknown) => {
+    boot.followFrame(options, instance);
+    return boot.stopFrame;
+  },
 }));
+function frameHost() {
+  const media = Object.assign(new EventTarget(), { matches: false });
+  const orientation = Object.assign(new EventTarget(), { type: "landscape-primary" });
+  const documentElement = { removeAttribute: vi.fn(), setAttribute: vi.fn() };
+  return {
+    media,
+    orientation,
+    window: {
+      document: { documentElement },
+      matchMedia: vi.fn(() => media),
+      screen: { orientation },
+    },
+  };
+}
+let frame: ReturnType<typeof frameHost>;
+
 async function settle() {
   for (let n = 0; n < 30; n++) {
     // eslint-disable-next-line no-await-in-loop
@@ -166,8 +198,9 @@ beforeEach(() => {
   boot.launch.mockResolvedValue("play");
   boot.load.mockResolvedValue({ save: { version: 12 }, status: "loaded" });
   vi.stubGlobal("document", { getElementById: (id: string) => (id === "app" ? boot.app : {}) });
-  vi.stubGlobal("screen", {});
-  vi.stubGlobal("window", {});
+  frame = frameHost();
+  vi.stubGlobal("screen", frame.window.screen);
+  vi.stubGlobal("window", frame.window);
 });
 afterEach(() => vi.unstubAllGlobals());
 async function entry() {
@@ -205,7 +238,29 @@ it("keeps launch before storage and passes the complete save result to the scene
   };
   release(result);
   await pending;
-  expect(boot.scene).toHaveBeenCalledWith(expect.any(Function), result);
+  const watch = boot.watchFrame.mock.calls[0]![2];
+  expect(boot.watchFrame).toHaveBeenCalledExactlyOnceWith("landscape", frame.window, watch);
+  expect(boot.scene).toHaveBeenCalledWith(expect.any(Function), result, watch.turn);
+  expect(boot.followFrame).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({ watch }),
+    boot.instances[0],
+  );
+  const turn = boot.scene.mock.calls[0]![2] as () => FrameTurn;
+  const size = { height: 360, width: 720 };
+  const sideways = { height: 720, width: 360, x: 0, y: 0 };
+  expect(pageToGame(turn(), { ...size, x: 0, y: 0 }, size, { x: 100, y: 50 })).toEqual({
+    x: 100,
+    y: 50,
+  });
+  frame.media.matches = true;
+  frame.orientation.type = "portrait-primary";
+  frame.media.dispatchEvent(new Event("change"));
+  expect(turn()).toBe(90);
+  expect(pageToGame(turn(), sideways, size, { x: 310, y: 100 })).toEqual({ x: 100, y: 50 });
+  frame.orientation.type = "portrait-secondary";
+  frame.orientation.dispatchEvent(new Event("change"));
+  expect(turn()).toBe(-90);
+  expect(pageToGame(turn(), sideways, size, { x: 50, y: 620 })).toEqual({ x: 100, y: 50 });
   expect(attempt.state.kind).toBe("ready");
   expect(boot.reveal.commit).toHaveBeenCalledOnce();
 });
@@ -236,6 +291,11 @@ it("waits for actual deferred retirement before constructing a Retry, without la
   failed.events.emit("destroy");
   await retry;
   expect(boot.game).toHaveBeenCalledTimes(2);
+  expect(boot.watchFrame).toHaveBeenCalledOnce();
+  expect(boot.scene.mock.calls.map((call) => call[2])).toEqual([
+    boot.watchFrame.mock.calls[0]![2].turn,
+    boot.watchFrame.mock.calls[0]![2].turn,
+  ]);
   expect(boot.load).toHaveBeenCalledOnce();
   expect(boot.reveal.commit).toHaveBeenCalledOnce();
 });

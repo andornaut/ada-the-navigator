@@ -1,4 +1,4 @@
-import { pageToGame } from "@andornaut/game-kit/runtime/view/pagePoint";
+import { type FrameTurn, pageToGame } from "@andornaut/game-kit/runtime/view/pagePoint";
 import {
   listenPagePresses,
   onPageControl,
@@ -90,7 +90,6 @@ import { USE_PRESS_MS } from "../ui/touchChrome.ts";
 import { createUpdateDialog, type UpdateLabels } from "../ui/updateDialog.ts";
 import { createWeaponDetailCard } from "../ui/weaponDetailCard.ts";
 import { createWeaponSelector, type WeaponChoice, type WeaponLabels } from "../ui/weapons.ts";
-import { FRAME_TURN } from "../view/frameTurn.ts";
 import { coarsePointer, touchControlsActive, useDiscShown } from "./coarsePointer.ts";
 import {
   bindDesktopInput,
@@ -101,6 +100,7 @@ import {
 import { type ControlSample, ControlState } from "./state.ts";
 
 export interface ControlsOptions {
+  readonly frameTurn: () => FrameTurn;
   /** The clock press, notice and feedback timing read, in milliseconds. */
   readonly now: () => number;
   /** Where the device settings are read and written; undefined where site data is blocked. */
@@ -726,7 +726,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
   const point = (event: Pick<PagePointerEvent, "clientX" | "clientY">) => {
     fitControls();
     return pageToGame(
-      FRAME_TURN.turn(),
+      options.frameTurn(),
       canvas.getBoundingClientRect(),
       canvasSize(sceneFit(scene)),
       { x: event.clientX, y: event.clientY },
