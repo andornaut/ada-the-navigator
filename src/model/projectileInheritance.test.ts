@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
-import { createEnemy } from "./enemyAi.ts";
+import { createEnemy } from "./ai/index.ts";
 import { createFlight, stepFlight } from "./flight.ts";
 import { rotatePhantomAllies } from "./phantomAllies.ts";
 import type { GalaxyProgress } from "./types.ts";

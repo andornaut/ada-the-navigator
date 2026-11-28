@@ -8,6 +8,7 @@ import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, relaunch, seedLaunches, supportEntropy } from "../testing/launch.ts";
+import { createEnemy } from "./ai/index.ts";
 import {
   ASTEROID_SHAPES,
   bounce,
@@ -20,7 +21,6 @@ import {
   scenerySilhouette,
   silhouette,
 } from "./asteroids.ts";
-import { createEnemy } from "./enemyAi.ts";
 import {
   BUMP_DAMAGE,
   createFlight,

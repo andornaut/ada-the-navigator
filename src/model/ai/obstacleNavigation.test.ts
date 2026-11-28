@@ -6,12 +6,12 @@ import { ENEMY_AVOIDANCE } from "../../data/enemyNavigation.ts";
 import { SHARED_SHIP_PHYSICS } from "../../data/shipPhysics.ts";
 import { actualGap } from "../../testing/aiGeometry.ts";
 import { ASTEROID_SHAPES, scenerySilhouette, worldSceneryBodyContact } from "../asteroids.ts";
-import { createEnemy } from "../enemyAi.ts";
 import { enemyHull } from "../enemyBody.ts";
 import { direction, stepShipMotion, turnToward } from "../shipPhysics.ts";
 import type { SpaceObject } from "../types.ts";
+import { createEnemy } from "./enemyAi.ts";
 import { avoidObstacles } from "./obstacleNavigation.ts";
-import { worldNavigationQuery } from "./worldNavigation.ts";
+import { worldNavigationQuery } from "./worldNavigation/index.ts";
 
 it("steers the released navigation core past an authored asteroid using current hull physics", () => {
   const shape = [...ASTEROID_SHAPES.values()].find((s) => s.size === "large")!;

@@ -11,6 +11,7 @@ import { GALAXY_SIDE } from "../data/world.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
+import { damageEnemy } from "./ai/index.ts";
 import {
   andromedaCourierActor,
   andromedaCourierAttempt,
@@ -31,7 +32,6 @@ import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { interactionCopy } from "./conversations.ts";
 import { closestOnSegment, outlineContact, worldParts } from "./convex.ts";
 import { GAME_AREA, gameAreaPoint, inGameArea } from "./edgeMarkers.ts";
-import { damageEnemy } from "./enemyAi.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import { ensureStation, questGuardPlacementContext } from "./flight.ts";

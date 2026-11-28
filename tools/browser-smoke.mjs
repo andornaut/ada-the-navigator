@@ -5092,7 +5092,7 @@ try {
   // Canonical save fixtures exercise rendering and restore boundaries, not natural combat progression.
   const [{ enemyCatalog }, { createEnemy, damageEnemy }, { restoreSave }] = await Promise.all([
     import(new URL("../src/data/enemyCatalog.ts", import.meta.url)),
-    import(new URL("../src/model/enemyAi.ts", import.meta.url)),
+    import(new URL("../src/model/ai/index.ts", import.meta.url)),
     import(new URL("../src/saving/index.ts", import.meta.url)),
   ]);
   // A claim platform beside Ada in Cartwheel: its hull is in Cartwheel's manifest and its turret

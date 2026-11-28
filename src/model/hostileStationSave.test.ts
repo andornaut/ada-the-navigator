@@ -7,7 +7,7 @@ import { SWARM_GROUP_MINIMUM } from "../data/spawnerCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
-import { createEnemy } from "./enemyAi.ts";
+import { createEnemy } from "./ai/index.ts";
 import { GameModel } from "./game.ts";
 import {
   escortPackId,

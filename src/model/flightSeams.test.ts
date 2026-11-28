@@ -9,9 +9,9 @@ import { PHANTOM_DESTINATIONS, PHANTOM_TUNING } from "../data/phantom.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
+import { createEnemy } from "./ai/index.ts";
 import { rollAsteroidLoot } from "./asteroidLoot.ts";
 import { dropRandom } from "./drops.ts";
-import { createEnemy } from "./enemyAi.ts";
 import {
   activeEnemyBeams,
   carryPickup,

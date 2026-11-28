@@ -35,7 +35,7 @@ import { CONTENT } from "../data/content.ts";
 import { enemyActorLoadout } from "../data/enemyActorDefinition.ts";
 import { MINE_LAYER } from "../data/enemyCatalog.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
-import { enemySpeedFraction } from "../model/enemyAi.ts";
+import { enemySpeedFraction } from "../model/ai/index.ts";
 import { enemyEquipmentDefinition } from "../model/enemyEquipment.ts";
 import { activeEnemyBeams, activeRingEmissions, type EnemyBeam } from "../model/flight.ts";
 import { hullOffset } from "../model/shipPhysics.ts";

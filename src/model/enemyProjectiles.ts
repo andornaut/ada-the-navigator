@@ -1,5 +1,5 @@
 import type { WeaponDefinition } from "../data/weaponCatalog.ts";
-import type { FireIntent } from "./enemyAi.ts";
+import type { FireIntent } from "./ai/index.ts";
 import { projectileReach } from "./playerProjectiles.ts";
 import { playerWeaponCoverage, type PlayerWeaponCoverageContext } from "./playerWeaponCoverage.ts";
 import type { Vec } from "./types.ts";

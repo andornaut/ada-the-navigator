@@ -13,7 +13,7 @@ import { GALAXY_ID, ROUTE_POSITION } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { restoreGameSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import { createEnemy } from "./enemyAi.ts";
+import { createEnemy } from "./ai/index.ts";
 import { enemyHull, enemyPhysicalBody } from "./enemyBody.ts";
 import { GameModel } from "./game.ts";
 

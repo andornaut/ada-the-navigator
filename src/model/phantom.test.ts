@@ -4,8 +4,8 @@ import { CONTENT } from "../data/content.ts";
 import { encounterTable, enemyDefinition, PHANTOM_FLAGSHIP_ID } from "../data/enemyCatalog.ts";
 import { FLAGSHIP_SURRENDER_HP } from "../data/enemyIdentity.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_FINALE_CHATTER, PHANTOM_TUNING } from "../data/phantom.ts";
-import * as enemyAi from "./enemyAi.ts";
-import { createEnemy, damageEnemy } from "./enemyAi.ts";
+import * as enemyAi from "./ai/index.ts";
+import { createEnemy, damageEnemy } from "./ai/index.ts";
 import {
   activateRouteEncounter,
   createFlight,

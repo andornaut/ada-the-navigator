@@ -1,7 +1,7 @@
 import { LANCE_TELL, PHASER_AIM_SECONDS } from "../../data/enemyCatalog.ts";
 import type { GameContent } from "../../data/types.ts";
 import { BEAM, LANCE_HIT_RADIUS } from "../../data/weaponCatalog.ts";
-import { magnitude as length } from "../ai/course.ts";
+import { enemyFireLine, type FireIntent, magnitude as length } from "../ai/index.ts";
 import {
   advanceHammerTutorial,
   authoredLanceAction,
@@ -13,7 +13,6 @@ import {
   EARLY_LANCE_SECONDS,
   pendingEarlyLance,
 } from "../earlyEncounterRuntime.ts";
-import { enemyFireLine, type FireIntent } from "../enemyAi.ts";
 import { enemyEquipmentDefinition } from "../enemyEquipment.ts";
 import { shipBody } from "../shipBody.ts";
 import type { FlightState, SpaceObject, Vec } from "../types.ts";

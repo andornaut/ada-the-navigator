@@ -29,6 +29,8 @@ const uiLayout = (path: string) => /^src\/ui\/(?:map\/)?layout\//u.test(path);
 
 const ENCAPSULATED_AREAS = [
   "src/art/",
+  "src/model/ai/worldNavigation/",
+  "src/model/ai/",
   "src/model/world/",
   "src/saving/",
   "src/ui/achievements/",

@@ -17,7 +17,7 @@ import {
 import { CONTENT } from "../data/content.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { HIT_FLASH, HIT_SHAKE } from "../data/layout.ts";
-import { createEnemy } from "../model/enemyAi.ts";
+import { createEnemy } from "../model/ai/index.ts";
 import { wreckId } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
 import { syncFlightRegion } from "../model/geography.ts";

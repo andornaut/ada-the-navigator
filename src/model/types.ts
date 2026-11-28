@@ -7,6 +7,7 @@ import type { JobType } from "../data/jobs.ts";
 import type { StorySceneId } from "../data/storyShips.ts";
 import type { GalaxyNumber, Vec, Weapon } from "../data/types.ts";
 import type { AchievementState } from "./achievements.ts";
+import type { EnemyState } from "./ai/index.ts";
 import type { AndromedaRedactProgress } from "./andromedaRedact.ts";
 import type { AndromedaProgress } from "./andromedaState.ts";
 import type {
@@ -16,7 +17,6 @@ import type {
 } from "./capitalBossEncounter.ts";
 import type { CartwheelMiningPatrol } from "./cartwheelMiningPatrol.ts";
 import type { EarlyEncounterState } from "./earlyEncounterRuntime.ts";
-import type { EnemyState } from "./enemyAi.ts";
 import type { ExplorationSites, ExplorationState } from "./explorationState.ts";
 import type { EnemyBeam } from "./flight/enemyBeams.ts";
 import type { NeedleChapterProgress, NeedleFlight } from "./needleState.ts";

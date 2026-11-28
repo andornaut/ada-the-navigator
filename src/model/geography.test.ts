@@ -5,7 +5,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
-import { createEnemy } from "./enemyAi.ts";
+import { createEnemy } from "./ai/index.ts";
 import {
   activateRouteEncounter,
   createFlight,

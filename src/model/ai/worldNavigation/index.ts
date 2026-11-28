@@ -1,11 +1,11 @@
-import type { EnemyDefinition } from "../../data/enemyCatalog.ts";
-import { ENEMY_AVOIDANCE } from "../../data/enemyNavigation.ts";
+import type { EnemyDefinition } from "../../../data/enemyCatalog.ts";
+import { ENEMY_AVOIDANCE } from "../../../data/enemyNavigation.ts";
 import {
   sceneryBound,
   type Silhouette,
   worldSceneryBodyContact,
   worldSceneryContact,
-} from "../asteroids.ts";
+} from "../../asteroids.ts";
 import {
   closestOnSegment,
   type Contact,
@@ -16,13 +16,13 @@ import {
   type Parts,
   partsReach,
   worldParts,
-} from "../convex.ts";
+} from "../../convex.ts";
+import { enemyHull } from "../../enemyBody.ts";
+import type { SpaceObject, Vec } from "../../types.ts";
+import { type WorldContext, worldDistance, worldPoint } from "../../world/index.ts";
 import type { EnemyState } from "../enemyAi.ts";
-import { enemyHull } from "../enemyBody.ts";
-import type { SpaceObject, Vec } from "../types.ts";
-import { type WorldContext, worldDistance, worldPoint } from "../world/index.ts";
-import type { NavigationPose, NavigationQuery } from "./navigationQuery.ts";
-import { navigationLookAhead } from "./prediction.ts";
+import type { NavigationPose, NavigationQuery } from "../navigationQuery.ts";
+import { navigationLookAhead } from "../prediction.ts";
 
 export interface NavigationWorld extends WorldContext {
   readonly drawnOf: (object: SpaceObject) => Silhouette | null;

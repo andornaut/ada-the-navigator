@@ -1,9 +1,9 @@
 import type { Point } from "../../data/enemyCatalog.ts";
 import { ENEMY_AVOIDANCE } from "../../data/enemyNavigation.ts";
 import { SHARED_SHIP_PHYSICS, type ShipPhysics } from "../../data/shipPhysics.ts";
-import type { EnemyState } from "../enemyAi.ts";
 import { direction, stepShipMotion, turnToward } from "../shipPhysics.ts";
 import { magnitude, rotate } from "./course.ts";
+import type { EnemyState } from "./enemyAi.ts";
 import type { NavigationQuery } from "./navigationQuery.ts";
 import { navigationHorizon } from "./prediction.ts";
 

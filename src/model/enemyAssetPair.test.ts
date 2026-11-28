@@ -8,7 +8,7 @@ import frigateFile from "../../public/art/enemies/fleetFrigate-hardpoints.json";
 import { enemyDefinition, PHANTOM_FLAGSHIP_ID } from "../data/enemyCatalog.ts";
 import { enemyAssetKey, INDUSTRIAL_BODY_KEYS } from "../data/enemyIdentity.ts";
 import { ENEMY_DISPLAY_SCALE, muzzleArtForDefinition, muzzleLayout } from "../data/enemyMuzzles.ts";
-import { createEnemy, damageEnemy, hardpointOffset, stepEnemy } from "./enemyAi.ts";
+import { createEnemy, damageEnemy, hardpointOffset, stepEnemy } from "./ai/index.ts";
 import { enemyPartOutline } from "./enemyBody.ts";
 import { muzzleOffset } from "./muzzles.ts";
 

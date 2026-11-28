@@ -23,8 +23,8 @@ import { enemyActorLoadout } from "../data/enemyActorDefinition.ts";
 import { type EnemyGeometryKey, enemyGeometryKey } from "../data/enemyIdentity.ts";
 import { ENEMY_DISPLAY_SCALE } from "../data/enemyMuzzles.ts";
 import type { RoutePosition } from "../data/galaxies.ts";
+import type { EnemyState } from "./ai/index.ts";
 import type { Parts } from "./convex.ts";
-import type { EnemyState } from "./enemyAi.ts";
 import type { Vec } from "./types.ts";
 
 /** Art draws every enemy in 16 hull headings and 16 turret aims (art/enemies.md). */

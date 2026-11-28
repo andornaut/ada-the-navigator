@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
-import { createEnemy } from "./enemyAi.ts";
+import { createEnemy } from "./ai/index.ts";
 import { createFlight } from "./flight.ts";
 import {
   archivedObjectIds,

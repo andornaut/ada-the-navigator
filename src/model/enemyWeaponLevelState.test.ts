@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 
 import { enemyCatalog } from "../data/enemyCatalog.ts";
-import { createEnemy, stepEnemy } from "./enemyAi.ts";
+import { createEnemy, stepEnemy } from "./ai/index.ts";
 
 const identity = { archetype: "fighter" as const, id: "level-state", packId: null, phase: 0 };
 const definition = enemyCatalog.fighter;

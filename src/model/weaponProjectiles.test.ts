@@ -7,8 +7,8 @@ import { BEAM, WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
+import { createEnemy } from "./ai/index.ts";
 import { outlineContact, worldParts } from "./convex.ts";
-import { createEnemy } from "./enemyAi.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import {
   activeBeamFlashes,

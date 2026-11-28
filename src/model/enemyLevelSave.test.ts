@@ -6,7 +6,7 @@ import { enemyDefinition } from "../data/enemyCatalog.ts";
 import type { WeaponLevel } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE, SAVE_VERSION } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
-import { createEnemy } from "./enemyAi.ts";
+import { createEnemy } from "./ai/index.ts";
 import { GameModel } from "./game.ts";
 import type { SpaceObject } from "./types.ts";
 

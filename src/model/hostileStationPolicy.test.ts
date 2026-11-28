@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
-import { createEnemy } from "./enemyAi.ts";
+import { createEnemy } from "./ai/index.ts";
 import { createUnpopulatedFlight } from "./flight.ts";
 import {
   materializeHostileStation,

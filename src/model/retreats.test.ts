@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 
 import { shipCatalogEntry } from "../data/enemyActors.ts";
 import { ENEMY_RETREAT, type EnemyArchetype, enemyCatalog } from "../data/enemyCatalog.ts";
-import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./enemyAi.ts";
+import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./ai/index.ts";
 
 const dt = 1 / 60;
 const spawn = (archetype: EnemyArchetype): EnemyState => ({

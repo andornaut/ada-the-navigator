@@ -34,12 +34,12 @@ import type { GalaxyNumber, GameContent, Vec, Weapon, WeaponLevel } from "../dat
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { validActivity } from "../model/activities.ts";
+import { enemyDefeated } from "../model/ai/index.ts";
 import { settlementById } from "../model/andromedaPlaces.ts";
 import { validAndromedaProgress } from "../model/andromedaState.ts";
 import { ASTEROID_SHAPES } from "../model/asteroids.ts";
 import { holodisksHeld } from "../model/conversations.ts";
 import { EARLY_LANCE_SECONDS, earlyEncounterKind } from "../model/earlyEncounterRuntime.ts";
-import { enemyDefeated } from "../model/enemyAi.ts";
 import { validExplorationSites, validExplorationState } from "../model/explorationState.ts";
 import { BEAM_TIMING } from "../model/flight/enemyBeams.ts";
 import { validGalaxyGeography } from "../model/galaxyGeography.ts";

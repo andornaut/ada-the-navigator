@@ -25,6 +25,7 @@ import { SCREEN } from "../data/screen.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
+import { createEnemy } from "./ai/index.ts";
 import * as asteroidLoot from "./asteroidLoot.ts";
 import { oreQuantityScale, rollAsteroidLoot } from "./asteroidLoot.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
@@ -38,7 +39,6 @@ import {
   rollRockAmmoDrop,
   splitResourcePickup,
 } from "./drops.ts";
-import { createEnemy } from "./enemyAi.ts";
 import { createFlight, pickupTouched, stepFlight, wreckId } from "./flight.ts";
 import { dropFromRock, seededRockOre } from "./flight/destruction.ts";
 import { GameModel } from "./game.ts";

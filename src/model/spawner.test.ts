@@ -10,7 +10,7 @@ import {
   SWARM_GROUP_MINIMUM,
 } from "../data/spawnerCatalog.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
-import { createEnemy } from "./enemyAi.ts";
+import { createEnemy } from "./ai/index.ts";
 import { createFlight, stepFlight } from "./flight.ts";
 import {
   engagementAdmissions,

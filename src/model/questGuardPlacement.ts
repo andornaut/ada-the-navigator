@@ -1,6 +1,6 @@
 import { ENEMY_AVOIDANCE } from "../data/enemyNavigation.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
-import type { StationGuardAnchor } from "./ai/stationGuardPatrol.ts";
+import type { StationGuardAnchor } from "./ai/index.ts";
 import { partsReach, worldParts } from "./convex.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";

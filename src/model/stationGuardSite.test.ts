@@ -3,7 +3,7 @@ import { expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
-import { createEnemy } from "./enemyAi.ts";
+import { createEnemy } from "./ai/index.ts";
 import { stationGuardSite } from "./stationGuardSite.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
 

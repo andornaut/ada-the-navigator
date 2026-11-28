@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 
 import { enemyCatalog } from "../data/enemyCatalog.ts";
-import { createEnemy, type EnemyContext, stepEnemy } from "./enemyAi.ts";
+import { createEnemy, type EnemyContext, stepEnemy } from "./ai/index.ts";
 
 const definition = enemyCatalog.swarm;
 function fixture() {

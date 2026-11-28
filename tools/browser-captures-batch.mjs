@@ -51,7 +51,7 @@ const [
   import(new URL("../src/testing/launch.ts", import.meta.url)),
   import(new URL("../src/saving/index.ts", import.meta.url)),
   import(new URL("../src/data/enemyActorDefinition.ts", import.meta.url)),
-  import(new URL("../src/model/enemyAi.ts", import.meta.url)),
+  import(new URL("../src/model/ai/index.ts", import.meta.url)),
   import(new URL("../src/data/enemyIdentity.ts", import.meta.url)),
   import(new URL("../src/model/flight.ts", import.meta.url)),
   import(new URL("../src/model/stations.ts", import.meta.url)),

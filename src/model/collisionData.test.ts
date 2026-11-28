@@ -12,9 +12,9 @@ import {
 } from "../data/enemyCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { CORE_MANIFEST, GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
+import { createEnemy } from "./ai/index.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { debrisSilhouette } from "./debrisBody.ts";
-import { createEnemy } from "./enemyAi.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import { SHIP_HEADINGS, SHIP_NOSE, shipSilhouette } from "./nose.ts";
 import { pickupOutline } from "./pickupBody.ts";

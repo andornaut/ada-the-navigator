@@ -5,7 +5,7 @@ import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { spacingRadius } from "../data/enemySpacing.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
-import { createEnemy } from "./enemyAi.ts";
+import { createEnemy } from "./ai/index.ts";
 import { createFlight } from "./flight.ts";
 import { newGameState } from "./game.ts";
 import {

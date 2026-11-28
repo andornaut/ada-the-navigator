@@ -6,17 +6,20 @@ import { retaliatorVariant } from "../data/enemyIdentity.ts";
 import { ENEMY_KEEP_MOVING } from "../data/enemyNavigation.ts";
 import { spacingRadius } from "../data/enemySpacing.ts";
 import {
+  createEnemy,
   edgeCourse,
+  type EnemyContext,
+  type EnemyState,
   minerDwell,
   minerNeedsPick,
   outlineEdge,
+  packSlot,
   pickMinerRock,
-} from "./ai/edgeTrace.ts";
-import { steerAroundObstacles } from "./ai/obstacleNavigation.ts";
-import { packSlot } from "./ai/packRoute.ts";
+  steerAroundObstacles,
+  stepEnemy,
+} from "./ai/index.ts";
 import { ASTEROID_SHAPES, scenerySilhouette } from "./asteroids.ts";
 import { worldParts } from "./convex.ts";
-import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./enemyAi.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 
 const dt = 1 / 60;

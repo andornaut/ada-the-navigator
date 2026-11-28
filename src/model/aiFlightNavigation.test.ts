@@ -6,9 +6,9 @@ import { ENEMY_AVOIDANCE } from "../data/enemyNavigation.ts";
 import { actualGap } from "../testing/aiGeometry.ts";
 import { protectAda } from "../testing/arrivalGrace.ts";
 import { markerModel } from "../testing/markerModel.ts";
+import { createEnemy } from "./ai/index.ts";
 import { ASTEROID_SHAPES, worldSceneryBodyContact } from "./asteroids.ts";
 import { GAME_AREA, gameAreaPoint, inGameArea } from "./edgeMarkers.ts";
-import { createEnemy } from "./enemyAi.ts";
 import { enemyHull } from "./enemyBody.ts";
 import {
   createFlight,

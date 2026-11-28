@@ -5,12 +5,12 @@ import { expect, it } from "vitest";
 import { enemyCatalog } from "../../data/enemyCatalog.ts";
 import { ASTEROID_SHAPES, scenerySilhouette } from "../asteroids.ts";
 import { type Contact, grown, outlinesContact, type Parts, worldParts } from "../convex.ts";
-import { createEnemy } from "../enemyAi.ts";
 import { enemyHull } from "../enemyBody.ts";
 import type { SpaceObject } from "../types.ts";
 import { worldPoint } from "../world/index.ts";
+import { createEnemy } from "./enemyAi.ts";
 import { navigationLookAhead } from "./prediction.ts";
-import { worldNavigationQuery } from "./worldNavigation.ts";
+import { worldNavigationQuery } from "./worldNavigation/index.ts";
 
 it("matches authored hull contacts across wrapped positions, headings, frames and clearances", () => {
   const shape = [...ASTEROID_SHAPES.values()].find((entry) => entry.size === "large")!;

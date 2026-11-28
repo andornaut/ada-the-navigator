@@ -1,9 +1,9 @@
 import { enemyOnly } from "../../data/enemyCatalog.ts";
 import type { GameContent } from "../../data/types.ts";
 import { BEAM, LANCE_HIT_RADIUS, weaponAt } from "../../data/weaponCatalog.ts";
+import type { EnemyAttackOpportunity } from "../ai/index.ts";
 import { crossbowAllowsAttack, crossbowSector } from "../earlyEncounterPatterns.ts";
 import { EARLY_LANCE_SECONDS } from "../earlyEncounterRuntime.ts";
-import type { EnemyAttackOpportunity } from "../enemyAi.ts";
 import { enemyBeamReach, planEnemyProjectile } from "../enemyProjectiles.ts";
 import { needleCourses } from "../needle.ts";
 import { fanHeading } from "../playerProjectiles.ts";

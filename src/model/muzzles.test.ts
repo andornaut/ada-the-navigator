@@ -14,7 +14,7 @@ import {
 } from "../data/enemyCatalog.ts";
 import { ENEMY_DISPLAY_SCALE, MUZZLE_ART, muzzleLayout } from "../data/enemyMuzzles.ts";
 import { ART_MANIFEST } from "../testing/publicArt.ts";
-import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./enemyAi.ts";
+import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./ai/index.ts";
 import { drawnIndex, muzzleOffset } from "./muzzles.ts";
 
 const at = (degrees: number) => ({

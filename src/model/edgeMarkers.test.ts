@@ -14,8 +14,8 @@ import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { displayMarkerFixtures, markerEdges, markerModel } from "../testing/markerModel.ts";
 import { logicalView, NO_INSETS, playView, safeGameArea } from "../ui/layout/playView.ts";
+import { createEnemy } from "./ai/index.ts";
 import { edgeMarkerKind, edgePoint, GAME_AREA } from "./edgeMarkers.ts";
-import { createEnemy } from "./enemyAi.ts";
 import { createFlight } from "./flight.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 

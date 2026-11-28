@@ -1,8 +1,8 @@
 import { MINE_LAYER } from "../../data/enemyCatalog.ts";
 import type { GameContent } from "../../data/types.ts";
 import { MISSILE_HIT_RADIUS } from "../../data/weaponCatalog.ts";
+import type { FireIntent } from "../ai/index.ts";
 import { outlineContact, type Parts } from "../convex.ts";
-import type { FireIntent } from "../enemyAi.ts";
 import { MINE_PARTS, MINE_REACH, mineTouches } from "../mineShape.ts";
 import { needleChannelContains } from "../needleFlight.ts";
 import { impactSurface } from "../projectileImpact.ts";

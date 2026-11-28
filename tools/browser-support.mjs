@@ -143,7 +143,7 @@ const [
   import(new URL("../src/model/flight.ts", import.meta.url)),
   import(new URL("../src/data/enemyActors.ts", import.meta.url)),
   import(new URL("../src/data/enemyActorDefinition.ts", import.meta.url)),
-  import(new URL("../src/model/enemyAi.ts", import.meta.url)),
+  import(new URL("../src/model/ai/index.ts", import.meta.url)),
 ]);
 
 // The play view's projection of a world offset from Ada to logical screen px, and back.

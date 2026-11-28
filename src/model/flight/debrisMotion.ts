@@ -1,5 +1,6 @@
 import { CURRENTS } from "../../data/galaxyFeatures.ts";
 import type { GameContent } from "../../data/types.ts";
+import { stepDebris } from "../ai/index.ts";
 import {
   placementRadius,
   type Silhouette,
@@ -7,7 +8,6 @@ import {
   worldSceneryBodyContact,
 } from "../asteroids.ts";
 import { pointOnCurrent, worldCurrentInCell, worldCurrentsNear } from "../currents.ts";
-import { stepDebris } from "../enemyAi.ts";
 import { exclusionZoneRadius } from "../exclusionZones.ts";
 import { ACTIVE_CHUNK_RADIUS } from "../geography.ts";
 import { MOVING_ROCK_PREFIX, ricochetRocks } from "../rockRicochet.ts";

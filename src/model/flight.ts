@@ -43,9 +43,22 @@ import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { BEAM, weaponAt } from "../data/weaponCatalog.ts";
-import { minerNeedsPick, outlineEdge, type TracedEdge } from "./ai/edgeTrace.ts";
-import type { StationGuardAnchor } from "./ai/stationGuardPatrol.ts";
-import { worldNavigationQuery } from "./ai/worldNavigation.ts";
+import {
+  averageVelocity,
+  circlingSide,
+  createEnemy,
+  type EnemyAttackOpportunity,
+  type EnemyContext,
+  enemyDefeated,
+  enemyIntegrity,
+  type EnemyState,
+  minerNeedsPick,
+  outlineEdge,
+  type StationGuardAnchor,
+  stepEnemy,
+  type TracedEdge,
+} from "./ai/index.ts";
+import { worldNavigationQuery } from "./ai/worldNavigation/index.ts";
 import {
   ASTEROID_SHAPES,
   bounce,
@@ -77,17 +90,6 @@ import {
   earlyEncounterCueDue,
   earlyEncounterKind,
 } from "./earlyEncounterRuntime.ts";
-import {
-  averageVelocity,
-  circlingSide,
-  createEnemy,
-  type EnemyAttackOpportunity,
-  type EnemyContext,
-  enemyDefeated,
-  enemyIntegrity,
-  type EnemyState,
-  stepEnemy,
-} from "./enemyAi.ts";
 import { enemyEquipmentDefinition, rollEnemyWeaponLevel } from "./enemyEquipment.ts";
 import {
   type ProceduralPoi,

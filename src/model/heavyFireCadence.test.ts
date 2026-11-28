@@ -9,7 +9,7 @@ import {
 import { weaponAt } from "../data/weaponCatalog.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
-import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./enemyAi.ts";
+import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./ai/index.ts";
 import { GameModel } from "./game.ts";
 
 function fixture(archetype: "capital" | "frigate" = "frigate", flagship = false) {

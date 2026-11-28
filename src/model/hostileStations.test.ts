@@ -21,8 +21,8 @@ import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { HOSTILE_LOCAL_ALLOWANCE, SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
+import { createEnemy, damageEnemy, stepEnemy } from "./ai/index.ts";
 import { fromScreen, partsReach, worldParts } from "./convex.ts";
-import { createEnemy, damageEnemy, stepEnemy } from "./enemyAi.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
 import { createFlight, spawnPlannedHostileStation } from "./flight.ts";
 import {

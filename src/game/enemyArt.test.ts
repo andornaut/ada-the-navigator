@@ -46,7 +46,7 @@ import {
 } from "../art/index.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
-import { enemySpeedFraction } from "../model/enemyAi.ts";
+import { enemySpeedFraction } from "../model/ai/index.ts";
 import { ART_MANIFEST as manifest, CORE_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 
 const assets = manifest.assets as EnemyFrame[];

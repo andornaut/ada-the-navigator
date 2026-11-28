@@ -3,7 +3,7 @@ import { expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ENEMY_AVOIDANCE } from "../data/enemyNavigation.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
-import * as enemyAi from "./enemyAi.ts";
+import * as enemyAi from "./ai/index.ts";
 import {
   createFlight,
   questGuardPlacementContext,

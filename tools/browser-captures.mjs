@@ -60,7 +60,7 @@ const [
   import(new URL("../src/saving/index.ts", import.meta.url)),
   import(new URL("../src/data/enemyActorDefinition.ts", import.meta.url)),
   import(new URL("../src/data/enemyActors.ts", import.meta.url)),
-  import(new URL("../src/model/enemyAi.ts", import.meta.url)),
+  import(new URL("../src/model/ai/index.ts", import.meta.url)),
   import(new URL("../src/data/asteroidCatalog.ts", import.meta.url)),
   import(new URL("../src/art/asteroidArt.ts", import.meta.url)),
   import(new URL("../src/ui/deviceSettings.ts", import.meta.url)),

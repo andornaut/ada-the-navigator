@@ -16,7 +16,7 @@ import { enemyActorAvailable, type EnemyActorKind } from "../data/enemyActors.ts
 import type { EnemyDefinition } from "../data/enemyCatalog.ts";
 import { enemyAssetKey, INDUSTRIAL_BODY_KEYS, PHANTOM_FLAGSHIP_ID } from "../data/enemyIdentity.ts";
 import type { GalaxyNumber, WeaponLevel } from "../data/types.ts";
-import { createEnemy, type EnemyState, stepEnemy } from "../model/enemyAi.ts";
+import { createEnemy, type EnemyState, stepEnemy } from "../model/ai/index.ts";
 import { enemyEquipmentDefinition } from "../model/enemyEquipment.ts";
 import { GameModel } from "../model/game.ts";
 import type { Vec } from "../model/types.ts";

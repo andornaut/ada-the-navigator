@@ -1,7 +1,7 @@
 import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import type { GameContent } from "../data/types.ts";
-import { createEnemy } from "./enemyAi.ts";
+import { createEnemy } from "./ai/index.ts";
 import { liveEnemy } from "./geography.ts";
 import { readPendingPhantomEncounter } from "./phantomRequiredPlans.ts";
 import { requiredWorldOccupantsPopulation } from "./requiredWorldReservations.ts";

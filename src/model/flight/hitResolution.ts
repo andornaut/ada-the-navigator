@@ -2,7 +2,7 @@ import { FLAGSHIP_SURRENDER_HP } from "../../data/enemyIdentity.ts";
 import { ROUTE_POSITION } from "../../data/galaxies.ts";
 import { PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../../data/phantom.ts";
 import type { GameContent } from "../../data/types.ts";
-import { damageEnemy, enemyDefeated } from "../enemyAi.ts";
+import { damageEnemy, enemyDefeated } from "../ai/index.ts";
 import { enemyEquipmentDefinition } from "../enemyEquipment.ts";
 import { queueHostileStationReward } from "../hostileStations/reward.ts";
 import { MOVING_ROCK_PREFIX } from "../rockRicochet.ts";

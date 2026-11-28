@@ -10,7 +10,7 @@ import {
 import { PHANTOM_TUNING } from "../data/phantom.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import * as enemyAi from "./enemyAi.ts";
+import * as enemyAi from "./ai/index.ts";
 import { enemyEquipmentDefinition, rollEnemyWeaponLevel } from "./enemyEquipment.ts";
 import { createFlight, spawnChapterEnemy, stepFlight, syncFlightRegion } from "./flight.ts";
 import { GameModel } from "./game.ts";

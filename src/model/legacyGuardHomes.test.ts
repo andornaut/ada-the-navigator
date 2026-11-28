@@ -5,7 +5,7 @@ import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
-import { createEnemy } from "./enemyAi.ts";
+import { createEnemy } from "./ai/index.ts";
 import { GameModel } from "./game.ts";
 import { type LegacyGuardHomePorts, legacyGuardHomeUpdates } from "./legacyGuardHomes.ts";
 import type { SpaceObject } from "./types.ts";

@@ -4,7 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
 import { SCREEN } from "../data/screen.ts";
-import { damageEnemy } from "../model/enemyAi.ts";
+import { damageEnemy } from "../model/ai/index.ts";
 import { enemyEquipmentDefinition } from "../model/enemyEquipment.ts";
 import { GameModel } from "../model/game.ts";
 import { worldSyncFlightRegion } from "../model/geography.ts";

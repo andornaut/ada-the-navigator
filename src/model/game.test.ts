@@ -12,11 +12,11 @@ import { SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { completeCartwheelHubIntroductionFixture } from "../testing/cartwheelFixture.ts";
 import { playOpening, readStory, relaunch, supportEntropy } from "../testing/launch.ts";
+import { createEnemy, damageEnemy } from "./ai/index.ts";
 import { worldNearestSettlerStation } from "./andromedaPlaces.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { enemyStardust } from "./drops.ts";
-import { createEnemy, damageEnemy } from "./enemyAi.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import {
   activateRequiredRoute,

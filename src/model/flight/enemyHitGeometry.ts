@@ -1,7 +1,7 @@
 import { ROUTE_POSITION, type RoutePosition } from "../../data/galaxies.ts";
 import type { GalaxyNumber, GameContent, Vec } from "../../data/types.ts";
+import { hardpointOffset } from "../ai/index.ts";
 import { outlineContact, screenOutlineContact, toScreen } from "../convex.ts";
-import { hardpointOffset } from "../enemyAi.ts";
 import { enemyHull, enemyPartOutline } from "../enemyBody.ts";
 import { enemyEquipmentDefinition } from "../enemyEquipment.ts";
 import type { FlightState, SpaceObject } from "../types.ts";

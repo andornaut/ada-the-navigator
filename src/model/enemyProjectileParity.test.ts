@@ -2,8 +2,8 @@ import { expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
+import * as ai from "./ai/index.ts";
 import { toScreen } from "./convex.ts";
-import * as ai from "./enemyAi.ts";
 import { activeEnemyBeams, createUnpopulatedFlight, stepFlight } from "./flight.ts";
 import { playerWeaponCoverage } from "./playerWeaponCoverage.ts";
 import type { FlightInput, SpaceObject, Vec } from "./types.ts";

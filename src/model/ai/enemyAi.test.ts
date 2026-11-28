@@ -10,10 +10,12 @@ import {
   enemyFire,
   enemyFireInterval,
   fireDamageRatio,
-} from "../data/enemyCatalog.ts";
-import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
-import { SHARED_SHIP_PHYSICS, SHIP_PHYSICS } from "../data/shipPhysics.ts";
-import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
+} from "../../data/enemyCatalog.ts";
+import { ENEMY_SIZE_RATIOS } from "../../data/enemyDimensions.ts";
+import { SHARED_SHIP_PHYSICS, SHIP_PHYSICS } from "../../data/shipPhysics.ts";
+import { WEAPON_CATALOG } from "../../data/weaponCatalog.ts";
+import { fanHeading } from "../playerProjectiles.ts";
+import { stepShipMotion } from "../shipPhysics.ts";
 import {
   aimDrift,
   averageVelocity,
@@ -30,8 +32,6 @@ import {
   stepEnemy,
   strafeLimited,
 } from "./enemyAi.ts";
-import { fanHeading } from "./playerProjectiles.ts";
-import { stepShipMotion } from "./shipPhysics.ts";
 
 /** `vector` turned by `angle` radians, as a ship's aim drift turns its line of fire. */
 const rotate = (vector: { x: number; y: number }, angle: number) => ({

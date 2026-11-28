@@ -6,7 +6,7 @@ import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { restoreSave, SAVE_RESTORE, SAVE_VERSION } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
-import { createEnemy } from "./enemyAi.ts";
+import { createEnemy } from "./ai/index.ts";
 import { GameModel } from "./game.ts";
 import type { SpaceObject } from "./types.ts";
 import { flightEncounterSeed } from "./world/index.ts";

@@ -3,7 +3,7 @@ import { CALF } from "../data/activities.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { PHANTOM_TUNING as T } from "../data/phantom.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { hardpointOffset } from "./enemyAi.ts";
+import { hardpointOffset } from "./ai/index.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 export interface PhantomAllySpec {
   id: string;

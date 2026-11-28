@@ -4,6 +4,7 @@ import { classSpacingRadius, spacingRadius } from "../data/enemySpacing.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
 import type { Vec } from "../data/types.ts";
+import { createEnemy } from "./ai/index.ts";
 import {
   type CourierAmbushAttempt,
   type CourierAmbushPair,
@@ -16,7 +17,6 @@ import {
 } from "./andromedaState.ts";
 import { ASTEROID_SHAPES, placementRadius, silhouetteWorldReach } from "./asteroids.ts";
 import { closestOnSegment } from "./convex.ts";
-import { createEnemy } from "./enemyAi.ts";
 import { rollEnemyWeaponLevel } from "./enemyEquipment.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { hostileStationContext } from "./hostileStations/placement.ts";

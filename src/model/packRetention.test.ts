@@ -7,7 +7,7 @@ import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
-import { createEnemy, damageEnemy } from "./enemyAi.ts";
+import { createEnemy, damageEnemy } from "./ai/index.ts";
 import {
   createUnpopulatedFlight,
   ensureDestination,

@@ -10,7 +10,7 @@ import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { seedLaunches } from "../testing/launchSeeds.ts";
-import { createEnemy } from "./enemyAi.ts";
+import { createEnemy } from "./ai/index.ts";
 import {
   activeEnemyBeams,
   activeProjectileImpacts,

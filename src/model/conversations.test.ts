@@ -16,6 +16,7 @@ import type { GalaxyNumber } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
+import { createEnemy } from "./ai/index.ts";
 import {
   ConversationDirector,
   type ConversationFacts,
@@ -26,7 +27,6 @@ import {
   pennyPoints,
   speakerName,
 } from "./conversations.ts";
-import { createEnemy } from "./enemyAi.ts";
 import { GameModel } from "./game.ts";
 import type { PhantomChatter } from "./phantom.ts";
 import type { SpaceObject } from "./types.ts";

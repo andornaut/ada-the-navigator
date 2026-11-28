@@ -1,6 +1,6 @@
 import { SCREEN } from "../../data/screen.ts";
 import type { GameContent } from "../../data/types.ts";
-import { enemyDefeated } from "../enemyAi.ts";
+import { enemyDefeated } from "../ai/index.ts";
 import { enemyHull } from "../enemyBody.ts";
 import { exclusionZoneRadius } from "../exclusionZones.ts";
 import type { FlightState, SpaceObject, Vec } from "../types.ts";

@@ -7,9 +7,9 @@ import { NEEDLE } from "../data/needle.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
+import { createEnemy } from "./ai/index.ts";
 import { placementRadius } from "./asteroids.ts";
 import { fromScreen } from "./convex.ts";
-import { createEnemy } from "./enemyAi.ts";
 import {
   activeEnemyBeams,
   createFlight,

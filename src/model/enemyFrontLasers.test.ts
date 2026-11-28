@@ -35,7 +35,7 @@ import {
   type EnemyState,
   stepEnemy,
   withinNoseArc,
-} from "./enemyAi.ts";
+} from "./ai/index.ts";
 import { drawnIndex } from "./muzzles.ts";
 
 /** Explicit test mounts on every frigate, capital and flagship design, not Art's positions. */

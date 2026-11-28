@@ -10,8 +10,8 @@ import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { ORE_FIELD_LAYOUTS, oreFieldLayout } from "../data/oreFieldLayouts.ts";
+import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./ai/index.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./enemyAi.ts";
 import { createFlight, PLATFORM_FACING, stepFlight } from "./flight.ts";
 import {
   ORE_FIELD_CLEAR_RADIUS,

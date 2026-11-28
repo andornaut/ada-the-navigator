@@ -8,7 +8,7 @@ import type { GalaxyNumber } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
-import { createEnemy } from "./enemyAi.ts";
+import { createEnemy } from "./ai/index.ts";
 import { activeEnemyBeams } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";

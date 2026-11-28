@@ -6,7 +6,7 @@ import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { SPAWNER_POLICIES, SPAWNER_REGIONS } from "../data/spawnerCatalog.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import { createEnemy, stepEnemy } from "./enemyAi.ts";
+import { createEnemy, stepEnemy } from "./ai/index.ts";
 import {
   createFlight,
   createUnpopulatedFlight,

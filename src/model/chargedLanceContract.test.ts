@@ -9,7 +9,7 @@ import {
 } from "../data/enemyCatalog.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
-import { createEnemy } from "./enemyAi.ts";
+import { createEnemy } from "./ai/index.ts";
 import { activeEnemyBeams, createFlight, stepFlight } from "./flight.ts";
 import type { SpaceObject } from "./types.ts";
 

@@ -6,9 +6,9 @@ import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import type { GameContent } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
+import { createEnemy } from "./ai/index.ts";
 import { rollAsteroidLoot } from "./asteroidLoot.ts";
 import { dropRandom } from "./drops.ts";
-import { createEnemy } from "./enemyAi.ts";
 import {
   BUMP_DAMAGE,
   createFlight,

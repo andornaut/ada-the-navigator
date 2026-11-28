@@ -2,7 +2,7 @@ import { enemyDefinition, escortTuning, FRIGATE_ESCORT_COUNT } from "../data/ene
 import { spacingRadius } from "../data/enemySpacing.ts";
 import { ROUTE_POSITION, type RoutePosition } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { createEnemy } from "./enemyAi.ts";
+import { createEnemy } from "./ai/index.ts";
 import { rollEnemyWeaponLevel } from "./enemyEquipment.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 

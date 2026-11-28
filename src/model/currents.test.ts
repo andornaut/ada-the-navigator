@@ -4,6 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { CURRENTS } from "../data/galaxyFeatures.ts";
+import { createEnemy } from "./ai/index.ts";
 import {
   type Current,
   currentInCell,
@@ -14,7 +15,6 @@ import {
   pointOnCurrent,
   streakFrame,
 } from "./currents.ts";
-import { createEnemy } from "./enemyAi.ts";
 import { createFlight, ensureDestination, stepFlight } from "./flight.ts";
 import { stationsNear } from "./stations.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";

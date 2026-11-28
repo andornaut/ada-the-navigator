@@ -22,7 +22,7 @@ import {
   type EnemyState,
   hardpointOffset,
   stepEnemy,
-} from "./enemyAi.ts";
+} from "./ai/index.ts";
 import { encounterLatticeSpacing } from "./spawnTargets.ts";
 
 const dt = 1 / 60;

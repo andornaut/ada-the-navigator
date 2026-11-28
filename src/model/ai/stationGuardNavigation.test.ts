@@ -6,9 +6,9 @@ import { ENEMY_AVOIDANCE } from "../../data/enemyNavigation.ts";
 import { SIMULATION_STEP_SECONDS } from "../../data/simulation.ts";
 import { GALAXY_SIDE } from "../../data/world.ts";
 import { partsReach, worldParts } from "../convex.ts";
-import { createEnemy, type EnemyContext, stepEnemy } from "../enemyAi.ts";
 import { enemyHull } from "../enemyBody.ts";
 import { worldDistance, wrapPoint } from "../world/index.ts";
+import { createEnemy, type EnemyContext, stepEnemy } from "./enemyAi.ts";
 
 it.each([false, true])(
   "uses the validated site frame for production home navigation (returning=%s)",

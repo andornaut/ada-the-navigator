@@ -1,6 +1,6 @@
 import { ECONOMY } from "../data/economy.ts";
 import type { GameContent } from "../data/types.ts";
-import { enemyDefeated } from "./enemyAi.ts";
+import { enemyDefeated } from "./ai/index.ts";
 import { markerObjectTracked } from "./markerKnowledge.ts";
 import { stationGuardSite } from "./stationGuardSite.ts";
 import { worldStationById } from "./stations.ts";

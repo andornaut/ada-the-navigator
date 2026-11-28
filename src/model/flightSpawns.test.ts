@@ -8,7 +8,7 @@ import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import { createEnemy } from "./enemyAi.ts";
+import { createEnemy } from "./ai/index.ts";
 import { createUnpopulatedFlight, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { ambientPackId, escortPackId, packMemberId, worldSyncFlightRegion } from "./geography.ts";

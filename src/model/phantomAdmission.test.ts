@@ -6,7 +6,7 @@ import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { clearPhantomTraffic } from "../testing/phantomTraffic.ts";
-import { damageEnemy } from "./enemyAi.ts";
+import { damageEnemy } from "./ai/index.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import { createFlight, inDanger, routeBlocked, spawnChapterEnemy, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";

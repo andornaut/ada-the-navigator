@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { type EnemyArchetype, enemyCatalog } from "../data/enemyCatalog.ts";
-import { GALAXY_SIDE } from "../data/world.ts";
+import { type EnemyArchetype, enemyCatalog } from "../../data/enemyCatalog.ts";
+import { GALAXY_SIDE } from "../../data/world.ts";
+import { wrapPoint } from "../world/index.ts";
 import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./enemyAi.ts";
-import { wrapPoint } from "./world/index.ts";
 
 const half = GALAXY_SIDE / 2;
 const spawn = (archetype: EnemyArchetype, x = half - 40, y = half - 20): EnemyState => ({

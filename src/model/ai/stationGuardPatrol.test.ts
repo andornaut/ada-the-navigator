@@ -7,10 +7,10 @@ import { SHARED_SHIP_PHYSICS } from "../../data/shipPhysics.ts";
 import { SIMULATION_STEP_SECONDS } from "../../data/simulation.ts";
 import { GALAXY_SIDE } from "../../data/world.ts";
 import { partsReach, worldParts } from "../convex.ts";
-import { createEnemy } from "../enemyAi.ts";
 import { enemyHull } from "../enemyBody.ts";
 import { stepShipMotion, turnToward } from "../shipPhysics.ts";
 import { worldDelta, worldDistance, wrapPoint } from "../world/index.ts";
+import { createEnemy } from "./enemyAi.ts";
 import { stationGuardPatrol } from "./stationGuardPatrol.ts";
 
 it.each([undefined, GALAXY_SIDE])(

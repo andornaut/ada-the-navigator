@@ -2,8 +2,8 @@ import { expect, it } from "vitest";
 
 import { enemyActorDefinition } from "../../data/enemyActorDefinition.ts";
 import { ROUTE_POSITION } from "../../data/galaxies.ts";
+import { createEnemy } from "../ai/index.ts";
 import { outlinesContact, type Parts } from "../convex.ts";
-import { createEnemy } from "../enemyAi.ts";
 import { enemyPhysicalBody } from "../enemyBody.ts";
 import { placementOutlinesOverlap } from "./overlap.ts";
 
