@@ -20,6 +20,7 @@ import {
   EXPANDED_RAPID_DISC_INK_OFFSET,
   HUD_AMMO_COUNT,
   HUD_BUTTON,
+  HUD_DISC_ICON_CENTER_OFFSET,
   HUD_ROW,
   HUD_WEAPON_LEVEL,
 } from "./layout/playView.ts";
@@ -212,6 +213,7 @@ ${button} ${disc}::before{
 // glyph is a mask over currentColor, so a state's colour, and the refusal cue's red text colour,
 // tint it; selection, lock and refusal never resize the disc or glyph.
 const rapidDiscInkOffset = units(EXPANDED_RAPID_DISC_INK_OFFSET);
+const weaponDiscIconCenterOffset = units(HUD_DISC_ICON_CENTER_OFFSET);
 
 // Kit's integer action-group ports use half units to preserve the symmetric 7.5-unit outsets.
 const GROUP_SCALE = 2;
@@ -253,7 +255,7 @@ ${hudDiscStyle(".ada-controls span.ada-weapon", ".ada-disc")}
 }
 .ada-controls .ada-weapon-group > button.ada-weapon .ui-hud-disc-icon{
   /* Kit centres on a whole unit. Retain the original half-unit centring of the glyph. */
-  translate:${units(0.5)} ${units(0.5)};
+  translate:${weaponDiscIconCenterOffset} ${weaponDiscIconCenterOffset};
   color:var(--disc-focus-glyph,currentColor);
   opacity:1
 }
