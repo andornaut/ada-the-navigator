@@ -1,7 +1,7 @@
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
-import type { ExchangeAmount, ExchangeResource } from "../model/exchange.ts";
-import { BUTTON_GAP } from "./layout/tokens.ts";
+import type { ExchangeAmount, ExchangeResource } from "../../model/exchange.ts";
+import { BUTTON_GAP } from "../layout/tokens.ts";
 
 export interface ExchangeActionData {
   readonly amount: ExchangeAmount;

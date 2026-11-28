@@ -1,9 +1,9 @@
 import { validateLayoutTree } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import { expect, it } from "vitest";
 
-import { EXCHANGE_AMOUNTS, type ExchangeResource } from "../model/exchange.ts";
+import { EXCHANGE_AMOUNTS, type ExchangeResource } from "../../model/exchange.ts";
+import { BUTTON_GAP } from "../layout/tokens.ts";
 import { exchangeTree } from "./exchangeTree.ts";
-import { BUTTON_GAP } from "./layout/tokens.ts";
 
 it("composes caller fixed-action facts without an editor or confirmation controller", () => {
   const actions = (resource: ExchangeResource) =>

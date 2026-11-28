@@ -3,9 +3,9 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 import { REFUSAL_ATTRIBUTES } from "@andornaut/game-kit/runtime/web/ui/dom/refusalCue";
 
-import { IMMEDIATE_EXCHANGE_UNIT_COST } from "../data/exchange.ts";
-import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
-import { uiIconUrl } from "../data/uiIconUrl.ts";
+import { IMMEDIATE_EXCHANGE_UNIT_COST } from "../../data/exchange.ts";
+import { EXCHANGE_COPY } from "../../data/exchangeCopy.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
 import {
   EXCHANGE_AMOUNTS,
   type ExchangeRefusal,
@@ -13,13 +13,13 @@ import {
   type ImmediateExchangeOrder,
   type ImmediateExchangePreview,
   type ImmediateExchangeResult,
-} from "../model/exchange.ts";
-import { fill } from "../model/shop.ts";
-import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
+} from "../../model/exchange.ts";
+import { fill } from "../../model/shop.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "../actionBinding.ts";
+import { inCurrentView } from "../pressScope.ts";
+import { refuse } from "../refusal.ts";
+import { createStandardTextAction } from "../standardTextAction.ts";
 import { type ExchangeActionData, type ExchangeSchema, exchangeTree } from "./exchangeTree.ts";
-import { inCurrentView } from "./pressScope.ts";
-import { refuse } from "./refusal.ts";
-import { createStandardTextAction } from "./standardTextAction.ts";
 
 export interface ExchangePort {
   readonly exchangeImmediately: (order: ImmediateExchangeOrder) => ImmediateExchangeResult;

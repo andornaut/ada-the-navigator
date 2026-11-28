@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { uiIconUrl } from "../data/uiIconUrl.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
 import {
   EXCHANGE_AMOUNTS,
   type ImmediateExchangeOrder,
   previewImmediateExchange,
-} from "../model/exchange.ts";
-import * as actionBinding from "./actionBinding.ts";
-import { fixtureActionRoot } from "./actionRootFixture.ts";
+} from "../../model/exchange.ts";
+import * as actionBinding from "../actionBinding.ts";
+import { fixtureActionRoot } from "../actionRootFixture.ts";
+import { REFUSAL } from "../refusal.ts";
 import { createExchangeView } from "./exchange.ts";
-import { REFUSAL } from "./refusal.ts";
 
 const dom = vi.hoisted(() => {
   const mountedRoots = new Set<Node>();
