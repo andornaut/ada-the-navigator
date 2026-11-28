@@ -37,7 +37,7 @@ import {
 import { ENEMY_AVOIDANCE, ENEMY_KEEP_MOVING, MINING_HULLS } from "../data/enemyNavigation.ts";
 import { spacingRadius } from "../data/enemySpacing.ts";
 import { byPosition, ROUTE_POSITION } from "../data/galaxies.ts";
-import { CURRENTS, ORE_FIELDS } from "../data/galaxyFeatures.ts";
+import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { LANDMARK_TUNING } from "../data/jobs.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../data/phantom.ts";
@@ -71,7 +71,7 @@ import {
 } from "./cartwheelMiningPatrol.ts";
 import { planChunkCaches } from "./chunkCaches.ts";
 import { onScreen } from "./conversations.ts";
-import { worldFlowAt, worldInCurrent } from "./currents.ts";
+import { worldFlowAt } from "./currents.ts";
 import {
   hammerAllowsMount,
   mantaEscortCommand,
@@ -111,6 +111,14 @@ import { beamPoint, outlineBeamStrike, rayCircle, sceneryEntry } from "./flight/
 import { crossbowAttack, crossbowFrame } from "./flight/crossbow.ts";
 import { inBattle, inDanger } from "./flight/danger.ts";
 import { ensureDebrisRivers, moveDebris } from "./flight/debrisMotion.ts";
+import {
+  destinationCandidates,
+  destinationClear,
+  ensureDestination as ensureFlightDestination,
+  ensureDestinationAt as ensureFlightDestinationAt,
+  isHeld,
+  placeDestinationAhead as placeFlightDestinationAhead,
+} from "./flight/destinationPlacement.ts";
 import {
   destroyEnemy,
   dropFromRock,
@@ -228,7 +236,6 @@ import {
   questGuardHomePorts,
 } from "./questGuardPlacement.ts";
 import {
-  readRequiredPlan,
   rememberRequiredSite,
   requiredPlanActors,
   storeRequiredPlan,
@@ -3035,39 +3042,12 @@ export function ensureRouteEncounter(
   return object;
 }
 
-export function ensureDestination(
+function requiredDestinationSpan(
   content: GameContent,
   id: string,
+  baseSpan: number,
   flight: FlightState,
-): SpaceObject {
-  const existing = flight.objects.find((o) => o.id === id && o.kind === "destination");
-  if (existing) {
-    return existing;
-  }
-  const rolePlan = readRequiredRolePlan(flight, id);
-  if (rolePlan) {
-    return rolePlan.site;
-  }
-  const pending = readRequiredPlan(flight, id);
-  if (pending && !planningRequiredWorld.has(flight)) {
-    activateRequiredRoute(content, id, flight);
-    return (
-      flight.objects.find((object) => object.kind === "destination" && object.id === id) ??
-      pending.site
-    );
-  }
-  const held = heldDestination(content, id, flight);
-  if (held) {
-    return held;
-  }
-  const heading = direction(
-    length(flight.velocity)
-      ? flight.velocity
-      : length(flight.facing)
-        ? flight.facing
-        : { x: 0, y: -1 },
-  );
-  const baseSpan = content.tuning.chunkSize * 2;
+): number {
   const leaderReach = planningRequiredWorld.has(flight)
     ? questGuardFormationReach(questGuardPlacementContext(content, flight), [
         spawnEnemy(
@@ -3080,70 +3060,36 @@ export function ensureDestination(
       ])
     : 0;
   // A new planned site's inward guard edge also stays outside the existing launch calm area.
-  const span = planningRequiredWorld.has(flight)
-    ? requiredSiteSpan(content, leaderReach)
-    : baseSpan;
-  const index = flight.objects.filter((o) => o.kind === "destination").length;
-  const spacing = content.tuning.storySpacing;
-  const offset = Math.ceil(index / 2) * (index % 2 ? 1 : -1) * spacing;
-  const target = {
-    x: flight.player.x + heading.x * span - heading.y * offset,
-    y: flight.player.y + heading.y * span + heading.x * offset,
-  };
-  while (destinationCrowded(content, flight, target)) {
-    target.x -= heading.y * spacing;
-    target.y += heading.x * spacing;
-  }
-  // A nearby clear point keeps the destination in its original region.
-  for (const point of destinationCandidates(target)) {
-    if (destinationClear(content, flight, point)) {
-      return ensureDestinationAt(content, id, point, flight);
-    }
-  }
-  return ensureDestinationAt(content, id, target, flight);
+  return planningRequiredWorld.has(flight) ? requiredSiteSpan(content, leaderReach) : baseSpan;
 }
 
-/** Story sites and their formations share the same bounded, ordered placement search. */
-function* destinationCandidates(target: Vec): Iterable<Vec> {
-  yield target;
-  const step = CURRENTS.width[1] / 2;
-  for (let ring = 1; ring <= 8; ring++) {
-    for (let spoke = 0; spoke < 16; spoke++) {
-      const angle = (spoke * Math.PI) / 8;
-      yield {
-        x: target.x + Math.cos(angle) * ring * step,
-        y: target.y + Math.sin(angle) * ring * step,
-      };
-    }
-  }
-}
-
-function destinationCrowded(content: GameContent, flight: FlightState, point: Vec): boolean {
-  const world = flightWorldContext(flight);
-  return (
-    flight.objects.some(
-      (object) =>
-        object.kind === "destination" &&
-        worldDistance(world, object, point) < content.tuning.storySpacing,
-    ) ||
-    worldStationsNear(
-      flightStationContext(flight),
-      ECONOMY,
-      flight.galaxy,
-      ECONOMY.station.destinationClearance,
-      point,
-    ).length > 0 ||
-    landmarkSites(flight.galaxy).some(
-      (site) => worldDistance(world, site, point) < LANDMARK_TUNING.placeClearance,
-    )
+function clearDestinationLayout(
+  content: GameContent,
+  flight: FlightState,
+  object: SpaceObject,
+): void {
+  clearLayoutObjects(
+    (o) => o.kind === "destination" || clearOf(flight, content.tuning.exclusionRadius, object, o),
+    flight,
   );
 }
 
-function destinationClear(content: GameContent, flight: FlightState, point: Vec): boolean {
-  return (
-    !worldInCurrent(flightWorldContext(flight), flight.galaxy, CURRENTS.clearance, point) &&
-    !destinationCrowded(content, flight, point)
-  );
+const destinationPlacement = {
+  activateRequiredRoute,
+  canonicalObject,
+  clearDestinationLayout,
+  generate,
+  planningRequiredWorld,
+  relocateRouteGuards,
+  requiredDestinationSpan,
+};
+
+export function ensureDestination(
+  content: GameContent,
+  id: string,
+  flight: FlightState,
+): SpaceObject {
+  return ensureFlightDestination(destinationPlacement, content, id, flight);
 }
 
 /** A seeded chapter site uses the same destination creation and protected-area clearance as exploration. */
@@ -3153,61 +3099,7 @@ export function ensureDestinationAt(
   point: Vec,
   flight: FlightState,
 ): SpaceObject {
-  const existing = flight.objects.find(
-    (object) => object.kind === "destination" && object.id === id,
-  );
-  if (existing) {
-    return existing;
-  }
-  generate(content, point, false, flight);
-  const object: SpaceObject = { ...point, hp: 1, id, kind: "destination", radius: 30, role: id };
-  canonicalObject(flight, object);
-  flight.objects.push(object);
-  // A destination's exclusion zone holds no layout object or drift path from earlier chunks.
-  clearLayoutObjects(
-    (o) => o.kind === "destination" || clearOf(flight, content.tuning.exclusionRadius, object, o),
-    flight,
-  );
-  relocateRouteGuards(content, flight);
-  return object;
-}
-
-/**
- * Cartwheel's miner and visitors destinations stand at their holding points beside the hub
- * (gameplay/rules.md), placing the hub first; null for any other destination.
- */
-function heldDestination(
-  content: GameContent,
-  id: string,
-  flight: FlightState,
-): SpaceObject | null {
-  const offset =
-    flight.galaxy === CARTWHEEL_STORY_SHIPS.galaxy &&
-    Object.hasOwn(CARTWHEEL_STORY_SHIPS.destinations, id)
-      ? CARTWHEEL_STORY_SHIPS.destinations[id as keyof typeof CARTWHEEL_STORY_SHIPS.destinations]
-      : undefined;
-  if (!offset) {
-    return null;
-  }
-  const hub = ensureDestination(content, CARTWHEEL_STORY_SHIPS.station, flight);
-  const target = { x: hub.x + offset.x, y: hub.y + offset.y };
-  generate(content, target, false, flight);
-  const object: SpaceObject = { ...target, hp: 1, id, kind: "destination", radius: 30, role: id };
-  canonicalObject(flight, object);
-  flight.objects.push(object);
-  clearLayoutObjects(
-    (o) => o.kind === "destination" || clearOf(flight, content.tuning.exclusionRadius, object, o),
-    flight,
-  );
-  return object;
-}
-
-/** Whether a destination is held beside the hub, so it neither moves ahead nor has a guard. */
-function isHeld(id: string, flight: FlightState): boolean {
-  return (
-    flight.galaxy === CARTWHEEL_STORY_SHIPS.galaxy &&
-    Object.hasOwn(CARTWHEEL_STORY_SHIPS.destinations, id)
-  );
+  return ensureFlightDestinationAt(destinationPlacement, content, id, point, flight);
 }
 
 /** Reposition an undiscovered encounter only while its old location is outside the generated near field. */
@@ -3216,19 +3108,7 @@ export function placeDestinationAhead(
   id: string,
   flight: FlightState,
 ): SpaceObject {
-  const existing = flight.objects.find((o) => o.id === id && o.kind === "destination");
-  if (existing && isHeld(id, flight)) {
-    return existing;
-  }
-  if (
-    !existing ||
-    worldDistance(flightWorldContext(flight), existing, flight.player) >
-      content.tuning.chunkSize * 2.5
-  ) {
-    flight.objects = flight.objects.filter((o) => o !== existing);
-    return ensureDestination(content, id, flight);
-  }
-  return existing;
+  return placeFlightDestinationAhead(destinationPlacement, content, id, flight);
 }
 
 /** Optional world generation starts only after the caller has installed required reservations. */
