@@ -264,7 +264,6 @@ export const HUD_BUTTON = {
   edge: 1,
   gap: SMALL_BUTTON_GAP - (HUD_TARGET - HUD_DISC),
   glyph: 20,
-  selectionOutline: 1,
   target: HUD_TARGET,
 } as const;
 

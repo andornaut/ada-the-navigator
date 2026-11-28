@@ -18,6 +18,7 @@ import { COLOURS } from "./layout/colours.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { EXPANDED_VIEWPORT, font, fromHudEdge, units } from "./layout/css.ts";
 import {
+  EQUIPPED_WEAPON_RING_WIDTH,
   EXPANDED_RAPID_DISC_INK_OFFSET,
   HUD_AMMO_COUNT,
   HUD_BUTTON,
@@ -334,7 +335,7 @@ ${(Object.keys(WEAPON_FILLS) as Weapon[])
   --disc-edge:${units(HUD_DISC_STATES.selected.edge)}
 }
 .ada-controls .ada-weapon-group > button.ada-weapon[data-state=selected] .ada-disc{
-  box-shadow:0 0 0 ${units(HUD_BUTTON.selectionOutline)} ${TASK_COLORS.story}
+  box-shadow:0 0 0 ${units(EQUIPPED_WEAPON_RING_WIDTH)} ${TASK_COLORS.story}
 }
 .ada-controls .ada-weapon[data-state=selected]:not(:focus-visible) .ada-disc{
   background:${HUD_DISC_STATES.selected.face}
@@ -360,7 +361,7 @@ ${PRESSED_WEAPON}{
 @media (forced-colors:active){
   .ada-controls .ada-weapon-group > button.ada-weapon[data-state=selected] .ada-disc{
     box-shadow:none;
-    outline:${units(HUD_BUTTON.selectionOutline)} solid ButtonText
+    outline:${units(EQUIPPED_WEAPON_RING_WIDTH)} solid ButtonText
   }
   .ada-controls .ada-weapon-group > .ada-weapon:focus-visible:not(:active,[data-weapon-pressed]) .ada-disc{
     forced-color-adjust:none;

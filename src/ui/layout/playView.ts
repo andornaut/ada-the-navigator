@@ -43,6 +43,7 @@ export {
 export const COMPACT_DISABLED_BANNER = { sideInsetReduction: 0.75, top: 2 } as const;
 export const EXPANDED_RAPID_DISC_INK_OFFSET = 0.75;
 export const HUD_DISC_ICON_CENTER_OFFSET = 0.5;
+export const EQUIPPED_WEAPON_RING_WIDTH = 1;
 
 export interface Size {
   readonly height: number;
