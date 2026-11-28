@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 
 import { CONTENT } from "../../data/content.ts";
-import { activeRingEmissions, createUnpopulatedFlight } from "../flight.ts";
+import { activeRingEmissions, createUnpopulatedFlight } from "./index.ts";
 import { recordRingEmission, stepRingEmissions } from "./ringEmissions.ts";
 
 it("keeps delayed rings in registration order and ages them only for their flight", () => {

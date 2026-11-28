@@ -5,7 +5,7 @@ import { CONTENT } from "../data/content.ts";
 import * as asteroids from "./asteroids.ts";
 import * as debris from "./debrisBody.ts";
 import { debrisFrameOf, debrisSilhouette } from "./debrisBody.ts";
-import { admitRedactEncounter, createUnpopulatedFlight, stepFlight } from "./flight.ts";
+import { admitRedactEncounter, createUnpopulatedFlight, stepFlight } from "./flight/index.ts";
 import { SceneryFrames } from "./sceneryFrames.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
 

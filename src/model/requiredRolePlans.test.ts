@@ -6,7 +6,7 @@ import { HOLODISKS } from "../data/holodisks.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./ai/index.ts";
-import { createUnpopulatedFlight } from "./flight.ts";
+import { createUnpopulatedFlight } from "./flight/index.ts";
 import { createFrigateEscorts, requiredFrigateEscortId } from "./frigateEscorts.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";

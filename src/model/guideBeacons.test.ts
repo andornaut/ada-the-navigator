@@ -10,7 +10,7 @@ import {
 } from "./andromeda/guideBeacons.ts";
 import { settlementById } from "./andromeda/places.ts";
 import { ensureAndromedaWorld } from "./andromeda/runtime.ts";
-import { createUnpopulatedFlight } from "./flight.ts";
+import { createUnpopulatedFlight } from "./flight/index.ts";
 import { newProgress } from "./progress.ts";
 
 describe("Andromeda guide route", () => {

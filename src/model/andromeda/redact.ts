@@ -2,7 +2,7 @@ import { ANDROMEDA_REDACT } from "../../data/capitalBosses.ts";
 import type { ConversationLine } from "../../data/conversations.ts";
 import type { Vec } from "../../data/types.ts";
 import type { ChapterContext } from "../chapterProtocol.ts";
-import { questGuardPlacementContext } from "../flight.ts";
+import { questGuardPlacementContext } from "../flight/index.ts";
 import type { StationPlacementContext } from "../stations/formation/index.ts";
 import type { FlightEvent } from "../types.ts";
 import type { AndromedaRedactProgress, RedactPlacement } from "./relay.ts";

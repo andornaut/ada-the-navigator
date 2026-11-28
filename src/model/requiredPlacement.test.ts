@@ -7,7 +7,7 @@ import { GALAXY_SIDE } from "../data/world.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { worldInCurrent } from "./currents.ts";
-import { createUnpopulatedFlight, planRequiredWhirlpoolRoutes } from "./flight.ts";
+import { createUnpopulatedFlight, planRequiredWhirlpoolRoutes } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { readRequiredRolePlan } from "./requiredRolePlans.ts";
 import { flightWorldContext, worldDistance } from "./world/index.ts";

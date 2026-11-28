@@ -4,7 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import { createFlight } from "./flight.ts";
+import { createFlight } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { buy, requestPurchase } from "./shop.ts";
 import { applyUpgrade } from "./upgradeDrops.ts";

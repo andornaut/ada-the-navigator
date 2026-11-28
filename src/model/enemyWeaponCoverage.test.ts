@@ -9,7 +9,7 @@ import { CONTENT } from "../data/content.ts";
 import type { EnemyWeapon, GalaxyNumber, Weapon } from "../data/types.ts";
 import { weaponAt } from "../data/weaponCatalog.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
-import { visitCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
+import { visitCartwheelHubFixture } from "../testing/cartwheel.fixture.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import {
@@ -20,7 +20,7 @@ import {
   placeSunflowerCapitalBoss,
   spawnPlannedHostileStation,
   stepFlight,
-} from "./flight.ts";
+} from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import type { SpaceObject } from "./types.ts";
 

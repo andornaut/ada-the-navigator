@@ -5,7 +5,7 @@ import { lineDuration, noticeDuration } from "../data/conversations.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, seedLaunches, supportEntropy } from "../testing/launch.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { BUMP_DAMAGE, createFlight, inDanger, stepFlight } from "./flight.ts";
+import { BUMP_DAMAGE, createFlight, inDanger, stepFlight } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
 

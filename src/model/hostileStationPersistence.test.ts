@@ -10,7 +10,7 @@ import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./ai/index.ts";
 import { enemyStardust } from "./drops.ts";
-import { createUnpopulatedFlight } from "./flight.ts";
+import { createUnpopulatedFlight } from "./flight/index.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
 import { escortPackId, worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";

@@ -4,7 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
-import { questGuardPlacementContext, spawnChapterEnemy, stepFlight } from "./flight.ts";
+import { questGuardPlacementContext, spawnChapterEnemy, stepFlight } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import {
   ACTIVE_CHUNK_RADIUS,

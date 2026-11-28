@@ -4,7 +4,7 @@ import { ECONOMY } from "../../data/economy.ts";
 import { HUNTING_PACKS } from "../../data/galaxyFeatures.ts";
 import type { GameContent } from "../../data/types.ts";
 import { type ActivityTerms, stepCourier } from "../activities.ts";
-import { ensureDestinationAt, placeHuntingPack } from "../flight.ts";
+import { ensureDestinationAt, placeHuntingPack } from "../flight/index.ts";
 import { packMemberId, worldDiscardNotable, worldPrunePackState } from "../geography.ts";
 import {
   flightStationContext,

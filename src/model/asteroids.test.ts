@@ -27,7 +27,7 @@ import {
   ensureDestination,
   ensureStation,
   stepFlight,
-} from "./flight.ts";
+} from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { SHIP_HEADINGS } from "./nose.ts";
 import { shipBody } from "./shipBody.ts";

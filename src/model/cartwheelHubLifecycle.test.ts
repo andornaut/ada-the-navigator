@@ -6,10 +6,10 @@ import { SAVE_RESTORE } from "../saving/index.ts";
 import {
   activateCartwheelHubFixture,
   visitCartwheelHubFixture,
-} from "../testing/cartwheelFixture.ts";
+} from "../testing/cartwheel.fixture.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { interactionCopy } from "./conversations.ts";
-import { ensureDestination, routeBlocked } from "./flight.ts";
+import { ensureDestination, routeBlocked } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { readRequiredRolePlan } from "./requiredRolePlans.ts";

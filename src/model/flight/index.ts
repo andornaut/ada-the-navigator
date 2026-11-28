@@ -1,19 +1,19 @@
 import { randomStream } from "@andornaut/game-kit/runtime/random";
 
-import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
-import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
+import { ANDROMEDA_PLACES } from "../../data/andromeda.ts";
+import { ASTEROID_ART } from "../../data/asteroidCatalog.ts";
 import {
   ANDROMEDA_REDACT,
   CARTWHEEL_CLAIM,
   NEEDLE_CADENCE,
   SUNFLOWER_CAPITAL_BOSS,
   WHIRLPOOL_CAPITAL_BOSS,
-} from "../data/capitalBosses.ts";
-import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
-import { SHIP_IMPACT_DAMAGE } from "../data/collisionDamage.ts";
-import { ECONOMY } from "../data/economy.ts";
-import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
-import type { EnemyActorKind } from "../data/enemyActors.ts";
+} from "../../data/capitalBosses.ts";
+import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../../data/chunkCatalog.ts";
+import { SHIP_IMPACT_DAMAGE } from "../../data/collisionDamage.ts";
+import { ECONOMY } from "../../data/economy.ts";
+import { enemyActorDefinition } from "../../data/enemyActorDefinition.ts";
+import type { EnemyActorKind } from "../../data/enemyActors.ts";
 import {
   AUTHORED_PURSUIT_HOME_RADIUS,
   ENEMY_AIM,
@@ -21,28 +21,28 @@ import {
   enemyCatalog,
   enemyOnly,
   FRIGATE_ESCORT_COUNT,
-} from "../data/enemyCatalog.ts";
-import { ENEMY_SIZE_RATIOS } from "../data/enemyDimensions.ts";
+} from "../../data/enemyCatalog.ts";
+import { ENEMY_SIZE_RATIOS } from "../../data/enemyDimensions.ts";
 import {
   type HeavyHullProfile,
   ordinaryHeavy,
   PHANTOM_FLAGSHIP_ID,
   retaliatorVariant,
-} from "../data/enemyIdentity.ts";
-import { ENEMY_AVOIDANCE, ENEMY_KEEP_MOVING, MINING_HULLS } from "../data/enemyNavigation.ts";
-import { spacingRadius } from "../data/enemySpacing.ts";
-import { byPosition, ROUTE_POSITION } from "../data/galaxies.ts";
-import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
-import { HOLODISKS } from "../data/holodisks.ts";
-import { LANDMARK_TUNING } from "../data/jobs.ts";
-import { PHANTOM_DESTINATIONS, PHANTOM_TUNING } from "../data/phantom.ts";
-import { SCREEN } from "../data/screen.ts";
-import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
-import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
-import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
-import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
-import type { GalaxyNumber, GameContent } from "../data/types.ts";
-import { BEAM, weaponAt } from "../data/weaponCatalog.ts";
+} from "../../data/enemyIdentity.ts";
+import { ENEMY_AVOIDANCE, ENEMY_KEEP_MOVING, MINING_HULLS } from "../../data/enemyNavigation.ts";
+import { spacingRadius } from "../../data/enemySpacing.ts";
+import { byPosition, ROUTE_POSITION } from "../../data/galaxies.ts";
+import { ORE_FIELDS } from "../../data/galaxyFeatures.ts";
+import { HOLODISKS } from "../../data/holodisks.ts";
+import { LANDMARK_TUNING } from "../../data/jobs.ts";
+import { PHANTOM_DESTINATIONS, PHANTOM_TUNING } from "../../data/phantom.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { SIMULATION_STEP_SECONDS } from "../../data/simulation.ts";
+import { SPAWNER_POLICIES } from "../../data/spawnerCatalog.ts";
+import { CARTWHEEL_STORY_SHIPS } from "../../data/storyShips.ts";
+import { TARGET_MARKER_RANGE } from "../../data/targetMarkers.ts";
+import type { GalaxyNumber, GameContent } from "../../data/types.ts";
+import { BEAM, weaponAt } from "../../data/weaponCatalog.ts";
 import {
   averageVelocity,
   circlingSide,
@@ -53,8 +53,8 @@ import {
   type EnemyState,
   type StationGuardAnchor,
   stepEnemy,
-} from "./ai/index.ts";
-import { worldNavigationQuery } from "./ai/worldNavigation/index.ts";
+} from "../ai/index.ts";
+import { worldNavigationQuery } from "../ai/worldNavigation/index.ts";
 import {
   ASTEROID_SHAPES,
   bounce,
@@ -63,7 +63,7 @@ import {
   type Silhouette,
   worldSceneryBodyContact,
   worldSceneryContact,
-} from "./asteroids.ts";
+} from "../asteroids.ts";
 import {
   CARTWHEEL_MINING_PATROL,
   type CartwheelMiningPatrolPlan,
@@ -72,105 +72,38 @@ import {
   cartwheelPatrolRockPaths,
   planCartwheelMiningPatrol,
   warnCartwheelPatrol,
-} from "./cartwheel/patrol/index.ts";
-import { planChunkCaches } from "./chunkCaches.ts";
-import { onScreen } from "./conversations.ts";
-import { worldFlowAt } from "./currents.ts";
+} from "../cartwheel/patrol/index.ts";
+import { planChunkCaches } from "../chunkCaches.ts";
+import { onScreen } from "../conversations.ts";
+import { worldFlowAt } from "../currents.ts";
 import {
   hammerAllowsMount,
   mantaEscortCommand,
   mantaEscortMayFire,
-} from "./earlyEncounterPatterns.ts";
+} from "../earlyEncounterPatterns.ts";
 import {
   EARLY_LANCE_MOUNT,
   earlyEncounterCueDue,
   earlyEncounterKind,
-} from "./earlyEncounterRuntime.ts";
-import { enemyEquipmentDefinition, rollEnemyWeaponLevel } from "./enemyEquipment.ts";
+} from "../earlyEncounterRuntime.ts";
+import { enemyEquipmentDefinition, rollEnemyWeaponLevel } from "../enemyEquipment.ts";
 import {
   type ProceduralPoi,
   type ProceduralPoiOpportunityEligibility,
   proceduralPoisNear,
-} from "./proceduralPois.ts";
-export { rollEncounter } from "./encounterRoll.ts";
-import { courierSpawnExclusions } from "./andromeda/courierAmbush.ts";
-import { settlementsNear } from "./andromeda/places.ts";
-import { selectCartwheelClaimField } from "./cartwheel/claim/index.ts";
-import { cartwheelRequiredSites } from "./cartwheel/sites/index.ts";
-import { exclusionZoneRadius } from "./exclusionZones.ts";
-import { touchesAda } from "./flight/adaContactQueries.ts";
-import { sceneryEntry } from "./flight/beamContact.ts";
-import { crossbowAttack, crossbowFrame } from "./flight/crossbow.ts";
-import { inBattle, inDanger } from "./flight/danger.ts";
-import { ensureDebrisRivers, moveDebris } from "./flight/debrisMotion.ts";
-import {
-  destinationCandidates,
-  destinationClear,
-  ensureDestination as ensureFlightDestination,
-  ensureDestinationAt as ensureFlightDestinationAt,
-  isHeld,
-  placeDestinationAhead as placeFlightDestinationAhead,
-} from "./flight/destinationPlacement.ts";
-import { destroyEnemy, isExplorationWreck, stepWrecks, wreckId } from "./flight/destruction.ts";
-import {
-  chargeEnemyBeam,
-  rememberEarlyLance,
-  restoreEarlyLance,
-  stepEnemyBeams,
-} from "./flight/enemyBeams.ts";
-import { movementSpeedFraction, shipSpeedFraction, towing } from "./flight/handling.ts";
-import { createHitResolution, hit } from "./flight/hitResolution.ts";
-import {
-  ensureHuntingPacks as ensureFlightHuntingPacks,
-  placeHuntingPack as placeFlightHuntingPack,
-} from "./flight/huntingPacks.ts";
-import { ageFlashes } from "./flight/impactFeedback.ts";
-import {
-  arrivalGraceActive as adaProtected,
-  beginArrivalGrace,
-  createUnpopulatedFlight,
-  type Loadout,
-} from "./flight/lifecycle.ts";
-import { planMantaEscorts } from "./flight/mantaEscorts.ts";
-import { minerInput } from "./flight/minerPatrol.ts";
-import { layMine, stepMines } from "./flight/mines.ts";
-import { stepPickup } from "./flight/pickups.ts";
-import { flightChunkKey, type FreshTravel, movePilot } from "./flight/pilotMovement.ts";
-import { fireBeam } from "./flight/playerBeam.ts";
-import { createProjectileStep } from "./flight/projectileStep.ts";
-import { recordRingEmission, stepRingEmissions } from "./flight/ringEmissions.ts";
-import { capital, enemySpacing, placeGuards } from "./flight/routeGuardPlacement.ts";
-import {
-  guardPack,
-  routeBlocked,
-  type RouteGuardPlanResult,
-  routeGuardPlanResult,
-} from "./flight/routeGuards.ts";
-import { resolveScenery, sceneryBlocksFlightSegment } from "./flight/sceneryResolution.ts";
-import {
-  adaContact,
-  adaSceneryContact,
-  bounceShips as bounceAdaShips,
-  bumpAda,
-  settleAda,
-} from "./flight/shipContact.ts";
-import {
-  firePlayerWeapon,
-  releaseFriendlyVolley,
-  releasePendingPellets,
-} from "./flight/weaponRelease.ts";
-import {
-  planSounderFormation,
-  protectedWhirlpoolDiskSites,
-  reserveWhirlpoolDiskSite,
-  restoreWhirlpoolSounder as restoreSounder,
-} from "./flight/whirlpoolSounder.ts";
+} from "../proceduralPois.ts";
+export { rollEncounter } from "../encounterRoll.ts";
+import { courierSpawnExclusions } from "../andromeda/courierAmbush.ts";
+import { settlementsNear } from "../andromeda/places.ts";
+import { selectCartwheelClaimField } from "../cartwheel/claim/index.ts";
+import { cartwheelRequiredSites } from "../cartwheel/sites/index.ts";
+import { exclusionZoneRadius } from "../exclusionZones.ts";
 import {
   createFrigateEscorts,
   FRIGATE_ESCORT_ROLE,
   frigateEscortStation,
   requiredFrigateEscortId,
-} from "./frigateEscorts.ts";
+} from "../frigateEscorts.ts";
 import {
   ACTIVE_CHUNK_RADIUS,
   ambientPackId,
@@ -186,41 +119,41 @@ import {
   worldRecordObjectRemoval,
   worldRetainedPackMembers,
   worldSyncFlightRegion,
-} from "./geography.ts";
-import { guardApproach } from "./guardApproach.ts";
-import { stationPopulationObjects } from "./hostileStations/index.ts";
+} from "../geography.ts";
+import { guardApproach } from "../guardApproach.ts";
+import { stationPopulationObjects } from "../hostileStations/index.ts";
 import {
   hostileStationContext,
   materializeHostileStation,
   type PlannedHostileStation,
   type StationMaterialization,
-} from "./hostileStations/placement.ts";
-import { queueHostileStationReward } from "./hostileStations/reward.ts";
-import type { NeedleCadencePlacement } from "./needle/routePlan.ts";
-import { activePhantomSong, phantomSongSpeed, stepPhantomAllies } from "./phantom/allies/index.ts";
-import { readPendingPhantomEncounter } from "./phantom/pending/index.ts";
+} from "../hostileStations/placement.ts";
+import { queueHostileStationReward } from "../hostileStations/reward.ts";
+import type { NeedleCadencePlacement } from "../needle/routePlan.ts";
+import { activePhantomSong, phantomSongSpeed, stepPhantomAllies } from "../phantom/allies/index.ts";
+import { readPendingPhantomEncounter } from "../phantom/pending/index.ts";
 import {
   nextPhantomBatchReserved,
   phantomFutureFlagshipGeometry,
   phantomRequiredActors,
-} from "./phantom/reservations/index.ts";
-import type { PlayerWeaponCoverageContext } from "./playerWeaponCoverage.ts";
+} from "../phantom/reservations/index.ts";
+import type { PlayerWeaponCoverageContext } from "../playerWeaponCoverage.ts";
 import {
   questGuardAnchor,
   questGuardFormationReach,
   questGuardHomePorts,
-} from "./questGuardPlacement.ts";
+} from "../questGuardPlacement.ts";
 import {
   requiredPlanActors,
   storeRequiredPlan,
   takeRequiredPlan,
-} from "./requiredEncounterPlans.ts";
+} from "../requiredEncounterPlans.ts";
 import {
   readRequiredRolePlan,
   storeRequiredRolePlan,
   takeRequiredRolePlan,
-} from "./requiredRolePlans.ts";
-import { requiredRouteGeometry } from "./requiredRouteGeometry.ts";
+} from "../requiredRolePlans.ts";
+import { requiredRouteGeometry } from "../requiredRouteGeometry.ts";
 import {
   type OptionalWorldFootprint,
   type RequiredWorldOccupants,
@@ -229,13 +162,16 @@ import {
   requiredWorldPlacementClear,
   requiredWorldPopulation,
   type RequiredWorldReservation,
-} from "./requiredWorldReservations.ts";
-import { retaliatorAsteroidQuery } from "./retaliatorAsteroids.ts";
-import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
-import { routeGuardEvidence } from "./routeGuardEvidence.ts";
-import { discoveryStardustId } from "./stardustPlacement.ts";
-import { stationFormationClear, type StationPlacementContext } from "./stations/formation/index.ts";
-import { impactFamily } from "./weaponImpacts.ts";
+} from "../requiredWorldReservations.ts";
+import { retaliatorAsteroidQuery } from "../retaliatorAsteroids.ts";
+import { MOVING_ROCK_PREFIX } from "../rockRicochet.ts";
+import { routeGuardEvidence } from "../routeGuardEvidence.ts";
+import { discoveryStardustId } from "../stardustPlacement.ts";
+import {
+  stationFormationClear,
+  type StationPlacementContext,
+} from "../stations/formation/index.ts";
+import { impactFamily } from "../weaponImpacts.ts";
 import {
   canonicalPosition,
   flightEncounterSeed,
@@ -251,37 +187,104 @@ import {
   worldDistance,
   type WorldGrid,
   worldPoint,
-} from "./world/index.ts";
+} from "../world/index.ts";
+import { touchesAda } from "./adaContactQueries.ts";
+import { sceneryEntry } from "./beamContact.ts";
+import { crossbowAttack, crossbowFrame } from "./crossbow.ts";
+import { inBattle, inDanger } from "./danger.ts";
+import { ensureDebrisRivers, moveDebris } from "./debrisMotion.ts";
+import {
+  destinationCandidates,
+  destinationClear,
+  ensureDestination as ensureFlightDestination,
+  ensureDestinationAt as ensureFlightDestinationAt,
+  isHeld,
+  placeDestinationAhead as placeFlightDestinationAhead,
+} from "./destinationPlacement.ts";
+import { destroyEnemy, isExplorationWreck, stepWrecks, wreckId } from "./destruction.ts";
+import {
+  chargeEnemyBeam,
+  rememberEarlyLance,
+  restoreEarlyLance,
+  stepEnemyBeams,
+} from "./enemyBeams.ts";
+import { movementSpeedFraction, shipSpeedFraction, towing } from "./handling.ts";
+import { createHitResolution, hit } from "./hitResolution.ts";
+import {
+  ensureHuntingPacks as ensureFlightHuntingPacks,
+  placeHuntingPack as placeFlightHuntingPack,
+} from "./huntingPacks.ts";
+import { ageFlashes } from "./impactFeedback.ts";
+import {
+  arrivalGraceActive as adaProtected,
+  beginArrivalGrace,
+  createUnpopulatedFlight,
+  type Loadout,
+} from "./lifecycle.ts";
+import { planMantaEscorts } from "./mantaEscorts.ts";
+import { minerInput } from "./minerPatrol.ts";
+import { layMine, stepMines } from "./mines.ts";
+import { stepPickup } from "./pickups.ts";
+import { flightChunkKey, type FreshTravel, movePilot } from "./pilotMovement.ts";
+import { fireBeam } from "./playerBeam.ts";
+import { createProjectileStep } from "./projectileStep.ts";
+import { recordRingEmission, stepRingEmissions } from "./ringEmissions.ts";
+import { capital, enemySpacing, placeGuards } from "./routeGuardPlacement.ts";
+import {
+  guardPack,
+  routeBlocked,
+  type RouteGuardPlanResult,
+  routeGuardPlanResult,
+} from "./routeGuards.ts";
+import { resolveScenery, sceneryBlocksFlightSegment } from "./sceneryResolution.ts";
+import {
+  adaContact,
+  adaSceneryContact,
+  bounceShips as bounceAdaShips,
+  bumpAda,
+  settleAda,
+} from "./shipContact.ts";
+import { firePlayerWeapon, releaseFriendlyVolley, releasePendingPellets } from "./weaponRelease.ts";
+import {
+  planSounderFormation,
+  protectedWhirlpoolDiskSites,
+  reserveWhirlpoolDiskSite,
+  restoreWhirlpoolSounder as restoreSounder,
+} from "./whirlpoolSounder.ts";
 
-export { activateRouteEncounter, syncFlightRegion } from "./geography.ts";
-import { partsReach, worldParts } from "./convex.ts";
-import { debrisSilhouette } from "./debrisBody.ts";
-import { enemyHull, enemyPhysicalBody } from "./enemyBody.ts";
-import { enemyBeamReach, planEnemyProjectile } from "./enemyProjectiles.ts";
-import { landmarkSites } from "./landmarks.ts";
-import { clearNeedleEnemies, ensureNeedleDebris, needleChannelContains } from "./needle/contact.ts";
-import { activeNeedleCourses } from "./needle/index.ts";
+export { activateRouteEncounter, syncFlightRegion } from "../geography.ts";
+import { partsReach, worldParts } from "../convex.ts";
+import { debrisSilhouette } from "../debrisBody.ts";
+import { enemyHull, enemyPhysicalBody } from "../enemyBody.ts";
+import { enemyBeamReach, planEnemyProjectile } from "../enemyProjectiles.ts";
+import { landmarkSites } from "../landmarks.ts";
+import {
+  clearNeedleEnemies,
+  ensureNeedleDebris,
+  needleChannelContains,
+} from "../needle/contact.ts";
+import { activeNeedleCourses } from "../needle/index.ts";
 import {
   ORE_FIELD_CLEAR_RADIUS,
   ORE_FIELD_ROLE,
   type OreField,
   worldOreFieldsNear,
-} from "./oreFields.ts";
-import { stardustPickupReach } from "./pickupBody.ts";
-import { SceneryFrames } from "./sceneryFrames.ts";
-import { rechargeShield } from "./shieldRecharge.ts";
-import { direction, turnToward } from "./shipPhysics.ts";
+} from "../oreFields.ts";
+import { stardustPickupReach } from "../pickupBody.ts";
+import { SceneryFrames } from "../sceneryFrames.ts";
+import { rechargeShield } from "../shieldRecharge.ts";
+import { direction, turnToward } from "../shipPhysics.ts";
 import {
   worldFitsEncounter,
   worldRegionalEngagementAdmissions,
   worldSpawnerStage,
-} from "./spawn/encounters/index.ts";
+} from "../spawn/encounters/index.ts";
 import {
   type ExclusionZone,
   planRegion,
   type SpawnPlacement,
   type SpawnRules,
-} from "./spawn/planner/index.ts";
+} from "../spawn/planner/index.ts";
 import {
   chunkSpawnReach,
   chunkSpawnRegion,
@@ -289,8 +292,8 @@ import {
   spawnRules,
   worldSpawnExclusions,
   worldSpawnSites,
-} from "./spawn/targets/index.ts";
-import { flightStationContext, worldStationById, worldStationsNear } from "./stations/index.ts";
+} from "../spawn/targets/index.ts";
+import { flightStationContext, worldStationById, worldStationsNear } from "../stations/index.ts";
 import type {
   FlightEvent,
   FlightInput,
@@ -300,30 +303,27 @@ import type {
   Shot,
   SpaceObject,
   Vec,
-} from "./types.ts";
-import { leveledValue, shipTuning } from "./upgrades.ts";
-import { markVisited, visitedChunk } from "./visited.ts";
+} from "../types.ts";
+import { leveledValue, shipTuning } from "../upgrades.ts";
+import { markVisited, visitedChunk } from "../visited.ts";
 
 export { wreckId };
-export type { EnemyBeam } from "./enemyBeamState.ts";
-export { pickupTouched } from "./flight/adaContactQueries.ts";
-export { dockFlight, undockFlight } from "./flight/berth.ts";
-export { recoverExplorationWreck, salvage, salvageTarget } from "./flight/destruction.ts";
-export { activeEnemyBeams } from "./flight/enemyBeams.ts";
+export type { EnemyBeam } from "../enemyBeamState.ts";
+export { pickupTouched } from "./adaContactQueries.ts";
+export { dockFlight, undockFlight } from "./berth.ts";
+export { recoverExplorationWreck, salvage, salvageTarget } from "./destruction.ts";
+export { activeEnemyBeams } from "./enemyBeams.ts";
 export {
   arrivalGraceActive,
   beginArrivalGrace,
   createUnpopulatedFlight,
   type Loadout,
-} from "./flight/lifecycle.ts";
-export { carryPickup } from "./flight/pickups.ts";
-export { activeRingEmissions, type RingEmission } from "./flight/ringEmissions.ts";
-export { BUMP_DAMAGE } from "./flight/shipContact.ts";
+} from "./lifecycle.ts";
+export { carryPickup } from "./pickups.ts";
+export { activeRingEmissions, type RingEmission } from "./ringEmissions.ts";
+export { BUMP_DAMAGE } from "./shipContact.ts";
 export { routeBlocked, type RouteGuardPlanResult, routeGuardPlanResult };
-export {
-  retireLegacyWhirlpoolDiskGuard,
-  whirlpoolSounderActor,
-} from "./flight/whirlpoolSounder.ts";
+export { retireLegacyWhirlpoolDiskGuard, whirlpoolSounderActor } from "./whirlpoolSounder.ts";
 export { reserveWhirlpoolDiskSite };
 export { inBattle, inDanger, movementSpeedFraction, shipSpeedFraction, towing };
 export {
@@ -336,7 +336,7 @@ export {
   type BlastFlash,
   drawnBeamFlash,
   type ProjectileImpact,
-} from "./flight/impactFeedback.ts";
+} from "./impactFeedback.ts";
 
 const length = (v: Vec) => Math.hypot(v.x, v.y);
 /**

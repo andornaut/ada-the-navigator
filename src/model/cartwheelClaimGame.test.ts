@@ -13,14 +13,14 @@ import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import {
   completeCartwheelHubIntroductionFixture,
   visitCartwheelHubFixture,
-} from "../testing/cartwheelFixture.ts";
+} from "../testing/cartwheel.fixture.ts";
 import { readStory, relaunch } from "../testing/launch.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { pennyInstance, pennyPoints } from "./conversations.ts";
 import { outlineContact, worldParts } from "./convex.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
-import { ensureStation, openCartwheelClaimField } from "./flight.ts";
+import { ensureStation, openCartwheelClaimField } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { flightLandmarkSites } from "./landmarks.ts";

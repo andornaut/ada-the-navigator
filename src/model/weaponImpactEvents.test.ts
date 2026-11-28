@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
-import { activeWeaponImpacts, stepFlight } from "./flight.ts";
+import { activeWeaponImpacts, stepFlight } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import type { Shot } from "./types.ts";
 

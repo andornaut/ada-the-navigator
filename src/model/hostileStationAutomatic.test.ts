@@ -10,7 +10,11 @@ import { settlementsNear } from "./andromeda/places.ts";
 import { fromScreen } from "./convex.ts";
 import { enemyStardust } from "./drops.ts";
 import { enemyHull } from "./enemyBody.ts";
-import { createUnpopulatedFlight, populateFlight, spawnPlannedHostileStation } from "./flight.ts";
+import {
+  createUnpopulatedFlight,
+  populateFlight,
+  spawnPlannedHostileStation,
+} from "./flight/index.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval } from "./geography.ts";

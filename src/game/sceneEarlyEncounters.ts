@@ -6,7 +6,7 @@ import { CARTWHEEL_MINING_PATROL } from "../model/cartwheel/patrol/index.ts";
 import { toScreen } from "../model/convex.ts";
 import { mantaEscortPhase } from "../model/earlyEncounterPatterns.ts";
 import { enemyPartOutline } from "../model/enemyBody.ts";
-import { activeCrossbowSector, activeEnemyBeams } from "../model/flight.ts";
+import { activeCrossbowSector, activeEnemyBeams } from "../model/flight/index.ts";
 import { requiredFrigateEscortId } from "../model/frigateEscorts.ts";
 import type { FlightState, Vec } from "../model/types.ts";
 import { flightWorldContext, worldDistance, worldPoint } from "../model/world/index.ts";

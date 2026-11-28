@@ -15,7 +15,7 @@ import {
   populateFlight,
   stepFlight,
   syncFlightRegion,
-} from "./flight.ts";
+} from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { ambientPackId, escortPackId, packMemberId } from "./geography.ts";
 import type { GalaxyProgress, SpaceObject, Vec } from "./types.ts";

@@ -39,8 +39,8 @@ import {
   rollRockAmmoDrop,
   splitResourcePickup,
 } from "./drops.ts";
-import { createFlight, pickupTouched, stepFlight, wreckId } from "./flight.ts";
 import { dropFromRock } from "./flight/destruction.ts";
+import { createFlight, pickupTouched, stepFlight, wreckId } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { nosePoint } from "./nose.ts";
 import { HUNT_GLINT, orePickupSize, pickupOutline, stardustPickupSize } from "./pickupBody.ts";

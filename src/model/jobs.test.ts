@@ -23,7 +23,7 @@ import { GALAXY_SIDE } from "../data/world.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { dropRandom } from "./drops.ts";
-import { ensureStation, stepFlight, towing } from "./flight.ts";
+import { ensureStation, stepFlight, towing } from "./flight/index.ts";
 import { GameModel, newGameState } from "./game.ts";
 import {
   acceptJob,

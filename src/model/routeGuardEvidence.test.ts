@@ -3,7 +3,7 @@ import { expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { createEnemy } from "./ai/index.ts";
-import { createFlight } from "./flight.ts";
+import { createFlight } from "./flight/index.ts";
 import { routeGuardEvidence } from "./routeGuardEvidence.ts";
 import type { SpaceObject } from "./types.ts";
 

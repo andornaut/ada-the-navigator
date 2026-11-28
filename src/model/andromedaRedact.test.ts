@@ -12,7 +12,7 @@ import {
 import { andromedaRelayWaypoint } from "./andromeda/relay.ts";
 import { ensureAndromedaWorld } from "./andromeda/runtime.ts";
 import type { ChapterContext } from "./chapterProtocol.ts";
-import { createUnpopulatedFlight, ensureDestinationAt } from "./flight.ts";
+import { createUnpopulatedFlight, ensureDestinationAt } from "./flight/index.ts";
 import { localMap, NO_LANDMARKS } from "./map.ts";
 import { newProgress } from "./progress.ts";
 import { requiredWorldOccupantsPlacementClear } from "./requiredWorldReservations.ts";

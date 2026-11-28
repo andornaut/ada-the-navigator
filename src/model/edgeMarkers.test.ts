@@ -16,7 +16,7 @@ import { displayMarkerFixtures, markerEdges, markerModel } from "../testing/mark
 import { logicalView, NO_INSETS, playView, safeGameArea } from "../ui/layout/playView.ts";
 import { createEnemy } from "./ai/index.ts";
 import { edgeMarkerKind, edgePoint, GAME_AREA } from "./edgeMarkers.ts";
-import { createFlight } from "./flight.ts";
+import { createFlight } from "./flight/index.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 
 const { gap, range } = EDGE_MARKERS;

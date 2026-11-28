@@ -5,7 +5,7 @@ import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
-import { ensureDestination } from "./flight.ts";
+import { ensureDestination } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import {
   resolveTargetObject,

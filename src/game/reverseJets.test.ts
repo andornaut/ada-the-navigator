@@ -11,7 +11,7 @@ import {
   shipJetDirection,
 } from "../art/index.ts";
 import { CONTENT } from "../data/content.ts";
-import { createFlight, stepFlight } from "../model/flight.ts";
+import { createFlight, stepFlight } from "../model/flight/index.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 
 const rear = readEngineJets(rearArt)!;

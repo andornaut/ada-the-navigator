@@ -7,7 +7,7 @@ import { questReward } from "../data/questRewards.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
-import { activateRequiredRoute, ensureDestination } from "./flight.ts";
+import { activateRequiredRoute, ensureDestination } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { type QuestDetailContext, questDetails, type QuestDetailSnapshot } from "./questDetails.ts";

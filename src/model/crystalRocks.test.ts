@@ -8,7 +8,7 @@ import type { GalaxyNumber } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { ASTEROID_SHAPES, galaxyCrystals, placedRockCrystals } from "./asteroids.ts";
-import { createFlight, stepFlight } from "./flight.ts";
+import { createFlight, stepFlight } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { ORE_FIELD_ROLE, oreFieldInCell } from "./oreFields.ts";
 import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";

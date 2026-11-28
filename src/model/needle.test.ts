@@ -4,7 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { NEEDLE } from "../data/needle.ts";
 import { NEEDLE_COURSE_COPY, NEEDLE_LEARNING } from "../data/needleCopy.ts";
 import { toScreen } from "./convex.ts";
-import { createFlight, stepFlight } from "./flight.ts";
+import { createFlight, stepFlight } from "./flight/index.ts";
 import {
   activeNeedleCourses,
   createNeedleCourse,

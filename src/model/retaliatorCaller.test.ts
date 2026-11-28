@@ -12,7 +12,7 @@ import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./ai/index.ts";
 import { partsReach, worldParts } from "./convex.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
-import { spawnChapterEnemy, syncFlightRegion } from "./flight.ts";
+import { spawnChapterEnemy, syncFlightRegion } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import * as planner from "./retaliatorNavigation.ts";

@@ -24,7 +24,7 @@ import { GALAXY_SIDE } from "../data/world.ts";
 import { createEnemy, damageEnemy, stepEnemy } from "./ai/index.ts";
 import { fromScreen, partsReach, worldParts } from "./convex.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
-import { createFlight, spawnPlannedHostileStation } from "./flight.ts";
+import { createFlight, spawnPlannedHostileStation } from "./flight/index.ts";
 import {
   worldActivateFlightRegion,
   worldRecordObjectRemoval,

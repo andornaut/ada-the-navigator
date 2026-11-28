@@ -22,7 +22,7 @@ import {
 import { outlineContact, worldParts } from "./convex.ts";
 import { GAME_AREA, gameAreaPoint, inGameArea } from "./edgeMarkers.ts";
 import { enemyHull } from "./enemyBody.ts";
-import { ensureDestination, ensureStation } from "./flight.ts";
+import { ensureDestination, ensureStation } from "./flight/index.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";

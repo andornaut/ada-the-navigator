@@ -8,7 +8,7 @@ import type { GalaxyNumber } from "../data/types.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { readStory, supportEntropy } from "../testing/launch.ts";
 import { currentInCell } from "./currents.ts";
-import { createFlight, stepFlight } from "./flight.ts";
+import { createFlight, stepFlight } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { oreFieldInCell } from "./oreFields.ts";

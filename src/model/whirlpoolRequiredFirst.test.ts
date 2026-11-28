@@ -12,7 +12,7 @@ import {
   ensureDestinationAt,
   ensureRouteEncounter,
   populateRequiredChapterFlight,
-} from "./flight.ts";
+} from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";

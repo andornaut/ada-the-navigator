@@ -6,6 +6,7 @@ import { FLAGSHIP_SURRENDER_HP } from "../data/enemyIdentity.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_FINALE_CHATTER, PHANTOM_TUNING } from "../data/phantom.ts";
 import * as enemyAi from "./ai/index.ts";
 import { createEnemy, damageEnemy } from "./ai/index.ts";
+import { hit } from "./flight/hitResolution.ts";
 import {
   activateRouteEncounter,
   createFlight,
@@ -14,8 +15,7 @@ import {
   spawnChapterEnemy,
   stepFlight,
   syncFlightRegion,
-} from "./flight.ts";
-import { hit } from "./flight/hitResolution.ts";
+} from "./flight/index.ts";
 import {
   activePhantomSong,
   phantomAllyRoster,

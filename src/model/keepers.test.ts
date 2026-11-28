@@ -8,7 +8,7 @@ import { KEEPERS, PHANTOM_KEEPER_GREETINGS, SETTLER_GREETING } from "../data/kee
 import type { GalaxyNumber } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
-import { ensureStation } from "./flight.ts";
+import { ensureStation } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { greetingLines, stationKeeper, stationRank, worldStationKeeper } from "./keepers.ts";
 import {

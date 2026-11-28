@@ -15,7 +15,7 @@ import {
 import { nearestSettlerStation } from "./andromeda/places.ts";
 import { chooseAndromeda, useAndromeda } from "./andromeda/runtime.ts";
 import { type CourierAmbushState, validCourierAmbushAttempt } from "./andromeda/state.ts";
-import { createUnpopulatedFlight, questGuardPlacementContext } from "./flight.ts";
+import { createUnpopulatedFlight, questGuardPlacementContext } from "./flight/index.ts";
 import { newProgress } from "./progress.ts";
 import type { SpaceObject } from "./types.ts";
 

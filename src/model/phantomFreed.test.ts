@@ -12,7 +12,7 @@ import { enemyIntegrity, hardpointOffset } from "./ai/index.ts";
 import { interactionCopy } from "./conversations.ts";
 import { worldParts } from "./convex.ts";
 import { enemyPartOutline } from "./enemyBody.ts";
-import { ensureDestination } from "./flight.ts";
+import { ensureDestination } from "./flight/index.ts";
 import { GameModel, newGameState } from "./game.ts";
 import { activateFlightRegion } from "./geography.ts";
 import type { SpaceObject, Vec } from "./types.ts";

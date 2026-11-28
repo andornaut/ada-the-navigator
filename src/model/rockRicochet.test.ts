@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import type { RockRicochet } from "../data/types.ts";
 import { ASTEROID_SHAPES, type AsteroidShape, silhouetteArea } from "./asteroids.ts";
-import { createFlight, stepFlight } from "./flight.ts";
+import { createFlight, stepFlight } from "./flight/index.ts";
 import {
   MOVING_ROCK_PREFIX,
   type RicochetContext,

@@ -8,7 +8,13 @@ import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { clearPhantomTraffic } from "../testing/phantomTraffic.ts";
 import { damageEnemy } from "./ai/index.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
-import { createFlight, inDanger, routeBlocked, spawnChapterEnemy, stepFlight } from "./flight.ts";
+import {
+  createFlight,
+  inDanger,
+  routeBlocked,
+  spawnChapterEnemy,
+  stepFlight,
+} from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";

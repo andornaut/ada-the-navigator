@@ -9,7 +9,7 @@ import { ControlState } from "../input/state.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { consumeContextQuestUse } from "../ui/contextQuestUse.ts";
-import { createFlight } from "./flight.ts";
+import { createFlight } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { flightLandmarkSites, landmarkLabel } from "./landmarks.ts";
 import type { QuestEntry } from "./questDetails.ts";

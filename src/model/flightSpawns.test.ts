@@ -9,7 +9,7 @@ import { GALAXY_SIDE } from "../data/world.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { createEnemy } from "./ai/index.ts";
-import { createUnpopulatedFlight, stepFlight } from "./flight.ts";
+import { createUnpopulatedFlight, stepFlight } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { ambientPackId, escortPackId, packMemberId, worldSyncFlightRegion } from "./geography.ts";
 import { planRegion, type SpawnSeeds } from "./spawn/planner/index.ts";

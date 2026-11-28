@@ -40,6 +40,7 @@ const ENCAPSULATED_AREAS = [
   "src/model/cartwheel/claim/",
   "src/model/cartwheel/patrol/",
   "src/model/cartwheel/sites/",
+  "src/model/flight/",
   "src/model/phantom/allies/",
   "src/model/phantom/authored/",
   "src/model/phantom/pending/",

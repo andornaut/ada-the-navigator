@@ -5,7 +5,7 @@ import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
-import { createFlight } from "./flight.ts";
+import { createFlight } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";

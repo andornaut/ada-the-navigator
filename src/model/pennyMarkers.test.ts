@@ -11,7 +11,7 @@ import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { createEnemy } from "./ai/index.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
-import { createFlight, ensureDestinationAt, spawnChapterEnemy } from "./flight.ts";
+import { createFlight, ensureDestinationAt, spawnChapterEnemy } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { markerKnowledgeStore } from "./markerBindings.ts";
 import { needleCourses } from "./needle/index.ts";

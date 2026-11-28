@@ -12,7 +12,7 @@ import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import * as enemyAi from "./ai/index.ts";
 import { enemyEquipmentDefinition, rollEnemyWeaponLevel } from "./enemyEquipment.ts";
-import { createFlight, spawnChapterEnemy, stepFlight, syncFlightRegion } from "./flight.ts";
+import { createFlight, spawnChapterEnemy, stepFlight, syncFlightRegion } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { newProgress } from "./progress.ts";
 

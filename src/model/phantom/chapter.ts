@@ -23,7 +23,7 @@ import {
   salvageTarget,
   spawnChapterEnemy,
   syncFlightRegion,
-} from "../flight.ts";
+} from "../flight/index.ts";
 import { stationPopulationObjects } from "../hostileStations/index.ts";
 import { stationFormationClear } from "../stations/formation/index.ts";
 import type {

@@ -7,9 +7,9 @@ import { LANDMARK_TUNING } from "../data/jobs.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
-import { activateCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
+import { activateCartwheelHubFixture } from "../testing/cartwheel.fixture.ts";
 import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
-import { ensureDestination } from "./flight.ts";
+import { ensureDestination } from "./flight/index.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
 import {

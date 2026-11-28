@@ -20,7 +20,7 @@ import {
 } from "./andromeda/runtime.ts";
 import { validAndromedaProgress } from "./andromeda/state.ts";
 import type { ChapterContext, ChapterResult } from "./chapterProtocol.ts";
-import { createFlight, ensureStation } from "./flight.ts";
+import { createFlight, ensureStation } from "./flight/index.ts";
 import { newProgress } from "./progress.ts";
 
 function fresh(): ChapterContext {

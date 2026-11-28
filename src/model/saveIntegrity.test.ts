@@ -11,7 +11,7 @@ import {
   SAVE_VERSION,
 } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import { routeBlocked, routeGuardPlanResult } from "./flight.ts";
+import { routeBlocked, routeGuardPlanResult } from "./flight/index.ts";
 import { GameModel, newGameState } from "./game.ts";
 import { readRequiredPlan } from "./requiredEncounterPlans.ts";
 

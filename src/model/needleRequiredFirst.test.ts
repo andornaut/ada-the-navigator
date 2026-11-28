@@ -4,7 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
-import { createUnpopulatedFlight, populateRequiredChapterFlight } from "./flight.ts";
+import { createUnpopulatedFlight, populateRequiredChapterFlight } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { needleCourses } from "./needle/index.ts";

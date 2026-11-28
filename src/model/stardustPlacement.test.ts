@@ -4,7 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import * as asteroidLoot from "./asteroidLoot.ts";
 import { toScreen } from "./convex.ts";
-import { createFlight, stepFlight } from "./flight.ts";
+import { createFlight, stepFlight } from "./flight/index.ts";
 import { orePickupSize, stardustPickupSize } from "./pickupBody.ts";
 import {
   discoveryCacheGroup,

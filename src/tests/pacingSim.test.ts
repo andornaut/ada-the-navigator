@@ -22,7 +22,7 @@ import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { weaponAt } from "../data/weaponCatalog.ts";
 import { asteroidSize } from "../model/asteroids.ts";
-import { createFlight, createUnpopulatedFlight, populateFlight } from "../model/flight.ts";
+import { createFlight, createUnpopulatedFlight, populateFlight } from "../model/flight/index.ts";
 import { MOVING_ROCK_PREFIX } from "../model/rockRicochet.ts";
 
 const spawnWeights = CONTENT.tuning.flight.spawnWeights;

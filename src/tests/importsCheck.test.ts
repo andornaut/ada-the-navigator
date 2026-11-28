@@ -267,7 +267,7 @@ describe("layers", () => {
     const gameplayEntries = [
       "src/model/andromeda/runtime.ts",
       "src/model/chapters.ts",
-      "src/model/flight.ts",
+      "src/model/flight/index.ts",
       "src/model/flight/enemyBeams.ts",
       "src/model/game.ts",
       "src/model/hostileStations/materialization.ts",

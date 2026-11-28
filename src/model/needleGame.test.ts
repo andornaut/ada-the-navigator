@@ -31,7 +31,7 @@ import {
   activeEnemyBeams,
   ensureStation,
   questGuardPlacementContext,
-} from "./flight.ts";
+} from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";

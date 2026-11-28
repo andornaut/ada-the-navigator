@@ -11,7 +11,7 @@ import {
   ensureDestination,
   ensureHuntingPacks,
   ensureRouteEncounter,
-} from "./flight.ts";
+} from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
 

@@ -14,7 +14,7 @@ import {
   populateRequiredFlight,
   spawnQuestFrigateAt,
   stepFlight,
-} from "./flight.ts";
+} from "./flight/index.ts";
 import { newGameState } from "./game.ts";
 import {
   readRequiredPlan,

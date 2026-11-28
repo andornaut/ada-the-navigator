@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import { ensureDestinationAt, spawnChapterEnemy, syncFlightRegion } from "./flight.ts";
+import { ensureDestinationAt, spawnChapterEnemy, syncFlightRegion } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { recordObjectRemoval } from "./geography.ts";
 

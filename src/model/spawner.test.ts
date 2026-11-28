@@ -11,7 +11,7 @@ import {
 } from "../data/spawnerCatalog.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { createEnemy } from "./ai/index.ts";
-import { createFlight, stepFlight } from "./flight.ts";
+import { createFlight, stepFlight } from "./flight/index.ts";
 import {
   engagementAdmissions,
   groupReach,

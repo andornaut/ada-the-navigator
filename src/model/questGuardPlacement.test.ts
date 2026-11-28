@@ -12,7 +12,7 @@ import {
   questGuardPlacementContext,
   spawnChapterEnemy,
   spawnQuestFrigateAt,
-} from "./flight.ts";
+} from "./flight/index.ts";
 import { worldActivateFlightRegion, worldSyncFlightRegion } from "./geography.ts";
 import { legacyGuardHomeUpdates } from "./legacyGuardHomes.ts";
 import { questGuardAnchor, questGuardHomePorts } from "./questGuardPlacement.ts";

@@ -9,7 +9,7 @@ import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./ai/index.ts";
-import { activeEnemyBeams } from "./flight.ts";
+import { activeEnemyBeams } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
 import { validPhantomFlight, validPhantomProgress } from "./phantom/index.ts";

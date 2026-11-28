@@ -9,7 +9,7 @@ import {
   questGuardPlacementContext,
   spawnChapterEnemy,
   stepFlight,
-} from "./flight.ts";
+} from "./flight/index.ts";
 import * as placement from "./questGuardPlacement.ts";
 import type { SpaceObject } from "./types.ts";
 import {

@@ -15,7 +15,7 @@ import {
   spawnChapterEnemy,
   stepFlight,
   syncFlightRegion,
-} from "./flight.ts";
+} from "./flight/index.ts";
 import { frigateEscortStation } from "./frigateEscorts.ts";
 import { GameModel } from "./game.ts";
 import { recordObjectRemoval } from "./geography.ts";

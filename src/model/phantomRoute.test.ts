@@ -11,7 +11,7 @@ import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import { clearPhantomTraffic } from "../testing/phantomTraffic.ts";
 import { outlineContact, worldParts } from "./convex.ts";
 import { enemyHull } from "./enemyBody.ts";
-import { ensureDestination, ensureStation, stepFlight } from "./flight.ts";
+import { ensureDestination, ensureStation, stepFlight } from "./flight/index.ts";
 import { GameModel, newGameState } from "./game.ts";
 import { activateFlightRegion } from "./geography.ts";
 import { flightStationContext, worldStationsNear } from "./stations/index.ts";

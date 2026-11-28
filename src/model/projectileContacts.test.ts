@@ -10,7 +10,7 @@ import { createEnemy } from "./ai/index.ts";
 import { ASTEROID_SHAPES, worldSceneryContact } from "./asteroids.ts";
 import { worldParts } from "./convex.ts";
 import { enemyPartOutline } from "./enemyBody.ts";
-import { activeBlastFlashes, activeProjectileImpacts, stepFlight } from "./flight.ts";
+import { activeBlastFlashes, activeProjectileImpacts, stepFlight } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import type { Shot, SpaceObject } from "./types.ts";
 

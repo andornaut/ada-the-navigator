@@ -5,7 +5,7 @@ import { ECONOMY, worldAmmoPack } from "../data/economy.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { rollAmmoDrop, rollRockAmmoDrop } from "./drops.ts";
-import { createFlight } from "./flight.ts";
+import { createFlight } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { buy, itemAbout, onSale, packCount, shopRow } from "./shop.ts";
 import { applyUpgrade } from "./upgradeDrops.ts";

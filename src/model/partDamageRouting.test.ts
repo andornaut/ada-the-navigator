@@ -9,7 +9,7 @@ import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy, damageEnemy, enemyEffects } from "./ai/index.ts";
 import { worldParts } from "./convex.ts";
 import { enemyPartOutline } from "./enemyBody.ts";
-import { activeBlastFlashes, stepFlight } from "./flight.ts";
+import { activeBlastFlashes, stepFlight } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 
 function heavy(galaxy: GalaxyNumber = 1, id = "routing:heavy") {

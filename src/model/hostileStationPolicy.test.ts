@@ -3,7 +3,7 @@ import { expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
 import { createEnemy } from "./ai/index.ts";
-import { createUnpopulatedFlight } from "./flight.ts";
+import { createUnpopulatedFlight } from "./flight/index.ts";
 import {
   materializeHostileStation,
   type PlannedHostileStation,

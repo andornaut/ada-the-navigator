@@ -4,7 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import { createEnemy } from "./ai/index.ts";
-import { createFlight, stepFlight } from "./flight.ts";
+import { createFlight, stepFlight } from "./flight/index.ts";
 import { rotatePhantomAllies } from "./phantom/allies/index.ts";
 import type { GalaxyProgress } from "./types.ts";
 const progress: GalaxyProgress = {

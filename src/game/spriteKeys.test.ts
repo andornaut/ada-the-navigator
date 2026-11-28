@@ -13,7 +13,7 @@ import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import { GameModel } from "../model/game.ts";
 import { storyShips } from "../model/storyShips.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
-import { activateCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
+import { activateCartwheelHubFixture } from "../testing/cartwheel.fixture.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 
 describe("object sprite keys", () => {

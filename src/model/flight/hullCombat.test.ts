@@ -12,10 +12,10 @@ import { endArrivalGrace } from "../../testing/arrivalGrace.ts";
 import { relaunch, supportEntropy } from "../../testing/launch.ts";
 import { createEnemy, damageEnemy, enemyEffects } from "../ai/index.ts";
 import { dropRandom, enemyStardust, rollEnemyDrop, rollHeavyDefeatUpgrade } from "../drops.ts";
-import { bounceShips, stepFlight, wreckId } from "../flight.ts";
 import { GameModel } from "../game.ts";
 import type { FlightEvent, FlightState, Shot, SpaceObject } from "../types.ts";
 import { createHitResolution, hit } from "./hitResolution.ts";
+import { bounceShips, stepFlight, wreckId } from "./index.ts";
 import { fireBeam } from "./playerBeam.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

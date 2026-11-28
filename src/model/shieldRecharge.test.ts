@@ -5,7 +5,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
-import { stepFlight } from "./flight.ts";
+import { stepFlight } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { canRechargeShield, rechargeShield } from "./shieldRecharge.ts";
 import type { FlightState } from "./types.ts";

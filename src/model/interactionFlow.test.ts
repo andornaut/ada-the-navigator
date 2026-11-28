@@ -9,10 +9,10 @@ import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import {
   completeCartwheelHubIntroductionFixture,
   visitCartwheelHubFixture,
-} from "../testing/cartwheelFixture.ts";
+} from "../testing/cartwheel.fixture.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
-import { activateRequiredRoute, ensureDestination, ensureStation } from "./flight.ts";
 import { hit } from "./flight/hitResolution.ts";
+import { activateRequiredRoute, ensureDestination, ensureStation } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval } from "./geography.ts";
 import { flightStationContext, worldStationsNear } from "./stations/index.ts";

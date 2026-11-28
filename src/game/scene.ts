@@ -126,7 +126,7 @@ import {
   activeWeaponImpacts,
   drawnBeamFlash,
   shipSpeedFraction,
-} from "../model/flight.ts";
+} from "../model/flight/index.ts";
 import { type Entropy, GameModel } from "../model/game.ts";
 import type { GainSnapshot } from "../model/itemGains.ts";
 import { nosePoint, shipHeading, shipSilhouette } from "../model/nose.ts";

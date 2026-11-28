@@ -7,7 +7,7 @@ import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { createUnpopulatedFlight, stepFlight } from "./flight.ts";
+import { createUnpopulatedFlight, stepFlight } from "./flight/index.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
 import { worldOreFieldInCell, worldOreFieldsNear } from "./oreFields.ts";
 import { retaliatorAsteroidQuery } from "./retaliatorAsteroids.ts";

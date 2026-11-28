@@ -8,10 +8,10 @@ import { SAVE_RESTORE } from "../saving/index.ts";
 import {
   completeCartwheelHubIntroductionFixture,
   visitCartwheelHubFixture,
-} from "../testing/cartwheelFixture.ts";
+} from "../testing/cartwheel.fixture.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { questRoute } from "../ui/quests/questsScreen.ts";
-import { ensureDestination } from "./flight.ts";
+import { ensureDestination } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { fill } from "./shop.ts";
 import type { HeldJob } from "./types.ts";

@@ -5,7 +5,7 @@ import { NEEDLE_CADENCE, WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts
 import { CONTENT } from "../data/content.ts";
 import { SCREEN } from "../data/screen.ts";
 import { toScreen } from "../model/convex.ts";
-import { createUnpopulatedFlight, spawnChapterEnemy } from "../model/flight.ts";
+import { createUnpopulatedFlight, spawnChapterEnemy } from "../model/flight/index.ts";
 import { needleCourses } from "../model/needle/index.ts";
 import type { Vec } from "../model/types.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "../model/world/index.ts";

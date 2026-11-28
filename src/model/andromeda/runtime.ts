@@ -19,7 +19,7 @@ import {
   ensureDestinationAt,
   ensureStation,
   questGuardPlacementContext,
-} from "../flight.ts";
+} from "../flight/index.ts";
 import { LATE_CHAPTER_ROUTES } from "../game/campaignState.ts";
 import { flightStationContext, worldStationById } from "../stations/index.ts";
 import type { DialogueState, FlightState, GalaxyProgress, UseAction, Vec } from "../types.ts";

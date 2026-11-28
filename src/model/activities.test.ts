@@ -26,8 +26,8 @@ import {
   validActivity,
 } from "./activities.ts";
 import { calfRouteMidpoint, calfStart, crossesCurrent } from "./calf.ts";
-import { activateRequiredRoute, ensureDestination, ensureStation } from "./flight.ts";
 import { hit } from "./flight/hitResolution.ts";
+import { activateRequiredRoute, ensureDestination, ensureStation } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 import type { FlightState, GameState, HeldActivity, Vec } from "./types.ts";

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { createFlight, ensureDestination, stepFlight, teleport } from "./flight.ts";
+import { createFlight, ensureDestination, stepFlight, teleport } from "./flight/index.ts";
 import type { GalaxyProgress } from "./types.ts";
 import { markVisited, validVisitedPages, visitedChunk } from "./visited.ts";
 

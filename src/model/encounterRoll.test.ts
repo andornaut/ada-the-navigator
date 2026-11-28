@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 
 import type { EncounterEntry } from "../data/enemyCatalog.ts";
 import { rollEncounter } from "./encounterRoll.ts";
-import { rollEncounter as flightRollEncounter } from "./flight.ts";
+import { rollEncounter as flightRollEncounter } from "./flight/index.ts";
 
 it("preserves weighted boundaries, inclusive group bounds and escort payload through the public facade", () => {
   const table: readonly EncounterEntry[] = [

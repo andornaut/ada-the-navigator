@@ -5,7 +5,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
-import { visitCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
+import { visitCartwheelHubFixture } from "../testing/cartwheel.fixture.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { placementRadius } from "./asteroids.ts";
 import {
@@ -21,7 +21,7 @@ import {
   planRequiredCartwheelRoute,
   populateFlight,
   stepFlight,
-} from "./flight.ts";
+} from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { worldOreFieldInCell } from "./oreFields.ts";

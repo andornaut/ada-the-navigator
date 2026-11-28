@@ -10,7 +10,7 @@ import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
-import { completeCartwheelHubIntroductionFixture } from "../testing/cartwheelFixture.ts";
+import { completeCartwheelHubIntroductionFixture } from "../testing/cartwheel.fixture.ts";
 import { playOpening, readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy, damageEnemy } from "./ai/index.ts";
 import { worldNearestSettlerStation } from "./andromeda/places.ts";
@@ -18,6 +18,7 @@ import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { enemyStardust } from "./drops.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
+import { hit } from "./flight/hitResolution.ts";
 import {
   activateRequiredRoute,
   activeEnemyBeams,
@@ -29,8 +30,7 @@ import {
   routeBlocked,
   routeGuardPlanResult,
   syncFlightRegion,
-} from "./flight.ts";
-import { hit } from "./flight/hitResolution.ts";
+} from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";

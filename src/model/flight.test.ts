@@ -21,7 +21,7 @@ import {
   stepFlight,
   syncFlightRegion,
   teleport,
-} from "./flight.ts";
+} from "./flight/index.ts";
 import { fanHeading } from "./playerProjectiles.ts";
 import { shipCircleContact } from "./shipBody.ts";
 import type { FlightInput, FlightState, GalaxyProgress, Vec } from "./types.ts";

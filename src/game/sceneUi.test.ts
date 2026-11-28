@@ -13,7 +13,7 @@ import { STATUS_PILL_LAYOUT } from "../data/layout.ts";
 import { SCREEN } from "../data/screen.ts";
 import { openRewoundCampaign } from "../model/campaignRewind.ts";
 import { CHEAT_AMOUNT, type CheatId } from "../model/cheats.ts";
-import { ensureDestination } from "../model/flight.ts";
+import { ensureDestination } from "../model/flight/index.ts";
 import { GameModel } from "../model/game.ts";
 import { gainSnapshot, type ItemGain, itemGains } from "../model/itemGains.ts";
 import { weaponName } from "../model/shop.ts";

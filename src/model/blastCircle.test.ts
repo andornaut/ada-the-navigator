@@ -8,7 +8,7 @@ import { createEnemy } from "./ai/index.ts";
 import { scenerySilhouette } from "./asteroids.ts";
 import { fromScreen, type Parts, screenOutlineContact } from "./convex.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
-import { activeBlastFlashes, createFlight, stepFlight } from "./flight.ts";
+import { activeBlastFlashes, createFlight, stepFlight } from "./flight/index.ts";
 import { shipTouchesScreenCircle } from "./shipBody.ts";
 import type { FlightState, GalaxyProgress, Shot, SpaceObject, Vec } from "./types.ts";
 import {

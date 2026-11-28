@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import art from "../../public/art/ship-nose.json";
 import { CONTENT } from "../data/content.ts";
 import { worldParts } from "./convex.ts";
-import { createFlight, stepFlight } from "./flight.ts";
+import { createFlight, stepFlight } from "./flight/index.ts";
 import { readShipNose, SHIP_HEADINGS, shipSilhouette } from "./nose.ts";
 import { SHIP_REACH, shipBody, shipTouches } from "./shipBody.ts";
 import type { FlightState, Vec } from "./types.ts";

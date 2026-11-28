@@ -12,7 +12,7 @@ import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { ORE_FIELD_LAYOUTS, oreFieldLayout } from "../data/oreFieldLayouts.ts";
 import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./ai/index.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { createFlight, PLATFORM_FACING, stepFlight } from "./flight.ts";
+import { createFlight, PLATFORM_FACING, stepFlight } from "./flight/index.ts";
 import {
   ORE_FIELD_CLEAR_RADIUS,
   ORE_FIELD_ROLE,

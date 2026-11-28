@@ -5,7 +5,7 @@ import { encounterTable } from "../data/enemyCatalog.ts";
 import { NEEDLE } from "../data/needle.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import { createUnpopulatedFlight } from "./flight.ts";
+import { createUnpopulatedFlight } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { planNeedleExit } from "./needle/routePlan.ts";

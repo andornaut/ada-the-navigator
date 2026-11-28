@@ -7,6 +7,7 @@ import { GALAXY_SIDE } from "../data/world.ts";
 import { protectAda } from "../testing/arrivalGrace.ts";
 import { markerModel } from "../testing/markerModel.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
+import { hit } from "./flight/hitResolution.ts";
 import {
   createFlight,
   questFrigateHome,
@@ -15,8 +16,7 @@ import {
   spawnQuestFrigateAt,
   stepFlight,
   syncFlightRegion,
-} from "./flight.ts";
-import { hit } from "./flight/hitResolution.ts";
+} from "./flight/index.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
 import { newProgress } from "./progress.ts";
 import { questGuardAnchor, questGuardHomePorts } from "./questGuardPlacement.ts";

@@ -3,7 +3,7 @@ import { expect } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { createUnpopulatedFlight } from "../model/flight.ts";
+import { createUnpopulatedFlight } from "../model/flight/index.ts";
 import { freshGalaxyGeography } from "../model/galaxyGeography.ts";
 import { GameModel } from "../model/game.ts";
 import { type StationService, stationSpecialty } from "../model/stations/commerce/index.ts";

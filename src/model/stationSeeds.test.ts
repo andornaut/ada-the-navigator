@@ -6,7 +6,7 @@ import { JOB_POOL } from "../data/jobs.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
-import { ensureStation } from "./flight.ts";
+import { ensureStation } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { stationSpecialty } from "./stations/commerce/index.ts";
 import { flightStationContext, worldStationsNear } from "./stations/index.ts";

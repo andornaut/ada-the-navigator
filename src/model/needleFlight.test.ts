@@ -17,7 +17,7 @@ import {
   spawnChapterEnemy,
   stepFlight,
   syncFlightRegion,
-} from "./flight.ts";
+} from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { MINE_PARTS, MINE_REACH } from "./mineShape.ts";
 import {

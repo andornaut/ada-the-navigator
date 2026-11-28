@@ -34,7 +34,7 @@ import { closestOnSegment, outlineContact, worldParts } from "./convex.ts";
 import { GAME_AREA, gameAreaPoint, inGameArea } from "./edgeMarkers.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
-import { ensureStation, questGuardPlacementContext } from "./flight.ts";
+import { ensureStation, questGuardPlacementContext } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";

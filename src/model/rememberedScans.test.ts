@@ -6,7 +6,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { questReward } from "../data/questRewards.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
-import { ensureStation } from "./flight.ts";
+import { ensureStation } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { landmarkById, landmarkLabel, landmarkSites } from "./landmarks.ts";
 import { stationSpecialty } from "./stations/commerce/index.ts";

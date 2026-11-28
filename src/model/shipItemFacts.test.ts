@@ -5,7 +5,7 @@ import { CONTENT } from "../data/content.ts";
 import { carriedItemName } from "../data/itemNames.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import { createUnpopulatedFlight } from "./flight.ts";
+import { createUnpopulatedFlight } from "./flight/index.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
 import type { HeldJob } from "./types.ts";

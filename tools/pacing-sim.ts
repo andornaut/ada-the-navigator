@@ -50,7 +50,7 @@ import {
   rollSalvageDrop,
   splitResourcePickup,
 } from "../src/model/drops.ts";
-import { createFlight, stepFlight, wreckId } from "../src/model/flight.ts";
+import { createFlight, stepFlight, wreckId } from "../src/model/flight/index.ts";
 import {
   acceptJob,
   type BoardContext,

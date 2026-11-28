@@ -5,7 +5,7 @@ import { PLAYER_WEAPON_COVERAGE } from "../data/playerWeaponCoverage.ts";
 import type { Weapon } from "../data/types.ts";
 import { WEAPON_CATALOG } from "../data/weaponCatalog.ts";
 import { fromScreen, toScreen } from "./convex.ts";
-import { activeBeamFlashes, createFlight, stepFlight } from "./flight.ts";
+import { activeBeamFlashes, createFlight, stepFlight } from "./flight/index.ts";
 import { nosePoint } from "./nose.ts";
 import { planPlayerVolley } from "./playerProjectiles.ts";
 import { playerWeaponCoverage } from "./playerWeaponCoverage.ts";

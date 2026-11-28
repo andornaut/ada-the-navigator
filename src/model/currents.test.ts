@@ -15,7 +15,7 @@ import {
   pointOnCurrent,
   streakFrame,
 } from "./currents.ts";
-import { createFlight, ensureDestination, stepFlight } from "./flight.ts";
+import { createFlight, ensureDestination, stepFlight } from "./flight/index.ts";
 import { stationsNear } from "./stations/index.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 

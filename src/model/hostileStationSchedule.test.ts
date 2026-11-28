@@ -8,7 +8,7 @@ import { GALAXY_SIDE } from "../data/world.ts";
 import { createEnemy } from "./ai/index.ts";
 import { outlinesContact } from "./convex.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
-import { createUnpopulatedFlight, spawnPlannedHostileStation } from "./flight.ts";
+import { createUnpopulatedFlight, spawnPlannedHostileStation } from "./flight/index.ts";
 import { worldRecordObjectRemoval } from "./geography.ts";
 import { hostileStationSites } from "./hostileStations/index.ts";
 import type { PlannedHostileStation } from "./hostileStations/placement.ts";

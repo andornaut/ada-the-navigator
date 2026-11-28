@@ -6,7 +6,7 @@ import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import * as enemyAi from "./ai/index.ts";
-import { stepFlight } from "./flight.ts";
+import { stepFlight } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval } from "./geography.ts";
 import type { SpaceObject } from "./types.ts";

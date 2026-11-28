@@ -8,7 +8,7 @@ import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { ConversationDirector, type ConversationFacts, pennyPoints } from "./conversations.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
-import { createFlight } from "./flight.ts";
+import { createFlight } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 

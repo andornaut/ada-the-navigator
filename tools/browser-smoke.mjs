@@ -975,7 +975,7 @@ try {
     import(new URL("../src/model/game.ts", import.meta.url)),
     import(new URL("../src/data/content.ts", import.meta.url)),
     import(new URL("../src/data/mapJump.ts", import.meta.url)),
-    import(new URL("../src/model/flight.ts", import.meta.url)),
+    import(new URL("../src/model/flight/index.ts", import.meta.url)),
     import(new URL("../src/testing/launch.ts", import.meta.url)),
     import(new URL("../src/saving/index.ts", import.meta.url)),
     import(new URL("../src/data/achievements.ts", import.meta.url)),
@@ -1920,7 +1920,7 @@ try {
   assert.equal(safeInput.teleport("growers"), true, "Safe input fixture must reach Growers");
   assert.deepEqual(safeInput.state.flight.player, { x: friendly.x, y: friendly.y });
   // Chapter one's stage places a quest guard on the Growers route; with its weapons stopped it no
-  // longer blocks the way in (routeBlocked in src/model/flight.ts), so Talk is offered there.
+  // longer blocks the way in (routeBlocked via src/model/flight/index.ts), so Talk is offered there.
   for (const guard of safeInput.state.flight.objects) {
     if (guard.kind === "enemy" && guard.routeId === "growers") {
       guard.enemy.disabled = true;
@@ -3508,7 +3508,7 @@ try {
   );
   // Towing never refuses the local map's Galaxies; leaving the galaxy from the galaxy map ends the
   // flight with the held rescue still held, its craft back where it was stranded.
-  const { ensureStation } = await import(new URL("../src/model/flight.ts", import.meta.url));
+  const { ensureStation } = await import(new URL("../src/model/flight/index.ts", import.meta.url));
   const towInput = relaunch(CONTENT, roomInput.save());
   const towFlight = towInput.state.flight;
   // The nearest station whose board offers a rescue.

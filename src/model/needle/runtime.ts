@@ -5,7 +5,7 @@ import { isNeedleCourseStart, NEEDLE, NEEDLE_PLACES } from "../../data/needle.ts
 import { NEEDLE_COPY, NEEDLE_COURSE_COPY, NEEDLE_LEARNING } from "../../data/needleCopy.ts";
 import type { CapitalBossProgress } from "../capitalBossEncounter.ts";
 import type { ChapterContext, ChapterResult } from "../chapterProtocol.ts";
-import { ensureDestination, ensureDestinationAt, spawnChapterEnemy } from "../flight.ts";
+import { ensureDestination, ensureDestinationAt, spawnChapterEnemy } from "../flight/index.ts";
 import { worldActivateFlightRegion } from "../geography.ts";
 import type { DialogueChoice, DialogueState, UseAction, Vec } from "../types.ts";
 import { shipTuning } from "../upgrades.ts";

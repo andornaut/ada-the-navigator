@@ -10,7 +10,7 @@ import { GALAXY_SIDE } from "../data/world.ts";
 import { restoreSave, SAVE_RESTORE, SAVE_VERSION } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { ACHIEVEMENT_TOTALS } from "./achievements.ts";
-import { createFlight } from "./flight.ts";
+import { createFlight } from "./flight/index.ts";
 import { galaxyRoute, GameModel, newGameState } from "./game.ts";
 import { acceptJob, type BoardContext, stationBoard } from "./jobs.ts";
 import {

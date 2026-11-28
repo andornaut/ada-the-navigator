@@ -4,7 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import * as ai from "./ai/index.ts";
 import { toScreen } from "./convex.ts";
-import { activeEnemyBeams, createUnpopulatedFlight, stepFlight } from "./flight.ts";
+import { activeEnemyBeams, createUnpopulatedFlight, stepFlight } from "./flight/index.ts";
 import { playerWeaponCoverage } from "./playerWeaponCoverage.ts";
 import type { FlightInput, SpaceObject, Vec } from "./types.ts";
 

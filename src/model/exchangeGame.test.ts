@@ -6,7 +6,7 @@ import { questReward } from "../data/questRewards.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import type { ExchangePreview, ExchangeQuote } from "./exchange.ts";
-import { ensureDestination, ensureStation } from "./flight.ts";
+import { ensureDestination, ensureStation } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 

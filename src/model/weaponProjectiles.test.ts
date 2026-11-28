@@ -16,7 +16,7 @@ import {
   activeWeaponImpacts,
   drawnBeamFlash,
   stepFlight,
-} from "./flight.ts";
+} from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { noseOffset, nosePoint } from "./nose.ts";
 import { projectileOpacity } from "./playerProjectiles.ts";

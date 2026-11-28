@@ -9,7 +9,7 @@ import {
   createUnpopulatedFlight,
   planRequiredCartwheelRoute,
   populateRequiredChapterFlight,
-} from "./flight.ts";
+} from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { readRequiredRolePlan } from "./requiredRolePlans.ts";

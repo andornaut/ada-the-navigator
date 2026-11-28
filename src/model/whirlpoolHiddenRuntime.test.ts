@@ -6,7 +6,7 @@ import { HOLODISKS } from "../data/holodisks.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
-import { ensureDestination, routeBlocked } from "./flight.ts";
+import { ensureDestination, routeBlocked } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { readRequiredRolePlan } from "./requiredRolePlans.ts";

@@ -17,7 +17,7 @@ import {
   routeBlocked,
   spawnQuestFrigateAt,
   stepFlight,
-} from "./flight.ts";
+} from "./flight/index.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
 import { newProgress } from "./progress.ts";
 import { questGuardAnchor } from "./questGuardPlacement.ts";

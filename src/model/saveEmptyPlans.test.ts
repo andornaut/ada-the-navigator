@@ -3,7 +3,7 @@ import { expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import { ensureDestination, ensureRouteEncounter } from "./flight.ts";
+import { ensureDestination, ensureRouteEncounter } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 
 it("rejects obsolete nonempty route journals while preserving valid active saves", () => {

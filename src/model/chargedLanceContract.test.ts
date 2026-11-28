@@ -10,7 +10,7 @@ import {
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
 import { createEnemy } from "./ai/index.ts";
-import { activeEnemyBeams, createFlight, stepFlight } from "./flight.ts";
+import { activeEnemyBeams, createFlight, stepFlight } from "./flight/index.ts";
 import type { SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, fire: false, move: { x: 0, y: 0 }, use: false };

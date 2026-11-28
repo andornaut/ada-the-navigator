@@ -1,7 +1,7 @@
 import type { ConversationLine } from "../../data/conversations.ts";
 import { holodiskInsertion } from "../../data/premiseCopy.ts";
 import type { GalaxyNumber, GameContent } from "../../data/types.ts";
-import { pickupTouched } from "../flight.ts";
+import { pickupTouched } from "../flight/index.ts";
 import type { FlightState, GalaxyProgress, SpaceObject, Vec } from "../types.ts";
 import { flightEncounterSeed } from "../world/index.ts";
 

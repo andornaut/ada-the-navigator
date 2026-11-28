@@ -5,7 +5,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { dropRandom, enemyStardust, rollEnemyDrop } from "./drops.ts";
-import { ensureStation } from "./flight.ts";
+import { ensureStation } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { type BoardContext, type JobBook, rerollBoards, stationBoard } from "./jobs.ts";
 import { stationSpecialty } from "./stations/commerce/index.ts";

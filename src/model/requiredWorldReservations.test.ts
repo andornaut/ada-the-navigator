@@ -6,7 +6,7 @@ import { spacingRadius } from "../data/enemySpacing.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
 import { createEnemy } from "./ai/index.ts";
-import { createFlight } from "./flight.ts";
+import { createFlight } from "./flight/index.ts";
 import { newGameState } from "./game.ts";
 import {
   requiredWorldOccupantsPlacementClear,

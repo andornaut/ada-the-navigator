@@ -1,6 +1,6 @@
 import { CONTENT } from "../data/content.ts";
 import type { GameContent } from "../data/types.ts";
-import { beginArrivalGrace } from "../model/flight.ts";
+import { beginArrivalGrace } from "../model/flight/index.ts";
 import type { FlightState } from "../model/types.ts";
 
 const withGrace = (seconds: number): GameContent => ({

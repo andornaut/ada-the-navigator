@@ -5,7 +5,7 @@ import { CONVERSATIONS } from "../data/conversations.ts";
 import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
-import { ensureRouteEncounter, routeBlocked, routeGuardPlanResult } from "./flight.ts";
+import { ensureRouteEncounter, routeBlocked, routeGuardPlanResult } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval } from "./geography.ts";
 import { rememberRequiredSite } from "./requiredEncounterPlans.ts";

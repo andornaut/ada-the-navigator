@@ -16,7 +16,7 @@ import {
   stepFlight,
   syncFlightRegion,
   teleport,
-} from "./flight.ts";
+} from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import {
   activateFlightRegion,

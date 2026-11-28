@@ -4,7 +4,7 @@ import type { GameContent } from "../../data/types.ts";
 import { partsReach, toScreen, worldParts } from "../convex.ts";
 import { dropRandom } from "../drops.ts";
 import { enemyPhysicalBody } from "../enemyBody.ts";
-import { questGuardPlacementContext, spawnChapterEnemy } from "../flight.ts";
+import { questGuardPlacementContext, spawnChapterEnemy } from "../flight/index.ts";
 import { worldRecordObjectRemoval } from "../geography.ts";
 import { stationPopulationObjects } from "../hostileStations/index.ts";
 import { stationFormationClear } from "../stations/formation/index.ts";

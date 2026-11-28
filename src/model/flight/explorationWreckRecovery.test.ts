@@ -5,11 +5,11 @@ import { TARGET_MARKER_RANGE } from "../../data/targetMarkers.ts";
 import { GALAXY_SIDE } from "../../data/world.ts";
 import { SAVE_RESTORE } from "../../saving/index.ts";
 import { relaunch, supportEntropy } from "../../testing/launch.ts";
-import { placeExplorationSite, recoverExplorationWreck, salvage, wreckId } from "../flight.ts";
 import { GameModel } from "../game.ts";
 import { proceduralPoisNear } from "../proceduralPois.ts";
 import type { FlightEvent, SpaceObject } from "../types.ts";
 import { hit } from "./hitResolution.ts";
+import { placeExplorationSite, recoverExplorationWreck, salvage, wreckId } from "./index.ts";
 
 function admittedWreck() {
   const seed = 31;

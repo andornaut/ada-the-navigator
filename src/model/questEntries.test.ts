@@ -6,7 +6,7 @@ import { questReward } from "../data/questRewards.ts";
 import { restoreSave, SAVE_RESTORE, SAVE_VERSION } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
-import { createFlight } from "./flight.ts";
+import { createFlight } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { stationsNear } from "./stations/index.ts";

@@ -10,7 +10,7 @@ import { galaxyProjects, PROJECT_THANKS, PROJECTS } from "../data/projects.ts";
 import { GALAXIES } from "../data/storybook.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
-import { ensureStation } from "./flight.ts";
+import { ensureStation } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import {
   donate,

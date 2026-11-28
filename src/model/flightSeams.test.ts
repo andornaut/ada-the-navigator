@@ -20,7 +20,7 @@ import {
   inDanger,
   pickupTouched,
   stepFlight,
-} from "./flight.ts";
+} from "./flight/index.ts";
 import { pickupOutline } from "./pickupBody.ts";
 import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 import type { FlightInput, SpaceObject, Vec } from "./types.ts";

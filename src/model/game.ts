@@ -189,7 +189,7 @@ import {
   teleport as teleportFlight,
   undockFlight,
   whirlpoolSounderActor,
-} from "./flight.ts";
+} from "./flight/index.ts";
 import { initializeGalaxyGeography } from "./galaxyGeography.ts";
 import { type BossCueGalaxy, projectBossCue } from "./game/bossCues.ts";
 import { projectCapitalBossHud } from "./game/bossHud.ts";

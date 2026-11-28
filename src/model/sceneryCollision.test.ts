@@ -4,7 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import type { GameContent } from "../data/types.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { dropRandom } from "./drops.ts";
-import { createFlight, stepFlight } from "./flight.ts";
+import { createFlight, stepFlight } from "./flight/index.ts";
 import type { FlightEvent, FlightState, SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

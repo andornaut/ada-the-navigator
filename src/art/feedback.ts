@@ -2,7 +2,7 @@ import type { Point, Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { HIT_FLASH, HIT_SHAKE } from "../data/layout.ts";
 import { SCREEN } from "../data/screen.ts";
-import { activeProjectileImpacts, wreckId } from "../model/flight.ts";
+import { activeProjectileImpacts, wreckId } from "../model/flight/index.ts";
 import { archivedObjectIds } from "../model/geography.ts";
 import type { GameState, Vec } from "../model/types.ts";
 

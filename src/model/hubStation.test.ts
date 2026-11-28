@@ -5,9 +5,9 @@ import { CONTENT } from "../data/content.ts";
 import { questReward } from "../data/questRewards.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
-import { visitCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
+import { visitCartwheelHubFixture } from "../testing/cartwheel.fixture.ts";
 import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
-import { ensureDestination } from "./flight.ts";
+import { ensureDestination } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { HUB_STATION } from "./stations/index.ts";
 

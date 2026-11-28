@@ -6,9 +6,9 @@ import { SAVE_RESTORE } from "../saving/index.ts";
 import {
   activateCartwheelHubFixture,
   completeCartwheelHubIntroductionFixture,
-} from "../testing/cartwheelFixture.ts";
+} from "../testing/cartwheel.fixture.ts";
 import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
-import { ensureDestination } from "./flight.ts";
+import { ensureDestination } from "./flight/index.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

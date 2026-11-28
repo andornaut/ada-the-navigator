@@ -28,6 +28,7 @@ import { sceneryBodyContact } from "./asteroids.ts";
 import { fromScreen, outlineContact, outlinesContact, type Parts } from "./convex.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
+import { hit as resolveHit } from "./flight/hitResolution.ts";
 import {
   activeBlastFlashes,
   activeEnemyBeams,
@@ -44,8 +45,7 @@ import {
   settleRouteEncounters,
   stepFlight,
   teleport,
-} from "./flight.ts";
-import { hit as resolveHit } from "./flight/hitResolution.ts";
+} from "./flight/index.ts";
 import { playerWeaponCoverage } from "./playerWeaponCoverage.ts";
 import { shipBody, shipCircleContact } from "./shipBody.ts";
 import { direction as unit } from "./shipPhysics.ts";

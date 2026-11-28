@@ -14,7 +14,7 @@ import { stationJobsRows, type StationRow } from "../ui/station/index.ts";
 import { createEnemy } from "./ai/index.ts";
 import { dropRandom, enemyStardust } from "./drops.ts";
 import { ROUTE_OPPORTUNITY_SECONDS } from "./explorationPacing.ts";
-import { ensureStation } from "./flight.ts";
+import { ensureStation } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { jobHostiles, rerollBoards } from "./jobs.ts";

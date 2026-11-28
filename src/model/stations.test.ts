@@ -7,7 +7,7 @@ import type { GalaxyNumber } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./ai/index.ts";
-import { createFlight, ensureDestination, stepFlight } from "./flight.ts";
+import { createFlight, ensureDestination, stepFlight } from "./flight/index.ts";
 import { GameModel } from "./game.ts";
 import {
   flightStationContext,

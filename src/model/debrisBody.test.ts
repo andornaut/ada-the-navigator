@@ -4,7 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { fromScreen } from "./convex.ts";
 import { debrisFrameOf, debrisSilhouette } from "./debrisBody.ts";
-import { createFlight, stepFlight } from "./flight.ts";
+import { createFlight, stepFlight } from "./flight/index.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, reducedMotion: true, use: false };

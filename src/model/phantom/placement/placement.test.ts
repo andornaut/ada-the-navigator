@@ -10,7 +10,7 @@ import { createEnemy } from "../../ai/index.ts";
 import { ASTEROID_SHAPES } from "../../asteroids.ts";
 import { partsReach, worldParts } from "../../convex.ts";
 import { enemyPhysicalBody } from "../../enemyBody.ts";
-import { createUnpopulatedFlight } from "../../flight.ts";
+import { createUnpopulatedFlight } from "../../flight/index.ts";
 import * as placement from "../../stations/formation/index.ts";
 import type { SpaceObject, Vec } from "../../types.ts";
 import { flightWorldContext, worldDelta, worldDistance, wrapPoint } from "../../world/index.ts";

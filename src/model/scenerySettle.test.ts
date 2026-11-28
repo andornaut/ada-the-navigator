@@ -4,7 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { ASTEROID_SHAPES, sceneryBodyContact, scenerySilhouette } from "./asteroids.ts";
 import { type Parts, unionContact } from "./convex.ts";
 import { debrisSilhouette } from "./debrisBody.ts";
-import { createFlight } from "./flight.ts";
+import { createFlight } from "./flight/index.ts";
 import { resolveScenery, type SceneryContactOf } from "./flight/sceneryResolution.ts";
 import { SceneryFrames } from "./sceneryFrames.ts";
 import { shipBody } from "./shipBody.ts";
