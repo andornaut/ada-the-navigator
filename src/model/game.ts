@@ -275,6 +275,7 @@ import {
   localMap,
   type MapContext,
   recordExplored,
+  selectMapTravelTarget,
   stationForMapDestination,
   withinChartingRadius,
 } from "./map.ts";
@@ -3833,19 +3834,20 @@ export class GameModel {
     if (!flight || this.state.mode !== "space" || this.state.dialogue || this.state.docked) {
       return null;
     }
-    const station = this.current.stations.includes(id) && this.stationSite(flight, id) !== null;
-    // Preserve rehydration for known destinations. Needle's disk is only a map waypoint here.
-    const destination =
-      this.current.known.includes(id) &&
-      stationForMapDestination(flight.galaxy, id) === null &&
-      !(flight.galaxy === 4 && id === "holodisk");
-    const place =
-      station || destination ? undefined : this.map?.places.find((p) => p.id === id && p.travel);
-    if (!station && !destination && !place) {
+    const target = selectMapTravelTarget(
+      {
+        galaxy: flight.galaxy,
+        hasStationSite: (id) => this.stationSite(flight, id) !== null,
+        map: () => this.map,
+        progress: this.current,
+      },
+      id,
+    );
+    if (!target) {
       return null;
     }
     const { reason } = travelState(this.inDanger, this.towing, this.carrying, { travel: true });
-    return { flight, place, reason, station };
+    return { flight, ...target, reason };
   }
   canTeleport(id: string): boolean {
     const travel = this.mapTravel(id);

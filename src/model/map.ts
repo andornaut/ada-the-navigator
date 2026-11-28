@@ -307,6 +307,28 @@ export function stationForMapDestination(galaxy: GalaxyNumber, id: string): stri
     : null;
 }
 
+/** Select a rehydratable destination or a travelable map place without paging either one. */
+export function selectMapTravelTarget(
+  context: {
+    readonly galaxy: GalaxyNumber;
+    readonly hasStationSite: (id: string) => boolean;
+    readonly map: () => LocalMap | null;
+    readonly progress: MapContext["progress"];
+  },
+  id: string,
+): { readonly station: boolean; readonly place: MapPlace | undefined } | null {
+  const { galaxy, progress } = context;
+  const station = progress.stations.includes(id) && context.hasStationSite(id);
+  // Needle's disk is a waypoint here. Travel must not materialize it as an ordinary destination.
+  const destination =
+    progress.known.includes(id) &&
+    stationForMapDestination(galaxy, id) === null &&
+    !(galaxy === 4 && id === "holodisk");
+  const place =
+    station || destination ? undefined : context.map()?.places.find((p) => p.id === id && p.travel);
+  return station || destination || place ? { place, station } : null;
+}
+
 export const withinChartingRadius = (point: Vec) =>
   Math.hypot(point.x - CHARTING_ORIGIN.x, point.y - CHARTING_ORIGIN.y) <= CHARTING_RADIUS;
 
