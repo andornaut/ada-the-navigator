@@ -246,34 +246,37 @@ a new Ada at position 1.
 
 One tuning value, `difficultyScale` (1), multiplies every enemy hit point and the
 encounter rate at every position. Weapon cadence uses the explicit intervals
-and shares in [Enemy weapons](#enemy-weapons). Small-craft Stardust drops use unscaled hull hit points. Heavy rewards are fixed
-independently of hull HP, part HP and mount counts, so tuning them leaves
-the economy unchanged. It is not a player setting: there is one forgiving difficulty.
+and shares in [Enemy weapons](#enemy-weapons). Enemy Stardust payouts follow
+[Economy](economy.md#earning-stardust), independently of hull HP, part HP and
+mount counts. It is not a player setting: there is one forgiving difficulty.
 
 Damage and hit points share one unit: 1 damage removes 1 HP. A level 1 Laser shot
 deals 1 damage.
+
+The tables list Sunflower, Whirlpool, Needle, Andromeda, Cartwheel and Phantom
+in route order. Fighter hull HP also applies to escorts.
 
 Small craft:
 
 | Position | `swarm` | `fighter` | `interceptor` | `retaliator` | Group bonus | Lead | Notice |
 | -------: | ------: | --------: | ------------: | -----------: | ----------: | ---: | -----: |
-|        1 |       2 |         4 |             3 |            8 |          +1 |  20% |   +20% |
-|        2 |       2 |         5 |             3 |            9 |          +1 |  40% |   +30% |
-|        3 |       3 |         5 |             4 |           10 |          +2 |  60% |   +40% |
-|        4 |       3 |         6 |             4 |           11 |          +2 |  80% |   +45% |
-|        5 |       3 |         6 |             5 |           11 |          +3 |  90% |   +50% |
-|        6 |       3 |         6 |             5 |           12 |          +3 | 100% |   +50% |
+|        1 |       2 |         4 |             3 |           15 |          +1 |  20% |   +20% |
+|        2 |       2 |         4 |             3 |           15 |          +1 |  40% |   +30% |
+|        3 |       4 |         7 |             5 |           20 |          +2 |  60% |   +40% |
+|        4 |       4 |         7 |             5 |           20 |          +2 |  80% |   +45% |
+|        5 |       6 |        10 |             8 |           25 |          +3 |  90% |   +50% |
+|        6 |       6 |        10 |             8 |           25 |          +3 | 100% |   +50% |
 
 Heavies:
 
-| Position | Hardpoint | `frigate` hull | Frigate weapons | `capital` hull | Capital weapons | Heavy share |
-| -------: | --------: | -------------: | --------------: | -------------: | --------------: | ----------: |
-|        1 |        10 |             40 |               2 |             80 |               4 |          ×1 |
-|        2 |        10 |             44 |               2 |             88 |               4 |          ×1 |
-|        3 |        12 |             60 |               3 |            120 |               6 |        ×1.2 |
-|        4 |        12 |             64 |               3 |            128 |               6 |        ×1.3 |
-|        5 |        14 |             88 |               4 |            176 |               8 |        ×1.4 |
-|        6 |        14 |             96 |               4 |            192 |               8 |        ×1.5 |
+| Position | Hardpoint | `frigate` hull | Frigate weapons | `capital` hull | Capital weapons | Heavy share | Turret platform hull | Hostile station hull |
+| -------: | --------: | -------------: | --------------: | -------------: | --------------: | ----------: | -------------------: | -------------------: |
+|        1 |        10 |             40 |               2 |             80 |               4 |          ×1 |                   50 |               Absent |
+|        2 |        10 |             45 |               2 |            100 |               4 |          ×1 |                   50 |               Absent |
+|        3 |        12 |             50 |               3 |            120 |               6 |        ×1.2 |                   55 |               Absent |
+|        4 |        12 |             55 |               3 |            140 |               6 |        ×1.3 |                   55 |                  175 |
+|        5 |        14 |             60 |               4 |            160 |               8 |        ×1.4 |                   60 |                  200 |
+|        6 |        14 |             65 |               4 |            180 |               8 |        ×1.5 |                   60 |                  225 |
 
 - Small-craft columns are hull HP. Outside Sunflower's staged ambient roster,
   the group bonus adds to both ends of each `swarm` and `fighter` group range. Lead is how much of Ada's movement enemy
@@ -288,7 +291,7 @@ Heavies:
   them on each hull's prow.
 - Every heavy hardpoint (weapon, engine, command and platform turret) has the
   position's hardpoint HP: 10, 10, 12, 12, 14 and 14 along the route. The
-  flagship's parts have 18 HP. A `platform` hull has half the frigate hull.
+  flagship's parts have 18 HP.
 - Heavy share multiplies the ambient roster's `frigate` weights before
   normalization. Placed platforms have no weight.
 
@@ -448,9 +451,10 @@ Frigates, capitals and platforms have hull HP and hardpoints.
 - **Disabled:** when every weapon hardpoint is destroyed, the ship is disabled,
   whatever its hull HP. It stops attacking and steering, coasts to rest, no longer
   counts for battle, and shows a red "Disabled" banner above its hull.
-- **Salvage:** within Talk range of a disabled heavy, Use offers Salvage. Salvaging drops the
-  half the rolled Stardust, rounded down, and can yield a heavy upgrade. The ship
-  survives: it powers down, its banner goes, it is drawn dimmed,
+- **Salvage:** within Talk range of a disabled heavy, Use offers Salvage. It can
+  yield a heavy upgrade and pays half the rolled Stardust, rounded down, for
+  ordinary heavies. [Archie's flagship](#archies-flagship) has a fixed payout.
+  The ship survives: it powers down, its banner goes, it is drawn dimmed,
   and shots and Ada pass through it. Ada can instead keep shooting a disabled ship
   until its hull breaks, for more Stardust and no upgrade.
 - **Engines and command:** each engine still provides an equal share of thrust.
@@ -468,12 +472,10 @@ Frigates, capitals and platforms have hull HP and hardpoints.
 ## Hostile station hull
 
 Hostile stations have six active weapon parts in Andromeda, seven in Cartwheel
-and eight in Phantom. Their hull HP is twice the active weapon count times the
-route part HP: 144, 196 and 224 respectively. Part hits damage only the selected
-part, with no hull damage or overflow. Hull hits damage only the hull. A station
-has no hull floor: zero hull destroys it, and disabling every weapon disables it.
-Friendly stations retain one HP. Existing ship hull HP and the flagship hull floor
-remain unchanged.
+and eight in Phantom. Their hull HP is set by [Difficulty](#difficulty).
+Part hits damage only the selected part, with no hull damage or overflow.
+Hull hits damage only the hull. A station has no hull floor: zero hull destroys
+it, and disabling every weapon disables it. Friendly stations retain one HP.
 
 Each galaxy has one hostile station design: two six-sided decks in Andromeda, an
 eight-sided wheel over a deck in Cartwheel and four arms over four in Phantom.
@@ -492,8 +494,8 @@ HP, weapon rolls, clocks and defender casualties. Fresh galaxy entry resets
 combat actors and casualties while preserving seeded site geography and known
 sites. Site identity and knowledge are separate from encounter-epoch actor state.
 
-Keep the existing size ratio 7, hull HP 72/98/112 in Andromeda/Cartwheel/Phantom,
-active weapon parts 6/7/8, and approved part HP, weapon mix and rates unchanged.
+Keep the existing size ratio 7, active weapon parts 6/7/8, and approved part HP,
+weapon mix and rates unchanged.
 See [Rules](rules.md#hostile-station-sites-and-map-knowledge) for geography and
 map knowledge, and [Economy](economy.md#earning-stardust) for the station payout.
 These policies are approved and their policy primitives are present in the
@@ -707,7 +709,7 @@ turrets fire while it advances, with no speed to advance.
   fields, chosen by the seed, so unguarded ore is always available. Its hull is one drawn frame
   that never rotates and has no thrust jets.
 - **Parts:** two turrets, each with the position's hardpoint HP, and a hull with
-  half the frigate hull ([Heavy hull and disabling](#heavy-hull-and-disabling)).
+  the position's turret platform HP ([Difficulty](#difficulty)).
   Hit areas, turret mounts and muzzles come from Art's drawn hardpoints, as for
   the frigate and capital, and hull hits test its drawn outline ([Hulls](#hulls)).
 - **Fire:** each live turret aims independently with `aimTurnSeconds` and fires
@@ -749,8 +751,8 @@ his fleet.
   units of the waypoint.
 - **Escorts:** 8 `escort` fighters, which hold back with it until the third wave
   is gone.
-- **Salvage:** salvaging it gives the last holodisk and its Stardust by the heavy
-  rule, then the story scene plays. It never regenerates.
+- **Salvage:** salvaging it gives the last holodisk and the fixed Stardust payout
+  in [Economy](economy.md#earning-stardust), then the story scene plays. It never regenerates.
 
 ## Finale allies
 

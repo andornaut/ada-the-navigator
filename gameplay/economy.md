@@ -50,22 +50,25 @@ and 160, then 120 and 200. Enemy ships are
 destroyed, not teleported: a defeated ship breaks apart in a short effect and drops
 its Stardust. A heavy is destroyed when its hull HP reaches 0.
 Each whole-number payout in the listed destruction range is equally likely.
-The range is the same in every galaxy. Fighter escorts use the fighter range.
+Each enemy class uses the same range in every galaxy, regardless of hull HP,
+part HP or mount count. Fighter escorts use the fighter range.
 
 | Enemy           | Destruction range | Average |
 | --------------- | ----------------: | ------: |
 | Swarm ship      |               1–3 |       2 |
 | Fighter         |               2–5 |     3.5 |
-| Interceptor     |               2–5 |     3.5 |
-| Retaliator      |               2–5 |     3.5 |
+| Interceptor     |               3–5 |       4 |
+| Retaliator      |               4–6 |       5 |
 | Frigate         |             10–20 |      15 |
 | Capital ship    |             20–30 |      25 |
 | Turret platform |             10–20 |      15 |
-| Hostile station |             10–20 |      15 |
+| Hostile station |             20–30 |      25 |
 
 For a frigate, capital ship or turret platform, salvage pays half the rolled
-value, rounded down. Destroying the hull pays the full roll. The finale
-flagship pays 44 on salvage. A discovery cache pays 4.
+value, rounded down. The sole exception to that salvage rule is the finale
+flagship (`PHANTOM_FLAGSHIP`, object ID `phantomFlagship`), which pays exactly
+50 Stardust on salvage. Destroying the hull pays the full roll. A discovery
+cache pays 4.
 
 Disabling a heavy does not destroy it. Fleeing, unloading,
 despawning or restoring a survivor does not grant defeat loot, and a released
