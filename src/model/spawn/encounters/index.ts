@@ -200,7 +200,17 @@ function populationRefusal(
     footprint.includesHostileAnchor,
     objects,
   );
-  if (!(count <= localCap)) {
+  return populationLimitRefusal(policy, stage, count <= localCap, types, capitals);
+}
+
+function populationLimitRefusal(
+  policy: SpawnerPolicy,
+  stage: SpawnerStage,
+  withinLocalCap: boolean,
+  types: ReadonlySet<EnemyActorKind>,
+  capitals: number,
+): PopulationRefusal | undefined {
+  if (!withinLocalCap) {
     return "local-cap";
   }
   if (!(types.size <= stage.maxNearbyArchetypes)) {
@@ -305,20 +315,18 @@ function admittedAt(
     const capitals =
       nearby.filter((other) => other.enemy?.archetype === "capital").length +
       (object.enemy?.archetype === "capital" ? 1 : 0);
-    if (
+    const withinLocalCap =
       nearby.length <
-        worldLocalCap(
-          context,
-          policy,
-          stage,
-          object.radius,
-          object,
-          object.enemy?.archetype === "capital",
-          objects,
-        ) &&
-      types.size <= stage.maxNearbyArchetypes &&
-      capitals <= policy.maxNearbyCapitals
-    ) {
+      worldLocalCap(
+        context,
+        policy,
+        stage,
+        object.radius,
+        object,
+        object.enemy?.archetype === "capital",
+        objects,
+      );
+    if (populationLimitRefusal(policy, stage, withinLocalCap, types, capitals) === undefined) {
       admitted.add(object.id);
       reserved.push(object);
     }

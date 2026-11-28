@@ -173,6 +173,23 @@ it("shares spawn and engagement budgets around capitals and explicit hostile sta
   }
 });
 
+it("counts reserved neighbours strictly below the cap for first-sight admission", () => {
+  const reserved = ship("reserved");
+  reserved.enemy!.engaged = true;
+  const waiting = ship("waiting");
+  const admit = (localCap: number) =>
+    worldEngagementAdmissions(
+      {},
+      policy,
+      { ...stage, localCap },
+      [reserved, waiting],
+      new Set([waiting.id]),
+      point,
+    );
+  expect(admit(1)).toEqual(new Set([reserved.id]));
+  expect(admit(1.5)).toEqual(new Set([reserved.id, waiting.id]));
+});
+
 it("uses the existing inclusive neighbourhood boundary and shortest wrapping distance", () => {
   const reach = 10;
   const capital = ship("capital", "capital");
