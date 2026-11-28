@@ -1,5 +1,9 @@
 import type { AsteroidSize } from "../../data/asteroidCatalog.ts";
-import { ASTEROID_LOOT, CRYSTAL_MINIMUM_ORE } from "../../data/asteroidLoot.ts";
+import {
+  ASTEROID_LOOT,
+  ASTEROID_RESOURCE_FLOOR,
+  CRYSTAL_MINIMUM_ORE,
+} from "../../data/asteroidLoot.ts";
 import { ECONOMY } from "../../data/economy.ts";
 import { WRECK_ID_PREFIX } from "../../data/enemyIdentity.ts";
 import { PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../../data/phantom.ts";
@@ -30,8 +34,21 @@ const rockDropId = (id: string): string =>
   id.startsWith(MOVING_ROCK_PREFIX) ? id.slice(MOVING_ROCK_PREFIX.length) : id;
 
 function rockLoot(size: AsteroidSize, crystal: boolean, next: () => number): AsteroidLoot {
-  const rolled = rollAsteroidLoot(ASTEROID_LOOT, size, next);
-  return crystal ? { ...rolled, ore: Math.max(CRYSTAL_MINIMUM_ORE, rolled.ore) } : rolled;
+  let { ore, stardust } = rollAsteroidLoot(ASTEROID_LOOT, size, next);
+  if (crystal) {
+    ore = Math.max(CRYSTAL_MINIMUM_ORE, ore);
+    const { minimum, weights } = ASTEROID_LOOT.totals[size];
+    const cap = minimum + weights.length - 1;
+    stardust = Math.min(stardust, cap - ore);
+  }
+  for (let deficit = ASTEROID_RESOURCE_FLOOR[size] - ore - stardust; deficit > 0; deficit--) {
+    if (next() < ASTEROID_LOOT.oreChance) {
+      ore++;
+    } else {
+      stardust++;
+    }
+  }
+  return { ore, stardust };
 }
 
 /** The rock's seeded ore content before any ammo replacement. */
@@ -45,8 +62,8 @@ export function seededRockOre(seed: number, object: SpaceObject): number {
 
 /**
  * An ammo outcome replaces the destroyed asteroid's combined ore/Stardust payout. A crystal rock
- * skips the ammo roll and gives at least `CRYSTAL_MINIMUM_ORE`; further ore and Stardust roll as
- * usual. A moving rock rolls under its placed rock's id and keeps its flag, so it drops what that
+ * skips the ammo roll and gives at least `CRYSTAL_MINIMUM_ORE` within its size's combined cap.
+ * A moving rock rolls under its placed rock's id and keeps its flag, so it drops what that
  * rock would have dropped had it stayed still.
  */
 export function dropFromRock(content: GameContent, object: SpaceObject, flight: FlightState): void {

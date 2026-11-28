@@ -27,6 +27,14 @@ export interface AsteroidLootContext {
  */
 export const CRYSTAL_MINIMUM_ORE = 1;
 
+/** Final combined resource minimums after yield scaling and the crystal ore guarantee. */
+export const ASTEROID_RESOURCE_FLOOR: Readonly<Record<AsteroidSize, number>> = {
+  huge: 3,
+  large: 2,
+  medium: 1,
+  small: 0,
+};
+
 /** Raw units split independently before the class-wide ore quantity reduction. */
 export const ASTEROID_LOOT: AsteroidLootContext = {
   oreChance: 0.75,
