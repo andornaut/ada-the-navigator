@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import { SCREEN } from "../data/screen.ts";
+import { sceneFit, viewShift } from "../game/playCamera.ts";
 import { requiredReady } from "../loading/required.ts";
 import { GameModel } from "../model/game.ts";
 import { shipHeading } from "../model/nose.ts";
@@ -14,14 +15,13 @@ import { direction } from "../model/shipPhysics.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
-import type { JumpPlay } from "../ui/jumpOverlay.ts";
-import { storyCoversScene } from "../ui/story/index.ts";
 import { EmergencyReturn, returnedOnDepletion } from "./emergencyReturn.ts";
-import { sceneFit, viewShift } from "./playCamera.ts";
+import type { JumpPlay } from "./jumpOverlay.ts";
+import { storyCoversScene } from "./story/index.ts";
 // Execute the actual scene frame loop against the real model without booting Phaser's renderer.
 const source = ts.createSourceFile(
   "scene.ts",
-  readFileSync(new URL("./scene.ts", import.meta.url), "utf8"),
+  readFileSync(new URL("../game/scene.ts", import.meta.url), "utf8"),
   ts.ScriptTarget.Latest,
   true,
 );
@@ -352,7 +352,7 @@ describe("failure visual rendering clock", () => {
     (reducedMotion) => {
       const hud = ts.createSourceFile(
         "sceneHud.ts",
-        readFileSync(new URL("./sceneHud.ts", import.meta.url), "utf8"),
+        readFileSync(new URL("../game/sceneHud.ts", import.meta.url), "utf8"),
         ts.ScriptTarget.Latest,
         true,
       );

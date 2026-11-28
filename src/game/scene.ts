@@ -147,12 +147,13 @@ import {
   type createRestartCard,
   type createStationView,
   type createStorybook,
+  EmergencyReturn,
   type GalaxyMapView,
   type PlacedBanner,
+  returnedOnDepletion,
   storyCoversScene,
   type WarpPaint,
 } from "../ui/index.ts";
-import { EmergencyReturn, returnedOnDepletion } from "./emergencyReturn.ts";
 import { cameraWorldView, parentFit, sceneFit, viewShift } from "./playCamera.ts";
 import { setRendering } from "./renderLoop.ts";
 import { drawAndromeda } from "./sceneAndromeda.ts";

@@ -1,8 +1,8 @@
 import { SPEAKERS } from "../data/conversations.ts";
 import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import type { GameState } from "../model/types.ts";
-import type { ConversationLineView } from "../ui/conversation.ts";
-import type { JumpScene } from "../ui/jumpOverlay.ts";
+import type { ConversationLineView } from "./conversation.ts";
+import type { JumpScene } from "./jumpOverlay.ts";
 
 /** Presentation only: the model has already committed the return and its save outcome. */
 export class EmergencyReturn {
