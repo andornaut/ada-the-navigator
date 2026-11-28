@@ -796,6 +796,8 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
             }
           }
         }
+        const medium = compact.get("medium");
+        const mediumRequests = ordered?.filter(({ shape }) => shape.size === "medium").length ?? 0;
         const rockBlocked = (at: Footprint) => {
           const rule = excludedBy(rules, region, "rock", at);
           if (rule) {
@@ -810,9 +812,6 @@ export function planRegion(rules: SpawnRules, seeds: SpawnSeeds, region: SpawnRe
             shape.size && packing && count > packing.compactAbove
               ? (compact.get(shape.size) ?? shape)
               : shape;
-          const medium = compact.get("medium");
-          const mediumRequests =
-            ordered?.filter(({ shape }) => shape.size === "medium").length ?? 0;
           const leavesRoom =
             variant.size === "huge" && medium && rules.corridor !== undefined && mediumRequests
               ? hugeLeavesRoom(
