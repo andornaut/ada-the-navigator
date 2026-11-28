@@ -20,9 +20,9 @@ import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { FlightState, Vec } from "../model/types.ts";
 import { USE_CALLOUT_FADE_MS, useCalloutAlpha, useCalloutLift } from "../ui/touchChrome.ts";
+import { createUseCallout } from "./chrome/index.ts";
 import type { GameScene } from "./scene.ts";
 import { filterTexture } from "./sceneAssets.ts";
-import { createUseCallout } from "./chrome/index.ts";
 
 /** The scene state and methods this module's functions use. */
 export type HudContext = Partial<Pick<GameScene, "fieldLight">> &
