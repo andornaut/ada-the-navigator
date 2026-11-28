@@ -258,6 +258,7 @@ describe("layers", () => {
 
     expect(reached).toContain("src/saving/codec.ts");
     expect(reached).toContain("src/saving/integrity.ts");
+    expect(reached).toContain("src/model/enemyBeamState.ts");
     expect(reached).toContain("src/model/needle/state.ts");
     expect([...reached].filter((path) => path.startsWith("src/model/andromeda/")).sort()).toEqual([
       "src/model/andromeda/places.ts",
@@ -267,6 +268,7 @@ describe("layers", () => {
       "src/model/andromeda/runtime.ts",
       "src/model/chapters.ts",
       "src/model/flight.ts",
+      "src/model/flight/enemyBeams.ts",
       "src/model/game.ts",
       "src/model/hostileStations/materialization.ts",
       "src/model/needle/runtime.ts",

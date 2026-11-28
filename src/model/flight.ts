@@ -305,10 +305,11 @@ import { leveledValue, shipTuning } from "./upgrades.ts";
 import { markVisited, visitedChunk } from "./visited.ts";
 
 export { wreckId };
+export type { EnemyBeam } from "./enemyBeamState.ts";
 export { pickupTouched } from "./flight/adaContactQueries.ts";
 export { dockFlight, undockFlight } from "./flight/berth.ts";
 export { recoverExplorationWreck, salvage, salvageTarget } from "./flight/destruction.ts";
-export { activeEnemyBeams, type EnemyBeam } from "./flight/enemyBeams.ts";
+export { activeEnemyBeams } from "./flight/enemyBeams.ts";
 export {
   arrivalGraceActive,
   beginArrivalGrace,

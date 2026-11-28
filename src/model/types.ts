@@ -17,8 +17,8 @@ import type {
 } from "./capitalBossEncounter.ts";
 import type { CartwheelMiningPatrol } from "./cartwheel/patrol/index.ts";
 import type { EarlyEncounterState } from "./earlyEncounterRuntime.ts";
+import type { EnemyBeam } from "./enemyBeamState.ts";
 import type { ExplorationSites, ExplorationState } from "./explorationState.ts";
-import type { EnemyBeam } from "./flight/enemyBeams.ts";
 import type { NeedleChapterProgress, NeedleFlight } from "./needle/state.ts";
 import type { PhantomFlight, PhantomProgress } from "./phantom/state/index.ts";
 import type { ProjectileFade } from "./playerProjectiles.ts";

@@ -4,6 +4,7 @@ import { BEAM, LANCE_HIT_RADIUS, weaponAt } from "../../data/weaponCatalog.ts";
 import type { EnemyAttackOpportunity } from "../ai/index.ts";
 import { crossbowAllowsAttack, crossbowSector } from "../earlyEncounterPatterns.ts";
 import { EARLY_LANCE_SECONDS } from "../earlyEncounterRuntime.ts";
+import { BEAM_TIMING } from "../enemyBeamState.ts";
 import { enemyBeamReach, planEnemyProjectile } from "../enemyProjectiles.ts";
 import { needleCourses } from "../needle/index.ts";
 import { fanHeading } from "../playerProjectiles.ts";
@@ -11,7 +12,7 @@ import type { PlayerWeaponCoverageContext } from "../playerWeaponCoverage.ts";
 import { direction } from "../shipPhysics.ts";
 import type { FlightState, SpaceObject } from "../types.ts";
 import { flightWorldContext } from "../world/index.ts";
-import { BEAM_TIMING, projectedLength } from "./enemyBeams.ts";
+import { projectedLength } from "./enemyBeams.ts";
 import { shotRadius } from "./projectileContact.ts";
 
 export function crossbowFrame(flight: FlightState, actor: SpaceObject, elapsed: number) {

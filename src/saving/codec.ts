@@ -40,8 +40,8 @@ import { validAndromedaProgress } from "../model/andromeda/state.ts";
 import { ASTEROID_SHAPES } from "../model/asteroids.ts";
 import { holodisksHeld } from "../model/conversations.ts";
 import { EARLY_LANCE_SECONDS, earlyEncounterKind } from "../model/earlyEncounterRuntime.ts";
+import { BEAM_TIMING } from "../model/enemyBeamState.ts";
 import { validExplorationSites, validExplorationState } from "../model/explorationState.ts";
-import { BEAM_TIMING } from "../model/flight/enemyBeams.ts";
 import { validGalaxyGeography } from "../model/galaxyGeography.ts";
 import {
   ACTIVE_CHUNK_RADIUS,
