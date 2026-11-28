@@ -665,10 +665,10 @@ describe("Stardust drops", () => {
       capital: [20, 30],
       fighter: [2, 5],
       frigate: [10, 20],
-      hostileStation: [10, 20],
-      interceptor: [2, 5],
+      hostileStation: [20, 30],
+      interceptor: [3, 5],
       platform: [10, 20],
-      retaliator: [2, 5],
+      retaliator: [4, 6],
       swarm: [1, 3],
     };
     for (const archetype of Object.keys(ranges) as (keyof typeof ranges)[]) {
@@ -784,8 +784,8 @@ describe("Stardust drops", () => {
       "retaliator",
       dropRandom(value.seed, "wreck:retaliator"),
     );
-    expect(drop.stardust).toBeGreaterThanOrEqual(2);
-    expect(drop.stardust).toBeLessThanOrEqual(5);
+    expect(drop.stardust).toBeGreaterThanOrEqual(4);
+    expect(drop.stardust).toBeLessThanOrEqual(6);
     expect(pickups(value).map((object) => object.amount)).toEqual(
       splitResourcePickup(drop.stardust),
     );

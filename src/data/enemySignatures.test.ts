@@ -7,7 +7,7 @@ import {
   SUNFLOWER_CAPITAL_BOSS,
   WHIRLPOOL_CAPITAL_BOSS,
 } from "./capitalBosses.ts";
-import { difficultyOf, enemyDefinition, PHANTOM_FLAGSHIP_ID } from "./enemyCatalog.ts";
+import { enemyDefinition, PHANTOM_FLAGSHIP_ID } from "./enemyCatalog.ts";
 import {
   capitalProfile,
   HOSTILE_STATION_SIGNATURE,
@@ -122,10 +122,13 @@ it("exports approved v1 platform and station tiers with capped unused mounts", (
   expect(HOSTILE_STATION_SIGNATURE.special).toEqual({ mount: "weapon-5", weapon: "ringBurst" });
 });
 
-it("derives the approved station hull from actual galaxy part HP without early station tiers", () => {
-  expect(
-    ROUTE.map((galaxy) =>
-      hostileStationHullHp(difficultyOf(galaxy).hardpointHp, ROUTE_POSITION[galaxy]),
-    ),
-  ).toEqual([undefined, undefined, undefined, 144, 196, 224]);
+it("uses explicit station hull HP without early station tiers", () => {
+  expect(ROUTE.map((galaxy) => hostileStationHullHp(ROUTE_POSITION[galaxy]))).toEqual([
+    undefined,
+    undefined,
+    undefined,
+    175,
+    200,
+    225,
+  ]);
 });

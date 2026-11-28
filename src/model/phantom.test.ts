@@ -226,7 +226,7 @@ describe("Phantom chapter", () => {
     expect(enemy.hp).toBe(1);
     expect(enemy.disabled).toBe(true);
     const ordinary = enemyDefinition(6, "capital", "ordinary");
-    expect(ordinary.hp).toBe(192);
+    expect(ordinary.hp).toBe(180);
     expect(ordinary.hullFloor).toBeUndefined();
     expect(enemyDefinition(6, "capital", PHANTOM_FLAGSHIP_ID)).toBe(definition);
   });
@@ -365,7 +365,7 @@ describe("Phantom chapter", () => {
     const released = context.flight.objects.filter(
       (object) => !existing.has(object.id) && carriesStardust(object),
     );
-    expect(released.reduce((sum, object) => sum + object.amount!, 0)).toBe(44);
+    expect(released.reduce((sum, object) => sum + object.amount!, 0)).toBe(50);
     expect(state(context).allies).toEqual([]);
     expect(state(context).phase).toBe("salvaged");
     expect(phantomBossHud(context, canSalvage)).toBeNull();

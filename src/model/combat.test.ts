@@ -1324,8 +1324,9 @@ describe("galaxy encounter tables", () => {
 });
 
 function pack(flight: FlightState, points: Vec[]): SpaceObject[] {
+  const definition = enemyDefinition(flight.galaxy, "swarm");
   const members = points.map((point, index) => {
-    const object = ship("swarm", point);
+    const object = ship("swarm", point, definition);
     object.id = `roster:${index}`;
     object.enemy!.id = object.id;
     object.enemy!.packId = "roster";
@@ -1380,7 +1381,8 @@ describe("combat admission and subframe firing", () => {
       stepFlight(CONTENT, 0.001, idle, flight);
       expect(members[2]!.enemy!.fleeing).toBe(false);
       expect(members[3]!.enemy!.fleeing).toBe(false);
-      hit(flight, members[2]!, 2);
+      const casualty = members[2]!;
+      hit(flight, casualty, Math.ceil(casualty.hp / CONTENT.tuning.flight.playerShotDamage));
       expect(stepFlight(CONTENT, 0.001, idle, flight)).toContainEqual({
         id: members[2]!.id,
         type: "enemyDestroyed",

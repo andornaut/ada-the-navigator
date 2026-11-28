@@ -313,7 +313,7 @@ export function stepWrecks(
       object,
       timing.spread,
       next,
-      object.id === PHANTOM_FLAGSHIP ? PHANTOM_TUNING.salvageStardust : drop.stardust,
+      object.id === PHANTOM_FLAGSHIP ? PHANTOM_TUNING.legacyWreckStardust : drop.stardust,
       { at: flight.time, from: { x: object.x, y: object.y } },
       flight,
     );

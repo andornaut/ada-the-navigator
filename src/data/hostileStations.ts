@@ -16,6 +16,7 @@ const profiles = new Map<string, EnemyDefinition>();
 export interface HostileStationProfileContext {
   readonly base: EnemyDefinition;
   readonly fire: (weapon: EnemyWeapon) => FireProfile;
+  readonly hullScale: number;
   readonly partHp: number;
 }
 
@@ -26,7 +27,7 @@ export function hostileStationDefinition(
 ): EnemyDefinition {
   const { galaxy, weaponLevel } = subject;
   const position = ROUTE_POSITION[galaxy];
-  const hp = hostileStationHullHp(context.partHp, position);
+  const hp = hostileStationHullHp(position);
   if (hp === undefined) {
     throw new RangeError("Unsupported hostile-station route position");
   }
@@ -85,7 +86,7 @@ export function hostileStationDefinition(
           ]
         : [],
     ),
-    hp,
+    hp: hp * context.hullScale,
     mounts,
     sizeRatio,
   };

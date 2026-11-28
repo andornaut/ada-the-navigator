@@ -23,8 +23,10 @@ export const PHANTOM_TUNING = {
   escorts: 8,
   flagshipDistance: 6000,
   formationGap: 60,
+  // A saved wreck may carry the bare flagship ID and retain its original payout.
+  legacyWreckStardust: 44,
   neighborGap: 16,
-  salvageStardust: 44,
+  salvageStardust: 50,
   songNurseryScale: 1.5,
   songRadius: 300,
   songSpeed: 0.75,

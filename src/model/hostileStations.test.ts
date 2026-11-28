@@ -81,7 +81,7 @@ it("materializes one persistent body and only the explicit swarm plan, then repe
   expect([result.station.kind, result.station.enemy?.archetype, result.station.hp]).toEqual([
     "enemy",
     "hostileStation",
-    144,
+    175,
   ]);
   const outline = enemyPhysicalBody(ROUTE_POSITION[f.galaxy], result.station.enemy!)!;
   expect(result.station.radius).toBe(partsReach(worldParts(outline)));
@@ -210,7 +210,7 @@ it("pages damaged state once and retains casualties and removal without rewards"
     station.enemy!.weaponLevel,
   );
   station.enemy = damageEnemy(definition, { amount: 999, hardpointId: "weapon-0" }, station.enemy!);
-  expect(station.enemy.hp).toBe(144);
+  expect(station.enemy.hp).toBe(175);
   const lost = defenders[0]!;
   lost.hp = 0;
   lost.enemy!.hp = 0;
@@ -236,7 +236,7 @@ it("pages damaged state once and retains casualties and removal without rewards"
     station.enemy = damageEnemy(definition, { amount: 999, hardpointId: part.id }, station.enemy!);
   }
   expect(station.enemy.disabled).toBe(true);
-  expect(station.enemy.hp).toBe(144);
+  expect(station.enemy.hp).toBe(175);
   f.player = { ...plan.point };
   const noRewards = structuredClone(f);
   expect(salvage(CONTENT, f)).toBe(false);

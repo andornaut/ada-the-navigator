@@ -126,13 +126,12 @@ export const HOSTILE_STATION_SIGNATURE = {
     "weapon-6",
     "weapon-7",
   ],
-  hullPerWeaponHp: 2,
   remaining: "rapidMissile",
   special: { mount: "weapon-5", weapon: "ringBurst" },
   tiers: [
-    { count: 6, position: 4 },
-    { count: 7, position: 5 },
-    { count: 8, position: 6 },
+    { count: 6, hullHp: 175, position: 4 },
+    { count: 7, hullHp: 200, position: 5 },
+    { count: 8, hullHp: 225, position: 6 },
   ],
 } as const;
 
@@ -201,10 +200,7 @@ export function hostileStationSignatureTiers(): readonly SignatureTier[] {
   );
 }
 
-/** Station hull is independent of part damage and derives from its active weapon tier. */
-export function hostileStationHullHp(partHp: number, position: RoutePosition): number | undefined {
-  const tier = HOSTILE_STATION_SIGNATURE.tiers.find((tier) => tier.position === position);
-  return tier === undefined
-    ? undefined
-    : HOSTILE_STATION_SIGNATURE.hullPerWeaponHp * tier.count * partHp;
+/** Station hull by route position, independent of weapon count and hardpoint HP. */
+export function hostileStationHullHp(position: RoutePosition): number | undefined {
+  return HOSTILE_STATION_SIGNATURE.tiers.find((tier) => tier.position === position)?.hullHp;
 }

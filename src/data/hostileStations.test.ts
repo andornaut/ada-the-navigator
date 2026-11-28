@@ -7,9 +7,9 @@ import { hostileStationDefinition } from "./hostileStations.ts";
 
 it("keeps approved station hulls and all-weapon prefixes with one Ring and all other Rapid", () => {
   for (const [galaxy, count, hp, partHp] of [
-    [5, 6, 144, 12],
-    [2, 7, 196, 14],
-    [6, 8, 224, 14],
+    [5, 6, 175, 12],
+    [2, 7, 200, 14],
+    [6, 8, 225, 14],
   ] as const) {
     const definition = enemyActorDefinition(galaxy, "hostileStation", "station", 3);
     expect(definition.hp).toBe(hp);
@@ -65,9 +65,12 @@ it("uses phased station clocks even when the supplied platform base is continuou
     {
       base: enemyCatalog.platform,
       fire: (weapon) => enemyFire("platform", { level: 2, weapon }),
+      hullScale: 1,
       partHp: 7,
     },
     { galaxy: 5, weaponLevel: 2 },
   );
   expect(definition.fireClockPolicy).toBe("staggered-and-paused");
+  expect(definition.hp).toBe(175);
+  expect(definition.hardpoints.every(({ hp }) => hp === 7)).toBe(true);
 });

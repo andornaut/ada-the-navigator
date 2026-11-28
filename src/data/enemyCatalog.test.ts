@@ -276,9 +276,9 @@ describe("approved heavy health and independent rewards", () => {
   it("applies route part HP alongside the approved hull HP", () => {
     const partHp = [10, 10, 12, 12, 14, 14];
     const hulls = {
-      capital: [80, 88, 120, 128, 176, 192],
-      frigate: [40, 44, 60, 64, 88, 96],
-      platform: [20, 22, 30, 32, 44, 48],
+      capital: [80, 100, 120, 140, 160, 180],
+      frigate: [40, 45, 50, 55, 60, 65],
+      platform: [50, 50, 55, 55, 60, 60],
     };
     for (const galaxy of GALAXY_NUMBERS) {
       const index = ROUTE_POSITION[galaxy] - 1;

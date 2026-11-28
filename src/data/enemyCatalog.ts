@@ -799,8 +799,8 @@ export interface PositionDifficulty {
   heavyShare: number;
   /** HP of every heavy hardpoint: weapon, engine, command and platform turret. */
   hardpointHp: number;
-  /** Hull HP of a frigate and a capital; a platform's hull is half the frigate's. */
-  hulls: { capital: number; frigate: number };
+  /** Independent hull HP for the three heavy ship archetypes. */
+  hulls: { capital: number; frigate: number; platform: number };
   /** Hull HP of each small craft. */
   hp: Readonly<Record<SmallCraft, number>>;
   /** Added to both ends of every swarm and fighter group range. */
@@ -811,7 +811,7 @@ export interface PositionDifficulty {
 
 /**
  * One tuning value multiplying every enemy's HP and the encounter rate at every
- * position, so the whole curve tunes at once; Stardust uses the unscaled HP.
+ * position, so the whole curve tunes at once. Stardust has its own payout table.
  */
 export const DIFFICULTY_SCALE = 1;
 
@@ -820,25 +820,25 @@ const position = (
   groupBonus: number,
   rates: [notice: number, encounters: number],
   hardpointHp: number,
-  hulls: [frigate: number, capital: number],
+  hulls: [frigate: number, capital: number, platform: number],
   heavyShare: number,
 ): PositionDifficulty => ({
   groupBonus,
   hardpointHp,
   heavyShare,
   hp: { fighter: hp[1], interceptor: hp[2], retaliator: hp[3], swarm: hp[0] },
-  hulls: { capital: hulls[1], frigate: hulls[0] },
+  hulls: { capital: hulls[1], frigate: hulls[0], platform: hulls[2] },
   rates: { encounters: rates[1], notice: rates[0] },
 });
 
 /** Difficulty by route position (gameplay/ships.md "Difficulty"). */
 export const POSITION_DIFFICULTY: Readonly<Record<RoutePosition, PositionDifficulty>> = {
-  1: position([2, 4, 3, 8], 1, [1.2, 1.725], 10, [40, 80], 1),
-  2: position([2, 5, 3, 9], 1, [1.3, 1.8975], 10, [44, 88], 1),
-  3: position([3, 5, 4, 10], 2, [1.4, 2.07], 12, [60, 120], 1.2),
-  4: position([3, 6, 4, 11], 2, [1.45, 2.2425], 12, [64, 128], 1.3),
-  5: position([3, 6, 5, 11], 3, [1.5, 2.415], 14, [88, 176], 1.4),
-  6: position([3, 6, 5, 12], 3, [1.5, 2.5875], 14, [96, 192], 1.5),
+  1: position([2, 4, 3, 15], 1, [1.2, 1.725], 10, [40, 80, 50], 1),
+  2: position([2, 4, 3, 15], 1, [1.3, 1.8975], 10, [45, 100, 50], 1),
+  3: position([4, 7, 5, 20], 2, [1.4, 2.07], 12, [50, 120, 55], 1.2),
+  4: position([4, 7, 5, 20], 2, [1.45, 2.2425], 12, [55, 140, 55], 1.3),
+  5: position([6, 10, 8, 25], 3, [1.5, 2.415], 14, [60, 160, 60], 1.4),
+  6: position([6, 10, 8, 25], 3, [1.5, 2.5875], 14, [65, 180, 60], 1.5),
 };
 
 /** A galaxy's difficulty, by its route position. */
@@ -852,9 +852,8 @@ export function unscaledHullHp(galaxy: GalaxyNumber, archetype: EnemyArchetype):
   switch (archetype) {
     case "capital":
     case "frigate":
-      return difficulty.hulls[archetype];
     case "platform":
-      return difficulty.hulls.frigate / 2;
+      return difficulty.hulls[archetype];
     default:
       return difficulty.hp[archetype];
   }
@@ -865,10 +864,10 @@ export const ENEMY_STARDUST_RANGES = {
   capital: [20, 30],
   fighter: [2, 5],
   frigate: [10, 20],
-  hostileStation: [10, 20],
-  interceptor: [2, 5],
+  hostileStation: [20, 30],
+  interceptor: [3, 5],
   platform: [10, 20],
-  retaliator: [2, 5],
+  retaliator: [4, 6],
   swarm: [1, 3],
 } as const satisfies Record<EnemyActorKind, readonly [number, number]>;
 
@@ -1043,6 +1042,7 @@ export function mountedEnemyDefinition(
             interval: enemyFireInterval(galaxy, "hostileStation", profile),
           };
         },
+        hullScale: DIFFICULTY_SCALE,
         partHp: difficultyOf(galaxy).hardpointHp * DIFFICULTY_SCALE,
       },
       { galaxy, weaponLevel },
