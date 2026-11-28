@@ -139,6 +139,28 @@ export default defineConfig(
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
   { files: SOURCE_FILES, plugins, rules: sourceRules },
   {
+    files: ["src/{data,model}/**/*.ts"],
+    ignores: TEST_FILES,
+    rules: {
+      "no-restricted-globals": [
+        "error",
+        {
+          checkGlobalObject: true,
+          globals: [
+            { message: "Pass time into model decisions.", name: "Date" },
+            { message: "Pass entropy into model decisions.", name: "crypto" },
+            { message: "Pass saved state into model decisions.", name: "localStorage" },
+            { message: "Pass time into model decisions.", name: "performance" },
+          ],
+        },
+      ],
+      "no-restricted-properties": [
+        "error",
+        { message: "Use an injected or seeded stream.", object: "Math", property: "random" },
+      ],
+    },
+  },
+  {
     // Keep the Local Map's emitted module order when its shared UI dependencies are one level up.
     files: ["src/ui/map/mapScreen.ts"],
     rules: {
