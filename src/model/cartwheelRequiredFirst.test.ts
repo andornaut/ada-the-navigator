@@ -3,7 +3,7 @@ import { expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
+import { cartwheelRequiredSites } from "./cartwheel/sites/index.ts";
 import {
   activateRequiredCartwheelRoute,
   createUnpopulatedFlight,

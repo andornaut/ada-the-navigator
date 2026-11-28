@@ -2,7 +2,7 @@ import { LIGHT_FIELD, type SpacePalette } from "../art/index.ts";
 import { SUNFLOWER_CAPITAL_BOSS, WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { andromedaCourierMarkers } from "../model/andromeda/runtime.ts";
-import { CARTWHEEL_MINING_PATROL } from "../model/cartwheelMiningPatrol.ts";
+import { CARTWHEEL_MINING_PATROL } from "../model/cartwheel/patrol/index.ts";
 import { toScreen } from "../model/convex.ts";
 import { mantaEscortPhase } from "../model/earlyEncounterPatterns.ts";
 import { enemyPartOutline } from "../model/enemyBody.ts";

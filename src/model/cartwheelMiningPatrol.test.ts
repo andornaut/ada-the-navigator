@@ -14,7 +14,7 @@ import {
   type CartwheelMiningRockPath,
   cartwheelPatrolAdmits,
   planCartwheelMiningPatrol,
-} from "./cartwheelMiningPatrol.ts";
+} from "./cartwheel/patrol/index.ts";
 import { closestOnSegment } from "./convex.ts";
 import {
   createUnpopulatedFlight,

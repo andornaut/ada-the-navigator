@@ -72,7 +72,7 @@ import {
   cartwheelPatrolRockPaths,
   planCartwheelMiningPatrol,
   warnCartwheelPatrol,
-} from "./cartwheelMiningPatrol.ts";
+} from "./cartwheel/patrol/index.ts";
 import { planChunkCaches } from "./chunkCaches.ts";
 import { onScreen } from "./conversations.ts";
 import { worldFlowAt } from "./currents.ts";
@@ -95,8 +95,8 @@ import {
 export { rollEncounter } from "./encounterRoll.ts";
 import { courierSpawnExclusions } from "./andromeda/courierAmbush.ts";
 import { settlementsNear } from "./andromeda/places.ts";
-import { selectCartwheelClaimField } from "./cartwheelClaimField.ts";
-import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
+import { selectCartwheelClaimField } from "./cartwheel/claim/index.ts";
+import { cartwheelRequiredSites } from "./cartwheel/sites/index.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
 import { touchesAda } from "./flight/adaContactQueries.ts";
 import { sceneryEntry } from "./flight/beamContact.ts";

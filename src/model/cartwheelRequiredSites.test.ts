@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
-import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
+import { cartwheelRequiredSites } from "./cartwheel/sites/index.ts";
 import { gameAreaPoint } from "./edgeMarkers.ts";
 import { worldDelta, worldPoint } from "./world/index.ts";
 

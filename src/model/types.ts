@@ -15,7 +15,7 @@ import type {
   CartwheelClaimProgress,
   RequiredCapitalBossProgress,
 } from "./capitalBossEncounter.ts";
-import type { CartwheelMiningPatrol } from "./cartwheelMiningPatrol.ts";
+import type { CartwheelMiningPatrol } from "./cartwheel/patrol/index.ts";
 import type { EarlyEncounterState } from "./earlyEncounterRuntime.ts";
 import type { ExplorationSites, ExplorationState } from "./explorationState.ts";
 import type { EnemyBeam } from "./flight/enemyBeams.ts";

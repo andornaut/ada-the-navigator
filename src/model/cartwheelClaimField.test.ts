@@ -6,7 +6,10 @@ import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
-import { CARTWHEEL_CLAIM_SEARCH_RADIUS, selectCartwheelClaimField } from "./cartwheelClaimField.ts";
+import {
+  CARTWHEEL_CLAIM_SEARCH_RADIUS,
+  selectCartwheelClaimField,
+} from "./cartwheel/claim/index.ts";
 import { GameModel } from "./game.ts";
 import { ORE_FIELD_ROLE, worldOreFieldsNear } from "./oreFields.ts";
 import { readRequiredRolePlan } from "./requiredRolePlans.ts";
