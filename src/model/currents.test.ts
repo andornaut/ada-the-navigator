@@ -198,7 +198,7 @@ describe("space currents", () => {
     }
   });
 
-  it("drift powered-down small craft and pickups but not frigates", () => {
+  it("adds flow to active small craft and pickups while frigates use only their own velocity", () => {
     // A current without a river, so no river rock on the centre line meets the ship.
     const current = currents.find((entry) => entry.length > 3500 && !entry.debris)!;
     const { point } = middle(current);
@@ -213,8 +213,6 @@ describe("space currents", () => {
           { archetype, id: archetype, packId: null, phase: 0 },
           at,
         ),
-        // Remove self-propulsion so this fixture measures current transport only.
-        disabled: true,
         returning: true,
       },
       hp: enemyCatalog[archetype].hp,
@@ -236,14 +234,23 @@ describe("space currents", () => {
       radius: 5,
     };
     flight.objects.push(swarm, frigate, pickup);
-    stepFlight(CONTENT, 0.5, idle, flight);
-    const flow = speed(flowAt(3, point));
-    expect(Math.hypot(swarm.x - swarmStart.x, swarm.y - swarmStart.y)).toBeGreaterThan(flow * 0.3);
-    expect(Math.hypot(pickup.x - pickupStart.x, pickup.y - pickupStart.y)).toBeCloseTo(
-      flow * 0.5,
-      -1,
-    );
-    expect(Math.hypot(frigate.x - frigateStart.x, frigate.y - frigateStart.y)).toBeLessThan(1);
+    const dt = 1 / 600;
+    stepFlight(CONTENT, dt, idle, flight);
+    const swarmFlow = flowAt(3, swarmStart);
+    const pickupFlow = flowAt(3, pickupStart);
+    expect(speed(swarmFlow)).toBeGreaterThan(0);
+    expect(speed(flowAt(3, frigateStart))).toBeGreaterThan(0);
+    for (const axis of ["x", "y"] as const) {
+      expect((swarm[axis] - swarmStart[axis]) / dt).toBeCloseTo(
+        swarm.enemy!.velocity[axis] + swarmFlow[axis],
+        5,
+      );
+      expect((pickup[axis] - pickupStart[axis]) / dt).toBeCloseTo(pickupFlow[axis], 5);
+      expect((frigate[axis] - frigateStart[axis]) / dt).toBeCloseTo(
+        frigate.enemy!.velocity[axis],
+        5,
+      );
+    }
   });
 
   it("keep asteroids out of their bands", () => {

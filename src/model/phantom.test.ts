@@ -2,11 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { encounterTable, enemyDefinition, PHANTOM_FLAGSHIP_ID } from "../data/enemyCatalog.ts";
-import { PHANTOM_COPY, PHANTOM_DESTINATIONS, PHANTOM_TUNING } from "../data/phantom.ts";
-import { carriesStardust } from "./drops.ts";
+import { FLAGSHIP_SURRENDER_HP } from "../data/enemyIdentity.ts";
+import { PHANTOM_DESTINATIONS, PHANTOM_FINALE_CHATTER, PHANTOM_TUNING } from "../data/phantom.ts";
 import * as enemyAi from "./enemyAi.ts";
 import { createEnemy, damageEnemy } from "./enemyAi.ts";
-import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import {
   activateRouteEncounter,
   createFlight,
@@ -16,6 +15,7 @@ import {
   stepFlight,
   syncFlightRegion,
 } from "./flight.ts";
+import { hit } from "./flight/hitResolution.ts";
 import {
   afterStepPhantom,
   beforeStepPhantom,
@@ -24,10 +24,10 @@ import {
   phantomBossHud,
   type PhantomContext,
   type PhantomFlight,
-  type PhantomHardpointEvent,
   phantomObjective,
   phantomObjectiveIndex,
   type PhantomProgress,
+  settlePhantomSurrender,
   usePhantom,
   validPhantomFlight,
   validPhantomProgress,
@@ -45,7 +45,7 @@ import {
 } from "./phantomAllies.ts";
 import { readPendingPhantomEncounter } from "./phantomRequiredPlans.ts";
 import { stationFormationClear } from "./stationPlacement.ts";
-import type { FlightState, GalaxyProgress } from "./types.ts";
+import type { FlightEvent, FlightState, GalaxyProgress } from "./types.ts";
 function fixture(): PhantomContext {
   const progress: GalaxyProgress = {
     charted: [],
@@ -205,26 +205,23 @@ describe("Phantom chapter", () => {
     expect(table.find((entry) => entry.archetype === "capital")?.escorts?.count).toBe(6);
     expect(enemyDefinition(6, "fighter").behaviour.kind).toBe("chase");
   });
-  it("keeps the flagship alive on lethal hull and final weapon hits without altering normal capitals", () => {
+  it("keeps flagship geometry and uses regular zero-hull damage outside the finale", () => {
     const definition = enemyDefinition(6, "capital", PHANTOM_FLAGSHIP_ID);
     expect(definition.hp).toBe(320);
     expect(definition.hardpoints).toHaveLength(13);
     expect(definition.hardpoints.every((part) => part.hp === 18)).toBe(true);
     expect(definition.behaviour).toEqual({ kind: "siege", speedFraction: 0.25 });
     expect(definition.pursuit.homeRadius).toBe(1000);
-    let enemy = createEnemy(
+    const enemy = createEnemy(
       definition,
       { archetype: "capital", id: PHANTOM_FLAGSHIP_ID, packId: null, phase: 0 },
       { x: 0, y: 0 },
     );
-    enemy = damageEnemy(definition, { amount: 10000, hardpointId: null }, enemy);
-    expect(enemy.hp).toBe(1);
-    expect(enemy.disabled).toBe(false);
-    for (const part of definition.hardpoints.filter((part) => part.kind === "weapon")) {
-      enemy = damageEnemy(definition, { amount: 10000, hardpointId: part.id }, enemy);
+    for (const hardpointId of [null, definition.hardpoints[0]!.id]) {
+      const damaged = damageEnemy(definition, { amount: 10000, hardpointId }, enemy);
+      expect(damaged).toMatchObject({ disabled: false, hp: 0 });
+      expect(damaged.hardpoints).toEqual(enemy.hardpoints);
     }
-    expect(enemy.hp).toBe(1);
-    expect(enemy.disabled).toBe(true);
     const ordinary = enemyDefinition(6, "capital", "ordinary");
     expect(ordinary.hp).toBe(180);
     expect(ordinary.hullFloor).toBeUndefined();
@@ -273,21 +270,17 @@ describe("Phantom chapter", () => {
     afterStepPhantom(context);
     expect(progress(context).broken).toContain(id);
   });
-  it("requires freed settlements, three complete waves, then disabling and actual salvage", () => {
+  it("requires freed settlements and three complete waves before consuming hull surrender once", () => {
     const context = fixture();
-    const firstLoss: PhantomHardpointEvent = {
-      id: PHANTOM_FLAGSHIP_ID,
-      type: "enemyFirstHardpointLost",
-    };
-    const canSalvage = () => true;
+    const canSalvage = () => false;
     expect(usePhantom(context, PHANTOM_DESTINATIONS[0])).toEqual({});
+    expect(settlePhantomSurrender(context)).toBe(false);
     freeSettlements(context);
     expect(progress(context).flagshipKnown).toBe(true);
     expect(phantomObjective(context)).toBe(PHANTOM_FLAGSHIP_ID);
     context.flight.player = { ...state(context).waypoint };
     beforeStepPhantom(context);
     expect(phantomBossHud(context, canSalvage)).toBeNull();
-    afterStepPhantom(context, undefined, undefined, [firstLoss]);
     expect(state(context).chatter).toEqual(["battleAlone"]);
     for (let wave = 1; wave <= 3; wave++) {
       expect(state(context).wave).toBe(wave);
@@ -297,7 +290,14 @@ describe("Phantom chapter", () => {
       expect(
         new Set(state(context).enemyIds.map((id) => object(context, id)?.enemy?.packId)).size,
       ).toBe(2);
-      disable(context, state(context).enemyIds);
+      expect(settlePhantomSurrender(context)).toBe(false);
+      for (const id of state(context).enemyIds) {
+        const target = object(context, id)!;
+        hit(CONTENT, target.hp, null, target, context.flight, []);
+      }
+      if (wave === PHANTOM_TUNING.waves) {
+        clearFinalePlayer(context);
+      }
       afterStepPhantom(context);
     }
     expect(state(context).phase).toBe("flagship");
@@ -307,68 +307,48 @@ describe("Phantom chapter", () => {
     context.flight.player = { x: flagship.x, y: flagship.y };
     syncFlightRegion(CONTENT, context.flight);
     expect(phantomBossHud(context, canSalvage)).toBeNull();
-    flagship.enemy!.engaged = true;
-    const definition = enemyEquipmentDefinition(6, flagship.enemy!);
-    flagship.enemy = damageEnemy(
-      definition,
-      { amount: definition.hp, hardpointId: null },
-      flagship.enemy!,
-    );
-    flagship.hp = flagship.enemy.hp;
+
+    const mounts = structuredClone(flagship.enemy!.hardpoints);
+    const events: FlightEvent[] = [];
+    const beforeSurrender = FLAGSHIP_SURRENDER_HP + 1;
+    hit(CONTENT, flagship.hp - beforeSurrender, mounts[0]!.id, flagship, context.flight, events);
+    expect(flagship.enemy!.hardpoints).toEqual(mounts);
+    expect(events).toEqual([]);
     expect(phantomBossHud(context, canSalvage)).toEqual({
       captain: "Admiral Archie",
       disabled: false,
-      hull: 1,
+      hull: beforeSurrender,
       id: PHANTOM_FLAGSHIP_ID,
-      maxHull: definition.hp,
+      maxHull: 320,
       ship: "Archie's flagship",
     });
-    flagship.enemy.returning = true;
+    flagship.enemy!.returning = true;
     expect(phantomBossHud(context, canSalvage)).toBeNull();
-    flagship.enemy.returning = false;
-    expect(phantomBossHud(context, canSalvage)?.hull).toBe(1);
-    afterStepPhantom(context, undefined, undefined, [{ ...firstLoss, id: "escort" }]);
-    expect(state(context).chatter).toEqual(["battleAlone", "flagshipAttack"]);
-
-    for (const part of definition.hardpoints.filter(({ kind }) => kind === "weapon")) {
-      flagship.enemy = damageEnemy(
-        definition,
-        { amount: part.hp, hardpointId: part.id },
-        flagship.enemy,
-      );
-    }
-    expect(flagship.enemy.disabled).toBe(true);
-    // Separate hits can lose the first and last mounts within one flight update.
-    afterStepPhantom(context, undefined, undefined, [
-      firstLoss,
-      { id: PHANTOM_FLAGSHIP_ID, type: "enemyDisabled" },
-    ]);
+    flagship.enemy!.returning = false;
     afterStepPhantom(context);
-    expect(state(context).chatter).toEqual([
-      "battleAlone",
-      "flagshipAttack",
-      "flagshipHardpoint",
-      "flagshipDisabled",
-    ]);
-    expect(PHANTOM_COPY.flagshipHardpoint?.lines).toEqual([
-      { speaker: "astra", text: "One hardpoint down. Keep aiming for the glowing parts." },
-    ]);
-    expect(validPhantomFlight(JSON.parse(JSON.stringify(state(context))))).toBe(true);
-    expect(phantomBossHud(context, () => false)).toBeNull();
-    expect(phantomBossHud(context, canSalvage)).toMatchObject({ disabled: true, hull: 1 });
-    const panel = usePhantom(context, PHANTOM_FLAGSHIP_ID)!.dialogue!;
-    expect(choosePhantom(context, panel, "invalid")).toEqual({});
-    expect(flagship.enemy!.salvaged).toBe(false);
-    const existing = new Set(context.flight.objects.map(({ id }) => id));
-    expect(choosePhantom(context, panel, "continue")).toEqual({ complete: true, holodisk: {} });
-    expect(flagship.enemy!.salvaged).toBe(true);
-    const released = context.flight.objects.filter(
-      (object) => !existing.has(object.id) && carriesStardust(object),
-    );
-    expect(released.reduce((sum, object) => sum + object.amount!, 0)).toBe(50);
+    expect(state(context).chatter).toEqual(["battleAlone", "flagshipAttack"]);
+    expect(settlePhantomSurrender(context)).toBe(false);
+
+    hit(CONTENT, 10000, null, flagship, context.flight, events);
+    hit(CONTENT, 10000, mounts[0]!.id, flagship, context.flight, events);
+    expect(events).toEqual([{ id: PHANTOM_FLAGSHIP_ID, type: "enemySurrendered" }]);
+    expect(flagship.enemy).toMatchObject({
+      disabled: true,
+      hp: FLAGSHIP_SURRENDER_HP,
+      surrendered: true,
+    });
+    expect(settlePhantomSurrender(context)).toBe(true);
+    expect(progress(context).surrenderAftermathDue).toBe(true);
+    expect(state(context).chatter).toEqual(PHANTOM_FINALE_CHATTER);
     expect(state(context).allies).toEqual([]);
     expect(state(context).phase).toBe("salvaged");
-    expect(phantomBossHud(context, canSalvage)).toBeNull();
+    expect(phantomBossHud(context, canSalvage)).toMatchObject({
+      hull: FLAGSHIP_SURRENDER_HP,
+      surrendered: true,
+    });
+    expect(usePhantom(context, PHANTOM_FLAGSHIP_ID)).toBeUndefined();
+    expect(settlePhantomSurrender(context)).toBe(false);
+    expect(validPhantomFlight(JSON.parse(JSON.stringify(state(context))))).toBe(true);
   });
   it.each([false, true])(
     "keeps repeated settlement talks from restarting the fleet or salvage, restored=%s",

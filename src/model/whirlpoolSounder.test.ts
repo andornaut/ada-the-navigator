@@ -2,13 +2,15 @@ import { beforeAll, describe, expect, it } from "vitest";
 
 import { WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
+import { ROUTE_POSITION } from "../data/galaxies.ts";
 import type { Vec } from "../data/types.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch } from "../testing/launch.ts";
+import { worldParts } from "./convex.ts";
 import { mantaEscortMayFire, mantaEscortPhase } from "./earlyEncounterPatterns.ts";
-import { damageEnemy } from "./enemyAi.ts";
-import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
+import { enemyHull } from "./enemyBody.ts";
 import { routeBlocked, stepFlight, syncFlightRegion } from "./flight.ts";
+import { hit } from "./flight/hitResolution.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
 import type { SpaceObject } from "./types.ts";
@@ -25,14 +27,6 @@ function flyTo(model: GameModel, { x, y }: Vec): void {
   syncFlightRegion(CONTENT, flight);
 }
 
-function disableWeapons(actor: SpaceObject): void {
-  const definition = enemyEquipmentDefinition(3, actor.enemy!);
-  for (const part of definition.hardpoints.filter(({ kind }) => kind === "weapon")) {
-    actor.enemy = damageEnemy(definition, { amount: part.hp, hardpointId: part.id }, actor.enemy!);
-  }
-  expect(actor.enemy?.disabled).toBe(true);
-}
-
 function reachGuardedSite(model: GameModel, id: "whale" | "family", distance: number): SpaceObject {
   const flight = flightOf(model);
   flight.freshDistance = distance;
@@ -42,7 +36,7 @@ function reachGuardedSite(model: GameModel, id: "whale" | "family", distance: nu
   const guard = stationPopulationObjects(flight).find((actor) => actor.routeId === id)!;
   expect(guard.enemy?.archetype).toBe("capital");
   expect(routeBlocked(id, flight)).toBe(true);
-  disableWeapons(guard);
+  hit(CONTENT, guard.hp, null, guard, flight, []);
   model.step(0.01, idle);
   expect(progressOf(model).known).toContain(id);
   return site;
@@ -242,9 +236,24 @@ it("keeps the family's disk blocked by Sounder and collectible once after resolu
   const boss = sounderActor(model);
   flyTo(model, { x: boss.x + 300, y: boss.y });
   model.step(0.01, idle);
-  disableWeapons(boss);
-  model.step(0.01, idle);
-  expect(progressOf(model).sounder).toEqual({ outcome: "disabled", phase: "resolved" });
+  const hull = enemyHull(boss.enemy!, ROUTE_POSITION[3])!;
+  const at = worldParts(hull)[0]![0]!;
+  flight.shots.push({
+    damage: boss.hp,
+    enemy: false,
+    hitIds: flight.objects.filter(({ id }) => id !== boss.id).map(({ id }) => id),
+    id: "sounder-hull-hit",
+    life: 1,
+    piercing: false,
+    velocity: { x: 0, y: 0 },
+    x: boss.x + at.x,
+    y: boss.y + at.y,
+  });
+  model.step(0.000001, idle);
+  expect(model.flightEvents.filter(({ type }) => type === "enemyDestroyed")).toEqual([
+    { id: boss.id, type: "enemyDestroyed" },
+  ]);
+  expect(progressOf(model).sounder).toEqual({ outcome: "defeated", phase: "resolved" });
   expect(progressOf(model).holodisk).toBe(false);
 
   flyTo(model, whale);
@@ -254,7 +263,7 @@ it("keeps the family's disk blocked by Sounder and collectible once after resolu
   model = new GameModel(CONTENT, () => 503, SAVE_RESTORE, model.save());
   model.startGalaxy(3);
   expect(flightOf(model)).toMatchObject({ encounterSeed: 503, seed: 173 });
-  expect(progressOf(model).sounder).toEqual({ outcome: "disabled", phase: "resolved" });
+  expect(progressOf(model).sounder).toEqual({ outcome: "defeated", phase: "resolved" });
   expect(waypoint(model)).toMatchObject({ ...diskSite, travel: true });
   expect(stationPopulationObjects(flightOf(model)).some(({ id }) => id === boss.id)).toBe(false);
 

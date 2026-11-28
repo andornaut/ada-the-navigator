@@ -1,12 +1,16 @@
 import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
-import { SAVE_RESTORE } from "../saving/index.ts";
+import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import { damageEnemy } from "./enemyAi.ts";
-import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
+import { enemyStardust } from "./drops.ts";
 import { createUnpopulatedFlight, spawnPlannedHostileStation } from "./flight.ts";
-import { flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
+import { hit } from "./flight/hitResolution.ts";
+import {
+  CURRENT_FLIGHT_TOPOLOGY,
+  flightEncounterSeed,
+  flightWorldContext,
+} from "./flightTopology.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
@@ -18,6 +22,7 @@ import {
 } from "./hostileStationPersistence.ts";
 import { planHostileStationFormation } from "./hostileStationSchedule.ts";
 import { hostileStationSites } from "./hostileStationSites.ts";
+import type { FlightEvent } from "./types.ts";
 
 function fixture() {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
@@ -78,23 +83,54 @@ it("maps only identified sites and permits travel without altering chart totals"
   expect(model.state).toEqual(before);
 });
 
-it("reads retained, disabled and removed current bodies without payout or mutation", () => {
+it("reads live, legacy paid, and removed bodies without map side effects", () => {
   const { body, flight, model, progress, site } = fixture();
   acknowledgeHostileStationIdentification(progress, flight, body.id);
   flight.player = { x: 0, y: 0 };
   worldSyncFlightRegion(flightWorldContext(flight), CONTENT, flight);
   expect(flight.world.notables[body.id]).toBe(body);
   expect(model.map!.places.find(({ id }) => id === site.id)?.hostileStationStatus).toBe("present");
-  const definition = enemyEquipmentDefinition(flight.galaxy, body.enemy!);
-  for (const part of definition.hardpoints.filter((part) => part.kind === "weapon")) {
-    body.enemy = damageEnemy(definition, { amount: part.hp, hardpointId: part.id }, body.enemy!);
-  }
+  const hp = body.hp;
+  const events: FlightEvent[] = [];
+  hit(CONTENT, 7, body.enemy!.hardpoints[0]!.id, body, flight, events);
+  expect(body).toMatchObject({ enemy: { disabled: false, hp: hp - 7 }, hp: hp - 7 });
+  expect(events).toEqual([]);
   const before = structuredClone(model.state);
-  expect(model.map!.places.find(({ id }) => id === site.id)?.hostileStationStatus).toBe("disabled");
+  expect(model.map!.places.find(({ id }) => id === site.id)?.hostileStationStatus).toBe("present");
   expect(model.state).toEqual(before);
   expect(flight.hostileStations![site.id]!.rewarded).toBe(false);
-  worldRecordObjectRemoval(flightWorldContext(flight), CONTENT, body, flight);
-  expect(model.map!.places.find(({ id }) => id === site.id)?.hostileStationStatus).toBe("removed");
+
+  // Older saves could already have paid for disabling the retained station.
+  model.state.unlocked = [1, 5];
+  flight.topology = CURRENT_FLIGHT_TOPOLOGY;
+  body.enemy!.disabled = true;
+  flight.hostileStations![site.id]!.rewarded = true;
+  model.state.economy.stardust += enemyStardust(
+    { id: body.id, seed: flight.seed },
+    "hostileStation",
+  );
+  const saved = model.save();
+  const decoded = restoreSave(saved);
+  expect(decoded?.flight?.world.notables[body.id]?.enemy?.disabled).toBe(true);
+  const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, saved);
+  resumed.continueGame();
+  const retained = resumed.state.flight!;
+  const legacy = retained.world.notables[body.id]!;
+  const paid = structuredClone(resumed.state);
+  expect(resumed.map!.places.find(({ id }) => id === site.id)?.hostileStationStatus).toBe(
+    "disabled",
+  );
+  expect(resumed.state).toEqual(paid);
+  const prior = retained.objects.length;
+  hit(CONTENT, legacy.hp, null, legacy, retained, events);
+  expect(events).toEqual([{ id: body.id, type: "enemyDestroyed" }]);
+  expect(retained.objects).toHaveLength(prior);
+  worldRecordObjectRemoval(flightWorldContext(retained), CONTENT, legacy, retained);
+  expect(resumed.map!.places.find(({ id }) => id === site.id)?.hostileStationStatus).toBe(
+    "removed",
+  );
+  expect(retained.hostileStations![site.id]!.rewarded).toBe(true);
+  expect(resumed.state.economy.stardust).toBe(paid.economy.stardust);
 });
 
 it("keeps an identified geographic point on a new encounter without carrying old removal status", () => {
