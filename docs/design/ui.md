@@ -111,3 +111,4 @@ Reference: [UI layout tree](ui/ui-layout-tree.md), [ship screen](ui/ship-screen.
 | ada-0458 | Optically center the Dock glyph in the Use disc                                 | [ada-0458.md](../work/ada-0458.md) |
 | ada-0459 | Mark the selected Local Map place with a teal ring                              | [ada-0459.md](../work/ada-0459.md) |
 | ada-0461 | Show Galaxy Map selection immediately with a teal ring                          | [ada-0461.md](../work/ada-0461.md) |
+| ada-0467 | Outline the equipped weapon on the flight HUD                                   | [ada-0467.md](../work/ada-0467.md) |
