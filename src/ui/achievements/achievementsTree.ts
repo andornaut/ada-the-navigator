@@ -1,7 +1,7 @@
 import type { ComponentNode, LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
+import { SPACING } from "../layout/tokens.ts";
 import type { AchievementEntry, AchievementsLabels } from "./achievementsCard.ts";
-import { SPACING } from "./layout/tokens.ts";
 
 export const ACHIEVEMENT_COLUMNS = {
   columnGap: SPACING.panelPadding,

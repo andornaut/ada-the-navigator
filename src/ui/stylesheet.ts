@@ -2,7 +2,7 @@ import actionGroupCss from "@andornaut/game-kit/runtime/web/ui/dom/actionGroup.c
 import hudDiscCss from "@andornaut/game-kit/runtime/web/ui/dom/hudDisc.css?raw";
 import layoutTreeCss from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree.css?raw";
 
-import { ACHIEVEMENTS_STYLE } from "./achievementsCard.ts";
+import { ACHIEVEMENTS_STYLE } from "./achievements/index.ts";
 import { BOSS_HUD_STYLE } from "./bossHud.ts";
 import { COMPLETION_INDICATOR_STYLE } from "./completionIndicator.ts";
 import { CONTROL_HELP_STYLE } from "./controlHelp.ts";

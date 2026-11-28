@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { type AchievementEntry, createAchievementsCard } from "./achievementsCard.ts";
 import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   resolveAdaHoldAction,
-} from "./actionBinding.ts";
-import { registerAdaActionRoot } from "./actionRegistry.ts";
-import { fixtureActionRoot } from "./actionRootFixture.ts";
+} from "../actionBinding.ts";
+import { registerAdaActionRoot } from "../actionRegistry.ts";
+import { fixtureActionRoot } from "../actionRootFixture.ts";
+import { type AchievementEntry, createAchievementsCard } from "./achievementsCard.ts";
 
 const corruption = vi.hoisted(() => ({ factory: false, row: false }));
 let active: Element | null = null;
@@ -188,9 +188,9 @@ vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
     active = node;
   },
 }));
-vi.mock("./layout/viewScale.ts", () => ({ VIEW_SCALE_EVENT: "scale", readViewUnit: () => 1 }));
-vi.mock("./modal.ts", async (original) => ({
-  ...(await original<typeof import("./modal.ts")>()),
+vi.mock("../layout/viewScale.ts", () => ({ VIEW_SCALE_EVENT: "scale", readViewUnit: () => 1 }));
+vi.mock("../modal.ts", async (original) => ({
+  ...(await original<typeof import("../modal.ts")>()),
   createCard: ({ close }: { close: Element }) => {
     const frame = new Element();
     const card = new Element();

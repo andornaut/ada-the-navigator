@@ -35,7 +35,7 @@ import {
   type AchievementEntry,
   type AchievementsLabels,
   createAchievementsCard,
-} from "../ui/achievementsCard.ts";
+} from "../ui/achievements/index.ts";
 import { assertAdaActionBindings, bindAdaAction } from "../ui/actionBinding.ts";
 import { type BackLayer, createBackStack, pressBack } from "../ui/backStack.ts";
 import type { CheatAction } from "../ui/cheatActions.ts";

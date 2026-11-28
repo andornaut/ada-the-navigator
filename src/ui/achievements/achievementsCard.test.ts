@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { ACHIEVEMENTS } from "../data/achievements.ts";
-import { CONTENT } from "../data/content.ts";
-import { SCREEN } from "../data/screen.ts";
-import { lineCount, measure } from "../testing/textMetrics.ts";
+import { ACHIEVEMENTS } from "../../data/achievements.ts";
+import { CONTENT } from "../../data/content.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { lineCount, measure } from "../../testing/textMetrics.ts";
+import { listCardHeader } from "../layout/cardFrame.ts";
+import { TEXT_BUTTON } from "../layout/controls.ts";
+import { SPACING, TYPE } from "../layout/tokens.ts";
 import {
   achievementColumnWidth,
   achievementPage,
@@ -15,9 +18,6 @@ import {
   fillCount,
   fillPage,
 } from "./achievementsCard.ts";
-import { listCardHeader } from "./layout/cardFrame.ts";
-import { TEXT_BUTTON } from "./layout/controls.ts";
-import { SPACING, TYPE } from "./layout/tokens.ts";
 
 describe("Achievements card", () => {
   it("pages the 14 entries six to a page, in Gameplay's order", () => {

@@ -4,7 +4,7 @@
 item has a gold box and a visible checkmark. An incomplete item has a blue empty
 box. The shared stylesheet and size apply identically to every consumer.
 
-Achievements use `AchievementEntry.unlocked` in `src/ui/achievementsCard.ts`.
+Achievements use `AchievementEntry.unlocked` in `src/ui/achievements/achievementsCard.ts`.
 Quest requirements, including job objectives, use `requirement.checked` in
 `src/ui/questsScreen.ts`.
 

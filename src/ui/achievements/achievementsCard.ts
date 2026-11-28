@@ -3,25 +3,25 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 import { focusTargets } from "@andornaut/game-kit/runtime/web/ui/dom/modalLayer";
 
-import { SCREEN } from "../data/screen.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "../actionBinding.ts";
+import { COMPLETION_INDICATOR, createCompletionIndicator } from "../completionIndicator.ts";
+import { registerForegroundSurface } from "../foregroundInput.ts";
+import { listCardHeader } from "../layout/cardFrame.ts";
+import { CARD_WIDTH_CAPS, cardWidth, SCROLL } from "../layout/contentCard.ts";
+import { TEXT_BUTTON } from "../layout/controls.ts";
+import { units } from "../layout/css.ts";
+import { SPACING, TYPE } from "../layout/tokens.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "../layout/viewScale.ts";
+import { createActions, createCard, setFooterAction, TEXT_TOKENS, UI_SCOPE } from "../modal.ts";
+import { createStandardCloseAction } from "../modalClose.ts";
+import { enterPressView } from "../pressScope.ts";
+import { createStandardTextAction } from "../standardTextAction.ts";
 import {
   ACHIEVEMENT_COLUMNS,
   type AchievementsLayoutSchema,
   achievementsTree,
 } from "./achievementsTree.ts";
-import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
-import { COMPLETION_INDICATOR, createCompletionIndicator } from "./completionIndicator.ts";
-import { registerForegroundSurface } from "./foregroundInput.ts";
-import { listCardHeader } from "./layout/cardFrame.ts";
-import { CARD_WIDTH_CAPS, cardWidth, SCROLL } from "./layout/contentCard.ts";
-import { TEXT_BUTTON } from "./layout/controls.ts";
-import { units } from "./layout/css.ts";
-import { SPACING, TYPE } from "./layout/tokens.ts";
-import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import { createActions, createCard, setFooterAction, TEXT_TOKENS, UI_SCOPE } from "./modal.ts";
-import { createStandardCloseAction } from "./modalClose.ts";
-import { enterPressView } from "./pressScope.ts";
-import { createStandardTextAction } from "./standardTextAction.ts";
 
 // The Achievements card (gameplay/quests.md "Achievements"), in Chibi's shape and spacing: every
 // entry in Gameplay's order, two columns of a badge beside the name, a locked counted entry's
