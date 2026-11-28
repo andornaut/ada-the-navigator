@@ -32,7 +32,12 @@ import {
   settlementsNear,
   worldNearestSettlerStation,
 } from "./andromedaPlaces.ts";
-import type { ChapterContext, ChapterResult, ChapterRuntime } from "./chapterProtocol.ts";
+import type {
+  ChapterArrivalCue,
+  ChapterContext,
+  ChapterResult,
+  ChapterRuntime,
+} from "./chapterProtocol.ts";
 import {
   ensureDestination,
   ensureDestinationAt,
@@ -510,7 +515,7 @@ export function stepAndromeda(
   context: ChapterContext,
   seconds = 0,
   previous = context.flight.player,
-): ChapterResult | undefined {
+): ChapterArrivalCue | undefined {
   const { content, flight, progress } = context;
   if (flight.galaxy !== 5) {
     return undefined;
@@ -520,13 +525,11 @@ export function stepAndromeda(
   }
   const inRange = (point: Vec) => distance(point, flight.player) <= content.tuning.talkRange;
   const cue = (id: "arrival" | "dent", speaker: Speaker, place: Vec & { id: string }) => ({
-    arrival: {
-      id: `chapter:andromeda:${id}:approach`,
-      line: { speaker, text: ANDROMEDA_CONVERSATIONS[id].lines[0].text },
-      place: place.id,
-      relevant: () =>
-        (id === "dent" ? progress.stage === 1 : relevant(progress, id)) && inRange(place),
-    },
+    id: `chapter:andromeda:${id}:approach`,
+    line: { speaker, text: ANDROMEDA_CONVERSATIONS[id].lines[0].text },
+    place: place.id,
+    relevant: () =>
+      (id === "dent" ? progress.stage === 1 : relevant(progress, id)) && inRange(place),
   });
   if (relevant(progress, "arrival")) {
     const station = flight.objects.find(

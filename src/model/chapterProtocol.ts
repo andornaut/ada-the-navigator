@@ -17,15 +17,16 @@ export interface ChapterContext {
   readonly progress: GalaxyProgress;
 }
 
-/** Shared outcomes are committed by GameModel, after a module handles the actual event. */
+/** A passive authored cue for an arrival that still needs an explicit Use. */
+export interface ChapterArrivalCue {
+  readonly id: string;
+  readonly place: string;
+  readonly line: ConversationLine;
+  readonly relevant: () => boolean;
+}
+
+/** Explicit interaction outcomes are committed by GameModel. */
 export interface ChapterResult {
-  /** A passive authored cue for an arrival that still needs an explicit Use. */
-  readonly arrival?: {
-    readonly id: string;
-    readonly place: string;
-    readonly line: ConversationLine;
-    readonly relevant: () => boolean;
-  };
   readonly complete?: boolean;
   readonly dialogue?: DialogueState;
   readonly holodisk?: { readonly giver?: string };
@@ -43,12 +44,13 @@ export interface ChapterRuntime {
   readonly objectiveIndex?: (context: ChapterContext) => number;
   readonly objective?: (context: ChapterContext) => string | null;
   readonly beforeStep?: (context: ChapterContext, seconds: number) => void;
+  /** Updates flight-local state and can offer one passive arrival cue. */
   readonly afterStep?: (
     context: ChapterContext,
     seconds: number,
     previous: Vec,
     events: readonly FlightEvent[],
-  ) => ChapterResult | void;
+  ) => ChapterArrivalCue | void;
   /** Undefined means the existing station, job and mechanical Use handlers may continue. */
   readonly activityChoices?: (
     context: ChapterContext,

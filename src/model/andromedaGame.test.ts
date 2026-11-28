@@ -1,8 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { COURIER } from "../data/activities.ts";
+import { ANDROMEDA_CONVERSATIONS, ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { CONTENT } from "../data/content.ts";
-import { CONVERSATION_TUNING } from "../data/conversations.ts";
+import { CONVERSATION_TUNING, CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { BUILT, GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
@@ -38,6 +39,7 @@ import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations.ts";
+import { flightLandmarkSites } from "./landmarks.ts";
 import { stationDisplayName } from "./stationIdentity.ts";
 import { flightStationContext, worldStationById } from "./stations.ts";
 import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
@@ -49,7 +51,7 @@ const built = BUILT as Set<GalaxyNumber>;
 beforeAll(() => built.add(5));
 afterAll(() => built.delete(5));
 
-function launch(seed?: number): GameModel {
+function launch(seed?: number, seen: readonly string[] = []): GameModel {
   const model = new GameModel(
     CONTENT,
     seed === undefined ? supportEntropy : () => seed,
@@ -59,6 +61,7 @@ function launch(seed?: number): GameModel {
   for (const progress of Object.values(model.state.progress)) {
     progress.opened = true;
   }
+  model.state.seenConversations.push(...seen);
   model.startGalaxy(5);
   return model;
 }
@@ -264,6 +267,84 @@ describe("repaired Andromeda lane", () => {
 });
 
 describe("mounted Andromeda chapter", () => {
+  it.each(["arrival", "dent"] as const)(
+    "preserves a real scan receipt during %s and saves the quiet cue only once",
+    (topic) => {
+      const model = launch(
+        173,
+        CONVERSATIONS.map(({ id }) => id),
+      );
+      const flight = model.state.flight!;
+      if (topic === "dent") {
+        arrival(model);
+        model.dismissConversation();
+      }
+      const station = worldNearestSettlerStation(
+        flightStationContext(flight),
+        ECONOMY,
+        flight.player,
+      );
+      const target = topic === "arrival" ? station.id : ANDROMEDA_PLACES.beacon;
+      if (topic === "arrival") {
+        ensureStation(CONTENT, target, flight);
+      }
+
+      const site = flightLandmarkSites(flight)[0]!;
+      flight.player = { x: site.x, y: site.y };
+      expect(model.useTarget).toEqual({ action: "scan", id: site.id });
+      model.interact();
+      const [receipt] = model.drainScanOutcomes();
+      expect(receipt?.target.id).toBe(site.id);
+      expect(Object.isFrozen(receipt)).toBe(true);
+      const speech = model.conversation!;
+      expect(speech).toMatchObject({
+        name: "Astra",
+        text: `Scan complete: ${receipt!.target.name}.`,
+      });
+
+      const cueId = `chapter:andromeda:${topic}:approach`;
+      const line = ANDROMEDA_CONVERSATIONS[topic].lines[0].text;
+      const stage = topic === "arrival" ? 0 : 1;
+      visit(model, target);
+      expect(model.state.dialogue).toBeNull();
+      expect(model.state.docked).toBeNull();
+      expect(model.state.progress[5].stage).toBe(stage);
+      expect(model.useTarget).toEqual({ action: topic === "arrival" ? "talk" : "use", id: target });
+      expect(model.conversation).toMatchObject({ key: speech.key, text: speech.text });
+      expect(model.state.seenConversations).not.toContain(cueId);
+      expect(model.drainScanOutcomes()).toEqual([]);
+
+      // Continue rebuilds the quiet offer from the same in-range state. The already drained
+      // scan receipt and the queued but unheard arrival have not been saved as speech.
+      const pending = model.save();
+      expect(restoreSave(pending)?.seenConversations).not.toContain(cueId);
+      const continued = relaunch(CONTENT, pending);
+      expect(continued.drainScanOutcomes()).toEqual([]);
+      continued.dismissNotice();
+      visit(continued, target);
+      continued.dismissNotice();
+      continued.step(0.001, idle);
+      if (continued.conversation?.speaker === "penny") {
+        // An actual nearby marker hint can play ahead of lore at the station.
+        continued.dismissConversation();
+        continued.step(CONVERSATION_TUNING.cooldownSeconds + 0.001, idle);
+      }
+      expect(continued.conversation?.text).toBe(line);
+      expect(continued.warningShowing).toBe(false);
+      expect(continued.state.seenConversations.filter((id) => id === cueId)).toHaveLength(1);
+
+      const saved = continued.save();
+      expect(restoreSave(saved)?.seenConversations.filter((id) => id === cueId)).toHaveLength(1);
+      const resumed = relaunch(CONTENT, saved);
+      visit(resumed, target);
+      expect(resumed.state.progress[5].stage).toBe(stage);
+      expect(resumed.state.dialogue).toBeNull();
+      expect(resumed.conversation?.text).not.toBe(line);
+      expect(resumed.state.seenConversations.filter((id) => id === cueId)).toHaveLength(1);
+      expect(resumed.drainScanOutcomes()).toEqual([]);
+    },
+  );
+
   it("owns due Wick Talk in the real berth through Continue while Exchange stays live", () => {
     const model = launch(173);
     const flight = model.state.flight!;

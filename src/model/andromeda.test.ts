@@ -54,12 +54,13 @@ describe("Andromeda chapter runtime", () => {
     Object.assign(context.flight.player, station);
     context.progress.stations.push(station.id);
     const passive = stepAndromeda(context)!;
-    expect(passive.dialogue).toBeUndefined();
-    expect(passive.arrival).toMatchObject({
+    expect(passive).toEqual({
+      id: "chapter:andromeda:arrival:approach",
       line: { speaker: "settler", text: ANDROMEDA_CONVERSATIONS.arrival.lines[0].text },
       place: station.id,
+      relevant: expect.any(Function),
     });
-    expect(passive.arrival?.relevant()).toBe(true);
+    expect(passive.relevant()).toBe(true);
     const initial = useAndromeda(context, station.id)!;
     for (const line of ANDROMEDA_CONVERSATIONS.arrival.lines) {
       expect(initial.dialogue?.text).toContain(`${line.speaker}: ${line.text}`);
@@ -73,7 +74,7 @@ describe("Andromeda chapter runtime", () => {
     // A completed panel cannot replay its transition.
     expect(chooseAndromeda(context, panel, "continue")).toBeUndefined();
     expect(context.progress.introduced).toBe(true);
-    expect(passive.arrival?.relevant()).toBe(false);
+    expect(passive.relevant()).toBe(false);
   });
 
   it("allows Pip's confession without making the optional dent inspection a prerequisite", () => {

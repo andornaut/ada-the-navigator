@@ -4465,11 +4465,11 @@ export class GameModel {
     this.stepCalf(dt, f);
     this.advanceCourier(f, f.time - flightTimeBeforeStep);
     if (context && previousChapterPosition) {
-      const result = runtime?.afterStep?.(context, dt, previousChapterPosition, events);
-      const arrival = result?.arrival;
+      const arrival = runtime?.afterStep?.(context, dt, previousChapterPosition, events);
       if (arrival) {
-        this.talk.authoredCue(arrival.id, arrival.line, {
+        this.talk.poiArrival(arrival.place, arrival.line, {
           onFirstShowing: () => this.coverPoiArrival(f, arrival.place),
+          onceId: arrival.id,
           relevant: () =>
             this.state.flight === f &&
             this.screen === "space" &&
@@ -4479,7 +4479,6 @@ export class GameModel {
             arrival.relevant(),
         });
       }
-      this.applyChapterResult(result);
       if (f.galaxy === 5) {
         const warning = takeAndromedaCourierWarning(f);
         if (warning) {

@@ -649,10 +649,10 @@ export function afterStepPhantom(
   seconds?: number,
   previous?: Vec,
   events: readonly (FlightEvent | PhantomHardpointEvent)[] = [],
-): ChapterResult | undefined {
+): void {
   const state = stateOf(context);
   if (!state || context.progress.questComplete) {
-    return undefined;
+    return;
   }
   // A separate final hit in this update still leaves the first loss ahead of surrender.
   if (
@@ -709,7 +709,6 @@ export function afterStepPhantom(
     state.disabledCued = true;
     state.chatter.push("flagshipDisabled");
   }
-  return undefined;
 }
 export function phantomObjective(context: ChapterContext): string | null {
   if (context.progress.questComplete) {
