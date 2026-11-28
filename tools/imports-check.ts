@@ -1,6 +1,7 @@
 // The import graph of src/ and tools/: no runtime import cycles, every module in a layer, and
-// every module outside the tests importing only its own layer or a lower one, type-only imports
-// included. Reads the sources with the TypeScript parser and follows relative specifiers: static
+// every module outside the tests importing only its own layer or a lower one and using the
+// public entry of an encapsulated area, type-only imports included. Reads the sources with the
+// TypeScript parser and follows relative specifiers: static
 // imports, re-exports, dynamic import() and inline import("...") types.
 // ESLint checks each file's imports and checks the whole runtime graph once per repository lint.
 import { readdirSync, readFileSync } from "node:fs";
@@ -25,6 +26,22 @@ const SOURCE = /\.(?:mjs|mts|ts)$/u;
 const TEST = /\.test\.ts$/u;
 
 const uiLayout = (path: string) => /^src\/ui\/(?:map\/)?layout\//u.test(path);
+
+const ENCAPSULATED_AREAS = [
+  "src/art/",
+  "src/saving/",
+  "src/ui/achievements/",
+  "src/ui/cheats/",
+  "src/ui/exchange/",
+  "src/ui/galaxy/",
+  "src/ui/menu/",
+  "src/ui/pause/",
+  "src/ui/resource/",
+  "src/ui/restart/",
+  "src/ui/settings/",
+  "src/ui/ship/",
+  "src/ui/weaponDetail/",
+];
 
 /** The layers, lowest first, each holding paths no other layer holds. */
 export const LAYERS: readonly Layer[] = [
@@ -209,8 +226,8 @@ export function cycles(edges: ReadonlyMap<string, readonly string[]>): string[][
 }
 
 /**
- * Each module in no layer, and each import of a higher or unplaced layer, type-only imports
- * included. Tests are exempt from the direction rule.
+ * Reports unplaced modules, imports of higher or unplaced layers, and imports that bypass an
+ * area's entry. Tests can inspect private modules directly.
  */
 export function layerFindings(graph: Graph): string[] {
   const findings: string[] = [];
@@ -229,6 +246,11 @@ export function layerFindings(graph: Graph): string[] {
         findings.push(`${path} imports ${target}, which is in no layer`);
       } else if (to > layer) {
         findings.push(`${path} (${LAYERS[layer]!.name}) imports ${target} (${LAYERS[to]!.name})`);
+      } else {
+        const area = ENCAPSULATED_AREAS.find((prefix) => target.startsWith(prefix));
+        if (area && !path.startsWith(area) && target !== `${area}index.ts`) {
+          findings.push(`${path} imports ${target} directly. Use ${area}index.ts`);
+        }
       }
     }
   }

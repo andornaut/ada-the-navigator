@@ -5,6 +5,7 @@ import {
   layerFindings,
   layerOf,
   LAYERS,
+  readImports,
   runtimeCycleFindings,
   specifiers,
 } from "../../tools/imports-check.ts";
@@ -142,6 +143,26 @@ describe("layers", () => {
       "src/loading/a.ts (platform) imports src/entry/bootstrap.ts (entry)",
       "src/art/a.ts (art) imports src/game/nested/b.ts (scene)",
       "src/extra.ts is in no layer",
+    ]);
+  });
+
+  it("allows public entries and internal imports but catches private imports across areas", () => {
+    const graph = new Map<string, ReturnType<typeof readImports>>();
+    const add = (path: string, source: string) => graph.set(path, readImports(path, source));
+    add(
+      "src/ui/pause/pauseCard.ts",
+      [
+        'import { paint } from "../ship/index.ts";',
+        'import type { ShipView } from "../ship/shipCard.ts";',
+        'export { shade } from "./pauseStyles.ts";',
+      ].join("\n"),
+    );
+    add("src/game/scene.ts", 'const art = import("../art/shipJets.ts");');
+    add("src/ui/modal.test.ts", 'import { paint } from "./ship/shipCard.ts";');
+
+    expect(layerFindings(graph)).toEqual([
+      "src/ui/pause/pauseCard.ts imports src/ui/ship/shipCard.ts directly. Use src/ui/ship/index.ts",
+      "src/game/scene.ts imports src/art/shipJets.ts directly. Use src/art/index.ts",
     ]);
   });
 });
