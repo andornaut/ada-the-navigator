@@ -90,10 +90,17 @@ import { USE_PRESS_MS } from "../ui/touchChrome.ts";
 import { createUpdateDialog, type UpdateLabels } from "../ui/updateDialog.ts";
 import { createWeaponDetailCard } from "../ui/weaponDetailCard.ts";
 import { createWeaponSelector, type WeaponChoice, type WeaponLabels } from "../ui/weapons.ts";
-import { coarsePointer, touchControlsActive, useDiscShown } from "./coarsePointer.ts";
-import { DesktopControlState, type DesktopFrame, isMenuExitKey } from "./desktop.ts";
 import { bindDesktopInput } from "./desktopDom.ts";
-import { type ControlSample, ControlState } from "./state.ts";
+import {
+  coarsePointer,
+  type ControlSample,
+  ControlState,
+  DesktopControlState,
+  type DesktopFrame,
+  isMenuExitKey,
+  touchControlsActive,
+  useDiscShown,
+} from "./index.ts";
 
 export interface ControlsOptions {
   readonly frameTurn: () => FrameTurn;

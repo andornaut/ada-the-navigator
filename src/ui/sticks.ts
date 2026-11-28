@@ -3,7 +3,7 @@ import {
   MOVE_STICK_GEOMETRY,
   type StickSide,
   stickVector,
-} from "../input/state.ts";
+} from "../input/index.ts";
 import type { ControlVisibility } from "./deviceSettings.ts";
 import type { Insets } from "./layout/playView.ts";
 import { stickRestCentres } from "./layout/touchControls.ts";

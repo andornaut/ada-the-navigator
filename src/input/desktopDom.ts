@@ -3,8 +3,8 @@ import {
   DESKTOP_FLIGHT_BINDINGS,
   type DesktopControlState,
   flightBindings,
-} from "./desktop.ts";
-import type { Vector } from "./state.ts";
+  type Vector,
+} from "./index.ts";
 
 interface DesktopBindingOptions {
   readonly accepts: () => boolean;

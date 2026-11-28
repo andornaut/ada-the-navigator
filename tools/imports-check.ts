@@ -18,6 +18,7 @@ export interface Layer {
 const INPUT_STATE = new Set([
   "src/input/coarsePointer.ts",
   "src/input/desktop.ts",
+  "src/input/index.ts",
   "src/input/state.ts",
 ]);
 const SOURCE = /\.(?:mjs|mts|ts)$/u;

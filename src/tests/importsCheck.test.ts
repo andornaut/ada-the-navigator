@@ -108,7 +108,9 @@ describe("layers", () => {
     expect(layerOf("src/ui/map/layout/mapScreen.ts")).toBe(layer("layout and input state"));
     expect(layerOf("src/ui/map/mapScreen.ts")).toBe(layer("ui"));
     expect(layerOf("src/ui/modal.ts")).toBe(layer("ui"));
+    expect(layerOf("src/input/index.ts")).toBe(layer("layout and input state"));
     expect(layerOf("src/input/controls.ts")).toBe(layer("scene"));
+    expect(layerOf("src/input/desktopDom.ts")).toBe(layer("scene"));
     expect(layerOf("src/loading/startup.ts")).toBe(layer("platform"));
     expect(layerOf("src/entry/bootstrap.ts")).toBe(layer("entry"));
     expect(layerOf("src/entry/anotherPage.ts")).toBe(layer("entry"));
