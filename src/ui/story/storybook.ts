@@ -330,8 +330,11 @@ const ART_WIDTH = `max(${units(STORY_BACKGROUND.width)}, 100cqw, calc(100cqh * $
 // The panel's padding, including the card's 2 frame.
 const PANEL_PADDING = `calc(${units(STORY_PANEL.padding)} - ${slice(2)})`;
 const HALF_GUTTER = `calc((100% - ${units(SCREEN.width)}) / 2)`;
-const HALF_PANEL_LEFT = `max(${HALF_GUTTER}, ${safeEdge("left", 0)})`;
-const HALF_PANEL_RIGHT = `max(${HALF_GUTTER}, ${safeEdge("right", 0)})`;
+const HALF_PANEL_LEFT = `max(${HALF_GUTTER}, ${safeEdge("left", 0)}, var(--ada-story-inset-left))`;
+const HALF_PANEL_RIGHT = `max(${HALF_GUTTER}, ${safeEdge("right", 0)}, var(--ada-story-inset-right))`;
+const HALF_PANEL_BOTTOM = `max(${safeEdge("bottom", 0)}, var(--ada-story-inset-bottom))`;
+const halfPanelHeight = (top: number) =>
+  `calc(100% - max(${fromHudEdge("top", top)}, var(--ada-story-inset-top)) - ${HALF_PANEL_BOTTOM})`;
 const HALF_ACTION_RIGHT = "--ada-story-action-right";
 const halfActionRight = (skipOffset: number) =>
   `max(${fromHudEdge("right", skipOffset)}, calc(${HALF_PANEL_RIGHT} + ${slice(2)}))`;
@@ -370,7 +373,23 @@ export const STORYBOOK_STYLE = `
 /* The bottom spread sits over the full backdrop, within the safe 720-unit game width.
    The copy keeps the game area's snapped inset, and Next shares Skip's outer right edge. */
 .ada-controls .ada-story-half{
+  --ada-story-inset-top:env(safe-area-inset-top,0px);
+  --ada-story-inset-right:env(safe-area-inset-right,0px);
+  --ada-story-inset-bottom:env(safe-area-inset-bottom,0px);
+  --ada-story-inset-left:env(safe-area-inset-left,0px);
   ${HALF_ACTION_RIGHT}:${halfActionRight(STORY_SKIP.right.besideSettings)}
+}
+:root[data-frame-turn="90"] .ada-controls .ada-story-half{
+  --ada-story-inset-top:env(safe-area-inset-right,0px);
+  --ada-story-inset-right:env(safe-area-inset-bottom,0px);
+  --ada-story-inset-bottom:env(safe-area-inset-left,0px);
+  --ada-story-inset-left:env(safe-area-inset-top,0px)
+}
+:root[data-frame-turn="-90"] .ada-controls .ada-story-half{
+  --ada-story-inset-top:env(safe-area-inset-left,0px);
+  --ada-story-inset-right:env(safe-area-inset-top,0px);
+  --ada-story-inset-bottom:env(safe-area-inset-right,0px);
+  --ada-story-inset-left:env(safe-area-inset-bottom,0px)
 }
 .ada-controls.ada-no-settings-button .ada-story-half{
   ${HALF_ACTION_RIGHT}:${halfActionRight(STORY_SKIP.right.corner)}
@@ -378,16 +397,17 @@ export const STORYBOOK_STYLE = `
 .ada-controls .ada-story.ada-story-half .ada-story-panel{
   left:${HALF_PANEL_LEFT};
   right:${HALF_PANEL_RIGHT};
-  bottom:${safeEdge("bottom", 0)};
+  bottom:${HALF_PANEL_BOTTOM};
   transform:none;
   width:auto;
   padding-left:calc(${PANEL_PADDING} + var(${VIEW_PROPERTIES.areaLeft}) - ${HALF_GUTTER});
   padding-right:calc(var(${HALF_ACTION_RIGHT}) - ${HALF_PANEL_RIGHT} - ${slice(2)});
-  min-height:50%;
-  max-height:${availableHeight(STORY_PANEL_TOP)}
+  min-height:min(50%, ${halfPanelHeight(STORY_PANEL_TOP)});
+  max-height:${halfPanelHeight(STORY_PANEL_TOP)}
 }
 .ada-controls .ada-story.ada-story-half .ada-story-panel.ada-story-room{
-  max-height:${availableHeight(STORY_ROOM_PANEL_TOP)}
+  min-height:min(50%, ${halfPanelHeight(STORY_ROOM_PANEL_TOP)});
+  max-height:${halfPanelHeight(STORY_ROOM_PANEL_TOP)}
 }
 .ada-controls .ada-story-background{
   position:absolute;

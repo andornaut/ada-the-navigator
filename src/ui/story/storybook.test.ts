@@ -65,6 +65,22 @@ describe("storybook page", () => {
     );
   });
 
+  it("maps all four Storybook safe insets into the turned frame", () => {
+    const sides = ["top", "right", "bottom", "left"];
+    for (const [turn, physicalSides] of [
+      ["", sides],
+      [':root[data-frame-turn="90"] ', ["right", "bottom", "left", "top"]],
+      [':root[data-frame-turn="-90"] ', ["left", "top", "right", "bottom"]],
+    ] as const) {
+      const spread = rule(`${turn}.ada-controls .ada-story-half`);
+      sides.forEach((side, index) => {
+        expect(spread).toContain(
+          `--ada-story-inset-${side}:env(safe-area-inset-${physicalSides[index]},0px)`,
+        );
+      });
+    }
+  });
+
   it("gives the choice column its share of the inner width within 228 and 300", () => {
     const column = rule(".ada-controls .ada-story-choice-column");
     expect(STORY_PANEL.choiceColumn).toEqual({ max: 300, min: 228, share: 0.38 });
@@ -367,7 +383,9 @@ it("centres the half spread within the game and safe edges over full-view art", 
   const panel = rule(".ada-controls .ada-story.ada-story-half .ada-story-panel");
   const gutter = `calc((100% - ${units(SCREEN.width)}) / 2)`;
   for (const side of ["left", "right"] as const) {
-    expect(panel).toContain(`${side}:max(${gutter}, ${safeEdge(side, 0)})`);
+    expect(panel).toContain(
+      `${side}:max(${gutter}, ${safeEdge(side, 0)}, var(--ada-story-inset-${side}));`,
+    );
   }
   expect(panel).toContain("transform:none;");
   expect(panel).toContain("width:auto;");
@@ -389,17 +407,20 @@ it("aligns the half spread's Next with the right edge of Skip in both HUD states
   );
 });
 
-it("grows the half spread past the lower half up to the light spread's top cap", () => {
-  const height = (top: number) =>
-    `max-height:calc(100% - ${fromHudEdge("top", top)} - ${safeEdge("bottom", SPACING.pageInset)})`;
-  const half = rule(".ada-controls .ada-story.ada-story-half .ada-story-panel");
-  expect(half).toContain(`bottom:${safeEdge("bottom", 0)};`);
-  expect(half).toContain("min-height:50%;");
-  expect(half).toContain(height(STORY_PANEL_TOP));
+it("grows the half spread past the lower half up to the safe-area and HUD cap", () => {
+  const selector = ".ada-controls .ada-story.ada-story-half .ada-story-panel";
+  const half = rule(selector);
+  const bottom = `max(${safeEdge("bottom", 0)}, var(--ada-story-inset-bottom))`;
+  expect(half).toContain(`bottom:${bottom};`);
+  for (const [spread, top] of [
+    [half, STORY_PANEL_TOP],
+    [rule(`${selector}.ada-story-room`), STORY_ROOM_PANEL_TOP],
+  ] as const) {
+    const height = `calc(100% - max(${fromHudEdge("top", top)}, var(--ada-story-inset-top)) - ${bottom})`;
+    expect(spread).toContain(`min-height:min(50%, ${height});`);
+    expect(spread).toContain(`max-height:${height}`);
+  }
   expect(half).not.toMatch(/(^|[\s;{])(top|height):/u);
-  expect(rule(".ada-controls .ada-story.ada-story-half .ada-story-panel.ada-story-room")).toContain(
-    height(STORY_ROOM_PANEL_TOP),
-  );
   // Astra's three questions and Previous all keep their full standard-height faces.
   const panel = 4 * TEXT_BUTTON.height + 3 * STORY_CHOICE_GAP + 2 * STORY_PANEL.padding;
   expect(panel).toBe(272);
