@@ -2600,7 +2600,7 @@ function releaseSummonedGuards(viewportWidth: number, flight: FlightState): void
 
 const routeGuardPackContext = { combat, spawnEnemy };
 
-const huntingPackContext = { combat, hash, random, spawnEnemy };
+const huntingPackContext = { combat, spawnEnemy };
 
 export function placeHuntingPack(
   content: GameContent,

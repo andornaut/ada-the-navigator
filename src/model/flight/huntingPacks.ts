@@ -1,3 +1,5 @@
+import { randomStream } from "@andornaut/game-kit/runtime/random";
+
 import { HUNTING_PACKS } from "../../data/galaxyFeatures.ts";
 import type { GameContent } from "../../data/types.ts";
 import { worldActivateFlightRegion } from "../geography.ts";
@@ -6,8 +8,6 @@ import { flightWorldContext, worldDistance } from "../world/index.ts";
 
 interface HuntingPackContext {
   combat: (flight: FlightState) => NonNullable<FlightState["combat"]>;
-  hash: (seed: number, x: number, y: number) => number;
-  random: (seed: number) => () => number;
   spawnEnemy: (
     content: GameContent,
     flight: FlightState,
@@ -24,7 +24,7 @@ interface HuntingPackContext {
  * placed again under its id replaces its members.
  */
 export function placeHuntingPack(
-  { combat, spawnEnemy }: Pick<HuntingPackContext, "combat" | "spawnEnemy">,
+  { combat, spawnEnemy }: HuntingPackContext,
   content: GameContent,
   packId: string,
   centre: Vec,
@@ -65,7 +65,7 @@ export function ensureHuntingPacks(
   content: GameContent,
   flight: FlightState,
 ): void {
-  const { combat, hash, random } = context;
+  const { combat } = context;
   if (!HUNTING_PACKS.galaxies.includes(flight.galaxy)) {
     return;
   }
@@ -77,9 +77,7 @@ export function ensureHuntingPacks(
       !placed.includes(object.id) &&
       worldDistance(flightWorldContext(flight), object, flight.player) <= HUNTING_PACKS.placeRange,
   )) {
-    const next = random(
-      hash(flight.seed ^ 0x4a7e, destination.id.length, destination.id.charCodeAt(0)),
-    );
+    const next = randomStream(flight.seed, `hunting-pack:whirlpool:${destination.id}`);
     const [fewest, most] = HUNTING_PACKS.count;
     const count = fewest + Math.floor(next() * (most - fewest + 1));
     let angle = next() * Math.PI * 2;
