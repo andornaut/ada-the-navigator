@@ -149,6 +149,49 @@ export function projectQuestEntries(
   });
 }
 
+export interface ContextQuestLookup {
+  readonly inSpace: () => boolean;
+  readonly hasSuspendedInteraction: () => boolean;
+  readonly nearestPlace: () => string | undefined;
+  readonly hasAvailableAction: (place: string | undefined) => boolean;
+  readonly hintTarget: (place: string | undefined) => string | undefined;
+  readonly inRange: (flight: FlightState, hint?: string) => ContextQuestDetails | null;
+}
+
+/** Existing Use actions take priority over looking up linked Quest Details. */
+export function projectContextQuestDetails(
+  context: ContextQuestLookup,
+  state: Readonly<Pick<GameState, "flight" | "dialogue" | "docked">>,
+): ContextQuestDetails | null {
+  const flight = state.flight;
+  if (
+    !context.inSpace() ||
+    !flight ||
+    state.dialogue ||
+    state.docked ||
+    context.hasSuspendedInteraction()
+  ) {
+    return null;
+  }
+  const place = context.nearestPlace();
+  if (context.hasAvailableAction(place)) {
+    return null;
+  }
+  return projectQuestDetailsFallback(context, flight, place, context.hintTarget(place));
+}
+
+/** Recheck screen and place admission at the point where the fallback is used. */
+export function projectQuestDetailsFallback(
+  context: Pick<ContextQuestLookup, "inSpace" | "inRange">,
+  flight: FlightState,
+  place: string | undefined,
+  hint: string | undefined,
+): ContextQuestDetails | null {
+  return !context.inSpace() || (place !== undefined && hint === undefined)
+    ? null
+    : context.inRange(flight, hint);
+}
+
 /** Resolve the explicit hint or the nearest eligible linked place without advancing its quest. */
 export function projectInRangeQuestDetails(
   context: QuestObjectContext & {

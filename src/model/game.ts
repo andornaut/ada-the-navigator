@@ -216,7 +216,10 @@ import {
 } from "./game/jobNavigation.ts";
 import { projectJobText, projectPlaceLabel } from "./game/jobText.ts";
 import {
+  type ContextQuestLookup,
+  projectContextQuestDetails,
   projectInRangeQuestDetails,
+  projectQuestDetailsFallback,
   projectQuestEntries,
   projectQuestLines,
   projectTaskObjective,
@@ -2537,33 +2540,18 @@ export class GameModel {
       ? undefined
       : { action, id };
   }
+  private readonly contextQuestLookup: ContextQuestLookup = {
+    hasAvailableAction: (place) => this.availableContextOffer(place).action !== undefined,
+    hasSuspendedInteraction: () => Boolean(this.suspendedInteraction),
+    hintTarget: (place) => this.useHintTarget(place),
+    inRange: (flight, hint) => this.inRangeQuestDetails(flight, hint),
+    inSpace: () => this.screen === "space",
+    nearestPlace: () => this.nearest(),
+  };
+
   /** Read-only Use fallback. Every available interaction takes priority on every visit. */
   get contextQuestDetails(): ContextQuestDetails | null {
-    const flight = this.state.flight;
-    if (
-      this.screen !== "space" ||
-      !flight ||
-      this.state.dialogue ||
-      this.state.docked ||
-      this.suspendedInteraction
-    ) {
-      return null;
-    }
-    const place = this.nearest();
-    if (this.availableContextOffer(place).action !== undefined) {
-      return null;
-    }
-    return this.questDetailsFallback(flight, place, this.useHintTarget(place));
-  }
-
-  private questDetailsFallback(
-    flight: FlightState,
-    place: string | undefined,
-    hint: string | undefined,
-  ): ContextQuestDetails | null {
-    return this.screen !== "space" || (place !== undefined && hint === undefined)
-      ? null
-      : this.inRangeQuestDetails(flight, hint);
+    return projectContextQuestDetails(this.contextQuestLookup, this.state);
   }
 
   private inRangeQuestDetails(
@@ -5101,7 +5089,7 @@ export class GameModel {
     const action = id === undefined ? undefined : this.availablePlaceAction(id);
     if (!id || action === undefined) {
       const hint = this.useHintTarget(id);
-      const details = this.questDetailsFallback(f, id, hint);
+      const details = projectQuestDetailsFallback(this.contextQuestLookup, f, id, hint);
       if (details) {
         openQuestDetails?.(details);
       } else if (hint !== undefined) {
