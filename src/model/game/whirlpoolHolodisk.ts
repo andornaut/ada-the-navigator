@@ -1,6 +1,9 @@
+import type { ConversationLine } from "../../data/conversations.ts";
+import { holodiskInsertion } from "../../data/premiseCopy.ts";
 import type { GalaxyNumber, GameContent } from "../../data/types.ts";
 import { pickupTouched } from "../flight.ts";
 import type { FlightState, GalaxyProgress, SpaceObject, Vec } from "../types.ts";
+import { flightEncounterSeed } from "../world/index.ts";
 
 type HolodiskProgress = Readonly<Pick<GalaxyProgress, "holodisk" | "requiredSites" | "sounder">>;
 
@@ -52,4 +55,28 @@ export function holodiskTouched(
 ): boolean {
   const disk = floatingHolodisk(context, f);
   return disk !== undefined && pickupTouched(content, f, disk, content.tuning.flight.pickupRadius);
+}
+
+/** Keep the passive pickup lines tied to their original flight across Continue. */
+export function whirlpoolDiskPickupId(flight: Pick<FlightState, "seed" | "encounterSeed">): string {
+  return `chapter:3:holodisk:pickup:${flightEncounterSeed(flight)}`;
+}
+
+/** The restoration line precedes the memory for the number of disks Ada now holds. */
+export function whirlpoolDiskPickupCues(
+  holodisk: GameContent["premise"]["holodisk"],
+  held: number,
+  pickup: string,
+): readonly { readonly id: string; readonly line: ConversationLine }[] {
+  const { inserted, memories } = holodisk;
+  const cues: { id: string; line: ConversationLine }[] = [];
+  const restored = holodiskInsertion(held, inserted).at(-1);
+  if (restored?.speaker === "Astra") {
+    cues.push({ id: `${pickup}:restored`, line: { speaker: "astra", text: restored.text } });
+  }
+  const memory = memories[held - 1];
+  if (memory) {
+    cues.push({ id: `${pickup}:memory`, line: { speaker: "astra", text: memory } });
+  }
+  return cues;
 }

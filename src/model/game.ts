@@ -237,6 +237,8 @@ import {
   floatingHolodisk,
   holodiskTouched,
   holodiskWaypoint,
+  whirlpoolDiskPickupCues,
+  whirlpoolDiskPickupId,
   whirlpoolDiskWaypoint,
 } from "./game/whirlpoolHolodisk.ts";
 import { liveEnemy, worldSyncFlightRegion } from "./geography.ts";
@@ -1677,7 +1679,7 @@ export class GameModel {
     );
     const flight = this.state.flight;
     if (flight?.galaxy === 3 && this.current.holodisk) {
-      const pickup = this.whirlpoolDiskPickupId(flight);
+      const pickup = whirlpoolDiskPickupId(flight);
       if (this.state.seenConversations.includes(pickup)) {
         this.queueWhirlpoolDiskLines(pickup);
       }
@@ -3913,28 +3915,23 @@ export class GameModel {
     }
   }
 
-  private whirlpoolDiskPickupId(flight: FlightState): string {
-    return `chapter:3:holodisk:pickup:${flightEncounterSeed(flight)}`;
-  }
   private pickUpWhirlpoolDisk(flight: FlightState): void {
     if (!this.takeHolodisk()) {
       return;
     }
-    const pickup = this.whirlpoolDiskPickupId(flight);
+    const pickup = whirlpoolDiskPickupId(flight);
     // Resume unheard lines on Continue in the pickup flight. Older saves already have a story.
     this.state.seenConversations.push(pickup);
     this.queueWhirlpoolDiskLines(pickup);
   }
   private queueWhirlpoolDiskLines(pickup: string): void {
-    const { inserted, memories } = this.content.premise.holodisk;
     const held = holodisksHeld(this.state.progress);
-    const restored = holodiskInsertion(held, inserted).at(-1);
-    if (restored?.speaker === "Astra") {
-      this.talk.authoredCue(`${pickup}:restored`, { speaker: "astra", text: restored.text });
-    }
-    const memory = memories[held - 1];
-    if (memory) {
-      this.talk.authoredCue(`${pickup}:memory`, { speaker: "astra", text: memory });
+    for (const { id, line } of whirlpoolDiskPickupCues(
+      this.content.premise.holodisk,
+      held,
+      pickup,
+    )) {
+      this.talk.authoredCue(id, line);
     }
   }
   /**
