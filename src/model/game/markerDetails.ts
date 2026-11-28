@@ -1,4 +1,4 @@
-import { landmarkLabel,type LandmarkSite } from "../landmarks.ts";
+import { landmarkLabel, type LandmarkSite } from "../landmarks.ts";
 import type { MarkerDetails, PennyMarker } from "../pennyMarkers.ts";
 import type { QuestEntry } from "../questDetails.ts";
 import { questsForObject } from "../questObjectLinks.ts";
