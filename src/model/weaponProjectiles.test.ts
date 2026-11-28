@@ -289,7 +289,7 @@ describe("Phaser hitscan beam", () => {
     ]);
   });
 
-  it("deals one hit to a multipart ship and sparks on the chosen hull or live hardpoint", () => {
+  it("damages a multipart hull once and sparks on the selected drawn surface", () => {
     const id = "heavy";
     const definition = enemyDefinition(1, "capital", id);
     const heavy = sturdy(id, 230, nose.y);
@@ -303,14 +303,17 @@ describe("Phaser hitscan beam", () => {
     const before = heavy.enemy;
     const flight = beam([heavy]);
     const after = heavy.enemy;
-    const damaged = before.hardpoints.filter(
-      ({ hp, id }, index) => after.hardpoints[index]!.id === id && after.hardpoints[index]!.hp < hp,
-    );
-    expect(Number(after.hp < before.hp) + damaged.length).toBe(1);
+    expect(before.hp - after.hp).toBeCloseTo(4);
+    expect(after.hardpoints.map(({ hp }) => hp)).toEqual(before.hardpoints.map(({ hp }) => hp));
     const [impact] = activeWeaponImpacts(flight);
     expect(activeWeaponImpacts(flight)).toHaveLength(1);
-    const outline = damaged[0] ? enemyPartOutline(1, before, damaged[0].id) : enemyHull(before, 1);
-    expect(outlineContact(outline!, heavy, impact!, 0.01)).not.toBeNull();
+    const outlines = [
+      enemyHull(before, 1),
+      ...before.hardpoints.map(({ id }) => enemyPartOutline(1, before, id)),
+    ];
+    expect(
+      outlines.some((outline) => outline && outlineContact(outline, heavy, impact!, 0.01)),
+    ).toBe(true);
   });
 
   it("strikes an obstacle at the nose at once", () => {

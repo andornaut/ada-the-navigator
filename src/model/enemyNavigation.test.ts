@@ -134,12 +134,15 @@ it("produces varied deterministic routes and exact JSON-resumed futures without 
   expect(Object.keys(original).sort()).toEqual(keys);
 });
 
-it("keeps the platform and disabled mobile ships stationary", () => {
-  for (const state of [spawn("platform"), { ...spawn("frigate"), disabled: true }]) {
-    const next = advance(state);
-    expect(next.position).toEqual(state.position);
-    expect(next.velocity).toEqual({ x: 0, y: 0 });
-  }
+it("keeps platforms stationary and lets a legacy disabled frigate steer", () => {
+  const platform = spawn("platform");
+  const stationary = advance(platform);
+  expect(stationary.position).toEqual(platform.position);
+  expect(stationary.velocity).toEqual({ x: 0, y: 0 });
+  const frigate = spawn("frigate");
+  const active = advance({ ...frigate, disabled: true });
+  expect(active).toEqual(advance(frigate));
+  expect(active.position).not.toEqual(frigate.position);
 });
 
 it.each(["swarm", "fighter", "interceptor", "retaliator", "frigate", "capital"] as const)(

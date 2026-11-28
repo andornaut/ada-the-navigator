@@ -124,7 +124,7 @@ describe("hostile station geography and encounter persistence", () => {
   });
 
   it.each([5, 2, 6] as const)(
-    "pays the galaxy %i first disable once across save and later destruction",
+    "preserves the galaxy %i legacy paid disable across save and later destruction",
     (galaxy) => {
       const { body, encounter, flight, model } = fixture(galaxy);
       const wallet = model.state.economy.stardust;
@@ -133,9 +133,12 @@ describe("hostile station geography and encounter persistence", () => {
       expect(amount).toBeLessThanOrEqual(30);
       expect(awardHostileStationEncounterReward(model.state.economy, flight, body)).toBe(0);
       body.enemy!.disabled = true;
-      expect(awardHostileStationEncounterReward(model.state.economy, flight, body)).toBe(amount);
-      expect(encounter.rewarded).toBe(true);
-      expect(model.state.economy.stardust).toBe(wallet + amount);
+      expect(awardHostileStationEncounterReward(model.state.economy, flight, body)).toBe(0);
+      expect(encounter.rewarded).toBe(false);
+      expect(model.state.economy.stardust).toBe(wallet);
+      // Recreate the saved receipt and wallet from a build that paid for disable.
+      encounter.rewarded = true;
+      model.state.economy.stardust += amount;
       expect(awardHostileStationEncounterReward(model.state.economy, flight, body)).toBe(0);
       const saved = restoreSave(model.save())!;
       expect(saved).toEqual(model.state);
@@ -148,7 +151,7 @@ describe("hostile station geography and encounter persistence", () => {
 
   it("claims the existing event amount once without also crediting the wallet", () => {
     const { body, encounter, flight, model } = fixture();
-    body.enemy!.disabled = true;
+    body.hp = body.enemy!.hp = 0;
     const wallet = model.state.economy.stardust;
     expect(claimHostileStationEncounterReward(flight, body)).toBe(
       enemyStardust({ id: body.id, seed: flight.seed }, "hostileStation"),

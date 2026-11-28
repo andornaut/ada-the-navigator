@@ -23,25 +23,19 @@ function heavy(galaxy: GalaxyNumber = 1, id = "routing:heavy") {
 }
 
 describe("single-target heavy damage routing", () => {
-  it.each([1, 2, 3, 4, 5, 6] as const)(
-    "routes a part hit without hull loss or spill in galaxy %i",
-    (galaxy) => {
-      const { definition, state } = heavy(galaxy);
-      const part = state.hardpoints.find(
-        (part) => definition.hardpoints.find((value) => value.id === part.id)?.kind === "weapon",
-      )!;
-      const snapshot = structuredClone(state);
-      const amount = part.hp + definition.hp * 3;
-      const hit = damageEnemy(definition, { amount, hardpointId: part.id }, state);
-      expect(hit.hp).toBe(state.hp);
-      expect(hit.hardpoints.find((value) => value.id === part.id)!.hp).toBe(0);
-      expect(hit.hardpoints.filter((value) => value.id !== part.id)).toEqual(
-        state.hardpoints.filter((value) => value.id !== part.id),
-      );
-      expect(damageEnemy(definition, { amount, hardpointId: part.id }, hit).hp).toBe(state.hp);
-      expect(state).toEqual(snapshot);
-    },
-  );
+  it.each([1, 2, 3, 4, 5, 6] as const)("routes a part hit to the hull in galaxy %i", (galaxy) => {
+    const { definition, state } = heavy(galaxy);
+    const part = state.hardpoints.find(
+      (part) => definition.hardpoints.find((value) => value.id === part.id)?.kind === "weapon",
+    )!;
+    const snapshot = structuredClone(state);
+    const amount = 2.5;
+    const hit = damageEnemy(definition, { amount, hardpointId: part.id }, state);
+    expect(hit.hp).toBe(state.hp - amount);
+    expect(hit.hardpoints).toEqual(state.hardpoints);
+    expect(hit.disabled).toBe(false);
+    expect(state).toEqual(snapshot);
+  });
 
   it("routes a hull hit only to hull HP", () => {
     const { definition, state } = heavy();
@@ -56,44 +50,41 @@ describe("single-target heavy damage routing", () => {
     ).toBe(true);
   });
 
-  it("retains the flagship hull floor for hull hits and preserves it entirely for part hits", () => {
+  it("lets a context-free flagship hit take the hull to zero from either contact surface", () => {
     const { definition, state } = heavy(6, PHANTOM_FLAGSHIP_ID);
-    const part = state.hardpoints[0]!;
-    expect(damageEnemy(definition, { amount: 1000, hardpointId: part.id }, state).hp).toBe(
-      state.hp,
-    );
-    const hull = damageEnemy(definition, { amount: 1000, hardpointId: null }, state);
-    expect(hull.hp).toBe(1);
-    expect(hull.hardpoints).toEqual(state.hardpoints);
+    for (const hardpointId of [state.hardpoints[0]!.id, null]) {
+      const hit = damageEnemy(definition, { amount: 1000, hardpointId }, state);
+      expect(hit.hp).toBe(0);
+      expect(hit.hardpoints).toEqual(state.hardpoints);
+    }
   });
 
-  it("disables after the last weapon is destroyed, with engines and command still intact", () => {
+  it("applies repeated weapon contacts to the same hull without disabling it", () => {
     const { definition, state } = heavy();
-    let hit = state;
     const weapons = definition.hardpoints.filter((part) => part.kind === "weapon");
+    let hit = state;
     weapons.forEach((part, index) => {
-      hit = damageEnemy(definition, { amount: part.hp * 2, hardpointId: part.id }, hit);
-      expect(hit.disabled).toBe(index === weapons.length - 1);
-      expect(hit.hp).toBe(state.hp);
+      hit = damageEnemy(definition, { amount: 1, hardpointId: part.id }, hit);
+      expect(hit.hp).toBe(state.hp - index - 1);
+      expect(hit.disabled).toBe(false);
     });
-    expect(
-      hit.hardpoints.filter((part) => !weapons.some((weapon) => weapon.id === part.id)),
-    ).toEqual(state.hardpoints.filter((part) => !weapons.some((weapon) => weapon.id === part.id)));
+    expect(hit.hardpoints).toEqual(state.hardpoints);
     expect(enemyEffects(definition, hit)).toMatchObject({
       defeated: false,
-      disabled: true,
+      disabled: false,
       movementStopped: false,
     });
   });
 
-  it("does not redirect an invalid part target to the hull", () => {
+  it("ignores stale part metadata when applying a valid hull hit", () => {
     const { definition, state } = heavy();
-    expect(damageEnemy(definition, { amount: 1000, hardpointId: "unknown-part" }, state)).toBe(
-      state,
+    const damage = { amount: 1, hardpointId: "unknown-part" };
+    expect(damageEnemy(definition, damage, state)).toEqual(
+      damageEnemy(definition, { ...damage, hardpointId: null }, state),
     );
   });
 
-  it("keeps one missile hit on one part, excludes the primary target from blast damage, and resumes exactly", () => {
+  it("hits the primary hull once through a part outline and resumes exactly", () => {
     const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
     model.startGalaxy(1);
     playOpening(model);
@@ -138,14 +129,17 @@ describe("single-target heavy damage routing", () => {
         velocity: { x: 1, y: 0 },
       },
     ];
-    const before = state.hardpoints.reduce((sum, part) => sum + part.hp, 0);
-    const input = { aim: { x: 0, y: 0 }, fire: false, move: { x: 0, y: 0 }, use: false };
+    const before = state.hardpoints.map(({ hp }) => hp);
+    const input = {
+      aim: { x: 0, y: 0 },
+      fire: false,
+      move: { x: 0, y: 0 },
+      use: false,
+    };
     stepFlight(CONTENT, 0.000001, input, flight);
-    expect(target.enemy.hp).toBe(state.hp);
-    expect(target.hp).toBe(state.hp);
-    expect(before - target.enemy.hardpoints.reduce((sum, part) => sum + part.hp, 0)).toBeCloseTo(
-      weapon.damageRatio,
-    );
+    expect(target.enemy.hp).toBeCloseTo(state.hp - weapon.damageRatio);
+    expect(target.hp).toBe(target.enemy.hp);
+    expect(target.enemy.hardpoints.map(({ hp }) => hp)).toEqual(before);
     expect(activeBlastFlashes(flight)).toHaveLength(1);
     const saved = model.save();
     expect(restoreSave(JSON.parse(saved))).not.toBeNull();

@@ -220,7 +220,7 @@ describe("missile blasts as screen circles", () => {
     }
   });
 
-  it("routes a covered turret's share to the turret it covers deepest, else the hull", () => {
+  it("damages the hull once when the circle covers both hull and turret", () => {
     // One Heavy radius to a frigate's side, the circle covers its hull and a side turret's base.
     const target = enemyAt("frigate", { x: -HEAVY, y: 0 });
     const hull = target.hp;
@@ -229,9 +229,8 @@ describe("missile blasts as screen circles", () => {
     flight.shots.push(missile(HEAVY, false));
     stepFlight(CONTENT, 1 / 120, idle, flight);
     const after = live(flight);
-    expect(after.hp).toBe(hull);
-    const lost = after.enemy!.hardpoints.map(({ hp }, index) => parts[index]! - hp);
-    expect(lost.filter((amount) => amount > 0)).toHaveLength(1);
+    expect(after.hp).toBe(hull - 2);
+    expect(after.enemy!.hardpoints.map(({ hp }) => hp)).toEqual(parts);
   });
 
   it("pops armed mines whose centre the circle covers on screen, and no others", () => {

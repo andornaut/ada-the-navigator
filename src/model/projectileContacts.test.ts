@@ -190,7 +190,7 @@ describe("projectile contact positions and detonation", () => {
     expect(activeBlastFlashes(flight)[0]!.x).toBeLessThan(240);
   });
 
-  it("resolves a live hardpoint contact before its hull and does not repeat primary damage", () => {
+  it("resolves a hardpoint impact position and damages the primary hull once", () => {
     const { flight } = fixture();
     const definition = enemyDefinition(1, "frigate", "heavy");
     const enemy = createEnemy(
@@ -210,10 +210,11 @@ describe("projectile contact positions and detonation", () => {
     const target = rock({ enemy, id: "heavy", kind: "enemy", radius: 100, x: 300 });
     flight.objects = [target];
     flight.shots = [missile({ ...at, velocity: { x: 1, y: 0 } })];
-    const before = enemy.hardpoints.reduce((sum, part) => sum + part.hp, 0);
+    const before = enemy.hardpoints.map(({ hp }) => hp);
+    target.hp = enemy.hp;
     stepFlight(CONTENT, 0.000001, idle, flight);
-    const after = target.enemy!.hardpoints.reduce((sum, part) => sum + part.hp, 0);
-    expect(before - after).toBeCloseTo(WEAPON_CATALOG.rapidMissile[0].damageRatio);
+    expect(target.enemy!.hardpoints.map(({ hp }) => hp)).toEqual(before);
+    expect(enemy.hp - target.hp).toBeCloseTo(WEAPON_CATALOG.rapidMissile[0].damageRatio);
     expect(activeBlastFlashes(flight)).toHaveLength(1);
     expect(activeProjectileImpacts(flight)[0]!.x).not.toBe(target.x);
   });

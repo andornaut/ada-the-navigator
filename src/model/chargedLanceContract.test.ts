@@ -131,15 +131,24 @@ describe("charged lance six-damage contract", () => {
     expect(Math.hypot(tell.end.x - tell.muzzle.x, tell.end.y - tell.muzzle.y)).toBeLessThan(gap);
   });
 
-  it.each(["mount", "disabled", "salvaged", "removed"] as const)(
+  it("continues a pending tell with legacy mount damage and disabled state", () => {
+    const { flight, mount, target, tell } = fixture();
+    target.enemy!.hardpoints.find((part) => part.id === mount)!.hp = 0;
+    target.enemy!.disabled = true;
+    const before = flight.shield;
+    stepFlight(CONTENT, tellSeconds + 0.1, idle, flight);
+    expect(tell.fired).toBe(true);
+    expect(flight.shield).toBe(
+      before - ENEMY_ONLY_DAMAGE.chargedLance * CONTENT.tuning.flight.playerShotDamage,
+    );
+  });
+
+  it.each(["defeated", "salvaged", "removed"] as const)(
     "cancels before firing when its %s becomes unavailable",
     (reason) => {
-      const { flight, mount, target } = fixture();
-      if (reason === "mount") {
-        target.enemy!.hardpoints.find((part) => part.id === mount)!.hp = 0;
-      }
-      if (reason === "disabled") {
-        target.enemy!.disabled = true;
+      const { flight, target } = fixture();
+      if (reason === "defeated") {
+        target.hp = target.enemy!.hp = 0;
       }
       if (reason === "salvaged") {
         target.enemy!.salvaged = true;

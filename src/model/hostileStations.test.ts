@@ -24,7 +24,7 @@ import { GALAXY_SIDE } from "../data/world.ts";
 import { fromScreen, partsReach, worldParts } from "./convex.ts";
 import { createEnemy, damageEnemy, stepEnemy } from "./enemyAi.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
-import { createFlight, salvage, spawnPlannedHostileStation } from "./flight.ts";
+import { createFlight, spawnPlannedHostileStation } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import {
   worldActivateFlightRegion,
@@ -209,8 +209,12 @@ it("pages damaged state once and retains casualties and removal without rewards"
     station.id,
     station.enemy!.weaponLevel,
   );
-  station.enemy = damageEnemy(definition, { amount: 999, hardpointId: "weapon-0" }, station.enemy!);
-  expect(station.enemy.hp).toBe(175);
+  const mount = station.enemy!.hardpoints.find(({ id }) => id === "weapon-0")!;
+  const hp = station.hp;
+  station.enemy = damageEnemy(definition, { amount: 7, hardpointId: mount.id }, station.enemy!);
+  station.hp = station.enemy.hp;
+  expect(station.hp).toBe(hp - 7);
+  expect(station.enemy.hardpoints.find(({ id }) => id === mount.id)).toEqual(mount);
   const lost = defenders[0]!;
   lost.hp = 0;
   lost.enemy!.hp = 0;
@@ -232,15 +236,8 @@ it("pages damaged state once and retains casualties and removal without rewards"
   expect(resumed.station).toEqual(saved);
   expect(resumed.defenders.map(({ id }) => id)).toEqual([defenders[1]!.id]);
   expect(f.objects.filter(({ id }) => id === station.id)).toHaveLength(1);
-  for (const part of definition.hardpoints) {
-    station.enemy = damageEnemy(definition, { amount: 999, hardpointId: part.id }, station.enemy!);
-  }
-  expect(station.enemy.disabled).toBe(true);
-  expect(station.enemy.hp).toBe(175);
-  f.player = { ...plan.point };
-  const noRewards = structuredClone(f);
-  expect(salvage(CONTENT, f)).toBe(false);
-  expect(f).toEqual(noRewards);
+  expect(resumed.station.enemy!.disabled).toBe(false);
+  expect(resumed.station.hp).toBe(hp - 7);
   station.enemy = damageEnemy(definition, { amount: 999, hardpointId: null }, station.enemy!);
   station.hp = station.enemy.hp;
   expect(station.hp).toBe(0);

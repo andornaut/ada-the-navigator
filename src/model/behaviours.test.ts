@@ -60,7 +60,10 @@ const range = (state: EnemyState, player = ada) =>
 function run(
   ships: EnemyState[],
   frames: number,
-  options: { context?: (peers: readonly EnemyState[]) => EnemyContext; each?: () => void } = {},
+  options: {
+    context?: (peers: readonly EnemyState[]) => EnemyContext;
+    each?: () => void;
+  } = {},
 ): { shots: number[] } {
   const shots = ships.map(() => 0);
   for (let frame = 0; frame < frames; frame++) {
@@ -511,69 +514,45 @@ describe("engine thrust", () => {
     return Math.hypot(ships[0]!.velocity.x, ships[0]!.velocity.y);
   }
   const capital = () => spawn("capital", { x: 0, y: 0 }, false);
-  /** Destroys each named part with exactly its HP, preserving the hull. */
-  const disable = (ids: string[], state: EnemyState) =>
-    ids.reduce((next, id) => {
-      const amount = enemyCatalog.capital.hardpoints.find((part) => part.id === id)!.hp;
-      return damageEnemy(enemyCatalog.capital, { amount, hardpointId: id }, next);
-    }, state);
-
-  it.each([
-    [[], 1],
-    [["engine-left"], 0.5],
-    [["engine-left", "engine-right"], 0],
-  ] as const)("scales capital top speed with working engines when %j are out", (ids, share) => {
-    const state = disable([...ids], capital());
-    const effects = enemyEffects(enemyCatalog.capital, state);
-    expect(effects.thrust).toBe(share);
-    expect(effects.movementStopped).toBe(share === 0);
-    expect(effects.defeated).toBe(false);
-    const full = enemyCatalog.capital.physics.maxSpeed;
-    expect(cruise(state)).toBeCloseTo(full * share, 0);
+  const legacyEngineDamage = (ids: readonly string[], state: EnemyState): EnemyState => ({
+    ...state,
+    hardpoints: state.hardpoints.map((part) => (ids.includes(part.id) ? { ...part, hp: 0 } : part)),
   });
 
-  it("slows a capital that loses an engine through its own physics", () => {
-    const full = enemyCatalog.capital.physics.maxSpeed;
-    const moving = { ...capital(), velocity: { x: full, y: 0 } };
-    const damaged = disable(["engine-left"], moving);
-    const ships = [{ ...damaged, home: { x: 100000, y: 0 }, returning: true }];
-    run(ships, 1, { context: (peers) => ({ ...context(peers), visibility: "unknown" }) });
-    const speed = Math.hypot(ships[0]!.velocity.x, ships[0]!.velocity.y);
-    expect(speed).toBeLessThan(full);
-    expect(speed).toBeGreaterThan(full * 0.9);
-  });
+  it.each([[[]], [["engine-left"]], [["engine-left", "engine-right"]]] as const)(
+    "keeps capital top speed with legacy engine damage %j",
+    (ids) => {
+      const state = legacyEngineDamage(ids, capital());
+      expect(enemyEffects(enemyCatalog.capital, state)).toMatchObject({
+        defeated: false,
+        movementStopped: false,
+        thrust: 1,
+      });
+      expect(cruise(state)).toBeCloseTo(enemyCatalog.capital.physics.maxSpeed, 0);
+    },
+  );
 
-  it("coasts a one-engine frigate to rest when its engine goes, while its guns fire", () => {
-    const state = damageEnemy(
-      enemyCatalog.frigate,
-      { amount: 4, hardpointId: "engine" },
-      { ...spawn("frigate", { x: 300, y: 0 }), velocity: { x: -20, y: 0 } },
-    );
-    const effects = enemyEffects(enemyCatalog.frigate, state);
-    expect(effects).toMatchObject({ defeated: false, movementStopped: true, thrust: 0 });
-    // No thrust: it keeps its momentum, slowing toward rest, and never speeds up.
+  it("keeps a frigate moving and firing with its legacy engine HP at zero", () => {
+    const original = {
+      ...spawn("frigate", { x: 300, y: 0 }),
+      velocity: { x: -20, y: 0 },
+    };
+    const state = legacyEngineDamage(["engine"], original);
     const result = stepEnemy(enemyCatalog.frigate, context([state]), state);
-    expect(result.velocity.x).toBeLessThan(0);
-    expect(result.velocity.x).toBeGreaterThan(-20);
-    expect(result.velocity.y).toBeCloseTo(0, 6);
+    const healthy = stepEnemy(enemyCatalog.frigate, context([original]), original);
+    expect(result.velocity).toEqual(healthy.velocity);
+    expect(result.fire).toEqual(healthy.fire);
     expect(result.fire.length).toBeGreaterThan(0);
-    // At rest it stays at rest.
-    const still = { ...state, velocity: { x: 0, y: 0 } };
-    expect(stepEnemy(enemyCatalog.frigate, context([still]), still).velocity).toEqual({
-      x: 0,
-      y: 0,
-    });
   });
 
   it("destroys a heavy at 0 hull, whatever its parts", () => {
     const definition = enemyCatalog.capital;
-    // Losing engines preserves the hull.
-    const engines = disable(["engine-left", "engine-right"], capital());
+    const engines = legacyEngineDamage(["engine-left", "engine-right"], capital());
     expect(engines.hp).toBe(definition.hp);
     expect(enemyEffects(definition, engines)).toMatchObject({ defeated: false, disabled: false });
     const broken = damageEnemy(definition, { amount: definition.hp, hardpointId: null }, engines);
     expect(enemyEffects(definition, broken).defeated).toBe(true);
-    expect(broken.hardpoints.find((part) => part.id === "command")!.hp).toBe(5);
+    expect(broken.hardpoints).toEqual(engines.hardpoints);
   });
 });
 

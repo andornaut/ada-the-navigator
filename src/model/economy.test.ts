@@ -36,7 +36,6 @@ import {
   enemyStardust,
   rollEnemyDrop,
   rollRockAmmoDrop,
-  rollSalvageDrop,
   splitResourcePickup,
 } from "./drops.ts";
 import { createEnemy } from "./enemyAi.ts";
@@ -688,22 +687,20 @@ describe("Stardust drops", () => {
     }
   });
 
-  it("shares one heavy roll between original and wreck IDs, flooring odd salvage payouts", () => {
-    let odd = 0;
+  it("shares the defeat outcome between original and wreck IDs", () => {
+    const next = vi.fn(() => 0);
     for (const archetype of HEAVIES) {
       for (let index = 0; index < 400; index++) {
         const id = `h:${index}`;
-        const next = vi.fn(() => 0);
-        const destroyed = rollEnemyDrop(ECONOMY, { id: wreckId(id), seed: 3 }, archetype, next);
-        expect(next).not.toHaveBeenCalled();
-        expect(destroyed.upgrade).toBe(false);
-        const salvaged = rollSalvageDrop(ECONOMY, { id, seed: 3 }, archetype, next);
-        expect(next).toHaveBeenCalledOnce();
-        expect(salvaged).toEqual({ stardust: Math.floor(destroyed.stardust / 2), upgrade: true });
-        odd += destroyed.stardust % 2;
+        const identity = { id, seed: 3 };
+        const drop = rollEnemyDrop(ECONOMY, identity, archetype, next);
+        expect(rollEnemyDrop(ECONOMY, { ...identity, id: wreckId(id) }, archetype, next)).toEqual(
+          drop,
+        );
+        expect(drop.stardust).toBe(drop.upgrade ? 0 : enemyStardust(identity, archetype));
       }
     }
-    expect(odd).toBeGreaterThan(0);
+    expect(next).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -728,27 +725,21 @@ describe("Stardust drops", () => {
   );
 
   it.each([
-    [1, "frigate"],
-    [1, "capital"],
-    [2, "platform"],
+    ["frigate", 0.1],
+    ["platform", 0.1],
+    ["capital", 0.2],
   ] as const)(
-    "drops an upgrade pickup from galaxy %i's %s 20% of the time when salvaged, never when destroyed",
-    (galaxy, archetype) => {
-      let dropped = 0;
-      const identity = { id: `route-fixture:${galaxy}`, seed: 5 };
-      const reward = enemyStardust(identity, archetype);
-      expect(
-        rollSalvageDrop(ECONOMY, identity, archetype, () => 0.2 - Number.EPSILON).upgrade,
-      ).toBe(true);
-      expect(rollSalvageDrop(ECONOMY, identity, archetype, () => 0.2).upgrade).toBe(false);
-      for (let index = 0; index < 20000; index++) {
-        const salvaged = rollSalvageDrop(ECONOMY, identity, archetype, dropRandom(5, `s:${index}`));
-        expect(salvaged.stardust).toBe(Math.floor(reward / 2));
-        dropped += salvaged.upgrade ? 1 : 0;
-        const destroyed = rollEnemyDrop(ECONOMY, identity, archetype, dropRandom(5, `d:${index}`));
-        expect(destroyed).toEqual({ stardust: reward, upgrade: false });
+    "replaces the full %s payout with an upgrade at probability %f",
+    (archetype, chance) => {
+      let upgrades = 0;
+      const count = 3000;
+      for (let index = 0; index < count; index++) {
+        const identity = { id: `route-fixture:${index}`, seed: 5 };
+        const drop = rollEnemyDrop(ECONOMY, identity, archetype, () => 0);
+        expect(drop.stardust).toBe(drop.upgrade ? 0 : enemyStardust(identity, archetype));
+        upgrades += Number(drop.upgrade);
       }
-      expect(Math.abs(dropped / 20000 - 0.2)).toBeLessThan(0.006);
+      expect(Math.abs(upgrades / count - chance)).toBeLessThan(0.025);
     },
   );
 

@@ -352,23 +352,19 @@ describe("every movable enemy keeps moving", () => {
     expect(Math.hypot(boxed.velocity.x, boxed.velocity.y)).toBeGreaterThan(0);
   });
 
-  it("leaves wrecked, disabled and engineless ships and fixed platforms to their physics", () => {
-    const disabled = { ...spawn("frigate", "disabled", { x: 0, y: 0 }), disabled: true };
-    expect(
-      slowest(enemyCatalog.frigate, (state) => observation([state]), 40, 39, {
-        ...disabled,
-        velocity: { x: 50, y: 0 },
-      }).state.velocity,
-    ).toEqual({ x: 0, y: 0 });
-    const engineless = spawn("frigate", "engineless", { x: 0, y: 0 });
-    engineless.hardpoints = engineless.hardpoints.map((part) =>
-      part.id === "engine" ? { ...part, hp: 0 } : part,
-    );
-    expect(
-      speed(
-        slowest(enemyCatalog.frigate, (state) => observation([state]), 30, 29, engineless).state,
-      ),
-    ).toBe(0);
+  it("keeps legacy damaged frigates moving and leaves wrecks and platforms to their physics", () => {
+    const frigate = spawn("frigate", "legacy", { x: 0, y: 0 });
+    const legacy = {
+      ...frigate,
+      disabled: true,
+      hardpoints: frigate.hardpoints.map((part) => ({ ...part, hp: 0 })),
+    };
+    const observe = (state: EnemyState) => observation([state]);
+    const healthy = slowest(enemyCatalog.frigate, observe, 30, 29, frigate).state;
+    const active = slowest(enemyCatalog.frigate, observe, 30, 29, legacy).state;
+    expect(active.velocity).toEqual(healthy.velocity);
+    expect(active.position).toEqual(healthy.position);
+    expect(speed(active)).toBeGreaterThan(0);
     const wreck = {
       ...spawn("fighter", "wreck", { x: 0, y: 0 }),
       hp: 0,

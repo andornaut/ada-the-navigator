@@ -522,27 +522,32 @@ describe("enemy rules", () => {
     expect(stepEnemy(definition, unknown, hit).state.lastSeen).toBeNull();
   });
 
-  it("coasts on its momentum without engines while the remaining weapon can fire", () => {
+  it("preserves independent mount firing phases and steering after legacy part damage", () => {
     const definition = enemyCatalog.frigate;
     const moving = { ...spawn("frigate"), velocity: { x: 30, y: 10 } };
-    const engineLost = damageEnemy(definition, { amount: 4, hardpointId: "engine" }, moving);
-    const portLost = damageEnemy(definition, { amount: 3, hardpointId: "port" }, engineLost);
-    const result = stepEnemy(definition, observation(portLost), portLost);
-    // No thrust: the hull keeps drifting the way it went and only slows.
-    expect(Math.hypot(result.velocity.x, result.velocity.y)).toBeGreaterThan(0);
-    expect(Math.hypot(result.velocity.x, result.velocity.y)).toBeLessThan(Math.hypot(30, 10));
-    expect(result.velocity.y * 30).toBeCloseTo(result.velocity.x * 10, 6);
-    expect(result.effects.defeated).toBe(false);
+    const legacy = {
+      ...moving,
+      hardpoints: moving.hardpoints.map((part) =>
+        part.id === "engine" || part.id === "port" ? { ...part, hp: 0 } : part,
+      ),
+    };
+    const result = stepEnemy(definition, observation(legacy), legacy);
+    const healthy = stepEnemy(definition, observation(moving), moving);
+    expect(result.velocity).toEqual(healthy.velocity);
+    expect(result.effects).toEqual(healthy.effects);
     expect(result.state.firePhasesInitialized).toBe(true);
-    expect(result.fire).toEqual([]);
-    const wait = result.state.hardpoints.find((part) => part.id === "starboard")!.cooldown;
+    expect(result.fire).toEqual(healthy.fire);
+    expect(result.state.hardpoints.map(({ cooldown }) => cooldown)).toEqual(
+      healthy.state.hardpoints.map(({ cooldown }) => cooldown),
+    );
+    const wait = result.state.hardpoints.find((part) => part.id === "port")!.cooldown;
     expect(wait).toBeGreaterThan(0);
     const ready = stepEnemy(
       definition,
       { ...observation(result.state), dt: wait + 1e-6 },
       result.state,
     );
-    expect(ready.fire.map((shot) => shot.hardpointId)).toEqual(["starboard"]);
+    expect(ready.fire.map(({ hardpointId }) => hardpointId)).toContain("port");
   });
 
   it("fires each hardpoint's projectiles at its profile's speed", () => {
@@ -707,32 +712,35 @@ describe("enemy rules", () => {
     expect(stepEnemy(enemyCatalog.capital, context, expired).state.returning).toBe(true);
   });
 
-  it("disables a heavy once its weapons are destroyed and destroys it only at 0 hull", () => {
+  it("fires every turret from a live heavy with a legacy disabled flag and zero mount HP", () => {
     const definition = enemyCatalog.capital;
-    // This existing engagement tests disable and hull routing, not first-entry timing.
-    let state: EnemyState = { ...spawn("capital"), firePhasesInitialized: true };
-    // Every turret fires; the front Lasers hold with Ada off the nose.
+    const original = {
+      ...spawn("capital"),
+      firePhasesInitialized: true as const,
+    };
+    const state = {
+      ...original,
+      disabled: true,
+      hardpoints: original.hardpoints.map((part) => ({ ...part, hp: 0 })),
+    };
+    const healthy = stepEnemy(definition, observation(original), original);
+    const result = stepEnemy(definition, observation(state), state);
     const volleys = definition.hardpoints.flatMap((part) =>
       part.kind === "weapon" && !part.fixed ? part.fire.angles : [],
     );
-    expect(stepEnemy(definition, observation(state), state).fire).toHaveLength(volleys.length);
-    for (const part of definition.hardpoints.filter((part) => part.kind === "weapon")) {
-      expect(state.disabled).toBe(false);
-      state = damageEnemy(definition, { amount: part.hp, hardpointId: part.id }, state);
-    }
-    // Destroying the weapons leaves the hull intact.
-    expect(state).toMatchObject({ disabled: true, hp: definition.hp });
-    const moving = { ...state, velocity: { x: 30, y: 0 } };
-    const result = stepEnemy(definition, observation(moving), moving);
-    expect(result.effects).toMatchObject({ defeated: false, disabled: true });
-    expect(result.fire).toEqual([]);
-    // It stops steering and coasts to rest through its own physics.
-    expect(result.velocity.x).toBeLessThan(30);
-    expect(result.velocity.x).toBeGreaterThan(0);
-    expect(result.state.disabled).toBe(true);
-    state = damageEnemy(definition, { amount: definition.hp, hardpointId: null }, result.state);
-    expect(enemyEffects(definition, state).defeated).toBe(true);
-    expect(stepEnemy(definition, observation(state), state).fire).toEqual([]);
+    expect(result.fire).toHaveLength(volleys.length);
+    expect(result.fire).toEqual(healthy.fire);
+    expect(result.state.hardpoints.map(({ cooldown }) => cooldown)).toEqual(
+      healthy.state.hardpoints.map(({ cooldown }) => cooldown),
+    );
+    expect(result.state).toMatchObject({ disabled: false, hp: definition.hp });
+    const destroyed = damageEnemy(
+      definition,
+      { amount: definition.hp, hardpointId: null },
+      result.state,
+    );
+    expect(enemyEffects(definition, destroyed).defeated).toBe(true);
+    expect(stepEnemy(definition, observation(destroyed), destroyed).fire).toEqual([]);
   });
 
   it("moves debris at constant velocity without changing the original", () => {
@@ -999,7 +1007,7 @@ describe("enemy ship physics and hull rotation", () => {
     expect(state.facing).toEqual({ x: 1, y: 0 });
   });
 
-  it("keeps the hull facing its drift when a disabled engine stops thrust", () => {
+  it("steers along the same heading after a legacy engine hit", () => {
     const definition = enemyCatalog.frigate;
     const moving = {
       ...spawn("frigate"),
@@ -1007,14 +1015,18 @@ describe("enemy ship physics and hull rotation", () => {
       heading: { x: 1, y: 0 },
       velocity: { x: 30, y: 0 },
     };
-    const engineLost = damageEnemy(definition, { amount: 4, hardpointId: "engine" }, moving);
-    const context = { ...observation(engineLost), player: { x: 0, y: 300 } };
-    const result = stepEnemy(definition, context, engineLost);
-    // Ada lies to the side, but with no thrust the hull cannot steer toward her.
-    expect(result.velocity.x).toBeGreaterThan(0);
-    expect(result.velocity.x).toBeLessThan(30);
-    expect(result.velocity.y).toBeCloseTo(0, 9);
-    expect(result.state.facing).toEqual({ x: 1, y: 0 });
+    const legacy = {
+      ...moving,
+      hardpoints: moving.hardpoints.map((part) =>
+        part.id === "engine" ? { ...part, hp: 0 } : part,
+      ),
+    };
+    const context = { ...observation(moving), player: { x: 0, y: 300 } };
+    const healthy = stepEnemy(definition, context, moving);
+    const result = stepEnemy(definition, context, legacy);
+    expect(result.velocity).toEqual(healthy.velocity);
+    expect(result.state.facing).toEqual(healthy.state.facing);
+    expect(Math.hypot(result.velocity.x, result.velocity.y)).toBeGreaterThan(30);
   });
 
   it("rotates legacy fraction offsets with the canonical hull span at exactly 90 degrees", () => {
@@ -1152,12 +1164,23 @@ describe("enemy aim", () => {
   function platformShots(
     seconds: number,
     lead = 1,
-  ): { ahead: number; aimError: number; angle: number; part: string; time: number }[] {
+  ): {
+    ahead: number;
+    aimError: number;
+    angle: number;
+    part: string;
+    time: number;
+  }[] {
     let state = { ...spawn("platform"), engaged: true, id: "platform:aim" };
     const radius = 300;
     const rate = 100 / radius;
-    const shots: { ahead: number; aimError: number; angle: number; part: string; time: number }[] =
-      [];
+    const shots: {
+      ahead: number;
+      aimError: number;
+      angle: number;
+      part: string;
+      time: number;
+    }[] = [];
     const dt = 1 / 60;
     for (let frame = 0; frame < seconds / dt; frame++) {
       const time = frame * dt;

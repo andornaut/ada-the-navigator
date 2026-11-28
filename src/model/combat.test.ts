@@ -21,11 +21,10 @@ import {
 import { byPosition, GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import { SCREEN } from "../data/screen.ts";
 import { SPAWNER_POLICIES, SPAWNER_REGIONS } from "../data/spawnerCatalog.ts";
-import type { EnemyWeapon, GalaxyNumber, Weapon } from "../data/types.ts";
+import type { EnemyWeapon, GalaxyNumber } from "../data/types.ts";
 import { weaponAt } from "../data/weaponCatalog.ts";
 import { sceneryBodyContact } from "./asteroids.ts";
 import { fromScreen, outlineContact, outlinesContact, type Parts } from "./convex.ts";
-import { carriesStardust, enemyStardust } from "./drops.ts";
 import { createEnemy, enemyFireLine } from "./enemyAi.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
@@ -42,17 +41,23 @@ import {
   placeDestinationAhead,
   rollEncounter,
   routeBlocked,
-  salvage,
-  salvageTarget,
   settleRouteEncounters,
   stepFlight,
   teleport,
 } from "./flight.ts";
+import { hit as resolveHit } from "./flight/hitResolution.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
 import { playerWeaponCoverage } from "./playerWeaponCoverage.ts";
 import { shipBody, shipCircleContact } from "./shipBody.ts";
 import { direction as unit } from "./shipPhysics.ts";
-import type { FlightInput, FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
+import type {
+  FlightEvent,
+  FlightInput,
+  FlightState,
+  GalaxyProgress,
+  SpaceObject,
+  Vec,
+} from "./types.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const progress: GalaxyProgress = {
@@ -137,11 +142,6 @@ function armedWith(
   )![0];
   const target = ship(archetype, point, enemyDefinition(galaxy, archetype, id), id);
   return { mount, target: only(target, mount) };
-}
-/** A shared weapon's level 1 volley, one projectile kind per bolt, missile or dot. */
-function volley(weapon: EnemyWeapon | undefined): string[] {
-  const shared = weapon && weaponAt(weapon as Weapon, 1);
-  return shared ? shared.anglesDegrees.map(() => shared.projectileKind) : [];
 }
 /** Holds every hardpoint's fire but `id`'s, which fires at once. */
 function only(object: SpaceObject, id: string): SpaceObject {
@@ -300,148 +300,87 @@ describe("integrated combat", () => {
     expect(missile.y).toBeCloseTo(position.y + velocity.y * slice);
   });
 
-  it("damages only targeted parts, disables a heavy without weapons and destroys it at 0 hull", () => {
-    // Each part consumes only its own HP; separate hull hits must destroy the hull.
+  it("damages the hull through mounts, keeps their volleys live, and destroys the heavy once", () => {
     const flight = empty();
-    const target = ship("capital", { x: 400, y: 0 }, enemyDefinition(1, "capital", "target"));
-    // Its 400 offset lies outside the 720x360 base view, where enemies hold fire.
+    const id = "target";
+    const definition = enemyDefinition(1, "capital", id);
+    const target = ship("capital", { x: 400, y: 0 }, definition, id);
     const wide = { ...idle, viewportWidth: 2 * SCREEN.width };
     flight.objects.push(target);
     target.enemy!.velocity = { x: 20, y: 10 };
-    // A moving hull faces its velocity.
-    target.enemy!.facing = { x: 20 / Math.hypot(20, 10), y: 10 / Math.hypot(20, 10) };
-    const hullHp = target.enemy!.hp;
-    const destroyPart = (id: string) => {
-      const damage = target.enemy!.hardpoints.find((part) => part.id === id)!.hp;
-      expect(damage).toBeGreaterThan(0);
-      hit(flight, partPosition(target, id), damage);
+    target.enemy!.facing = {
+      x: 20 / Math.hypot(20, 10),
+      y: 10 / Math.hypot(20, 10),
     };
-    destroyPart("engine-left");
-    destroyPart("weapon-left");
-    stepFlight(CONTENT, 0.001, wide, flight);
-    expect(target.enemy!.hp).toBe(hullHp);
-    for (const id of ["engine-left", "weapon-left"]) {
-      expect(target.enemy!.hardpoints.find((part) => part.id === id)!.hp).toBe(0);
-    }
+    const hullHp = target.enemy!.hp;
+    const parts = target.enemy!.hardpoints.map(({ hp }) => hp);
+    hit(flight, partPosition(target, "engine-left"), 2);
+    hit(flight, partPosition(target, "weapon-left"), 3);
+    const wounded = stepFlight(CONTENT, 0.001, wide, flight);
+    expect(wounded).not.toContainEqual({ id, type: "enemyDisabled" });
+    expect(target.enemy).toMatchObject({ disabled: false, hp: hullHp - 5 });
+    expect(target.enemy!.hardpoints.map(({ hp }) => hp)).toEqual(parts);
     flight.shots = [];
+    delete flight.pendingPellets;
     const before = { x: target.x, y: target.y };
     for (const part of target.enemy!.hardpoints) {
       part.cooldown = 0;
     }
     stepFlight(CONTENT, 0.01, wide, flight);
-    // One working engine of two still drives the hull at half its top speed, and the other three
-    // mounts still fire their loadout's volleys.
     expect({ x: target.x, y: target.y }).not.toEqual(before);
-    const loadout = heavyLoadout("capital", 1, "target")!;
-    const standing = ["weapon-right", "weapon-rear-left", "weapon-rear-right"].flatMap((mount) =>
-      volley(loadout.get(mount)),
-    );
+    const standing = definition.hardpoints.flatMap((part) => {
+      if (part.kind !== "weapon" || part.fixed) {
+        return [];
+      }
+      expect(target.enemy!.hardpoints.find(({ id }) => id === part.id)!.cooldown).toBeGreaterThan(
+        0,
+      );
+      const { angles, projectile, weapon } = part.fire;
+      return projectile === "beam" || projectile === "mine" || weapon === "ringBurst"
+        ? []
+        : angles.map(() => projectile);
+    });
+    expect(standing.length).toBeGreaterThan(0);
     const committed = [...flight.shots, ...(flight.pendingPellets ?? []).map(({ shot }) => shot)];
-    expect(committed.map((shot) => shot.projectile).sort()).toEqual(standing.sort());
-    flight.shots = [];
-    delete flight.pendingPellets;
-    // Its front Lasers, with Ada astern of the nose, hold fire. Destroying the last weapons, the
-    // front Lasers among them, disables it once while hull remains.
-    for (const id of ["weapon-right", "weapon-rear-left", "weapon-rear-right", "prow-left"]) {
-      destroyPart(id);
-    }
-    expect(stepFlight(CONTENT, 0.01, wide, flight)).not.toContainEqual({
-      id: "target",
-      type: "enemyDisabled",
-    });
-    destroyPart("prow-right");
-    const disabling = stepFlight(CONTENT, 0.01, wide, flight);
-    expect(disabling).toContainEqual({ id: "target", type: "enemyDisabled" });
-    expect(disabling).not.toContainEqual({ id: target.id, type: "enemyDestroyed" });
-    expect(hullHp).toBeGreaterThan(0);
-    expect(target.enemy).toMatchObject({ disabled: true, hp: hullHp });
-    for (const id of [
-      "weapon-left",
-      "weapon-right",
-      "weapon-rear-left",
-      "weapon-rear-right",
-      "prow-left",
-      "prow-right",
-    ]) {
-      expect(target.enemy!.hardpoints.find((part) => part.id === id)!.hp).toBe(0);
-    }
-    expect(flight.objects).toContain(target);
-    // It holds fire and coasts to rest on its other engine.
-    flight.shots = [];
-    target.enemy!.hardpoints.forEach((part) => (part.cooldown = 0));
-    const coasting = Math.hypot(target.enemy!.velocity.x, target.enemy!.velocity.y);
-    expect(coasting).toBeGreaterThan(0);
-    const later = stepFlight(CONTENT, 20, wide, flight);
-    expect(later.some((event) => event.type === "enemyDisabled")).toBe(false);
-    expect(flight.shots.filter((shot) => shot.enemy)).toEqual([]);
-    expect(Math.hypot(target.enemy!.velocity.x, target.enemy!.velocity.y)).toBeLessThan(0.01);
-    // Destroying the command still cannot spill into the hull.
-    destroyPart("command");
-    expect(stepFlight(CONTENT, 0.01, wide, flight)).not.toContainEqual({
-      id: target.id,
-      type: "enemyDestroyed",
-    });
-    expect(target.enemy!.hardpoints.find((part) => part.id === "command")!.hp).toBe(0);
-    expect(target.enemy!.hp).toBe(hullHp);
-    // A separate hit on the exposed hull damages only the hull, then the final hit destroys it.
-    hit(flight, partPosition(target, "command"));
-    stepFlight(CONTENT, 0.01, wide, flight);
-    const remainingHull = hullHp - CONTENT.tuning.flight.playerShotDamage;
-    expect(target.enemy!.hp).toBe(remainingHull);
-    hit(flight, partPosition(target, "command"), remainingHull);
-    expect(stepFlight(CONTENT, 0.01, wide, flight)).toContainEqual({
-      id: target.id,
-      type: "enemyDestroyed",
-    });
+    expect(
+      committed
+        .filter(({ enemy, enemyWeapon }) => enemy && enemyWeapon !== "ringBurst")
+        .map(({ projectile }) => projectile)
+        .sort(),
+    ).toEqual(standing.sort());
+    const defeat = { id: target.id, type: "enemyDestroyed" };
+    hit(flight, partPosition(target, "command"), target.hp);
+    expect(
+      stepFlight(CONTENT, 0.01, wide, flight).filter(({ type }) => type === "enemyDestroyed"),
+    ).toEqual([defeat]);
     expect(flight.objects).not.toContain(target);
-    expect(stepFlight(CONTENT, 0.01, wide, flight)).not.toContainEqual({
-      id: target.id,
-      type: "enemyDestroyed",
-    });
+    expect(stepFlight(CONTENT, 0.01, wide, flight)).not.toContainEqual(defeat);
   });
 
-  it("salvages a disabled heavy within Talk range for its Stardust and spares it", () => {
-    // Sunflower's frigate: a 40 HP hull.
+  it("keeps a previously salvaged capital inert and preserves the paid outcome", () => {
     const flight = empty();
-    const target = ship("frigate", { x: 120, y: 0 }, enemyDefinition(1, "frigate"));
-    flight.objects.push(target);
-    expect(salvageTarget(CONTENT, flight)).toBeUndefined();
+    const target = ship("capital", { x: 120, y: 0 });
     target.enemy!.disabled = true;
-    expect(salvageTarget(CONTENT, flight)).toBe(target);
-    flight.player = { x: 120 - CONTENT.tuning.exclusionRadius - 1, y: 0 };
-    expect(salvageTarget(CONTENT, flight)).toBeUndefined();
-    expect(salvage(CONTENT, flight)).toBe(false);
-    flight.player = { x: 0, y: 0 };
-    expect(salvage(CONTENT, flight)).toBe(true);
-    expect(target.enemy!.salvaged).toBe(true);
-    const stardust = flight.objects
-      .filter(carriesStardust)
-      .reduce((sum, object) => sum + object.amount!, 0);
-    expect(stardust).toBe(
-      Math.floor(enemyStardust({ id: target.id, seed: flight.seed }, "frigate") / 2),
-    );
-    expect(salvageTarget(CONTENT, flight)).toBeUndefined();
-    expect(salvage(CONTENT, flight)).toBe(false);
-    // Shots and Ada pass through the spared ship, which neither moves nor fires.
-    flight.objects = flight.objects.filter((object) => object === target);
-    target.enemy!.hardpoints.forEach((part) => (part.cooldown = 0));
-    hit(flight, { x: target.x, y: target.y }, 3);
+    target.enemy!.salvaged = true;
+    flight.objects.push(target);
+    const before = structuredClone(target);
+    hit(flight, target, 999);
     flight.player = { x: target.x, y: target.y };
     stepFlight(CONTENT, 0.1, idle, flight);
-    expect(target.enemy!.hp).toBe(40);
+    expect(target).toEqual(before);
     expect(flight.player).toEqual({ x: target.x, y: target.y });
     expect(flight.shots.filter((shot) => shot.enemy)).toEqual([]);
-    expect(flight.objects).toContain(target);
+    expect(flight.objects.filter(({ kind }) => kind === "pickup" || kind === "wreck")).toEqual([]);
   });
 
-  it("unblocks a route once its guard is disabled, salvaged or not", () => {
+  it("keeps a previously salvaged guard out of the route blockers", () => {
     const flight = createUnpopulatedFlight(CONTENT, 1, 173);
     formationDestination(flight);
     const guard = ensureRouteEncounter(CONTENT, "quest", flight)!;
     expect(routeBlocked("quest", flight)).toBe(true);
     guard.enemy!.disabled = true;
-    expect(routeBlocked("quest", flight)).toBe(false);
     guard.enemy!.salvaged = true;
+    stepFlight(CONTENT, 0.01, idle, flight);
     expect(routeBlocked("quest", flight)).toBe(false);
   });
 
@@ -449,7 +388,7 @@ describe("integrated combat", () => {
     const flight = empty();
     const target = ship("capital", { x: 400, y: 0 });
     target.enemy!.hardpoints.forEach((part) => (part.cooldown = 999));
-    // Its front Lasers' prow ports are already destroyed, so they no longer take hits.
+    // Legacy zero-HP prow ports still belong to the drawn contact geometry.
     const stumps = ["prow-left", "prow-right"];
     for (const part of target.enemy!.hardpoints.filter(({ id }) => stumps.includes(id))) {
       part.hp = 0;
@@ -538,9 +477,7 @@ describe("integrated combat", () => {
 
   it("explodes Ada's missile at the end of its reach, its blast striking an enemy beside it", () => {
     const flight = empty();
-    const target = ship("interceptor", { x: 300, y: 50 });
-    // The disabled, unsalvaged hull stays beside the endpoint without steering into the missile.
-    target.enemy!.disabled = true;
+    const target = ship("interceptor", { x: 300, y: 100 });
     flight.objects.push(target);
     const hp = target.hp;
     flight.shots.push({
@@ -558,7 +495,6 @@ describe("integrated combat", () => {
     });
     stepFlight(CONTENT, 0.6, idle, flight);
     expect(flight.shots).toEqual([]);
-    expect(target).toMatchObject({ x: 300, y: 50 });
     expect(target.hp).toBe(hp - 2);
     expect(activeBlastFlashes(flight)).toEqual([
       expect.objectContaining({ radius: 60, x: expect.closeTo(300, 6), y: 0 }),
@@ -950,13 +886,13 @@ describe("integrated combat", () => {
     expect(Math.hypot(along.x - along.y, (along.x + along.y) / 2)).toBeCloseTo(SCREEN.width, 6);
   });
 
-  it("puts out a charged lance whose capital is disabled before it fires", () => {
+  it("puts out a charged lance whose capital is destroyed before it fires", () => {
     const flight = emptyIn(2);
     const { target } = armedWith("capital", 2, "chargedLance", { x: 200, y: 0 });
     flight.objects.push(target);
     stepFlight(CONTENT, 1 / 60, idle, flight);
     expect(activeEnemyBeams(flight)).toHaveLength(1);
-    target.enemy!.disabled = true;
+    target.hp = target.enemy!.hp = 0;
     stepFlight(CONTENT, 1 / 60, idle, flight);
     expect(activeEnemyBeams(flight)).toEqual([]);
   });
@@ -989,14 +925,14 @@ describe("integrated combat", () => {
   });
 
   it.each([1, 2, 3] as const)(
-    "opens a galaxy %i route once its guard is disabled, though its hull still stands",
+    "opens a galaxy %i route only after its guard reaches zero hull",
     (galaxy) => {
       const flight = galaxy === 1 ? createUnpopulatedFlight(CONTENT, 1, 173) : empty();
       flight.galaxy = galaxy;
       const destination =
         galaxy === 1 ? formationDestination(flight) : ensureDestination(CONTENT, "quest", flight);
       const guard = ensureRouteEncounter(CONTENT, "quest", flight)!;
-      // Its weapons go: every weapon hardpoint destroyed disables it.
+      // A legacy save with all weapon HP gone still has a live guard.
       const weapons = shipCatalogEntry(guard.enemy!.archetype)!.hardpoints.filter(
         ({ kind }) => kind === "weapon",
       );
@@ -1006,8 +942,11 @@ describe("integrated combat", () => {
           hardpoint.hp = 0;
         }
       }
-      guard.enemy!.disabled = true;
       expect(guard.hp).toBeGreaterThan(0);
+      expect(routeBlocked("quest", flight)).toBe(true);
+      const events: FlightEvent[] = [];
+      resolveHit(CONTENT, guard.hp, null, guard, flight, events);
+      expect(events).toContainEqual({ id: guard.id, type: "enemyDestroyed" });
       expect(routeBlocked("quest", flight)).toBe(false);
       flight.player = { x: destination.x, y: destination.y };
       expect(stepFlight(CONTENT, 0.01, idle, flight)).toContainEqual({
@@ -1123,12 +1062,13 @@ describe("integrated combat", () => {
 });
 
 describe("rotating hulls", () => {
-  it("hits hardpoints where the rotated hull draws them", () => {
+  it("applies hull damage where the rotated hull draws a rear mount", () => {
     const flight = empty();
     const target = ship("capital", { x: 400, y: 0 });
     target.enemy!.hardpoints.forEach((part) => (part.cooldown = 999));
     flight.objects.push(target);
-    const hp = (id: string) => target.enemy!.hardpoints.find((part) => part.id === id)!.hp;
+    const hp = target.hp;
+    const parts = target.enemy!.hardpoints.map(({ hp }) => hp);
     target.enemy!.facing = { x: 1, y: 0 };
     const east = partPosition(target, "weapon-rear-right");
     target.enemy!.facing = { x: 0, y: 1 };
@@ -1137,10 +1077,11 @@ describe("rotating hulls", () => {
     // Facing south, the part is no longer drawn where it was facing east.
     hit(flight, east);
     stepFlight(CONTENT, 0.001, idle, flight);
-    expect(hp("weapon-rear-right")).toBe(3);
+    expect(target.hp).toBe(hp);
     hit(flight, south);
     stepFlight(CONTENT, 0.001, idle, flight);
-    expect(hp("weapon-rear-right")).toBe(2);
+    expect(target.hp).toBe(hp - CONTENT.tuning.flight.playerShotDamage);
+    expect(target.enemy!.hardpoints.map(({ hp }) => hp)).toEqual(parts);
   });
 });
 
@@ -1605,7 +1546,7 @@ function silence(object: SpaceObject): void {
   }
 }
 
-function stopEngines(object: SpaceObject): void {
+function legacyEngineDamage(object: SpaceObject): void {
   const definition = shipCatalogEntry(object.enemy!.archetype)!;
   for (const part of object.enemy!.hardpoints) {
     if (definition.hardpoints.some((entry) => entry.id === part.id && entry.kind === "engine")) {
@@ -1656,7 +1597,7 @@ describe("capital local-area separation", () => {
   );
 
   it.each(capitalPairs)(
-    "does not let moving %s and %s collapse the gap across long frames or an engine disable",
+    "does not let moving %s and %s collapse the gap across long frames with legacy engine damage",
     (firstKind, secondKind) => {
       const flight = empty();
       const radius =
@@ -1678,14 +1619,10 @@ describe("capital local-area separation", () => {
       );
       expect(first.x).toBeGreaterThan(-startDistance / 2);
       expect(second.x).toBeLessThan(startDistance / 2);
-      stopEngines(first);
-      const stopped = { x: first.x, y: first.y };
-      const coast = Math.hypot(first.enemy!.velocity.x, first.enemy!.velocity.y);
+      legacyEngineDamage(first);
+      const before = { x: first.x, y: first.y };
       stepFlight(CONTENT, 3, idle, flight);
-      // Without engines it only coasts out its momentum, which a peer contact slide may carry.
-      expect(Math.hypot(first.x - stopped.x, first.y - stopped.y)).toBeLessThanOrEqual(
-        coast * enemyCatalog[firstKind].physics.brakingSeconds + 1e-6,
-      );
+      expect({ x: first.x, y: first.y }).not.toEqual(before);
       expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(
         radius + capitalHullGap,
       );
@@ -1699,7 +1636,7 @@ describe("capital local-area separation", () => {
     live.id = live.enemy!.id = "live";
     hulk.id = hulk.enemy!.id = "hulk";
     for (const object of [live, hulk]) {
-      stopEngines(object);
+      legacyEngineDamage(object);
       silence(object);
     }
     hulk.enemy!.disabled = true;
@@ -1709,10 +1646,9 @@ describe("capital local-area separation", () => {
     for (let step = 0; step < 3; step++) {
       stepFlight(CONTENT, 1 / 60, idle, flight);
     }
-    expect([hulk, live].map(({ x, y }) => ({ x, y }))).toEqual([
-      { x: 500, y: 0 },
-      { x: 300, y: 0 },
-    ]);
+    expect({ x: hulk.x, y: hulk.y }).toEqual({ x: 500, y: 0 });
+    expect(live.enemy!.home).toEqual({ x: 300, y: 0 });
+    expect(Math.hypot(live.x - hulk.x, live.y - hulk.y)).toBeLessThan(capitalHullGap);
   });
 
   it("settles a guard off a salvaged hulk's drawn hull, leaving the hulk in place", () => {
@@ -1747,8 +1683,8 @@ describe("capital local-area separation", () => {
     second.id = second.enemy!.id = "resume-second";
     first.routeId = "required-first";
     second.routeId = "required-second";
-    stopEngines(first);
-    stopEngines(second);
+    legacyEngineDamage(first);
+    legacyEngineDamage(second);
     silence(first);
     silence(second);
     first.enemy!.hardpoints[0]!.hp = 2;
@@ -1771,15 +1707,11 @@ describe("capital local-area separation", () => {
     expect(flight.combat!.routeEncounters).toEqual([first.routeId, second.routeId]);
     expect(routeBlocked(first.routeId, flight)).toBe(true);
     expect(routeBlocked(second.routeId, flight)).toBe(true);
-    const positions = [first, second].map((object) => ({
-      home: { ...object.enemy!.home },
-      x: object.x,
-      y: object.y,
-    }));
+    const homes = [first, second].map((object) => ({ ...object.enemy!.home }));
     stepFlight(CONTENT, 1 / 60, idle, flight);
-    expect(
-      [first, second].map((object) => ({ home: object.enemy!.home, x: object.x, y: object.y })),
-    ).toEqual(positions);
+    stepFlight(CONTENT, 1 / 60, idle, restored);
+    expect(restored).toEqual(flight);
+    expect([first, second].map((object) => object.enemy!.home)).toEqual(homes);
   });
 
   it("settles a translated capital away from another capital without changing the existing valid guard", () => {
@@ -1819,11 +1751,14 @@ describe("capital local-area separation", () => {
     third.id = third.enemy!.id = "frigate-second";
     flight.objects.push(first, second, third);
     for (const object of flight.objects) {
-      stopEngines(object);
+      legacyEngineDamage(object);
       silence(object);
     }
-    const positions = flight.objects.map((object) => ({ x: object.x, y: object.y }));
-    stepFlight(CONTENT, 2, idle, flight);
+    const positions = flight.objects.map((object) => ({
+      x: object.x,
+      y: object.y,
+    }));
+    settleRouteEncounters(CONTENT, flight);
     expect(flight.objects.map((object) => ({ x: object.x, y: object.y }))).toEqual(positions);
     expect(second.x - first.x).toBeLessThan(capitalHullGap);
     expect(third.x - second.x).toBeLessThan(capitalHullGap);
@@ -1835,13 +1770,13 @@ describe("capital local-area separation", () => {
     const frigates = [ship("frigate", { x: -1000, y: 600 }), ship("frigate", { x: -950, y: 600 })];
     for (const [index, object] of [...capitals, ...frigates].entries()) {
       object.id = object.enemy!.id = `settled-${index}`;
-      stopEngines(object);
+      legacyEngineDamage(object);
       silence(object);
     }
     flight.objects.push(...capitals, ...frigates);
-    const frigatePositions = frigates.map((object) => ({ x: object.x, y: object.y }));
+    const frigateHomes = frigates.map((object) => ({ ...object.enemy!.home }));
     stepFlight(CONTENT, 1 / 60, idle, flight);
-    expect(frigates.map((object) => ({ x: object.x, y: object.y }))).toEqual(frigatePositions);
+    expect(frigates.map((object) => object.enemy!.home)).toEqual(frigateHomes);
     expect(
       Math.hypot(capitals[0]!.x - capitals[1]!.x, capitals[0]!.y - capitals[1]!.y),
     ).toBeGreaterThanOrEqual(capitals[0]!.radius + capitals[1]!.radius + capitalHullGap);
@@ -1862,7 +1797,7 @@ describe("capital local-area separation", () => {
     expect({ x: third.x, y: third.y }).toEqual({ x: 240, y: 600 });
   });
 
-  it("settles a paged-in capital without moving an engaged capital beside a rock", () => {
+  it("settles a paged-in capital without relocating an engaged capital beside a rock", () => {
     const flight = empty();
     const engaged = ship("capital", { x: 300, y: 0 });
     const rockRadius = 30;
@@ -1878,7 +1813,7 @@ describe("capital local-area separation", () => {
     engaged.id = engaged.enemy!.id = "engaged";
     paged.id = paged.enemy!.id = "paged";
     for (const object of [engaged, paged]) {
-      stopEngines(object);
+      legacyEngineDamage(object);
       silence(object);
     }
     flight.objects.push(engaged, rock);
@@ -1887,7 +1822,9 @@ describe("capital local-area separation", () => {
       engaged.radius + paged.radius + capitalHullGap,
     );
     stepFlight(CONTENT, 1 / 60, idle, flight);
-    expect({ x: engaged.x, y: engaged.y }).toEqual({ x: 300, y: 0 });
+    expect(Math.hypot(engaged.x - 300, engaged.y)).toBeLessThan(
+      enemyCatalog.capital.physics.maxSpeed / 60,
+    );
     expect(engaged.enemy!.home).toEqual({ x: 300, y: 0 });
     expect({ x: paged.x, y: paged.y }).not.toEqual({ x: 900, y: 0 });
     expect(Math.hypot(engaged.x - paged.x, engaged.y - paged.y)).toBeGreaterThanOrEqual(

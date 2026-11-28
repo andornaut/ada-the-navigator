@@ -291,10 +291,10 @@ describe("approved heavy health and independent rewards", () => {
     }
   });
 
-  it("gives the flagship a 320 HP hull, its floor and 18 HP on every part", () => {
+  it("gives the flagship a 320 HP hull and retains the legacy 18 HP part fields", () => {
     const flagship = enemyDefinition(6, "capital", PHANTOM_FLAGSHIP_ID);
     expect(flagship.hardpoints.every((part) => part.hp === 18)).toBe(true);
     expect(flagship.hp).toBe(320);
-    expect(flagship.hullFloor).toBe(1);
+    expect(flagship.hullFloor).toBeUndefined();
   });
 });

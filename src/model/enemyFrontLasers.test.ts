@@ -327,23 +327,28 @@ describe("heavy front Lasers", () => {
     expect(withinNoseArc(ENEMY_FORWARD_GUNS.arcRadians, facing, at(180))).toBe(false);
   });
 
-  it("counts each front Laser toward disabling the heavy", () => {
+  it("fires a front Laser with legacy zero mount HP until the hull reaches zero", () => {
     const definition = frigate();
-    let state = engaged(definition, { x: 1, y: 0 }, { x: -300, y: 0 });
-    const weapons = definition.hardpoints.filter((part) => part.kind === "weapon");
-    for (const part of weapons.filter((part) => !FRONT_IDS.has(part.id))) {
-      state = damageEnemy(definition, { amount: part.hp, hardpointId: part.id }, state);
-    }
-    // Every mount is down, but the front Laser still fights.
+    const original = engaged(definition, { x: 1, y: 0 }, { x: -300, y: 0 });
+    const state = {
+      ...original,
+      disabled: true,
+      hardpoints: original.hardpoints.map((part) => ({ ...part, hp: 0 })),
+    };
     expect(enemyEffects(definition, state).disabled).toBe(false);
-    expect(frontShots(fly(definition, 2, state)).length).toBeGreaterThan(0);
-    const prow = weapons.find((part) => part.id === "test-prow")!;
-    state = damageEnemy(definition, { amount: prow.hp - 1, hardpointId: prow.id }, state);
-    expect(state.disabled).toBe(false);
-    state = damageEnemy(definition, { amount: 1, hardpointId: prow.id }, state);
-    expect(state.disabled).toBe(true);
-    expect(state.hp).toBe(definition.hp);
-    expect(stepEnemy(definition, context(state), state).fire).toEqual([]);
+    const shots = frontShots(fly(definition, 2, state));
+    expect(shots.length).toBeGreaterThan(0);
+    const beamGeometry = ({ facing, shot }: (typeof shots)[number]) => ({ facing, shot });
+    expect(shots.map(beamGeometry)).toEqual(
+      frontShots(fly(definition, 2, original)).map(beamGeometry),
+    );
+    const destroyed = damageEnemy(
+      definition,
+      { amount: state.hp, hardpointId: "test-prow" },
+      state,
+    );
+    expect(destroyed.hp).toBe(0);
+    expect(stepEnemy(definition, context(destroyed), destroyed).fire).toEqual([]);
   });
 
   it("keeps a heavy facing its travel instead of turning toward Ada", () => {
