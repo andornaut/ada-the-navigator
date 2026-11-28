@@ -141,10 +141,7 @@ describe("layers", () => {
       ["src/data/a.test.ts", [{ target: "src/entry/main.ts", typeOnly: false }]],
       ["src/loading/a.ts", [{ target: "src/entry/bootstrap.ts", typeOnly: false }]],
       ["src/art/a.ts", [{ target: "src/game/nested/b.ts", typeOnly: true }]],
-      [
-        "src/ui/card.ts",
-        [{ target: "src/ui/actions/actionRoot.fixture.ts", typeOnly: false }],
-      ],
+      ["src/ui/card.ts", [{ target: "src/ui/actions/actionRoot.fixture.ts", typeOnly: false }]],
       ["src/extra.ts", []],
     ]);
     expect(layerFindings(graph)).toEqual([
