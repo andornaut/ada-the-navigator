@@ -101,7 +101,7 @@ import {
 } from "./andromedaRedact.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { calfHome, calfRouteMidpoint, calfStart, placedCalf, stepCalf } from "./calf.ts";
-import { capitalBossActor, encounterBossHud } from "./capitalBossEncounter.ts";
+import { capitalBossActor } from "./capitalBossEncounter.ts";
 import type { ChapterContext, ChapterResult } from "./chapterProtocol.ts";
 import { chapterRuntime } from "./chapters.ts";
 import { applyEconomyCheat, type CheatId, economyCheatAvailable } from "./cheats.ts";
@@ -200,6 +200,7 @@ import {
   flightWorldContext,
 } from "./flightTopology.ts";
 import { initializeGalaxyGeography } from "./galaxyGeography.ts";
+import { projectCapitalBossHud } from "./game/bossHud.ts";
 import { earlyRequiredDestination, galaxyRoute, newGameState } from "./game/campaignState.ts";
 import { dockedShopGroups, dockedShopOffers, dockedShopSupply } from "./game/dockedShop.ts";
 import { encounterCues, stationsInRange } from "./game/encounterCues.ts";
@@ -299,7 +300,6 @@ import {
 import type { MarkerDetails, PennyMarker, PennyPoint } from "./pennyMarkers.ts";
 import {
   phantomBlockadeAdmits,
-  phantomBossHud,
   type PhantomContext,
   phantomWaypoint,
   settlePhantomSurrender,
@@ -2063,33 +2063,7 @@ export class GameModel {
     if (this.screen !== "space" || this.state.docked || !flight) {
       return null;
     }
-    const canSalvage = () => false;
-    if (flight.galaxy === 6) {
-      return phantomBossHud({ content: this.content, flight, progress: this.current }, canSalvage);
-    }
-    if (flight.galaxy === 2) {
-      return this.current.claim?.phase === "active"
-        ? encounterBossHud(CARTWHEEL_CLAIM, flight, canSalvage)
-        : null;
-    }
-    if (flight.galaxy === 5) {
-      return this.current.redact?.phase === "active"
-        ? encounterBossHud(ANDROMEDA_REDACT, flight, canSalvage)
-        : null;
-    }
-    const sounder = this.current.sounder;
-    const optional = this.current.capitalBoss?.phase === "active";
-    const identity =
-      optional && flight.galaxy === 1
-        ? SUNFLOWER_CAPITAL_BOSS
-        : optional && flight.galaxy === 4
-          ? NEEDLE_CADENCE
-          : flight.galaxy === 3 &&
-              (sounder?.phase === "active" ||
-                (sounder?.phase === "resolved" && sounder.outcome === "disabled"))
-            ? WHIRLPOOL_CAPITAL_BOSS
-            : null;
-    return identity && encounterBossHud(identity, flight, canSalvage);
+    return projectCapitalBossHud({ content: this.content, flight, progress: this.current });
   }
 
   private prepareCartwheelClaim(flight: FlightState): void {
