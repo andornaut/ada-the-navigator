@@ -9,65 +9,36 @@ import { ensureDestination, ensureDestinationAt, spawnChapterEnemy } from "./fli
 import { flightWorldContext } from "./flightTopology.ts";
 import { worldActivateFlightRegion } from "./geography.ts";
 import {
-  type NeedleApproach,
   type NeedleCourse,
   needleCourses,
   needleLearningFeedback,
-  type NeedleProgress,
-  readNeedleProgress,
   stepNeedleCourse,
-  unfinishedNeedleCourse,
 } from "./needle.ts";
 import {
   type NeedleCadencePlacement,
   planNeedleCadence,
   planNeedleExit,
 } from "./needleExitPlan.ts";
-import type {
-  DialogueChoice,
-  DialogueState,
-  FlightState,
-  GalaxyProgress,
-  UseAction,
-  Vec,
-} from "./types.ts";
+import {
+  type NeedleApproach,
+  type NeedleChapterProgress,
+  type NeedleFlight,
+  type StoryCourse,
+  unfinishedNeedleCourse,
+} from "./needleState.ts";
+import type { DialogueChoice, DialogueState, UseAction, Vec } from "./types.ts";
 import { shipTuning } from "./upgrades.ts";
 import { worldDistance, worldPoint } from "./worldContacts.ts";
 import { wrapPoint } from "./worldGeometry.ts";
-export interface NeedleChapterProgress extends NeedleProgress {
-  met: boolean;
-  briefed: boolean;
-  practiceThanked: boolean;
-}
-export interface NeedleCue {
-  speaker: "loom" | "ada" | "astra";
-  text: string;
-}
-type StoryCourse = "practice" | "eye";
-export interface NeedleFlight {
-  anchor: Vec;
-  activityPatrol?: { id: number; tried: number[] };
-  chatter: NeedleCue[];
-  exitPackPlaced: boolean;
-  exitWarned?: boolean;
-  /** The current course can be started with zero cleared gates, including across Continue. */
-  startedCourse?: StoryCourse;
-}
-type ChapterProgress = GalaxyProgress & {
-  needle?: NeedleChapterProgress;
-};
-type ChapterFlight = FlightState & {
-  needle?: NeedleFlight;
-};
 const progressOf = (context: ChapterContext): NeedleChapterProgress =>
-  ((context.progress as ChapterProgress).needle ??= {
+  (context.progress.needle ??= {
     briefed: false,
     eyeLit: 0,
     met: false,
     practiceLit: 0,
     practiceThanked: false,
   });
-const stateOf = (context: ChapterContext) => (context.flight as ChapterFlight).needle;
+const stateOf = (context: ChapterContext) => context.flight.needle;
 const nearbyStarts = new WeakMap<NeedleFlight, StoryCourse>();
 
 export type NeedleTrackedObjective = {
@@ -77,7 +48,7 @@ export type NeedleTrackedObjective = {
 
 /** Supplies one revealed course step to the existing tracked story objective. */
 export function needleTrackedObjective(context: ChapterContext): NeedleTrackedObjective | null {
-  const progress = (context.progress as ChapterProgress).needle;
+  const progress = context.progress.needle;
   if (
     context.flight.galaxy !== 4 ||
     !progress?.briefed ||
@@ -128,7 +99,7 @@ export function needleCadenceSite(
 ): Vec | null {
   if (
     context.flight.galaxy !== 4 ||
-    (context.progress as ChapterProgress).needle?.eyeLit !== NEEDLE.eyeGates ||
+    context.progress.needle?.eyeLit !== NEEDLE.eyeGates ||
     context.progress.capitalBoss
   ) {
     return null;
@@ -169,7 +140,7 @@ export function initNeedle(context: ChapterContext): void {
   if (!state) {
     const loom = ensureDestination(context.content, "elderLoom", context.flight);
     state = { anchor: { x: loom.x, y: loom.y }, chatter: [], exitPackPlaced: false };
-    (context.flight as ChapterFlight).needle = state;
+    context.flight.needle = state;
   }
   const layout = needleCourses(context.flight)!;
   ensureDestinationAt(context.content, "needlePractice", layout.practice.path[0]!, context.flight);
@@ -410,9 +381,7 @@ export function needleActivityChoices(
   context: ChapterContext,
   place: string,
 ): readonly DialogueChoice[] {
-  return context.flight.galaxy === 4 &&
-    place === "elderLoom" &&
-    (context.progress as ChapterProgress).needle?.briefed
+  return context.flight.galaxy === 4 && place === "elderLoom" && context.progress.needle?.briefed
     ? [{ id: "changeApproach", label: NEEDLE_LEARNING.changeLabel }]
     : [];
 }
@@ -425,66 +394,4 @@ export function needleAction(context: ChapterContext, id: string): UseAction | u
     return undefined;
   }
   return id === "elderLoom" ? "talk" : "use";
-}
-export function readNeedleChapterProgress(value: unknown): NeedleChapterProgress | null {
-  const base = readNeedleProgress(value);
-  if (!base || !value || typeof value !== "object") {
-    return null;
-  }
-  const record = value as NeedleChapterProgress;
-  if (
-    [record.met, record.briefed, record.practiceThanked].some(
-      (flag) => typeof flag !== "boolean",
-    ) ||
-    (record.briefed && !record.met) ||
-    record.briefed !== Boolean(record.approach) ||
-    ((base.practiceLit || base.eyeLit) && !record.briefed) ||
-    (record.practiceThanked && base.practiceLit !== NEEDLE.practiceGates)
-  ) {
-    return null;
-  }
-  return {
-    ...base,
-    briefed: record.briefed,
-    met: record.met,
-    practiceThanked: record.practiceThanked,
-  };
-}
-export function validNeedleFlight(value: unknown): value is NeedleFlight {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-  const state = value as NeedleFlight & { readonly guidance?: unknown };
-  const point = (point: unknown): point is Vec =>
-    Boolean(point) &&
-    typeof point === "object" &&
-    Number.isFinite((point as Vec).x) &&
-    Number.isFinite((point as Vec).y);
-  return (
-    point(state.anchor) &&
-    (state.activityPatrol === undefined ||
-      (state.activityPatrol !== null &&
-        Number.isSafeInteger(state.activityPatrol.id) &&
-        state.activityPatrol.id >= 0 &&
-        Array.isArray(state.activityPatrol.tried) &&
-        state.activityPatrol.tried.length <= NEEDLE.activityPatrolGates.length &&
-        state.activityPatrol.tried.every((index) =>
-          NEEDLE.activityPatrolGates.some((gate) => gate === index),
-        ) &&
-        new Set(state.activityPatrol.tried).size === state.activityPatrol.tried.length)) &&
-    typeof state.exitPackPlaced === "boolean" &&
-    (state.exitWarned === undefined || typeof state.exitWarned === "boolean") &&
-    (state.guidance === undefined || point(state.guidance)) &&
-    (state.startedCourse === undefined ||
-      state.startedCourse === "practice" ||
-      state.startedCourse === "eye") &&
-    Array.isArray(state.chatter) &&
-    state.chatter.length <= 16 &&
-    state.chatter.every(
-      (cue) =>
-        ["loom", "ada", "astra"].includes(cue.speaker) &&
-        typeof cue.text === "string" &&
-        cue.text.length <= 240,
-    )
-  );
 }

@@ -3,49 +3,8 @@ import { NEEDLE } from "../data/needle.ts";
 import { NEEDLE_LEARNING } from "../data/needleCopy.ts";
 import { closestOnSegment, type Contact, partContact, toScreen } from "./convex.ts";
 import { dropRandom } from "./drops.ts";
+import type { NeedleProgress } from "./needleState.ts";
 import type { Vec } from "./types.ts";
-export type NeedleApproach = "show" | "feedback" | "independent";
-export interface NeedleProgress {
-  practiceLit: number;
-  eyeLit: number;
-  /** Absent until Ada makes the required practice choice through Loom's Talk. */
-  approach?: NeedleApproach;
-}
-export function unfinishedNeedleCourse(
-  progress: Readonly<NeedleProgress> | undefined,
-): "practice" | "eye" | undefined {
-  if (!progress?.approach) {
-    return undefined;
-  }
-  if (progress.practiceLit < NEEDLE.practiceGates) {
-    return "practice";
-  }
-  return progress.eyeLit < NEEDLE.eyeGates ? "eye" : undefined;
-}
-/** Strict finite save validation; a completed Eye requires the practice course. */
-export function readNeedleProgress(value: unknown): NeedleProgress | null {
-  if (!value || typeof value !== "object") {
-    return null;
-  }
-  const p = value as Record<string, unknown>;
-  const count = (n: unknown, max: number): n is number =>
-    typeof n === "number" && Number.isInteger(n) && n >= 0 && n <= max;
-  if (
-    !count(p.practiceLit, NEEDLE.practiceGates) ||
-    !count(p.eyeLit, NEEDLE.eyeGates) ||
-    (p.eyeLit > 0 && p.practiceLit !== NEEDLE.practiceGates) ||
-    (p.approach !== undefined &&
-      !["show", "feedback", "independent"].includes(String(p.approach))) ||
-    (p.practiceLit > 0 && p.approach === undefined)
-  ) {
-    return null;
-  }
-  return {
-    ...(p.approach === undefined ? {} : { approach: p.approach as NeedleApproach }),
-    eyeLit: p.eyeLit,
-    practiceLit: p.practiceLit,
-  };
-}
 export interface NeedleGate {
   readonly point: Vec;
   /** Unit travel direction through the plane, in world coordinates. */
