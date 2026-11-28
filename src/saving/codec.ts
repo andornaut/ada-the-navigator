@@ -63,8 +63,8 @@ import {
 } from "../model/markerKnowledge.ts";
 import { readNeedleChapterProgress, validNeedleFlight } from "../model/needleState.ts";
 import { worldOreFieldsNear } from "../model/oreFields.ts";
-import { validPhantomFlight, validPhantomProgress } from "../model/phantom.ts";
 import { pendingPhantomEncounterUnshared } from "../model/phantomRequiredPlans.ts";
+import { validPhantomFlight, validPhantomProgress } from "../model/phantomState.ts";
 import { requiredPlanConsistent, requiredPlanObjects } from "../model/requiredEncounterPlans.ts";
 import { requiredRolePlanConsistent } from "../model/requiredRolePlans.ts";
 import { SAVE_VERSION, type SaveRestore } from "../model/saveSchema.ts";

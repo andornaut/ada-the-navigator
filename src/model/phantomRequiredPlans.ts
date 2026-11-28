@@ -2,7 +2,7 @@ import { encounterTable, FRIGATE_ESCORT_COUNT } from "../data/enemyCatalog.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP, PHANTOM_TUNING as T } from "../data/phantom.ts";
 import { FRIGATE_ESCORT_ROLE, requiredFrigateEscortId } from "./frigateEscorts.ts";
 import { escortPackId } from "./geography.ts";
-import type { PhantomFlight } from "./phantom.ts";
+import type { PhantomFlight } from "./phantomState.ts";
 import { requiredPlanObjects } from "./requiredEncounterPlans.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
 

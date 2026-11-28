@@ -21,7 +21,7 @@ import type { ExplorationSites, ExplorationState } from "./explorationState.ts";
 import type { EnemyBeam } from "./flight/enemyBeams.ts";
 import type { FlightTopology } from "./flightTopology.ts";
 import type { NeedleChapterProgress, NeedleFlight } from "./needleState.ts";
-import type { PhantomFlight, PhantomProgress } from "./phantom.ts";
+import type { PhantomFlight, PhantomProgress } from "./phantomState.ts";
 import type { ProjectileFade } from "./playerProjectiles.ts";
 import type { StationRestockState } from "./stationRestock.ts";
 import type { StoryCursor } from "./storyCursor.ts";
