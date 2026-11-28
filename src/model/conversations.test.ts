@@ -128,52 +128,27 @@ describe("Phantom flight chatter", () => {
     expect(continued.talk.pending("chapter:phantom:flagshipSurrender")).toBe(false);
   });
 
-  it("keeps a blocked or unshown hardpoint cue pending across Continue and retires it on display", () => {
-    const pending: PhantomChatter[] = ["flagshipHardpoint"];
-    const id = "chapter:phantom:flagshipHardpoint";
-    const initial = director(6);
-    initial.talk.queuePhantomChatter(pending);
-    initial.talk.step(0.01, "refusal", calm);
-    expect(initial.talk.showing).toBeNull();
-    expect(pending).toEqual(["flagshipHardpoint"]);
-    initial.talk.step(0.01, null, calm);
-    expect(initial.talk.pending(id)).toBe(true);
-    expect(pending).toEqual(["flagshipHardpoint"]);
-
-    const continued = director(6, initial.heard);
-    const restored: PhantomChatter[] = JSON.parse(JSON.stringify(pending));
-    continued.talk.queuePhantomChatter(restored);
-    continued.talk.queuePhantomChatter(restored);
-    continued.talk.step(0.01, null, calm);
-    expect(restored).toEqual(["flagshipHardpoint"]);
-    expect(continued.talk.showing).toMatchObject({
-      instance: id,
-      line: { speaker: "astra", text: "One hardpoint down. Keep aiming for the glowing parts." },
-    });
-    expect(restored).toEqual([]);
-    expect(continued.heard).not.toContain(id);
-
-    const afterDisplay = director(6, continued.heard);
-    afterDisplay.talk.queuePhantomChatter(structuredClone(restored));
-    afterDisplay.talk.step(0.01, null, calm);
-    expect(afterDisplay.talk.pending(id)).toBe(false);
-
-    // A new battle may generate the same cue after the canonical flight reset.
-    afterDisplay.talk.beginFlight(6);
-    afterDisplay.talk.queuePhantomChatter(["flagshipHardpoint"]);
-    afterDisplay.talk.step(0.01, null, calm);
-    expect(afterDisplay.talk.showing?.instance).toBe(id);
+  it("ignores saved mount-loss and disable cues while still presenting surrendered Archie", () => {
+    const pending: PhantomChatter[] = [
+      "flagshipHardpoint",
+      "flagshipDisabled",
+      "flagshipSurrender",
+    ];
+    const { heard, talk } = director(6);
+    talk.queuePhantomChatter(structuredClone(pending));
+    talk.step(0.01, null, calm);
+    expect(talk.showing?.instance).toBe("chapter:phantom:flagshipSurrender");
+    talk.advance();
+    expect(talk.pending("chapter:phantom:flagshipHardpoint")).toBe(false);
+    expect(talk.pending("chapter:phantom:flagshipDisabled")).toBe(false);
+    expect(heard).not.toContain("chapter:phantom:flagshipHardpoint");
+    expect(heard).not.toContain("chapter:phantom:flagshipDisabled");
   });
 
   it.each(["battleAllies", "battleAlone"] as const)(
-    "keeps %s, attack, hardpoint, and surrender in their original warning order",
+    "keeps %s before the attack and surrender warnings",
     (approach) => {
-      const pending: PhantomChatter[] = [
-        approach,
-        "flagshipAttack",
-        "flagshipHardpoint",
-        "flagshipDisabled",
-      ];
+      const pending: PhantomChatter[] = [approach, "flagshipAttack", ...PHANTOM_SURRENDER_CHATTER];
       const { talk } = director(6);
       for (const cue of [...pending]) {
         talk.queuePhantomChatter(pending);
@@ -181,7 +156,7 @@ describe("Phantom flight chatter", () => {
         expect(talk.showing?.conversation).toMatchObject({
           id: `chapter:phantom:${cue}`,
           priority: "warning",
-          repeat: "flight",
+          repeat: PHANTOM_SURRENDER_CHATTER.some((key) => key === cue) ? "never" : "flight",
         });
         expect(pending).not.toContain(cue);
         if (cue === approach || cue === "flagshipAttack") {
@@ -280,10 +255,10 @@ describe("conversation schedule", () => {
     expect(showing(talk)).toBe("reaction:capital:0");
   });
 
-  it("reacts to a disabled heavy once each flight", () => {
+  it("keeps legacy disabled heavies from playing the retired reaction", () => {
     const { talk } = director(1, [...lessonsHeard, "arrival:1"]);
     run(talk, 0.05, { heavyDisabled: true });
-    expect(tapThrough(talk)).toEqual(["reaction:disabled:0", "reaction:disabled:1"]);
+    expect(talk.showing).toBeNull();
     run(talk, cooldownSeconds + 1, { heavyDisabled: true });
     expect(talk.showing).toBeNull();
   });
@@ -298,7 +273,7 @@ describe("conversation schedule", () => {
     expect(pool.map(({ lines }) => lines[0]!.text)).toEqual([
       "Something's guarding this place. Here it comes!",
       "We can't visit yet. A guard ship is watching.",
-      "A guard is blocking the way in. Stop its weapons first.",
+      "A guard is blocking the way in. We’ll have to take it out first.",
     ]);
     pool.forEach(({ id }, index) => {
       const { talk } = director(1, [...lessonsHeard, "arrival:1"]);
@@ -1272,7 +1247,6 @@ describe("line pools", () => {
     ).toEqual({
       penny: 5,
       "reaction:capital": 3,
-      "reaction:disabled": 3,
       "reaction:frigate": 3,
       "reaction:mapped": 4,
       "reaction:return": 3,

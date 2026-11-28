@@ -47,8 +47,8 @@ export const PHANTOM_CHAPTER: ChapterContent = {
     "Break the drone blockades.",
     "Talk with the freed Blurbs.",
     "Fly to Archie's flagship.",
-    "Destroy the flagship’s weapon hardpoints to disable it.",
-    "Use Salvage at the flagship to recover the last holodisk.",
+    "Force Archie’s flagship to surrender.",
+    "Receive the last holodisk from Archie.",
     "Go home to Earth when ready.",
   ],
   opening:

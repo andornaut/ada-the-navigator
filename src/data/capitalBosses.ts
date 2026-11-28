@@ -56,17 +56,9 @@ export const CARTWHEEL_CLAIM_CUES = {
     speaker: "captainClaim",
     text: "This field is under fleet claim. Miners, clear the area.",
   },
-  hardpoint: {
-    speaker: "ada",
-    text: "The miners warned us about this side. One mount's down.",
-  },
-  mineLayer: {
-    speaker: "astra",
-    text: "That side won't lay new mines. Watch for the ones already there.",
-  },
   resolved: {
     speaker: "astra",
-    text: "The field is clear. The carrier's salvage can help pay for the disk.",
+    text: "The carrier’s gone. The miners can get back to work.",
   },
 } as const satisfies Record<string, ConversationLine>;
 

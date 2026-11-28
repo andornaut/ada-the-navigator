@@ -26,8 +26,7 @@ const read = (name: string) =>
 // Inline icon copy compares its accessible control name.
 const COPY = read("player-copy.md")
   .replaceAll("{useIcon}", CONTROL_WORDS.use)
-  .replace(/Astra, first hardpoint lost while the flagship stays active:/gu, "Astra:")
-  .replace(/Admiral Archie, (?:as the flagship attacks|flagship disabled):/gu, "Admiral Archie:");
+  .replace("Admiral Archie, as the flagship attacks:", "Admiral Archie:");
 const QUESTS = read("quests.md");
 
 // A copy passage from its heading or lead-in up to until, by default the next heading.
@@ -53,7 +52,7 @@ function spokenLines(text: string): { mood?: string; name: string; text: string 
 
 // Ambient copy covers all galaxies; Phantom battle cues retain their explicit triggers.
 const IN_FLIGHT = passage("## In-flight conversations");
-const BATTLE = passage("Battle chatter stays in the small box:", "Salvage the last holodisk");
+const BATTLE = passage("Battle chatter stays in the small box:", "Award the last holodisk");
 const BROADCASTS = passage("Memory lines and broadcasts follow", "Outposts handing over");
 
 type Conversation = (typeof CONVERSATIONS)[number];
@@ -100,6 +99,11 @@ describe("in-flight conversations", () => {
           expect(QUESTS).toContain(`"${text}"`);
           continue;
         }
+        if (conversation.id === "chapter:phantom:flagshipMemory") {
+          expect(speaker).toBe("astra");
+          expect(COPY).toContain(`Sixth: "${text}"`);
+          continue;
+        }
         const source = trigger.kind === "job" ? QUESTS : COPY;
         expect(source).toContain(`${nameOf(conversation, speaker)}: "${text}"`);
         if (desktop !== undefined) {
@@ -140,11 +144,13 @@ describe("in-flight conversations", () => {
       "chapter:phantom:battleAllies",
       "chapter:phantom:battleAlone",
       "chapter:phantom:flagshipAttack",
-      "chapter:phantom:flagshipHardpoint",
-      "chapter:phantom:flagshipDisabled",
+      "chapter:phantom:flagshipStandDown",
+      "chapter:phantom:flagshipSurrender",
+      "chapter:phantom:flagshipMemory",
     ]);
-    expect(spoken(BATTLE_CUES)).toEqual(spokenLines(BATTLE));
+    expect(spoken(BATTLE_CUES.slice(0, -1))).toEqual(spokenLines(BATTLE));
     expect(INTERACTION_COPY["6.phantom.flagshipHardpoint"]).toBeUndefined();
+    expect(INTERACTION_COPY["6.phantom.flagshipDisabled"]).toBeUndefined();
     expect(
       BATTLE_CUES.every(({ trigger }) => trigger.kind === "chapter" && trigger.galaxy === 6),
     ).toBe(true);

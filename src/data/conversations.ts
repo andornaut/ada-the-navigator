@@ -221,25 +221,18 @@ export const MAPPED_PLACE_RETURN_LINE = line(
 );
 
 export const CONVERSATIONS: readonly Conversation[] = [
-  ...(
-    [
-      "battleAllies",
-      "battleAlone",
-      "flagshipAttack",
-      "flagshipHardpoint",
-      "flagshipDisabled",
-      ...PHANTOM_FINALE_CHATTER,
-    ] as const
-  ).map((id): Conversation => ({
-    id: `chapter:phantom:${id}`,
-    lines: PHANTOM_COPY[id]!.lines.map((line) => ({
-      ...line,
-      speaker: line.speaker as Speaker,
-    })),
-    priority: "warning",
-    repeat: PHANTOM_FINALE_CHATTER.some((key) => key === id) ? "never" : "flight",
-    trigger: { galaxy: 6, id, kind: "chapter" },
-  })),
+  ...(["battleAllies", "battleAlone", "flagshipAttack", ...PHANTOM_FINALE_CHATTER] as const).map(
+    (id): Conversation => ({
+      id: `chapter:phantom:${id}`,
+      lines: PHANTOM_COPY[id]!.lines.map((line) => ({
+        ...line,
+        speaker: line.speaker as Speaker,
+      })),
+      priority: "warning",
+      repeat: PHANTOM_FINALE_CHATTER.some((key) => key === id) ? "never" : "flight",
+      trigger: { galaxy: 6, id, kind: "chapter" },
+    }),
+  ),
   {
     id: "lesson:move",
     lines: [line("astra", "Fly with the {move}.", "Move with WASD or the arrow keys.")],
@@ -319,32 +312,23 @@ export const CONVERSATIONS: readonly Conversation[] = [
     "reaction:frigate",
     { priority: "lore", repeat: "flight", trigger: { kind: "frigate" } },
     [
-      [
-        line("astra", "A frigate. Its guns are the glowing parts."),
-        line("ada", "Then that's where I'll aim."),
-      ],
+      [line("astra", "A frigate. Aim for the hull."), line("ada", "I see it.")],
       [
         line("ada", "That one's bigger than a drone."),
-        line("astra", "A frigate. Knock out its guns to stop it."),
+        line("astra", "A frigate. Give it some room."),
       ],
-      [line("astra", "Frigate ahead. Take out its weapons first."), line("ada", "Got it.")],
+      [line("astra", "Frigate ahead. Watch its fire."), line("ada", "Got it.")],
     ],
   ),
   ...pool(
     "reaction:capital",
     { priority: "lore", repeat: "flight", trigger: { kind: "capital" } },
     [
+      [line("ada", "That ship is huge!"), line("astra", "Keep moving. It has a lot of guns.")],
+      [line("ada", "Look at the size of that!"), line("astra", "Stay clear of its fire.")],
       [
-        line("ada", "That ship is huge!"),
-        line("astra", "No crew aboard. Aim for the glowing parts."),
-      ],
-      [
-        line("ada", "Look at the size of that!"),
-        line("astra", "Big, but empty. Hit the glowing parts."),
-      ],
-      [
-        line("astra", "A capital ship. Nobody aboard, just machines."),
-        line("ada", "Then let's find its glowing parts."),
+        line("astra", "A capital ship. Its hull can take a lot of damage."),
+        line("ada", "Then I’ll keep moving."),
       ],
     ],
   ),
@@ -390,24 +374,6 @@ export const CONVERSATIONS: readonly Conversation[] = [
       ],
     ],
   ),
-  ...pool(
-    "reaction:disabled",
-    { priority: "lore", repeat: "flight", trigger: { kind: "disabled" } },
-    [
-      [
-        line("astra", "Its weapons are down. We could salvage parts and let it go."),
-        happy("ada", "No need to wreck it."),
-      ],
-      [
-        line("astra", "Its guns are out. We can salvage it, or finish it."),
-        happy("ada", "Salvage. It can't hurt anyone now."),
-      ],
-      [
-        line("astra", "Disabled. Come close and I can salvage parts."),
-        line("ada", "Let's take what we need and go."),
-      ],
-    ],
-  ),
   // A guard still blocks the destination Ada reached: once per destination each flight, one
   // variant at random.
   {
@@ -433,7 +399,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
   {
     id: "warning:guard:3",
     lines: [
-      line("astra", "A guard is blocking the way in. Stop its weapons first."),
+      line("astra", "A guard is blocking the way in. We’ll have to take it out first."),
       line("ada", "Okay. I'm ready."),
     ],
     priority: "warning",
@@ -893,7 +859,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
   ),
   ...Object.fromEntries(
     Object.entries(PHANTOM_COPY)
-      .filter(([key]) => key !== "flagshipHardpoint")
+      .filter(([key]) => key !== "flagshipHardpoint" && key !== "flagshipDisabled")
       .map(([key, copy]): [string, InteractionCopy] => [
         `6.phantom.${key}`,
         {
