@@ -33,4 +33,4 @@ prices and pacing.
 | ada-0463 | Guarantee minimum resource payouts by asteroid size                                  | [ada-0463.md](../work/ada-0463.md) |
 | ada-0464 | Increase asteroid and small-ship ammunition drop odds                                | [ada-0464.md](../work/ada-0464.md) |
 | ada-0465 | Tune enemy hull HP and Stardust rewards                                              | [ada-0465.md](../work/ada-0465.md) |
-| ada-0466 | Award heavy defeat loot automatically and recover wrecks by Scan                     | [ada-0466.md](../work/ada-0466.md) |
+| ada-0466 | Use hull-only combat and recover wreck loot by Scan                                  | [ada-0466.md](../work/ada-0466.md) |
