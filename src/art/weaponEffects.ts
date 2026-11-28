@@ -1055,18 +1055,19 @@ const CONTACT_RING_STEPS = [
   [0.78, 0.6],
 ] as const;
 
-/**
- * Ada's Phaser contact `age` ms after the hit (art/weapons.md "Beams"): one cream ring growing
- * from 3 to 16 px and thinning from 3 to 1.4 px over 160 ms, with a four-point amber burst and
- * a white core while it is young; under reduced motion one still ring.
- */
-function phaserContact(at: Vec, angle: number, reducedMotion: boolean, age: number): EffectShape[] {
+const PHASER_CONTACT_RINGS = [
+  { colour: EFFECT_COLOURS.cream, peak: 1, start: 0 },
+  { colour: EFFECT_COLOURS.amber, peak: 0.85, start: 26 },
+  { colour: EFFECT_COLOURS.cream, peak: 0.72, start: 52 },
+] as const;
+
+function phaserContactRings(at: Vec, reducedMotion: boolean, age: number): EllipseShape[] {
   if (reducedMotion) {
     return age < 136
       ? [
           {
             ...circle(at, 5.5),
-            alpha: heldFade(Math.min(1, (136 - age) / 88)),
+            alpha: 0.95 * Math.min(1, (136 - age) / 88),
             colour: EFFECT_COLOURS.cream,
             kind: "ellipse",
             stroke: 1.75,
@@ -1074,29 +1075,20 @@ function phaserContact(at: Vec, angle: number, reducedMotion: boolean, age: numb
         ]
       : [];
   }
-  const k = age / SPARK_MS;
-  if (k >= 1) {
-    return [];
+  const rings: EllipseShape[] = [];
+  for (const { colour, peak, start } of PHASER_CONTACT_RINGS) {
+    const elapsed = age - start;
+    if (elapsed >= 0 && elapsed < 108) {
+      rings.push({
+        ...circle(at, 2.75 + (14.25 * elapsed) / 108),
+        alpha: peak * Math.min(1, (108 - elapsed) / 92),
+        colour,
+        kind: "ellipse",
+        stroke: 1.5,
+      });
+    }
   }
-  const shapes: EffectShape[] = [
-    {
-      ...circle(at, 3 + 13 * (1 - (1 - k) ** 2)),
-      alpha: heldAlpha(k, CONTACT_RING_STEPS, 0.3),
-      colour: EFFECT_COLOURS.cream,
-      kind: "ellipse",
-      stroke: 3 - 1.6 * k,
-    },
-  ];
-  if (k < 0.45) {
-    shapes.push(burst(at, angle, 4, 5.5 * (1 - k), FOUR_POINT_WAIST, EFFECT_COLOURS.amber, 1), {
-      alpha: 1,
-      at,
-      colour: EFFECT_COLOURS.white,
-      kind: "disc",
-      radius: 2.2 * (1 - k),
-    });
-  }
-  return shapes;
+  return rings;
 }
 
 /**
@@ -1128,10 +1120,10 @@ export function impactEffect(
       ? blast(at, impact.blastRadius, reducedMotion, t)
       : [];
   }
-  const angle = impact.direction ? screenAngle(impact.direction) : 0;
   if (impact.family === "phaserRings") {
-    return phaserContact(at, angle, reducedMotion, t);
+    return phaserContactRings(at, reducedMotion, t);
   }
+  const angle = impact.direction ? screenAngle(impact.direction) : 0;
   if (
     impact.family === "compact" ||
     impact.family === "compactBright" ||

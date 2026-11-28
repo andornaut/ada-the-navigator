@@ -54,53 +54,50 @@ describe("weapon impact families", () => {
     ).not.toEqual([]);
   });
 
-  it("grows one cream Phaser contact ring in held alpha steps over a young burst and core", () => {
-    const { amber, cream, white } = EFFECT_COLOURS;
-    const [ring, star, core] = playerPhaser(0);
-    expect(ring).toEqual({
-      alpha: 1,
-      at: context.at,
-      colour: cream,
-      halfHeight: 3,
-      halfWidth: 3,
-      kind: "ellipse",
-      stroke: 3,
-    });
-    // A four-point amber burst along the incoming direction (screen right) and a white core.
-    expect(star).toMatchObject({ alpha: 1, colour: amber, kind: "polygon" });
-    if (star?.kind !== "polygon") {
-      throw Error("Phaser burst missing");
-    }
-    expect(star.points).toHaveLength(8);
-    expect(star.points[0]!.x).toBeCloseTo(context.at.x + 5.5, 9);
-    expect(star.points[0]!.y).toBeCloseTo(context.at.y, 9);
-    expect(core).toEqual({ alpha: 1, at: context.at, colour: white, kind: "disc", radius: 2.2 });
-    for (const [age, count, alpha] of [
-      [71, 3, 1],
-      [72, 1, 1],
-      [80, 1, 0.6],
-      [124, 1, 0.6],
-      [125, 1, 0.3],
-      [159, 1, 0.3],
+  it("staggers the player Phaser rings and fades each from its own start", () => {
+    const { amber, cream } = EFFECT_COLOURS;
+    expect(playerPhaser(0)).toEqual([
+      {
+        alpha: 1,
+        at: context.at,
+        colour: cream,
+        halfHeight: 2.75,
+        halfWidth: 2.75,
+        kind: "ellipse",
+        stroke: 1.5,
+      },
+    ]);
+    for (const [age, count] of [
+      [25, 1],
+      [26, 2],
+      [51, 2],
+      [52, 3],
+      [108, 2],
+      [134, 1],
+      [160, 0],
     ] as const) {
-      const shapes = playerPhaser(age);
-      expect(shapes).toHaveLength(count);
-      expect(shapes[0]).toHaveProperty("alpha", alpha);
+      expect(playerPhaser(age)).toHaveLength(count);
     }
-    expect(playerPhaser(160)).toEqual([]);
-    const half = playerPhaser(80)[0];
-    if (half?.kind !== "ellipse") {
-      throw Error("Phaser ring missing");
+    const rings = playerPhaser(62);
+    expect(rings.map(({ colour }) => colour)).toEqual([cream, amber, cream]);
+    for (const [index, radius, opacity] of [
+      [0, 10.93, 0.5],
+      [1, 7.5, 0.665],
+      [2, 4.07, 0.72],
+    ] as const) {
+      const ring = rings[index];
+      if (ring?.kind !== "ellipse") {
+        throw Error("Phaser ring missing");
+      }
+      expect(ring).toMatchObject({ at: context.at, halfHeight: ring.halfWidth, stroke: 1.5 });
+      expect(ring.halfWidth).toBeCloseTo(radius);
+      expect(ring.alpha).toBeCloseTo(opacity);
     }
-    // At k 0.5 the ring reaches 3 + 13 x 0.75 and thins to 3 - 0.8.
-    expect(half.halfWidth).toBeCloseTo(12.75, 9);
-    expect(half.halfHeight).toBe(half.halfWidth);
-    expect(half.stroke).toBeCloseTo(2.2, 9);
   });
 
   it("holds a single stationary player Phaser ring under reduced motion", () => {
     const ring = {
-      alpha: 1,
+      alpha: 0.95,
       at: context.at,
       colour: EFFECT_COLOURS.cream,
       halfHeight: 5.5,
@@ -110,9 +107,7 @@ describe("weapon impact families", () => {
     };
     expect(playerPhaser(0, true)).toEqual([ring]);
     expect(playerPhaser(48, true)).toEqual([ring]);
-    // From 48 ms it fades by the held fade: 0.6 at 92 ms, 0.3 at 120 ms.
-    expect(playerPhaser(92, true)).toEqual([{ ...ring, alpha: 0.6 }]);
-    expect(playerPhaser(120, true)).toEqual([{ ...ring, alpha: 0.3 }]);
+    expect(playerPhaser(92, true)).toEqual([{ ...ring, alpha: 0.475 }]);
     expect(playerPhaser(136, true)).toEqual([]);
   });
 
