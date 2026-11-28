@@ -1021,7 +1021,7 @@ Drones arrive:
 Frigate sighted:
 
 - Astra: "A frigate. Aim for the hull." Ada: "I see it."
-- Ada: "That one’s bigger than a drone." Astra: "A frigate. Give it some room."
+- Ada: "That one's bigger than a drone." Astra: "A frigate. Give it some room."
 - Astra: "Frigate ahead. Watch its fire." Ada: "Got it."
 
 Capital ship sighted:
