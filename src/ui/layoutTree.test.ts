@@ -1,10 +1,11 @@
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { bindAdaAction, resolveAdaHoldAction } from "./actionBinding.ts";
-import { registerAdaActionRoot } from "./actionRegistry.ts";
-import { fixtureActionRoot } from "./actionRootFixture.ts";
-import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
+import { bindAdaAction, resolveAdaHoldAction } from "./actions/actionBinding.ts";
+import { registerAdaActionRoot } from "./actions/actionRegistry.ts";
+import { fixtureActionRoot } from "./actions/actionRootFixture.ts";
+import { bindAdaActionRoot } from "./actions/holdActionsAdapter.ts";
+import { enterPressView, rootPressGuard } from "./actions/pressScope.ts";
 import {
   type AdaButtonProps,
   type AdaCardProps,
@@ -12,7 +13,6 @@ import {
   createAdaLayoutPorts,
   mountAdaLayout,
 } from "./layoutTree.ts";
-import { enterPressView, rootPressGuard } from "./pressScope.ts";
 
 class Element extends EventTarget {
   readonly nodeType = 1;

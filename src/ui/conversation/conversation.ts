@@ -22,8 +22,9 @@ import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
+  invalidatePressScope,
   resolveAdaForegroundAction,
-} from "../actionBinding.ts";
+} from "../actions/index.ts";
 import { showDialogueChoiceStatus } from "../dialogueChoice.ts";
 import {
   COMPACT_PORTRAITS,
@@ -60,7 +61,6 @@ import {
 import { readViewUnit } from "../layoutDom/index.ts";
 import { TEXT_TOKENS } from "../modal.ts";
 import { CONVERSATION_SLOT, FLIGHT_PANEL_BACKGROUND } from "../notice.ts";
-import { invalidatePressScope } from "../pressScope.ts";
 import { refuse } from "../refusal.ts";
 import { createStandardTextAction } from "../standardTextAction.ts";
 

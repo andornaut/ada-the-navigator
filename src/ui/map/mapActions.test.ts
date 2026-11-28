@@ -7,17 +7,17 @@ import { afterEach, expect, it, vi } from "vitest";
 
 import { canAffordMapJump, MAP_JUMP_COST } from "../../data/mapJump.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "../../model/world/index.ts";
-import { bindAdaAction, resolveAdaHoldAction } from "../actionBinding.ts";
-import { registerForegroundSurface } from "../foregroundInput.ts";
-import { bindAdaActionRoot, bindAdaHoldActions } from "../holdActionsAdapter.ts";
-import { VIEW_SCALE_EVENT } from "../layout/viewScale.ts";
-import { framePoint, turnOf } from "../layoutDom/frameBox.ts";
+import { bindAdaAction, resolveAdaHoldAction } from "../actions/actionBinding.ts";
+import { bindAdaActionRoot, bindAdaHoldActions } from "../actions/holdActionsAdapter.ts";
 import {
   enterPressView,
   inCurrentView,
   invalidatePressScope,
   rootPressGuard,
-} from "../pressScope.ts";
+} from "../actions/pressScope.ts";
+import { registerForegroundSurface } from "../foregroundInput.ts";
+import { VIEW_SCALE_EVENT } from "../layout/viewScale.ts";
+import { framePoint, turnOf } from "../layoutDom/frameBox.ts";
 import { createStandardTextAction } from "../standardTextAction.ts";
 import {
   chipRect,

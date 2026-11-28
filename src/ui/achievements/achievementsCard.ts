@@ -4,7 +4,11 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 import { focusTargets } from "@andornaut/game-kit/runtime/web/ui/dom/modalLayer";
 
 import { SCREEN } from "../../data/screen.ts";
-import { assertAdaActionBindings, assertAdaActionMetadata } from "../actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  enterPressView,
+} from "../actions/index.ts";
 import { COMPLETION_INDICATOR, createCompletionIndicator } from "../completionIndicator.ts";
 import { registerForegroundSurface } from "../foregroundInput.ts";
 import {
@@ -19,7 +23,6 @@ import {
 import { readViewUnit, TEXT_BUTTON, VIEW_SCALE_EVENT } from "../layoutDom/index.ts";
 import { createActions, createCard, setFooterAction, TEXT_TOKENS, UI_SCOPE } from "../modal.ts";
 import { createStandardCloseAction } from "../modalClose.ts";
-import { enterPressView } from "../pressScope.ts";
 import { createStandardTextAction } from "../standardTextAction.ts";
 import {
   ACHIEVEMENT_COLUMNS,

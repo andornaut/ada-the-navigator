@@ -7,9 +7,9 @@ import { GameModel } from "../../model/game.ts";
 import { SAVE_RESTORE } from "../../saving/index.ts";
 import { endArrivalGrace } from "../../testing/arrivalGrace.ts";
 import { supportEntropy } from "../../testing/launchSeeds.ts";
-import { resolveAdaHoldAction } from "../actionBinding.ts";
-import { bindAdaActionRoot } from "../holdActionsAdapter.ts";
-import { rootPressGuard } from "../pressScope.ts";
+import { resolveAdaHoldAction } from "../actions/actionBinding.ts";
+import { bindAdaActionRoot } from "../actions/holdActionsAdapter.ts";
+import { rootPressGuard } from "../actions/pressScope.ts";
 import { StoryShell } from "./shell.ts";
 
 vi.mock("../uiSkin.ts", () => ({ applyButtonSkin: vi.fn().mockResolvedValue(undefined) }));

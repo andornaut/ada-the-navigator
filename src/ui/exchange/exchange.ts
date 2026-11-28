@@ -15,8 +15,11 @@ import {
   type ImmediateExchangeResult,
 } from "../../model/exchange.ts";
 import { fill } from "../../model/shop.ts";
-import { assertAdaActionBindings, assertAdaActionMetadata } from "../actionBinding.ts";
-import { inCurrentView } from "../pressScope.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  inCurrentView,
+} from "../actions/index.ts";
 import { refuse } from "../refusal.ts";
 import { createStandardTextAction } from "../standardTextAction.ts";
 import { type ExchangeActionData, type ExchangeSchema, exchangeTree } from "./exchangeTree.ts";

@@ -10,7 +10,7 @@ import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
-} from "../actionBinding.ts";
+} from "../actions/index.ts";
 import { SCROLL } from "../layout/index.ts";
 import { readViewUnit } from "../layoutDom/index.ts";
 import { createStartScreen } from "./startScreen.ts";

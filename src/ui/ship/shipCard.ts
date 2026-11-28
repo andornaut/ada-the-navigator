@@ -12,7 +12,7 @@ import { WEAPON_LEVEL_COUNT } from "../../data/weaponCatalog.ts";
 import { weaponGlyphPath } from "../../data/weaponGlyphs.ts";
 import { fill, weaponName } from "../../model/shop.ts";
 import type { Aboard, ShipItemFact } from "../../model/types.ts";
-import { ADA_ACTION_HOLD_MS, assertAdaActionMetadata, bindAdaAction } from "../actionBinding.ts";
+import { ADA_ACTION_HOLD_MS, assertAdaActionMetadata, bindAdaAction } from "../actions/index.ts";
 import { applyAdaControlTheme, createAdaPageDivider } from "../buttonPresentation.ts";
 import { compactLevelName } from "../compactLevelName.ts";
 import { SCROLL } from "../layout/index.ts";

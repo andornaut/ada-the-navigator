@@ -10,7 +10,7 @@ import { weaponDetailLines } from "../../data/weaponDetails.ts";
 import type { LocalMap, MapPlace } from "../../model/map.ts";
 import type { QuestEntry } from "../../model/questDetails.ts";
 import type { ContextQuestDetails } from "../../model/questObjectLinks.ts";
-import { assertAdaActionBindings, assertAdaActionMetadata } from "../actionBinding.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "../actions/index.ts";
 import { compactLevelName } from "../compactLevelName.ts";
 import { SCROLL } from "../layout/index.ts";
 import { readViewUnit } from "../layoutDom/index.ts";

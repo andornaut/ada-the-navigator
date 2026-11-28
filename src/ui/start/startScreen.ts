@@ -1,7 +1,7 @@
 import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { assertAdaActionBindings } from "../actionBinding.ts";
+import { assertAdaActionBindings } from "../actions/index.ts";
 import {
   BUTTON_GAP,
   font,

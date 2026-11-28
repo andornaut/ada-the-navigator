@@ -27,7 +27,9 @@ import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
-} from "../actionBinding.ts";
+  inCurrentView,
+  invalidatePressScope,
+} from "../actions/index.ts";
 import { registerForegroundSurface } from "../foregroundInput.ts";
 import {
   BUTTON_GAP,
@@ -60,7 +62,6 @@ import {
 import { BUTTON_FACE, MODAL_LAYER, TEXT_TOKENS } from "../modal.ts";
 import { createStandardCloseAction } from "../modalClose.ts";
 import { galaxiesAvailable, mapShowsEmpty } from "../pause.ts";
-import { inCurrentView, invalidatePressScope } from "../pressScope.ts";
 import { refuse } from "../refusal.ts";
 import { createStandardTextAction } from "../standardTextAction.ts";
 import {

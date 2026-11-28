@@ -3,7 +3,7 @@ import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayo
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { type MountedLayout, mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { assertAdaActionBindings, assertAdaActionMetadata } from "../actionBinding.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "../actions/index.ts";
 import { SCROLL, SPACING } from "../layout/index.ts";
 import { readViewUnit } from "../layoutDom/index.ts";
 import { createActions, createCard, setFooterAction } from "../modal.ts";

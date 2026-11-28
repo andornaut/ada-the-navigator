@@ -22,20 +22,20 @@ const recovery = vi.hoisted(() => ({
   invalidate: vi.fn(),
   options: undefined as unknown,
 }));
-vi.mock("../ui/actionBinding.ts", () => ({
+vi.mock("../ui/actions/actionBinding.ts", () => ({
   createAdaFactoryHoldBinding: (_options: unknown, host: HTMLElement) => {
     recovery.host = host;
     return recovery.bind;
   },
 }));
-vi.mock("../ui/holdActionsAdapter.ts", () => ({
+vi.mock("../ui/actions/holdActionsAdapter.ts", () => ({
   bindAdaRecoveryActionRoot: (options: unknown, host: HTMLElement) => {
     recovery.options = options;
     recovery.host = host;
     return recovery;
   },
 }));
-vi.mock("../ui/pressScope.ts", () => ({ rootPressGuard: () => ({ gate: {} }) }));
+vi.mock("../ui/actions/pressScope.ts", () => ({ rootPressGuard: () => ({ gate: {} }) }));
 const progress = vi.hoisted(() => ({
   begin: vi.fn(() => ({ finish: vi.fn(), progress: vi.fn() })),
   mount: vi.fn(() => vi.fn()),

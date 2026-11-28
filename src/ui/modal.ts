@@ -1,7 +1,7 @@
 import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 import { setControlPlacement } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 
-import { ADA_ACTION_HOLD_MS, bindAdaAction } from "./actionBinding.ts";
+import { ADA_ACTION_HOLD_MS, bindAdaAction } from "./actions/index.ts";
 import { CARD_CONTENT, cardHeaderLayout, listCardHeader } from "./layout/cardFrame.ts";
 import { type CardSize, SCROLL } from "./layout/contentCard.ts";
 import { type ButtonTag, FOCUS_RING } from "./layout/controls.ts";

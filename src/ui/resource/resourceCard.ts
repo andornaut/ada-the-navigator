@@ -2,7 +2,11 @@ import type { ControlAvailability } from "@andornaut/game-kit/runtime/ui/control
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { assertAdaActionBindings, assertAdaActionMetadata } from "../actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  inCurrentView,
+} from "../actions/index.ts";
 import { createDetailCardFrame } from "../detailCardFrame.ts";
 import { detailCount, renderDetailQuantity } from "../detailQuantity.ts";
 import { renderItemDetailDescription, renderItemDetailHeader } from "../itemDetailContent.ts";
@@ -11,7 +15,6 @@ import { readViewUnit } from "../layoutDom/index.ts";
 import { createAdaLayoutPorts } from "../layoutTree.ts";
 import { createStandardCloseAction } from "../modalClose.ts";
 import { createModalLayer } from "../modalLayer.ts";
-import { inCurrentView } from "../pressScope.ts";
 import {
   type ResourceAction,
   type ResourceLayoutData,

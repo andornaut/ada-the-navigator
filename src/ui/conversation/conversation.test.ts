@@ -18,8 +18,9 @@ import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   resolveAdaHoldAction,
-} from "../actionBinding.ts";
-import { bindAdaActionRoot } from "../holdActionsAdapter.ts";
+} from "../actions/actionBinding.ts";
+import { bindAdaActionRoot } from "../actions/holdActionsAdapter.ts";
+import { rootPressGuard } from "../actions/pressScope.ts";
 import { units, VIEW_HOST_ID } from "../layout/css.ts";
 import {
   hudRect,
@@ -29,7 +30,6 @@ import {
   STORY_SKIP,
 } from "../layout/playView.ts";
 import { BOX_OCCUPANT, boxOccupant, NOTICE_STYLE } from "../notice.ts";
-import { rootPressGuard } from "../pressScope.ts";
 import {
   COMPACT_PORTRAITS,
   CONVERSATION_STYLE,

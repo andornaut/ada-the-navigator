@@ -5,12 +5,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CAST, castPortrait } from "../../data/cast.ts";
 import { CONTENT } from "../../data/content.ts";
-import * as actionBinding from "../actionBinding.ts";
-import { resolveAdaHoldAction } from "../actionBinding.ts";
-import { registerAdaActionRoot } from "../actionRegistry.ts";
-import { fixtureActionRoot } from "../actionRootFixture.ts";
-import { bindAdaActionRoot } from "../holdActionsAdapter.ts";
-import { currentView, enterPressView, rootPressGuard } from "../pressScope.ts";
+import * as actionBinding from "../actions/actionBinding.ts";
+import { resolveAdaHoldAction } from "../actions/actionBinding.ts";
+import { registerAdaActionRoot } from "../actions/actionRegistry.ts";
+import { fixtureActionRoot } from "../actions/actionRootFixture.ts";
+import { bindAdaActionRoot } from "../actions/holdActionsAdapter.ts";
+import { currentView, enterPressView, rootPressGuard } from "../actions/pressScope.ts";
 import * as refusal from "../refusal.ts";
 import {
   STORY_PORTRAITS,

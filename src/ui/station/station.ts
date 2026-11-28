@@ -15,7 +15,8 @@ import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
-} from "../actionBinding.ts";
+  inCurrentView,
+} from "../actions/index.ts";
 import { createDialoguePanel, type DialogueSpeaker } from "../conversation/index.ts";
 import { createExchangeView, type ExchangePort } from "../exchange/index.ts";
 import {
@@ -30,7 +31,6 @@ import { readViewUnit } from "../layoutDom/index.ts";
 import { createActions, createCard, isTap } from "../modal.ts";
 import { createStandardCloseAction } from "../modalClose.ts";
 import { createModalLayer } from "../modalLayer.ts";
-import { inCurrentView } from "../pressScope.ts";
 import { refuse } from "../refusal.ts";
 import { createStandardTextAction } from "../standardTextAction.ts";
 import { applyButtonSkin } from "../uiSkin.ts";

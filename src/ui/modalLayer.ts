@@ -3,8 +3,8 @@ import {
   type ModalLayer,
 } from "@andornaut/game-kit/runtime/web/ui/dom/modalLayer";
 
+import { enterPressView } from "./actions/index.ts";
 import { adaForegroundInput } from "./foregroundInput.ts";
-import { enterPressView } from "./pressScope.ts";
 
 interface SharedLayer {
   readonly layer: ModalLayer;

@@ -6,7 +6,7 @@ import { CONTENT } from "../../data/content.ts";
 import { FPS_COUNTER_LABEL, SETTINGS_STATE_LABELS } from "../../data/settingsCopy.ts";
 import { uiIconUrl } from "../../data/uiIconUrl.ts";
 import type { InstallStepsKind } from "../../pwa/index.ts";
-import { assertAdaActionBindings, assertAdaActionMetadata } from "../actionBinding.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "../actions/index.ts";
 import { applyAdaControlTheme, createAdaPageDivider } from "../buttonPresentation.ts";
 import {
   type ControlVisibility,

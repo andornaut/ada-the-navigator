@@ -7,7 +7,7 @@ import {
   assertAdaActionMetadata,
   bindAdaAction,
   resolveAdaHoldAction,
-} from "./actionBinding.ts";
+} from "./actions/index.ts";
 import { readViewUnit } from "./layoutDom/index.ts";
 import { type PauseFrame, pauseFrames, pausePose } from "./pause.ts";
 

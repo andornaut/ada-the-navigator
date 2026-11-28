@@ -2,11 +2,11 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { CHEAT_COPY } from "../../data/cheatCopy.ts";
 import { uiIconUrl } from "../../data/uiIconUrl.ts";
-import { resolveAdaHoldAction } from "../actionBinding.ts";
-import { fixtureActionRoot } from "../actionRootFixture.ts";
+import { resolveAdaHoldAction } from "../actions/actionBinding.ts";
+import { fixtureActionRoot } from "../actions/actionRootFixture.ts";
+import { bindAdaActionRoot } from "../actions/holdActionsAdapter.ts";
+import { rootPressGuard } from "../actions/pressScope.ts";
 import type { CheatAction } from "../cheatActions.ts";
-import { bindAdaActionRoot } from "../holdActionsAdapter.ts";
-import { rootPressGuard } from "../pressScope.ts";
 import { createCheats } from "./cheats.ts";
 
 const corruption = vi.hoisted(() => ({ factory: false }));

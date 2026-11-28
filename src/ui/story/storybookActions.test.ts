@@ -6,14 +6,14 @@ import { afterEach, expect, it, vi } from "vitest";
 
 import { SCROLL } from "../../data/layout.ts";
 import { ControlState } from "../../input/state.ts";
-import * as actionBinding from "../actionBinding.ts";
-import { bindAdaAction, resolveAdaHoldAction } from "../actionBinding.ts";
-import { registerAdaActionRoot } from "../actionRegistry.ts";
-import { bindAdaActionRoot } from "../holdActionsAdapter.ts";
+import * as actionBinding from "../actions/actionBinding.ts";
+import { bindAdaAction, resolveAdaHoldAction } from "../actions/actionBinding.ts";
+import { registerAdaActionRoot } from "../actions/actionRegistry.ts";
+import { bindAdaActionRoot } from "../actions/holdActionsAdapter.ts";
+import { enterPressView, rootPressGuard } from "../actions/pressScope.ts";
 import { NO_INSETS } from "../layout/playView.ts";
 import { useDiscLayout, usePressed } from "../layout/touchControls.ts";
 import { readViewUnit } from "../layoutDom/viewScaleBridge.ts";
-import { enterPressView, rootPressGuard } from "../pressScope.ts";
 import { createStorybook, type StoryPageView } from "./storybook.ts";
 
 vi.mock("./storyArt.ts", async (original) => ({

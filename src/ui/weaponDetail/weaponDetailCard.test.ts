@@ -2,11 +2,11 @@ import { afterEach, expect, it, vi } from "vitest";
 
 import { uiIconUrl } from "../../data/uiIconUrl.ts";
 import { WEAPON_DETAIL_LABELS, weaponDetailLines } from "../../data/weaponDetails.ts";
-import { resolveAdaHoldAction } from "../actionBinding.ts";
-import { registerAdaActionRoot } from "../actionRegistry.ts";
-import { fixtureActionRoot } from "../actionRootFixture.ts";
+import { resolveAdaHoldAction } from "../actions/actionBinding.ts";
+import { registerAdaActionRoot } from "../actions/actionRegistry.ts";
+import { fixtureActionRoot } from "../actions/actionRootFixture.ts";
+import { enterPressView, rootPressGuard } from "../actions/pressScope.ts";
 import { compactLevelName } from "../compactLevelName.ts";
-import { enterPressView, rootPressGuard } from "../pressScope.ts";
 import { createWeaponDetailCard } from "./weaponDetailCard.ts";
 
 const fixture = vi.hoisted(() => {

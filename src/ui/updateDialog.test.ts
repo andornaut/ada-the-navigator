@@ -2,9 +2,9 @@ import { ObsoleteUpdateOfferError } from "@andornaut/game-kit/runtime/web/pwa/bu
 import { afterEach, expect, it, vi } from "vitest";
 
 import { createUpdateOffer, type UpdateOffer } from "../pwa/updateOffer.ts";
-import { resolveAdaHoldAction } from "./actionBinding.ts";
-import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
-import { rootPressGuard } from "./pressScope.ts";
+import { resolveAdaHoldAction } from "./actions/actionBinding.ts";
+import { bindAdaActionRoot } from "./actions/holdActionsAdapter.ts";
+import { rootPressGuard } from "./actions/pressScope.ts";
 import { createUpdateDialog } from "./updateDialog.ts";
 const fixture = vi.hoisted(() => {
   class Node extends EventTarget {

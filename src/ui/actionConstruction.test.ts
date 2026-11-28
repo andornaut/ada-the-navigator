@@ -5,9 +5,9 @@ import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
-} from "./actionBinding.ts";
-import { adaActionHasRoot, registerAdaActionRoot } from "./actionRegistry.ts";
-import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
+} from "./actions/actionBinding.ts";
+import { adaActionHasRoot, registerAdaActionRoot } from "./actions/actionRegistry.ts";
+import { bindAdaActionRoot } from "./actions/holdActionsAdapter.ts";
 
 class NodeFixture extends EventTarget {
   readonly children: NodeFixture[] = [];

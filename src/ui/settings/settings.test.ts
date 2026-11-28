@@ -2,13 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CONTENT } from "../../data/content.ts";
 import { SETTINGS_STATE_LABELS } from "../../data/settingsCopy.ts";
-import * as actionBinding from "../actionBinding.ts";
-import { resolveAdaHoldAction } from "../actionBinding.ts";
-import { fixtureActionRoot } from "../actionRootFixture.ts";
+import * as actionBinding from "../actions/actionBinding.ts";
+import { resolveAdaHoldAction } from "../actions/actionBinding.ts";
+import { fixtureActionRoot } from "../actions/actionRootFixture.ts";
+import { currentView, rootPressGuard } from "../actions/pressScope.ts";
 import { DEVICE_STORAGE_KEYS } from "../deviceSettings.ts";
 import { PAGE_DIVIDER_STYLE } from "../layout/pageDivider.ts";
 import * as modal from "../modal.ts";
-import { currentView, rootPressGuard } from "../pressScope.ts";
 import { createSettings, SETTINGS_STYLE, type SettingsLabels } from "./settings.ts";
 
 vi.mock("../uiSkin.ts", () => ({ applyButtonSkin: vi.fn().mockResolvedValue(undefined) }));

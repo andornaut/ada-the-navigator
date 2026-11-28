@@ -1,10 +1,15 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import { bindAdaAction, resolveAdaHoldAction } from "../actionBinding.ts";
-import { registerAdaActionRoot } from "../actionRegistry.ts";
-import { fixtureActionRoot } from "../actionRootFixture.ts";
+import { bindAdaAction, resolveAdaHoldAction } from "../actions/actionBinding.ts";
+import { registerAdaActionRoot } from "../actions/actionRegistry.ts";
+import { fixtureActionRoot } from "../actions/actionRootFixture.ts";
+import {
+  currentView,
+  enterPressView,
+  inCurrentView,
+  rootPressGuard,
+} from "../actions/pressScope.ts";
 import { SCROLL } from "../layout/contentCard.ts";
-import { currentView, enterPressView, inCurrentView, rootPressGuard } from "../pressScope.ts";
 import { createResourceCard } from "./resourceCard.ts";
 
 const fixture = vi.hoisted(() => {

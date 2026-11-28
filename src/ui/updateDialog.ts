@@ -7,15 +7,18 @@ import { createActionGroup } from "@andornaut/game-kit/runtime/web/ui/dom/action
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import type { UpdateOffer } from "../pwa/updateOffer.ts";
-import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
-import { registerAdaAncestorActionScope } from "./actionRegistry.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  inCurrentView,
+  registerAdaAncestorActionScope,
+} from "./actions/index.ts";
 import { SCROLL } from "./layout/index.ts";
 import { readViewUnit, VIEW_SCALE_EVENT } from "./layoutDom/index.ts";
 import { createAdaLayoutPorts } from "./layoutTree.ts";
 import { createCard } from "./modal.ts";
 import { createStandardCloseAction } from "./modalClose.ts";
 import { createModalLayer } from "./modalLayer.ts";
-import { inCurrentView } from "./pressScope.ts";
 import { FONT_ROLES } from "./settings/index.ts";
 import { type UpdateAction, type UpdateSchema, updateTree } from "./updateTree.ts";
 

@@ -48,6 +48,7 @@ const ENCAPSULATED_AREAS = [
   "src/model/world/",
   "src/saving/",
   "src/ui/achievements/",
+  "src/ui/actions/",
   "src/ui/cheats/",
   "src/ui/conversation/",
   "src/ui/exchange/",

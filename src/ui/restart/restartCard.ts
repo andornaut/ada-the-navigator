@@ -1,9 +1,9 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
+import { inCurrentView } from "../actions/index.ts";
 import { applyAdaControlTheme } from "../buttonPresentation.ts";
 import { mountAdaLayout } from "../layoutTree.ts";
 import { createModalLayer } from "../modalLayer.ts";
-import { inCurrentView } from "../pressScope.ts";
 import { type ConfirmAction, restartTree } from "./restartTree.ts";
 
 export interface RestartLabels {

@@ -5,13 +5,15 @@ import {
 
 import { LOADING_LAYER, SCROLL } from "../data/layout.ts";
 import type { MountStartupFailure } from "../loading/index.ts";
-import { createAdaFactoryHoldBinding } from "./actionBinding.ts";
+import {
+  bindAdaRecoveryActionRoot,
+  createAdaFactoryHoldBinding,
+  rootPressGuard,
+} from "./actions/index.ts";
 import { adaForegroundInput } from "./foregroundInput.ts";
-import { bindAdaRecoveryActionRoot } from "./holdActionsAdapter.ts";
 import { loadingFailureLayout } from "./layout/loadingFailureLayout.ts";
 import { viewScale } from "./layout/playView.ts";
 import { VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import { rootPressGuard } from "./pressScope.ts";
 
 function recoveryUnit(root: HTMLElement): number {
   const viewport = root.ownerDocument.defaultView;

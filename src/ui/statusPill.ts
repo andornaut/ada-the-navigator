@@ -9,7 +9,7 @@ import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
-} from "./actionBinding.ts";
+} from "./actions/index.ts";
 import {
   COLOURS,
   countSlot,

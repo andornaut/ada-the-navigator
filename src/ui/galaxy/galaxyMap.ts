@@ -18,7 +18,8 @@ import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
-} from "../actionBinding.ts";
+  invalidatePressScope,
+} from "../actions/index.ts";
 import { registerForegroundSurface } from "../foregroundInput.ts";
 import {
   COLOURS,
@@ -56,7 +57,6 @@ import { BUTTON_SLICE, CARD_SLICE, readViewUnit } from "../layoutDom/index.ts";
 import { mapCloseActionStyle } from "../mapCloseAction.ts";
 import { BUTTON_FACE, MODAL_LAYER, TEXT_TOKENS } from "../modal.ts";
 import { createStandardCloseAction } from "../modalClose.ts";
-import { invalidatePressScope } from "../pressScope.ts";
 import { refuse } from "../refusal.ts";
 import { drawShipJets } from "../shipJetCanvas.ts";
 import { createShipTailView } from "../shipTailView.ts";

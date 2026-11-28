@@ -1,8 +1,8 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import { bindAdaAction } from "./actionBinding.ts";
-import { bindAdaHoldActions } from "./holdActionsAdapter.ts";
-import { rootPressGuard } from "./pressScope.ts";
+import { bindAdaAction } from "./actions/actionBinding.ts";
+import { bindAdaHoldActions } from "./actions/holdActionsAdapter.ts";
+import { rootPressGuard } from "./actions/pressScope.ts";
 import { createWeaponSelector, type WeaponLabels } from "./weapons.ts";
 let activeDocument: FixtureDocument;
 const disposers: (() => void)[] = [];

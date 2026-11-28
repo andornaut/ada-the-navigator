@@ -1,9 +1,9 @@
 import { afterEach, expect, it, vi } from "vitest";
 
 import { requiredLoading, requiredReady } from "../loading/required.ts";
-import { bindAdaAction } from "./actionBinding.ts";
-import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
-import { enterPressView, rootPressGuard } from "./pressScope.ts";
+import { bindAdaAction } from "./actions/actionBinding.ts";
+import { bindAdaActionRoot } from "./actions/holdActionsAdapter.ts";
+import { enterPressView, rootPressGuard } from "./actions/pressScope.ts";
 
 class Element extends EventTarget {
   parentElement: Element | null = null;

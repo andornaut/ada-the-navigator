@@ -20,8 +20,9 @@ import {
   assertAdaActionMetadata,
   bindAdaAction,
   resolveAdaHoldAction,
-} from "../actionBinding.ts";
-import { registerAdaActionRoot } from "../actionRegistry.ts";
+} from "../actions/actionBinding.ts";
+import { registerAdaActionRoot } from "../actions/actionRegistry.ts";
+import { currentView, inCurrentView, rootPressGuard } from "../actions/pressScope.ts";
 import { itemDetailName, itemDetailProse, renderItemDetailHeader } from "../itemDetailContent.ts";
 import { SCROLL } from "../layout/contentCard.ts";
 import { units } from "../layout/css.ts";
@@ -32,7 +33,6 @@ import { readViewUnit } from "../layoutDom/viewScaleBridge.ts";
 import { isTap } from "../modal.ts";
 import { createStandardCloseAction } from "../modalClose.ts";
 import { createModalLayer } from "../modalLayer.ts";
-import { currentView, inCurrentView, rootPressGuard } from "../pressScope.ts";
 import { createStandardTextAction } from "../standardTextAction.ts";
 import { buttonProperty } from "../uiSkin.ts";
 import * as stationSource from "./station.ts";

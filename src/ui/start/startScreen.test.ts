@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { resolveAdaHoldAction } from "../actionBinding.ts";
-import { bindAdaActionRoot } from "../holdActionsAdapter.ts";
-import { rootPressGuard } from "../pressScope.ts";
+import { resolveAdaHoldAction } from "../actions/actionBinding.ts";
+import { bindAdaActionRoot } from "../actions/holdActionsAdapter.ts";
+import { rootPressGuard } from "../actions/pressScope.ts";
 import { createStartScreen } from "./startScreen.ts";
 import type { TitleScreenArt } from "./titleScreen.ts";
 

@@ -6,9 +6,11 @@ import {
 } from "@andornaut/game-kit/runtime/web/input/dom/foregroundInput";
 import type { PressGuard } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 
-import { resolveAdaForegroundAction } from "./actionBinding.ts";
-import { foregroundPressGuard } from "./holdActionsAdapter.ts";
-import { rootPressGuard } from "./pressScope.ts";
+import {
+  foregroundPressGuard,
+  resolveAdaForegroundAction,
+  rootPressGuard,
+} from "./actions/index.ts";
 
 type GameEscape = NonNullable<ForegroundInputOptions["gameEscape"]>;
 

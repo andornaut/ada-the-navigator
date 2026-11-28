@@ -5,13 +5,13 @@ import ts from "typescript";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { PHONE_BACK_PRESSED } from "../pwa/events.ts";
-import * as actionBinding from "../ui/actionBinding.ts";
+import * as actionBinding from "../ui/actions/actionBinding.ts";
+import { bindAdaActionRoot } from "../ui/actions/holdActionsAdapter.ts";
+import { enterPressView, inCurrentView, rootPressGuard } from "../ui/actions/pressScope.ts";
 import { createBackStack, pressBack } from "../ui/backStack.ts";
-import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
 import { SCROLL } from "../ui/layout/contentCard.ts";
 import { readViewUnit } from "../ui/layoutDom/viewScaleBridge.ts";
 import { createHudNavigationButton } from "../ui/pauseButton.ts";
-import { enterPressView, inCurrentView, rootPressGuard } from "../ui/pressScope.ts";
 import { EXIT_SHOWN_ATTRIBUTE } from "../ui/settings/index.ts";
 import { isMenuExitKey } from "./desktop.ts";
 

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { fixtureActionRoot } from "./actionRootFixture.ts";
+import { fixtureActionRoot } from "./actions/actionRootFixture.ts";
 import { activateNavigation, createNavigationButton } from "./navigationButton.ts";
 import { type NavigationActivity, navigationEntry } from "./navigationEntry.ts";
 

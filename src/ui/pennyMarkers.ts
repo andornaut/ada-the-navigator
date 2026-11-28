@@ -13,7 +13,7 @@ import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
-} from "./actionBinding.ts";
+} from "./actions/index.ts";
 import {
   layoutTargetMarkers,
   PENNY_MARKER,

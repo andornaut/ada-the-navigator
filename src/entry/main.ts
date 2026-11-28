@@ -37,12 +37,11 @@ import {
   setupPhoneApp,
 } from "../pwa/index.ts";
 import { saves } from "../saving/index.ts";
+import { bindAdaActionRoot, rootPressGuard } from "../ui/actions/index.ts";
 import { prepareBootReveal } from "../ui/bootReveal.ts";
 import { CRASH_SCREEN } from "../ui/crashScreen.ts";
 import { registerForegroundSurface } from "../ui/foregroundInput.ts";
-import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
 import { loadingFailureChrome } from "../ui/loadingFailure.ts";
-import { rootPressGuard } from "../ui/pressScope.ts";
 import { followPageVisibility } from "./lifecycle.ts";
 
 const frameTurn = watchFrameTurn("landscape", window);

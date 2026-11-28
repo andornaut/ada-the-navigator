@@ -11,8 +11,9 @@ import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
+  invalidatePressScope,
   resolveAdaHoldAction,
-} from "./actionBinding.ts";
+} from "./actions/index.ts";
 import { AmmoFeedbackQueue } from "./ammoFeedback.ts";
 import {
   COLOURS,
@@ -31,7 +32,6 @@ import {
   units,
 } from "./layout/index.ts";
 import { readViewUnit } from "./layoutDom/index.ts";
-import { invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 
 export interface WeaponChoice {

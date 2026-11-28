@@ -5,7 +5,7 @@ import { createLoadingAttempts } from "@andornaut/game-kit/runtime/load/loadingA
 import { type FrameTurn, pageToGame } from "@andornaut/game-kit/runtime/view/pagePoint";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-import type { AdaActionRootOptions } from "../ui/holdActionsAdapter.ts";
+import type { AdaActionRootOptions } from "../ui/actions/holdActionsAdapter.ts";
 
 const boot = vi.hoisted(() => ({
   app: {},
@@ -47,13 +47,13 @@ vi.mock("../ui/foregroundInput.ts", () => ({
     return boot.foregroundLeave;
   },
 }));
-vi.mock("../ui/holdActionsAdapter.ts", () => ({
+vi.mock("../ui/actions/holdActionsAdapter.ts", () => ({
   bindAdaActionRoot: (options: AdaActionRootOptions, root: HTMLElement) => {
     boot.appRoot(options, root);
     return { dispose: boot.appDispose };
   },
 }));
-vi.mock("../ui/pressScope.ts", () => ({ rootPressGuard: () => boot.appGuard }));
+vi.mock("../ui/actions/pressScope.ts", () => ({ rootPressGuard: () => boot.appGuard }));
 vi.mock("./crash.ts", () => ({}));
 vi.mock("../ui/crashScreen.ts", () => ({
   CRASH_SCREEN: {

@@ -1,10 +1,10 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import * as actionBinding from "./actionBinding.ts";
-import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
+import * as actionBinding from "./actions/actionBinding.ts";
+import { bindAdaActionRoot } from "./actions/holdActionsAdapter.ts";
+import { enterPressView } from "./actions/pressScope.ts";
 import { activateNavigation, createNavigationButton } from "./navigationButton.ts";
 import { createHudNavigationButton } from "./pauseButton.ts";
-import { enterPressView } from "./pressScope.ts";
 class Element extends EventTarget {
   dataset: Record<string, string> = {};
   className = "";

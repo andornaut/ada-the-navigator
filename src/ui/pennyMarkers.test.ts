@@ -19,8 +19,8 @@ import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   resolveAdaHoldAction,
-} from "./actionBinding.ts";
-import { fixtureActionRoot } from "./actionRootFixture.ts";
+} from "./actions/actionBinding.ts";
+import { fixtureActionRoot } from "./actions/actionRootFixture.ts";
 import { units } from "./layout/css.ts";
 import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
 import { safeGameArea } from "./layout/playView.ts";

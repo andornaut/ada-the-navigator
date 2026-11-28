@@ -4,9 +4,9 @@ import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   resolveAdaHoldAction,
-} from "../actionBinding.ts";
-import { registerAdaActionRoot } from "../actionRegistry.ts";
-import { fixtureActionRoot } from "../actionRootFixture.ts";
+} from "../actions/actionBinding.ts";
+import { registerAdaActionRoot } from "../actions/actionRegistry.ts";
+import { fixtureActionRoot } from "../actions/actionRootFixture.ts";
 import { type AchievementEntry, createAchievementsCard } from "./achievementsCard.ts";
 
 const corruption = vi.hoisted(() => ({ factory: false, row: false }));

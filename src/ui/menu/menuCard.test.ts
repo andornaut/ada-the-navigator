@@ -4,11 +4,11 @@ import { runInNewContext } from "node:vm";
 import ts from "typescript";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { registerAdaActionRoot } from "../actionRegistry.ts";
-import { bindAdaActionRoot } from "../holdActionsAdapter.ts";
+import { registerAdaActionRoot } from "../actions/actionRegistry.ts";
+import { bindAdaActionRoot } from "../actions/holdActionsAdapter.ts";
+import { enterPressView, rootPressGuard } from "../actions/pressScope.ts";
 import { units } from "../layout/css.ts";
 import { VIEW_SCALE_EVENT } from "../layout/viewScale.ts";
-import { enterPressView, rootPressGuard } from "../pressScope.ts";
 
 const fixture = vi.hoisted(() => {
   class Node extends EventTarget {
@@ -236,7 +236,7 @@ import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   resolveAdaHoldAction,
-} from "../actionBinding.ts";
+} from "../actions/actionBinding.ts";
 import { actionOrder } from "../modal.ts";
 import { createMenuCard } from "./menuCard.ts";
 

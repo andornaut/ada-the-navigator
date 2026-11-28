@@ -96,13 +96,13 @@ an additional header icon does not move or replace the row's icon.
 
 ## Registered actions and completed producers
 
-[Action metadata](../../../src/ui/actionBinding.ts) registers each discrete control and
+[Action metadata](../../../src/ui/actions/actionBinding.ts) registers each discrete control and
 its original availability and callback. `assertAdaActionMetadata` checks completed
 producers while detached; `assertAdaActionBindings` additionally requires attached
 controls beneath live registered roots. These structural checks do not invoke
 availability or execution policy.
 
-[Action roots](../../../src/ui/holdActionsAdapter.ts) own published tap/hold dispatch and
+[Action roots](../../../src/ui/actions/holdActionsAdapter.ts) own published tap/hold dispatch and
 nearest-root eligibility. The current Ada hold duration is 500 ms, independent of
 display scale. A hold uses its registered override or falls back to the tap action.
 Factory bindings register metadata only: the factory keeps its original guarded

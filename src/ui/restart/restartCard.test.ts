@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { resolveAdaHoldAction } from "../actionBinding.ts";
-import { bindAdaActionRoot } from "../holdActionsAdapter.ts";
-import { enterPressView, rootPressGuard } from "../pressScope.ts";
+import { resolveAdaHoldAction } from "../actions/actionBinding.ts";
+import { bindAdaActionRoot } from "../actions/holdActionsAdapter.ts";
+import { enterPressView, rootPressGuard } from "../actions/pressScope.ts";
 import { createRestartCard } from "./restartCard.ts";
 
 let doc: EventTarget & {

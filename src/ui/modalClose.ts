@@ -1,7 +1,7 @@
 import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 
 import { HUD_BUTTON } from "../data/layout.ts";
-import { ADA_ACTION_HOLD_MS, bindAdaAction, resolveAdaHoldAction } from "./actionBinding.ts";
+import { ADA_ACTION_HOLD_MS, bindAdaAction, resolveAdaHoldAction } from "./actions/index.ts";
 import { CARD_CLOSE } from "./layout/cardFrame.ts";
 import { units } from "./layout/css.ts";
 

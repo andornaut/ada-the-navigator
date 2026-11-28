@@ -475,7 +475,7 @@ function recoveryAssertionFactory(
   ) {
     return false;
   }
-  const registry = context.sources.get("src/ui/actionRegistry.ts");
+  const registry = context.sources.get("src/ui/actions/actionRegistry.ts");
   const registrations = implementation.body.statements
     .flatMap((statement) =>
       ts.isVariableStatement(statement) ? [...statement.declarationList.declarations] : [],
@@ -596,8 +596,8 @@ function recoveryAssertionFactory(
 }
 
 function scanContext(sources: ScanContext["sources"]): ScanContext {
-  const registry = sources.get("src/ui/actionBinding.ts");
-  const adapter = sources.get("src/ui/holdActionsAdapter.ts");
+  const registry = sources.get("src/ui/actions/actionBinding.ts");
+  const adapter = sources.get("src/ui/actions/holdActionsAdapter.ts");
   const lexicalDeclarations = localDeclarations(sources);
   const assertions = new Map<ts.FunctionDeclaration, RuntimeAssertionKind>();
   const live = directExport(registry, "assertAdaActionBindings");
@@ -611,7 +611,7 @@ function scanContext(sources: ScanContext["sources"]): ScanContext {
   const context: ScanContext = {
     actionBinding: directExport(registry, "bindAdaAction"),
     actionModules: new Set(
-      [registry, adapter, sources.get("src/ui/actionRegistry.ts")].filter(
+      [registry, adapter, sources.get("src/ui/actions/actionRegistry.ts")].filter(
         (module) => module !== undefined,
       ),
     ),

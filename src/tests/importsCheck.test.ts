@@ -171,6 +171,13 @@ describe("layers", () => {
         'import type { DialogueSpeaker } from "../conversation/dialoguePanel.ts";',
       ].join("\n"),
     );
+    add(
+      "src/ui/recovery.ts",
+      [
+        'import {bindAdaRecoveryActionRoot} from "./actions/index.ts";',
+        'import {rootPressGuard} from "./actions/pressScope.ts";',
+      ].join("\n"),
+    );
     add("src/game/scene.ts", 'const art = import("../art/shipJets.ts");');
     add("src/ui/modal.test.ts", 'import { paint } from "./ship/shipCard.ts";');
 
@@ -179,6 +186,7 @@ describe("layers", () => {
       "src/ui/pause/pauseCard.ts imports src/ui/ship/shipCard.ts directly. Use src/ui/ship/index.ts",
       "src/ui/station/station.ts imports src/ui/conversation/dialoguePanel.ts directly. " +
         "Use src/ui/conversation/index.ts",
+      "src/ui/recovery.ts imports src/ui/actions/pressScope.ts directly. Use src/ui/actions/index.ts",
       "src/game/scene.ts imports src/art/shipJets.ts directly. Use src/art/index.ts",
     ]);
   });

@@ -20,16 +20,16 @@ vi.mock("@andornaut/game-kit/runtime/web/crash/dom/crashScreen", () => ({
     };
   },
 }));
-vi.mock("./actionBinding.ts", () => ({
+vi.mock("./actions/actionBinding.ts", () => ({
   createAdaFactoryHoldBinding: () => () => {
     host.duringBind?.();
     return host.unbind;
   },
 }));
-vi.mock("./holdActionsAdapter.ts", () => ({
+vi.mock("./actions/holdActionsAdapter.ts", () => ({
   bindAdaRecoveryActionRoot: host.newRoot,
 }));
-vi.mock("./pressScope.ts", () => ({
+vi.mock("./actions/pressScope.ts", () => ({
   rootPressGuard: () => ({}),
 }));
 function pageWindow() {

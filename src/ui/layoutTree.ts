@@ -11,7 +11,7 @@ import {
   mountLayout,
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "./actions/index.ts";
 import { presentAdaButtonContent } from "./buttonPresentation.ts";
 import { type CardSize, SCROLL } from "./layout/index.ts";
 import { readViewUnit } from "./layoutDom/index.ts";

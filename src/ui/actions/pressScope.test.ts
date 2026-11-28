@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 
+import { createModalLayer } from "../modalLayer.ts";
 import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
-import { createModalLayer } from "./modalLayer.ts";
 import {
   currentView,
   enterPressView,

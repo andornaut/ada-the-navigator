@@ -19,7 +19,7 @@ import {
   assertAdaActionMetadata,
   bindAdaAction,
   resolveAdaForegroundAction,
-} from "../actionBinding.ts";
+} from "../actions/index.ts";
 import { showDialogueChoiceStatus } from "../dialogueChoice.ts";
 import {
   type StoryPanelContainer,

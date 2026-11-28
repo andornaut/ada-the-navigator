@@ -36,7 +36,16 @@ import {
   type AchievementsLabels,
   createAchievementsCard,
 } from "../ui/achievements/index.ts";
-import { assertAdaActionBindings, bindAdaAction } from "../ui/actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  bindAdaAction,
+  bindAdaActionRoot,
+  currentView,
+  foregroundPressGuard,
+  inCurrentView,
+  rootPressGuard,
+  subscribePressScope,
+} from "../ui/actions/index.ts";
 import { type BackLayer, createBackStack, pressBack } from "../ui/backStack.ts";
 import type { CheatAction } from "../ui/cheatActions.ts";
 import { type CheatLabels, createCheats } from "../ui/cheats/index.ts";
@@ -48,7 +57,6 @@ import {
   type PaintSwatch,
 } from "../ui/flightFeedback/index.ts";
 import { registerForegroundSurface, registerGameEscape } from "../ui/foregroundInput.ts";
-import { bindAdaActionRoot, foregroundPressGuard } from "../ui/holdActionsAdapter.ts";
 import {
   HUD_BUTTON,
   HUD_ROW,
@@ -75,12 +83,6 @@ import {
   type PauseState,
 } from "../ui/pause/index.ts";
 import { createHudNavigationButton } from "../ui/pauseButton.ts";
-import {
-  currentView,
-  inCurrentView,
-  rootPressGuard,
-  subscribePressScope,
-} from "../ui/pressScope.ts";
 import { refusalPose } from "../ui/refusal.ts";
 import { createResourceCard } from "../ui/resource/index.ts";
 import {

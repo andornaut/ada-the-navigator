@@ -8,9 +8,9 @@ import {
   interactionCopy,
 } from "../../model/conversations.ts";
 import type { DialogueState } from "../../model/types.ts";
+import { invalidatePressScope } from "../actions/index.ts";
 import type { createDialoguePanel } from "../conversation/index.ts";
 import { showDialogueChoiceStatus } from "../dialogueChoice.ts";
-import { invalidatePressScope } from "../pressScope.ts";
 import { createStandardTextAction } from "../standardTextAction.ts";
 
 /** The caller supplies the eligible conversation and accepts only the current panel's choice. */

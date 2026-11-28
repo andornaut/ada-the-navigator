@@ -70,7 +70,7 @@ it("permits the implementation-owned click and keeps gestures visible for review
   ).toBe("raw-discrete");
   expect(
     scanSingleSource(
-      "src/ui/actionBinding.ts",
+      "src/ui/actions/actionBinding.ts",
       'function bypass(){element.addEventListener("click", action);}',
     )[0]?.kind,
   ).toBe("raw-discrete");
@@ -530,9 +530,14 @@ it("does not resolve type-only or lexically shadowed event imports", () => {
 });
 
 const canonicalRegistry = {
-  path: "src/ui/actionBinding.ts",
-  text: readFileSync(new URL("../ui/actionBinding.ts", import.meta.url), "utf8"),
+  path: "src/ui/actions/actionBinding.ts",
+  text: readFileSync(new URL("../ui/actions/actionBinding.ts", import.meta.url), "utf8"),
 };
+const canonicalActionFacade = {
+  path: "src/ui/actions/index.ts",
+  text: readFileSync(new URL("../ui/actions/index.ts", import.meta.url), "utf8"),
+};
+const canonicalBindings = [canonicalRegistry, canonicalActionFacade];
 
 // Legacy synthetic fixtures model a consumer with an explicit import from the real registry.
 function registryImport(path: string): string {
@@ -542,7 +547,7 @@ function registryImport(path: string): string {
 
 function scanRegistryFixtures(inputs: readonly DiscreteActionSource[]) {
   const result = scanDiscreteActionProject([
-    canonicalRegistry,
+    ...canonicalBindings,
     ...inputs.map(({ path, text }) => ({ path, text: registryImport(path) + text })),
   ]);
   return result;
@@ -562,10 +567,10 @@ const originFixture = `
 `;
 
 it.each([
-  ["direct alias", 'import { bindAdaAction as register } from "./actionBinding.ts";', true],
+  ["direct alias", 'import { bindAdaAction as register } from "./actions/actionBinding.ts";', true],
   ["same-named local", "function bindAdaAction() {}", false],
   ["wrong module", 'import { bindAdaAction } from "./observe.ts";', false],
-  ["type-only", 'import type { bindAdaAction } from "./actionBinding.ts";', false],
+  ["type-only", 'import type { bindAdaAction } from "./actions/actionBinding.ts";', false],
   ["re-export", 'import { bindAdaAction } from "./barrel.ts";', true],
   ["unavailable", 'import { bindAdaAction } from "./unavailable.ts";', false],
 ] as const)("requires a canonical value export for a %s", (scenario, prefix, proven) => {
@@ -575,9 +580,9 @@ it.each([
       ? originFixture
       : originFixture.replace("register(", "bindAdaAction(");
   const result = scanDiscreteActionProject([
-    canonicalRegistry,
+    ...canonicalBindings,
     { path: "src/ui/observe.ts", text: "export function bindAdaAction() {}" },
-    { path: "src/ui/barrel.ts", text: 'export {bindAdaAction} from "./actionBinding.ts";' },
+    { path: "src/ui/barrel.ts", text: 'export {bindAdaAction} from "./actions/actionBinding.ts";' },
     { path, text: prefix + body },
   ]);
   expect(
@@ -591,8 +596,8 @@ it.each([
 });
 
 const actionFacade = {
-  path: "src/ui/actions/index.ts",
-  text: 'export {bindAdaAction as useAction} from "../actionBinding.ts";',
+  path: "src/ui/actions/forwardingFixture.ts",
+  text: 'export {bindAdaAction as useAction} from "./actionBinding.ts";',
 };
 
 it.each([
@@ -607,14 +612,14 @@ it.each([
   ],
   [
     "lookalike",
-    actionFacade.text.replace("../actionBinding.ts", "../fakeBinding.ts"),
+    actionFacade.text.replace("./actionBinding.ts", "../fakeBinding.ts"),
     "",
     "",
     false,
   ],
   [
     "second facade",
-    actionFacade.text.replace("../actionBinding.ts", "../extraFacade.ts"),
+    actionFacade.text.replace("./actionBinding.ts", "../extraFacade.ts"),
     "",
     "",
     false,
@@ -623,7 +628,7 @@ it.each([
   ["duplicate name", actionFacade.text.repeat(2), "", "", false],
   [
     "facade replacement",
-    'import {bindAdaAction} from "../actionBinding.ts"; ' +
+    'import {bindAdaAction} from "./actionBinding.ts"; ' +
       "let useAction = bindAdaAction; useAction = replacement; export {useAction};",
     "",
     "",
@@ -637,10 +642,13 @@ it.each([
     { ...canonicalRegistry, text: canonicalRegistry.text + after },
     { ...actionFacade, text: facade },
     { path: "src/ui/fakeBinding.ts", text: "export function bindAdaAction() {}" },
-    { path: "src/ui/extraFacade.ts", text: 'export {bindAdaAction} from "./actionBinding.ts";' },
+    {
+      path: "src/ui/extraFacade.ts",
+      text: 'export {bindAdaAction} from "./actions/actionBinding.ts";',
+    },
     {
       path,
-      text: `import {useAction as register} from "./actions/index.ts";${before}${originFixture}`,
+      text: `import {useAction as register} from "./actions/forwardingFixture.ts";${before}${originFixture}`,
     },
   ]);
   expect(
@@ -652,11 +660,11 @@ it.each([
 it("does not promote a lexically shadowed wrapper or fake lifetime handle to a binding proof", () => {
   const path = "src/ui/panel.ts";
   const result = scanDiscreteActionProject([
-    canonicalRegistry,
+    ...canonicalBindings,
     {
       path,
       text: `
-      import { bindAdaAction } from "./actionBinding.ts";
+      import { bindAdaAction } from "./actions/actionBinding.ts";
       function fakeRegistry(bindAdaAction) {
         function register(button) { return bindAdaAction(opts, button); }
         const button = createButton("Run");
@@ -698,12 +706,12 @@ it("keeps the actual registry bridge but flags an unrelated raw click in the sam
   const impostor =
     'export function bindAdaAction(options, button) { button.addEventListener("click", options.run); }';
   expect(
-    scanDiscreteActionProject([canonicalRegistry, { path: external, text: impostor }]).findings,
+    scanDiscreteActionProject([...canonicalBindings, { path: external, text: impostor }]).findings,
   ).toEqual([expect.objectContaining({ kind: "raw-discrete", path: external })]);
 });
 
 function constructionFindings(path: string, text: string) {
-  return scanDiscreteActionProject([canonicalRegistry, { path, text }]).findings.filter(
+  return scanDiscreteActionProject([...canonicalBindings, { path, text }]).findings.filter(
     (finding) => finding.path === path,
   );
 }
@@ -720,16 +728,16 @@ const standardTextConstructor = expect.objectContaining({
 
 it("proves the existing text producer through explicit binding and action resolver re-exports", () => {
   const path = "src/ui/standardTextAction.ts";
-  const text = standardTextSource.replace("./actionBinding.ts", "./actions/index.ts");
+  const text = standardTextSource.replace("./actions/index.ts", "./actions/forwardingFixture.ts");
   const facade = {
     ...actionFacade,
-    text: 'export {ADA_ACTION_HOLD_MS, bindAdaAction, resolveAdaHoldAction} from "../actionBinding.ts";',
+    text: 'export {ADA_ACTION_HOLD_MS, bindAdaAction, resolveAdaHoldAction} from "./actionBinding.ts";',
   };
   for (const source of [
     facade,
     { ...facade, text: facade.text.replace("resolveAdaHoldAction", "type resolveAdaHoldAction") },
   ]) {
-    const result = scanDiscreteActionProject([canonicalRegistry, source, { path, text }]);
+    const result = scanDiscreteActionProject([...canonicalBindings, source, { path, text }]);
     const findings = result.findings.filter((finding) => finding.path === path);
     expect(findings).toEqual(source === facade ? [] : [standardTextConstructor]);
   }
@@ -738,7 +746,7 @@ it("proves the existing text producer through explicit binding and action resolv
 it("proves the guarded text producer in place and by renamed import and constructor", () => {
   expect(constructionFindings("src/ui/standardTextAction.ts", standardTextSource)).toEqual([]);
   const renamed = standardTextSource
-    .replace("resolveAdaHoldAction }", "resolveAdaHoldAction as resolveOwned }")
+    .replace("  resolveAdaHoldAction,", "  resolveAdaHoldAction as resolveOwned,")
     .replace("resolveAdaHoldAction(root, button)", "resolveOwned(root, button)")
     .replace("createStandardTextAction(", "makeTextAction(");
   expect(renamed).not.toBe(standardTextSource);
@@ -827,7 +835,7 @@ it.each([
 });
 
 const layoutMetadataSources = [
-  canonicalRegistry,
+  ...canonicalBindings,
   ...["standardTextAction", "modalClose"].map((name) => ({
     path: `src/ui/${name}.ts`,
     text: readFileSync(new URL(`../ui/${name}.ts`, import.meta.url), "utf8"),
@@ -1170,7 +1178,7 @@ it.each([
 
 const rawRowPath = "src/ui/inventoryFixture.ts";
 const rawRowSource = `
-  import { bindAdaAction } from "./actionBinding.ts";
+  import { bindAdaAction } from "./actions/actionBinding.ts";
   function inventoryRow(row) {
     const line = document.createElement("button");
     line.type = "button";
@@ -1219,7 +1227,7 @@ it("reports a bound raw Close using only the standard icon skin", () => {
   const path = "src/ui/rawCloseFixture.ts";
   const closeClass = 'button.className = "ada-close"';
   const source = `
-    import { bindAdaAction } from "./actionBinding.ts";
+    import { bindAdaAction } from "./actions/actionBinding.ts";
     function closeButton(onClose) {
       const button = document.createElement("button");
       const binding = bindAdaAction({ click: { run: () => onClose() } }, button);
@@ -1325,7 +1333,7 @@ function constructWith(
   bind = "bindAdaAction({ click: { run: () => act() } }, control)",
 ) {
   return `
-    import { bindAdaAction } from "./ui/actionBinding.ts";
+    import { bindAdaAction } from "./ui/actions/actionBinding.ts";
     function build() {
       ${prelude}
       const control = document.createElement("button");
@@ -1375,7 +1383,7 @@ it("does not extend pre-bind proof through a destructured cleanup handle", () =>
 it("does not exempt a callback because it is named continuous, drag, or editing", () => {
   for (const callback of ["continuous", "drag", "editing"]) {
     const findings = scanWithRegistry(
-      "src/ui/actionBinding.ts",
+      "src/ui/actions/actionBinding.ts",
       `
       function ${callback}(event) { event.preventDefault(); runAction(); }
       node.addEventListener("pointerup", ${callback});
@@ -1407,7 +1415,7 @@ it.each([
   const consumer = "src/consumer.ts";
   writeFileSync(join(project, consumer), imported ? registryImport(consumer) + text : text);
   if (imported) {
-    mkdirSync(join(project, "src/ui"));
+    mkdirSync(join(project, dirname(canonicalRegistry.path)), { recursive: true });
     writeFileSync(join(project, canonicalRegistry.path), canonicalRegistry.text);
   }
   const report = join(project, "report.json");
@@ -1518,11 +1526,11 @@ it.each([
 it("distinguishes direct live-root and metadata assertion sites from unresolved methods", () => {
   const path = "src/ui/assertionConsumer.ts";
   const result = scanDiscreteActionProject([
-    canonicalRegistry,
+    ...canonicalBindings,
     {
       path,
       text: `
-        import { assertAdaActionBindings as verify, assertAdaActionMetadata } from "./actionBinding.ts";
+        import { assertAdaActionBindings as verify, assertAdaActionMetadata } from "./actions/actionBinding.ts";
         verify(panel);
         assertAdaActionMetadata(panel);
         const repaint = { assertBindings() {} };
@@ -1540,13 +1548,13 @@ it("distinguishes direct live-root and metadata assertion sites from unresolved 
 });
 
 const recoveryAdapter = {
-  path: "src/ui/holdActionsAdapter.ts",
-  text: readFileSync(new URL("../ui/holdActionsAdapter.ts", import.meta.url), "utf8"),
+  path: "src/ui/actions/holdActionsAdapter.ts",
+  text: readFileSync(new URL("../ui/actions/holdActionsAdapter.ts", import.meta.url), "utf8"),
 };
 
 const recoveryRegistry = {
-  path: "src/ui/actionRegistry.ts",
-  text: readFileSync(new URL("../ui/actionRegistry.ts", import.meta.url), "utf8"),
+  path: "src/ui/actions/actionRegistry.ts",
+  text: readFileSync(new URL("../ui/actions/actionRegistry.ts", import.meta.url), "utf8"),
 };
 const recoveryStartup = {
   path: "src/ui/loadingFailure.ts",
@@ -1559,7 +1567,7 @@ const recoveryCrash = {
 };
 
 const crashAssertion = "completed.root.assertBindings()";
-const recoverySources = [canonicalRegistry, recoveryRegistry, recoveryAdapter, recoveryCrash];
+const recoverySources = [...canonicalBindings, recoveryRegistry, recoveryAdapter, recoveryCrash];
 
 it.each(["caller", "adapter"] as const)(
   "associates the actual recovery assertion when its %s uses a named facade",
@@ -1568,10 +1576,10 @@ it.each(["caller", "adapter"] as const)(
       ...actionFacade,
       text:
         port === "caller"
-          ? 'export {bindAdaRecoveryActionRoot} from "../holdActionsAdapter.ts";'
+          ? 'export {bindAdaRecoveryActionRoot} from "./holdActionsAdapter.ts";'
           : "export {assertAdaActionBindings, resolveAdaHoldAction, resolveAdaPointerTarget} " +
-            'from "../actionBinding.ts"; ' +
-            'export {adaActionOwner, registerAdaActionRoot} from "../actionRegistry.ts";',
+            'from "./actionBinding.ts"; ' +
+            'export {adaActionOwner, registerAdaActionRoot} from "./actionRegistry.ts";',
     };
     const adapter =
       port === "adapter"
@@ -1579,7 +1587,7 @@ it.each(["caller", "adapter"] as const)(
             ...recoveryAdapter,
             text: recoveryAdapter.text.replaceAll(
               /"\.\/(actionBinding|actionRegistry)\.ts"/gu,
-              '"./actions/index.ts"',
+              '"./forwardingFixture.ts"',
             ),
           }
         : recoveryAdapter;
@@ -1587,10 +1595,10 @@ it.each(["caller", "adapter"] as const)(
       ...recoveryStartup,
       text:
         port === "caller"
-          ? recoveryStartup.text.replace("./holdActionsAdapter.ts", "./actions/index.ts")
+          ? recoveryStartup.text.replace("./actions/index.ts", "./actions/forwardingFixture.ts")
           : recoveryStartup.text,
     };
-    const inputs = [canonicalRegistry, recoveryRegistry, adapter, startup];
+    const inputs = [...canonicalBindings, recoveryRegistry, adapter, startup];
     const proven = scanDiscreteActionProject([...inputs, facade]);
     expect(proven.runtimeAssertions).toContainEqual(
       expect.objectContaining({
@@ -1640,7 +1648,7 @@ it.each([
   [
     "a foreign root factory",
     recoveryCrash,
-    'from "./holdActionsAdapter.ts"',
+    'from "./actions/index.ts"',
     'from "./foreignRecovery.ts"',
   ],
   [
@@ -1786,7 +1794,7 @@ it.each([
   expect(mutated.text).not.toBe(input.text);
   const { path } = recoveryStartup;
   const result = scanDiscreteActionProject([
-    canonicalRegistry,
+    ...canonicalBindings,
     recoveryRegistry,
     ...[recoveryAdapter, recoveryStartup].map((source) =>
       source.path === input.path ? mutated : source,
@@ -1801,7 +1809,7 @@ it.each([
 it("keeps recovery method calls unresolved when their binding or eager lifetime is ambiguous", () => {
   const path = "src/recovery.ts";
   const result = scanDiscreteActionProject([
-    canonicalRegistry,
+    ...canonicalBindings,
     recoveryRegistry,
     recoveryAdapter,
     {
@@ -1811,7 +1819,7 @@ it("keeps recovery method calls unresolved when their binding or eager lifetime 
     {
       path,
       text: `
-        import {bindAdaRecoveryActionRoot as bind} from "./ui/holdActionsAdapter.ts";
+        import {bindAdaRecoveryActionRoot as bind} from "./ui/actions/holdActionsAdapter.ts";
         import {bindAdaRecoveryActionRoot as fake} from "./lookalike.ts";
         function wrongModule(root) {
           const panel = root.ownerDocument.createElement("div");
@@ -1881,7 +1889,7 @@ it("keeps recovery method calls unresolved when their binding or eager lifetime 
 it("requires the adapter method to delegate to the canonical assertion import", () => {
   const path = "src/caller.ts";
   const result = scanDiscreteActionProject([
-    canonicalRegistry,
+    ...canonicalBindings,
     recoveryRegistry,
     {
       ...recoveryAdapter,
@@ -1893,7 +1901,7 @@ it("requires the adapter method to delegate to the canonical assertion import", 
     {
       path,
       text: `
-        import {bindAdaRecoveryActionRoot} from "./ui/holdActionsAdapter.ts";
+        import {bindAdaRecoveryActionRoot} from "./ui/actions/holdActionsAdapter.ts";
         function construct(root) {
           const panel = root.ownerDocument.createElement("div");
           const audit = bindAdaRecoveryActionRoot(options, panel);
@@ -1911,7 +1919,7 @@ it("requires the adapter method to delegate to the canonical assertion import", 
 it("does not authenticate a wrong module, lexical shadow, bare name or indirect assertion call", () => {
   const path = "src/ui/assertionConsumer.ts";
   const result = scanDiscreteActionProject([
-    canonicalRegistry,
+    ...canonicalBindings,
     {
       path: "src/ui/observe.ts",
       text: "export function assertAdaActionBindings(panel) {}",
@@ -1920,7 +1928,7 @@ it("does not authenticate a wrong module, lexical shadow, bare name or indirect 
       path,
       text: `
         import { assertAdaActionBindings } from "./observe.ts";
-        import { assertAdaActionMetadata as verify } from "./actionBinding.ts";
+        import { assertAdaActionMetadata as verify } from "./actions/actionBinding.ts";
         assertAdaActionBindings(panel);
         function shadow(verify) { verify(panel); }
         function assertAdaActionMetadata(panel) {}
@@ -1938,11 +1946,11 @@ it("does not authenticate a wrong module, lexical shadow, bare name or indirect 
 it("retains construction findings when a control escapes before a genuine conditional assertion", () => {
   const path = "src/ui/assertionConsumer.ts";
   const result = scanDiscreteActionProject([
-    canonicalRegistry,
+    ...canonicalBindings,
     {
       path,
       text: `
-        import { assertAdaActionBindings, assertAdaActionMetadata as inspect } from "./actionBinding.ts";
+        import { assertAdaActionBindings, assertAdaActionMetadata as inspect } from "./actions/actionBinding.ts";
         export function createPanel() {
           const button = document.createElement("button");
           button.dataset.action = "unbound";
@@ -2801,7 +2809,7 @@ it.each([
     const result = scanRegistryFixtures([
       {
         path,
-        text: `import {assertAdaActionBindings} from "./actionBinding.ts";
+        text: `import {assertAdaActionBindings} from "./actions/actionBinding.ts";
       export function make(root) {
         const button = document.createElement("button");
         ${before}
@@ -2844,7 +2852,7 @@ it.each([
 });
 const conversationPath = "src/ui/conversation/conversation.ts";
 const conversationScannerSources = [
-  canonicalRegistry,
+  ...canonicalBindings,
   ...[conversationPath, "src/ui/standardTextAction.ts", "src/ui/modalClose.ts"].map((path) => ({
     path,
     text: readFileSync(new URL(`../../${path}`, import.meta.url), "utf8"),
@@ -3062,7 +3070,7 @@ it.each([
 
 const kitAliasSource = `
   import {createButton} from "@andornaut/game-kit/runtime/web/ui/dom/button";
-  import {assertAdaActionBindings, assertAdaActionMetadata} from "./actionBinding.ts";
+  import {assertAdaActionBindings, assertAdaActionMetadata} from "./actions/actionBinding.ts";
   function render(host: HTMLElement) {
     const document = host.ownerDocument;
     const row = document.createElement("div");
@@ -3171,7 +3179,7 @@ it("keeps a separate click action visible beside a proven Kit construction", () 
 it("removes only the actual weapon Kit constructor from the local census", () => {
   const path = "src/ui/weapons.ts";
   const text = readFileSync(new URL("../ui/weapons.ts", import.meta.url), "utf8");
-  const { findings } = scanDiscreteActionProject([canonicalRegistry, { path, text }]);
+  const { findings } = scanDiscreteActionProject([...canonicalBindings, { path, text }]);
   expect(
     findings
       .filter((finding) => finding.path === path)
@@ -3219,7 +3227,7 @@ const switchConstructor = expect.objectContaining({
 
 function switchFindings(text: string, path = "src/ui/modal.ts") {
   return scanDiscreteActionProject([
-    canonicalRegistry,
+    ...canonicalBindings,
     { path, text },
     { path: "src/ui/layoutDom/viewScaleBridge.ts", text: viewScaleSource },
   ]).findings.filter((finding) => finding.path === path);

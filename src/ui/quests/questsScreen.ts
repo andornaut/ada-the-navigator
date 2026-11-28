@@ -9,7 +9,11 @@ import type { GalaxyNumber } from "../../data/types.ts";
 import { uiIconUrl } from "../../data/uiIconUrl.ts";
 import type { MapPlace } from "../../model/map.ts";
 import type { QuestEntry, QuestObjective } from "../../model/questDetails.ts";
-import { assertAdaActionBindings, assertAdaActionMetadata } from "../actionBinding.ts";
+import {
+  assertAdaActionBindings,
+  assertAdaActionMetadata,
+  inCurrentView,
+} from "../actions/index.ts";
 import { createCompletionIndicator } from "../completionIndicator.ts";
 import { COLOURS, QUEST_LIST_PAGE_SIZE, QUEST_ROUTE_ARROW, SCROLL } from "../layout/index.ts";
 import { readViewUnit } from "../layoutDom/index.ts";
@@ -17,7 +21,6 @@ import { chipFace, chipGlyph, type MapScreenLabels } from "../map/index.ts";
 import { createCard, setFooterAction, setScrollGroup } from "../modal.ts";
 import { createStandardCloseAction } from "../modalClose.ts";
 import { createModalLayer } from "../modalLayer.ts";
-import { inCurrentView } from "../pressScope.ts";
 import { refuse } from "../refusal.ts";
 import { spriteIconPath } from "../spriteIconPath.ts";
 import { createStandardTextAction } from "../standardTextAction.ts";

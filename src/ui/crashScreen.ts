@@ -23,14 +23,16 @@ import { BUILD_LABEL } from "../buildLabel.ts";
 import { CRASH_COPY } from "../data/crashCopy.ts";
 import { TEXT_BUTTON } from "../data/layout.ts";
 import { SCREEN } from "../data/screen.ts";
-import { createAdaFactoryHoldBinding } from "./actionBinding.ts";
+import {
+  bindAdaRecoveryActionRoot,
+  createAdaFactoryHoldBinding,
+  rootPressGuard,
+} from "./actions/index.ts";
 import { adaForegroundInput } from "./foregroundInput.ts";
-import { bindAdaRecoveryActionRoot } from "./holdActionsAdapter.ts";
 import { COLOURS } from "./layout/colours.ts";
 import { CARD_WIDTH_CAPS, SCROLL } from "./layout/contentCard.ts";
 import { pixels } from "./layout/css.ts";
 import { readViewUnit } from "./layoutDom/viewScaleBridge.ts";
-import { rootPressGuard } from "./pressScope.ts";
 
 // Recovery uses the primary control face, lip and cream text without game resources.
 export const CRASH_COLOURS: CrashColours = {
