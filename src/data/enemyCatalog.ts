@@ -833,12 +833,12 @@ const position = (
 
 /** Difficulty by route position (gameplay/ships.md "Difficulty"). */
 export const POSITION_DIFFICULTY: Readonly<Record<RoutePosition, PositionDifficulty>> = {
-  1: position([2, 4, 3, 15], 1, [1.2, 1.725], 10, [40, 80, 50], 1),
-  2: position([2, 4, 3, 15], 1, [1.3, 1.8975], 10, [45, 100, 50], 1),
-  3: position([4, 7, 5, 20], 2, [1.4, 2.07], 12, [50, 120, 55], 1.2),
-  4: position([4, 7, 5, 20], 2, [1.45, 2.2425], 12, [55, 140, 55], 1.3),
-  5: position([6, 10, 8, 25], 3, [1.5, 2.415], 14, [60, 160, 60], 1.4),
-  6: position([6, 10, 8, 25], 3, [1.5, 2.5875], 14, [65, 180, 60], 1.5),
+  1: position([2, 4, 3, 15], 1, [1.2, 1.725], 10, [40, 80, 60], 1),
+  2: position([2, 4, 3, 15], 1, [1.3, 1.8975], 10, [45, 100, 65], 1),
+  3: position([4, 7, 5, 20], 2, [1.4, 2.07], 12, [50, 120, 70], 1.2),
+  4: position([4, 7, 5, 20], 2, [1.45, 2.2425], 12, [55, 140, 75], 1.3),
+  5: position([6, 10, 8, 25], 3, [1.5, 2.415], 14, [60, 160, 80], 1.4),
+  6: position([6, 10, 8, 25], 3, [1.5, 2.5875], 14, [65, 180, 85], 1.5),
 };
 
 /** A galaxy's difficulty, by its route position. */
@@ -866,7 +866,7 @@ export const ENEMY_STARDUST_RANGES = {
   frigate: [10, 20],
   hostileStation: [20, 30],
   interceptor: [3, 5],
-  platform: [10, 20],
+  platform: [15, 25],
   retaliator: [4, 6],
   swarm: [1, 3],
 } as const satisfies Record<EnemyActorKind, readonly [number, number]>;

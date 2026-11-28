@@ -667,7 +667,7 @@ describe("Stardust drops", () => {
       frigate: [10, 20],
       hostileStation: [20, 30],
       interceptor: [3, 5],
-      platform: [10, 20],
+      platform: [15, 25],
       retaliator: [4, 6],
       swarm: [1, 3],
     };

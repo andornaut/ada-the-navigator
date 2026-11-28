@@ -278,7 +278,7 @@ describe("approved heavy health and independent rewards", () => {
     const hulls = {
       capital: [80, 100, 120, 140, 160, 180],
       frigate: [40, 45, 50, 55, 60, 65],
-      platform: [50, 50, 55, 55, 60, 60],
+      platform: [60, 65, 70, 75, 80, 85],
     };
     for (const galaxy of GALAXY_NUMBERS) {
       const index = ROUTE_POSITION[galaxy] - 1;
