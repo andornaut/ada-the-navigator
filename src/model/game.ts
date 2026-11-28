@@ -25,7 +25,7 @@ import {
   type NoticeRank,
   SPEAKERS,
 } from "../data/conversations.ts";
-import { deliveryDestination, DESTINATIONS, STATION_SENTENCE } from "../data/destinations.ts";
+import { deliveryDestination, DESTINATIONS } from "../data/destinations.ts";
 import { ECONOMY, type UpgradeWeapon } from "../data/economy.ts";
 import { EXCHANGE_RATES } from "../data/exchange.ts";
 import {
@@ -201,6 +201,7 @@ import { dockedShopGroups, dockedShopOffers, dockedShopSupply } from "./game/doc
 import { encounterCues, stationsInRange } from "./game/encounterCues.ts";
 import { dockedJobRows, type JobRow } from "./game/jobBoard.ts";
 import { jobIndicator, jobMapTarget, type JobNavigationContext } from "./game/jobNavigation.ts";
+import { projectJobText, projectPlaceLabel } from "./game/jobText.ts";
 import {
   projectQuestEntries,
   projectQuestLines,
@@ -5470,22 +5471,18 @@ export class GameModel {
     return this.placeLabelIn(this.state.selectedGalaxy, id);
   }
   private placeLabelIn(galaxy: GalaxyNumber, id: string): string {
-    const named = this.label(id) || (id.startsWith("settlement:") ? this.label("settlement") : "");
-    if (named) {
-      return named;
-    }
-    if (id.startsWith("station:")) {
-      return STATION_SENTENCE;
-    }
-    const chapter =
-      (BUILT.has(galaxy) && this.content.chapters[galaxy]) || placeholderChapter(galaxy);
-    return (
-      DESTINATIONS[id]?.sentence ??
-      (galaxy === this.state.selectedGalaxy
-        ? this.destinations().find((place) => place.id === id)?.label
-        : undefined) ??
-      chapter.dialogue[dialogueKeys[id] ?? id]?.speaker ??
-      chapter.name
+    return projectPlaceLabel(
+      {
+        chapter: () =>
+          (BUILT.has(galaxy) && this.content.chapters[galaxy]) || placeholderChapter(galaxy),
+        label: (key) => this.label(key),
+        mappedLabel: () =>
+          galaxy === this.state.selectedGalaxy
+            ? this.destinations().find((place) => place.id === id)?.label
+            : undefined,
+        speaker: (chapter) => chapter.dialogue[dialogueKeys[id] ?? id]?.speaker,
+      },
+      id,
     );
   }
   /** A job's title and one line of detail (gameplay/quests.md "Player strings"). */
@@ -5496,22 +5493,12 @@ export class GameModel {
     galaxy: GalaxyNumber,
     job: JobOffer,
   ): { readonly detail: string; readonly title: string } {
-    const landmark = landmarkById(galaxy, job.target.id);
-    const titles: Record<JobType, string> = {
-      delivery: fill(this.label("deliveryTitle"), {
-        item: job.item,
-        place: this.placeLabelIn(galaxy, job.target.id),
-      }),
-      hunt: fill(this.label("huntTitle"), { item: job.item }),
-      rescue: fill(this.label("rescueTitle"), { craft: job.item }),
-      survey: fill(this.label("surveyTitle"), {
-        landmark: landmark ? landmarkLabel((key) => this.label(key), landmark) : "",
-      }),
-    };
-    return {
-      detail: this.label(`${job.type}About`),
-      title: titles[job.type],
-    };
+    return projectJobText(
+      (key) => this.label(key),
+      (id) => this.placeLabelIn(galaxy, id),
+      galaxy,
+      job,
+    );
   }
   /**
    * The docked station's job board: the held job first, marked Active, then the station's
