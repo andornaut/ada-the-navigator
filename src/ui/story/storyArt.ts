@@ -1,5 +1,6 @@
 import {
   ABOARD_HOLODISK_FRAMES,
+  ABOARD_HOLODISK_ORIGIN,
   type CanvasBox,
   type StoryBackgroundArt,
   type StoryOverlay,
@@ -531,9 +532,6 @@ const fetchJson = async (url: string): Promise<unknown> => {
   }
   return response.json();
 };
-
-// The shipped Aboard overlays use this authored SVG viewport origin, separately from story at.
-const ABOARD_HOLODISK_ORIGIN = { x: 379, y: 133 };
 
 let holodiskSheet: { readonly path: string; readonly xml: Promise<Document> } | undefined;
 

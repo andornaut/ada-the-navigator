@@ -10,7 +10,7 @@ import type { Plugin } from "vite";
 
 import { CACHE_POLICY } from "../../pwa/cachePolicy.ts";
 import { FILE_READ_CONCURRENCY, mapBounded } from "./mapBounded.ts";
-import { ART_DIRECTORY, artUrls } from "./precacheArt.ts";
+import { aboardLooseOmissions, ART_DIRECTORY, artUrls } from "./precacheArt.ts";
 
 const UPDATE_ART_BUCKETS: Readonly<Record<string, number>> = {
   andromeda: 4,
@@ -126,7 +126,12 @@ export function precachePlugin({
         async (url) => [url, await readFile(join(publicDir, url))] as const,
         urls,
       );
+      const omitted = aboardLooseOmissions(new Map(files));
+      urls = urls.filter((url) => !omitted.includes(url));
       for (const [url, source] of files) {
+        if (omitted.includes(url)) {
+          continue;
+        }
         this.emitFile({ fileName: url.slice(1), source, type: "asset" });
       }
     },

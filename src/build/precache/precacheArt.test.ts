@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { isHashedAssetUrl } from "@andornaut/game-kit/runtime/web/pwa/cachePolicy";
 import { describe, expect, it } from "vitest";
 
-import { routePreviews } from "../../art/index.ts";
+import { ABOARD_HOLODISK_FRAMES, routePreviews } from "../../art/index.ts";
 import { ASTEROID_ART } from "../../data/asteroidCatalog.ts";
 import { ECONOMY } from "../../data/economy.ts";
 import { GALAXY_ID } from "../../data/galaxies.ts";
@@ -16,7 +16,7 @@ import { uiIconUrl } from "../../data/uiIconUrl.ts";
 import { SHIP_HEADINGS } from "../../model/nose.ts";
 import { CACHE_POLICY } from "../../pwa/cachePolicy.ts";
 import { SHIPPED_SHIP_SOURCES } from "../../testing/shippedShipSources.ts";
-import { ART_DIRECTORY, artUrls } from "./precacheArt.ts";
+import { aboardLooseOmissions, ART_DIRECTORY, artUrls } from "./precacheArt.ts";
 
 const publicDir = fileURLToPath(new URL("../../../public/", import.meta.url));
 const artDirectory = join(publicDir, ART_DIRECTORY);
@@ -26,6 +26,29 @@ const read = (url: string) => JSON.parse(readFileSync(join(publicDir, url), "utf
 const artFiles = readdirSync(artDirectory, { recursive: true, withFileTypes: true })
   .filter((entry) => entry.isFile())
   .map((entry) => relative(artDirectory, join(entry.parentPath, entry.name)).split(sep).join("/"));
+
+it("omits only verified selected Aboard frames and preserves the loose path otherwise", () => {
+  const manifest = "/art/manifest.json";
+  const sheet = "/art/aboard-holodisk-sheet.svg";
+  const ids = [...ABOARD_HOLODISK_FRAMES];
+  const loose = ids.map((id) => `/art/${id}.svg`);
+  const files = new Map(
+    [manifest, sheet, ...loose].map((url) => [url, readFileSync(join(publicDir, url))]),
+  );
+  expect(aboardLooseOmissions(files)).toEqual(loose);
+  const core = JSON.parse(files.get(manifest)!.toString("utf8"));
+  const legacy = {
+    ...core,
+    assets: core.assets.map((row: { id: string }) =>
+      ABOARD_HOLODISK_FRAMES.has(row.id) ? { id: row.id, path: `/art/${row.id}.svg` } : row,
+    ),
+  };
+  expect(
+    aboardLooseOmissions(new Map(files).set(manifest, Buffer.from(JSON.stringify(legacy)))),
+  ).toEqual([]);
+  const damaged = files.get(sheet)!.toString("utf8").replace(`id="${ids[2]}"`, `id="${ids[1]}"`);
+  expect(aboardLooseOmissions(new Map(files).set(sheet, Buffer.from(damaged)))).toEqual([]);
+});
 
 // Every /art/ URL a JSON document names, at any depth, the UI manifest's base path among them.
 function namedArtUrls(json: unknown): string[] {

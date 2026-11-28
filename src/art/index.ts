@@ -1,5 +1,6 @@
 export {
   ABOARD_HOLODISK_FRAMES,
+  ABOARD_HOLODISK_ORIGIN,
   type CoreManifest,
   galaxyLoadsAtOnce,
   type GalaxyManifest,

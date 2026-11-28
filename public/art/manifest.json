@@ -6894,7 +6894,7 @@
     },
     {
       "id": "aboard-holodisk-0",
-      "path": "/art/aboard-holodisk-0.svg",
+      "path": "/art/aboard-holodisk-sheet.svg",
       "width": 285,
       "height": 186,
       "displayWidth": 285,
@@ -6907,11 +6907,12 @@
       "at": {
         "x": 379,
         "y": 133
-      }
+      },
+      "svgSheet": true
     },
     {
       "id": "aboard-holodisk-1",
-      "path": "/art/aboard-holodisk-1.svg",
+      "path": "/art/aboard-holodisk-sheet.svg",
       "width": 285,
       "height": 186,
       "displayWidth": 285,
@@ -6924,11 +6925,12 @@
       "at": {
         "x": 379,
         "y": 133
-      }
+      },
+      "svgSheet": true
     },
     {
       "id": "aboard-holodisk-2",
-      "path": "/art/aboard-holodisk-2.svg",
+      "path": "/art/aboard-holodisk-sheet.svg",
       "width": 285,
       "height": 186,
       "displayWidth": 285,
@@ -6941,11 +6943,12 @@
       "at": {
         "x": 379,
         "y": 133
-      }
+      },
+      "svgSheet": true
     },
     {
       "id": "aboard-holodisk-3",
-      "path": "/art/aboard-holodisk-3.svg",
+      "path": "/art/aboard-holodisk-sheet.svg",
       "width": 285,
       "height": 186,
       "displayWidth": 285,
@@ -6958,7 +6961,8 @@
       "at": {
         "x": 379,
         "y": 133
-      }
+      },
+      "svgSheet": true
     },
     {
       "id": "route-sky",

@@ -83,6 +83,8 @@ export const ABOARD_HOLODISK_FRAMES: ReadonlySet<string> = new Set([
   "aboard-holodisk-2",
   "aboard-holodisk-3",
 ]);
+// The raw SVG viewport origin is independent of Storybook's placement.
+export const ABOARD_HOLODISK_ORIGIN = { x: 379, y: 133 };
 
 /**
  * Whether a galaxy manifest's asset loads with the galaxy's first flight: hull headings, props and
