@@ -7,7 +7,7 @@ import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
-import { bedroomBackground } from "../ui/bedroom.ts";
+import { bedroomBackground } from "../ui/story/bedroom.ts";
 import { stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { stationStock } from "./shop.ts";

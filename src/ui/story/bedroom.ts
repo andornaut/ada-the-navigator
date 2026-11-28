@@ -1,8 +1,8 @@
-import { type Background, BACKGROUND_ART } from "../data/storybook.ts";
-import { roomBackground, type StoryPage } from "../model/storybook.ts";
-import { PAUSE_BUTTON, type Size } from "./layout/playView.ts";
-import { STORY_BACKGROUND, storyBackgroundScale } from "./layout/storyPage.ts";
-import { SPACING } from "./layout/tokens.ts";
+import { type Background, BACKGROUND_ART } from "../../data/storybook.ts";
+import { roomBackground, type StoryPage } from "../../model/storybook.ts";
+import { PAUSE_BUTTON, type Size } from "../layout/playView.ts";
+import { STORY_BACKGROUND, storyBackgroundScale } from "../layout/storyPage.ts";
+import { SPACING } from "../layout/tokens.ts";
 import type { CanvasBox } from "./storyArt.ts";
 
 /** Shared room canvases keep their floor at the view's bottom, independently of dialogue. */

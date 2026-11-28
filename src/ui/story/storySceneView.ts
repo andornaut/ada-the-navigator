@@ -1,7 +1,7 @@
-import type { StoryOverlay, StoryScenePreview } from "../art/index.ts";
+import type { StoryOverlay, StoryScenePreview } from "../../art/index.ts";
 import { storyOverlayCrop } from "./storyCompositions.ts";
 
-export type { StoryScenePreview } from "../art/index.ts";
+export type { StoryScenePreview } from "../../art/index.ts";
 
 /** The existing story overlay node, shared by the scene and its thumbnail. */
 export function createStoryOverlay(

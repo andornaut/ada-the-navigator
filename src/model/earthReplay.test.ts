@@ -4,7 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { ROUTE } from "../data/galaxies.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import { storyPageView } from "../ui/storybook.ts";
+import { storyPageView } from "../ui/story/index.ts";
 import { GameModel } from "./game.ts";
 
 function returnedToRoom(): GameModel {

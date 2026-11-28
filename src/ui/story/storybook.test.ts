@@ -3,23 +3,23 @@ import { compileFunction } from "node:vm";
 
 import { describe, expect, it } from "vitest";
 
-import { CONTENT } from "../data/content.ts";
-import { ARCHIE_NAMED } from "../data/conversations.ts";
-import { SCREEN } from "../data/screen.ts";
-import { openingScene } from "../model/storybook.ts";
-import { AWAITING_TAB, SPEAKING_FRAME_MS, TAB_COLOURS } from "./conversation.ts";
-import { TEXT_BUTTON } from "./layout/controls.ts";
-import { font, fromHudEdge, safeEdge, units } from "./layout/css.ts";
+import { CONTENT } from "../../data/content.ts";
+import { ARCHIE_NAMED } from "../../data/conversations.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { openingScene } from "../../model/storybook.ts";
+import { AWAITING_TAB, SPEAKING_FRAME_MS, TAB_COLOURS } from "../conversation.ts";
+import { TEXT_BUTTON } from "../layout/controls.ts";
+import { font, fromHudEdge, safeEdge, units } from "../layout/css.ts";
 import {
   HUD_BUTTON,
   HUD_ROW,
   STORY_PANEL_TOP,
   STORY_ROOM_PANEL_TOP,
   STORY_SKIP,
-} from "./layout/playView.ts";
-import { STORY_CHOICE_GAP, STORY_PANEL } from "./layout/storyPage.ts";
-import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./layout/tokens.ts";
-import { MODAL_STYLE } from "./modal.ts";
+} from "../layout/playView.ts";
+import { STORY_CHOICE_GAP, STORY_PANEL } from "../layout/storyPage.ts";
+import { SMALL_BUTTON_GAP, SPACING, TYPE } from "../layout/tokens.ts";
+import { MODAL_STYLE } from "../modal.ts";
 import {
   preloadStoryImages,
   STORY_PORTRAITS,
@@ -231,7 +231,7 @@ describe("storybook page", () => {
     expect(storyTabColour("Elder Loom")).toBe("#e9e3da");
     expect(storyTabColour("No portrait")).toBe(AWAITING_TAB);
     // Mom's and Dad's tabs, which only story pages show, as Art's table sets them.
-    const table = readFileSync(new URL("../../art/controls.md", import.meta.url), "utf8");
+    const table = readFileSync(new URL("../../../art/controls.md", import.meta.url), "utf8");
     for (const name of ["Mom", "Dad"]) {
       const fill = new RegExp(`^\\| ${name} tab +\\| \`(#[0-9a-f]{6})\``, "mu").exec(table)?.[1];
       expect(fill, name).toBeDefined();
@@ -252,7 +252,7 @@ describe("the overnight recharge's overlays", () => {
 });
 
 const MANIFEST = JSON.parse(
-  readFileSync(new URL("../../public/art/manifest.json", import.meta.url), "utf8"),
+  readFileSync(new URL("../../../public/art/manifest.json", import.meta.url), "utf8"),
 ) as {
   assets: {
     frameWidth?: number;

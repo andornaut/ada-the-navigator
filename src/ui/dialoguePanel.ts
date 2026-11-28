@@ -11,7 +11,12 @@ import { font, units } from "./layout/css.ts";
 import { STORY_PANEL } from "./layout/storyPage.ts";
 import { BUTTON_GAP, SPACING, TYPE } from "./layout/tokens.ts";
 import { VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import { STORY_PORTRAITS, storyPortrait, storyPortraitFrame, storyTabColour } from "./storybook.ts";
+import {
+  STORY_PORTRAITS,
+  storyPortrait,
+  storyPortraitFrame,
+  storyTabColour,
+} from "./story/index.ts";
 
 export const DIALOGUE_PANEL_STYLE = `
 .ada-controls .ada-dialogue-frame{

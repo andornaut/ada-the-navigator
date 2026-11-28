@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { CONTENT } from "../data/content.ts";
-import { type Background, BACKGROUND_ART } from "../data/storybook.ts";
-import { jumpHomeScene, roomBackground, roomScene } from "../model/storybook.ts";
+import { CONTENT } from "../../data/content.ts";
+import { type Background, BACKGROUND_ART } from "../../data/storybook.ts";
+import { jumpHomeScene, roomBackground, roomScene } from "../../model/storybook.ts";
+import { PAUSE_BUTTON } from "../layout/playView.ts";
+import { STORY_BACKGROUND, storyBackgroundScale } from "../layout/storyPage.ts";
+import { SPACING } from "../layout/tokens.ts";
 import { bedroomBackground, bedroomSideOffset, bedroomTop } from "./bedroom.ts";
-import { PAUSE_BUTTON } from "./layout/playView.ts";
-import { STORY_BACKGROUND, storyBackgroundScale } from "./layout/storyPage.ts";
-import { SPACING } from "./layout/tokens.ts";
 
 describe("shared bedroom", () => {
   const variants = Object.entries(BACKGROUND_ART)

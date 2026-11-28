@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { STORY_BACKGROUND } from "./layout/storyPage.ts";
+import { STORY_BACKGROUND } from "../layout/storyPage.ts";
 import { readOverlay, storyBackgrounds, storyComposites } from "./storyArt.ts";
 import { readStoryCompositionAssets, storyOverlayCrop } from "./storyCompositions.ts";
 

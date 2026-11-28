@@ -63,7 +63,7 @@ import { refuse } from "./refusal.ts";
 import { drawShipJets } from "./shipJetCanvas.ts";
 import { createShipTailView } from "./shipTailView.ts";
 import { createStandardTextAction } from "./standardTextAction.ts";
-import { setStoryScenePreview } from "./storySceneView.ts";
+import { setStoryScenePreview } from "./story/index.ts";
 
 // The galaxy map (art/layout.md "Galaxy selector"), after Chibi's MapScene: the route sky and
 // ground, the chart's legs, markers, labels and Ada's ship, the panel for the chosen galaxy, Earth's

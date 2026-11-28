@@ -2,11 +2,11 @@ import { existsSync, readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { holodiskScene } from "../model/storybook.ts";
+import { holodiskScene } from "../../model/storybook.ts";
 import { type ArtAsset, overnightSteps, readHolodisk, readOverlay } from "./storyArt.ts";
 import { storyPageView } from "./storybook.ts";
 
-const publicFile = (path: string) => new URL(`../../public${path}`, import.meta.url);
+const publicFile = (path: string) => new URL(`../../../public${path}`, import.meta.url);
 const manifest = JSON.parse(readFileSync(publicFile("/art/manifest.json"), "utf8")) as {
   aboardHolodisk: string;
   assets: ArtAsset[];

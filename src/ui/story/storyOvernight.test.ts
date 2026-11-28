@@ -2,8 +2,8 @@ import { existsSync, readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { BACKGROUND_ART, OVERNIGHT_SLEEP } from "../data/storybook.ts";
-import { jumpHomeScene } from "../model/storybook.ts";
+import { BACKGROUND_ART, OVERNIGHT_SLEEP } from "../../data/storybook.ts";
+import { jumpHomeScene } from "../../model/storybook.ts";
 import {
   type ArtAsset,
   breathAlpha,
@@ -18,7 +18,7 @@ import {
 } from "./storyArt.ts";
 import { readStoryCompositionAssets } from "./storyCompositions.ts";
 
-const publicFile = (path: string) => new URL(`../../public${path}`, import.meta.url);
+const publicFile = (path: string) => new URL(`../../../public${path}`, import.meta.url);
 const manifest = JSON.parse(readFileSync(publicFile("/art/manifest.json"), "utf8")) as {
   assets: ArtAsset[];
   storyCompositions: string;

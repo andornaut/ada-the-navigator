@@ -7,7 +7,7 @@ import type { FlightInput } from "../model/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
-import { storyPageView } from "../ui/storybook.ts";
+import { storyPageView } from "../ui/story/index.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function depleted() {

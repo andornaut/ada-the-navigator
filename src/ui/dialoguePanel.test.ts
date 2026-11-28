@@ -14,7 +14,12 @@ import { createDialoguePanel, DIALOGUE_PANEL_STYLE } from "./dialoguePanel.ts";
 import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
 import { currentView, enterPressView, rootPressGuard } from "./pressScope.ts";
 import * as refusal from "./refusal.ts";
-import { STORY_PORTRAITS, storyPortrait, storyPortraitFrame, storyTabColour } from "./storybook.ts";
+import {
+  STORY_PORTRAITS,
+  storyPortrait,
+  storyPortraitFrame,
+  storyTabColour,
+} from "./story/index.ts";
 
 it("centers dialogue navigation in one row with a 16 logical pixel gap", () => {
   const row = DIALOGUE_PANEL_STYLE.match(/\.ada-dialogue-controls\{([^}]+)\}/u)?.[1];

@@ -26,7 +26,7 @@ import { RESTART_STYLE } from "./restartCard.ts";
 import { SETTINGS_STYLE } from "./settings.ts";
 import { START_SCREEN_STYLE } from "./startScreen.ts";
 import { STATUS_PILL_STYLE } from "./statusPill.ts";
-import { STORYBOOK_STYLE } from "./storybook.ts";
+import { STORYBOOK_STYLE } from "./story/index.ts";
 import { WEAPON_STYLE } from "./weapons.ts";
 
 // The page's inherited text colour and its ground under the game.

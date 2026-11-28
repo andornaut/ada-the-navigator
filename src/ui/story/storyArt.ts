@@ -1,9 +1,14 @@
-import type { CanvasBox, StoryBackgroundArt, StoryOverlay, StorySourceRect } from "../art/index.ts";
-import { type Background, BACKGROUND_ART } from "../data/storybook.ts";
-import { STORY_BACKGROUND, type SubjectBand } from "./layout/storyPage.ts";
+import type {
+  CanvasBox,
+  StoryBackgroundArt,
+  StoryOverlay,
+  StorySourceRect,
+} from "../../art/index.ts";
+import { type Background, BACKGROUND_ART } from "../../data/storybook.ts";
+import { STORY_BACKGROUND, type SubjectBand } from "../layout/storyPage.ts";
 import { readStoryCompositionAssets, validStorySourceRect } from "./storyCompositions.ts";
 
-export type { CanvasBox, StoryOverlay, StorySourceRect } from "../art/index.ts";
+export type { CanvasBox, StoryOverlay, StorySourceRect } from "../../art/index.ts";
 
 // Art's storybook environments, their compatibility aliases, the rock glow transitions, the overnight
 // sequence (art/storybook.md) and the holodisk moment aboard (art/aboard.md), read from the root

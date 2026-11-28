@@ -9,25 +9,24 @@ import {
   castPortrait,
   type CastPortraitSheet,
   STORY_CAST,
-} from "../data/cast.ts";
-import { ARCHIE_NAMED, type Speaker, SPEAKERS } from "../data/conversations.ts";
-import { SCREEN } from "../data/screen.ts";
-import type { Background } from "../data/storybook.ts";
-import { showsStoryNext, type StoryChoice, type StoryPage } from "../model/storybook.ts";
+} from "../../data/cast.ts";
+import { ARCHIE_NAMED, type Speaker, SPEAKERS } from "../../data/conversations.ts";
+import { SCREEN } from "../../data/screen.ts";
+import type { Background } from "../../data/storybook.ts";
+import { showsStoryNext, type StoryChoice, type StoryPage } from "../../model/storybook.ts";
 import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
   resolveAdaForegroundAction,
-} from "./actionBinding.ts";
-import { bedroomBackground, bedroomSideOffset, bedroomTop } from "./bedroom.ts";
-import { showDialogueChoiceStatus } from "./dialogueChoice.ts";
+} from "../actionBinding.ts";
+import { showDialogueChoiceStatus } from "../dialogueChoice.ts";
 import {
   type StoryPanelContainer,
   type StoryPanelNative,
   type StoryPanelSchema,
   storyPanelTree,
-} from "./dialoguePanelTree.ts";
+} from "../dialoguePanelTree.ts";
 import {
   AWAITING_TAB,
   COMPACT_PORTRAITS,
@@ -39,15 +38,15 @@ import {
   SPEAKING_FRAME_MS,
   storySpeakerName,
   TAB_COLOURS,
-} from "./dialoguePortraits.ts";
-import { registerForegroundSurface } from "./foregroundInput.ts";
-import { COLOURS } from "./layout/colours.ts";
-import { SCROLL } from "./layout/contentCard.ts";
-import { BUTTON_SLICE } from "./layout/controls.ts";
-import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
-import { font, fromHudEdge, safeEdge, slice, units, VIEW_PROPERTIES } from "./layout/css.ts";
-import { frameBoxIn, frameSize } from "./layout/frameBox.ts";
-import { STORY_PANEL_TOP, STORY_ROOM_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
+} from "../dialoguePortraits.ts";
+import { registerForegroundSurface } from "../foregroundInput.ts";
+import { COLOURS } from "../layout/colours.ts";
+import { SCROLL } from "../layout/contentCard.ts";
+import { BUTTON_SLICE } from "../layout/controls.ts";
+import { CONVERSATION_BOX } from "../layout/conversationBox.ts";
+import { font, fromHudEdge, safeEdge, slice, units, VIEW_PROPERTIES } from "../layout/css.ts";
+import { frameBoxIn, frameSize } from "../layout/frameBox.ts";
+import { STORY_PANEL_TOP, STORY_ROOM_PANEL_TOP, STORY_SKIP } from "../layout/playView.ts";
 import {
   STORY_BACKGROUND,
   STORY_CHOICE_GAP,
@@ -57,11 +56,14 @@ import {
   storyBackgroundTop,
   storyHalfArtOffset,
   type SubjectBand,
-} from "./layout/storyPage.ts";
-import { SMALL_BUTTON_GAP, SPACING, TYPE } from "./layout/tokens.ts";
-import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import { FOCUS_STYLE, TEXT_TOKENS } from "./modal.ts";
-import { createStandardTextAction } from "./standardTextAction.ts";
+} from "../layout/storyPage.ts";
+import { SMALL_BUTTON_GAP, SPACING, TYPE } from "../layout/tokens.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "../layout/viewScale.ts";
+import { FOCUS_STYLE, TEXT_TOKENS } from "../modal.ts";
+import { createStandardTextAction } from "../standardTextAction.ts";
+import type { TitleScreenArt } from "../titleScreen.ts";
+import { titleShipView } from "../titleShipView.ts";
+import { bedroomBackground, bedroomSideOffset, bedroomTop } from "./bedroom.ts";
 import {
   breathKeyframes,
   loadStoryArt,
@@ -75,8 +77,6 @@ import {
   transitionStepsForBackgrounds,
 } from "./storyArt.ts";
 import { createStoryOverlay } from "./storySceneView.ts";
-import type { TitleScreenArt } from "./titleScreen.ts";
-import { titleShipView } from "./titleShipView.ts";
 
 export interface StoryLabels {
   readonly next: string;

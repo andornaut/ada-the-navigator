@@ -17,7 +17,7 @@ import {
 import { SAVE_RESTORE } from "../../saving/index.ts";
 import { supportEntropy } from "../../testing/launchSeeds.ts";
 import { lineCount, measure } from "../../testing/textMetrics.ts";
-import { type ArtAsset, backgroundOverlays, storyBases } from "../storyArt.ts";
+import { type ArtAsset, backgroundOverlays, storyBases } from "../story/storyArt.ts";
 import { STORY_BUTTON } from "./controls.ts";
 import {
   hudRect,

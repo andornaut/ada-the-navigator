@@ -4,16 +4,16 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { afterEach, expect, it, vi } from "vitest";
 
-import { SCROLL } from "../data/layout.ts";
-import { ControlState } from "../input/state.ts";
-import * as actionBinding from "./actionBinding.ts";
-import { bindAdaAction, resolveAdaHoldAction } from "./actionBinding.ts";
-import { registerAdaActionRoot } from "./actionRegistry.ts";
-import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
-import { NO_INSETS } from "./layout/playView.ts";
-import { useDiscLayout, usePressed } from "./layout/touchControls.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
-import { enterPressView, rootPressGuard } from "./pressScope.ts";
+import { SCROLL } from "../../data/layout.ts";
+import { ControlState } from "../../input/state.ts";
+import * as actionBinding from "../actionBinding.ts";
+import { bindAdaAction, resolveAdaHoldAction } from "../actionBinding.ts";
+import { registerAdaActionRoot } from "../actionRegistry.ts";
+import { bindAdaActionRoot } from "../holdActionsAdapter.ts";
+import { NO_INSETS } from "../layout/playView.ts";
+import { useDiscLayout, usePressed } from "../layout/touchControls.ts";
+import { readViewUnit } from "../layout/viewScale.ts";
+import { enterPressView, rootPressGuard } from "../pressScope.ts";
 import { createStorybook, type StoryPageView } from "./storybook.ts";
 
 vi.mock("./storyArt.ts", async (original) => ({
@@ -551,7 +551,7 @@ it("owns sleep background activation with one current page identity and no paral
 
 const controlsSource = ts.createSourceFile(
   "controls.ts",
-  readFileSync(new URL("../input/controls.ts", import.meta.url), "utf8"),
+  readFileSync(new URL("../../input/controls.ts", import.meta.url), "utf8"),
   ts.ScriptTarget.Latest,
   true,
 );

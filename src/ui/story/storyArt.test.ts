@@ -2,11 +2,11 @@ import { existsSync, readFileSync } from "node:fs";
 
 import { describe, expect, it, vi } from "vitest";
 
-import { CONTENT } from "../data/content.ts";
-import { BACKGROUND_ART } from "../data/storybook.ts";
-import type { ArtBackground } from "../data/types.ts";
-import { boardingScene, prologueScene } from "../model/storybook.ts";
-import { STORY_BACKGROUND } from "./layout/storyPage.ts";
+import { CONTENT } from "../../data/content.ts";
+import { BACKGROUND_ART } from "../../data/storybook.ts";
+import type { ArtBackground } from "../../data/types.ts";
+import { boardingScene, prologueScene } from "../../model/storybook.ts";
+import { STORY_BACKGROUND } from "../layout/storyPage.ts";
 import {
   type ArtAsset,
   loadStoryArt,
@@ -21,7 +21,7 @@ import {
 import { STORYBOOK_STYLE } from "./storybook.ts";
 import { readStoryCompositionAssets } from "./storyCompositions.ts";
 
-const publicFile = (path: string) => new URL(`../../public${path}`, import.meta.url);
+const publicFile = (path: string) => new URL(`../../../public${path}`, import.meta.url);
 const manifest = JSON.parse(readFileSync(publicFile("/art/manifest.json"), "utf8")) as {
   assets: ArtAsset[];
   storyCompositions?: string;
