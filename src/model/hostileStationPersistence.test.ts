@@ -129,8 +129,8 @@ describe("hostile station geography and encounter persistence", () => {
       const { body, encounter, flight, model } = fixture(galaxy);
       const wallet = model.state.economy.stardust;
       const amount = enemyStardust({ id: body.id, seed: flight.seed }, "hostileStation");
-      expect(amount).toBeGreaterThanOrEqual(10);
-      expect(amount).toBeLessThanOrEqual(20);
+      expect(amount).toBeGreaterThanOrEqual(20);
+      expect(amount).toBeLessThanOrEqual(30);
       expect(awardHostileStationEncounterReward(model.state.economy, flight, body)).toBe(0);
       body.enemy!.disabled = true;
       expect(awardHostileStationEncounterReward(model.state.economy, flight, body)).toBe(amount);
