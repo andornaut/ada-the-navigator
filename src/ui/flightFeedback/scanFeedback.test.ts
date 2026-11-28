@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { lineDuration } from "../data/conversations.ts";
-import { immutableScanOutcome, type ScanOutcome } from "../model/scanOutcomes.ts";
+import { lineDuration } from "../../data/conversations.ts";
+import { immutableScanOutcome, type ScanOutcome } from "../../model/scanOutcomes.ts";
 import {
   scanFeedbackContents,
   type ScanFeedbackContext,

@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import paints from "../../public/art/ship-paint.json";
-import { CONTENT } from "../data/content.ts";
-import { ECONOMY } from "../data/economy.ts";
-import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { tierColour, UPGRADE_TIER_COLOURS } from "../data/upgradeTiers.ts";
-import { SHIPPED_SHIP_SOURCES } from "../testing/shippedShipSources.ts";
+import paints from "../../../public/art/ship-paint.json";
+import { CONTENT } from "../../data/content.ts";
+import { ECONOMY } from "../../data/economy.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
+import { tierColour, UPGRADE_TIER_COLOURS } from "../../data/upgradeTiers.ts";
+import { SHIPPED_SHIP_SOURCES } from "../../testing/shippedShipSources.ts";
+import { chipLeft, flyPoint, ITEM_NOTICE, noticeIconLayout } from "../layout/itemNotice.ts";
 import {
   centredNoticeLeft,
   countedLabel,
@@ -19,7 +20,6 @@ import {
   noticeLanding,
   NoticeQueue,
 } from "./itemNotice.ts";
-import { chipLeft, flyPoint, ITEM_NOTICE, noticeIconLayout } from "./layout/itemNotice.ts";
 
 const LABELS = CONTENT.labels;
 const notice = (gain: Parameters<typeof gainNotice>[2]) => gainNotice(LABELS, undefined, gain);

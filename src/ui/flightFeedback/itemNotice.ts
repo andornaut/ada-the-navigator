@@ -1,11 +1,11 @@
-import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
-import { HUD_ICON_BEARINGS } from "../data/hudIconBearings.ts";
-import { NOTICE_TIMING } from "../data/noticeTiming.ts";
-import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { tierColour } from "../data/upgradeTiers.ts";
-import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
-import type { ItemGain } from "../model/itemGains.ts";
-import { fill, weaponName } from "../model/shop.ts";
+import { ECONOMY, type UpgradeTrack } from "../../data/economy.ts";
+import { HUD_ICON_BEARINGS } from "../../data/hudIconBearings.ts";
+import { NOTICE_TIMING } from "../../data/noticeTiming.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
+import { tierColour } from "../../data/upgradeTiers.ts";
+import { weaponGlyphPath } from "../../data/weaponGlyphs.ts";
+import type { ItemGain } from "../../model/itemGains.ts";
+import { fill, weaponName } from "../../model/shop.ts";
 import {
   COLOURS,
   font,
@@ -15,15 +15,15 @@ import {
   statusCargoInset,
   TYPE,
   units,
-} from "./layout/index.ts";
-import { readViewUnit } from "./layoutDom/index.ts";
-import { spriteIconPath } from "./spriteIconPath.ts";
-import { STATUS_COLOURS } from "./statusPill.ts";
+} from "../layout/index.ts";
+import { readViewUnit } from "../layoutDom/index.ts";
+import { spriteIconPath } from "../spriteIconPath.ts";
+import { STATUS_COLOURS } from "../statusPill.ts";
 
 // Non-currency item gains name the actual item at the HUD's top centre, then fade in place.
 // Ammunition refills use the corresponding weapon's feedback instead of this queue.
 
-export { NOTICE_TIMING } from "../data/noticeTiming.ts";
+export { NOTICE_TIMING } from "../../data/noticeTiming.ts";
 
 export type NoticeKind = "cargo" | "holodisk" | "shield" | "tow" | "upgrade" | "weapon";
 

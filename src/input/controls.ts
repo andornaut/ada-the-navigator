@@ -42,9 +42,13 @@ import type { CheatAction } from "../ui/cheatActions.ts";
 import { type CheatLabels, createCheats } from "../ui/cheats/index.ts";
 import { consumeContextQuestUse, createContextQuestIcon } from "../ui/contextQuestUse.ts";
 import type { DeviceStorage } from "../ui/deviceSettings.ts";
+import {
+  createItemNotices,
+  type NoticePlaces,
+  type PaintSwatch,
+} from "../ui/flightFeedback/index.ts";
 import { registerForegroundSurface, registerGameEscape } from "../ui/foregroundInput.ts";
 import { bindAdaActionRoot, foregroundPressGuard } from "../ui/holdActionsAdapter.ts";
-import { createItemNotices, type NoticePlaces, type PaintSwatch } from "../ui/itemNotice.ts";
 import {
   HUD_BUTTON,
   HUD_ROW,
@@ -159,7 +163,7 @@ export interface ControlsOptions {
   };
   // Returns whether the switch was refused.
   readonly onWeaponSelect: (weapon: Weapon) => boolean;
-  // Player copy for the item notices (src/ui/itemNotice.ts).
+  // Player copy for the item notices (src/ui/flightFeedback/itemNotice.ts).
   readonly noticeLabels: Readonly<Record<string, string>>;
   // Each paint scheme's shop swatch, the paint notice's icon.
   readonly paintSwatch?: PaintSwatch;

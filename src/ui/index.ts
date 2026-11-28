@@ -7,6 +7,7 @@ export {
 } from "./conversation/index.ts";
 export { createBannerLayer, type PlacedBanner } from "./disabledBanner.ts";
 export { EmergencyReturn, returnedOnDepletion } from "./emergencyReturn.ts";
+export { createScanFeedbackView } from "./flightFeedback/index.ts";
 export { createFpsCounter } from "./fpsCounter.ts";
 export { createGalaxyMap, type GalaxyMapView } from "./galaxy/index.ts";
 export { createJumpOverlay, type SheetArt, type WarpPaint } from "./jumpOverlay.ts";
@@ -16,7 +17,6 @@ export { BOX_OCCUPANT, type BoxOccupant, boxOccupant } from "./notice.ts";
 export { createPennyMarkerLayer, markerName } from "./pennyMarkers.ts";
 export { questContextIcon } from "./quests/index.ts";
 export { createRestartCard } from "./restart/index.ts";
-export { createScanFeedbackView } from "./scanFeedbackView.ts";
 export { aboardLabel, type ShipView } from "./ship/index.ts";
 export { shopItemDetail, stationRow } from "./shopView.ts";
 export { createStationView } from "./station/index.ts";

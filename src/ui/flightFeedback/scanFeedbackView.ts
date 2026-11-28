@@ -1,10 +1,10 @@
-import { CONVERSATION_BOX, SHIELD_PILL } from "../data/layout.ts";
-import { visualNoticeTiming } from "../data/noticeTiming.ts";
-import type { Weapon } from "../data/types.ts";
-import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
-import type { ScanOutcome } from "../model/scanOutcomes.ts";
-import { createCompletionIndicator } from "./completionIndicator.ts";
+import { CONVERSATION_BOX, SHIELD_PILL } from "../../data/layout.ts";
+import { visualNoticeTiming } from "../../data/noticeTiming.ts";
+import type { Weapon } from "../../data/types.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
+import { weaponGlyphPath } from "../../data/weaponGlyphs.ts";
+import type { ScanOutcome } from "../../model/scanOutcomes.ts";
+import { createCompletionIndicator } from "../completionIndicator.ts";
 import {
   font,
   fromHudEdge,
@@ -15,16 +15,16 @@ import {
   TYPE,
   units,
   VIEW_PROPERTIES,
-} from "./layout/index.ts";
-import { measureFrame, readViewUnit, VIEW_SCALE_EVENT } from "./layoutDom/index.ts";
-import { TEXT_TOKENS } from "./modal.ts";
+} from "../layout/index.ts";
+import { measureFrame, readViewUnit, VIEW_SCALE_EVENT } from "../layoutDom/index.ts";
+import { TEXT_TOKENS } from "../modal.ts";
+import { STATUS_COLOURS } from "../statusPill.ts";
 import {
   type ScanFeedbackContent,
   type ScanFeedbackContext,
   scanFeedbackParts,
   ScanFeedbackQueue,
 } from "./scanFeedback.ts";
-import { STATUS_COLOURS } from "./statusPill.ts";
 
 const SAFE_NOTICE_WIDTH = `100% - 2 * max(${fromHudEdge("left")}, ${fromHudEdge("right")})`;
 
