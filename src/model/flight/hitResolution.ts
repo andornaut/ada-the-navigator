@@ -1,6 +1,6 @@
-import { ANDROMEDA_REDACT, CARTWHEEL_CLAIM, NEEDLE_CADENCE } from "../../data/capitalBosses.ts";
+import { FLAGSHIP_SURRENDER_HP } from "../../data/enemyIdentity.ts";
 import { ROUTE_POSITION } from "../../data/galaxies.ts";
-import { PHANTOM_FLAGSHIP } from "../../data/phantom.ts";
+import { PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../../data/phantom.ts";
 import type { GameContent } from "../../data/types.ts";
 import { damageEnemy, enemyDefeated } from "../enemyAi.ts";
 import { enemyEquipmentDefinition } from "../enemyEquipment.ts";
@@ -14,7 +14,7 @@ import { armed } from "./mines.ts";
 import { projectileContact, projectileSceneryContact, shotRadius } from "./projectileContact.ts";
 import { blastCoversRock } from "./rockBlastCoverage.ts";
 
-/** Damages an enemy (at a hardpoint, or its hull for null) or scenery, then resolves its loss. */
+/** Damages a hull or scenery, then resolves the shared combat outcome. */
 export function hit(
   content: GameContent,
   amount: number,
@@ -30,41 +30,37 @@ export function hit(
     const before = object.enemy;
     const definition = enemyEquipmentDefinition(flight.galaxy, before);
     const after = damageEnemy(definition, { amount, hardpointId: part }, before);
+    if (after === before) {
+      return;
+    }
+    const phantom = flight.phantom;
+    if (
+      object.id === PHANTOM_FLAGSHIP &&
+      before.archetype === "capital" &&
+      flight.galaxy === 6 &&
+      phantom?.phase === "flagship" &&
+      phantom.wave === PHANTOM_TUNING.waves &&
+      phantom.enemyIds.includes(object.id) &&
+      after.hp <= FLAGSHIP_SURRENDER_HP
+    ) {
+      object.enemy = {
+        ...after,
+        disabled: true,
+        engaged: false,
+        hp: FLAGSHIP_SURRENDER_HP,
+        surrendered: true,
+      };
+      object.hp = FLAGSHIP_SURRENDER_HP;
+      if (flight.enemyBeams) {
+        flight.enemyBeams = flight.enemyBeams.filter((beam) => beam.ownerId !== object.id);
+      }
+      events.push({ id: object.id, type: "enemySurrendered" });
+      return;
+    }
     object.enemy = after;
     object.hp = enemyDefeated(after) ? 0 : Math.max(1, after.hp);
-    if ((!before.disabled && after.disabled) || object.hp <= 0) {
-      queueHostileStationReward(flight, events, object);
-    }
-    if (object.hp > 0 && !before.disabled && after.disabled) {
-      events.push({ id: object.id, type: "enemyDisabled" });
-    } else if (
-      (object.id === PHANTOM_FLAGSHIP ||
-        object.id === CARTWHEEL_CLAIM.id ||
-        object.id === NEEDLE_CADENCE.id ||
-        object.id === ANDROMEDA_REDACT.id) &&
-      part !== null &&
-      object.hp > 0 &&
-      !before.disabled &&
-      !after.disabled &&
-      before.hardpoints.every(({ hp }) => hp > 0) &&
-      after.hardpoints.some(({ hp, id }) => id === part && hp === 0)
-    ) {
-      events.push({ id: object.id, type: "enemyFirstHardpointLost" });
-    }
-    if (
-      object.id === CARTWHEEL_CLAIM.id &&
-      part !== null &&
-      object.hp > 0 &&
-      !before.disabled &&
-      !after.disabled &&
-      definition.hardpoints.some(
-        (mount) =>
-          mount.id === part && mount.kind === "weapon" && mount.fire.weapon === "mineLayer",
-      ) &&
-      before.hardpoints.some(({ hp, id }) => id === part && hp > 0) &&
-      after.hardpoints.some(({ hp, id }) => id === part && hp === 0)
-    ) {
-      events.push({ hardpointId: part, id: object.id, type: "enemyMineLayerDisabled" });
+    if (object.hp <= 0) {
+      queueHostileStationReward(flight, events, object, content);
     }
   } else {
     object.hp -= amount;
@@ -104,7 +100,7 @@ export function createHitResolution(
 
   /**
    * Ada's shot strikes every enemy and obstacle it touches at its position that it has not struck,
-   * until it is spent; a large hull only takes it at a live hardpoint.
+   * until it is spent.
    */
   function strike(
     content: GameContent,
@@ -164,7 +160,7 @@ export function createHitResolution(
   /**
    * A missile's blast is a circle on screen of radius `radius` about the impact (gameplay/rules.md
    * "Missiles"): it deals full damage to every other live enemy or rock whose drawn shape
-   * overlaps it. A multipart ship takes it at the live hardpoint it covers deepest. Armed mines
+   * overlaps it. Armed mines
    * whose centre it covers pop. The blast shows one flash, which stands in for
    * the destruction flash of every enemy the impact destroys, the struck one included. `struck`,
    * damaged directly by its hit, is null for a missile that exploded at the end of its reach.

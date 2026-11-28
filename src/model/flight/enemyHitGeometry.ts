@@ -33,7 +33,7 @@ export function liveParts(
   const definition = enemyEquipmentDefinition(galaxy, enemy);
   const adaWidth = content.tuning.flight.shipRadius * 2;
   return definition.hardpoints
-    .filter((part) => enemy.hardpoints.some((value) => value.id === part.id && value.hp > 0))
+    .filter((part) => enemy.hardpoints.some((value) => value.id === part.id))
     .map((part) => {
       const offset = hardpointOffset(definition, adaWidth, enemy.facing, part);
       return { id: part.id, x: object.x + offset.x, y: object.y + offset.y };

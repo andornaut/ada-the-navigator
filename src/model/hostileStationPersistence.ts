@@ -269,7 +269,7 @@ function rewardClaim(
     hasHostileStationSites(flight.galaxy) &&
     actorFor(flight, body.id) === body &&
     bodyRole(body) &&
-    (body.enemy!.disabled || body.hp <= 0 || body.enemy!.hp <= 0)
+    (body.hp <= 0 || body.enemy!.hp <= 0)
     ? { amount: enemyStardust({ id: body.id, seed: flight.seed }, "hostileStation"), encounter }
     : null;
 }

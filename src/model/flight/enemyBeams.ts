@@ -224,7 +224,7 @@ function lanceHolds(beam: EnemyBeam, flight: FlightState): SpaceObject | undefin
     enemy &&
     !enemy.disabled &&
     !enemy.salvaged &&
-    enemy.hardpoints.some((part) => part.id === beam.hardpointId && part.hp > 0)
+    enemy.hardpoints.some((part) => part.id === beam.hardpointId)
     ? owner
     : undefined;
 }
@@ -292,7 +292,7 @@ export function stepEnemyBeams(
             owner: {
               disabled: enemy.disabled,
               hp: owner.hp,
-              mountHp: enemy.hardpoints.find(({ id }) => id === beam.hardpointId)?.hp ?? null,
+              mountHp: enemy.hardpoints.some(({ id }) => id === beam.hardpointId) ? 1 : null,
               salvaged: enemy.salvaged,
             },
           },

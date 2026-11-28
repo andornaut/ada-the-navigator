@@ -144,6 +144,8 @@ export interface EnemyState {
   retreat?: RetreatState;
   /** A disabled heavy Ada salvaged: powered down, passable and drawn dimmed. */
   salvaged: boolean;
+  /** The active Phantom flagship has irreversibly surrendered. */
+  surrendered?: true;
   tactic: TacticState;
   velocity: Point;
   /** Equipped level resolved at spawn; legacy absence is interpreted by the loadout owner. */
@@ -410,21 +412,13 @@ const freshTactic = (integrity: number): TacticState => ({
   volleys: 0,
 });
 
-export function enemyEffects(definition: EnemyDefinition, state: EnemyState): EnemyEffects {
-  const disabledHardpoints = definition.hardpoints
-    .filter((part) => !state.hardpoints.some((value) => value.id === part.id && value.hp > 0))
-    .map((part) => part.id);
-  const engines = definition.hardpoints.filter((part) => part.kind === "engine");
-  const working = engines.filter((part) => !disabledHardpoints.includes(part.id)).length;
-  const weapons = definition.hardpoints.filter((part) => part.kind === "weapon");
+export function enemyEffects(_definition: EnemyDefinition, state: EnemyState): EnemyEffects {
   return {
     defeated: enemyDefeated(state),
-    disabled:
-      state.disabled ||
-      (weapons.length > 0 && weapons.every((part) => disabledHardpoints.includes(part.id))),
-    disabledHardpoints,
-    movementStopped: engines.length > 0 && working === 0,
-    thrust: engines.length ? working / engines.length : 1,
+    disabled: state.salvaged || state.surrendered === true,
+    disabledHardpoints: [],
+    movementStopped: state.surrendered === true,
+    thrust: 1,
   };
 }
 
@@ -473,41 +467,31 @@ export function createEnemy(
 }
 
 /**
- * A hit damages only its selected hardpoint, with no overflow; null selects only the hull.
- * Destroying a heavy's last weapon hardpoint disables it for good. A hit engages
- * the ship; on a returning ship that is not fleeing it also clears the return latch and resets
- * the pursuit clock.
+ * Contacts on any part damage the hull. A hit engages the ship and wakes a returning ship
+ * that is not fleeing.
  */
 export function damageEnemy(
   definition: EnemyDefinition,
   hit: { amount: number; hardpointId: string | null },
   state: EnemyState,
 ): EnemyState {
-  if (!Number.isFinite(hit.amount) || hit.amount <= 0 || enemyEffects(definition, state).defeated) {
-    return state;
-  }
   if (
-    hit.hardpointId !== null &&
-    !definition.hardpoints.some((part) => part.id === hit.hardpointId)
+    !Number.isFinite(hit.amount) ||
+    hit.amount <= 0 ||
+    enemyDefeated(state) ||
+    state.salvaged ||
+    state.surrendered
   ) {
     return state;
   }
   const wake = state.returning && !state.fleeing;
-  const next: EnemyState = {
+  return {
     ...state,
+    disabled: false,
     engaged: true,
     ...(wake ? { pursuitSeconds: 0, returnSeconds: 0, returning: false } : {}),
-    hardpoints: state.hardpoints.map((part) =>
-      part.id === hit.hardpointId
-        ? { ...part, hp: Math.max(0, part.hp - hit.amount) }
-        : { ...part },
-    ),
-    hp:
-      hit.hardpointId === null
-        ? Math.max(definition.hullFloor ?? 0, state.hp - hit.amount)
-        : state.hp,
+    hp: Math.max(definition.hullFloor ?? 0, state.hp - hit.amount),
   };
-  return { ...next, disabled: enemyEffects(definition, next).disabled };
 }
 
 /** Push away from nearby live peers, strongest when closest. */
@@ -1263,7 +1247,8 @@ export function stepEnemy(
   const next: EnemyState = {
     ...state,
     age: state.age + context.dt,
-    engaged: state.engaged || summoned || sighted,
+    disabled: effects.disabled,
+    engaged: !effects.disabled && (state.engaged || summoned || sighted),
     fleeing: state.fleeing,
     hardpoints: state.hardpoints.map((part) => ({ ...part })),
   };
@@ -1705,7 +1690,7 @@ export function stepEnemy(
         .cooldown;
   for (const part of definition.hardpoints) {
     const value = next.hardpoints.find((entry) => entry.id === part.id);
-    if (part.kind === "weapon" && value && value.hp > 0) {
+    if (part.kind === "weapon" && value) {
       // Muzzles sit on the hull as it faced at the start of the step; a fixed front Laser fires
       // from its drawn shot origin.
       const offset =

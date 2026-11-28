@@ -1114,7 +1114,6 @@ export function mountedEnemyDefinition(
         behaviour: { kind: "siege", speedFraction: 0.25 },
         hardpoints: definition.hardpoints.map((part) => ({ ...part, hp: FLAGSHIP_PART_HP })),
         hp: FLAGSHIP_HULL_HP,
-        hullFloor: 1,
         sizeRatio: ENEMY_SIZE_RATIOS.flagship,
       };
     }

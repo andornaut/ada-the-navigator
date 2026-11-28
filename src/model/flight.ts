@@ -3693,7 +3693,7 @@ function enemies(
           part.kind === "weapon" &&
           part.fire.weapon === "chargedLance",
       ) &&
-      state.hardpoints.some((part) => part.id === EARLY_LANCE_MOUNT && part.hp > 0);
+      state.hardpoints.some((part) => part.id === EARLY_LANCE_MOUNT);
     if (early?.kind === "hammer" && early.phase === "ready" && !lanceAvailable) {
       state.earlyEncounter = { kind: "hammer", phase: "complete" };
     }
@@ -3804,7 +3804,7 @@ function enemies(
       object.enemy.earlyEncounter = { kind: "hammer", phase: "complete" };
     }
     if (intent.effects.defeated) {
-      queueHostileStationReward(flight, events, object);
+      queueHostileStationReward(flight, events, object, content);
       destroyEnemy(object, flight);
       events.push({ id: object.id, type: "enemyDestroyed" });
       continue;
@@ -3920,7 +3920,7 @@ function enemies(
     if (bounceShips(content, flight, object)) {
       damage(SHIP_IMPACT_DAMAGE, flight);
       hit(content, SHIP_IMPACT_DAMAGE, null, object, flight, events);
-      if (object.hp <= 0) {
+      if (object.hp <= 0 || object.enemy.surrendered) {
         continue;
       }
     }

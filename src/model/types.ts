@@ -521,6 +521,7 @@ export type FlightEvent =
   | { id: string; type: "ammoCollected" }
   /** A heavy's last weapon hardpoint was destroyed while its hull holds. */
   | { id: string; type: "enemyDisabled" }
+  | { id: string; type: "enemySurrendered" }
   /** An authored boss lost its first working hardpoint without resolving the fight on that hit. */
   | { id: string; type: "enemyFirstHardpointLost" }
   /** The Outrigger lost a working Mine Layer and is still armed. */

@@ -14,7 +14,13 @@ import { ECONOMY, type UpgradeTrack } from "../data/economy.ts";
 import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
 import { enemyActorAvailable, isEnemyActorKind } from "../data/enemyActors.ts";
 import { enemyCatalog } from "../data/enemyCatalog.ts";
-import { type HeavyHullProfile, isHeavyHullProfile, wreckEnemyId } from "../data/enemyIdentity.ts";
+import {
+  FLAGSHIP_SURRENDER_HP,
+  type HeavyHullProfile,
+  isHeavyHullProfile,
+  PHANTOM_FLAGSHIP_ID,
+  wreckEnemyId,
+} from "../data/enemyIdentity.ts";
 import { ENEMY_KEEP_MOVING } from "../data/enemyNavigation.ts";
 import { GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
@@ -296,6 +302,15 @@ function enemyState(galaxy: GalaxyNumber, value: unknown): boolean {
     !(value.returnSeconds === undefined || nonnegative(value.returnSeconds)) ||
     !(value.retreat === undefined || retreatState(value.age as number, value.retreat)) ||
     !(value.firePhasesInitialized === undefined || value.firePhasesInitialized === true) ||
+    (value.surrendered !== undefined &&
+      !(
+        value.surrendered === true &&
+        galaxy === 6 &&
+        value.id === PHANTOM_FLAGSHIP_ID &&
+        value.archetype === "capital" &&
+        value.disabled === true &&
+        value.hp === FLAGSHIP_SURRENDER_HP
+      )) ||
     !(value.patrolFlip === undefined || patrolFlip(value.age as number, value.patrolFlip)) ||
     !(value.miner === undefined || minerState(value.age as number, value.miner)) ||
     !finite(value.phase) ||

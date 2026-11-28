@@ -1,14 +1,13 @@
 import { expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { ECONOMY } from "../data/economy.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { fromScreen } from "./convex.ts";
-import { enemyStardust } from "./drops.ts";
-import { damageEnemy } from "./enemyAi.ts";
+import { enemyStardust, rollHeavyDefeatUpgrade } from "./drops.ts";
 import { enemyHull } from "./enemyBody.ts";
-import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import { createUnpopulatedFlight, spawnPlannedHostileStation, stepFlight } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
@@ -52,22 +51,25 @@ function fixture() {
   return { body: created.station, flight, model, progress, site };
 }
 
-function disable(
+function setRewardRoll(
   body: ReturnType<typeof fixture>["body"],
   flight: ReturnType<typeof fixture>["flight"],
+  upgrade: boolean,
 ): void {
-  const definition = enemyEquipmentDefinition(flight.galaxy, body.enemy!);
-  for (const part of body.enemy!.hardpoints) {
-    body.enemy = damageEnemy(definition, { amount: 999, hardpointId: part.id }, body.enemy!);
+  while (
+    rollHeavyDefeatUpgrade(ECONOMY, { id: body.id, seed: flight.seed }, "hostileStation") !==
+    upgrade
+  ) {
+    flight.seed++;
   }
-  expect(body.enemy!.disabled).toBe(true);
 }
 
-it("claims the authoritative disabled station once before a queued depletion", () => {
+it("claims the authoritative destroyed station once before a queued depletion", () => {
   const { body, flight } = fixture();
-  disable(body, flight);
+  setRewardRoll(body, flight, false);
+  body.hp = body.enemy!.hp = 0;
   const events: FlightEvent[] = [{ amount: 3, type: "stardust" }, { type: "depleted" }];
-  queueHostileStationReward(flight, events, body);
+  queueHostileStationReward(flight, events, body, CONTENT);
   expect(events).toEqual([
     { amount: 3, type: "stardust" },
     {
@@ -76,13 +78,14 @@ it("claims the authoritative disabled station once before a queued depletion", (
     },
     { type: "depleted" },
   ]);
-  queueHostileStationReward(flight, events, body);
+  queueHostileStationReward(flight, events, body, CONTENT);
   expect(events).toHaveLength(3);
   const resumed = structuredClone(flight);
   queueHostileStationReward(
     resumed,
     events,
     resumed.objects.find(({ id }) => id === body.id)!,
+    CONTENT,
   );
   expect(events).toHaveLength(3);
 });
@@ -90,17 +93,20 @@ it("claims the authoritative disabled station once before a queued depletion", (
 it("does not claim from an active station, detached copy or missing body", () => {
   const { body, flight } = fixture();
   const events: FlightEvent[] = [];
-  queueHostileStationReward(flight, events, body);
-  disable(body, flight);
-  queueHostileStationReward(flight, events, structuredClone(body));
+  queueHostileStationReward(flight, events, body, CONTENT);
+  body.enemy!.disabled = true;
+  queueHostileStationReward(flight, events, body, CONTENT);
+  body.hp = body.enemy!.hp = 0;
+  queueHostileStationReward(flight, events, structuredClone(body), CONTENT);
   expect(events).toEqual([]);
   flight.objects = flight.objects.filter(({ id }) => id !== body.id);
-  queueHostileStationReward(flight, events, body);
+  queueHostileStationReward(flight, events, body, CONTENT);
   expect(events).toEqual([]);
 });
 
 it("emits the existing Stardust event from real station hull destruction before cleanup", () => {
   const { body, flight } = fixture();
+  setRewardRoll(body, flight, false);
   // The Andromeda ring's open center is flyable. Hit one of its solid convex faces.
   const part = enemyHull(body.enemy!, ROUTE_POSITION[flight.galaxy])![0]!;
   const solid = fromScreen(
@@ -143,4 +149,19 @@ it("emits the existing Stardust event from real station hull destruction before 
   ]);
   expect(flight.hostileStations![body.id]!.rewarded).toBe(true);
   expect(flight.objects.some(({ id }) => id === `wreck:${body.id}`)).toBe(false);
+});
+
+it("replaces a hostile station's full reward with one upgrade and respects old paid states", () => {
+  const { body, flight } = fixture();
+  setRewardRoll(body, flight, true);
+  body.hp = body.enemy!.hp = 0;
+  const events: FlightEvent[] = [];
+  queueHostileStationReward(flight, events, body, CONTENT);
+  expect(events).toEqual([]);
+  expect(flight.objects.filter(({ upgrade }) => upgrade)).toHaveLength(1);
+  const continued = structuredClone(flight);
+  const sameBody = continued.objects.find(({ id }) => id === body.id)!;
+  queueHostileStationReward(continued, events, sameBody, CONTENT);
+  expect(continued.objects.filter(({ upgrade }) => upgrade)).toHaveLength(1);
+  expect(events).toEqual([]);
 });

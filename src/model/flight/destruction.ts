@@ -224,6 +224,7 @@ export function salvageTarget(content: GameContent, flight: FlightState): SpaceO
         object.kind === "enemy" &&
         object.hp > 0 &&
         object.enemy?.disabled === true &&
+        !object.enemy.surrendered &&
         object.enemy.archetype !== "hostileStation" &&
         !object.enemy.salvaged &&
         worldDistance(flightWorldContext(flight), object, flight.player) <=
@@ -302,18 +303,21 @@ export function stepWrecks(
     }
     object.wreck.released = true;
     const next = dropRandom(flight.seed, object.id);
-    const drop = rollEnemyDrop(
-      ECONOMY,
-      { id: object.id, seed: flight.seed },
-      object.wreck.archetype,
-      next,
-    );
+    const drop =
+      object.id === PHANTOM_FLAGSHIP
+        ? { stardust: PHANTOM_TUNING.legacyWreckStardust, upgrade: false }
+        : rollEnemyDrop(
+            ECONOMY,
+            { id: object.id, seed: flight.seed },
+            object.wreck.archetype,
+            next,
+          );
     releaseStardust(
       [],
       object,
       timing.spread,
       next,
-      object.id === PHANTOM_FLAGSHIP ? PHANTOM_TUNING.legacyWreckStardust : drop.stardust,
+      drop.stardust,
       { at: flight.time, from: { x: object.x, y: object.y } },
       flight,
     );

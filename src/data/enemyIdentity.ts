@@ -4,6 +4,7 @@ import { GALAXY_ID, ROUTE, type RoutePosition } from "./galaxies.ts";
 import type { SHIP_PHYSICS } from "./shipPhysics.ts";
 
 export const PHANTOM_FLAGSHIP_ID = "phantomFlagship";
+export const FLAGSHIP_SURRENDER_HP = 16;
 export const WRECK_ID_PREFIX = "wreck:";
 export const INDUSTRIAL_BODY_KEYS = ["retaliatorCargoHauler", "retaliatorMiningFreighter"] as const;
 export type IndustrialBodyKey = (typeof INDUSTRIAL_BODY_KEYS)[number];

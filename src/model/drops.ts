@@ -49,13 +49,27 @@ export function enemyStardust(identity: EnemyPayoutIdentity, archetype: EnemyAct
   return low + offset;
 }
 
-/** A destroyed enemy's full payout; only small craft roll for an upgrade. */
+/** Heavy upgrades replace the full Stardust payout and keep the prior upgrade seed. */
+export function rollHeavyDefeatUpgrade(
+  catalog: EconomyCatalog,
+  { id, seed }: EnemyPayoutIdentity,
+  archetype: EnemyActorKind,
+): boolean {
+  const chance =
+    archetype === "frigate" || archetype === "platform" ? 0.1 : catalog.upgradeDropChance.heavy;
+  return dropRandom(seed, `salvage:${wreckEnemyId(id)}`)() < chance;
+}
+
+/** A destroyed enemy's payout, with an exclusive upgrade outcome for heavies. */
 export function rollEnemyDrop(
   catalog: EconomyCatalog,
   identity: EnemyPayoutIdentity,
   archetype: EnemyArchetype,
   next: () => number,
 ): Drop {
+  if (HEAVIES.includes(archetype) && rollHeavyDefeatUpgrade(catalog, identity, archetype)) {
+    return { stardust: 0, upgrade: true };
+  }
   return {
     stardust: enemyStardust(identity, archetype),
     upgrade: !HEAVIES.includes(archetype) && next() < catalog.upgradeDropChance.small,
