@@ -1,7 +1,7 @@
 import { containsPoint, type Point, type Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { STICK_AREA_MARGIN, STICK_DRAWN_HALF, TOUCH_STICK, USE_DISC } from "../../data/layout.ts";
-import type { StickSide } from "../../input/state.ts";
+import type { StickSide } from "../../input/index.ts";
 import { type Insets, playView, type Size } from "./playView.ts";
 export { TOUCH_STICK, USE_DISC } from "../../data/layout.ts";
 
