@@ -830,6 +830,27 @@ export interface InteractionCopy {
   readonly topicExit?: { readonly label: string; readonly target: string };
   readonly topics: readonly InteractionTopic[];
 }
+/** The explicitly offered disk exchange uses the resolved outpost giver. */
+export function holodiskHandoverCopy(party: string): InteractionCopy {
+  return {
+    lines: [
+      { speaker: party, text: "We found this drifting near our outposts." },
+      { id: "ask-astra", speaker: "Ada", text: "Astra, is that your holodisk?" },
+      { speaker: "Astra", text: "Yes. A piece of my memory." },
+      { speaker: party, text: "Take it. And thank you." },
+    ],
+    party,
+    topicExit: { label: "Ask Astra about the holodisk", target: "ask-astra" },
+    topics: [
+      {
+        label: "Where was it?",
+        lines: [{ speaker: party, text: "Drifting near our outposts." }],
+      },
+      { label: "What does it hold?", lines: [{ speaker: "Astra", text: "Part of my memory." }] },
+    ],
+  };
+}
+
 export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
   ...Object.fromEntries(
     Object.entries(NEEDLE_COPY).map(([key, copy]) => [
@@ -857,9 +878,10 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
       .map(([key, copy]): [string, InteractionCopy] => [
         `6.phantom.${key}`,
         {
-          lines: copy.lines.map((line) => ({
-            speaker: displayChapterSpeaker(line.speaker),
-            text: line.text,
+          lines: copy.lines.map(({ id, speaker, text }) => ({
+            ...(id && { id }),
+            speaker: displayChapterSpeaker(speaker),
+            text,
           })),
           party:
             key === "phantomSettlement3"
@@ -869,6 +891,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
                 : key === "flagshipSalvage"
                   ? "Astra"
                   : ARCHIE_NAMED.name,
+          ...(copy.topicExit && { topicExit: copy.topicExit }),
           topics: (copy.topics ?? []).map((topic) => ({
             label: topic.question,
             lines: topic.lines.map((line) => ({
@@ -886,6 +909,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
         text: "Here are the spare parts.",
       },
       {
+        id: "repairs",
         speaker: "Rivet",
         text: "Now we can repair the growers' equipment.",
       },
@@ -899,6 +923,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
       },
     ],
     party: "Rivet",
+    topicExit: { label: "Discuss the repairs", target: "repairs" },
     topics: [
       {
         label: "Need another delivery?",
@@ -927,6 +952,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
         text: "A visitor! We grow food here, but our equipment needs repairs.",
       },
       {
+        id: "ask-for-help",
         speaker: "Ada",
         text: "Can someone help fix it?",
       },
@@ -940,6 +966,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
       },
     ],
     party: "Clover",
+    topicExit: { label: "Ask who can help", target: "ask-for-help" },
     topics: [
       {
         label: "What do you need?",
@@ -968,6 +995,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
         text: "The workshop sent this tool kit. They need spare parts.",
       },
       {
+        id: "spare-parts",
         speaker: "Patch",
         text: "Useful tools! We have parts to spare, but our food is running low.",
       },
@@ -981,6 +1009,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
       },
     ],
     party: "Patch",
+    topicExit: { label: "Ask about spare parts", target: "spare-parts" },
     topics: [
       {
         label: "What do you salvage?",
@@ -1009,6 +1038,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
         text: "Food from the growers. Their equipment needs repairs.",
       },
       {
+        id: "repair",
         speaker: "Rivet",
         text: "We can repair it. We're short of parts, though.",
       },
@@ -1022,6 +1052,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
       },
     ],
     party: "Rivet",
+    topicExit: { label: "Ask about the repair", target: "repair" },
     topics: [
       {
         label: "What do you repair?",
@@ -1050,6 +1081,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
         text: "There's room for everyone here. Let them dock.",
       },
       {
+        id: "reassure-mica",
         speaker: "Ada",
         text: "We're right here, Mica.",
       },
@@ -1063,6 +1095,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
       },
     ],
     party: "Jasper",
+    topicExit: { label: "Reassure Mica", target: "reassure-mica" },
     topics: [
       {
         label: "Should we move away?",
@@ -1091,6 +1124,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
         text: "Welcome. Independent miners bring ore here for transport.",
       },
       {
+        id: "find-ore",
         speaker: "Ada",
         text: "Where do I find ore?",
       },
@@ -1108,6 +1142,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
       },
     ],
     party: "Quartz",
+    topicExit: { label: "Ask where to find ore", target: "find-ore" },
     topics: [
       {
         label: "Who uses the hub?",
@@ -1136,6 +1171,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
         text: "That pilot keeps blocking you. Does it happen often?",
       },
       {
+        id: "mica-explains",
         speaker: "Mica",
         text: "It keeps happening. I've started waiting until they're gone.",
       },
@@ -1149,6 +1185,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
       },
     ],
     party: "Mica",
+    topicExit: { label: "Hear Mica out", target: "mica-explains" },
     topics: [
       {
         label: "Do you need docking help?",
@@ -1177,6 +1214,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
         text: "Have you seen the pilot blocking Mica?",
       },
       {
+        id: "opal-explains",
         speaker: "Opal",
         text: "I've seen it. I didn't know what to do.",
       },
@@ -1190,6 +1228,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
       },
     ],
     party: "Opal",
+    topicExit: { label: "Hear what Opal saw", target: "opal-explains" },
     topics: [
       {
         label: "Does Mica want company?",
@@ -1218,6 +1257,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
         text: "Have you seen someone traveling alone? We've been searching.",
       },
       {
+        id: "marlo-news",
         speaker: "Ada",
         text: "Marlo was stuck behind some rocks. I've cleared a way.",
       },
@@ -1231,6 +1271,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
       },
     ],
     party: "Whale family",
+    topicExit: { label: "Tell them about Marlo", target: "marlo-news" },
     topics: [
       {
         label: "Who are you seeking?",
@@ -1259,6 +1300,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
         text: "That's better. Thank you.",
       },
       {
+        id: "marlo-plans",
         speaker: "Ada",
         text: "Where will you go now?",
       },
@@ -1272,6 +1314,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
       },
     ],
     party: "Marlo",
+    topicExit: { label: "Ask where Marlo will go", target: "marlo-plans" },
     topics: [
       {
         label: "Will they be looking?",
@@ -1349,11 +1392,13 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
         text: "A shining disk drifts on the current ahead. Drones guard it. Follow our song.",
       },
       {
+        id: "follow-song",
         speaker: "Ada",
         text: "Astra's holodisk! We'll follow.",
       },
     ],
     party: "Whale family",
+    topicExit: { label: "Follow the song", target: "follow-song" },
     topics: [
       {
         label: "Where is the disk?",
@@ -1382,6 +1427,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
         text: "I found your family. Here are their coordinates.",
       },
       {
+        id: "marlo-reacts",
         speaker: "Marlo",
         text: "You found my family! Now I know where to go.",
       },
@@ -1395,6 +1441,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
       },
     ],
     party: "Marlo",
+    topicExit: { label: "Hear Marlo’s reaction", target: "marlo-reacts" },
     topics: [
       {
         label: "Can you reach them?",
@@ -1423,6 +1470,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
         text: "Can you hear me? I can't get through these rocks.",
       },
       {
+        id: "whale-surprise",
         speaker: "Ada",
         text: "A whale in space! And you can talk?",
       },
@@ -1436,6 +1484,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
       },
     ],
     party: "Marlo",
+    topicExit: { label: "Ask how to help", target: "whale-surprise" },
     topics: [
       {
         label: "Where do you travel?",
@@ -1464,6 +1513,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
         text: "Can you hear me? I can't get through these rocks.",
       },
       {
+        id: "whale-surprise",
         speaker: "Ada",
         text: "A whale in space! And you can talk?",
       },
@@ -1477,6 +1527,7 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
       },
     ],
     party: "Marlo",
+    topicExit: { label: "Ask how to help", target: "whale-surprise" },
     topics: [
       {
         label: "Where do you travel?",
@@ -1505,11 +1556,13 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
         text: "Ore deposited at the hub. Partial loads count.",
       },
       {
+        id: "shield-ore",
         speaker: "Ada",
         text: "Let's keep ore for your shield too.",
       },
     ],
     party: "Astra",
+    topicExit: { label: "Talk about keeping ore", target: "shield-ore" },
     topics: [
       {
         label: "Why keep ore?",
@@ -1538,11 +1591,13 @@ export const INTERACTION_COPY: Readonly<Record<string, InteractionCopy>> = {
         text: "Its weapons are down. I can salvage parts.",
       },
       {
+        id: "take-parts",
         speaker: "Ada",
         text: "Let's take what we need and go.",
       },
     ],
     party: "Astra",
+    topicExit: { label: "Take what we need", target: "take-parts" },
     topics: [
       {
         label: "What can we collect?",

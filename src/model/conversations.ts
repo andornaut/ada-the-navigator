@@ -14,6 +14,7 @@ import {
   type ConversationLine,
   CONVERSATIONS,
   type EncounterCue,
+  holodiskHandoverCopy,
   INTERACTION_COPY,
   type InteractionCopy,
   type InteractionLine,
@@ -1626,22 +1627,7 @@ export function interactionCopy(
   const name = roles[panel.title] ?? panel.title;
   if (panel.context === "holodiskHandover") {
     const party = ["Clover", "Rivet", "Patch"].includes(name) ? name : "Clover";
-    return {
-      lines: [
-        { speaker: party, text: "We found this drifting near our outposts." },
-        { speaker: "Ada", text: "Astra, is that your holodisk?" },
-        { speaker: "Astra", text: "Yes. A piece of my memory." },
-        { speaker: party, text: "Take it. And thank you." },
-      ],
-      party,
-      topics: [
-        {
-          label: "Where was it?",
-          lines: [{ speaker: party, text: "Drifting near our outposts." }],
-        },
-        { label: "What does it hold?", lines: [{ speaker: "Astra", text: "Part of my memory." }] },
-      ],
-    };
+    return holodiskHandoverCopy(party);
   }
   if (panel.context === "tow") {
     const tow = CONVERSATIONS.find(

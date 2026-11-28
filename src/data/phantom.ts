@@ -1,4 +1,4 @@
-import type { ConversationLine, Mood } from "./conversations.ts";
+import type { ConversationLine, InteractionCopy, Mood } from "./conversations.ts";
 import type { ChapterContent, PremiseLine } from "./types.ts";
 export const PHANTOM_DESTINATIONS = [
   "phantomSettlement1",
@@ -75,10 +75,12 @@ export const PHANTOM_CLOSING: readonly PremiseLine[] = [
   { speaker: "ada", text: "Always." },
 ];
 export interface PhantomLine extends Required<PremiseLine> {
+  readonly id?: string;
   readonly mood?: Mood;
 }
 export interface PhantomCopy {
   readonly lines: readonly PhantomLine[];
+  readonly topicExit?: InteractionCopy["topicExit"];
   readonly topics?: readonly {
     question: string;
     lines: readonly PhantomLine[];
@@ -98,14 +100,18 @@ export const PHANTOM_COPY: Readonly<Record<string, PhantomCopy>> = {
   aftermath: {
     lines: [
       line("ada", "Astra, show him your map."),
-      line(
-        "astra",
-        "Six disks, every coordinate. There are galaxies past galaxies, Admiral. They never end.",
-      ),
+      {
+        ...line(
+          "astra",
+          "Six disks, every coordinate. There are galaxies past galaxies, Admiral. They never end.",
+        ),
+        id: "show-map",
+      },
       line("archie", "No end... No one could hold all of that."),
       line("ada", "No one has to. But you could help fix what you broke here."),
       line("archie", "The Blurbs' docks. My blockades cracked them. I'll start there."),
     ],
+    topicExit: { label: "Show the Admiral the map", target: "show-map" },
     topics: [
       {
         lines: [line("astra", "Every coordinate. There are galaxies past galaxies.")],
@@ -137,8 +143,9 @@ export const PHANTOM_COPY: Readonly<Record<string, PhantomCopy>> = {
   flagshipSalvage: {
     lines: [
       line("astra", "The last holodisk is here. I can bring it aboard."),
-      line("ada", "Let's get your memory back."),
+      { ...line("ada", "Let's get your memory back."), id: "recover-memory" },
     ],
+    topicExit: { label: "Bring the holodisk aboard", target: "recover-memory" },
     topics: [
       { lines: [line("astra", "The last piece of my memory.")], question: "What can we collect?" },
       { lines: [line("astra", "Yes. Its weapons are down.")], question: "Is it disabled?" },
@@ -147,10 +154,11 @@ export const PHANTOM_COPY: Readonly<Record<string, PhantomCopy>> = {
   phantomSettlement1: {
     lines: [
       line("blurbs", "Blub! The drones are gone!"),
-      line("ada", "Can you leave your homes now?"),
+      { ...line("ada", "Can you leave your homes now?"), id: "leave-homes" },
       line("blurbs", "We haven't left since the Admiral came."),
       line("ada", "The blockade here is broken."),
     ],
+    topicExit: { label: "Ask if they can leave", target: "leave-homes" },
     topics: [
       {
         lines: [line("blurbs", "We Blurbs wobble, but we always hold together.")],
@@ -165,10 +173,11 @@ export const PHANTOM_COPY: Readonly<Record<string, PhantomCopy>> = {
   phantomSettlement2: {
     lines: [
       line("blurbs", "You broke the blockade!"),
-      line("ada", "Were travelers stuck away from home?"),
+      { ...line("ada", "Were travelers stuck away from home?"), id: "ask-travelers" },
       line("blurbs", "Yes. The stranded travelers can come home now."),
       line("ada", "Then they have a way back."),
     ],
+    topicExit: { label: "Ask about stranded travelers", target: "ask-travelers" },
     topics: [
       {
         lines: [line("blurbs", "Yes. The blockade is broken.")],
@@ -180,10 +189,11 @@ export const PHANTOM_COPY: Readonly<Record<string, PhantomCopy>> = {
   phantomSettlement3: {
     lines: [
       line("dollop", "Thank you, Navigator."),
-      line("ada", "Where is the Admiral's flagship?"),
+      { ...line("ada", "Where is the Admiral's flagship?"), id: "find-flagship" },
       line("dollop", "Past the dark nebula."),
       line("dollop", "We'll send word to everyone you've helped."),
     ],
+    topicExit: { label: "Ask where to find the flagship", target: "find-flagship" },
     topics: [
       {
         lines: [line("dollop", "Past the dark nebula. His flagship waits there.")],

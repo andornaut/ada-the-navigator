@@ -87,6 +87,7 @@ export const ANDROMEDA_CONVERSATIONS = {
     lines: [
       { speaker: "Ada", text: "Pip, did you see the dent in the beacon?" },
       {
+        id: "pip-confesses",
         speaker: "Pip",
         text: "You saw the dent? It was me. I was late, I flew too fast, and I clipped it.",
       },
@@ -114,6 +115,7 @@ export const ANDROMEDA_CONVERSATIONS = {
         text: "Yes. I'll tell them what happened.",
       },
     ],
+    topicExit: { label: "Hear Pip’s account", target: "pip-confesses" },
   },
   dent: {
     lines: [
@@ -127,7 +129,7 @@ export const ANDROMEDA_CONVERSATIONS = {
   holodisk: {
     lines: [
       { speaker: "Pip", text: "This belongs to your ship, doesn't it?" },
-      { speaker: "Ada", text: "Yes. It's part of Astra's memory." },
+      { id: "astra-memory", speaker: "Ada", text: "Yes. It's part of Astra's memory." },
       { speaker: "Pip", text: "I should have given it back right away. Here." },
       { speaker: "Ada", text: "Thank you, Pip." },
     ],
@@ -140,11 +142,16 @@ export const ANDROMEDA_CONVERSATIONS = {
         text: "It was so strange and shiny. I should have given it back.",
       },
     ],
+    topicExit: { label: "Tell Pip about Astra’s memory", target: "astra-memory" },
   },
   ownsUp: {
     lines: [
       { speaker: "Pip", text: "I clipped the beacon. I was flying too fast." },
-      { speaker: "Wick", text: "So it wasn't the drones at all. Thank you for telling us, Pip." },
+      {
+        id: "wick-responds",
+        speaker: "Wick",
+        text: "So it wasn't the drones at all. Thank you for telling us, Pip.",
+      },
       { speaker: "Wick", text: "Now, who can help us fix it?" },
       {
         speaker: "Pip",
@@ -160,6 +167,7 @@ export const ANDROMEDA_CONVERSATIONS = {
         text: "The dark guide beacon. Ships need its light.",
       },
     ],
+    topicExit: { label: "Talk about fixing the beacon", target: "wick-responds" },
   },
   parts: {
     lines: [{ text: carriedItemName("beacon parts") }, { text: ANDROMEDA_CHAPTER.objectives[5]! }],
@@ -168,7 +176,7 @@ export const ANDROMEDA_CONVERSATIONS = {
   repaired: {
     lines: [
       { speaker: "Ada", text: "We brought the beacon parts." },
-      { speaker: "Pip", text: "Let's fix the beacon." },
+      { id: "fix-beacon", speaker: "Pip", text: "Let's fix the beacon." },
       { speaker: "Wick", text: "There. The beacon is lit again, and ships can find their way." },
       { speaker: "Ada", text: "I can see its light!" },
     ],
@@ -185,13 +193,18 @@ export const ANDROMEDA_CONVERSATIONS = {
         text: "The beacon Pip clipped. The parts have repaired it.",
       },
     ],
+    topicExit: { label: "Fix the beacon", target: "fix-beacon" },
   },
 } as const satisfies Readonly<Record<string, AndromedaConversation>>;
 
 /** Pip can explain the damage before Ada inspects it. */
 export const ANDROMEDA_CONFESSION_WITHOUT_INSPECTION: readonly AndromedaLine[] = [
   { speaker: "Ada", text: "Pip, do you know what happened to the beacon?" },
-  { speaker: "Pip", text: "It was me. I was late, I flew too fast, and I clipped it." },
+  {
+    id: "pip-confesses",
+    speaker: "Pip",
+    text: "It was me. I was late, I flew too fast, and I clipped it.",
+  },
 ];
 
 export type AndromedaConversationId = keyof typeof ANDROMEDA_CONVERSATIONS;

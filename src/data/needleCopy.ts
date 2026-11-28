@@ -40,12 +40,12 @@ export const NEEDLE_COPY: Readonly<Record<string, InteractionCopy>> = {
         speaker: "loom",
         text: "Welcome to Needle, young pilot. Our channels are narrow, and they cannot be rushed.",
       },
-      { id: "lookingForDisk", speaker: "ada", text: "I'm looking for a shining disk." },
+      { id: "looking-for-disk", speaker: "ada", text: "I'm looking for a shining disk." },
       { speaker: "loom", text: "It drifted into the Eye, our narrowest channel." },
       { speaker: "ada", text: "How do I reach it?" },
     ],
     party: "loom",
-    topicExit: { label: "Ask about the disk", target: "lookingForDisk" },
+    topicExit: { label: "Ask about the disk", target: "looking-for-disk" },
     topics: [
       {
         label: "Who flies here?",
@@ -70,7 +70,7 @@ export const NEEDLE_COPY: Readonly<Record<string, InteractionCopy>> = {
   practice: {
     lines: [
       { speaker: "loom", text: "To reach the disk you must thread every gate, slowly." },
-      { speaker: "ada", text: "Can I try a shorter channel first?" },
+      { id: "shorter-course", speaker: "ada", text: "Can I try a shorter channel first?" },
       {
         speaker: "loom",
         text: "Follow the green flag to the Practice Channel. That's where the first ring is.",
@@ -78,6 +78,7 @@ export const NEEDLE_COPY: Readonly<Record<string, InteractionCopy>> = {
       { speaker: "ada", text: "Four gates first. I'll take my time." },
     ],
     party: "loom",
+    topicExit: { label: "Ask for a shorter course", target: "shorter-course" },
     topics: [
       {
         label: "Why practice?",
@@ -97,11 +98,12 @@ export const NEEDLE_COPY: Readonly<Record<string, InteractionCopy>> = {
   practiceComplete: {
     lines: [
       { speaker: "loom", text: "There. You learned it one gate at a time." },
-      { speaker: "ada", text: "The short channel helped." },
+      { id: "short-channel-helped", speaker: "ada", text: "The short channel helped." },
       { speaker: "loom", text: "The Eye is waiting." },
       { speaker: "ada", text: "I'll go slowly through each gate." },
     ],
     party: "loom",
+    topicExit: { label: "Talk about the Eye", target: "short-channel-helped" },
     topics: [
       {
         label: "Where is the disk?",
