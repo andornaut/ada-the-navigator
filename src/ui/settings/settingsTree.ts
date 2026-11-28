@@ -1,13 +1,12 @@
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
 import type { DeviceSetting } from "../deviceSettings.ts";
-import { settingsColumnArrangement } from "../layout/index.ts";
+import { CARD_CONTENT, settingsColumnArrangement } from "../layout/index.ts";
 
 export type SettingsSwitch = DeviceSetting;
 export type SettingsNative = SettingsSwitch | "actions" | "build" | "divider" | "install";
 export type SettingsLayoutSchema = {
   settings: { props: Record<string, never>; slots: "body" };
-  column: { props: "left" | "right"; slots: "rows" };
   native: { props: SettingsNative; slots: never };
 };
 export interface SettingsLayoutData {
@@ -22,6 +21,17 @@ const native = (id: SettingsNative): LayoutNode<SettingsLayoutSchema> => ({
   props: id,
 });
 
+const column = (
+  key: "left" | "right",
+  rows: readonly SettingsNative[],
+): LayoutNode<SettingsLayoutSchema> => ({
+  children: rows.map(native),
+  gap: CARD_CONTENT.rowGap,
+  key,
+  kind: "stack",
+  padding: 0,
+});
+
 /** Native widgets retain their state and handlers; configuration owns their actual arrangement. */
 export function settingsTree(data: SettingsLayoutData): LayoutNode<SettingsLayoutSchema> {
   return {
@@ -34,27 +44,13 @@ export function settingsTree(data: SettingsLayoutData): LayoutNode<SettingsLayou
         {
           ...settingsColumnArrangement(data.columns),
           children: [
-            {
-              component: "column",
-              key: "left",
-              kind: "component",
-              props: "left",
-              slots: { rows: [native("move"), native("aim"), native("sound")] },
-            },
+            column("left", ["move", "aim", "sound"]),
             native("divider"),
-            {
-              component: "column",
-              key: "right",
-              kind: "component",
-              props: "right",
-              slots: {
-                rows: [
-                  native("fpsCounter"),
-                  native("reducedMotion"),
-                  ...(data.install ? [native("install")] : []),
-                ],
-              },
-            },
+            column("right", [
+              "fpsCounter",
+              "reducedMotion",
+              ...(data.install ? (["install"] as const) : []),
+            ]),
           ],
           key: "rows",
           padding: 0,

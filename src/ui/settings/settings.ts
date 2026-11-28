@@ -18,7 +18,6 @@ import {
 } from "../deviceSettings.ts";
 import { type InstallPort, startInstall, watchInstallRow } from "../installRow.ts";
 import {
-  CARD_CONTENT,
   font,
   fromHudEdge,
   hudButtonTarget,
@@ -226,12 +225,12 @@ ${DEFAULT_CONTROL_FOCUS}{${FOCUS_STYLE}
   align-self:stretch
 }
 
-/* Independent columns keep each switch and its help together at their natural height. */
-.ada-controls .ada-settings-column{
-  display:grid;
+/* Keep the implicit track so long help can wrap inside each Kit stack. */
+.ada-controls .ada-settings-rows > [data-settings-column]{
+  grid-template-columns:none;
   align-content:start;
+  align-items:normal;
   align-self:stretch;
-  row-gap:${units(CARD_CONTENT.rowGap)};
   min-width:0
 }
 .ada-controls [data-dialog=settings] .ada-settings-rows.ui-layout-stack{
@@ -388,12 +387,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
     update();
     return row;
   };
-  const leftColumn = document.createElement("div");
-  leftColumn.className = "ada-settings-column";
-  leftColumn.dataset.settingsColumn = "left";
-  const rightColumn = document.createElement("div");
-  rightColumn.className = "ada-settings-column";
-  rightColumn.dataset.settingsColumn = "right";
   const switches = {
     aim: switchRow("aim", options.labels.aimControls, options.labels.controlsNote),
     fpsCounter: switchRow("fpsCounter", FPS_COUNTER_LABEL),
@@ -478,13 +471,6 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   const arrangement = mountLayout<SettingsLayoutSchema>(
     {
       components: {
-        column: {
-          create: (side) => {
-            const element = side === "left" ? leftColumn : rightColumn;
-            return { dispose() {}, element, slots: { rows: element }, update() {} };
-          },
-          slots: ["rows"],
-        },
         native: {
           create: (name) => ({ dispose() {}, element: nativeNodes[name], slots: {}, update() {} }),
           slots: [],
@@ -500,10 +486,14 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions) {
   );
   let rows: HTMLElement;
   const bindRows = () => {
-    rows = card.firstElementChild as HTMLElement;
+    const left = switches.move.parentElement!;
+    const right = switches.fpsCounter.parentElement!;
+    rows = left.parentElement!;
     rows.classList.add("ada-settings-rows");
     rows.dataset.inkTop = String((CONTROL_ROW.height - TYPE.body.lineHeight) / 2);
     rows.dataset.columns = String(arrangementColumns);
+    left.dataset.settingsColumn = "left";
+    right.dataset.settingsColumn = "right";
     if (stepsFrame.parentElement === modal && stepsFrame.nextSibling) {
       modal.append(stepsFrame);
     }

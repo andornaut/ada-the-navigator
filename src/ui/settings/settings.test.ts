@@ -330,6 +330,10 @@ describe("Settings current-state labels", () => {
   });
   it("retains control instances in independent columns with the shared native divider", () => {
     const { columns, rows, settings } = setup();
+    expect(columns[0]!.className).toBe("ui-layout-stack");
+    expect(columns[0]!.dataset.settingsColumn).toBe("left");
+    expect(columns[2]!.className).toBe("ui-layout-stack");
+    expect(columns[2]!.dataset.settingsColumn).toBe("right");
     const dividers = columns.filter((row) => row.attributes.get("aria-orientation") === "vertical");
     expect(dividers).toHaveLength(1);
     expect(dividers[0]!.hidden).toBe(true);

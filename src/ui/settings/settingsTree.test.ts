@@ -7,7 +7,7 @@ import { type SettingsLayoutSchema, settingsTree } from "./settingsTree.ts";
 
 function body(columns: 1 | 2, install: boolean) {
   const tree = settingsTree({ columns, install });
-  validateLayoutTree({ column: ["rows"], native: [], settings: ["body"] }, tree);
+  validateLayoutTree({ native: [], settings: ["body"] }, tree);
   if (tree.kind !== "component" || tree.component !== "settings") {
     throw Error("Missing Settings port");
   }
@@ -17,6 +17,11 @@ function body(columns: 1 | 2, install: boolean) {
 it("uses the published fractional/intrinsic tracks around the canonical native divider", () => {
   const [rows, build, actions] = body(2, true);
   expect(rows).toMatchObject({
+    children: [
+      { gap: CARD_CONTENT.rowGap, key: "left", kind: "stack", padding: 0 },
+      { component: "native", key: "divider" },
+      { gap: CARD_CONTENT.rowGap, key: "right", kind: "stack", padding: 0 },
+    ],
     gap: SETTINGS_COLUMN_GAP / 2,
     kind: "columns",
     sizing: {
