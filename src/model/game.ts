@@ -7,10 +7,7 @@ import { ANDROMEDA_CHAPTER, ANDROMEDA_LANE_COURIER, ANDROMEDA_PLACES } from "../
 import {
   type CapitalBossHud,
   CARTWHEEL_CLAIM,
-  CARTWHEEL_CLAIM_CUES,
-  SUNFLOWER_BOSS_CUES,
   SUNFLOWER_CAPITAL_BOSS,
-  WHIRLPOOL_BOSS_CUES,
   WHIRLPOOL_CAPITAL_BOSS,
 } from "../data/capitalBosses.ts";
 import {
@@ -94,7 +91,6 @@ import {
 } from "./andromeda/courierRun.ts";
 import {
   ANDROMEDA_REDACT,
-  ANDROMEDA_REDACT_CUES,
   andromedaRedactEligible,
   reserveAndromedaRedact,
   resolveAndromedaRedact,
@@ -195,6 +191,7 @@ import {
   whirlpoolSounderActor,
 } from "./flight.ts";
 import { initializeGalaxyGeography } from "./galaxyGeography.ts";
+import { type BossCueGalaxy, projectBossCue } from "./game/bossCues.ts";
 import { projectCapitalBossHud } from "./game/bossHud.ts";
 import { earlyRequiredDestination, galaxyRoute, newGameState } from "./game/campaignState.ts";
 import { dockedExchange } from "./game/dockedExchange.ts";
@@ -303,7 +300,6 @@ import { clearNeedleEnemies, ensureNeedleDebris } from "./needle/contact.ts";
 import { needleCourses, setNeedleActivity, stepNeedleCourse } from "./needle/index.ts";
 import {
   NEEDLE_CADENCE,
-  NEEDLE_CADENCE_CUES,
   needleCadenceSite,
   type NeedleTrackedObjective,
   needleTrackedObjective,
@@ -2051,6 +2047,13 @@ export class GameModel {
     return projectCapitalBossHud({ content: this.content, flight, progress: this.current });
   }
 
+  private cueCapitalBoss(galaxy: BossCueGalaxy): void {
+    const cue = projectBossCue(this.current, galaxy);
+    if (cue && (!cue.needsVisibleBoss || this.bossHud())) {
+      this.talk.authoredCue(cue.id, cue.line);
+    }
+  }
+
   private prepareCartwheelClaim(flight: FlightState): void {
     const progress = this.current;
     if (flight.galaxy !== 2 || progress.stage < 3 || !progress.known.includes(HUB_STATION)) {
@@ -2092,17 +2095,7 @@ export class GameModel {
     if (claim?.phase === "active") {
       this.current.claim = { ...claim, outcome, phase: "resolved" };
       openCartwheelClaimField(this.content, flight, claim);
-      this.cartwheelClaimCues();
-    }
-  }
-
-  private cartwheelClaimCues(): void {
-    const { id } = CARTWHEEL_CLAIM;
-    const claim = this.current.claim;
-    if (claim?.phase === "resolved") {
-      this.talk.authoredCue(`${id}:resolved`, CARTWHEEL_CLAIM_CUES.resolved);
-    } else if (claim?.phase === "active" && this.bossHud()) {
-      this.talk.authoredCue(`${id}:approach`, CARTWHEEL_CLAIM_CUES.approach);
+      this.cueCapitalBoss(2);
     }
   }
 
@@ -2138,17 +2131,7 @@ export class GameModel {
     const boss = this.current.capitalBoss;
     if (boss?.phase === "active") {
       this.current.capitalBoss = { outcome, phase: "resolved", site: boss.site };
-      this.needleBossCues();
-    }
-  }
-
-  private needleBossCues(): void {
-    const { id } = NEEDLE_CADENCE;
-    const boss = this.current.capitalBoss;
-    if (boss?.phase === "resolved") {
-      this.talk.authoredCue(`${id}:resolved`, NEEDLE_CADENCE_CUES.resolved);
-    } else if (boss?.phase === "active" && this.bossHud()) {
-      this.talk.authoredCue(`${id}:approach`, NEEDLE_CADENCE_CUES.approach);
+      this.cueCapitalBoss(4);
     }
   }
 
@@ -2212,16 +2195,6 @@ export class GameModel {
       this.flightEvents.push(result.discovery);
     }
     this.talk.authoredCue(result.cue.id, result.cue.line);
-  }
-
-  private redactCues(): void {
-    const { id } = ANDROMEDA_REDACT;
-    const boss = this.current.redact;
-    if (boss?.phase === "resolved") {
-      this.talk.authoredCue(`${id}:resolved`, ANDROMEDA_REDACT_CUES.resolved);
-    } else if (boss?.phase === "active" && this.bossHud()) {
-      this.talk.authoredCue(`${id}:approach`, ANDROMEDA_REDACT_CUES.approach);
-    }
   }
 
   /** Intercepted entries retain their identity as their disclosed attribution changes. */
@@ -2299,19 +2272,7 @@ export class GameModel {
     }
     this.current.sounder = { outcome, phase: "resolved" };
     this.prepareWhirlpoolDisk(flight);
-    this.sounderCues(flight);
-  }
-
-  private sounderCues(flight: FlightState): void {
-    const { id } = WHIRLPOOL_CAPITAL_BOSS;
-    if (flight.galaxy !== 3) {
-      return;
-    }
-    if (this.current.sounder?.phase === "resolved") {
-      this.talk.authoredCue(`${id}:resolved`, WHIRLPOOL_BOSS_CUES.resolved);
-    } else if (this.current.sounder?.phase === "active" && this.bossHud()) {
-      this.talk.authoredCue(`${id}:approach`, WHIRLPOOL_BOSS_CUES.approach);
-    }
+    this.cueCapitalBoss(3);
   }
 
   private prepareSunflowerBoss(flight: FlightState): void {
@@ -2365,20 +2326,7 @@ export class GameModel {
         site: boss.site,
       };
       this.prepareSunflowerBoss(flight);
-      this.sunflowerBossCues(flight);
-    }
-  }
-
-  private sunflowerBossCues(flight: FlightState): void {
-    const { id } = SUNFLOWER_CAPITAL_BOSS;
-    const boss = this.current.capitalBoss;
-    if (flight.galaxy !== 1 || !boss) {
-      return;
-    }
-    if (boss.phase === "resolved") {
-      this.talk.authoredCue(`${id}:resolved`, SUNFLOWER_BOSS_CUES.resolved);
-    } else if (boss.phase === "active" && this.bossHud()) {
-      this.talk.authoredCue(`${id}:approach`, SUNFLOWER_BOSS_CUES.approach);
+      this.cueCapitalBoss(1);
     }
   }
 
@@ -4306,10 +4254,10 @@ export class GameModel {
       }
       if (f.galaxy === 4) {
         this.prepareNeedleBoss(context);
-        this.needleBossCues();
+        this.cueCapitalBoss(4);
       } else if (f.galaxy === 5) {
         this.prepareRedact(context);
-        this.redactCues();
+        this.cueCapitalBoss(5);
       }
       const thread = heldActivity(f.galaxy, this.state);
       const layout = needleCourses(f);
@@ -4396,10 +4344,11 @@ export class GameModel {
     const approach = this.poiApproach(f, unknownPoi, landmarks);
     this.cueGrowersApproach(f);
     this.cueMarkedPoiArrivals(f);
-    this.sunflowerBossCues(f);
-    this.sounderCues(f);
+    if (f.galaxy === 1 || f.galaxy === 3) {
+      this.cueCapitalBoss(f.galaxy);
+    }
     if (f.galaxy === 2) {
-      this.cartwheelClaimCues();
+      this.cueCapitalBoss(2);
       const scene = f.storyScene;
       const blocked = CARTWHEEL_STORY_SHIPS.scenes.blocked;
       if (
