@@ -5531,7 +5531,9 @@ function scanSource(context: ScanContext, path: string, text: string) {
   ) => {
     if (
       !classes.some((value) =>
-        strings(value).some((text) => text.split(/\s+/u).includes("ada-button")),
+        strings(value).some((text) =>
+          text.split(/\s+/u).some((name) => name === "ada-button" || name === "ada-close"),
+        ),
       )
     ) {
       return;
@@ -5549,7 +5551,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
         "raw-standard-button",
         site,
         undefined,
-        "A native button uses the Ada standard text skin without Kit construction",
+        "A native button uses an Ada standard button skin without Kit construction",
       );
     }
   };

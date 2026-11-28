@@ -1136,6 +1136,25 @@ it.each([
   ]);
 });
 
+it("reports a bound raw Close using only the standard icon skin", () => {
+  const path = "src/ui/rawCloseFixture.ts";
+  const closeClass = 'button.className = "ada-close"';
+  const source = `
+    import { bindAdaAction } from "./actionBinding.ts";
+    function closeButton(onClose) {
+      const button = document.createElement("button");
+      const binding = bindAdaAction({ click: { run: () => onClose() } }, button);
+      button.type = "button";
+      button.dataset.action = "close";
+      ${closeClass};
+      return { element: button, dispose() { binding.dispose(); } };
+    }
+  `;
+  expect(constructionFindings(path, source)).toEqual([
+    expect.objectContaining({ kind: "raw-standard-button", path, source: closeClass }),
+  ]);
+});
+
 const shipLayoutSource = readFileSync(new URL("../ui/shipCard.ts", import.meta.url), "utf8");
 // Scan identical source at an unrelated sibling path to rule out a Ship-specific exemption.
 it.each(["src/ui/shipCard.ts", rawRowPath])(
