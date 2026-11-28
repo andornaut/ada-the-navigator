@@ -547,7 +547,7 @@ describe("shared Earth and space dialogue presentation", () => {
       choices.children.slice(0, -1).every((node) => !node.className.includes("ada-primary")),
     ).toBe(true);
     expect(navigation.children.map((node) => node.textContent)).toEqual([CONTENT.labels.previous]);
-    expect(choices.children.at(-1)?.textContent).toBe("Resume conversation");
+    expect(choices.children.at(-1)?.textContent).toBe("Discuss the repairs");
     const skip = buttons().find((node) => node.textContent === CONTENT.labels.skip)!;
     expect(skip.className).toContain("ui-standard-button");
     expect(skip.className).toContain("ada-compact");
@@ -585,7 +585,7 @@ describe("shared Earth and space dialogue presentation", () => {
       .all()
       .find((node) => node.className.includes("ada-dialogue-controls"))!;
     navigation.children[0]!.click();
-    const resume = parent.all().find((node) => node.textContent === "Resume conversation")!;
+    const resume = parent.all().find((node) => node.textContent === "Discuss the repairs")!;
     resume.click();
     expect(navigation.children.map((node) => node.textContent)).toEqual([
       CONTENT.labels.previous,
@@ -1108,7 +1108,7 @@ it("binds native Skip and Close once with current callbacks and disposes their r
     parent.all().find((node) => node.tag === "button" && node.textContent === label)!;
   expect(skip.hidden).toBe(true);
   button("Next").click();
-  button("Resume conversation").click();
+  button("Discuss the repairs").click();
   expect(skip.hidden).toBe(false);
   const replacement = vi.fn();
   options.skip = replacement;

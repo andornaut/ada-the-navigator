@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { ANDROMEDA_CONVERSATIONS } from "../data/andromeda.ts";
 import { CONTENT } from "../data/content.ts";
 import {
   CONVERSATION_TUNING,
@@ -1354,9 +1355,10 @@ describe("Use conversation paging", () => {
   const copy = {
     lines: [
       { speaker: "Clover", text: "First" },
-      { speaker: "Ada", text: "Last" },
+      { id: "last", speaker: "Ada", text: "Last" },
     ],
     party: "Clover",
+    topicExit: { label: "Read last line", target: "last" },
     topics: [{ label: "Question", lines: [{ speaker: "Clover", text: "Answer" }] }],
   };
   const panel = {
@@ -1498,40 +1500,43 @@ describe("Use conversation paging", () => {
     { label: "Opening would loop", target: "opening" },
     { label: "Duplicate target", target: "duplicate" },
     { label: " ", target: "end" },
-  ])("keeps the legacy continuation for an invalid edge: $label", (topicExit) => {
-    const run = new InteractionConversation();
-    run.show(
-      {
-        ...copy,
-        lines: [
-          { ...copy.lines[0]!, id: "opening" },
-          { ...copy.lines[1]!, id: "duplicate" },
-          { id: "duplicate", speaker: "Ada", text: "Another line" },
-          { id: "end", speaker: "Ada", text: "Done" },
-        ],
-        topicExit,
-      },
-      panel,
-    );
-    run.advance();
-    expect(run.topicExitLabel).toBe("Resume conversation");
-    run.leaveTopics();
-    expect(run.line?.text).toBe("Last");
-    expect(run.nextAction).toBe("page");
-  });
+  ])(
+    "keeps the main exchange linear instead of opening an invalid topic hub: $label",
+    (topicExit) => {
+      const run = new InteractionConversation();
+      run.show(
+        {
+          ...copy,
+          lines: [
+            { ...copy.lines[0]!, id: "opening" },
+            { ...copy.lines[1]!, id: "duplicate" },
+            { id: "duplicate", speaker: "Ada", text: "Another line" },
+            { id: "end", speaker: "Ada", text: "Done" },
+          ],
+          topicExit,
+        },
+        panel,
+      );
+      expect(run.nextAction).toBe("page");
+      run.advance();
+      expect(run.topicExitLabel).toBeUndefined();
+      expect(run.topics).toEqual([]);
+      expect(run.line?.text).toBe("Last");
+      run.leaveTopics();
+      expect(run.line?.text).toBe("Last");
+      expect(run.nextAction).toBe("page");
+    },
+  );
 
-  it("keeps a one-line optional exchange escapable at its existing outcome", () => {
+  it("keeps a malformed one-line optional exchange escapable at its existing outcome", () => {
     const run = new InteractionConversation();
     const linear = { ...panel, choices: [{ id: "continue", label: "Continue" }] };
     run.show({ ...copy, lines: [copy.lines[0]!] }, linear);
-    run.advance();
-    expect(run.topicExitLabel).toBe("Resume conversation");
+    expect(run.topicExitLabel).toBeUndefined();
+    expect(run.topics).toEqual([]);
     expect(run.canSkip).toBe(false);
-    run.leaveTopics();
     expect(run.line?.text).toBe("First");
     expect(run.nextAction).toBe("continue");
-    run.previous();
-    expect(run.topics).toEqual(copy.topics);
   });
 
   it("retains completion across station screens and clears it on undock or standalone close", () => {
@@ -1718,6 +1723,73 @@ describe("Use copy resolution", () => {
     text: "",
     title: "Salvager",
   };
+  it("resolves every topic exit through its production copy adapter", () => {
+    const variants = Object.entries(INTERACTION_COPY)
+      .filter(([key, copy]) => copy.topics.length && key !== "3.holodiskLead")
+      .map(([key]) => {
+        const scoped = /^(\d)\.(.+)$/u.exec(key);
+        return {
+          context: Number(scoped?.[1] ?? 1),
+          panel: { ...panel, context: scoped?.[2] ?? key },
+        };
+      });
+    function assertExit(
+      context: Parameters<typeof interactionCopy>[0],
+      page: Parameters<typeof interactionCopy>[1],
+    ) {
+      const copy = interactionCopy(context, page);
+      expect(copy.topics.length, page.context).toBeGreaterThan(0);
+      const edge = copy.topicExit;
+      expect(edge?.label, page.context).toBeTruthy();
+      expect(copy.lines.filter(({ id }) => id === edge?.target)).toEqual([copy.lines[1]]);
+      const run = new InteractionConversation();
+      run.show(copy, page);
+      run.advance();
+      expect(run.topicExitLabel).toBe(edge?.label);
+      expect(run.canSkip).toBe(false);
+      run.topic(0);
+      run.advance();
+      expect(run.completedTopic(0)).toBe(true);
+      run.leaveTopics();
+      expect(run.line).toBe(copy.lines[1]);
+      run.previous();
+      expect(run.topicExitLabel).toBe(edge?.label);
+      expect(run.completedTopic(0)).toBe(true);
+    }
+    for (const variant of variants) {
+      assertExit(variant.context, variant.panel);
+    }
+    for (const title of ["Grower", "Salvager", "Workshop"]) {
+      assertExit(1, { ...panel, title });
+    }
+    for (const [key, copy] of Object.entries(ANDROMEDA_CONVERSATIONS)) {
+      if (!("questions" in copy)) {
+        continue;
+      }
+      for (const stage of key === "confession" ? [1, 2] : [0]) {
+        assertExit({ galaxy: 5, progress: { stage } }, { ...panel, context: `andromeda:${key}` });
+      }
+    }
+    const settlements = ["phantomSettlement1", "phantomSettlement2", "phantomSettlement3"];
+    for (const id of settlements) {
+      const others = settlements.filter((other) => other !== id);
+      for (let order = 0; order < settlements.length; order++) {
+        const phantom = {
+          broken: settlements,
+          flagshipKnown: false,
+          freed: others.slice(0, order),
+        };
+        assertExit(
+          { galaxy: 6, progress: { phantom, stage: 0 } },
+          { ...panel, context: `phantom.${id}` },
+        );
+      }
+    }
+    const lead = interactionCopy(3, { ...panel, context: "holodiskLead" });
+    expect(lead.topics).toEqual([]);
+    expect(lead.topicExit).toBeUndefined();
+  });
+
   it("offers Wick's main question once and leads from his answer to the beacon", () => {
     const arrival = { ...panel, context: "andromeda:arrival", title: "Wick" };
     const run = new InteractionConversation();

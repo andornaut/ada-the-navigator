@@ -1275,22 +1275,23 @@ type InteractionPage =
   | { kind: "answer"; index: number; thread: InteractionThread }
   | { kind: "fork"; thread: InteractionThread };
 
+type ResolvedTopicExit = { readonly index: number; readonly label: string };
+
 interface InteractionFrame {
   readonly copy: InteractionCopy;
   readonly page: InteractionPage;
   readonly panel: import("./types.ts").DialogueState;
+  readonly topicExit: ResolvedTopicExit | undefined;
 }
 
-function interactionAtOutcome({ copy, page }: InteractionFrame): boolean {
+function interactionAtOutcome({ copy, page, topicExit }: InteractionFrame): boolean {
   return (
-    page.kind === "main" &&
-    page.index >= copy.lines.length - 1 &&
-    (page.index !== 0 || copy.topics.length === 0)
+    page.kind === "main" && page.index >= copy.lines.length - 1 && (page.index !== 0 || !topicExit)
   );
 }
 
 function interactionNextPage(frame: InteractionFrame): InteractionPage | undefined {
-  const { copy, page } = frame;
+  const { page, topicExit } = frame;
   if (page.kind === "answer") {
     const topic = page.thread.at(-1)!.topic;
     if (page.index + 1 < topic.lines.length) {
@@ -1299,7 +1300,7 @@ function interactionNextPage(frame: InteractionFrame): InteractionPage | undefin
     return topic.choices?.length ? { kind: "fork", thread: page.thread } : { kind: "topics" };
   }
   if (page.kind === "main" && !interactionAtOutcome(frame)) {
-    return page.index === 0 && copy.topics.length
+    return page.index === 0 && topicExit
       ? { kind: "topics" }
       : { index: page.index + 1, kind: "main" };
   }
@@ -1314,17 +1315,16 @@ function interactionNextAction(frame: InteractionFrame): "page" | "continue" | u
 }
 
 /** Validate the authored edge before displaying or dispatching it. */
-function interactionTopicExit(copy: InteractionCopy): { index: number; label: string } {
+function interactionTopicExit(copy: InteractionCopy): ResolvedTopicExit | undefined {
   const edge = copy.topicExit;
-  if (edge?.label.trim() && edge.target.trim()) {
+  if (copy.topics.length && edge?.label.trim() && edge.target.trim()) {
     const index = copy.lines.findIndex(({ id }) => id === edge.target);
     if (index > 0 && copy.lines.findLastIndex(({ id }) => id === edge.target) === index) {
       return { index, label: edge.label };
     }
   }
-  // Older copy still needs a way out. For a one-line opening, index 1 reuses
-  // the opening text at the outcome without returning to the topic menu.
-  return { index: 1, label: "Resume conversation" };
+  // An invalid edge leaves the main exchange available as ordinary linear pages.
+  return undefined;
 }
 
 /** Traverses presentation pages and remembers the continuation of outcomes already applied. */
@@ -1344,7 +1344,12 @@ export class InteractionConversation {
     if (panel === this.live) {
       return;
     }
-    const next: InteractionFrame = { copy, page: { index: 0, kind: "main" }, panel };
+    const next: InteractionFrame = {
+      copy,
+      page: { index: 0, kind: "main" },
+      panel,
+      topicExit: interactionTopicExit(copy),
+    };
     if (this.choosing && this.live && this.frame?.panel === this.live) {
       this.applied.set(this.live, { id: this.choosing, next });
       this.history.push(this.frame);
@@ -1468,7 +1473,7 @@ export class InteractionConversation {
   }
 
   private get currentTopicExit() {
-    return this.page.kind === "topics" && this.copy ? interactionTopicExit(this.copy) : undefined;
+    return this.page.kind === "topics" ? this.frame?.topicExit : undefined;
   }
 
   get hasPrevious(): boolean {
@@ -1540,7 +1545,7 @@ export class InteractionConversation {
     }
     if (this.copy && !this.atOutcome) {
       this.showPage({
-        index: Math.max(this.copy.topics.length ? 1 : 0, this.copy.lines.length - 1),
+        index: Math.max(0, this.copy.lines.length - 1),
         kind: "main",
       });
     }
