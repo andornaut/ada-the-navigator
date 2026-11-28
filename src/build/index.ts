@@ -2,6 +2,7 @@
 // gameViteConfig loads it through a single Vite module runner, which resolves @andornaut/game-kit
 // as the app does.
 export { authoredGeometryChunk } from "./authoredGeometry.ts";
+export { downloadSizeAssetsPlugin } from "./downloadSizeAssets.ts";
 export { homePagePlugin, webManifestPlugin } from "./pages/homePage.ts";
 export { ICONS } from "./pages/icons.ts";
 export { sitePages } from "./pages/sitePages.ts";

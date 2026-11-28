@@ -5,7 +5,6 @@ import { gameViteConfig } from "@andornaut/game-kit/build/gameConfig";
 import type { ConfigEnv } from "vite";
 
 import type * as ConfigModules from "./src/build/index.ts";
-import { downloadSizeAssetsPlugin } from "./tools/download-size-assets.mjs";
 
 // The landing page at / and the game at /play/, from pages/.
 // homePagePlugin fills the landing page's copy (src/data/homeCopy.ts).
@@ -49,7 +48,7 @@ export default ({ command }: ConfigEnv) =>
         pageHtmlFile: "play/index.html",
         serviceWorkerSource: repoPath("src/entry/serviceWorker.ts"),
       }),
-      downloadSizeAssetsPlugin(),
+      modules.downloadSizeAssetsPlugin(),
       modules.securityHeadersPlugin(),
     ],
     previewHost: undefined,
