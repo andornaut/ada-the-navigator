@@ -91,7 +91,7 @@ export function createPauseButton(root: HTMLElement, label: string, onPause: () 
   button.title = label;
   button.hidden = true;
   let disposed = false;
-  const pose = mountNavigationPose(button);
+  let pose: ReturnType<typeof mountNavigationPose> | undefined;
   const action = bindAdaAction(
     {
       click: {
@@ -100,7 +100,7 @@ export function createPauseButton(root: HTMLElement, label: string, onPause: () 
             ? { kind: "omitted" }
             : { kind: "available" },
         run: () => {
-          pose.rest();
+          pose?.rest();
           onPause();
         },
       },
@@ -117,12 +117,13 @@ export function createPauseButton(root: HTMLElement, label: string, onPause: () 
     disposed = true;
     action.dispose();
     kit.dispose();
-    pose.dispose();
+    pose?.dispose();
   };
   try {
     assertAdaActionMetadata(button);
     root.append(button);
     assertAdaActionBindings(button);
+    pose = mountNavigationPose(button);
   } catch (error) {
     dispose();
     button.remove();
@@ -131,14 +132,23 @@ export function createPauseButton(root: HTMLElement, label: string, onPause: () 
   return {
     button,
     dispose,
+    setMode(mode: "pause" | "menu", label: string) {
+      if (disposed || !button.isConnected || !root.contains(button)) {
+        return;
+      }
+      button.dataset.navigation = mode;
+      button.dataset.action = mode;
+      button.setAttribute("aria-label", label);
+      button.title = label;
+    },
     setPressed(pressed: boolean) {
       if (disposed) {
         return;
       }
       if (pressed) {
-        pose.press();
+        pose?.press();
       } else {
-        pose.rest();
+        pose?.rest();
       }
     },
   };

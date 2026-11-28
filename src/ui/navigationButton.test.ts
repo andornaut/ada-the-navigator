@@ -144,7 +144,16 @@ describe("actual Pause/Menu entry", () => {
     expect(entry.button.title).toBe(expected === "pause" ? "Pause" : "Menu");
     expect(button.children.map((face) => face.hidden)).toEqual([true]);
     expect(button.dataset.navigation).toBe(expected);
+    const other = expected === "pause" ? "menu" : "pause";
+    button.remove();
+    entry.setMode(other);
+    expect(button.dataset.action).toBe(expected);
+    root.append(button);
     entry.dispose();
+    entry.setMode(other);
+    expect(button.dataset.action).toBe(expected);
+    expect(button.dataset.navigation).toBe(expected);
+    expect(entry.button.title).toBe(expected === "pause" ? "Pause" : "Menu");
     entry.button.dispatchEvent(new Event("click"));
     expect(pause).toHaveBeenCalledTimes(expected === "pause" ? 1 : 0);
     expect(menu).toHaveBeenCalledTimes(expected === "menu" ? 1 : 0);

@@ -7,15 +7,11 @@ export function createNavigationButton(
   activate: () => void,
 ) {
   const entry = createPauseButton(root, labels.pause, activate);
-  const { button } = entry;
-  button.setAttribute("aria-haspopup", "dialog");
+  entry.button.setAttribute("aria-haspopup", "dialog");
   return {
     ...entry,
     setMode(mode: "pause" | "menu") {
-      button.dataset.navigation = mode;
-      button.dataset.action = mode;
-      button.setAttribute("aria-label", labels[mode]);
-      button.title = labels[mode];
+      entry.setMode(mode, labels[mode]);
     },
   };
 }

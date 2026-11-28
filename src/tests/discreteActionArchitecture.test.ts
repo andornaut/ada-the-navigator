@@ -649,6 +649,54 @@ function constructionFindings(path: string, text: string) {
   );
 }
 
+const mountedRootSource = readFileSync(new URL("../ui/pauseButton.ts", import.meta.url), "utf8");
+const mountedRootFixture = "src/ui/mountedRootFixture.ts";
+const mountedRootConstructor = expect.objectContaining({
+  kind: "unbound-discrete",
+  source: expect.stringContaining("createButton(root.ownerDocument,"),
+});
+
+it.each(["src/ui/pauseButton.ts", mountedRootFixture])(
+  "proves mounted factory registration and live mode updates in %s",
+  (path) => {
+    expect(constructionFindings(path, mountedRootSource)).toEqual([]);
+  },
+);
+
+it.each([
+  ["missing binding", "const action = bindAdaAction(", "const action = otherBind("],
+  ["native registry ownership", 'nativeClickOwner: "factory"', 'nativeClickOwner: "registry"'],
+  [
+    "early publication",
+    "const action = bindAdaAction(",
+    "root.append(button); const action = bindAdaAction(",
+  ],
+  ["wrong mounted root", "    root.append(button);", "    otherRoot.append(button);"],
+  ["missing live audit", "    assertAdaActionBindings(button);", "    check(button);"],
+  ["omitted action cleanup", "    action.dispose();", "    kit.dispose();"],
+] as const)("rejects mounted factory construction with %s", (_case, original, replacement) => {
+  const source = mountedRootSource.replace(original, replacement);
+  expect(source).not.toBe(mountedRootSource);
+  expect(constructionFindings(mountedRootFixture, source)).toContainEqual(mountedRootConstructor);
+});
+
+it.each([
+  [
+    "omitted disposal guard",
+    "disposed || !button.isConnected || !root.contains(button)",
+    "!button.isConnected || !root.contains(button)",
+  ],
+  ["foreign live root", "!root.contains(button)", "!otherRoot.contains(button)"],
+] as const)("retains the mode metadata finding with %s", (_case, original, replacement) => {
+  const source = mountedRootSource.replace(original, replacement);
+  expect(source).not.toBe(mountedRootSource);
+  const findings = constructionFindings(mountedRootFixture, source);
+  expect(findings).not.toContainEqual(mountedRootConstructor);
+  expect(findings).toContainEqual(
+    expect.objectContaining({ kind: "unbound-discrete", source: "button.dataset.action = mode" }),
+  );
+});
+
 const layoutMetadataSources = [
   canonicalRegistry,
   ...["standardTextAction", "modalClose"].map((name) => ({

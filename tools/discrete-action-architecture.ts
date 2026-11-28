@@ -3018,7 +3018,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
     }
     return !handlers.size && listeners.includes(click.listener) ? listeners : undefined;
   };
-  const registeredDetachedMetadata = new Set<ts.BinaryExpression>();
+  const registeredFactoryMetadata = new Set<ts.BinaryExpression>();
 
   // Prove first publication within the construction block, independently of when it runs.
   // The Kit caller-layout icon factory calls getState with the fresh element while creating it.
@@ -3131,11 +3131,42 @@ function scanSource(context: ScanContext, path: string, text: string) {
           deferred.add(local);
           return true;
         }
-        return !local.initializer;
+        return (
+          !local.initializer ||
+          (rootResolution &&
+            !isConst(local) &&
+            local.initializer.kind === ts.SyntaxKind.FalseKeyword)
+        );
       }
       const edit = ts.isExpressionStatement(statement) && statement.expression;
       if (!edit) {
         return false;
+      }
+      if (
+        rootResolution &&
+        ts.isBinaryExpression(edit) &&
+        edit.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+        ts.isPropertyAccessExpression(edit.left) &&
+        !edit.left.questionDotToken
+      ) {
+        const { expression, name } = edit.left;
+        if (
+          name.text === "hidden" &&
+          edit.right.kind === ts.SyntaxKind.TrueKeyword &&
+          (face(expression) || lexicalIdentity(expression, alias))
+        ) {
+          return true;
+        }
+        if (
+          name.text === "title" &&
+          lexicalIdentity(expression, alias) &&
+          (ts.isStringLiteral(edit.right) ||
+            (ts.isIdentifier(edit.right) &&
+              !readsPrivate(edit.right) &&
+              lexicalDeclaration(edit.right)))
+        ) {
+          return true;
+        }
       }
       if (
         ts.isBinaryExpression(edit) &&
@@ -3360,7 +3391,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
         )
       ) {
         for (const metadata of actionMetadata) {
-          registeredDetachedMetadata.add(metadata);
+          registeredFactoryMetadata.add(metadata);
         }
         return true;
       }
@@ -3368,7 +3399,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
     if (textButton) {
       return mappedFocusPublication(block, handle, alias, binding, options, action);
     }
-    if (!native || !stateWithoutElement) {
+    if (!rootResolution && (!native || !stateWithoutElement)) {
       return false;
     }
 
@@ -3460,7 +3491,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
       };
       return !unsafeUpdate(fn) && layoutPublishesComponent(constructor);
     };
-    if (publishesLayout()) {
+    if (native && stateWithoutElement && publishesLayout()) {
       return true;
     }
     const attempt = tail.find((statement) => !isDeferredDeclaration(singleLocal(statement)));
@@ -3468,7 +3499,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
       !attempt ||
       !ts.isTryStatement(attempt) ||
       attempt.finallyBlock ||
-      attempt.tryBlock.statements.length !== 3
+      attempt.tryBlock.statements.length !== (rootResolution ? 4 : 3)
     ) {
       return false;
     }
@@ -3495,6 +3526,14 @@ function scanSource(context: ScanContext, path: string, text: string) {
       return false;
     }
     const host = lexicalDeclaration(mount.expression.expression);
+    if (
+      rootResolution &&
+      (!dot(call.arguments[0], "ownerDocument") ||
+        !host ||
+        !lexicalIdentity(call.arguments[0].expression, host))
+    ) {
+      return false;
+    }
     if (
       !domHost(mount.expression.expression) &&
       !(
@@ -3565,7 +3604,219 @@ function scanSource(context: ScanContext, path: string, text: string) {
         )
       );
     };
-    return failed.block.statements.slice(0, -1).every((step) => rollback(step, true));
+    if (!rootResolution) {
+      return failed.block.statements.slice(0, -1).every((step) => rollback(step, true));
+    }
+    const setup = captureCall(attempt.tryBlock.statements[3]);
+    const setupState = setup && lexicalDeclaration(setup.left);
+    if (
+      !setup ||
+      !setupState ||
+      !ts.isVariableDeclaration(setupState) ||
+      !(setupState.parent.flags & ts.NodeFlags.Let) ||
+      setupState.initializer ||
+      setupState.parent.parent.parent !== block ||
+      setupState.end > binding.pos ||
+      !ts.isCallExpression(setup.right) ||
+      setup.right.questionDotToken ||
+      !ts.isIdentifier(setup.right.expression) ||
+      setup.right.arguments.length !== 1 ||
+      !lexicalIdentity(setup.right.arguments[0]!, alias)
+    ) {
+      return false;
+    }
+    const rollbackSteps = failed.block.statements.slice(0, -1);
+    const retry = callStatement(rollbackSteps[0]);
+    const dispose = retry && lexicalDeclaration(retry.expression);
+    const cleanup = dispose && ts.isVariableDeclaration(dispose) && dispose.initializer;
+    if (
+      rollbackSteps.length !== 2 ||
+      !retry ||
+      retry.questionDotToken ||
+      retry.arguments.length ||
+      !rollback(rollbackSteps[1]!, false) ||
+      !dispose ||
+      !ts.isVariableDeclaration(dispose) ||
+      !isConst(dispose) ||
+      !cleanup ||
+      !ts.isArrowFunction(cleanup) ||
+      !synchronousCallable(cleanup) ||
+      cleanup.parameters.length ||
+      !ts.isBlock(cleanup.body) ||
+      cleanup.body.statements.length !== 5
+    ) {
+      return false;
+    }
+    const [skip, retire, unbind, removeKit, releaseSetup] = cleanup.body.statements;
+    const isReturnGuard = (step: ts.Statement | undefined): step is ts.IfStatement =>
+      Boolean(
+        step &&
+        ts.isIfStatement(step) &&
+        !step.elseStatement &&
+        ts.isBlock(step.thenStatement) &&
+        step.thenStatement.statements.length === 1 &&
+        ts.isReturnStatement(step.thenStatement.statements[0]!) &&
+        !step.thenStatement.statements[0]!.expression,
+      );
+    const retired = captureCall(retire);
+    const flag = retired && lexicalDeclaration(retired.left);
+    const disposes = (
+      step: ts.Statement | undefined,
+      local: ts.VariableDeclaration,
+      optional = false,
+    ) => {
+      const invoke = callStatement(step);
+      const port = invoke?.expression;
+      return (
+        invoke &&
+        !invoke.questionDotToken &&
+        !invoke.arguments.length &&
+        port &&
+        ts.isPropertyAccessExpression(port) &&
+        Boolean(port.questionDotToken) === optional &&
+        port.name.text === "dispose" &&
+        lexicalIdentity(port.expression, local)
+      );
+    };
+    if (
+      !retired ||
+      retired.right.kind !== ts.SyntaxKind.TrueKeyword ||
+      !flag ||
+      !ts.isVariableDeclaration(flag) ||
+      !(flag.parent.flags & ts.NodeFlags.Let) ||
+      flag.initializer?.kind !== ts.SyntaxKind.FalseKeyword ||
+      flag.parent.parent.parent !== block ||
+      !isReturnGuard(skip) ||
+      !lexicalIdentity(skip.expression, flag) ||
+      !disposes(unbind, binding) ||
+      !disposes(removeKit, handle) ||
+      !disposes(releaseSetup, setupState, true)
+    ) {
+      return false;
+    }
+    const mountedReturn = block.statements.at(-1);
+    if (
+      !mountedReturn ||
+      !ts.isReturnStatement(mountedReturn) ||
+      !mountedReturn.expression ||
+      !ts.isObjectLiteralExpression(mountedReturn.expression) ||
+      !mountedReturn.expression.properties.every(
+        (property) =>
+          property.name && ts.isIdentifier(property.name) && property.name.text !== "__proto__",
+      ) ||
+      new Set(mountedReturn.expression.properties.map((property) => property.name!.getText(source)))
+        .size !== mountedReturn.expression.properties.length
+    ) {
+      return false;
+    }
+    const mountedRecord = mountedReturn.expression;
+    const release = namedProperty(mountedRecord, "dispose");
+    if (
+      !release ||
+      !ts.isShorthandPropertyAssignment(release) ||
+      declaration(release.name) !== dispose
+    ) {
+      return false;
+    }
+    const unsafe = (site: ts.Node): true | undefined => {
+      if (ts.isIdentifier(site)) {
+        const value = reads(site);
+        if (
+          site.text === "eval" ||
+          (value === binding &&
+            site !== binding.name &&
+            site.parent.parent !== callStatement(unbind)) ||
+          (value === handle &&
+            site !== handle.name &&
+            site.parent !== alias.initializer &&
+            site.parent.parent !== callStatement(removeKit) &&
+            !(
+              site.pos < binding.pos &&
+              ts.isPropertyAccessExpression(site.parent) &&
+              face(site.parent)
+            )) ||
+          (value === dispose &&
+            site !== dispose.name &&
+            site !== release.name &&
+            site !== retry.expression) ||
+          (value === flag &&
+            site !== flag.name &&
+            site !== retired.left &&
+            ((ts.isBinaryExpression(site.parent) &&
+              site.parent.left === site &&
+              site.parent.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+              site.parent.operatorToken.kind <= ts.SyntaxKind.LastAssignment) ||
+              ts.isShorthandPropertyAssignment(site.parent) ||
+              ts.isPostfixUnaryExpression(site.parent) ||
+              (ts.isPrefixUnaryExpression(site.parent) &&
+                site.parent.operator !== ts.SyntaxKind.ExclamationToken)))
+        ) {
+          return true;
+        }
+      }
+      return ts.forEachChild(site, unsafe);
+    };
+    if (unsafe(block)) {
+      return false;
+    }
+    const mountedMetadata = new Set(actionMetadata);
+    for (const port of mountedRecord.properties) {
+      if (!ts.isMethodDeclaration(port) || !synchronousCallable(port) || !port.body) {
+        continue;
+      }
+      const [guard, ...updates] = port.body.statements;
+      if (!isReturnGuard(guard)) {
+        continue;
+      }
+      // The mutation may run while hidden, but only for the still-connected owning root.
+      const terms = (test: ts.Expression): ts.Expression[] =>
+        ts.isBinaryExpression(test) && test.operatorToken.kind === ts.SyntaxKind.BarBarToken
+          ? [...terms(test.left), ...terms(test.right)]
+          : [test];
+      const [retired, connection, membership, extra] = terms(guard.expression);
+      const removed =
+        connection &&
+        ts.isPrefixUnaryExpression(connection) &&
+        connection.operator === ts.SyntaxKind.ExclamationToken &&
+        dot(connection.operand, "isConnected") &&
+        lexicalIdentity(connection.operand.expression, alias);
+      const contains =
+        membership &&
+        ts.isPrefixUnaryExpression(membership) &&
+        membership.operator === ts.SyntaxKind.ExclamationToken &&
+        membership.operand;
+      if (
+        !retired ||
+        !lexicalIdentity(retired, flag) ||
+        !removed ||
+        !contains ||
+        !ts.isCallExpression(contains) ||
+        contains.questionDotToken ||
+        !dot(contains.expression, "contains") ||
+        !lexicalIdentity(contains.expression.expression, host!) ||
+        contains.arguments.length !== 1 ||
+        !lexicalIdentity(contains.arguments[0]!, alias) ||
+        extra
+      ) {
+        continue;
+      }
+      for (const update of updates) {
+        const write = captureCall(update);
+        if (
+          write &&
+          dot(write.left, "action") &&
+          dot(write.left.expression, "dataset") &&
+          lexicalIdentity(write.left.expression.expression, alias) &&
+          port.parameters.some((parameter) => lexicalIdentity(write.right, parameter))
+        ) {
+          mountedMetadata.add(write);
+        }
+      }
+    }
+    for (const metadata of mountedMetadata) {
+      registeredFactoryMetadata.add(metadata);
+    }
+    return true;
   };
 
   // A retained component may write metadata in its own update callback if the same
@@ -5247,7 +5498,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
           !hasBinding(target) &&
           !immediateButtonRegistration(node, target) &&
           !capturedConstruction(target, node) &&
-          !registeredDetachedMetadata.has(node) &&
+          !registeredFactoryMetadata.has(node) &&
           !(isActionId && certifiedMemberMetadata(target))
         ) {
           record(
