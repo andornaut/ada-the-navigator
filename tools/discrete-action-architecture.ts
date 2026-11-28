@@ -51,6 +51,7 @@ interface AssertionSite {
 interface ScanContext {
   readonly assertions: ReadonlyMap<ts.FunctionDeclaration, RuntimeAssertionKind>;
   readonly actionBinding: ts.FunctionDeclaration | undefined;
+  readonly actionModules: ReadonlySet<ts.SourceFile>;
   readonly recoveryRoot: ts.FunctionDeclaration | undefined;
   readonly lexicalDeclarations: (node: ts.Identifier) => readonly ts.Declaration[] | undefined;
   readonly factories: Map<string, ReadonlySet<string>>;
@@ -73,7 +74,9 @@ function localModule(
 function localValueImport(
   context: ScanContext,
   node: ts.Identifier,
-): { readonly name: string; readonly target: ts.SourceFile } | undefined {
+):
+  | { readonly binding: ts.ImportSpecifier; readonly name: string; readonly target: ts.SourceFile }
+  | undefined {
   const declarations = context.lexicalDeclarations(node);
   const item = declarations?.length === 1 ? declarations[0] : undefined;
   if (!item || !ts.isImportSpecifier(item)) {
@@ -90,7 +93,7 @@ function localValueImport(
     return undefined;
   }
   const target = localModule(context.sources, node.getSourceFile(), statement.moduleSpecifier.text);
-  return target && { name: item.propertyName?.text ?? item.name.text, target };
+  return target && { binding: item, name: item.propertyName?.text ?? item.name.text, target };
 }
 
 // These pinned Phaser exports are library lifecycle notifications, outside the input lifecycle.
@@ -243,10 +246,12 @@ function inertRegistrationOptions(
 }
 
 /** Follow a binding through direct reads. Reject writes, aliases and opaque syntax. */
-function directRecoveryReads(
+function directBindingReads(
   context: ScanContext,
   scope: ts.Node,
-  binding: ts.FunctionDeclaration | ts.ParameterDeclaration | ts.VariableDeclaration,
+  binding:
+    ts.FunctionDeclaration | ts.ImportSpecifier | ts.ParameterDeclaration | ts.VariableDeclaration,
+  allowTypeQueries = false,
 ): boolean {
   const name = binding.name;
   if (!name || !ts.isIdentifier(name)) {
@@ -271,7 +276,8 @@ function directRecoveryReads(
           (ts.isPropertyAccessExpression(parent) && parent.expression === node) ||
           (ts.isCallExpression(parent) &&
             (parent.expression === node || parent.arguments.some((arg) => arg === node))) ||
-          (ts.isParameter(parent) && parent.initializer === node);
+          (ts.isParameter(parent) && parent.initializer === node) ||
+          (allowTypeQueries && ts.isTypeQueryNode(parent) && parent.exprName === node);
         if (!read) {
           return true;
         }
@@ -362,6 +368,68 @@ function privateAdapterLifetime(
   return !unsafe(implementation) && writes === 1 && cleanups === 1;
 }
 
+function directExport(module: ts.SourceFile | undefined, name: string) {
+  const declarations = module?.statements.filter(
+    (node): node is ts.FunctionDeclaration =>
+      ts.isFunctionDeclaration(node) &&
+      node.name?.text === name &&
+      node.body !== undefined &&
+      node.modifiers?.some(({ kind }) => kind === ts.SyntaxKind.ExportKeyword) === true &&
+      !node.modifiers.some(
+        ({ kind }) =>
+          kind === ts.SyntaxKind.DeclareKeyword ||
+          kind === ts.SyntaxKind.DefaultKeyword ||
+          kind === ts.SyntaxKind.AsyncKeyword,
+      ) &&
+      !node.asteriskToken,
+  );
+  return declarations?.length === 1 ? declarations[0] : undefined;
+}
+
+/** Follow one facade of explicit relative re-exports for the canonical action identities. */
+function actionValueImport(context: ScanContext, node: ts.Identifier) {
+  const imported = localValueImport(context, node);
+  if (!imported || context.actionModules.has(imported.target)) {
+    return imported;
+  }
+  let forwarded: { readonly name: string; readonly target: ts.SourceFile } | undefined;
+  for (const statement of imported.target.statements) {
+    if (
+      !ts.isExportDeclaration(statement) ||
+      statement.attributes ||
+      !statement.exportClause ||
+      !ts.isNamedExports(statement.exportClause) ||
+      !statement.moduleSpecifier ||
+      !ts.isStringLiteral(statement.moduleSpecifier) ||
+      !/^\.\.?\//u.test(statement.moduleSpecifier.text)
+    ) {
+      return undefined;
+    }
+    for (const item of statement.exportClause.elements) {
+      if (item.name.text !== imported.name) {
+        continue;
+      }
+      const target = localModule(context.sources, imported.target, statement.moduleSpecifier.text);
+      if (
+        forwarded ||
+        statement.isTypeOnly ||
+        item.isTypeOnly ||
+        !target ||
+        !context.actionModules.has(target)
+      ) {
+        return undefined;
+      }
+      forwarded = { name: item.propertyName?.text ?? item.name.text, target };
+    }
+  }
+  const origin = forwarded && directExport(forwarded.target, forwarded.name);
+  return origin &&
+    directBindingReads(context, origin.getSourceFile(), origin, true) &&
+    directBindingReads(context, node.getSourceFile(), imported.binding, true)
+    ? forwarded
+    : undefined;
+}
+
 /** Authenticate the actual returned method and its default subtree, through the local wrapper. */
 function recoveryAssertionFactory(
   context: ScanContext,
@@ -401,9 +469,9 @@ function recoveryAssertionFactory(
   const root = implementation.parameters[1];
   if (
     !root ||
-    !directRecoveryReads(context, factory, factory.parameters[1]) ||
-    !directRecoveryReads(context, implementation.getSourceFile(), implementation) ||
-    !directRecoveryReads(context, implementation, root)
+    !directBindingReads(context, factory, factory.parameters[1]) ||
+    !directBindingReads(context, implementation.getSourceFile(), implementation) ||
+    !directBindingReads(context, implementation, root)
   ) {
     return false;
   }
@@ -420,7 +488,7 @@ function recoveryAssertionFactory(
       ) {
         return [];
       }
-      const target = localValueImport(context, initializer.expression);
+      const target = actionValueImport(context, initializer.expression);
       return target?.name === "registerAdaActionRoot" && target.target === registry
         ? [initializer]
         : [];
@@ -516,7 +584,7 @@ function recoveryAssertionFactory(
   }
   const delegated = tail.expression;
   const target =
-    ts.isIdentifier(delegated.expression) && localValueImport(context, delegated.expression);
+    ts.isIdentifier(delegated.expression) && actionValueImport(context, delegated.expression);
   return Boolean(
     !delegated.questionDotToken &&
     delegated.arguments.length === 1 &&
@@ -531,23 +599,6 @@ function scanContext(sources: ScanContext["sources"]): ScanContext {
   const registry = sources.get("src/ui/actionBinding.ts");
   const adapter = sources.get("src/ui/holdActionsAdapter.ts");
   const lexicalDeclarations = localDeclarations(sources);
-  const directExport = (module: ts.SourceFile | undefined, name: string) => {
-    const declarations = module?.statements.filter(
-      (node): node is ts.FunctionDeclaration =>
-        ts.isFunctionDeclaration(node) &&
-        node.name?.text === name &&
-        node.body !== undefined &&
-        node.modifiers?.some(({ kind }) => kind === ts.SyntaxKind.ExportKeyword) === true &&
-        !node.modifiers.some(
-          ({ kind }) =>
-            kind === ts.SyntaxKind.DeclareKeyword ||
-            kind === ts.SyntaxKind.DefaultKeyword ||
-            kind === ts.SyntaxKind.AsyncKeyword,
-        ) &&
-        !node.asteriskToken,
-    );
-    return declarations?.length === 1 ? declarations[0] : undefined;
-  };
   const assertions = new Map<ts.FunctionDeclaration, RuntimeAssertionKind>();
   const live = directExport(registry, "assertAdaActionBindings");
   const metadata = directExport(registry, "assertAdaActionMetadata");
@@ -559,6 +610,11 @@ function scanContext(sources: ScanContext["sources"]): ScanContext {
   }
   const context: ScanContext = {
     actionBinding: directExport(registry, "bindAdaAction"),
+    actionModules: new Set(
+      [registry, adapter, sources.get("src/ui/actionRegistry.ts")].filter(
+        (module) => module !== undefined,
+      ),
+    ),
     assertions,
     factories: new Map(),
     lexicalDeclarations,
@@ -588,36 +644,32 @@ function scanSource(context: ScanContext, path: string, text: string) {
       exported.set(item.name.text, item);
     }
   }
-  const candidates = new Map(exported);
+  const candidates = new Set(exported.keys());
   for (const statement of source.statements) {
     const bindings = ts.isImportDeclaration(statement)
       ? statement.importClause?.namedBindings
       : undefined;
     if (bindings && ts.isNamedImports(bindings)) {
       for (const item of bindings.elements) {
-        const target = exported.get(item.propertyName?.text ?? item.name.text);
-        if (target) {
-          candidates.set(item.name.text, target);
-        }
+        candidates.add(item.name.text);
       }
     }
   }
   const canonicalCall = (call: ts.CallExpression): ts.FunctionDeclaration | undefined => {
     const callee = call.expression;
-    if (call.questionDotToken || !ts.isIdentifier(callee)) {
+    if (call.questionDotToken || !ts.isIdentifier(callee) || !candidates.has(callee.text)) {
       return undefined;
     }
-    const target = candidates.get(callee.text);
-    if (!target) {
+    const local = exported.get(callee.text);
+    if (local && lexicalIdentity(callee, local)) {
+      return local;
+    }
+    const imported = actionValueImport(context, callee);
+    if (!imported) {
       return undefined;
     }
-    if (lexicalIdentity(callee, target)) {
-      return target;
-    }
-    const imported = localValueImport(context, callee);
-    return imported?.target === target.getSourceFile() && imported.name === target.name?.text
-      ? target
-      : undefined;
+    const target = exported.get(imported.name);
+    return target && imported.target === target.getSourceFile() ? target : undefined;
   };
   const canonicalBindingCall = (call: ts.CallExpression): boolean =>
     context.actionBinding !== undefined &&
@@ -2561,7 +2613,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
     ) {
       return false;
     }
-    const imported = localValueImport(context, resolve.expression);
+    const imported = actionValueImport(context, resolve.expression);
     const { condition, whenFalse, whenTrue } = returned.expression;
     return Boolean(
       imported &&
@@ -5769,8 +5821,8 @@ function scanSource(context: ScanContext, path: string, text: string) {
       !owner ||
       !ts.isParameter(owner) ||
       owner.parent !== block.parent ||
-      !directRecoveryReads(context, block, host) ||
-      !directRecoveryReads(context, block.parent, owner)
+      !directBindingReads(context, block, host) ||
+      !directBindingReads(context, block.parent, owner)
     ) {
       return false;
     }

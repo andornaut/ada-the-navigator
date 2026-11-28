@@ -566,7 +566,7 @@ it.each([
   ["same-named local", "function bindAdaAction() {}", false],
   ["wrong module", 'import { bindAdaAction } from "./observe.ts";', false],
   ["type-only", 'import type { bindAdaAction } from "./actionBinding.ts";', false],
-  ["re-export", 'import { bindAdaAction } from "./barrel.ts";', false],
+  ["re-export", 'import { bindAdaAction } from "./barrel.ts";', true],
   ["unavailable", 'import { bindAdaAction } from "./unavailable.ts";', false],
 ] as const)("requires a canonical value export for a %s", (scenario, prefix, proven) => {
   const path = "src/ui/panel.ts";
@@ -588,6 +588,65 @@ it.each([
       .filter((fact) => fact.path === path)
       .flatMap(({ members }) => members),
   ).toEqual(proven ? ["button"] : []);
+});
+
+const actionFacade = {
+  path: "src/ui/actions/index.ts",
+  text: 'export {bindAdaAction as useAction} from "../actionBinding.ts";',
+};
+
+it.each([
+  ["explicit alias", actionFacade.text, "", "", true],
+  ["clause type only", actionFacade.text.replace("export {", "export type {"), "", "", false],
+  [
+    "member type only",
+    actionFacade.text.replace("{bindAdaAction", "{type bindAdaAction"),
+    "",
+    "",
+    false,
+  ],
+  [
+    "lookalike",
+    actionFacade.text.replace("../actionBinding.ts", "../fakeBinding.ts"),
+    "",
+    "",
+    false,
+  ],
+  [
+    "second facade",
+    actionFacade.text.replace("../actionBinding.ts", "../extraFacade.ts"),
+    "",
+    "",
+    false,
+  ],
+  ["star export", `${actionFacade.text} export * from "../fakeBinding.ts";`, "", "", false],
+  ["duplicate name", actionFacade.text.repeat(2), "", "", false],
+  [
+    "facade replacement",
+    'import {bindAdaAction} from "../actionBinding.ts"; ' +
+      "let useAction = bindAdaAction; useAction = replacement; export {useAction};",
+    "",
+    "",
+    false,
+  ],
+  ["import reassignment", actionFacade.text, "register = replacement;", "", false],
+  ["origin reassignment", actionFacade.text, "", "bindAdaAction = replacement;", false],
+] as const)("checks named action provenance for %s", (_label, facade, before, after, proven) => {
+  const path = "src/ui/panel.ts";
+  const result = scanDiscreteActionProject([
+    { ...canonicalRegistry, text: canonicalRegistry.text + after },
+    { ...actionFacade, text: facade },
+    { path: "src/ui/fakeBinding.ts", text: "export function bindAdaAction() {}" },
+    { path: "src/ui/extraFacade.ts", text: 'export {bindAdaAction} from "./actionBinding.ts";' },
+    {
+      path,
+      text: `import {useAction as register} from "./actions/index.ts";${before}${originFixture}`,
+    },
+  ]);
+  expect(
+    result.findings.filter((finding) => finding.path === path).map(({ kind }) => kind),
+  ).toEqual(proven ? [] : ["unbound-discrete", "unbound-discrete"]);
+  expect(result.factoryAssociations.some((fact) => fact.path === path)).toBe(proven);
 });
 
 it("does not promote a lexically shadowed wrapper or fake lifetime handle to a binding proof", () => {
@@ -657,6 +716,23 @@ const standardTextFixture = "src/ui/standardTextFixture.ts";
 const standardTextConstructor = expect.objectContaining({
   kind: "unbound-discrete",
   source: expect.stringContaining("createButton(root.ownerDocument,"),
+});
+
+it("proves the existing text producer through explicit binding and action resolver re-exports", () => {
+  const path = "src/ui/standardTextAction.ts";
+  const text = standardTextSource.replace("./actionBinding.ts", "./actions/index.ts");
+  const facade = {
+    ...actionFacade,
+    text: 'export {ADA_ACTION_HOLD_MS, bindAdaAction, resolveAdaHoldAction} from "../actionBinding.ts";',
+  };
+  for (const source of [
+    facade,
+    { ...facade, text: facade.text.replace("resolveAdaHoldAction", "type resolveAdaHoldAction") },
+  ]) {
+    const result = scanDiscreteActionProject([canonicalRegistry, source, { path, text }]);
+    const findings = result.findings.filter((finding) => finding.path === path);
+    expect(findings).toEqual(source === facade ? [] : [standardTextConstructor]);
+  }
 });
 
 it("proves the guarded text producer in place and by renamed import and constructor", () => {
@@ -1484,6 +1560,55 @@ const recoveryCrash = {
 
 const crashAssertion = "completed.root.assertBindings()";
 const recoverySources = [canonicalRegistry, recoveryRegistry, recoveryAdapter, recoveryCrash];
+
+it.each(["caller", "adapter"] as const)(
+  "associates the actual recovery assertion when its %s uses a named facade",
+  (port) => {
+    const facade = {
+      ...actionFacade,
+      text:
+        port === "caller"
+          ? 'export {bindAdaRecoveryActionRoot} from "../holdActionsAdapter.ts";'
+          : "export {assertAdaActionBindings, resolveAdaHoldAction, resolveAdaPointerTarget} " +
+            'from "../actionBinding.ts"; ' +
+            'export {adaActionOwner, registerAdaActionRoot} from "../actionRegistry.ts";',
+    };
+    const adapter =
+      port === "adapter"
+        ? {
+            ...recoveryAdapter,
+            text: recoveryAdapter.text.replaceAll(
+              /"\.\/(actionBinding|actionRegistry)\.ts"/gu,
+              '"./actions/index.ts"',
+            ),
+          }
+        : recoveryAdapter;
+    const startup = {
+      ...recoveryStartup,
+      text:
+        port === "caller"
+          ? recoveryStartup.text.replace("./holdActionsAdapter.ts", "./actions/index.ts")
+          : recoveryStartup.text,
+    };
+    const inputs = [canonicalRegistry, recoveryRegistry, adapter, startup];
+    const proven = scanDiscreteActionProject([...inputs, facade]);
+    expect(proven.runtimeAssertions).toContainEqual(
+      expect.objectContaining({
+        kind: "live-root",
+        path: startup.path,
+        source: "recovery.assertBindings()",
+      }),
+    );
+    const target = port === "caller" ? "bindAdaRecoveryActionRoot" : "registerAdaActionRoot";
+    const rejected = scanDiscreteActionProject([
+      ...inputs,
+      { ...facade, text: facade.text.replace(target, `type ${target}`) },
+    ]);
+    expect(rejected.unresolvedRuntimeAssertions).toContainEqual(
+      expect.objectContaining({ path: startup.path, source: "recovery.assertBindings()" }),
+    );
+  },
+);
 
 it("associates the eager Startup and guarded lazy Crash recovery assertions", () => {
   const result = scanDiscreteActionProject([...recoverySources, recoveryStartup]);
