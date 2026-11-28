@@ -10,6 +10,7 @@ import { SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { routeBlocked } from "./flight.ts";
+import { hit } from "./flight/hitResolution.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { escortPackId, worldSyncFlightRegion } from "./geography.ts";
@@ -27,7 +28,7 @@ function launch() {
   return model;
 }
 
-it("keeps required guards hidden and blocks story progress until their actual disable", () => {
+it("keeps required guards hidden and blocks story progress until hull defeat", () => {
   const model = launch();
   const flight = model.state.flight!;
   expect(flight).not.toBeNull();
@@ -65,7 +66,7 @@ it("keeps required guards hidden and blocks story progress until their actual di
   expect(progress.introduced).toBe(false);
   expect(progress.known).not.toContain("growers");
   expect(progress.questItem).toBeNull();
-  leader.enemy!.disabled = true;
+  hit(CONTENT, leader.enemy!.hp, null, leader, flight, []);
   model.step(SIMULATION_STEP_SECONDS, idle);
   expect(progress.known).toContain("growers");
   expect(progress.introduced).toBe(false);
@@ -81,7 +82,7 @@ it("keeps required guards hidden and blocks story progress until their actual di
   model.choose("continue");
   model.step(SIMULATION_STEP_SECONDS, idle);
   expect(progress.stage).toBe(1);
-  expect(flight.objects.filter((actor) => actor.id === leader.id)).toHaveLength(1);
+  expect(stationPopulationObjects(flight).some((actor) => actor.id === leader.id)).toBe(false);
 });
 
 it("preserves hidden full states through Continue and retains site coordinates across fresh entries", () => {

@@ -16,6 +16,7 @@ import {
   stepFlight,
   syncFlightRegion,
 } from "./flight.ts";
+import { hit } from "./flight/hitResolution.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
 import { newProgress } from "./progress.ts";
@@ -156,11 +157,11 @@ describe("a blocking guard's cue", () => {
     expect(routeBlocked("quest", flight)).toBe(true);
   });
 
-  it("does not cue outside Talk range or once the required guard is disabled", () => {
+  it("does not cue outside Talk range or once the required guard is defeated", () => {
     const { flight, guard, site } = guarded();
     flight.player = { x: site.x - CONTENT.tuning.talkRange - 1, y: site.y };
     expect(stepFlight(CONTENT, 1 / 30, idle, flight)).not.toContainEqual(cue);
-    guard.enemy!.disabled = true;
+    hit(CONTENT, guard.enemy!.hp, null, guard, flight, []);
     expect(routeBlocked(site.id, flight)).toBe(false);
     flight.player = { x: site.x, y: site.y };
     expect(stepFlight(CONTENT, 1 / 30, idle, flight)).not.toContainEqual(cue);

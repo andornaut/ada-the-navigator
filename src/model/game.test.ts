@@ -63,7 +63,7 @@ function launch(model: GameModel, galaxy: GalaxyNumber = 1) {
   model.startGalaxy(galaxy);
 }
 
-it("talks and salvages within the 160 Talk range, whatever the exclusion radius", () => {
+it("talks within the 160 Talk range, whatever the exclusion radius", () => {
   expect(CONTENT.tuning.talkRange).toBe(160);
   // A smaller exclusion radius leaves the interaction range alone.
   const content = { ...CONTENT, tuning: { ...CONTENT.tuning, exclusionRadius: 40 } };
@@ -81,18 +81,9 @@ it("talks and salvages within the 160 Talk range, whatever the exclusion radius"
   expect(model.contextLabel).toBe("Talk");
   flight.player = { x: growers.x + 170, y: growers.y };
   expect(model.contextLabel).toBeUndefined();
-  const at = { x: flight.player.x + 150, y: flight.player.y };
-  const enemy = createEnemy(
-    enemyDefinition(1, "frigate"),
-    { archetype: "frigate", id: "spared", packId: null, phase: 0 },
-    at,
-  );
-  enemy.disabled = true;
-  flight.objects.push({ ...at, enemy, hp: enemy.hp, id: enemy.id, kind: "enemy", radius: 40 });
-  expect(model.contextLabel).toBe("Salvage");
 });
 
-it("offers Salvage beside a disabled heavy and salvages it on Use", () => {
+it("does not offer or pay manual Salvage beside an unpaid legacy heavy", () => {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
   model.startGalaxy(1);
   playOpening(model);
@@ -105,12 +96,13 @@ it("offers Salvage beside a disabled heavy and salvages it on Use", () => {
     at,
   );
   flight.objects.push({ ...at, enemy, hp: enemy.hp, id: enemy.id, kind: "enemy", radius: 40 });
-  expect(model.contextLabel).not.toBe("Salvage");
+  expect(model.contextLabel).toBeUndefined();
   enemy.disabled = true;
-  expect(model.contextLabel).toBe("Salvage");
+  expect(model.contextLabel).toBeUndefined();
+  const before = structuredClone(flight.objects);
   model.interact();
-  expect(enemy.salvaged).toBe(true);
-  expect(model.contextLabel).not.toBe("Salvage");
+  expect(flight.objects).toEqual(before);
+  expect(model.state.dialogue).toBeNull();
 });
 function arrive(model: GameModel, id: string) {
   const f = model.state.flight!;

@@ -27,12 +27,13 @@ import {
 } from "./activities.ts";
 import { calfRouteMidpoint, calfStart, crossesCurrent } from "./calf.ts";
 import { activateRequiredRoute, ensureDestination, ensureStation } from "./flight.ts";
+import { hit } from "./flight/hitResolution.ts";
 import { GameModel } from "./game.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
 import type { FlightState, GameState, HeldActivity, Vec } from "./types.ts";
 
-/** Test support: admit the saved required encounter, then disable its actual noncombat-fixture guard. */
-function disableStoryGuard(content: GameContent, flight: FlightState, id: string): void {
+/** Test support: admit the saved required encounter and defeat its actual guard. */
+function defeatStoryGuard(content: GameContent, flight: FlightState, id: string): void {
   const encounter = activateRequiredRoute(content, id, flight);
   if (encounter.status === "resolved") {
     return;
@@ -44,7 +45,7 @@ function disableStoryGuard(content: GameContent, flight: FlightState, id: string
   if (guard.routeId !== id || guard.enemy?.archetype !== "frigate") {
     throw new Error(`Expected the actual required frigate for ${id}`);
   }
-  guard.enemy.disabled = true;
+  hit(content, guard.enemy.hp, null, guard, flight, []);
 }
 
 /**
@@ -104,7 +105,7 @@ function atPlace(galaxy: GalaxyNumber, place: string, resolved = true) {
   flight.player = { x: at.x, y: at.y };
   flight.velocity = { x: 0, y: 0 };
   if (galaxy === 1) {
-    disableStoryGuard(CONTENT, flight, place);
+    defeatStoryGuard(CONTENT, flight, place);
   }
   return model;
 }
@@ -127,7 +128,7 @@ function flyTo(model: GameModel, place: string) {
   flight.player = { x: at.x, y: at.y };
   flight.velocity = { x: 0, y: 0 };
   if (flight.galaxy === 1) {
-    disableStoryGuard(CONTENT, flight, place);
+    defeatStoryGuard(CONTENT, flight, place);
   }
   model.state.dialogue = null;
 }
