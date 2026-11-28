@@ -4,7 +4,7 @@ import { expect, it } from "vitest";
 
 import { enemyCatalog } from "../../data/enemyCatalog.ts";
 import { ASTEROID_SHAPES, scenerySilhouette } from "../asteroids.ts";
-import { type Contact, outlinesContact, type Parts } from "../convex.ts";
+import { type Contact, grown, outlinesContact, type Parts, worldParts } from "../convex.ts";
 import { createEnemy } from "../enemyAi.ts";
 import { enemyHull } from "../enemyBody.ts";
 import type { SpaceObject } from "../types.ts";
@@ -194,4 +194,33 @@ it("rechecks clearance when either centre changes between checks of the same pos
   expect(query.clear(pose, 40)).toBe(true);
   rock.y = 500;
   expect(query.clear(pose, 0)).toBe(false);
+});
+
+it("keeps zero-clearance contact at the expanded outline's outer bound", () => {
+  const shape = [...ASTEROID_SHAPES.values()].find((entry) => entry.size === "large")!;
+  const rock: SpaceObject = {
+    asteroid: shape.id,
+    hp: 10,
+    id: "outer-bound-rock",
+    kind: "rock",
+    radius: shape.radius,
+    x: 0,
+    y: 0,
+  };
+  const definition = enemyCatalog.fighter;
+  const enemy = createEnemy(
+    definition,
+    { archetype: "fighter", id: "outer-bound-fighter", packId: null, phase: 0.4 },
+    { x: 0, y: 0 },
+  );
+  const context = { drawnOf: scenerySilhouette, frameOf: () => 0 };
+  const query = worldNavigationQuery(context, [rock], definition, { ...enemy, radius: 40 })!;
+  const outline = scenerySilhouette(rock)!.frames[0]!;
+  const hull = enemyHull(enemy)!;
+  const vertices = grown(worldParts(outline), worldParts(hull)).flat();
+  const outer = vertices.reduce((right, vertex) => (vertex.x > right.x ? vertex : right));
+  const pose = { facing: enemy.facing, position: outer, time: 0 };
+
+  expect(query.clear(pose, 0)).toBe(false);
+  expect(query.clear({ ...pose, position: { x: outer.x + 1e-7, y: outer.y } }, 0)).toBe(true);
 });

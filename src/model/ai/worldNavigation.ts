@@ -51,6 +51,32 @@ const bounded = new WeakMap<
   }[]
 >();
 
+interface OutlineBounds {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
+const outlineBounds = new WeakMap<Parts, OutlineBounds>();
+
+function boundsOf(parts: Parts): OutlineBounds {
+  let bounds = outlineBounds.get(parts);
+  if (!bounds) {
+    bounds = { bottom: -Infinity, left: Infinity, right: -Infinity, top: Infinity };
+    for (const part of parts) {
+      for (const point of part) {
+        bounds.left = Math.min(bounds.left, point.x);
+        bounds.right = Math.max(bounds.right, point.x);
+        bounds.top = Math.min(bounds.top, point.y);
+        bounds.bottom = Math.max(bounds.bottom, point.y);
+      }
+    }
+    outlineBounds.set(parts, bounds);
+  }
+  return bounds;
+}
+
 /**
  * Scenery berth uses authored geometry; protected-area routing and physical collision stay separate.
  * A moving obstacle is tested at its position extrapolated by its velocity to each pose's time,
@@ -237,14 +263,25 @@ export function worldNavigationQuery(
           return false;
         }
         const shape = worldParts(outline);
-        const parts = body ? grown(shape, worldParts(body)) : shape;
+        const bodyParts = body ? worldParts(body) : null;
+        const margin = body ? clearance : enemy.radius + clearance;
+        if (bodyParts) {
+          const obstacleBounds = boundsOf(shape);
+          const bodyBounds = boundsOf(bodyParts);
+          // These extrema enclose every obstacle vertex minus every body vertex, as in grownParts.
+          const { x, y } = projection;
+          if (
+            x < obstacleBounds.left - bodyBounds.right - margin ||
+            x > obstacleBounds.right - bodyBounds.left + margin ||
+            y < obstacleBounds.top - bodyBounds.bottom - margin ||
+            y > obstacleBounds.bottom - bodyBounds.top + margin
+          ) {
+            return false;
+          }
+        }
+        const parts = bodyParts ? grown(shape, bodyParts) : shape;
         // Boolean admission needs no exit normal or depth. Existing primitives retain exact contact boundaries.
-        return overlaps(
-          parts,
-          projection.x,
-          projection.y,
-          body ? clearance : enemy.radius + clearance,
-        );
+        return overlaps(parts, projection.x, projection.y, margin);
       });
     },
     escape(pose, clearance) {
