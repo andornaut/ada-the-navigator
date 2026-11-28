@@ -26,10 +26,6 @@ export const SUNFLOWER_BOSS_CUES = {
     speaker: "captainTally",
     text: "Food, parts, repairs. I counted three outposts. I didn't count on them working together.",
   },
-  hardpoint: {
-    speaker: "astra",
-    text: "That's one hardpoint down. The others are still live.",
-  },
   resolved: {
     speaker: "astra",
     text: "The patrol's clear. I marked a supply cache and a safer route between the outposts.",
@@ -79,10 +75,6 @@ export const WHIRLPOOL_BOSS_CUES = {
   approach: {
     speaker: "captainSounder",
     text: "I followed their calls. Stay out of this current.",
-  },
-  hardpoint: {
-    speaker: "astra",
-    text: "One hardpoint down. Ride the current around the escorts.",
   },
   resolved: {
     speaker: "astra",

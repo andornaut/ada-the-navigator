@@ -2361,9 +2361,6 @@ export class GameModel {
       this.talk.authoredCue(`${id}:resolved`, WHIRLPOOL_BOSS_CUES.resolved);
     } else if (this.current.sounder?.phase === "active" && this.bossHud()) {
       this.talk.authoredCue(`${id}:approach`, WHIRLPOOL_BOSS_CUES.approach);
-      if (capitalBossActor(flight, id)?.enemy?.hardpoints.some(({ hp }) => hp <= 0)) {
-        this.talk.authoredCue(`${id}:hardpoint`, WHIRLPOOL_BOSS_CUES.hardpoint);
-      }
     }
   }
 
@@ -2432,9 +2429,6 @@ export class GameModel {
       this.talk.authoredCue(`${id}:resolved`, SUNFLOWER_BOSS_CUES.resolved);
     } else if (boss.phase === "active" && this.bossHud()) {
       this.talk.authoredCue(`${id}:approach`, SUNFLOWER_BOSS_CUES.approach);
-      if (capitalBossActor(flight, id)?.enemy?.hardpoints.some(({ hp }) => hp <= 0)) {
-        this.talk.authoredCue(`${id}:hardpoint`, SUNFLOWER_BOSS_CUES.hardpoint);
-      }
     }
   }
 
