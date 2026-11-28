@@ -9,7 +9,7 @@ import { createFlight } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import {
   acknowledgePhantomBlockadeRecovery,
   afterStepPhantom,

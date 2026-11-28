@@ -12,7 +12,7 @@ import {
   identifiedHostileStationSites,
   registerHostileStationEncounter,
   rememberHostileStationSite,
-} from "./hostileStationPersistence.ts";
+} from "./hostileStations/persistence.ts";
 
 function fixture() {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);

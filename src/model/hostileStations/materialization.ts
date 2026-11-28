@@ -1,18 +1,18 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
-import { enemyActorAvailable } from "../data/enemyActors.ts";
-import type { GameContent } from "../data/types.ts";
-import { spawnPlannedHostileStation, syncFlightRegion } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
+import { enemyActorAvailable } from "../../data/enemyActors.ts";
+import type { GameContent } from "../../data/types.ts";
+import { spawnPlannedHostileStation, syncFlightRegion } from "../flight.ts";
+import { flightWorldContext } from "../flightTopology.ts";
+import { readPendingPhantomEncounter } from "../phantomRequiredPlans.ts";
+import type { FlightState, GalaxyProgress } from "../types.ts";
+import { periodicWorldGrid, worldCellOrigin } from "../worldCells.ts";
 import {
   hostileStationEncounterIds,
   registerHostileStationEncounter,
   rememberHostileStationSite,
-} from "./hostileStationPersistence.ts";
-import { scheduleHostileStations } from "./hostileStationSchedule.ts";
-import { readPendingPhantomEncounter } from "./phantomRequiredPlans.ts";
-import type { FlightState, GalaxyProgress } from "./types.ts";
-import { periodicWorldGrid, worldCellOrigin } from "./worldCells.ts";
+} from "./persistence.ts";
+import { scheduleHostileStations } from "./schedule.ts";
 
 /** The caller represents all required occupants before admitting optional station encounters. */
 export function materializeHostileStationRegion(

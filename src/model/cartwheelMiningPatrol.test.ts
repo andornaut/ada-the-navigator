@@ -24,7 +24,7 @@ import {
 } from "./flight.ts";
 import { CURRENT_FLIGHT_TOPOLOGY, flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { worldOreFieldInCell } from "./oreFields.ts";
 import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
 import type { FlightInput, Vec } from "./types.ts";

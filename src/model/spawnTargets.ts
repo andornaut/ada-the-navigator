@@ -34,7 +34,7 @@ import type { GalaxyNumber } from "../data/types.ts";
 import { ASTEROID_SHAPES, galaxyCrystals, placementRadius } from "./asteroids.ts";
 import { worldCurrentsNear } from "./currents.ts";
 import { ambientPackId, packMemberId } from "./geography.ts";
-import { hostileStationSites } from "./hostileStationSites.ts";
+import { hostileStationSites } from "./hostileStations/index.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { ORE_FIELD_CLEAR_RADIUS, worldOreFieldsNear } from "./oreFields.ts";
 import { spawnSalvagePoisNear } from "./proceduralPois.ts";

@@ -34,7 +34,7 @@ import { hit } from "./flight/hitResolution.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { needleCourses } from "./needle.ts";
 import { rememberRequiredSite } from "./requiredEncounterPlans.ts";
 import { readRequiredRolePlan } from "./requiredRolePlans.ts";

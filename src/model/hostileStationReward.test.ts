@@ -12,14 +12,14 @@ import { createUnpopulatedFlight, spawnPlannedHostileStation, stepFlight } from 
 import { flightWorldContext } from "./flightTopology.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
+import { hostileStationSites } from "./hostileStations/index.ts";
 import {
   hostileStationEncounterIds,
   registerHostileStationEncounter,
   rememberHostileStationSite,
-} from "./hostileStationPersistence.ts";
-import { queueHostileStationReward } from "./hostileStationReward.ts";
-import { planHostileStationFormation } from "./hostileStationSchedule.ts";
-import { hostileStationSites } from "./hostileStationSites.ts";
+} from "./hostileStations/persistence.ts";
+import { queueHostileStationReward } from "./hostileStations/reward.ts";
+import { planHostileStationFormation } from "./hostileStations/schedule.ts";
 import type { FlightEvent } from "./types.ts";
 
 function fixture() {

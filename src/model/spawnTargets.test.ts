@@ -21,7 +21,7 @@ import {
   bandAcceptance,
 } from "../testing/spawnAcceptance.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
-import { hostileStationSites } from "./hostileStationSites.ts";
+import { hostileStationSites } from "./hostileStations/index.ts";
 import { type ExclusionZone, planRegion, type SpawnCategory } from "./spawnPlanner.ts";
 import {
   chunkSpawnReach,

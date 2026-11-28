@@ -1,14 +1,13 @@
-import { enemyActorAvailable } from "../data/enemyActors.ts";
+import { enemyActorAvailable } from "../../data/enemyActors.ts";
 import {
   hasHostileStationSites,
   HOSTILE_STATION_PLACEMENT,
-} from "../data/hostileStationPlacement.ts";
-import { HOSTILE_STATION_POLICY } from "../data/hostileStationPolicy.ts";
-import type { GalaxyNumber } from "../data/types.ts";
-import { GALAXY_SIDE } from "../data/world.ts";
-import { enemyStardust } from "./drops.ts";
-import { escortPackId } from "./geography.ts";
-import { hostileStationPack } from "./hostileStations.ts";
+} from "../../data/hostileStationPlacement.ts";
+import { HOSTILE_STATION_POLICY } from "../../data/hostileStationPolicy.ts";
+import type { GalaxyNumber } from "../../data/types.ts";
+import { GALAXY_SIDE } from "../../data/world.ts";
+import { enemyStardust } from "../drops.ts";
+import { escortPackId } from "../geography.ts";
 import type {
   EconomyState,
   FlightState,
@@ -17,8 +16,9 @@ import type {
   HostileStationSiteState,
   SpaceObject,
   Vec,
-} from "./types.ts";
-import { wrappedDistance, wrapPoint } from "./worldGeometry.ts";
+} from "../types.ts";
+import { wrappedDistance, wrapPoint } from "../worldGeometry.ts";
+import { hostileStationPack } from "./population.ts";
 
 export interface HostileStationSite {
   readonly id: string;

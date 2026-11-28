@@ -14,7 +14,7 @@ import { createEnemy, type EnemyContext, type EnemyState, stepEnemy } from "./en
 import { enemyPhysicalBody } from "./enemyBody.ts";
 import { spawnChapterEnemy, syncFlightRegion } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import * as planner from "./retaliatorNavigation.ts";
 
 afterEach(() => vi.restoreAllMocks());

@@ -15,11 +15,10 @@ import { flightWorldContext } from "./flightTopology.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval } from "./geography.ts";
-import { hostileStationEncounterIds } from "./hostileStationPersistence.ts";
-import { materializeGeneratedHostileStations } from "./hostileStationRuntime.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
-import { planHostileStationFormation } from "./hostileStationSchedule.ts";
-import { hostileStationSites } from "./hostileStationSites.ts";
+import { hostileStationSites, stationPopulationObjects } from "./hostileStations/index.ts";
+import { materializeGeneratedHostileStations } from "./hostileStations/materialization.ts";
+import { hostileStationEncounterIds } from "./hostileStations/persistence.ts";
+import { planHostileStationFormation } from "./hostileStations/schedule.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
 import type { FlightState } from "./types.ts";
 

@@ -8,10 +8,9 @@ import { flightWorldContext } from "./flightTopology.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval } from "./geography.ts";
-import { resolveHostileStationEncounter } from "./hostileStationPersistence.ts";
-import { materializeHostileStationRegion } from "./hostileStationRuntime.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
-import { hostileStationSites } from "./hostileStationSites.ts";
+import { hostileStationSites, stationPopulationObjects } from "./hostileStations/index.ts";
+import { materializeHostileStationRegion } from "./hostileStations/materialization.ts";
+import { resolveHostileStationEncounter } from "./hostileStations/persistence.ts";
 
 function fixture() {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);

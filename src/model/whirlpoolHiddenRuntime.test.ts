@@ -8,7 +8,7 @@ import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { ensureDestination, routeBlocked } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { readRequiredRolePlan } from "./requiredRolePlans.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

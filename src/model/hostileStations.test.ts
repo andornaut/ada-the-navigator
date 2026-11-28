@@ -31,7 +31,7 @@ import {
   worldRecordObjectRemoval,
   worldSyncFlightRegion,
 } from "./geography.ts";
-import { hostileStationContext, type PlannedHostileStation } from "./hostileStations.ts";
+import { hostileStationContext, type PlannedHostileStation } from "./hostileStations/placement.ts";
 import { drawnIndex } from "./muzzles.ts";
 import { worldRegionalEngagementAdmissions, worldSpawnerStage } from "./spawner.ts";
 import type { FlightState } from "./types.ts";

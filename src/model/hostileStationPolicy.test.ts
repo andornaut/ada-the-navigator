@@ -8,7 +8,7 @@ import {
   materializeHostileStation,
   type PlannedHostileStation,
   type StationMaterializationContext,
-} from "./hostileStations.ts";
+} from "./hostileStations/placement.ts";
 import { requiredWorldOccupantsPopulation } from "./requiredWorldReservations.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
 

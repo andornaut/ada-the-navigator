@@ -11,7 +11,7 @@ import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { interactionCopy } from "./conversations.ts";
 import { ensureDestination, routeBlocked } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { readRequiredRolePlan } from "./requiredRolePlans.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

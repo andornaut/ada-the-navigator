@@ -35,7 +35,7 @@ import {
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { inNeedleChannel, needleCourses, type NeedleGate } from "./needle.ts";
 import { NEEDLE_ACTIVITY_TARGET } from "./needleActivity.ts";
 import { isNeedleRim, needleRimContact } from "./needleFlight.ts";

@@ -9,7 +9,7 @@ import { nearestSettlement, worldNearestSettlerStation } from "./andromedaPlaces
 import { chapterRuntime } from "./chapters.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import type { SpaceObject } from "./types.ts";
 
 function prepared() {

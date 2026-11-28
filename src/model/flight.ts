@@ -190,14 +190,14 @@ import {
   worldSyncFlightRegion,
 } from "./geography.ts";
 import { guardApproach } from "./guardApproach.ts";
-import { queueHostileStationReward } from "./hostileStationReward.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import {
   hostileStationContext,
   materializeHostileStation,
   type PlannedHostileStation,
   type StationMaterialization,
-  stationPopulationObjects,
-} from "./hostileStations.ts";
+} from "./hostileStations/placement.ts";
+import { queueHostileStationReward } from "./hostileStations/reward.ts";
 import type { NeedleCadencePlacement } from "./needleExitPlan.ts";
 import { activePhantomSong, phantomSongSpeed, stepPhantomAllies } from "./phantomAllies.ts";
 import {

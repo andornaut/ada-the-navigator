@@ -53,7 +53,7 @@ import {
 import {
   validHostileStationEncounters,
   validHostileStationSites,
-} from "../model/hostileStationPersistence.ts";
+} from "../model/hostileStations/index.ts";
 import { isLandmark } from "../model/landmarks.ts";
 import { validExplored } from "../model/map.ts";
 import {

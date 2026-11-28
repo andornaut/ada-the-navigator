@@ -26,7 +26,7 @@ import { ensureDestination, ensureStation } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { flightLandmarkSites, landmarkSites } from "./landmarks.ts";
 import { stardustPickupReach } from "./pickupBody.ts";
 import { ambientSecondThread } from "./poiDiscourse.ts";

@@ -1,6 +1,6 @@
 import packageInfo from "../../package.json" with { type: "json" };
 import { galaxyRoute } from "../model/game/campaignState.ts";
-import { stationPopulationObjects } from "../model/hostileStations.ts";
+import { stationPopulationObjects } from "../model/hostileStations/index.ts";
 import { routeGuardEvidence } from "../model/routeGuardEvidence.ts";
 import type { GameState } from "../model/types.ts";
 import { restoreSave } from "./codec.ts";

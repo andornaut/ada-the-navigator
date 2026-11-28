@@ -12,7 +12,7 @@ import {
 } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { readRequiredRolePlan } from "./requiredRolePlans.ts";
 import { worldDistance } from "./worldContacts.ts";
 

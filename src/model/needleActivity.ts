@@ -7,7 +7,7 @@ import { enemyPhysicalBody } from "./enemyBody.ts";
 import { questGuardPlacementContext, spawnChapterEnemy } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { worldRecordObjectRemoval } from "./geography.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { inNeedleChannel, needleCourses } from "./needle.ts";
 import { stationFormationClear } from "./stationPlacement.ts";
 import type { FlightState, SpaceObject } from "./types.ts";

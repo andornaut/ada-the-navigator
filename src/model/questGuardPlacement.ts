@@ -7,7 +7,7 @@ import { exclusionZoneRadius } from "./exclusionZones.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { frigateEscortStation } from "./frigateEscorts.ts";
 import { liveEnemy } from "./geography.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import type { LegacyGuardHomePorts } from "./legacyGuardHomes.ts";
 import { stationGuardSite } from "./stationGuardSite.ts";
 import { stationFormationClear, type StationPlacementContext } from "./stationPlacement.ts";

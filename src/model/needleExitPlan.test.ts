@@ -7,7 +7,7 @@ import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { createUnpopulatedFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { planNeedleExit } from "./needleExitPlan.ts";
 import {
   initNeedle,

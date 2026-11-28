@@ -15,7 +15,7 @@ import { hit } from "./flight/hitResolution.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { ACTIVE_CHUNK_RADIUS, worldActivateFlightRegion } from "./geography.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import * as pendingPlans from "./phantomRequiredPlans.ts";
 import { shipTuning } from "./upgrades.ts";
 import { periodicWorldGrid } from "./worldCells.ts";

@@ -16,12 +16,14 @@ import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import {
   acknowledgeHostileStationIdentification,
+  hostileStationSites,
+} from "./hostileStations/index.ts";
+import {
   hostileStationEncounterIds,
   registerHostileStationEncounter,
   rememberHostileStationSite,
-} from "./hostileStationPersistence.ts";
-import { planHostileStationFormation } from "./hostileStationSchedule.ts";
-import { hostileStationSites } from "./hostileStationSites.ts";
+} from "./hostileStations/persistence.ts";
+import { planHostileStationFormation } from "./hostileStations/schedule.ts";
 import type { FlightEvent } from "./types.ts";
 
 function fixture() {

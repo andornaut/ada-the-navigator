@@ -1,6 +1,6 @@
 import { flightWorldContext } from "./flightTopology.ts";
 import { liveEnemy, retainQuestGuardRecovery } from "./geography.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { legacyGuardHomeUpdates } from "./legacyGuardHomes.ts";
 import { questGuardHomePorts } from "./questGuardPlacement.ts";
 import type { StationPlacementContext } from "./stationPlacement.ts";

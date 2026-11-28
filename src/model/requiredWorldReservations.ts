@@ -2,7 +2,7 @@ import { spacingRadius } from "../data/enemySpacing.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 import { worldDistance } from "./worldContacts.ts";
 

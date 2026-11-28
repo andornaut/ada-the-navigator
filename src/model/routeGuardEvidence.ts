@@ -1,5 +1,5 @@
 import { liveEnemy } from "./geography.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
 
 export type RouteGuardEvidence =

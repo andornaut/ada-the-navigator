@@ -38,7 +38,7 @@ import { ensureStation, questGuardPlacementContext } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { flightLandmarkSites } from "./landmarks.ts";
 import { stationDisplayName } from "./stationIdentity.ts";
 import { flightStationContext, worldStationById } from "./stations.ts";

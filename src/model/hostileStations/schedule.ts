@@ -1,18 +1,18 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
-import { enemyActorAvailable } from "../data/enemyActors.ts";
-import { spacingRadius } from "../data/enemySpacing.ts";
-import { ROUTE_POSITION } from "../data/galaxies.ts";
-import { HOSTILE_STATION_POLICY } from "../data/hostileStationPolicy.ts";
-import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
-import type { PlannedHostileStation, StationMaterialization } from "./hostileStations.ts";
+import { enemyActorAvailable } from "../../data/enemyActors.ts";
+import { spacingRadius } from "../../data/enemySpacing.ts";
+import { ROUTE_POSITION } from "../../data/galaxies.ts";
+import { HOSTILE_STATION_POLICY } from "../../data/hostileStationPolicy.ts";
+import { SPAWNER_POLICIES } from "../../data/spawnerCatalog.ts";
+import { memberPosition } from "../spawner.ts";
+import { wrapPoint } from "../worldGeometry.ts";
+import type { PlannedHostileStation, StationMaterialization } from "./placement.ts";
 import {
   type HostileStationSite,
   hostileStationSites,
   type HostileStationSitesContext,
-} from "./hostileStationSites.ts";
-import { memberPosition } from "./spawner.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+} from "./sites.ts";
 
 export interface HostileStationIdentities {
   readonly bodyId: string;

@@ -244,10 +244,12 @@ import {
   whirlpoolDiskWaypoint,
 } from "./game/whirlpoolHolodisk.ts";
 import { liveEnemy, worldSyncFlightRegion } from "./geography.ts";
-import { hostileStationMapPlaces } from "./hostileStationMap.ts";
-import { acknowledgeHostileStationIdentification } from "./hostileStationPersistence.ts";
-import { materializeGeneratedHostileStations } from "./hostileStationRuntime.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import {
+  acknowledgeHostileStationIdentification,
+  hostileStationMapPlaces,
+  stationPopulationObjects,
+} from "./hostileStations/index.ts";
+import { materializeGeneratedHostileStations } from "./hostileStations/materialization.ts";
 import {
   INDICATOR_SOURCES,
   type IndicatorTarget,

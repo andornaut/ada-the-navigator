@@ -24,7 +24,7 @@ import {
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { readRequiredPlan } from "./requiredEncounterPlans.ts";
 import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
 import { flightStationContext, type StationSite, worldStationInCell } from "./stations.ts";

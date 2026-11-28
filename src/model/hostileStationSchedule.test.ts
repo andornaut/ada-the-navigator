@@ -11,13 +11,13 @@ import { enemyPhysicalBody } from "./enemyBody.ts";
 import { createUnpopulatedFlight, spawnPlannedHostileStation } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { worldRecordObjectRemoval } from "./geography.ts";
-import type { PlannedHostileStation } from "./hostileStations.ts";
+import { hostileStationSites } from "./hostileStations/index.ts";
+import type { PlannedHostileStation } from "./hostileStations/placement.ts";
 import {
   type HostileStationScheduleContext,
   planHostileStationFormation,
   scheduleHostileStations,
-} from "./hostileStationSchedule.ts";
-import { hostileStationSites } from "./hostileStationSites.ts";
+} from "./hostileStations/schedule.ts";
 import { worldSpawnerStage } from "./spawner.ts";
 import { worldPoint } from "./worldContacts.ts";
 

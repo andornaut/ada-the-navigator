@@ -17,7 +17,7 @@ import { ROUTE_OPPORTUNITY_SECONDS } from "./explorationPacing.ts";
 import { ensureStation } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { jobHostiles, rerollBoards } from "./jobs.ts";
 import { proceduralPoisNear } from "./proceduralPois.ts";
 import { scanOutcomeLines } from "./scanOutcomeSpeech.ts";

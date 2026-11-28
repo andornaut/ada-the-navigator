@@ -1,15 +1,16 @@
-import { enemyActorAvailable, type EnemyActorKind } from "../data/enemyActors.ts";
-import { ROUTE_POSITION } from "../data/galaxies.ts";
-import { HOSTILE_STATION_POLICY } from "../data/hostileStationPolicy.ts";
-import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
-import type { GameContent } from "../data/types.ts";
-import { partsReach, worldParts } from "./convex.ts";
-import { enemyPhysicalBody } from "./enemyBody.ts";
-import { flightWorldContext } from "./flightTopology.ts";
-import { escortPackId, liveEnemy } from "./geography.ts";
-import { type SpawnerContext, worldFitsHostileStation, worldSpawnerStage } from "./spawner.ts";
-import type { FlightState, SpaceObject, Vec } from "./types.ts";
-import { worldDistance } from "./worldContacts.ts";
+import { enemyActorAvailable, type EnemyActorKind } from "../../data/enemyActors.ts";
+import { ROUTE_POSITION } from "../../data/galaxies.ts";
+import { HOSTILE_STATION_POLICY } from "../../data/hostileStationPolicy.ts";
+import { SPAWNER_POLICIES } from "../../data/spawnerCatalog.ts";
+import type { GameContent } from "../../data/types.ts";
+import { partsReach, worldParts } from "../convex.ts";
+import { enemyPhysicalBody } from "../enemyBody.ts";
+import { flightWorldContext } from "../flightTopology.ts";
+import { escortPackId, liveEnemy } from "../geography.ts";
+import { type SpawnerContext, worldFitsHostileStation, worldSpawnerStage } from "../spawner.ts";
+import type { FlightState, SpaceObject, Vec } from "../types.ts";
+import { worldDistance } from "../worldContacts.ts";
+import { hostileStationPack, stationPopulationObjects } from "./population.ts";
 
 export interface PlannedActor {
   readonly id: string;
@@ -36,23 +37,6 @@ export type StationMaterialization =
       readonly defenders: readonly SpaceObject[];
     }
   | { readonly status: "removed" | "unresolved" | "rejected" };
-
-/** Stable role packs let paging preserve survivors without treating defenders as route guards. */
-export function hostileStationPack(id: string): string {
-  return `hostile-station:${id}`;
-}
-
-/** Loaded state wins over the same identity's dormant representation. Null is never a position. */
-export function stationPopulationObjects(flight: FlightState): readonly SpaceObject[] {
-  return [
-    ...new Map([
-      ...Object.values(flight.world.notables).flatMap((object) =>
-        object === null ? [] : [[object.id, object] as const],
-      ),
-      ...flight.objects.map((object) => [object.id, object] as const),
-    ]).values(),
-  ];
-}
 
 /** Both spawning and engagement consume the same authoritative hostile station identities. */
 export function hostileStationContext(flight: FlightState): SpawnerContext {

@@ -17,6 +17,9 @@ import { GameModel } from "./game.ts";
 import { escortPackId, worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import {
   acknowledgeHostileStationIdentification,
+  validHostileStationSites,
+} from "./hostileStations/index.ts";
+import {
   awardHostileStationEncounterReward,
   claimHostileStationEncounterReward,
   hostileStationEncounterIds,
@@ -24,9 +27,8 @@ import {
   registerHostileStationEncounter,
   rememberHostileStationSite,
   resolveHostileStationEncounter,
-  validHostileStationSites,
-} from "./hostileStationPersistence.ts";
-import { hostileStationPack } from "./hostileStations.ts";
+} from "./hostileStations/persistence.ts";
+import { hostileStationPack } from "./hostileStations/population.ts";
 import type { SpaceObject } from "./types.ts";
 import { wrapPoint } from "./worldGeometry.ts";
 

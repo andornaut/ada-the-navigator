@@ -10,7 +10,7 @@ import {
   worldRecordObjectRemoval,
   worldSyncFlightRegion,
 } from "../geography.ts";
-import { stationPopulationObjects } from "../hostileStations.ts";
+import { stationPopulationObjects } from "../hostileStations/index.ts";
 import { rememberRequiredSite } from "../requiredEncounterPlans.ts";
 import { readRequiredRolePlan } from "../requiredRolePlans.ts";
 import type {

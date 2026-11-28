@@ -1,7 +1,7 @@
 import type { GameContent } from "../data/types.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
 import { liveEnemy } from "./geography.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { questGuardFormationAt } from "./questGuardPlacement.ts";
 import { requiredPlanActors } from "./requiredEncounterPlans.ts";
 import type { RequiredWorldReservation } from "./requiredWorldReservations.ts";

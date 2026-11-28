@@ -6,7 +6,7 @@ import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { createUnpopulatedFlight, populateRequiredChapterFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { needleCourses } from "./needle.ts";
 import { planNeedleExit } from "./needleExitPlan.ts";
 import { initNeedle } from "./needleRuntime.ts";

@@ -12,7 +12,7 @@ import { enemyHull } from "./enemyBody.ts";
 import { routeBlocked, stepFlight, syncFlightRegion } from "./flight.ts";
 import { hit } from "./flight/hitResolution.ts";
 import { GameModel } from "./game.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import type { SpaceObject } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

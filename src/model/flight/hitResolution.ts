@@ -4,7 +4,7 @@ import { PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../../data/phantom.ts";
 import type { GameContent } from "../../data/types.ts";
 import { damageEnemy, enemyDefeated } from "../enemyAi.ts";
 import { enemyEquipmentDefinition } from "../enemyEquipment.ts";
-import { queueHostileStationReward } from "../hostileStationReward.ts";
+import { queueHostileStationReward } from "../hostileStations/reward.ts";
 import { MOVING_ROCK_PREFIX } from "../rockRicochet.ts";
 import type { FlightEvent, FlightState, Shot, SpaceObject, Vec } from "../types.ts";
 import { destroyEnemy, dropFromRock, isExplorationWreck, markBlasted } from "./destruction.ts";

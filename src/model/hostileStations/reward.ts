@@ -1,8 +1,8 @@
-import { ECONOMY } from "../data/economy.ts";
-import type { GameContent } from "../data/types.ts";
-import { rollHeavyDefeatUpgrade } from "./drops.ts";
-import { claimHostileStationEncounterReward } from "./hostileStationPersistence.ts";
-import type { FlightEvent, FlightState, SpaceObject } from "./types.ts";
+import { ECONOMY } from "../../data/economy.ts";
+import type { GameContent } from "../../data/types.ts";
+import { rollHeavyDefeatUpgrade } from "../drops.ts";
+import type { FlightEvent, FlightState, SpaceObject } from "../types.ts";
+import { claimHostileStationEncounterReward } from "./persistence.ts";
 
 /** Claims while the authoritative body is owned, before cleanup or depletion leaves flight. */
 export function queueHostileStationReward(

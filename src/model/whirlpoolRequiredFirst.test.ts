@@ -16,7 +16,7 @@ import {
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
-import { stationPopulationObjects } from "./hostileStations.ts";
+import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { storeRequiredRolePlan } from "./requiredRolePlans.ts";
 
 function launch(reunited: boolean) {

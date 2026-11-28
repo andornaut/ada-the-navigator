@@ -1,10 +1,7 @@
-import { HOSTILE_STATION_COPY } from "../data/hostileStationCopy.ts";
-import {
-  identifiedHostileStationSites,
-  resolveHostileStationEncounter,
-} from "./hostileStationPersistence.ts";
-import type { KnownHostileStationMapPlace } from "./map.ts";
-import type { FlightState, GalaxyProgress } from "./types.ts";
+import { HOSTILE_STATION_COPY } from "../../data/hostileStationCopy.ts";
+import type { KnownHostileStationMapPlace } from "../map.ts";
+import type { FlightState, GalaxyProgress } from "../types.ts";
+import { identifiedHostileStationSites, resolveHostileStationEncounter } from "./persistence.ts";
 
 /** Geographic identification survives encounters; current body status never comes from geography. */
 export function hostileStationMapPlaces(

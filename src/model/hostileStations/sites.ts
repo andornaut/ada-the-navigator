@@ -1,22 +1,22 @@
 import { randomStream } from "@andornaut/game-kit/runtime/random";
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
-import { GALAXY_ID } from "../data/galaxies.ts";
+import { GALAXY_ID } from "../../data/galaxies.ts";
 import {
   hasHostileStationSites,
   HOSTILE_STATION_PLACEMENT,
-} from "../data/hostileStationPlacement.ts";
-import type { GalaxyNumber } from "../data/types.ts";
-import type { Vec } from "./types.ts";
+} from "../../data/hostileStationPlacement.ts";
+import type { GalaxyNumber } from "../../data/types.ts";
+import type { Vec } from "../types.ts";
 import {
   periodicWorldGrid,
   worldCellKey,
   worldCellOrigin,
   worldCellsNear,
   worldGrid,
-} from "./worldCells.ts";
-import { type WorldContext, worldDistance } from "./worldContacts.ts";
-import { nearestImage, wrapPoint } from "./worldGeometry.ts";
+} from "../worldCells.ts";
+import { type WorldContext, worldDistance } from "../worldContacts.ts";
+import { nearestImage, wrapPoint } from "../worldGeometry.ts";
 
 export interface HostileStationSite extends Readonly<Vec> {
   readonly id: string;
