@@ -20,8 +20,7 @@ import { followFrameTurn } from "@andornaut/game-kit/runtime/web/view/phaser/fol
 import { Core, Game, Scale, Scenes, WEBGL } from "phaser";
 
 import { SCREEN } from "../data/screen.ts";
-import { GameScene } from "../game/scene.ts";
-import { flushScene, refreshScene } from "../game/sceneUi.ts";
+import { flushScene, GameScene, refreshScene } from "../game/index.ts";
 import { requireBootJets, requireSceneFiles, validateBootCore } from "../loading/game/index.ts";
 import {
   EntryReloadRequired,

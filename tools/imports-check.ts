@@ -30,6 +30,7 @@ const uiLayout = (path: string) => /^src\/ui\/(?:map\/)?layout\//u.test(path);
 const ENCAPSULATED_AREAS = [
   "src/art/",
   "src/build/",
+  "src/game/",
   "src/loading/game/",
   "src/loading/",
   "src/model/ai/worldNavigation/",
