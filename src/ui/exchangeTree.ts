@@ -1,6 +1,7 @@
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
 import type { ExchangeAmount, ExchangeResource } from "../model/exchange.ts";
+import { BUTTON_GAP } from "./layout/tokens.ts";
 
 export interface ExchangeActionData {
   readonly amount: ExchangeAmount;
@@ -30,12 +31,21 @@ export function exchangeTree(data: {
           kind: "component",
           props: { id: resource },
           slots: {
-            content: data[resource].map((action) => ({
-              component: "action",
-              key: `${action.resource}-${action.amount}`,
-              kind: "component",
-              props: action,
-            })),
+            content: [
+              {
+                children: data[resource].map((action) => ({
+                  component: "action",
+                  key: `${action.resource}-${action.amount}`,
+                  kind: "component",
+                  props: action,
+                })),
+                gap: BUTTON_GAP,
+                key: "quantities",
+                kind: "columns",
+                padding: 0,
+                sizing: { mode: "intrinsic" },
+              },
+            ],
           },
         })),
         { component: "native", key: "status", kind: "component", props: { id: "status" } },

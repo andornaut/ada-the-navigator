@@ -17,7 +17,6 @@ import {
 import { fill } from "../model/shop.ts";
 import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { type ExchangeActionData, type ExchangeSchema, exchangeTree } from "./exchangeTree.ts";
-import { createActions } from "./modal.ts";
 import { inCurrentView } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 import { createStandardTextAction } from "./standardTextAction.ts";
@@ -55,7 +54,6 @@ export function createExchangeView(
   root.setAttribute("aria-label", EXCHANGE_COPY.title);
   const status = document.createElement("p");
   status.setAttribute("role", "status");
-  const containers = { ore: createActions([]), root, stardust: createActions([]) };
   let disposed = false;
   const actions: ReturnType<typeof createStandardTextAction>[] = [];
   const refusal = (value: ImmediateExchangePreview | ImmediateExchangeResult): string =>
@@ -163,7 +161,6 @@ export function createExchangeView(
         },
         container: {
           create(data) {
-            const controls = containers[data.id];
             if (data.id === "root") {
               return { dispose() {}, element: root, slots: { content: root }, update() {} };
             }
@@ -201,8 +198,8 @@ export function createExchangeView(
             spoken.textContent = fill(EXCHANGE_COPY.rate, values);
             rate.append(visual, spoken);
             summary.append(heading, rate);
-            row.append(summary, controls);
-            return { dispose() {}, element: row, slots: { content: controls }, update() {} };
+            row.append(summary);
+            return { dispose() {}, element: row, slots: { content: row }, update() {} };
           },
           slots: ["content"],
         },

@@ -6,7 +6,7 @@ import {
   type ImmediateExchangeOrder,
   previewImmediateExchange,
 } from "../model/exchange.ts";
-import { resolveAdaHoldAction } from "./actionBinding.ts";
+import * as actionBinding from "./actionBinding.ts";
 import { fixtureActionRoot } from "./actionRootFixture.ts";
 import { createExchangeView } from "./exchange.ts";
 import { REFUSAL } from "./refusal.ts";
@@ -64,7 +64,11 @@ const dom = vi.hoisted(() => {
     }
     dataset: Record<string, string> = {};
     attributes: Record<string, string> = {};
-    readonly style = { removeProperty: vi.fn(), setProperty: vi.fn() };
+    readonly style = {
+      getPropertyValue: () => "",
+      removeProperty: vi.fn(),
+      setProperty: vi.fn(),
+    };
     hidden = false;
     disabled = false;
     className = "";
@@ -160,20 +164,8 @@ const dom = vi.hoisted(() => {
       }
     }
   }
-  const state = { corruptFactory: false };
-  return { Node, mountedRoots, state };
+  return { Node, mountedRoots };
 });
-vi.mock("./modal.ts", async () => ({
-  ...(await vi.importActual<typeof import("./modal.ts")>("./modal.ts")),
-  createActions: (actions: { button: InstanceType<typeof dom.Node> }[]) => {
-    const node = new dom.Node();
-    node.append(...actions.map(({ button }) => button));
-    if (dom.state.corruptFactory) {
-      node.append(new dom.Node("button"));
-    }
-    return node;
-  },
-}));
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
   focusTarget: (node: { focus(): void }) => node.focus(),
 }));
@@ -182,7 +174,6 @@ afterEach(() => {
   vi.clearAllTimers();
   vi.useRealTimers();
   dom.mountedRoots.clear();
-  dom.state.corruptFactory = false;
   vi.unstubAllGlobals();
   vi.clearAllMocks();
 });
@@ -300,6 +291,8 @@ describe("immediate fixed Exchange actions", () => {
       ]);
       expect(rateIcons.map((part) => (part as unknown as HTMLImageElement).alt)).toEqual(["", ""]);
       expect(row.children.map((part) => part.tagName)).toEqual(["DIV", "DIV"]);
+      expect(row.children[1]!.className).toBe("ui-layout-columns");
+      expect(row.children[1]!.getAttribute("data-ui-layout-sizing")).toBe("intrinsic");
       expect(row.children[1]!.children.map((part) => part.tagName)).toEqual([
         "BUTTON",
         "BUTTON",
@@ -433,9 +426,16 @@ describe("immediate fixed Exchange actions", () => {
 });
 
 it("rejects incomplete Exchange action construction without auditing other Shop controls", () => {
-  dom.state.corruptFactory = true;
-  expect(() => fixture()).toThrow("no registered action binding");
-  dom.state.corruptFactory = false;
+  const bind = vi.spyOn(actionBinding, "bindAdaAction").mockImplementationOnce(() => ({
+    activate: () => false,
+    dispose() {},
+    update() {},
+  }));
+  try {
+    expect(() => fixture()).toThrow("no registered action binding");
+  } finally {
+    bind.mockRestore();
+  }
   const f = fixture();
   expect(f.root.children[0]!.tagName).toBe("BUTTON");
   expect(f.commit).not.toHaveBeenCalled();
@@ -457,10 +457,12 @@ it("rejects late unregistered Exchange controls before a transaction", () => {
   unbound.disabled = true;
   (f.view.root as unknown as InstanceType<typeof dom.Node>).append(unbound);
   const activate = () =>
-    resolveAdaHoldAction(
-      f.root as unknown as HTMLElement,
-      f.action("exchange-ore-1") as unknown as HTMLElement,
-    )!.activate();
+    actionBinding
+      .resolveAdaHoldAction(
+        f.root as unknown as HTMLElement,
+        f.action("exchange-ore-1") as unknown as HTMLElement,
+      )!
+      .activate();
   expect(activate).toThrow("no registered action binding");
   expect(f.commit).not.toHaveBeenCalled();
   expect(f.onChange).not.toHaveBeenCalled();
@@ -477,10 +479,9 @@ it("audits Exchange after the balance update without replaying the committed tra
   });
   const button = f.action("exchange-ore-1");
   const activate = () =>
-    resolveAdaHoldAction(
-      f.root as unknown as HTMLElement,
-      button as unknown as HTMLElement,
-    )!.activate();
+    actionBinding
+      .resolveAdaHoldAction(f.root as unknown as HTMLElement, button as unknown as HTMLElement)!
+      .activate();
   expect(activate).toThrow("no registered action binding");
   expect(f.commit).toHaveBeenCalledExactlyOnceWith({ amount: 1, resource: "ore" });
   expect(f.onChange).toHaveBeenCalledOnce();
