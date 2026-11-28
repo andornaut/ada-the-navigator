@@ -1,8 +1,10 @@
+import { ANDROMEDA_PLACES } from "../../data/andromeda.ts";
 import { ECONOMY } from "../../data/economy.ts";
-import { GALAXY_NUMBERS } from "../../data/galaxies.ts";
+import { BUILT, GALAXY_NUMBERS } from "../../data/galaxies.ts";
+import { NEEDLE_PLACES } from "../../data/needle.ts";
+import { PHANTOM_DESTINATIONS } from "../../data/phantom.ts";
 import type { GalaxyNumber } from "../../data/types.ts";
 import { newAchievements } from "../achievements.ts";
-import { chapterRuntime } from "../chapters.ts";
 import { newProgress } from "../progress.ts";
 import { SAVE_VERSION } from "../saveSchema.ts";
 import type { GalaxyProgress, GameState } from "../types.ts";
@@ -41,9 +43,16 @@ const required: Partial<Record<GalaxyNumber, readonly string[]>> = {
   3: ["whale", "whale", "whale", "family", "whale"],
 };
 
+export const LATE_CHAPTER_ROUTES = {
+  4: NEEDLE_PLACES,
+  5: [ANDROMEDA_PLACES.beacon, ANDROMEDA_PLACES.pip],
+  6: PHANTOM_DESTINATIONS,
+} as const;
+
 /** A galaxy's story destinations in the order its route first visits them; the first opens it. */
 export function galaxyRoute(galaxy: GalaxyNumber): readonly string[] {
-  return chapterRuntime(galaxy)?.route ?? [...new Set(required[galaxy] ?? [])];
+  const routes: Readonly<Partial<Record<GalaxyNumber, readonly string[]>>> = LATE_CHAPTER_ROUTES;
+  return (BUILT.has(galaxy) ? routes[galaxy] : undefined) ?? [...new Set(required[galaxy] ?? [])];
 }
 /** A stage of the early campaign can revisit a prior required destination. */
 export function earlyRequiredDestination(galaxy: GalaxyNumber, stage: number): string | undefined {

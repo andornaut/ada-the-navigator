@@ -1,9 +1,9 @@
 import { BUILT } from "../data/galaxies.ts";
 import { NEEDLE_PLACES } from "../data/needle.ts";
-import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { ANDROMEDA_RUNTIME, andromedaAction, andromedaObjectiveIndex } from "./andromeda.ts";
 import type { ChapterRuntime } from "./chapterProtocol.ts";
+import { LATE_CHAPTER_ROUTES } from "./game/campaignState.ts";
 import {
   chooseNeedle,
   initNeedle,
@@ -38,7 +38,7 @@ const RUNTIMES: Readonly<Partial<Record<GalaxyNumber, ChapterRuntime>>> = {
     init: initNeedle,
     objective: needleObjective,
     objectiveIndex: needleObjectiveIndex,
-    route: NEEDLE_PLACES,
+    route: LATE_CHAPTER_ROUTES[4],
     use: useNeedle,
   },
   5: {
@@ -55,7 +55,7 @@ const RUNTIMES: Readonly<Partial<Record<GalaxyNumber, ChapterRuntime>>> = {
     init: initPhantom,
     objective: phantomObjective,
     objectiveIndex: phantomObjectiveIndex,
-    route: PHANTOM_DESTINATIONS,
+    route: LATE_CHAPTER_ROUTES[6],
     use: usePhantom,
   },
 };

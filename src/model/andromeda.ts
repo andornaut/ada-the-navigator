@@ -45,6 +45,7 @@ import {
   questGuardPlacementContext,
 } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
+import { LATE_CHAPTER_ROUTES } from "./game/campaignState.ts";
 import { guideBeaconSlotAt, storyGuideBeaconSlot } from "./guideBeacons.ts";
 import { flightStationContext, namesSavedStation, worldStationById } from "./stations.ts";
 import type { DialogueState, FlightState, GalaxyProgress, UseAction, Vec } from "./types.ts";
@@ -556,6 +557,6 @@ export const ANDROMEDA_RUNTIME: ChapterRuntime = {
   galaxy: 5,
   init: mountAndromeda,
   objective: andromedaObjective,
-  route: [ANDROMEDA_PLACES.beacon, ANDROMEDA_PLACES.pip],
+  route: LATE_CHAPTER_ROUTES[5],
   use: useAndromeda,
 };
