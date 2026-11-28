@@ -114,7 +114,9 @@ import {
   questContextIcon,
   type SheetArt,
   type ShipView,
+  shopItemDetail,
   stardustCount,
+  stationRow,
   storyPageView,
 } from "../ui/index.ts";
 import { itemDetailName } from "../ui/itemDetailContent.ts";
@@ -144,7 +146,6 @@ import {
 import { coverShip, endJump, jumpScene } from "./sceneJump.ts";
 import { type Asset, projectId, TITLE_SCREEN_KEY } from "./sceneShared.ts";
 import { StoryShell } from "./shell.ts";
-import { shopItemDetail, stationRow } from "./shopView.ts";
 
 const scanViews = new WeakMap<
   object,

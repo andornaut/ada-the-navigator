@@ -7,7 +7,7 @@ import { expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { fill, type ShopRow, weaponName } from "../model/shop.ts";
-import { stationRow } from "./shopView.ts";
+import { stationRow } from "../ui/index.ts";
 
 const source = ts.createSourceFile(
   "sceneUi.ts",

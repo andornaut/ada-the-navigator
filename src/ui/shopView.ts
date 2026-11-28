@@ -12,8 +12,8 @@ import {
   shopRowState,
   weaponName,
 } from "../model/shop.ts";
-import type { ItemDetail } from "../ui/itemDetailContent.ts";
-import { type ItemGlyph, type StationRow, weaponItemGlyph } from "../ui/station.ts";
+import type { ItemDetail } from "./itemDetailContent.ts";
+import { type ItemGlyph, type StationRow, weaponItemGlyph } from "./station.ts";
 
 // Maps the model's shop rows to the station view's rows (art/shop.md, art/shop-icons.md).
 

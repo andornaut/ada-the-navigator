@@ -17,6 +17,7 @@ export { questContextIcon } from "./questsScreen.ts";
 export { createRestartCard } from "./restartCard.ts";
 export { createScanFeedbackView } from "./scanFeedbackView.ts";
 export { aboardLabel, type ShipView } from "./shipCard.ts";
+export { shopItemDetail, stationRow } from "./shopView.ts";
 export { createStationView } from "./station.ts";
 export { stardustCount } from "./statusPill.ts";
 export {

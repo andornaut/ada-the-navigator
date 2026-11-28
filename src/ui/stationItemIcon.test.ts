@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ECONOMY } from "../data/economy.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { itemGlyph } from "../game/shopView.ts";
 import type { ShopItem } from "../model/shop.ts";
+import { itemGlyph } from "./shopView.ts";
 import { createStationItemIcon, setStationItemTitle } from "./stationItemIcon.ts";
 
 class IconElement {
