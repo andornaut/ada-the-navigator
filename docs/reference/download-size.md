@@ -30,4 +30,8 @@ The deferred game loads Phaser and the authored geometry in separate groups.
 Both groups are reusable across updates if their contents stay the same.
 In a matched update where the geometry was unchanged, separating it reduced
 the changed compressed group bodies from 1,077,979 to 481,405 bytes.
-The split introduces one additional archive request on a fresh install.
+The geometry split adds one archive. Grouping the Play page with its
+hashed bootstrap removes one archive, so together the changes keep the
+first-install archive count steady. The page and bootstrap are still
+served directly for launch. A page-only update also carries the small
+bootstrap in the shared group.
