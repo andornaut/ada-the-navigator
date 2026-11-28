@@ -904,14 +904,17 @@ it.each([
   );
 });
 
-const mappedFocusSource = readFileSync(new URL("../ui/galaxyMap.ts", import.meta.url), "utf8");
+const mappedFocusSource = readFileSync(
+  new URL("../ui/galaxy/galaxyMap.ts", import.meta.url),
+  "utf8",
+);
 const mappedFocusFinding = expect.objectContaining({
   kind: "unbound-discrete",
   source: expect.stringContaining("createButton(document,"),
 });
-const mappedFocusFixture = "src/ui/mappedFocusFixture.ts";
+const mappedFocusFixture = "src/ui/galaxy/mappedFocusFixture.ts";
 
-it.each(["src/ui/galaxyMap.ts", mappedFocusFixture])(
+it.each(["src/ui/galaxy/galaxyMap.ts", mappedFocusFixture])(
   "proves the bound mapped button and shared focus callback in %s",
   (path) => {
     expect(constructionFindings(path, mappedFocusSource)).not.toContainEqual(mappedFocusFinding);

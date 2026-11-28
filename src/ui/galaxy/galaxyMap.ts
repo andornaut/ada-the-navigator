@@ -3,27 +3,26 @@ import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayo
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { type GalaxyMapArt, jetLayerPass, jetOccluderRegions, jetsInFront } from "../art/index.ts";
-import { GALAXY_COUNT, type RoutePosition } from "../data/galaxies.ts";
-import { SCREEN } from "../data/screen.ts";
-import { TASK_COLORS } from "../data/taskCategories.ts";
-import type { RouteFlight } from "../model/game.ts";
+import {
+  type GalaxyMapArt,
+  jetLayerPass,
+  jetOccluderRegions,
+  jetsInFront,
+} from "../../art/index.ts";
+import { GALAXY_COUNT, type RoutePosition } from "../../data/galaxies.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { TASK_COLORS } from "../../data/taskCategories.ts";
+import type { RouteFlight } from "../../model/game.ts";
 import {
   ADA_ACTION_HOLD_MS,
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
-} from "./actionBinding.ts";
-import { registerForegroundSurface } from "./foregroundInput.ts";
-import {
-  type GalaxyPanelGroup,
-  type GalaxyPanelLeaf,
-  type GalaxyPanelSchema,
-  galaxyPanelTree,
-} from "./galaxyPanelTree.ts";
-import { COLOURS, UNLISTED_COLOURS } from "./layout/colours.ts";
-import { SCROLL } from "./layout/contentCard.ts";
-import { BUTTON_SLICE, CARD_SLICE } from "./layout/controls.ts";
+} from "../actionBinding.ts";
+import { registerForegroundSurface } from "../foregroundInput.ts";
+import { COLOURS, UNLISTED_COLOURS } from "../layout/colours.ts";
+import { SCROLL } from "../layout/contentCard.ts";
+import { BUTTON_SLICE, CARD_SLICE } from "../layout/controls.ts";
 import {
   COMPACT_VIEWPORT,
   font,
@@ -33,7 +32,7 @@ import {
   safeEdge,
   slice,
   units,
-} from "./layout/css.ts";
+} from "../layout/css.ts";
 import {
   easeInOutSine,
   GALAXY_MAP,
@@ -51,19 +50,25 @@ import {
   routePoint,
   type Stamp,
   unlockFlightSeconds,
-} from "./layout/galaxyMap.ts";
-import { SAFE_MARGIN } from "./layout/playView.ts";
-import { SPACING, TYPE } from "./layout/tokens.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
-import { mapCloseActionStyle } from "./mapCloseAction.ts";
-import { BUTTON_FACE, MODAL_LAYER, TEXT_TOKENS } from "./modal.ts";
-import { createStandardCloseAction } from "./modalClose.ts";
-import { invalidatePressScope } from "./pressScope.ts";
-import { refuse } from "./refusal.ts";
-import { drawShipJets } from "./shipJetCanvas.ts";
-import { createShipTailView } from "./shipTailView.ts";
-import { createStandardTextAction } from "./standardTextAction.ts";
-import { setStoryScenePreview } from "./story/index.ts";
+} from "../layout/galaxyMap.ts";
+import { SAFE_MARGIN } from "../layout/playView.ts";
+import { SPACING, TYPE } from "../layout/tokens.ts";
+import { readViewUnit } from "../layout/viewScale.ts";
+import { mapCloseActionStyle } from "../mapCloseAction.ts";
+import { BUTTON_FACE, MODAL_LAYER, TEXT_TOKENS } from "../modal.ts";
+import { createStandardCloseAction } from "../modalClose.ts";
+import { invalidatePressScope } from "../pressScope.ts";
+import { refuse } from "../refusal.ts";
+import { drawShipJets } from "../shipJetCanvas.ts";
+import { createShipTailView } from "../shipTailView.ts";
+import { createStandardTextAction } from "../standardTextAction.ts";
+import { setStoryScenePreview } from "../story/index.ts";
+import {
+  type GalaxyPanelGroup,
+  type GalaxyPanelLeaf,
+  type GalaxyPanelSchema,
+  galaxyPanelTree,
+} from "./galaxyPanelTree.ts";
 
 // The galaxy map (art/layout.md "Galaxy selector"), after Chibi's MapScene: the route sky and
 // ground, the chart's legs, markers, labels and Ada's ship, the panel for the chosen galaxy, Earth's
@@ -128,7 +133,7 @@ export interface GalaxyMapView {
   readonly stay: boolean;
 }
 
-export type { GalaxyMapArt } from "../art/index.ts";
+export type { GalaxyMapArt } from "../../art/index.ts";
 
 export interface GalaxyMapOptions {
   readonly labels: GalaxyMapLabels;

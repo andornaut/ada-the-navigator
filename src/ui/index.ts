@@ -7,7 +7,7 @@ export {
 } from "./conversation.ts";
 export { createBannerLayer, type PlacedBanner } from "./disabledBanner.ts";
 export { createFpsCounter } from "./fpsCounter.ts";
-export { createGalaxyMap, type GalaxyMapView } from "./galaxyMap.ts";
+export { createGalaxyMap, type GalaxyMapView } from "./galaxy/index.ts";
 export { createJumpOverlay, type SheetArt, type WarpPaint } from "./jumpOverlay.ts";
 export { fogColor, mapDistance, type MapField, mapScreenLabels } from "./map/index.ts";
 export { createCoveredPaint } from "./modalScenePaint.ts";

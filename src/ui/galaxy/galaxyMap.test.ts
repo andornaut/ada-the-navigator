@@ -1,9 +1,9 @@
 import { expect, it } from "vitest";
 
-import { CONTENT } from "../data/content.ts";
+import { CONTENT } from "../../data/content.ts";
+import { units } from "../layout/css.ts";
+import { GALAXY_MAP } from "../layout/galaxyMap.ts";
 import { GALAXY_MAP_STYLE } from "./galaxyMap.ts";
-import { units } from "./layout/css.ts";
-import { GALAXY_MAP } from "./layout/galaxyMap.ts";
 
 it("leaves the galaxy selector unframed while retaining the information panel frame", () => {
   const outer = GALAXY_MAP_STYLE.match(/\.ada-controls \.ada-route-rules\{([^}]+)\}/u)?.[1];
