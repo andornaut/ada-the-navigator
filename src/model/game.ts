@@ -218,6 +218,7 @@ import {
   resolveStationGreeting,
   type StationGreetingVisit,
 } from "./game/stationGreeting.ts";
+import { projectStoryView, storyPageCanSkip, storyRoomPage } from "./game/storyView.ts";
 import {
   floatingHolodisk,
   holodiskTouched,
@@ -368,7 +369,6 @@ import {
   type Scene,
   sceneEnd,
   shownChoices,
-  showsStoryNext,
   stepOf,
   stepPage,
   type StoryChoice,
@@ -1761,63 +1761,30 @@ export class GameModel {
     if (!position || this.screen !== "story") {
       return null;
     }
-    const page = currentPage(position);
-    if (this.choosingReplay) {
-      const choices = this.replayChapters.map((galaxy) => ({
-        label: this.content.chapters[galaxy]!.name,
-      }));
-      return {
-        canGoBack: true,
-        canSkip: false,
-        choices,
-        page: {
-          background: page.background,
-          choices,
-          heading: this.label("replayChapter"),
-          id: "replay-menu",
-          previousAction: this.label("questBack"),
-          text: "",
-        },
-        run: this.run,
-      };
-    }
-    return {
-      canGoBack: canGoBack(position),
-      canSkip: this.storyCanSkip(position, page),
-      choices:
-        this.roomPage && this.replayChapters.length > 0
-          ? [{ label: this.label("replayChapter") }]
-          : shownChoices(position),
-      page,
-      run: this.run,
-    };
+    return projectStoryView(
+      {
+        canSkip: (page) => this.storyCanSkip(position, page),
+        choosingReplay: () => this.choosingReplay,
+        label: (key) => this.label(key),
+        replayChoices: () =>
+          this.replayChapters.map((galaxy) => ({ label: this.content.chapters[galaxy]!.name })),
+        roomHasReplays: () => this.roomPage && this.replayChapters.length > 0,
+        run: () => this.run,
+      },
+      position,
+    );
   }
   private storyCanSkip(position: StoryPosition, page: StoryPage): boolean {
-    if (!showsStoryNext(page)) {
-      return false;
-    }
-    const { scene } = position;
-    if (page.next !== undefined) {
-      const next = scene.pages.find(({ id }) => id === page.next);
-      const following =
-        next?.sleep && this.playedInterludes.has(scene)
-          ? scene.pages.find(({ id }) => id === next.next)
-          : next;
-      return following !== undefined && showsStoryNext(following);
-    }
-    // The run preview is built through the same scene transitions as Next.
-    const index = this.runScenes.findIndex(({ id }) => id === scene.id);
-    const following = index < 0 ? undefined : this.runScenes[index + 1]?.pages[0];
-    return following !== undefined && showsStoryNext(following);
+    return storyPageCanSkip(
+      (scene) => this.playedInterludes.has(scene),
+      () => this.runScenes,
+      position,
+      page,
+    );
   }
   /** Ada's room page, where Back opens Menu unless chapter selection is open. */
   get roomPage(): boolean {
-    return (
-      !this.choosingReplay &&
-      this.story !== null &&
-      this.screen === "story" &&
-      currentPage(this.story).id === "room"
-    );
+    return storyRoomPage(() => this.screen === "story", this.choosingReplay, this.story);
   }
   /**
    * Whether the Paused card shows Map: in flight only, separate from Pause visibility, and never
