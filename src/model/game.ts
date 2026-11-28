@@ -206,7 +206,14 @@ import { dockedShopGroups, dockedShopOffers, dockedShopSupply } from "./game/doc
 import { encounterCues, stationsInRange } from "./game/encounterCues.ts";
 import { projectFlightLog } from "./game/flightLog.ts";
 import { dockedJobRows, type JobRow } from "./game/jobBoard.ts";
-import { jobIndicator, jobMapTarget, type JobNavigationContext } from "./game/jobNavigation.ts";
+import {
+  jobIndicator,
+  jobMapTarget,
+  type JobNavigationContext,
+  type JobScenery,
+  lostItemNear,
+  projectJobScenery,
+} from "./game/jobNavigation.ts";
 import { projectJobText, projectPlaceLabel } from "./game/jobText.ts";
 import {
   projectInRangeQuestDetails,
@@ -512,21 +519,7 @@ function placeholderChapter(galaxy: GalaxyNumber): ChapterContent {
 }
 const dialogueKeys: Record<string, string> = { growers: "grower", salvagers: "salvager" };
 
-/** What the scene draws for jobs: landmarks, a rescue's craft and a hunt's area and glint. */
-export interface JobScenery {
-  readonly landmarks: readonly (Vec & {
-    readonly charted: boolean;
-    readonly id: string;
-    readonly kind: string;
-  })[];
-  /** A rescue's stranded or towed craft, with the pool item it is. */
-  readonly craft: (Vec & { readonly item: string }) | null;
-  readonly towing: boolean;
-  /** A hunt's search area. */
-  readonly area: (Vec & { readonly radius: number }) | null;
-  /** A hunt's lost item while it glints, within glint range of Ada. */
-  readonly glint: Vec | null;
-}
+export type { JobScenery } from "./game/jobNavigation.ts";
 
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -4499,7 +4492,7 @@ export class GameModel {
       inCurrent: inCurrent(f.galaxy, 0, f.player),
       inDanger: this.inDanger,
       jobMoments,
-      lostItemNear: this.lostItemNear(f),
+      lostItemNear: lostItemNear(this.jobNavigation, f),
       moved: Math.hypot(input.move.x, input.move.y) > 0,
       // The hub counts as a station for returns, but its mapping is a new place's.
       newStation: stationsDiscovered.some((id) => id !== HUB_STATION),
@@ -5826,18 +5819,11 @@ export class GameModel {
     }
   }
 
-  /** A held hunt's lost item within Penny's hunt range, as its point id. */
-  private lostItemNear(f: FlightState): string | null {
-    const held = this.held;
-    return held?.type === "hunt" &&
-      held.spot &&
-      worldDistance(flightWorldContext(f), held.spot, f.player) <= JOB_TUNING.hunt.penny
-      ? `job:${held.id}`
-      : null;
-  }
   private readonly jobNavigation: JobNavigationContext = {
     held: () => this.held,
     jobObjective: () => this.jobObjective,
+    scannableSites: (flight) => this.scannableSites(flight),
+    scannedSite: (id) => this.scannedSite(id),
     state: () => this.state,
     towPlaces: (flight) => this.towPlaces(flight),
   };
@@ -5849,29 +5835,7 @@ export class GameModel {
   }
   /** Landmarks and the held job's craft, search area and glint, for the scene. */
   get jobScenery(): JobScenery {
-    const f = this.state.flight;
-    const held = this.held;
-    if (!f || this.state.mode !== "space") {
-      return { area: null, craft: null, glint: null, landmarks: [], towing: false };
-    }
-    const hunt = held?.type === "hunt" ? held : undefined;
-    return {
-      area: hunt ? { radius: JOB_TUNING.hunt.radius, x: hunt.target.x, y: hunt.target.y } : null,
-      craft:
-        held?.type === "rescue"
-          ? { item: held.item, x: (f.tow ?? held.target).x, y: (f.tow ?? held.target).y }
-          : null,
-      glint:
-        hunt?.spot &&
-        worldDistance(flightWorldContext(f), hunt.spot, f.player) <= JOB_TUNING.hunt.glint
-          ? { ...hunt.spot }
-          : null,
-      landmarks: this.scannableSites(f).map((site) => ({
-        ...site,
-        charted: this.scannedSite(site.id),
-      })),
-      towing: Boolean(f.tow),
-    };
+    return projectJobScenery(this.jobNavigation, this.state);
   }
   choose(id: string): void {
     const dialogue = this.state.dialogue;

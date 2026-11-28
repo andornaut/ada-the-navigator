@@ -4,7 +4,7 @@ import { heldActivity } from "../activities.ts";
 import { flightWorldContext } from "../flightTopology.ts";
 import type { IndicatorTarget } from "../indicators.ts";
 import { nearestWorldSafePlace } from "../jobs.ts";
-import { landmarkById } from "../landmarks.ts";
+import { landmarkById, type LandmarkSite } from "../landmarks.ts";
 import type { MapContext } from "../map.ts";
 import { flightStationContext, worldStationById } from "../stations.ts";
 import type { FlightState, GameState, HeldJob, JobTarget, Vec } from "../types.ts";
@@ -14,8 +14,66 @@ import { worldDistance } from "../worldContacts.ts";
 export interface JobNavigationContext {
   readonly held: () => HeldJob | undefined;
   readonly jobObjective: () => string | null;
+  readonly scannableSites: (flight: FlightState) => readonly LandmarkSite[];
+  readonly scannedSite: (id: string) => boolean;
   readonly state: () => Readonly<Pick<GameState, "tasks">>;
   readonly towPlaces: (flight: FlightState) => readonly JobTarget[];
+}
+
+/** What the scene draws for jobs: landmarks, a rescue's craft and a hunt's area and glint. */
+export interface JobScenery {
+  readonly landmarks: readonly (Vec & {
+    readonly charted: boolean;
+    readonly id: string;
+    readonly kind: string;
+  })[];
+  /** A rescue's stranded or towed craft, with the pool item it is. */
+  readonly craft: (Vec & { readonly item: string }) | null;
+  readonly towing: boolean;
+  /** A hunt's search area. */
+  readonly area: (Vec & { readonly radius: number }) | null;
+  /** A hunt's lost item while it glints, within glint range of Ada. */
+  readonly glint: Vec | null;
+}
+
+/** A held hunt's lost item within Penny's hunt range, as its point id. */
+export function lostItemNear(context: JobNavigationContext, f: FlightState): string | null {
+  const held = context.held();
+  return held?.type === "hunt" &&
+    held.spot &&
+    worldDistance(flightWorldContext(f), held.spot, f.player) <= JOB_TUNING.hunt.penny
+    ? `job:${held.id}`
+    : null;
+}
+
+/** Project the scene's landmarks and held-job geometry without changing job or scan state. */
+export function projectJobScenery(
+  context: JobNavigationContext,
+  state: Readonly<Pick<GameState, "flight" | "mode">>,
+): JobScenery {
+  const f = state.flight;
+  const held = context.held();
+  if (!f || state.mode !== "space") {
+    return { area: null, craft: null, glint: null, landmarks: [], towing: false };
+  }
+  const hunt = held?.type === "hunt" ? held : undefined;
+  return {
+    area: hunt ? { radius: JOB_TUNING.hunt.radius, x: hunt.target.x, y: hunt.target.y } : null,
+    craft:
+      held?.type === "rescue"
+        ? { item: held.item, x: (f.tow ?? held.target).x, y: (f.tow ?? held.target).y }
+        : null,
+    glint:
+      hunt?.spot &&
+      worldDistance(flightWorldContext(f), hunt.spot, f.player) <= JOB_TUNING.hunt.glint
+        ? { ...hunt.spot }
+        : null,
+    landmarks: context.scannableSites(f).map((site) => ({
+      ...site,
+      charted: context.scannedSite(site.id),
+    })),
+    towing: Boolean(f.tow),
+  };
 }
 
 /**
