@@ -22,7 +22,7 @@ import { interactionCopy } from "./conversations.ts";
 import { partsReach, worldParts } from "./convex.ts";
 import { crossbowContainsAttack } from "./earlyEncounterPatterns.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
-import { damageEnemy, enemyFireLine } from "./enemyAi.ts";
+import { enemyFireLine } from "./enemyAi.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import { enemyBeamReach } from "./enemyProjectiles.ts";
@@ -459,25 +459,25 @@ describe("Captain Cadence admission and outcome", () => {
     "records one %s transmission and names Archie only after the third memory",
     (outcome) => {
       let model = completeEye(1);
-      const flight = model.state.flight!;
       const { id } = NEEDLE_CADENCE;
-      const boss = nearCrossbow(model, outcome === "salvaged" ? CONTENT.tuning.talkRange - 1 : 300);
-      const definition = enemyEquipmentDefinition(4, boss.enemy!);
+      const boss = nearCrossbow(model, 300);
+      const flight = model.state.flight!;
       if (outcome === "salvaged") {
-        for (const part of definition.hardpoints.filter(({ kind }) => kind === "weapon")) {
-          boss.enemy = damageEnemy(
-            definition,
-            { amount: part.hp, hardpointId: part.id },
-            boss.enemy!,
-          );
+        const saved = model.saveDocument();
+        const claim = saved.progress[4].capitalBoss!;
+        if (claim.phase !== "active") {
+          throw new Error("The legacy fixture must start at the admitted Crossbow encounter");
         }
-        expect(model.contextAction).toBe("salvage");
-        expect(model.bossHud()).toMatchObject({ disabled: true, id });
-        model.interact();
-        const rewards = flight.objects.filter(({ role }) => role === "stardust");
-        expect(rewards.length).toBeGreaterThan(0);
-        model.interact();
-        expect(flight.objects.filter(({ role }) => role === "stardust")).toEqual(rewards);
+        const savedBoss = saved.flight!.objects.find((object) => object.id === id)!;
+        savedBoss.enemy!.disabled = true;
+        savedBoss.enemy!.salvaged = true;
+        savedBoss.enemy!.engaged = false;
+        saved.progress[4].capitalBoss = { ...claim, outcome, phase: "resolved" };
+        model = relaunch(CONTENT, saved);
+        const paid = model.state.economy.stardust;
+        model.step(0.001, idle);
+        expect(model.state.economy.stardust).toBe(paid);
+        expect(model.flightEvents).not.toContainEqual({ id, type: "enemyDestroyed" });
       } else {
         const shot = {
           damage: 1000,

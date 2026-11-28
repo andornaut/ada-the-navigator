@@ -18,11 +18,8 @@ import { readStory, relaunch } from "../testing/launch.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { pennyInstance, pennyPoints } from "./conversations.ts";
 import { outlineContact, worldParts } from "./convex.ts";
-import { enemyStardust } from "./drops.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
-import { damageEnemy } from "./enemyAi.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
-import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import { ensureStation } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
@@ -98,12 +95,6 @@ function fieldRocks(flight: FlightState, fieldId: string): SpaceObject[] {
   );
 }
 
-function stardustDropped(flight: FlightState): number {
-  return flight.objects
-    .filter(({ role }) => role === "stardust")
-    .reduce((amount, object) => amount + (object.amount ?? 0), 0);
-}
-
 function hearCue(model: GameModel, cue: ConversationLine): void {
   for (let beat = 0; beat < 8 && model.conversation?.text !== cue.text; beat++) {
     model.dismissConversation();
@@ -133,85 +124,63 @@ function hullImpact(actor: SpaceObject): Vec {
   return point!;
 }
 
-function shootMount(flight: FlightState, actor: SpaceObject, hardpointId: string, damage: number) {
-  const outline = enemyPartOutline(ROUTE_POSITION[2], actor.enemy!, hardpointId)!;
-  const polygon = worldParts(outline)[0]!;
-  const point = polygon.reduce(
-    (point, vertex) => ({
-      x: point.x + vertex.x / polygon.length,
-      y: point.y + vertex.y / polygon.length,
-    }),
-    { x: actor.x, y: actor.y },
-  );
+function shootHull(flight: FlightState, actor: SpaceObject, damage: number) {
   flight.shots.push({
-    ...point,
+    ...hullImpact(actor),
     damage,
     enemy: false,
     hitIds: flight.objects.filter((object) => object !== actor).map(({ id }) => id),
-    id: `claim-hit:${hardpointId}`,
+    id: "claim-hull",
     life: 1,
     piercing: false,
     velocity: { x: 0, y: 0 },
   });
 }
 
-it.each(["stern-left", "stern-right"])(
-  "reports the actual %s Mine Layer loss and lets the other mount lay mines",
-  (side) => {
-    const model = beginClaim();
-    const flight = model.state.flight!;
-    const actor = capitalBossActor(flight, id)!;
-    flyTo(model, { x: actor.x + 300, y: actor.y });
-    endArrivalGrace(flight);
-    model.step(0.01, idle);
-    hearCue(model, CARTWHEEL_CLAIM_CUES.approach);
-    const mount = (key: string) => actor.enemy!.hardpoints.find(({ id }) => id === key)!;
-    const remaining = side === "stern-left" ? "stern-right" : "stern-left";
-    const before = mount(side).hp;
-    const oldMine = {
-      age: 1,
-      damage: 3,
-      id: "already-laid",
-      ownerId: id,
-      x: actor.x,
-      y: actor.y + 200,
-    };
-    flight.mines = [oldMine];
+it("keeps both Mine Layers intact and firing after a real hull hit", () => {
+  const model = beginClaim();
+  const flight = model.state.flight!;
+  const actor = capitalBossActor(flight, id)!;
+  flyTo(model, { x: actor.x + 300, y: actor.y });
+  endArrivalGrace(flight);
+  model.step(0.01, idle);
+  hearCue(model, CARTWHEEL_CLAIM_CUES.approach);
+  const mineLayers = ["stern-left", "stern-right"];
+  const hp = actor.hp;
+  const mountHp = actor.enemy!.hardpoints.map(({ hp }) => hp);
+  const oldMine = {
+    age: 1,
+    damage: 3,
+    id: "already-laid",
+    ownerId: id,
+    x: actor.x,
+    y: actor.y + 200,
+  };
+  flight.mines = [oldMine];
 
-    shootMount(flight, actor, side, 1);
-    model.step(0.000001, idle);
-    expect(mount(side).hp).toBe(before - 1);
-    expect(model.flightEvents.some(({ type }) => type === "enemyMineLayerDisabled")).toBe(false);
-    shootMount(flight, actor, side, before);
-    model.step(0.000001, idle);
-    expect(model.flightEvents).toContainEqual({
-      hardpointId: side,
-      id,
-      type: "enemyMineLayerDisabled",
-    });
-    expect(mount(side).hp).toBe(0);
-    expect(mount(remaining).hp).toBeGreaterThan(0);
-    expect(model.state.progress[2].claim?.phase).toBe("active");
-    hearCue(model, CARTWHEEL_CLAIM_CUES.mineLayer);
-    expect(flight.mines.find(({ id }) => id === oldMine.id)).toMatchObject({
-      damage: oldMine.damage,
-      ownerId: id,
-      x: oldMine.x,
-      y: oldMine.y,
-    });
-    expect(flight.mines.find(({ id }) => id === oldMine.id)?.end).toBeUndefined();
+  shootHull(flight, actor, 1);
+  model.step(0.000001, idle);
+  expect(actor.hp).toBe(hp - 1);
+  expect(actor.enemy!.hardpoints.map(({ hp }) => hp)).toEqual(mountHp);
+  expect(model.state.progress[2].claim?.phase).toBe("active");
+  expect(flight.mines.find(({ id }) => id === oldMine.id)).toMatchObject({
+    damage: oldMine.damage,
+    ownerId: id,
+    x: oldMine.x,
+    y: oldMine.y,
+  });
+  expect(flight.mines.find(({ id }) => id === oldMine.id)?.end).toBeUndefined();
 
-    const existing = new Set(flight.mines.map(({ id }) => id));
-    for (const part of actor.enemy!.hardpoints) {
-      part.cooldown = part.id === side || part.id === remaining ? 0 : 10;
-    }
-    model.step(0.01, idle);
-    expect(mount(side).cooldown).toBe(0);
-    expect(mount(remaining).cooldown).toBeGreaterThan(1);
-    expect(flight.mines.filter(({ id }) => !existing.has(id))).toHaveLength(1);
-    expect(model.flightEvents.some(({ type }) => type === "enemyMineLayerDisabled")).toBe(false);
-  },
-);
+  const existing = new Set(flight.mines.map(({ id }) => id));
+  for (const part of actor.enemy!.hardpoints) {
+    part.cooldown = mineLayers.includes(part.id) ? 0 : 10;
+  }
+  model.step(0.01, idle);
+  for (const id of mineLayers) {
+    expect(actor.enemy!.hardpoints.find((part) => part.id === id)?.cooldown).toBeGreaterThan(1);
+  }
+  expect(flight.mines.filter(({ id }) => !existing.has(id))).toHaveLength(2);
+});
 
 it.each(["defeated", "salvaged"] as const)(
   "opens the same canonical Cartwheel field once when Claim is %s and preserves ordinary mining",
@@ -243,63 +212,37 @@ it.each(["defeated", "salvaged"] as const)(
     expect(model.state.progress[2].claim).toEqual(claim);
     expect(capitalBossActor(model.state.flight!, id)).toEqual(beforeReturn);
 
-    const flight = model.state.flight!;
+    let flight = model.state.flight!;
     flyTo(model, field);
     model.step(0.01, idle);
     expect(fieldRocks(flight, field.id)).toEqual([]);
     const actor = capitalBossActor(flight, id)!;
-    flyTo(model, { x: actor.x + 300, y: actor.y });
-    endArrivalGrace(flight);
-    model.step(0.01, idle);
-    expect(model.bossHud()).toMatchObject({ captain: "Captain Claim", disabled: false, id });
-    hearCue(model, CARTWHEEL_CLAIM_CUES.approach);
     const milestone = outcome === "salvaged" ? { firstHardpointLost: true as const } : {};
-
     if (outcome === "salvaged") {
-      const definition = enemyEquipmentDefinition(2, actor.enemy!);
-      const mount = definition.hardpoints.find(({ kind }) => kind === "weapon")!;
-      shootMount(flight, actor, mount.id, mount.hp);
-      model.step(0.000001, idle);
-      expect(model.flightEvents).toContainEqual({ id, type: "enemyFirstHardpointLost" });
-      hearCue(model, CARTWHEEL_CLAIM_CUES.hardpoint);
-      for (const part of definition.hardpoints.filter(({ kind }) => kind === "weapon")) {
-        actor.enemy = damageEnemy(
-          definition,
-          { amount: part.hp, hardpointId: part.id },
-          actor.enemy!,
-        );
-      }
-      expect(model.bossHud()).toBeNull();
-      flyTo(model, { x: actor.x + CONTENT.tuning.talkRange - 1, y: actor.y });
-      expect(model.bossHud()).toMatchObject({ disabled: true, id });
-      const expected = Math.floor(enemyStardust({ id, seed: flight.seed }, "capital") / 2);
-      const oldStardust = stardustDropped(flight);
-      model.interact();
-      expect(stardustDropped(flight) - oldStardust).toBe(expected);
-      model.interact();
-      expect(stardustDropped(flight) - oldStardust).toBe(expected);
+      // Older saves had already opened the field through manual Salvage.
+      actor.enemy!.disabled = true;
+      actor.enemy!.salvaged = true;
+      actor.enemy!.engaged = false;
+      model.state.progress[2].claim = { ...claim, ...milestone, outcome, phase: "resolved" };
+      const paid = model.state.economy.stardust;
+      const pending = flight.objects.filter(({ kind }) => kind === "pickup");
+      model = relaunch(CONTENT, model.save());
+      flight = model.state.flight!;
+      expect(model.state.economy.stardust).toBe(paid);
+      expect(flight.objects.filter(({ kind }) => kind === "pickup")).toEqual(pending);
     } else {
-      const shot = {
-        damage: 1000,
-        enemy: false,
-        hitIds: flight.objects.filter((object) => object !== actor).map(({ id }) => id),
-        id: "claim-hull-hit",
-        life: 1,
-        piercing: false,
-        velocity: { x: 0, y: 0 },
-        ...hullImpact(actor),
-      };
-      shootMount(flight, actor, "stern-left", 1000);
-      flight.shots.push(shot, { ...shot, id: "claim-second-hit" });
+      flyTo(model, { x: actor.x + 300, y: actor.y });
+      endArrivalGrace(flight);
+      model.step(0.01, idle);
+      expect(model.bossHud()).toMatchObject({ captain: "Captain Claim", id });
+      hearCue(model, CARTWHEEL_CLAIM_CUES.approach);
+      shootHull(flight, actor, 1000);
+      flight.shots.push({ ...flight.shots.at(-1)!, id: "claim-second-hit" });
       model.step(0.000001, idle);
-      expect(model.flightEvents).toContainEqual({
-        hardpointId: "stern-left",
-        id,
-        type: "enemyMineLayerDisabled",
-      });
       expect(model.flightEvents.filter(({ type }) => type === "enemyDestroyed")).toEqual([
         { id, type: "enemyDestroyed" },
       ]);
+      hearCue(model, CARTWHEEL_CLAIM_CUES.resolved);
     }
     expect(model.state.progress[2].claim).toEqual({
       ...claim,
@@ -315,14 +258,6 @@ it.each(["defeated", "salvaged"] as const)(
       travel: true,
     });
     expect(model.state.progress[2].holodisk).toBe(false);
-    hearCue(model, CARTWHEEL_CLAIM_CUES.resolved);
-    if (outcome === "defeated") {
-      model.dismissConversation();
-      model.step(0.001, idle);
-      expect(model.conversation?.text).not.toBe(CARTWHEEL_CLAIM_CUES.mineLayer.text);
-      expect(model.state.seenConversations).not.toContain(`${id}:mineLayer:stern-left`);
-    }
-
     flyTo(model, { x: field.x, y: field.y });
     model.step(0.01, idle);
     const rocks = fieldRocks(flight, field.id);
