@@ -1,5 +1,5 @@
 import { GALAXY_ID } from "../data/galaxies.ts";
-import type { PhantomAllySpec } from "../model/phantomAllies.ts";
+import type { PhantomAllySpec } from "../model/phantom/allies/index.ts";
 
 export const PHANTOM_ALLIES_ART = "phantom-allies";
 
