@@ -525,186 +525,171 @@ describe("mounted Andromeda chapter", () => {
     expect(resumed).toMatchObject({ phase: "active", site: redact?.site });
   });
 
-  it.each(["defeated", "salvaged"] as const)(
-    "reveals the same one relay on %s and retains it for normal chart travel",
-    (outcome) => {
-      let model = repairBeacon(launch(173));
-      let flight = model.state.flight!;
-      const { id, relayId, relayLabel } = ANDROMEDA_REDACT;
-      const active = model.state.progress[5].redact!;
-      const boss = capitalBossActor(flight, id)!;
-      expect(boss).toMatchObject({ ...active.site, kind: "enemy", persistent: true });
-      expect(boss.routeId).toBeUndefined();
-      expect(model.map?.places.find((place) => place.id === id)).toMatchObject({
-        ...active.site,
-        label: "Broad Wing",
-        objective: false,
-        optionalEncounter: true,
-        travel: true,
-      });
-      expect(flight.objects.some((object) => object.id === relayId)).toBe(false);
-      expect(model.flightLog).toEqual([]);
-      model = relaunch(CONTENT, model.save());
-      flight = model.state.flight!;
-      const retained = capitalBossActor(flight, id)!;
-      expect(retained).toEqual(boss);
-      expect(model.state.progress[5].redact).toEqual(active);
+  it("reveals one relay on hull defeat and retains chart travel for a legacy salvage outcome", () => {
+    let model = repairBeacon(launch(173));
+    let flight = model.state.flight!;
+    const { id, relayId, relayLabel } = ANDROMEDA_REDACT;
+    const active = model.state.progress[5].redact!;
+    const boss = capitalBossActor(flight, id)!;
+    expect(boss).toMatchObject({ ...active.site, kind: "enemy", persistent: true });
+    expect(boss.routeId).toBeUndefined();
+    expect(model.map?.places.find((place) => place.id === id)).toMatchObject({
+      ...active.site,
+      label: "Broad Wing",
+      objective: false,
+      optionalEncounter: true,
+      travel: true,
+    });
+    expect(flight.objects.some((object) => object.id === relayId)).toBe(false);
+    expect(model.flightLog).toEqual([]);
+    model = relaunch(CONTENT, model.save());
+    flight = model.state.flight!;
+    const retained = capitalBossActor(flight, id)!;
+    expect(retained).toEqual(boss);
+    expect(model.state.progress[5].redact).toEqual(active);
 
-      flight.player = { x: retained.x + 300, y: retained.y };
-      flight.velocity = { x: 0, y: 0 };
-      worldSyncFlightRegion(flightWorldContext(flight), CONTENT, flight);
-      endArrivalGrace(flight);
-      model.step(0.01, idle);
-      expect(model.bossHud()).toMatchObject({
-        captain: "Captain Redact",
-        disabled: false,
-        id,
-        ship: "Broad Wing",
-      });
-      const discoveries = model.state.progress[5].discoveries;
-      if (outcome === "salvaged") {
-        const definition = enemyEquipmentDefinition(5, retained.enemy!);
-        for (const part of definition.hardpoints.filter(({ kind }) => kind === "weapon")) {
-          retained.enemy = damageEnemy(
-            definition,
-            { amount: part.hp, hardpointId: part.id },
-            retained.enemy!,
-          );
-        }
-        expect(model.bossHud()).toBeNull();
-        flight.player = { x: retained.x + CONTENT.tuning.talkRange - 1, y: retained.y };
-        expect(model.contextAction).toBe("salvage");
-        expect(model.bossHud()).toMatchObject({ disabled: true, id });
-        model.interact();
-        const rewards = flight.objects.filter(({ role }) => role === "stardust");
-        expect(rewards.length).toBeGreaterThan(0);
-        model.interact();
-        expect(flight.objects.filter(({ role }) => role === "stardust")).toEqual(rewards);
-      } else {
-        const position = ROUTE_POSITION[5];
-        const enemy = retained.enemy!;
-        const hull = enemyHull(enemy, position)!;
-        const parts = enemy.hardpoints.map(({ id }) => enemyPartOutline(position, enemy, id));
-        const impact = worldParts(hull)
-          .map((polygon) =>
-            polygon.reduce(
-              (point, vertex) => ({
-                x: point.x + vertex.x / polygon.length,
-                y: point.y + vertex.y / polygon.length,
-              }),
-              { x: retained.x, y: retained.y },
-            ),
-          )
-          .find((point) =>
-            parts.every(
-              (outline) => !outline || outlineContact(outline, retained, point, 8) === null,
-            ),
-          );
-        expect(impact).toBeDefined();
-        const shot = {
-          damage: 1000,
-          enemy: false,
-          hitIds: flight.objects.filter(({ id: other }) => other !== id).map(({ id }) => id),
-          id: "redact-hull-hit",
-          life: 1,
-          piercing: false,
-          velocity: { x: 0, y: 0 },
-          ...impact!,
-        };
-        flight.shots.push(shot, { ...shot, id: "redact-second-hit" });
-        model.step(0.000001, idle);
-        expect(model.flightEvents.filter(({ type }) => type === "enemyDestroyed")).toEqual([
-          { id, type: "enemyDestroyed" },
-        ]);
-      }
-      const progress = model.state.progress[5];
-      expect(progress).toMatchObject({ holodisk: false, redact: { outcome, phase: "resolved" } });
-      expect(model.bossHud()).toBeNull();
-      expect(progress.discoveries).toBe(discoveries + 1);
-      expect(
-        model.flightEvents.filter((event) => event.type === "discovered" && event.id === relayId),
-      ).toEqual([{ id: relayId, type: "discovered" }]);
-      const waypoint = { ...active.relay, id: relayId };
-      const entry = { id: relayId, text: relayLabel, waypoint };
-      expect(model.flightLog).toEqual([entry]);
-      expect(model.map?.places.filter((place) => place.id === relayId)).toEqual([
-        expect.objectContaining({ ...waypoint, label: relayLabel, objective: false, travel: true }),
-      ]);
-      expect(model.map?.places.some((place) => place.id === id)).toBe(false);
+    flight.player = { x: retained.x + 300, y: retained.y };
+    flight.velocity = { x: 0, y: 0 };
+    worldSyncFlightRegion(flightWorldContext(flight), CONTENT, flight);
+    endArrivalGrace(flight);
+    model.step(0.01, idle);
+    expect(model.bossHud()).toMatchObject({
+      captain: "Captain Redact",
+      disabled: false,
+      id,
+      ship: "Broad Wing",
+    });
+    const discoveries = model.state.progress[5].discoveries;
+    const position = ROUTE_POSITION[5];
+    const enemy = retained.enemy!;
+    const hull = enemyHull(enemy, position)!;
+    const parts = enemy.hardpoints.map(({ id }) => enemyPartOutline(position, enemy, id));
+    const impact = worldParts(hull)
+      .map((polygon) =>
+        polygon.reduce(
+          (point, vertex) => ({
+            x: point.x + vertex.x / polygon.length,
+            y: point.y + vertex.y / polygon.length,
+          }),
+          { x: retained.x, y: retained.y },
+        ),
+      )
+      .find((point) =>
+        parts.every((outline) => !outline || outlineContact(outline, retained, point, 8) === null),
+      );
+    expect(impact).toBeDefined();
+    const shot = {
+      damage: 1000,
+      enemy: false,
+      hitIds: flight.objects.filter(({ id: other }) => other !== id).map(({ id }) => id),
+      id: "redact-hull-hit",
+      life: 1,
+      piercing: false,
+      velocity: { x: 0, y: 0 },
+      ...impact!,
+    };
+    flight.shots.push(shot, { ...shot, id: "redact-second-hit" });
+    model.step(0.000001, idle);
+    expect(model.flightEvents.filter(({ type }) => type === "enemyDestroyed")).toEqual([
+      { id, type: "enemyDestroyed" },
+    ]);
+    const progress = model.state.progress[5];
+    expect(progress).toMatchObject({
+      holodisk: false,
+      redact: { outcome: "defeated", phase: "resolved" },
+    });
+    expect(model.bossHud()).toBeNull();
+    expect(progress.discoveries).toBe(discoveries + 1);
+    expect(
+      model.flightEvents.filter((event) => event.type === "discovered" && event.id === relayId),
+    ).toEqual([{ id: relayId, type: "discovered" }]);
+    const waypoint = { ...active.relay, id: relayId };
+    const entry = { id: relayId, text: relayLabel, waypoint };
+    expect(model.flightLog).toEqual([entry]);
+    expect(model.map?.places.filter((place) => place.id === relayId)).toEqual([
+      expect.objectContaining({ ...waypoint, label: relayLabel, objective: false, travel: true }),
+    ]);
+    expect(model.map?.places.some((place) => place.id === id)).toBe(false);
 
-      if (outcome === "salvaged") {
-        // The return visit starts with the introductory tutorials already heard.
-        for (const id of ["lesson:move", "lesson:aim", "lesson:stardust"] as const) {
-          if (!model.state.seenConversations.includes(id)) {
-            model.state.seenConversations.push(id);
-          }
-        }
-      }
-      model = relaunch(CONTENT, model.save());
-      flight = model.state.flight!;
-      expect(model.flightLog).toEqual([entry]);
-      if (outcome === "salvaged") {
-        const world = flightWorldContext(flight);
-        flight.player = worldPoint(world, active.relay, {
-          x: active.relay.x + 1200,
-          y: active.relay.y,
-        });
-        flight.velocity = { x: 0, y: 0 };
-        worldSyncFlightRegion(world, CONTENT, flight);
-        const marker = model.targetMarkers(GAME_AREA).find(({ id }) => id === relayId);
-        expect(marker).toMatchObject({ id: relayId, identified: true });
-        expect(inGameArea(gameAreaPoint(flight.player, marker!))).toBe(false);
-        model.flightMarkerShown(marker!);
+    model = relaunch(CONTENT, model.save());
+    expect(model.flightLog).toEqual([entry]);
+    expect(model.state.progress[5].redact).toMatchObject({ outcome: "defeated" });
 
-        visit(model, relayId);
-        expect(model.useTarget).toBeUndefined();
-        const arrivals = [];
-        // Let the real reveal queue run without unrelated ambient asteroid physics.
-        flight.objects = flight.objects.filter(
-          (object) =>
-            object.persistent ||
-            (object.kind !== "rock" && !(object.kind === "debris" && object.asteroid)),
-        );
-        // Isolate the quiet window from passing patrols as well.
-        const quietLimit = CONVERSATION_TUNING.cooldownSeconds * 2 + 5;
-        for (let elapsed = 0; elapsed < quietLimit; elapsed += 0.5) {
-          flight.objects = flight.objects.filter(({ kind }) => kind !== "enemy");
-          flight.shots = flight.shots.filter(({ enemy }) => !enemy);
-          flight.dangerFor = 0;
-          model.step(0.5, idle);
-          const line = model.conversation;
-          if (line?.key.startsWith(`poi:arrival:5:${relayId}:`)) {
-            arrivals.push({ speaker: line.speaker, text: line.text });
-          }
-          if (line) {
-            model.dismissConversation();
-          }
-        }
-        expect(arrivals).toEqual([
-          { speaker: "astra", text: "Saved to the map. We can come back any time." },
-        ]);
-        expect(model.state.dialogue).toBeNull();
-        expect(model.state.docked).toBeNull();
-        expect(model.state.progress[5].discoveries).toBe(discoveries + 1);
+    // A historical save used the same relay after a paid salvage outcome.
+    const historical = model.state.progress[5].redact;
+    if (historical?.phase !== "resolved") {
+      throw new Error("Expected Redact's resolved relay");
+    }
+    model.state.progress[5].redact = { ...historical, outcome: "salvaged" };
+    // The return visit starts with the introductory tutorials already heard.
+    for (const id of ["lesson:move", "lesson:aim", "lesson:stardust"] as const) {
+      if (!model.state.seenConversations.includes(id)) {
+        model.state.seenConversations.push(id);
       }
+    }
+    model = relaunch(CONTENT, model.save());
+    flight = model.state.flight!;
+    expect(model.flightLog).toEqual([entry]);
+    expect(model.state.progress[5].redact).toMatchObject({ outcome: "salvaged" });
+    const world = flightWorldContext(flight);
+    flight.player = worldPoint(world, active.relay, {
+      x: active.relay.x + 1200,
+      y: active.relay.y,
+    });
+    flight.velocity = { x: 0, y: 0 };
+    worldSyncFlightRegion(world, CONTENT, flight);
+    const marker = model.targetMarkers(GAME_AREA).find(({ id }) => id === relayId);
+    expect(marker).toMatchObject({ id: relayId, identified: true });
+    expect(inGameArea(gameAreaPoint(flight.player, marker!))).toBe(false);
+    model.flightMarkerShown(marker!);
+
+    visit(model, relayId);
+    expect(model.useTarget).toBeUndefined();
+    const arrivals = [];
+    // Let the real reveal queue run without unrelated ambient asteroid physics.
+    flight.objects = flight.objects.filter(
+      (object) =>
+        object.persistent ||
+        (object.kind !== "rock" && !(object.kind === "debris" && object.asteroid)),
+    );
+    // Isolate the quiet window from passing patrols as well.
+    const quietLimit = CONVERSATION_TUNING.cooldownSeconds * 2 + 5;
+    for (let elapsed = 0; elapsed < quietLimit; elapsed += 0.5) {
+      flight.objects = flight.objects.filter(({ kind }) => kind !== "enemy");
+      flight.shots = flight.shots.filter(({ enemy }) => !enemy);
       flight.dangerFor = 0;
-      model.state.economy.stardust = 50;
-      expect(model.teleport(relayId)).toBe(true);
-      expect(flight.player).toMatchObject(active.relay);
-      model.step(0.01, idle);
-      expect(model.flightEvents).not.toContainEqual({ id: relayId, type: "discovered" });
-      expect(model.state.progress[5].discoveries).toBe(discoveries + 1);
-      flight.dangerFor = 0;
-      model.returnHome();
-      expect(model.state.flight).toBeNull();
-      model = new GameModel(CONTENT, () => 301, SAVE_RESTORE, model.save());
-      model.startGalaxy(5);
-      expect(capitalBossActor(model.state.flight!, id)).toBeUndefined();
-      expect(model.flightLog).toEqual([entry]);
-      expect(model.map?.places.filter((place) => place.id === relayId)).toHaveLength(1);
-      expect(model.state.progress[5].discoveries).toBe(discoveries + 1);
-    },
-  );
+      model.step(0.5, idle);
+      const line = model.conversation;
+      if (line?.key.startsWith(`poi:arrival:5:${relayId}:`)) {
+        arrivals.push({ speaker: line.speaker, text: line.text });
+      }
+      if (line) {
+        model.dismissConversation();
+      }
+    }
+    expect(arrivals).toEqual([
+      { speaker: "astra", text: "Saved to the map. We can come back any time." },
+    ]);
+    expect(model.state.dialogue).toBeNull();
+    expect(model.state.docked).toBeNull();
+    expect(model.state.progress[5].discoveries).toBe(discoveries + 1);
+    flight.dangerFor = 0;
+    model.state.economy.stardust = 50;
+    expect(model.teleport(relayId)).toBe(true);
+    expect(flight.player).toMatchObject(active.relay);
+    model.step(0.01, idle);
+    expect(model.flightEvents).not.toContainEqual({ id: relayId, type: "discovered" });
+    expect(model.state.progress[5].discoveries).toBe(discoveries + 1);
+    flight.dangerFor = 0;
+    model.returnHome();
+    expect(model.state.flight).toBeNull();
+    model = new GameModel(CONTENT, () => 301, SAVE_RESTORE, model.save());
+    model.startGalaxy(5);
+    expect(capitalBossActor(model.state.flight!, id)).toBeUndefined();
+    expect(model.flightLog).toEqual([entry]);
+    expect(model.map?.places.filter((place) => place.id === relayId)).toHaveLength(1);
+    expect(model.state.progress[5].discoveries).toBe(discoveries + 1);
+  });
 
   it("rejects invented settlement targets and a carried chapter item in another galaxy", () => {
     const model = launch();

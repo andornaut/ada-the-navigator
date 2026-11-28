@@ -9,9 +9,9 @@ import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { clearPhantomTraffic } from "../testing/phantomTraffic.ts";
 import { outlinesContact } from "./convex.ts";
-import { damageEnemy } from "./enemyAi.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
-import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
+import { spawnChapterEnemy } from "./flight.ts";
+import { hit } from "./flight/hitResolution.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { ACTIVE_CHUNK_RADIUS, worldActivateFlightRegion } from "./geography.ts";
@@ -19,7 +19,7 @@ import { stationPopulationObjects } from "./hostileStations.ts";
 import * as pendingPlans from "./phantomRequiredPlans.ts";
 import { shipTuning } from "./upgrades.ts";
 import { periodicWorldGrid } from "./worldCells.ts";
-import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
+import { worldPoint } from "./worldContacts.ts";
 
 const originallyBuilt = BUILT.has(6);
 afterEach(() => {
@@ -41,37 +41,20 @@ function launched(withAlly = false) {
   return model;
 }
 
-function disablePrimary(model: GameModel, ids: readonly string[]): void {
+function defeatPrimary(model: GameModel, ids: readonly string[]): void {
   const flight = model.state.flight!;
   for (const id of ids) {
     const represented = stationPopulationObjects(flight).find((object) => object.id === id)!;
     worldActivateFlightRegion(flightWorldContext(flight), CONTENT, represented, flight);
     const actor = flight.objects.find((object) => object.id === id)!;
-    const definition = enemyEquipmentDefinition(6, actor.enemy!);
-    const weapons = definition.hardpoints.filter(({ kind }) => kind === "weapon");
-    if (weapons.length) {
-      for (const part of weapons) {
-        actor.enemy = damageEnemy(
-          definition,
-          { amount: part.hp, hardpointId: part.id },
-          actor.enemy!,
-        );
-      }
-    } else {
-      actor.enemy = damageEnemy(
-        definition,
-        { amount: definition.hp, hardpointId: null },
-        actor.enemy!,
-      );
-      actor.hp = actor.enemy.hp;
-    }
+    hit(CONTENT, actor.hp, null, actor, flight, []);
   }
 }
 
 function freeSettlements(model: GameModel): void {
   const flight = model.state.flight!;
   for (const id of PHANTOM_DESTINATIONS) {
-    disablePrimary(model, flight.phantom!.blockades[id]!);
+    defeatPrimary(model, flight.phantom!.blockades[id]!);
     const site = stationPopulationObjects(flight).find((object) => object.id === id)!;
     flight.player = { x: site.x, y: site.y };
     flight.velocity = { x: 0, y: 0 };
@@ -86,30 +69,6 @@ function freeSettlements(model: GameModel): void {
   }
   expect(model.state.progress[6].phantom!.flagshipKnown).toBe(true);
   expect(flight.phantom!.phase).toBe("approach");
-}
-
-function fixedBlockers(model: GameModel) {
-  const flight = model.state.flight!;
-  const pending = pendingPlans.readPendingPhantomEncounter(flight);
-  if (pending?.kind !== "flagship") {
-    return [];
-  }
-  const world = flightWorldContext(flight);
-  return stationPopulationObjects(flight).filter((actor) => {
-    if (!actor.enemy?.disabled || actor.hp <= 0) {
-      return false;
-    }
-    const obstacle = enemyPhysicalBody(ROUTE_POSITION[flight.galaxy], actor.enemy);
-    return (
-      obstacle &&
-      pending.actors.some((incoming) => {
-        const body = enemyPhysicalBody(ROUTE_POSITION[flight.galaxy], incoming.enemy!);
-        return (
-          body && outlinesContact(body, incoming, obstacle, worldPoint(world, incoming, actor))
-        );
-      })
-    );
-  });
 }
 
 it("prepares one full next batch before optional generation and retains it unchanged on reads and Continue", () => {
@@ -141,7 +100,7 @@ it("saves the actual departing ally heading and restores older departures withou
   const ally = state.allies.find(({ id }) => id === "clover")!;
   ally.facing = { x: 0.6, y: -0.8 };
   ally.velocity = { x: 0, y: 0 };
-  disablePrimary(model, state.enemyIds);
+  defeatPrimary(model, state.enemyIds);
   model.step(0.000001, input);
   const current = state.departures?.find(({ id }) => id === ally.id);
   if (!current) {
@@ -153,7 +112,7 @@ it("saves the actual departing ally heading and restores older departures withou
   expect(restoreSave(model.save())?.flight?.phantom?.departures).toEqual(state.departures);
 });
 
-it("transfers actual phases and clears fixed-waypoint blockers only through canonical salvage and paging", () => {
+it("transfers the real batches after hull defeat and clears a fixed-waypoint obstruction", () => {
   const stored = vi.spyOn(pendingPlans, "storePendingPhantomEncounter");
   const model = launched();
   const flight = model.state.flight!;
@@ -162,7 +121,7 @@ it("transfers actual phases and clears fixed-waypoint blockers only through cano
   model.markerTargetDisplayed(PHANTOM_FLAGSHIP);
   expect(flight.markerActors?.knowledge[PHANTOM_FLAGSHIP]).toBeUndefined();
   const completed: number[] = [];
-  const salvaged = new Set<string>();
+  const blockerId = "fixture:flagship-blocker";
   for (let phase = 0; phase <= PHANTOM_TUNING.waves; phase++) {
     const beforeWave = flight.phantom!.wave;
     const beforePhase: string = flight.phantom!.phase;
@@ -170,16 +129,10 @@ it("transfers actual phases and clears fixed-waypoint blockers only through cano
     const seconds = 0.1;
     const physics = shipTuning(ECONOMY, CONTENT, flight.levels).physics;
     const world = flightWorldContext(flight);
-    const approach = Math.max(
-      0,
-      ...fixedBlockers(model).map((actor) => worldDistance(world, flight.player, actor)),
-    );
     const departure =
       (ACTIVE_CHUNK_RADIUS + 1) * periodicWorldGrid(world, CONTENT.tuning.chunkSize).pitch;
     const frameLimit = Math.ceil(
-      ((approach + departure) / physics.maxSpeed +
-        physics.accelerationSeconds * 2 +
-        physics.brakingSeconds) /
+      (departure / physics.maxSpeed + physics.accelerationSeconds * 2 + physics.brakingSeconds) /
         seconds,
     );
     for (let frame = 0; frame < frameLimit; frame++) {
@@ -195,42 +148,37 @@ it("transfers actual phases and clears fixed-waypoint blockers only through cano
           part.cooldown = 999;
         }
       }
-      const blockers = fixedBlockers(model);
-      const target = blockers.find((actor) => !actor.enemy!.salvaged);
-      let movement = { x: 1, y: 0 };
-      if (target) {
-        const delta = worldDelta(world, flight.player, target);
-        const distance = Math.hypot(delta.x, delta.y);
-        movement = distance ? { x: delta.x / distance, y: delta.y / distance } : { x: 0, y: 0 };
-      }
-      if (target && model.contextAction === "salvage") {
-        const candidates = stationPopulationObjects(flight).filter(
-          (actor) => actor.enemy?.disabled && !actor.enemy.salvaged,
+      const pending = pendingPlans.readPendingPhantomEncounter(flight);
+      if (frame === 0 && pending?.kind === "flagship") {
+        const leader = pending.actors.find(({ id }) => id === PHANTOM_FLAGSHIP)!;
+        const blocker = spawnChapterEnemy(CONTENT, "platform", blockerId, leader, flight, {
+          admit: () => true,
+        })!;
+        blocker.enemy!.hardpoints.forEach((part) => (part.cooldown = 999));
+        const position = ROUTE_POSITION[flight.galaxy];
+        const hull = enemyPhysicalBody(position, leader.enemy!)!;
+        const obstacle = enemyPhysicalBody(position, blocker.enemy!)!;
+        expect(
+          outlinesContact(hull, leader, obstacle, worldPoint(world, leader, blocker)),
+        ).toBeTruthy();
+        model.step(0.001, { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false });
+        expect(flight.phantom!.phase).toBe("waves");
+        expect(pendingPlans.readPendingPhantomEncounter(flight)).toBe(pending);
+        expect(stationPopulationObjects(flight).some(({ id }) => id === PHANTOM_FLAGSHIP)).toBe(
+          false,
         );
-        model.interact();
-        for (const actor of candidates) {
-          if (actor.enemy!.salvaged) {
-            salvaged.add(actor.id);
-          }
-        }
-        if (model.state.dialogue) {
-          model.choose("continue");
-        }
+        hit(CONTENT, blocker.hp, null, blocker, flight, []);
+        expect(blocker.hp).toBe(0);
       }
-      model.step(seconds, { aim: { x: 0, y: 0 }, move: movement, use: false });
+      model.step(seconds, { aim: { x: 0, y: 0 }, move: { x: 1, y: 0 }, use: false });
       if (flight.phantom!.wave !== beforeWave || flight.phantom!.phase !== beforePhase) {
         transferred = true;
         break;
       }
     }
-    expect(
-      transferred,
-      `phase ${phase}: mode=${model.state.mode}, shield=${flight.shield}, blockers=${fixedBlockers(
-        model,
-      )
-        .map(({ id }) => id)
-        .join(",")}`,
-    ).toBe(true);
+    expect(transferred, `phase ${phase}: mode=${model.state.mode}, shield=${flight.shield}`).toBe(
+      true,
+    );
     const batch = stored.mock.results
       .flatMap((result) => (result.type === "return" ? [result.value] : []))
       .findLast((batch) =>
@@ -248,13 +196,10 @@ it("transfers actual phases and clears fixed-waypoint blockers only through cano
       break;
     }
     completed.push(flight.phantom!.wave);
-    disablePrimary(model, flight.phantom!.enemyIds);
+    defeatPrimary(model, flight.phantom!.enemyIds);
   }
   expect(completed).toEqual([1, 2, 3]);
   expect(flight.phantom!.phase).toBe("flagship");
   expect(pendingPlans.readPendingPhantomEncounter(flight)).toBeNull();
-  for (const id of salvaged) {
-    const actor = stationPopulationObjects(flight).find((actor) => actor.id === id);
-    expect(actor?.enemy?.salvaged === true || flight.world.notables[id] === null).toBe(true);
-  }
+  expect(flight.world.notables[blockerId]).toBeNull();
 });
