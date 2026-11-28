@@ -61,7 +61,7 @@ part HP or mount count. Fighter escorts use the fighter range.
 | Retaliator      |               4–6 |       5 |
 | Frigate         |             10–20 |      15 |
 | Capital ship    |             20–30 |      25 |
-| Turret platform |             10–20 |      15 |
+| Turret platform |             15–25 |      20 |
 | Hostile station |             20–30 |      25 |
 
 For a frigate, capital ship or turret platform, salvage pays half the rolled

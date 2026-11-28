@@ -271,12 +271,12 @@ Heavies:
 
 | Position | Hardpoint | `frigate` hull | Frigate weapons | `capital` hull | Capital weapons | Heavy share | Turret platform hull | Hostile station hull |
 | -------: | --------: | -------------: | --------------: | -------------: | --------------: | ----------: | -------------------: | -------------------: |
-|        1 |        10 |             40 |               2 |             80 |               4 |          ×1 |                   50 |               Absent |
-|        2 |        10 |             45 |               2 |            100 |               4 |          ×1 |                   50 |               Absent |
-|        3 |        12 |             50 |               3 |            120 |               6 |        ×1.2 |                   55 |               Absent |
-|        4 |        12 |             55 |               3 |            140 |               6 |        ×1.3 |                   55 |                  175 |
-|        5 |        14 |             60 |               4 |            160 |               8 |        ×1.4 |                   60 |                  200 |
-|        6 |        14 |             65 |               4 |            180 |               8 |        ×1.5 |                   60 |                  225 |
+|        1 |        10 |             40 |               2 |             80 |               4 |          ×1 |                   60 |               Absent |
+|        2 |        10 |             45 |               2 |            100 |               4 |          ×1 |                   65 |               Absent |
+|        3 |        12 |             50 |               3 |            120 |               6 |        ×1.2 |                   70 |               Absent |
+|        4 |        12 |             55 |               3 |            140 |               6 |        ×1.3 |                   75 |                  175 |
+|        5 |        14 |             60 |               4 |            160 |               8 |        ×1.4 |                   80 |                  200 |
+|        6 |        14 |             65 |               4 |            180 |               8 |        ×1.5 |                   85 |                  225 |
 
 - Small-craft columns are hull HP. Outside Sunflower's staged ambient roster,
   the group bonus adds to both ends of each `swarm` and `fighter` group range. Lead is how much of Ada's movement enemy
