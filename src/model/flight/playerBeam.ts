@@ -1,14 +1,14 @@
 import { ROUTE_POSITION } from "../../data/galaxies.ts";
 import type { GameContent } from "../../data/types.ts";
 import { BEAM, type WeaponDefinition } from "../../data/weaponCatalog.ts";
-import type { Parts } from "../convex.ts";
+import { type Parts, rayCircle } from "../convex.ts";
 import { enemyHull, enemyPartOutline } from "../enemyBody.ts";
 import { MINE_PARTS } from "../mineShape.ts";
 import { playerWeaponCoverage, type PlayerWeaponCoverageContext } from "../playerWeaponCoverage.ts";
 import { direction } from "../shipPhysics.ts";
 import type { FlightEvent, FlightState, SpaceObject, Vec } from "../types.ts";
 import { flightWorldContext, worldPoint } from "../world/index.ts";
-import { beamPoint, outlineBeamStrike, rayCircle, sceneryEntry } from "./beamContact.ts";
+import { beamPoint, outlineBeamStrike, sceneryEntry } from "./beamContact.ts";
 import { liveParts, partReach } from "./enemyHitGeometry.ts";
 import { recordBeamFlash } from "./impactFeedback.ts";
 import { armed } from "./mines.ts";

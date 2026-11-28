@@ -11,6 +11,7 @@ import {
 } from "../../data/phantom.ts";
 import { encounterBossHud } from "../capitalBossEncounter.ts";
 import type { ChapterContext, ChapterResult } from "../chapterProtocol.ts";
+import { rayCircle } from "../convex.ts";
 import { dropRandom } from "../drops.ts";
 import { exclusionZoneRadius } from "../exclusionZones.ts";
 import {
@@ -23,7 +24,6 @@ import {
   spawnChapterEnemy,
   syncFlightRegion,
 } from "../flight.ts";
-import { rayCircle } from "../flight/beamContact.ts";
 import { stationPopulationObjects } from "../hostileStations/index.ts";
 import { stationFormationClear } from "../stations/formation/index.ts";
 import type {

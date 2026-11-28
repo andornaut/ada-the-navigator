@@ -41,6 +41,30 @@ export function worldParts(screen: Parts): Parts {
 }
 
 /**
+ * Where a ray from `origin` along unit `direction` first meets a circle, as a distance along
+ * the ray within `range`, or null. An origin inside the circle meets it at 0.
+ */
+export function rayCircle(
+  origin: Vec,
+  direction: Vec,
+  range: number,
+  center: Vec,
+  radius: number,
+): number | null {
+  const along = (center.x - origin.x) * direction.x + (center.y - origin.y) * direction.y;
+  const square = (center.x - origin.x) ** 2 + (center.y - origin.y) ** 2 - along * along;
+  if (square > radius * radius) {
+    return null;
+  }
+  const half = Math.sqrt(radius * radius - square);
+  if (along + half < 0) {
+    return null;
+  }
+  const entry = Math.max(0, along - half);
+  return entry <= range ? entry : null;
+}
+
+/**
  * A screen contact in world units. A screen edge with normal n is the world line with normal
  * P^T n, where P is the projection, and moving 1 world unit along that unit normal moves the
  * point |P^T n| screen px off the edge.

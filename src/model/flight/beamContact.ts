@@ -1,6 +1,6 @@
 import { BEAM } from "../../data/weaponCatalog.ts";
 import { sceneryBound, type Silhouette, worldSceneryContact } from "../asteroids.ts";
-import { outlineContact, type Parts, partsReach, worldParts } from "../convex.ts";
+import { outlineContact, type Parts, partsReach, rayCircle, worldParts } from "../convex.ts";
 import { impactSurface } from "../projectileImpact.ts";
 import type { FlightState, SpaceObject, Vec } from "../types.ts";
 import { flightWorldContext, worldPoint } from "../world/index.ts";
@@ -25,30 +25,6 @@ export function sampleBeam<T>(
     }
   }
   return null;
-}
-
-/**
- * Where a ray from `origin` along unit `direction` first meets a circle, as a distance along
- * the ray within `range`, or null. An origin inside the circle meets it at 0.
- */
-export function rayCircle(
-  origin: Vec,
-  direction: Vec,
-  range: number,
-  center: Vec,
-  radius: number,
-): number | null {
-  const along = (center.x - origin.x) * direction.x + (center.y - origin.y) * direction.y;
-  const square = (center.x - origin.x) ** 2 + (center.y - origin.y) ** 2 - along * along;
-  if (square > radius * radius) {
-    return null;
-  }
-  const half = Math.sqrt(radius * radius - square);
-  if (along + half < 0) {
-    return null;
-  }
-  const entry = Math.max(0, along - half);
-  return entry <= range ? entry : null;
 }
 
 /**
