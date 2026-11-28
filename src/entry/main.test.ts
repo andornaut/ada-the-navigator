@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { createLoadingAttempts } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-import type { AdaActionRootOptions } from "./ui/holdActionsAdapter.ts";
+import type { AdaActionRootOptions } from "../ui/holdActionsAdapter.ts";
 
 const boot = vi.hoisted(() => ({
   app: {},
@@ -38,32 +38,32 @@ const boot = vi.hoisted(() => ({
   stopVisibility: vi.fn(),
 }));
 vi.mock("virtual:ada-ui.css", () => ({}));
-vi.mock("./ui/foregroundInput.ts", () => ({
+vi.mock("../ui/foregroundInput.ts", () => ({
   registerForegroundSurface: (surface: unknown) => {
     boot.foregroundRegister(surface);
     return boot.foregroundLeave;
   },
 }));
-vi.mock("./ui/holdActionsAdapter.ts", () => ({
+vi.mock("../ui/holdActionsAdapter.ts", () => ({
   bindAdaActionRoot: (options: AdaActionRootOptions, root: HTMLElement) => {
     boot.appRoot(options, root);
     return { dispose: boot.appDispose };
   },
 }));
-vi.mock("./ui/pressScope.ts", () => ({ rootPressGuard: () => boot.appGuard }));
-vi.mock("./crash/install.ts", () => ({}));
-vi.mock("./ui/crashScreen.ts", () => ({
+vi.mock("../ui/pressScope.ts", () => ({ rootPressGuard: () => boot.appGuard }));
+vi.mock("./crash.ts", () => ({}));
+vi.mock("../ui/crashScreen.ts", () => ({
   CRASH_SCREEN: {
     stopGameOnCrash: (callback: () => void) => {
       boot.crash = callback;
     },
   },
 }));
-vi.mock("./saving/index.ts", () => ({
+vi.mock("../saving/index.ts", () => ({
   saves: { blockWrites: boot.blockWrites, load: boot.load },
 }));
-vi.mock("./game/sceneUi.ts", () => ({ flushScene: vi.fn(), refreshScene: vi.fn() }));
-vi.mock("./game/scene.ts", () => ({
+vi.mock("../game/sceneUi.ts", () => ({ flushScene: vi.fn(), refreshScene: vi.fn() }));
+vi.mock("../game/scene.ts", () => ({
   GameScene: class {
     events = new EventEmitter();
     controls = { reset: vi.fn(), setEnabled: vi.fn() };
@@ -129,15 +129,15 @@ vi.mock("phaser", () => ({
   Scenes: { Events: { CREATE: "create" } },
   WEBGL: 2,
 }));
-vi.mock("./pwa/index.ts", () => ({
+vi.mock("../pwa/index.ts", () => ({
   launchPhoneApp: boot.launch,
   requireNewerVersion: boot.requireNewer,
   setupPhoneApp: vi.fn(),
 }));
-vi.mock("./loading/startup.ts", () => ({ startupFence: boot.startup }));
-vi.mock("./loading/bootReveal.ts", () => ({ prepareBootReveal: () => boot.reveal }));
+vi.mock("../loading/startup.ts", () => ({ startupFence: boot.startup }));
+vi.mock("../loading/bootReveal.ts", () => ({ prepareBootReveal: () => boot.reveal }));
 vi.mock("./lifecycle.ts", () => ({ followPageVisibility: () => boot.stopVisibility }));
-vi.mock("./view/frameTurn.ts", () => ({ FRAME_TURN: {} }));
+vi.mock("../view/frameTurn.ts", () => ({ FRAME_TURN: {} }));
 vi.mock("@andornaut/game-kit/runtime/web/view/dom/watchFrameTurn", () => ({
   lockGameOrientation: vi.fn(),
 }));
@@ -172,7 +172,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 async function entry() {
   const module = await import("./main.ts");
-  const { requiredLoading } = await import("./loading/required.ts");
+  const { requiredLoading } = await import("../loading/required.ts");
   const attempt = createLoadingAttempts({
     load: async (attempt) => {
       await module.prepareGame(requiredLoading, attempt);
@@ -192,7 +192,7 @@ it("keeps launch before storage and passes the complete save result to the scene
   const { attempt } = await entry();
   const pending = attempt.start();
   await settle();
-  const { loadingFailureChrome } = await import("./ui/loadingFailure.ts");
+  const { loadingFailureChrome } = await import("../ui/loadingFailure.ts");
   expect(boot.launch).toHaveBeenCalledExactlyOnceWith(loadingFailureChrome);
   expect(boot.load).toHaveBeenCalledOnce();
   expect(boot.game).not.toHaveBeenCalled();
@@ -363,7 +363,7 @@ it("does not start launch or storage after an earlier module-download crash", as
 it("starts a newer-save update while required artwork is blocked, without constructing or writing", async () => {
   boot.load.mockResolvedValue({ status: "newer" });
   const module = await import("./main.ts");
-  const { requiredLoading } = await import("./loading/required.ts");
+  const { requiredLoading } = await import("../loading/required.ts");
   const unobserve = requiredLoading.observe({ retry: () => {}, status: () => "failed" });
   const prepare = createLoadingAttempts({
     load: (attempt) => module.prepareGame(requiredLoading, attempt),
@@ -380,7 +380,7 @@ it("starts a newer-save update while required artwork is blocked, without constr
 
 it("defers entry until an actual attempt and coalesces repeated cached-module callers", async () => {
   const module = await import("./main.ts");
-  const { requiredLoading } = await import("./loading/required.ts");
+  const { requiredLoading } = await import("../loading/required.ts");
   expect(boot.load).not.toHaveBeenCalled();
   expect(boot.game).not.toHaveBeenCalled();
   const attempts = createLoadingAttempts({
@@ -410,7 +410,7 @@ it("retains the crash write fence and pauses the actual owned instance after suc
 
 it("owns one App root before game construction with the actual required registry ports", async () => {
   const { attempt, module } = await entry();
-  const { requiredLoading, requiredReady } = await import("./loading/required.ts");
+  const { requiredLoading, requiredReady } = await import("../loading/required.ts");
   expect(boot.appRoot).toHaveBeenCalledOnce();
   expect(boot.foregroundRegister).toHaveBeenCalledExactlyOnceWith({
     escape: "pass-through",

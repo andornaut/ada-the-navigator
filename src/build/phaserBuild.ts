@@ -1,7 +1,7 @@
 import type { PhaserBuild } from "@andornaut/game-kit/build/phaserBuild";
 
 // The production build's Phaser (the kit's build/vite/phaserBuildPlugin): WebGL alone, as
-// src/main.ts asks for, with no sound manager, since the game's beeps are its own Web Audio
+// src/entry/main.ts asks for, with no sound manager, since the game's beeps are its own Web Audio
 // (src/platform/index.ts), and without the namespaces the game reads nothing from.
 // phaserBuild.test.ts fails when the game uses something it leaves out.
 export const PHASER_BUILD: PhaserBuild = {

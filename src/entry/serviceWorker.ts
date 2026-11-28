@@ -4,6 +4,6 @@
 // globals at load, so the build emits it as one classic script with no imports.
 import { runServiceWorker } from "@andornaut/game-kit/runtime/web/pwa/dom/serviceWorker";
 
-import { CACHE_POLICY } from "./cachePolicy.ts";
+import { CACHE_POLICY } from "../pwa/cachePolicy.ts";
 
 runServiceWorker(CACHE_POLICY);

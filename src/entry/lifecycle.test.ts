@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { followPageVisibility } from "../lifecycle.ts";
+import { followPageVisibility } from "./lifecycle.ts";
 
 class PageDocument extends EventTarget {
   visibilityState: DocumentVisibilityState = "visible";

@@ -1,19 +1,19 @@
 // The crash listener and lightweight progress shell precede every game-module download.
-import "../crash/install.ts";
+import "./crash.ts";
 import "@andornaut/game-kit/runtime/web/progress/dom/progressBar.css";
 
 import type { LaunchResult } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 
+import type { RequiredBootResources } from "../loading/bootReveal.ts";
+import { EntryReloadRequired } from "../loading/entryRecovery.ts";
+import { requiredLoading } from "../loading/required.ts";
+import { requireBootFonts } from "../loading/requiredFonts.ts";
+import { requireBootUi } from "../loading/requiredUi.ts";
+import { startLoading } from "../loading/startup.ts";
 import { preparePhoneLaunch } from "../pwa/index.ts";
 import { CRASH_SCREEN } from "../ui/crashScreen.ts";
 import { mountLoading } from "../ui/loadingBar.ts";
 import { loadingFailureChrome, mountStartupFailure } from "../ui/loadingFailure.ts";
-import type { RequiredBootResources } from "./bootReveal.ts";
-import { EntryReloadRequired } from "./entryRecovery.ts";
-import { requiredLoading } from "./required.ts";
-import { requireBootFonts } from "./requiredFonts.ts";
-import { requireBootUi } from "./requiredUi.ts";
-import { startLoading } from "./startup.ts";
 
 const app = document.getElementById("app");
 if (!app) {
@@ -65,7 +65,7 @@ async function startSupportedLaunch(app: HTMLElement, launched: Promise<LaunchRe
           return new Promise<never>(() => {});
         }
         const boot = bootResources();
-        const game = await import("../main.ts").catch((error: unknown) => {
+        const game = await import("./main.ts").catch((error: unknown) => {
           throw new EntryReloadRequired("module-import", error);
         });
         return {

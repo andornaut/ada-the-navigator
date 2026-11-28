@@ -12,17 +12,17 @@ const fixture = vi.hoisted(() => ({
   stopOnCrash: vi.fn(),
   subscribe: vi.fn(),
 }));
-vi.mock("../crash/install.ts", () => ({}));
+vi.mock("./crash.ts", () => ({}));
 vi.mock("../ui/crashScreen.ts", () => ({
   CRASH_SCREEN: { stopGameOnCrash: fixture.stopOnCrash },
 }));
 vi.mock("../pwa/index.ts", () => ({ preparePhoneLaunch: fixture.prepare }));
 vi.mock("../ui/loadingBar.ts", () => ({ mountLoading: fixture.mountLoading }));
-vi.mock("./required.ts", () => ({ requiredLoading: { subscribe: fixture.subscribe } }));
-vi.mock("./requiredFonts.ts", () => ({ requireBootFonts: fixture.requireFonts }));
-vi.mock("./requiredUi.ts", () => ({ requireBootUi: fixture.requireUi }));
-vi.mock("./startup.ts", () => ({ startLoading: fixture.startLoading }));
-vi.mock("../main.ts", () => {
+vi.mock("../loading/required.ts", () => ({ requiredLoading: { subscribe: fixture.subscribe } }));
+vi.mock("../loading/requiredFonts.ts", () => ({ requireBootFonts: fixture.requireFonts }));
+vi.mock("../loading/requiredUi.ts", () => ({ requireBootUi: fixture.requireUi }));
+vi.mock("../loading/startup.ts", () => ({ startLoading: fixture.startLoading }));
+vi.mock("./main.ts", () => {
   fixture.importGame();
   return {
     commitGame: vi.fn(),

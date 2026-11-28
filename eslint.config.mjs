@@ -38,10 +38,10 @@ const PHASER_MODULES = [
   "input/controls",
 ];
 const PHASER_MESSAGE =
-  `Only src/main.ts and the Phaser modules (${PHASER_MODULES.join(", ")}) may import ` +
+  `Only src/entry/main.ts and the Phaser modules (${PHASER_MODULES.join(", ")}) may import ` +
   "Phaser, the kit's phaser/ modules or a Phaser module.";
 const PHASER_FILES = [
-  "src/main.ts",
+  "src/entry/main.ts",
   ...PHASER_MODULES.flatMap((module) => [`src/${module}.ts`, `src/${module}.test.ts`]),
 ];
 const TEST_FILES = ["src/**/*.test.ts", "src/testSetup.ts"];

@@ -43,7 +43,7 @@ describe("the landing page's install markup", () => {
 
   it("loads the landing script and none of the game", () => {
     const scripts = [...LANDING.matchAll(/<script\b[^>]*\bsrc="([^"]+)"/gu)].map(([, src]) => src);
-    expect(scripts).toEqual(["/src/landing/main.ts"]);
+    expect(scripts).toEqual(["/src/entry/landing.ts"]);
   });
 });
 
@@ -94,7 +94,7 @@ describe("the landing page's Install button", () => {
     vi.stubGlobal("document", {
       getElementById: (id: string) => ({ install: button, "install-steps": dialog })[id] ?? null,
     });
-    await import("./main.ts");
+    await import("./landing.ts");
   }
   // Lets the click's install promise settle.
   const settle = () =>

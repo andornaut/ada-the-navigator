@@ -1,7 +1,7 @@
-// The crash screen listens before any other module runs (src/crash/install.ts).
-import "./crash/install.ts";
+// The crash screen listens before any other module runs (src/entry/crash.ts).
+import "./crash.ts";
 import "@andornaut/game-kit/runtime/web/view/frameTurnLandscapeGame.css";
-import "./style.css";
+import "../style.css";
 import "@andornaut/game-kit/runtime/web/ui/dom/ui.css";
 // The HTML interface's stylesheet (src/ui/stylesheet.ts, served by src/build/uiStylePlugin.ts).
 import "virtual:ada-ui.css";
@@ -16,29 +16,29 @@ import { lockGameOrientation } from "@andornaut/game-kit/runtime/web/view/dom/wa
 import { followFrameTurn } from "@andornaut/game-kit/runtime/web/view/phaser/followFrameTurn";
 import { Core, Game, Scale, Scenes, WEBGL } from "phaser";
 
-import { SCREEN } from "./data/screen.ts";
-import { GameScene } from "./game/scene.ts";
-import { flushScene, refreshScene } from "./game/sceneUi.ts";
-import { followPageVisibility } from "./lifecycle.ts";
-import { prepareBootReveal, type RequiredBootResources } from "./loading/bootReveal.ts";
-import { EntryReloadRequired } from "./loading/entryRecovery.ts";
-import { requiredLoading, requiredReady } from "./loading/required.ts";
-import { requireBootJets, validateBootCore } from "./loading/requiredCore.ts";
-import { requireSceneFiles } from "./loading/requiredFiles.ts";
-import { startupFence } from "./loading/startup.ts";
+import { SCREEN } from "../data/screen.ts";
+import { GameScene } from "../game/scene.ts";
+import { flushScene, refreshScene } from "../game/sceneUi.ts";
+import { prepareBootReveal, type RequiredBootResources } from "../loading/bootReveal.ts";
+import { EntryReloadRequired } from "../loading/entryRecovery.ts";
+import { requiredLoading, requiredReady } from "../loading/required.ts";
+import { requireBootJets, validateBootCore } from "../loading/requiredCore.ts";
+import { requireSceneFiles } from "../loading/requiredFiles.ts";
+import { startupFence } from "../loading/startup.ts";
 import {
   disposePlatformBack,
   launchPhoneApp,
   requireNewerVersion,
   setupPhoneApp,
-} from "./pwa/index.ts";
-import { saves } from "./saving/index.ts";
-import { CRASH_SCREEN } from "./ui/crashScreen.ts";
-import { registerForegroundSurface } from "./ui/foregroundInput.ts";
-import { bindAdaActionRoot } from "./ui/holdActionsAdapter.ts";
-import { loadingFailureChrome } from "./ui/loadingFailure.ts";
-import { rootPressGuard } from "./ui/pressScope.ts";
-import { FRAME_TURN } from "./view/frameTurn.ts";
+} from "../pwa/index.ts";
+import { saves } from "../saving/index.ts";
+import { CRASH_SCREEN } from "../ui/crashScreen.ts";
+import { registerForegroundSurface } from "../ui/foregroundInput.ts";
+import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";
+import { loadingFailureChrome } from "../ui/loadingFailure.ts";
+import { rootPressGuard } from "../ui/pressScope.ts";
+import { FRAME_TURN } from "../view/frameTurn.ts";
+import { followPageVisibility } from "./lifecycle.ts";
 
 const mount = document.getElementById("game-canvas");
 if (!mount) {

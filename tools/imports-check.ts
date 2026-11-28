@@ -30,14 +30,6 @@ const INPUT_STATE = new Set([
   "src/input/desktop.ts",
   "src/input/state.ts",
 ]);
-const ENTRIES = new Set([
-  "src/crash/install.ts",
-  "src/landing/main.ts",
-  "src/lifecycle.ts",
-  "src/loading/bootstrap.ts",
-  "src/main.ts",
-  "src/pwa/serviceWorker.ts",
-]);
 const SOURCE = /\.(?:mjs|mts|ts)$/u;
 const TEST = /\.test\.ts$/u;
 
@@ -80,7 +72,7 @@ export const LAYERS: readonly Layer[] = [
   },
   {
     band: "Platform",
-    holds: (path) => /^src\/(?:crash|loading|platform|pwa)\//u.test(path) && !ENTRIES.has(path),
+    holds: (path) => /^src\/(?:loading|platform|pwa)\//u.test(path),
     name: "platform",
   },
   {
@@ -93,7 +85,7 @@ export const LAYERS: readonly Layer[] = [
     holds: (path) => sceneModule(path) || path === "src/input/controls.ts",
     name: "scene",
   },
-  { band: "Entries", holds: (path) => ENTRIES.has(path), name: "entry" },
+  { band: "Entries", holds: (path) => path.startsWith("src/entry/"), name: "entry" },
   {
     band: "Support",
     holds: (path) =>

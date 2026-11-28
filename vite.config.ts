@@ -46,7 +46,7 @@ export default ({ command }: ConfigEnv) =>
       ...modules.precachePlugin({
         ...(command === "build" ? { buildId: metadata.buildId } : {}),
         pageHtmlFile: "play/index.html",
-        serviceWorkerSource: repoPath("src/pwa/serviceWorker.ts"),
+        serviceWorkerSource: repoPath("src/entry/serviceWorker.ts"),
       }),
       downloadSizeAssetsPlugin(),
       modules.securityHeadersPlugin(),

@@ -105,7 +105,10 @@ describe("layers", () => {
     expect(layerOf("src/ui/map/mapScreen.ts")).toBe(layer("ui"));
     expect(layerOf("src/ui/modal.ts")).toBe(layer("ui"));
     expect(layerOf("src/input/controls.ts")).toBe(layer("scene"));
-    expect(layerOf("src/loading/bootstrap.ts")).toBe(layer("entry"));
+    expect(layerOf("src/loading/startup.ts")).toBe(layer("platform"));
+    expect(layerOf("src/entry/bootstrap.ts")).toBe(layer("entry"));
+    expect(layerOf("src/entry/anotherPage.ts")).toBe(layer("entry"));
+    expect(layerOf("src/entry/landing.test.ts")).toBe(layer("support"));
     expect(layerOf("src/ui/modal.test.ts")).toBe(layer("support"));
     expect(layerOf("src/unknown.ts")).toBe(-1);
     expect(layer("data")).toBeLessThan(layer("model"));
@@ -123,11 +126,13 @@ describe("layers", () => {
           { target: "src/buildLabel.ts", typeOnly: false },
         ],
       ],
-      ["src/data/a.test.ts", [{ target: "src/main.ts", typeOnly: false }]],
+      ["src/data/a.test.ts", [{ target: "src/entry/main.ts", typeOnly: false }]],
+      ["src/loading/a.ts", [{ target: "src/entry/bootstrap.ts", typeOnly: false }]],
       ["src/extra.ts", []],
     ]);
     expect(layerFindings(graph)).toEqual([
       "src/data/a.ts (data) imports src/model/b.ts (model)",
+      "src/loading/a.ts (platform) imports src/entry/bootstrap.ts (entry)",
       "src/extra.ts is in no layer",
     ]);
   });

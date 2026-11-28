@@ -23,10 +23,11 @@ describes their implementation.
 
 ### Source layout
 
-- **Entry:** [`src/loading/bootstrap.ts`](loading/bootstrap.ts) starts phone launch
-  and the loading UI before importing [`src/main.ts`](main.ts), which creates
-  the Phaser game at the 720 × 360 base view in device pixels.
-  [`src/lifecycle.ts`](lifecycle.ts) sleeps the game loop while the page is hidden.
+- **Entry:** [`src/entry/`](entry/) contains the landing and play entries, crash
+  listener, page lifecycle, and service worker entry. [`bootstrap.ts`](entry/bootstrap.ts)
+  starts phone launch and the loading UI before importing [`main.ts`](entry/main.ts),
+  which creates the Phaser game at the 720 × 360 base view in device pixels.
+  [`lifecycle.ts`](entry/lifecycle.ts) sleeps the game loop while the page is hidden.
 - **Model:** [`src/model/`](model/) holds the Phaser-free game state (`GameModel`),
   flight, combat, economy and stories. It defines the save schema and restore
   port in [`saveSchema.ts`](model/saveSchema.ts).
@@ -47,13 +48,12 @@ describes their implementation.
   [`src/ui/layout/`](ui/layout/) computes every position, size and press area,
   with the spacing and type tokens in `tokens.ts`.
 - **Page:** [`src/loading/`](loading/) drives the kit's DOM progress bar,
-  [`src/pwa/`](pwa/) the service worker, install and update flows,
-  [`src/view/`](view/) the frame turn, and [`src/landing/`](landing/) the landing
-  page's Install button.
+  [`src/pwa/`](pwa/) holds cache policy and install and update flows, and
+  [`src/view/`](view/) handles frame turn.
 - **Build:** [`src/build/`](build/) holds the Node-only code the Vite build runs:
   the landing page and web manifest, the Phaser build, the stylesheet module, the
   icons, the precache and the security headers. No runtime module imports it.
-- **Phaser boundary:** only `src/main.ts` and the Phaser modules
+- **Phaser boundary:** only `src/entry/main.ts` and the Phaser modules
   (`PHASER_MODULES` in [`eslint.config.mjs`](../eslint.config.mjs)) import
   Phaser, the kit's `phaser/` modules or one another, enforced by ESLint's
   `no-restricted-imports` and, by resolved path, `import-x/no-restricted-paths`. The model, data, layout, interface and the rest
@@ -61,7 +61,7 @@ describes their implementation.
 - **Layers:** [ESLint](../eslint.config.mjs) places every
   module of `src/` and `tools/` in a layer of the shared source-structure bands,
   lowest first: lib and data, model, saving, art (`src/art/` and the Phaser-free
-  `src/game/` modules), layout and input state, platform (loading, PWA, crash),
+  `src/game/` modules), layout and input state, platform (loading and PWA),
   ui, scene, entries, then support (build, tests, tools). Outside tests, imports point down only,
   including type-only imports. The repository lint reports runtime cycles, and
   erased type-only edges may close a cycle within a layer.
@@ -176,7 +176,7 @@ icon reaches an installed app; the source pages and manifest keep plain URLs.
 `src/pwa/index.ts` exposes the install state, its change listener, the install
 prompt and the browser whose own menu installs the game (iOS and Firefox for
 Android). The dev server registers no service worker. The landing page's
-Install button runs on `src/landing/main.ts`, which loads only the kit's
+Install button runs on `src/entry/landing.ts`, which loads only the kit's
 install and launch modules: it shows while the browser can install the game, and
 opens the browser's prompt or that browser's menu steps.
 
