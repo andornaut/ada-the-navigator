@@ -6,7 +6,7 @@ import { uiIconUrl } from "../../data/uiIconUrl.ts";
 import type { MapPlace } from "../../model/map.ts";
 import type { QuestEntry } from "../../model/questDetails.ts";
 import * as actionBinding from "../actions/actionBinding.ts";
-import { fixtureActionRoot } from "../actions/actionRootFixture.ts";
+import { fixtureActionRoot } from "../actions/actionRoot.fixture.ts";
 import { slice, units } from "../layout/css.ts";
 import { QUEST_ICON, QUESTS_SCREEN_STYLE } from "../layout/questsScreen.ts";
 import { BUTTON_GAP } from "../layout/tokens.ts";

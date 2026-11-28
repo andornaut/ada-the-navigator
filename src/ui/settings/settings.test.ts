@@ -4,7 +4,7 @@ import { CONTENT } from "../../data/content.ts";
 import { SETTINGS_STATE_LABELS } from "../../data/settingsCopy.ts";
 import * as actionBinding from "../actions/actionBinding.ts";
 import { resolveAdaHoldAction } from "../actions/actionBinding.ts";
-import { fixtureActionRoot } from "../actions/actionRootFixture.ts";
+import { fixtureActionRoot } from "../actions/actionRoot.fixture.ts";
 import { currentView, rootPressGuard } from "../actions/pressScope.ts";
 import { DEVICE_STORAGE_KEYS } from "../deviceSettings.ts";
 import { PAGE_DIVIDER_STYLE } from "../layout/pageDivider.ts";

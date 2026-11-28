@@ -23,7 +23,7 @@ const INPUT_STATE = new Set([
   "src/input/state.ts",
 ]);
 const SOURCE = /\.(?:mjs|mts|ts)$/u;
-const TEST = /\.test\.ts$/u;
+const TEST_SOURCE = /\.(?:test|fixture)\.ts$/u;
 
 const uiLayout = (path: string) => /^src\/ui\/(?:map\/)?layout\//u.test(path);
 
@@ -124,9 +124,9 @@ export const LAYERS: readonly Layer[] = [
   },
 ];
 
-/** The index in LAYERS of a repository path, or -1. Tests sit in the top layer, Support. */
+/** The index in LAYERS of a repository path, or -1. Tests and their fixtures sit in Support. */
 export function layerOf(path: string): number {
-  return TEST.test(path) ? LAYERS.length - 1 : LAYERS.findIndex((layer) => layer.holds(path));
+  return TEST_SOURCE.test(path) ? LAYERS.length - 1 : LAYERS.findIndex((layer) => layer.holds(path));
 }
 
 /** A relative import: its target, and whether every import of it is type-only. */
@@ -260,7 +260,7 @@ export function layerFindings(graph: Graph): string[] {
       findings.push(`${path} is in no layer`);
       continue;
     }
-    if (TEST.test(path)) {
+    if (TEST_SOURCE.test(path)) {
       continue;
     }
     for (const { target } of imports) {

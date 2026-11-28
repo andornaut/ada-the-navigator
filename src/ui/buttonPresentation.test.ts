@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { fixtureActionRoot } from "./actions/actionRootFixture.ts";
+import { fixtureActionRoot } from "./actions/actionRoot.fixture.ts";
 import {
   applyAdaControlTheme,
   createAdaPageDivider,

@@ -6,7 +6,7 @@ import {
   resolveAdaHoldAction,
 } from "../actions/actionBinding.ts";
 import { registerAdaActionRoot } from "../actions/actionRegistry.ts";
-import { fixtureActionRoot } from "../actions/actionRootFixture.ts";
+import { fixtureActionRoot } from "../actions/actionRoot.fixture.ts";
 import { type AchievementEntry, createAchievementsCard } from "./achievementsCard.ts";
 
 const corruption = vi.hoisted(() => ({ factory: false, row: false }));

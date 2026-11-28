@@ -8,7 +8,7 @@ import { canRechargeShield } from "../model/shieldRecharge.ts";
 import { noLevels, shipTuning } from "../model/upgrades.ts";
 import * as actionBinding from "./actions/actionBinding.ts";
 import { resolveAdaHoldAction } from "./actions/actionBinding.ts";
-import { fixtureActionRoot } from "./actions/actionRootFixture.ts";
+import { fixtureActionRoot } from "./actions/actionRoot.fixture.ts";
 import { fromHudEdge, pixels, units } from "./layout/css.ts";
 import { countSlot, SHIELD_PILL, STATUS_PILL } from "./layout/playView.ts";
 import { shieldRasterGeometry } from "./layout/shieldGeometry.ts";

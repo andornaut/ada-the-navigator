@@ -20,7 +20,7 @@ import {
   assertAdaActionMetadata,
   resolveAdaHoldAction,
 } from "./actions/actionBinding.ts";
-import { fixtureActionRoot } from "./actions/actionRootFixture.ts";
+import { fixtureActionRoot } from "./actions/actionRoot.fixture.ts";
 import { units } from "./layout/css.ts";
 import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
 import { safeGameArea } from "./layout/playView.ts";

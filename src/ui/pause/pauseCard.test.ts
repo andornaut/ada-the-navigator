@@ -4,7 +4,7 @@ import { CONTENT } from "../../data/content.ts";
 import { ControlState } from "../../input/state.ts";
 import type { LocalMap, MapPlace } from "../../model/map.ts";
 import * as actionBinding from "../actions/actionBinding.ts";
-import { fixtureActionRoot } from "../actions/actionRootFixture.ts";
+import { fixtureActionRoot } from "../actions/actionRoot.fixture.ts";
 import { inCurrentView } from "../actions/pressScope.ts";
 import * as mapUI from "../map/index.ts";
 import { mapScreenLabels } from "../map/index.ts";

@@ -4,7 +4,7 @@ import { uiIconUrl } from "../../data/uiIconUrl.ts";
 import { WEAPON_DETAIL_LABELS, weaponDetailLines } from "../../data/weaponDetails.ts";
 import { resolveAdaHoldAction } from "../actions/actionBinding.ts";
 import { registerAdaActionRoot } from "../actions/actionRegistry.ts";
-import { fixtureActionRoot } from "../actions/actionRootFixture.ts";
+import { fixtureActionRoot } from "../actions/actionRoot.fixture.ts";
 import { enterPressView, rootPressGuard } from "../actions/pressScope.ts";
 import { compactLevelName } from "../compactLevelName.ts";
 import { createWeaponDetailCard } from "./weaponDetailCard.ts";

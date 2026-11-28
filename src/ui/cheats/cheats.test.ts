@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { CHEAT_COPY } from "../../data/cheatCopy.ts";
 import { uiIconUrl } from "../../data/uiIconUrl.ts";
 import { resolveAdaHoldAction } from "../actions/actionBinding.ts";
-import { fixtureActionRoot } from "../actions/actionRootFixture.ts";
+import { fixtureActionRoot } from "../actions/actionRoot.fixture.ts";
 import { bindAdaActionRoot } from "../actions/holdActionsAdapter.ts";
 import { rootPressGuard } from "../actions/pressScope.ts";
 import type { CheatAction } from "../cheatActions.ts";

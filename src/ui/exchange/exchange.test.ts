@@ -7,7 +7,7 @@ import {
   previewImmediateExchange,
 } from "../../model/exchange.ts";
 import * as actionBinding from "../actions/actionBinding.ts";
-import { fixtureActionRoot } from "../actions/actionRootFixture.ts";
+import { fixtureActionRoot } from "../actions/actionRoot.fixture.ts";
 import { REFUSAL } from "../refusal.ts";
 import { createExchangeView } from "./exchange.ts";
 

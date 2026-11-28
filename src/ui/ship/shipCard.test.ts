@@ -4,7 +4,7 @@ import { CONTENT } from "../../data/content.ts";
 import { uiIconUrl } from "../../data/uiIconUrl.ts";
 import * as actionBinding from "../actions/actionBinding.ts";
 import { resolveAdaHoldAction } from "../actions/actionBinding.ts";
-import { fixtureActionRoot } from "../actions/actionRootFixture.ts";
+import { fixtureActionRoot } from "../actions/actionRoot.fixture.ts";
 import {
   aboardLabel,
   disposeShipSections,

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { bindAdaAction, resolveAdaHoldAction } from "./actions/actionBinding.ts";
 import { registerAdaActionRoot } from "./actions/actionRegistry.ts";
-import { fixtureActionRoot } from "./actions/actionRootFixture.ts";
+import { fixtureActionRoot } from "./actions/actionRoot.fixture.ts";
 import { bindAdaActionRoot } from "./actions/holdActionsAdapter.ts";
 import { enterPressView, rootPressGuard } from "./actions/pressScope.ts";
 import {

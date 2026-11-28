@@ -8,7 +8,7 @@ import { CONTENT } from "../../data/content.ts";
 import * as actionBinding from "../actions/actionBinding.ts";
 import { resolveAdaHoldAction } from "../actions/actionBinding.ts";
 import { registerAdaActionRoot } from "../actions/actionRegistry.ts";
-import { fixtureActionRoot } from "../actions/actionRootFixture.ts";
+import { fixtureActionRoot } from "../actions/actionRoot.fixture.ts";
 import { bindAdaActionRoot } from "../actions/holdActionsAdapter.ts";
 import { currentView, enterPressView, rootPressGuard } from "../actions/pressScope.ts";
 import * as refusal from "../refusal.ts";

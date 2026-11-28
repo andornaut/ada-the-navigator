@@ -15,7 +15,7 @@ import { CONTENT } from "../data/content.ts";
 import type { RoutePosition } from "../data/galaxies.ts";
 import * as actionBinding from "./actions/actionBinding.ts";
 import { resolveAdaHoldAction } from "./actions/actionBinding.ts";
-import { fixtureActionRoot } from "./actions/actionRootFixture.ts";
+import { fixtureActionRoot } from "./actions/actionRoot.fixture.ts";
 import { createGalaxyMap, type GalaxyMapView } from "./galaxy/index.ts";
 import { createJumpOverlay, type SheetArt } from "./jumpOverlay.ts";
 import { drawShipJets, drawShipTail } from "./shipJetCanvas.ts";

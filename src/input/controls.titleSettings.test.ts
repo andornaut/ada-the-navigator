@@ -4,7 +4,7 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
-import { fixtureActionRoot } from "../ui/actions/actionRootFixture.ts";
+import { fixtureActionRoot } from "../ui/actions/actionRoot.fixture.ts";
 import { createNavigationButton } from "../ui/navigationButton.ts";
 import { createHudNavigationButton } from "../ui/pauseButton.ts";
 import { EXIT_SHOWN_ATTRIBUTE } from "../ui/settings/index.ts";

@@ -120,6 +120,7 @@ describe("layers", () => {
     expect(layerOf("src/entry/bootstrap.ts")).toBe(layer("entry"));
     expect(layerOf("src/entry/anotherPage.ts")).toBe(layer("entry"));
     expect(layerOf("src/entry/landing.test.ts")).toBe(layer("support"));
+    expect(layerOf("src/ui/actions/actionRoot.fixture.ts")).toBe(layer("support"));
     expect(layerOf("src/ui/modal.test.ts")).toBe(layer("support"));
     expect(layerOf("src/unknown.ts")).toBe(-1);
     expect(layer("data")).toBeLessThan(layer("model"));
@@ -140,12 +141,17 @@ describe("layers", () => {
       ["src/data/a.test.ts", [{ target: "src/entry/main.ts", typeOnly: false }]],
       ["src/loading/a.ts", [{ target: "src/entry/bootstrap.ts", typeOnly: false }]],
       ["src/art/a.ts", [{ target: "src/game/nested/b.ts", typeOnly: true }]],
+      [
+        "src/ui/card.ts",
+        [{ target: "src/ui/actions/actionRoot.fixture.ts", typeOnly: false }],
+      ],
       ["src/extra.ts", []],
     ]);
     expect(layerFindings(graph)).toEqual([
       "src/data/a.ts (data) imports src/model/b.ts (model)",
       "src/loading/a.ts (platform) imports src/entry/bootstrap.ts (entry)",
       "src/art/a.ts (art) imports src/game/nested/b.ts (scene)",
+      "src/ui/card.ts (ui) imports src/ui/actions/actionRoot.fixture.ts (support)",
       "src/extra.ts is in no layer",
     ]);
   });
