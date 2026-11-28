@@ -3,7 +3,7 @@ import { GALAXY_NUMBERS } from "./galaxies.ts";
 import { JOB_LORE } from "./jobs.ts";
 import { LANDMARK_SCAN_COPY } from "./landmarkScanCopy.ts";
 import { NEEDLE_COPY } from "./needleCopy.ts";
-import { PHANTOM_COPY } from "./phantom.ts";
+import { PHANTOM_COPY, PHANTOM_SURRENDER_CHATTER } from "./phantom.ts";
 import { TARGET_MARKER_RANGE } from "./targetMarkers.ts";
 import type { GalaxyNumber } from "./types.ts";
 
@@ -228,6 +228,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
       "flagshipAttack",
       "flagshipHardpoint",
       "flagshipDisabled",
+      ...PHANTOM_SURRENDER_CHATTER,
     ] as const
   ).map((id): Conversation => ({
     id: `chapter:phantom:${id}`,

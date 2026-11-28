@@ -11,6 +11,7 @@ export const PHANTOM_DESTINATIONS = [
   "phantomSettlement3",
 ] as const;
 export const PHANTOM_FLAGSHIP = "phantomFlagship";
+export const PHANTOM_SURRENDER_CHATTER = ["flagshipStandDown", "flagshipSurrender"] as const;
 export const PHANTOM_TUNING = {
   allies: 8,
   // Preserve the ally response previously borrowed from Ada's old engine curve.
@@ -174,6 +175,8 @@ export const PHANTOM_COPY: Readonly<Record<string, PhantomCopy>> = {
       },
     ],
   },
+  flagshipStandDown: { lines: [line("ada", "Archie, stand down. This is over.")] },
+  flagshipSurrender: { lines: [line("archie", "All right. Take the disk.")] },
   phantomSettlement1: {
     lines: [
       line("blurbs", "Blub! The drones are gone!"),

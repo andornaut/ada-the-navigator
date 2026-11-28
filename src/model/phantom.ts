@@ -6,6 +6,7 @@ import {
   PHANTOM_COPY,
   PHANTOM_DESTINATIONS,
   PHANTOM_FLAGSHIP,
+  PHANTOM_SURRENDER_CHATTER,
   PHANTOM_TUNING as T,
 } from "../data/phantom.ts";
 import { encounterBossHud } from "./capitalBossEncounter.ts";
@@ -60,6 +61,7 @@ const PHANTOM_CHATTER = [
   "flagshipAttack",
   "flagshipHardpoint",
   "flagshipDisabled",
+  ...PHANTOM_SURRENDER_CHATTER,
 ] as const;
 export type PhantomChatter = (typeof PHANTOM_CHATTER)[number];
 

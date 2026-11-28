@@ -10,6 +10,7 @@ import {
   lineDuration,
 } from "../data/conversations.ts";
 import { type EnemyArchetype, enemyCatalog } from "../data/enemyCatalog.ts";
+import { PHANTOM_SURRENDER_CHATTER } from "../data/phantom.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
@@ -97,6 +98,36 @@ const drones = { dronesNear: true, inDanger: true };
 const quietHeard = ["quiet:1:lonely", "quiet:1:tail", "quiet:1:name"];
 
 describe("Phantom flight chatter", () => {
+  it("resumes only Archie's pending surrender reply after Ada's displayed line", () => {
+    const pending: PhantomChatter[] = [...PHANTOM_SURRENDER_CHATTER];
+    const initial = director(6, [], { move: true });
+    initial.talk.queuePhantomChatter(pending);
+    initial.talk.step(0.01, "refusal", calm);
+    expect(initial.talk.showing).toBeNull();
+    expect(pending).toEqual(PHANTOM_SURRENDER_CHATTER);
+    initial.talk.step(0.01, null, calm);
+    expect(initial.talk.showing?.line).toMatchObject({
+      speaker: "ada",
+      text: "Archie, stand down. This is over.",
+    });
+    expect(pending).toEqual(["flagshipSurrender"]);
+
+    const continued = director(6, initial.heard, { move: true });
+    const restored = structuredClone(pending);
+    continued.talk.queuePhantomChatter(restored);
+    continued.talk.queuePhantomChatter(restored);
+    continued.talk.step(0.01, null, calm);
+    expect(continued.talk.showing?.line).toMatchObject({
+      speaker: "archie",
+      text: "All right. Take the disk.",
+    });
+    expect(restored).toEqual([]);
+    continued.talk.advance();
+    continued.talk.queuePhantomChatter(restored);
+    continued.talk.step(0.01, null, calm);
+    expect(continued.talk.pending("chapter:phantom:flagshipSurrender")).toBe(false);
+  });
+
   it("keeps a blocked or unshown hardpoint cue pending across Continue and retires it on display", () => {
     const pending: PhantomChatter[] = ["flagshipHardpoint"];
     const id = "chapter:phantom:flagshipHardpoint";
