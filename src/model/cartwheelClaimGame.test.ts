@@ -20,7 +20,7 @@ import { pennyInstance, pennyPoints } from "./conversations.ts";
 import { outlineContact, worldParts } from "./convex.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
-import { ensureStation } from "./flight.ts";
+import { ensureStation, openCartwheelClaimField } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
@@ -224,6 +224,7 @@ it.each(["defeated", "salvaged"] as const)(
       actor.enemy!.salvaged = true;
       actor.enemy!.engaged = false;
       model.state.progress[2].claim = { ...claim, ...milestone, outcome, phase: "resolved" };
+      openCartwheelClaimField(CONTENT, flight, claim);
       const paid = model.state.economy.stardust;
       const pending = flight.objects.filter(({ kind }) => kind === "pickup");
       model = relaunch(CONTENT, model.save());
