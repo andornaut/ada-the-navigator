@@ -3,19 +3,19 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 import { REFUSAL_ATTRIBUTES } from "@andornaut/game-kit/runtime/web/ui/dom/refusalCue";
 
-import { CHEAT_COPY } from "../data/cheatCopy.ts";
-import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
-import { type CheatAction, runCheatAction } from "./cheatActions.ts";
+import { CHEAT_COPY } from "../../data/cheatCopy.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "../actionBinding.ts";
+import { type CheatAction, runCheatAction } from "../cheatActions.ts";
+import { SCROLL } from "../layout/contentCard.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "../layout/viewScale.ts";
+import { createActions, createCard, setFooterAction } from "../modal.ts";
+import { createStandardCloseAction } from "../modalClose.ts";
+import { createModalLayer } from "../modalLayer.ts";
+import { inCurrentView } from "../pressScope.ts";
+import { refuse } from "../refusal.ts";
+import { createStandardTextAction } from "../standardTextAction.ts";
 import { type CheatRowData, type CheatsSchema, cheatsTree } from "./cheatsTree.ts";
-import { SCROLL } from "./layout/contentCard.ts";
-import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import { createActions, createCard, setFooterAction } from "./modal.ts";
-import { createStandardCloseAction } from "./modalClose.ts";
-import { createModalLayer } from "./modalLayer.ts";
-import { inCurrentView } from "./pressScope.ts";
-import { refuse } from "./refusal.ts";
-import { createStandardTextAction } from "./standardTextAction.ts";
 
 export interface CheatLabels {
   readonly back: string;

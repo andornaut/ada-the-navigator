@@ -1,7 +1,7 @@
 import { validateLayoutTree } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import { describe, expect, it } from "vitest";
 
-import { CONTENT } from "../data/content.ts";
+import { CONTENT } from "../../data/content.ts";
 import { restartTree } from "./restartTree.ts";
 
 const labels = {

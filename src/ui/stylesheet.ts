@@ -24,7 +24,7 @@ import { LOADING_STYLE } from "./loadingBar.ts";
 import { MAP_SCREEN_STYLE } from "./map/index.ts";
 import { NOTICE_STYLE } from "./notice.ts";
 import { PENNY_MARKERS_STYLE } from "./pennyMarkers.ts";
-import { RESTART_STYLE } from "./restartCard.ts";
+import { RESTART_STYLE } from "./restart/index.ts";
 import { SETTINGS_STYLE } from "./settings/index.ts";
 import { START_SCREEN_STYLE } from "./startScreen.ts";
 import { STATUS_PILL_STYLE } from "./statusPill.ts";

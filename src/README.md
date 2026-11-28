@@ -182,7 +182,7 @@ opens the browser's prompt or that browser's menu steps.
 ## Dev tools
 
 - **Cheats:** the browser-tab cheats are defined in [gameplay/cheats.md](../gameplay/cheats.md)
-  and implemented in [`src/ui/cheats.ts`](ui/cheats.ts) and
+  and implemented in [`src/ui/cheats/cheats.ts`](ui/cheats/cheats.ts) and
   [`src/model/cheats.ts`](model/cheats.ts).
 - **Launch worlds:** `ADA_LAUNCH_SEED=<n> npm test` replays the suite in another
   launch-seed world on demand; the test category runs only the default world.

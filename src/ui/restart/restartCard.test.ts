@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { resolveAdaHoldAction } from "./actionBinding.ts";
-import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
-import { enterPressView, rootPressGuard } from "./pressScope.ts";
+import { resolveAdaHoldAction } from "../actionBinding.ts";
+import { bindAdaActionRoot } from "../holdActionsAdapter.ts";
+import { enterPressView, rootPressGuard } from "../pressScope.ts";
 import { createRestartCard } from "./restartCard.ts";
 
 let doc: EventTarget & {
@@ -172,8 +172,8 @@ const native = vi.hoisted(() => ({
   present: vi.fn(),
   tap: vi.fn(),
 }));
-vi.mock("./modal.ts", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("./modal.ts")>()),
+vi.mock("../modal.ts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../modal.ts")>()),
   createActions: () => new Element(),
   createButton: (label: string) => {
     const button = new Element("button");
@@ -200,8 +200,8 @@ vi.mock("./modal.ts", async (importOriginal) => ({
     root.dataset.footerAction = intent;
   },
 }));
-vi.mock("./buttonPresentation.ts", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("./buttonPresentation.ts")>();
+vi.mock("../buttonPresentation.ts", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../buttonPresentation.ts")>();
   return {
     ...actual,
     applyAdaControlTheme: () => {},

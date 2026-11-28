@@ -39,7 +39,7 @@ import {
 import { assertAdaActionBindings, bindAdaAction } from "../ui/actionBinding.ts";
 import { type BackLayer, createBackStack, pressBack } from "../ui/backStack.ts";
 import type { CheatAction } from "../ui/cheatActions.ts";
-import { type CheatLabels, createCheats } from "../ui/cheats.ts";
+import { type CheatLabels, createCheats } from "../ui/cheats/index.ts";
 import { consumeContextQuestUse, createContextQuestIcon } from "../ui/contextQuestUse.ts";
 import type { DeviceStorage } from "../ui/deviceSettings.ts";
 import { registerForegroundSurface, registerGameEscape } from "../ui/foregroundInput.ts";

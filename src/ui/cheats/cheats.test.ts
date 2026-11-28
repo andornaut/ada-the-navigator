@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-import { CHEAT_COPY } from "../data/cheatCopy.ts";
-import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { resolveAdaHoldAction } from "./actionBinding.ts";
-import { fixtureActionRoot } from "./actionRootFixture.ts";
-import type { CheatAction } from "./cheatActions.ts";
+import { CHEAT_COPY } from "../../data/cheatCopy.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
+import { resolveAdaHoldAction } from "../actionBinding.ts";
+import { fixtureActionRoot } from "../actionRootFixture.ts";
+import type { CheatAction } from "../cheatActions.ts";
+import { bindAdaActionRoot } from "../holdActionsAdapter.ts";
+import { rootPressGuard } from "../pressScope.ts";
 import { createCheats } from "./cheats.ts";
-import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
-import { rootPressGuard } from "./pressScope.ts";
 
 const corruption = vi.hoisted(() => ({ factory: false }));
 const mountedRoots = new Set<Element>();
@@ -173,18 +173,18 @@ class Element extends EventTarget {
   }
 }
 
-vi.mock("./modalLayer.ts", () => ({
+vi.mock("../modalLayer.ts", () => ({
   createModalLayer: () => ({ dispose: vi.fn(), open: () => vi.fn() }),
 }));
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
   focusTarget: (node: Element) => node.focus(),
 }));
 
-vi.mock("./layout/viewScale.ts", () => ({
+vi.mock("../layout/viewScale.ts", () => ({
   VIEW_SCALE_EVENT: "ada-view-scale",
   readViewUnit: () => 1,
 }));
-vi.mock("./modal.ts", () => ({
+vi.mock("../modal.ts", () => ({
   createActions: (items: { button: Element }[]) => {
     const row = new Element();
     row.append(...items.map((item) => item.button));

@@ -1,6 +1,6 @@
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
-import type { AdaLayoutSchema } from "./layoutTree.ts";
+import type { AdaLayoutSchema } from "../layoutTree.ts";
 import type { RestartLabels } from "./restartCard.ts";
 
 /** Start confirmations and the selective campaign rewind in Cheats. */
