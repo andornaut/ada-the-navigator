@@ -202,6 +202,7 @@ import {
 import { initializeGalaxyGeography } from "./galaxyGeography.ts";
 import { projectCapitalBossHud } from "./game/bossHud.ts";
 import { earlyRequiredDestination, galaxyRoute, newGameState } from "./game/campaignState.ts";
+import { dockedExchange } from "./game/dockedExchange.ts";
 import { dockedShopGroups, dockedShopOffers, dockedShopSupply } from "./game/dockedShop.ts";
 import { encounterCues, stationsInRange } from "./game/encounterCues.ts";
 import { projectFlightLog } from "./game/flightLog.ts";
@@ -3014,41 +3015,28 @@ export class GameModel {
   }
   /** Exchange uses the one fungible ore balance and never emits a pickup event. */
   previewExchange(order: ExchangeOrder): ExchangePreview {
-    const flight = this.state.flight;
-    if (this.state.mode !== "space" || !flight || !this.state.docked || this.state.dialogue) {
-      return { kind: "refused", reason: "unavailable" };
-    }
-    return quoteExchange(
-      EXCHANGE_RATES,
-      { ore: flight.cargo, stardust: this.state.economy.stardust },
-      order,
-    );
+    const exchange = dockedExchange(this.state);
+    return exchange
+      ? quoteExchange(EXCHANGE_RATES, exchange.balances, order)
+      : { kind: "refused", reason: "unavailable" };
   }
   confirmExchange(quote: ExchangeQuote): ExchangePreview {
-    const flight = this.state.flight;
-    if (this.state.mode !== "space" || !flight || !this.state.docked || this.state.dialogue) {
+    const exchange = dockedExchange(this.state);
+    if (!exchange) {
       return { kind: "refused", reason: "unavailable" };
     }
-    const result = confirmExchange(
-      EXCHANGE_RATES,
-      { ore: flight.cargo, stardust: this.state.economy.stardust },
-      quote,
-    );
+    const result = confirmExchange(EXCHANGE_RATES, exchange.balances, quote);
     if (result.kind === "quote") {
-      flight.cargo = result.after.ore;
+      exchange.flight.cargo = result.after.ore;
       this.state.economy.stardust = result.after.stardust;
     }
     return result;
   }
   previewImmediateExchange(order: ImmediateExchangeOrder): ImmediateExchangePreview {
-    const flight = this.state.flight;
-    if (this.state.mode !== "space" || !flight || !this.state.docked || this.state.dialogue) {
-      return { kind: "refused", reason: "unavailable" };
-    }
-    return previewImmediateExchange(
-      { ore: flight.cargo, stardust: this.state.economy.stardust },
-      order,
-    );
+    const exchange = dockedExchange(this.state);
+    return exchange
+      ? previewImmediateExchange(exchange.balances, order)
+      : { kind: "refused", reason: "unavailable" };
   }
   /** Recheck live balances and apply both resource changes in one transaction. */
   exchangeImmediately(order: ImmediateExchangeOrder): ImmediateExchangeResult {
