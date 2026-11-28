@@ -13,13 +13,11 @@ export function scanOutcomeLines(outcome: ScanOutcome): readonly ConversationLin
         ? LANDMARK_SCAN_COPY.outcomeRecoveredWreck
         : LANDMARK_SCAN_COPY.outcomeScan;
   const lead =
-    outcome.actionLead?.kind === "salvage"
-      ? LANDMARK_SCAN_COPY.outcomeSalvage
-      : outcome.leadStation !== undefined
-        ? fill(LANDMARK_SCAN_COPY.outcomeLead, { station: outcome.leadStation })
-        : outcome.actionLead?.kind === "patrol"
-          ? LANDMARK_SCAN_COPY.outcomePatrol
-          : undefined;
+    outcome.leadStation !== undefined
+      ? fill(LANDMARK_SCAN_COPY.outcomeLead, { station: outcome.leadStation })
+      : outcome.actionLead?.kind === "patrol"
+        ? LANDMARK_SCAN_COPY.outcomePatrol
+        : undefined;
   return [
     fill(intro, { target: outcome.target.name }),
     ...(recoveredWreck || lead === undefined ? [] : [lead]),

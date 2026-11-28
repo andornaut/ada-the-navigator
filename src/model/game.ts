@@ -180,13 +180,12 @@ import {
   populateRequiredChapterFlight,
   populateRequiredFlight,
   questGuardPlacementContext,
+  recoverExplorationWreck,
   reserveAndromedaRelaySite,
   reserveWhirlpoolDiskSite,
   restoreWhirlpoolSounder,
   retireLegacyWhirlpoolDiskGuard,
   routeBlocked,
-  salvage,
-  salvageTarget,
   settleRouteEncounters,
   stepFlight,
   sunflowerBossCache,
@@ -1492,12 +1491,11 @@ export class GameModel {
     const activeLead =
       lead &&
       leadTarget?.state === "present" &&
-      this.scanLeadAvailable(f, lead.origin, leadTarget.object, lead.kind)
+      this.scanLeadAvailable(f, lead.origin, leadTarget.object)
         ? lead
         : undefined;
     if (activeLead) {
       contributions.push({
-        disclosed: activeLead.kind === "salvage",
         id: activeLead.targetId,
         source: "scan",
       });
@@ -1543,11 +1541,7 @@ export class GameModel {
       if (!waypoint && f.galaxy === 4 && isNeedleCourseStart(id)) {
         return { state: "unresolved" };
       }
-      const current = waypoint ?? this.markerPoint(f, id, litCaches);
-      const point =
-        current && activeLead?.kind === "salvage" && activeLead.targetId === id
-          ? { ...current, symbol: "wreck" as const }
-          : current;
+      const point = waypoint ?? this.markerPoint(f, id, litCaches);
       if (!point) {
         return { state: "unresolved" };
       }
@@ -2028,18 +2022,31 @@ export class GameModel {
       return undefined;
     }
     const context = flightWorldContext(f);
+    const range = this.content.tuning.talkRange;
+    const charted = [...this.current.charted];
+    for (const { id, opportunity, x, y } of this.explorationSites(f)) {
+      if (!this.scannedSite(id)) {
+        continue;
+      }
+      // An older chart can record a Scan before the player recovered this exact wreck.
+      const pending =
+        opportunity.kind === "salvage" &&
+        worldDistance(context, f.player, { x, y }) <= range &&
+        f.objects.some(
+          (object) =>
+            object.id === `${id}:salvage` &&
+            object.hp > 0 &&
+            object.enemy?.archetype === "frigate" &&
+            object.enemy.disabled &&
+            !object.enemy.salvaged &&
+            worldDistance(context, f.player, object) <= range,
+        );
+      if (!pending) {
+        charted.push(id);
+      }
+    }
     const site = landmarkScanTarget(
-      {
-        ...context,
-        charted: [
-          ...this.current.charted,
-          ...this.explorationSites(f)
-            .filter(({ id }) => this.scannedSite(id))
-            .map(({ id }) => id),
-        ],
-        player: f.player,
-        range: this.content.tuning.talkRange,
-      },
+      { ...context, charted, player: f.player, range },
       this.scannableSites(f),
     );
     const place = placeId && f.objects.find(({ id }) => id === placeId);
@@ -2054,8 +2061,7 @@ export class GameModel {
     if (this.screen !== "space" || this.state.docked || !flight) {
       return null;
     }
-    const canSalvage = (object: SpaceObject) =>
-      this.contextAction === "salvage" && salvageTarget(this.content, flight) === object;
+    const canSalvage = () => false;
     if (flight.galaxy === 6) {
       return phantomBossHud({ content: this.content, flight, progress: this.current }, canSalvage);
     }
@@ -2445,9 +2451,6 @@ export class GameModel {
     if (job) {
       return { action: job, id };
     }
-    if (this.salvageable()) {
-      return { action: "salvage" };
-    }
     const scan = this.nearestScan(id);
     if (scan) {
       return { action: "scan", id: scan.id };
@@ -2760,12 +2763,7 @@ export class GameModel {
     this.scanOutcomes = [];
     return outcomes;
   }
-  private scanLeadAvailable(
-    flight: FlightState,
-    origin: Vec,
-    object: SpaceObject,
-    kind: ScanActionLead["kind"],
-  ): boolean {
+  private scanLeadAvailable(flight: FlightState, origin: Vec, object: SpaceObject): boolean {
     const enemy = object.enemy;
     if (!enemy || object.hp <= 0) {
       return false;
@@ -2777,9 +2775,7 @@ export class GameModel {
     ) {
       return false;
     }
-    return kind === "salvage"
-      ? enemy.disabled === true && !enemy.salvaged
-      : !enemy.disabled && enemy.packId?.startsWith("pack:") === true;
+    return !enemy.disabled && enemy.packId?.startsWith("pack:") === true;
   }
 
   private scanActionLead(
@@ -2787,10 +2783,6 @@ export class GameModel {
     site: LandmarkSite,
     leadStation: string | undefined,
   ): ScanActionLead | undefined {
-    const wreck = flight.objects.find((object) => object.id === `${site.id}:salvage`);
-    if (wreck && this.scanLeadAvailable(flight, site, wreck, "salvage")) {
-      return { kind: "salvage", targetId: wreck.id };
-    }
     if (leadStation !== undefined) {
       return undefined;
     }
@@ -2799,8 +2791,7 @@ export class GameModel {
     const patrol = flight.objects
       .filter(
         (object) =>
-          store.get(object.id) === "identified" &&
-          this.scanLeadAvailable(flight, site, object, "patrol"),
+          store.get(object.id) === "identified" && this.scanLeadAvailable(flight, site, object),
       )
       .sort(
         (a, b) =>
@@ -2816,12 +2807,15 @@ export class GameModel {
     completions: readonly ScanCompletion[],
     site = landmarkById(flight.galaxy, targetId),
     leadStation?: string,
+    wreckRecovered?: true,
   ): void {
     if (!site) {
       return;
     }
     const actionLead =
-      source === "scan" ? this.scanActionLead(flight, site, leadStation) : undefined;
+      source === "scan" && !wreckRecovered
+        ? this.scanActionLead(flight, site, leadStation)
+        : undefined;
     if (source === "scan") {
       if (actionLead) {
         this.scanLeads.set(flight, { ...actionLead, origin: { x: site.x, y: site.y } });
@@ -2841,6 +2835,7 @@ export class GameModel {
         symbol: site.kind,
       },
       targetId,
+      ...(wreckRecovered ? { wreckRecovered } : {}),
     });
     this.scanOutcomes.push(outcome);
     this.talk.scanOutcome(outcome);
@@ -5130,36 +5125,6 @@ export class GameModel {
       return;
     }
     const chapterContext = this.chapterContext();
-    if (chapterContext) {
-      const runtime = chapterRuntime(chapterContext.flight.galaxy);
-      const target = salvageTarget(this.content, chapterContext.flight);
-      const id = target?.id === PHANTOM_FLAGSHIP ? target.id : undefined;
-      if (runtime?.use && id) {
-        const result = runtime.use(chapterContext, id);
-        if (result !== undefined) {
-          this.applyChapterResult(result);
-          return;
-        }
-      }
-    }
-    const flight = this.state.flight;
-    const target = flight && salvageTarget(this.content, flight);
-    if (flight && target && salvage(this.content, flight)) {
-      if (flight.galaxy === 1 && target.id === SUNFLOWER_CAPITAL_BOSS.id) {
-        this.resolveSunflowerBoss(flight, "salvaged");
-      } else if (flight.galaxy === 2 && target.id === CARTWHEEL_CLAIM.id) {
-        this.resolveCartwheelClaim(flight, "salvaged");
-      } else if (flight.galaxy === 3 && target.id === WHIRLPOOL_CAPITAL_BOSS.id) {
-        this.resolveSounder(flight, "disabled");
-      } else if (flight.galaxy === 4 && target.id === NEEDLE_CADENCE.id) {
-        this.resolveNeedleBoss("salvaged");
-      } else if (flight.galaxy === 5 && target.id === ANDROMEDA_REDACT.id) {
-        this.resolveRedact(flight, "salvaged");
-      } else {
-        this.panel("salvage", INTERACTION_COPY.salvage!.lines[0]!.text, "Astra");
-      }
-      return;
-    }
     const scan = this.nearestScan(id);
     if (scan) {
       const sites = this.current.explorationSites;
@@ -5176,12 +5141,32 @@ export class GameModel {
           postExplorationLead(this.state.flight.galaxy, this.state, lead);
           leadStation = this.keeperStationName(this.state.flight.galaxy, lead.station);
         }
-        this.current.explorationSites = {
-          ...sites,
-          [scan.id]: typeof site === "boolean" ? true : { ...site, scanned: true },
-        };
+        const flight = this.state.flight;
+        const wreck = this.explorationSites(flight).some(
+          ({ id, opportunity }) => id === scan.id && opportunity.kind === "salvage",
+        );
+        const recovered = wreck && recoverExplorationWreck(this.content, flight, scan.id);
+        const charted = this.scannedSite(scan.id);
+        const paid =
+          wreck &&
+          !recovered &&
+          flight.objects.some(({ enemy, id }) => id === `${scan.id}:salvage` && enemy?.salvaged);
+        if (!charted) {
+          this.current.explorationSites = {
+            ...sites,
+            [scan.id]: typeof site === "boolean" ? true : { ...site, scanned: true },
+          };
+        }
         this.talk.completeScanLesson();
-        this.emitScanOutcome(this.state.flight, scan.id, "scan", [], scan, leadStation);
+        this.emitScanOutcome(
+          flight,
+          scan.id,
+          !recovered && (charted || paid) ? "remembered" : "scan",
+          [],
+          scan,
+          leadStation,
+          recovered ? true : undefined,
+        );
         return;
       }
       this.current.charted.push(scan.id);
@@ -5740,17 +5725,6 @@ export class GameModel {
   /** Whether a rescue's tow line is attached, which refuses Travel. */
   get towing(): boolean {
     return this.state.mode === "space" && Boolean(this.state.flight?.tow);
-  }
-  /** Whether Use salvages a disabled heavy here: in flight, with no conversation or card open. */
-  private salvageable(): boolean {
-    const f = this.state.flight;
-    return (
-      f !== null &&
-      this.state.mode === "space" &&
-      !this.state.dialogue &&
-      !this.state.docked &&
-      salvageTarget(this.content, f) !== undefined
-    );
   }
   /** A delivery's or a supply run's item is aboard in flight: Travel here refuses, as towing. */
   get carrying(): boolean {

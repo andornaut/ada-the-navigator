@@ -199,34 +199,90 @@ it("admits salvage sites among Andromeda's planned enemy groups", () => {
   expect(admitted).toHaveLength(approached.length);
 }, 60_000);
 
-it("materializes the actual disabled frigate and salvages once through contextual Use after Continue", () => {
-  const { candidate, flight, model } = fixture("salvage");
-  const id = `${candidate.id}:salvage`;
-  const wreck = stationPopulationObjects(flight).find((object) => object.id === id)!;
-  expect(wreck.enemy).toMatchObject({ archetype: "frigate", disabled: true });
-  const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, model.save());
-  resumed.continueGame();
-  const restored = resumed.state.flight!;
-  expect(stationPopulationObjects(restored).find((object) => object.id === id)).toEqual(wreck);
-  restored.player = { x: wreck.x - CONTENT.tuning.talkRange / 2, y: wreck.y };
-  resumed.step(0.001, idle);
-  expect(resumed.contextAction).toBe("salvage");
-  const existing = new Set(restored.objects.map(({ id }) => id));
-  resumed.interact();
-  expect(restored.objects.find((object) => object.id === id)?.enemy?.salvaged).toBe(true);
-  const stardust = () =>
-    restored.objects.filter(
-      ({ id, kind, role }) => kind === "pickup" && role === "stardust" && !existing.has(id),
+it.each([false, true])(
+  "recovers the admitted frigate once through Scan after Continue (previously charted: %s)",
+  (charted) => {
+    const { candidate, flight, model } = fixture("salvage");
+    const id = `${candidate.id}:salvage`;
+    const wreck = stationPopulationObjects(flight).find((object) => object.id === id)!;
+    expect(wreck.enemy).toMatchObject({ archetype: "frigate", disabled: true });
+    if (charted) {
+      const progress = model.state.progress[5];
+      progress.explorationSites = {
+        ...progress.explorationSites,
+        [candidate.id]: { kind: "salvage", scanned: true },
+      };
+    }
+    const resume = (save: string) => {
+      const resumed = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE, save);
+      resumed.continueGame();
+      return resumed;
+    };
+    const resumed = resume(model.save());
+    const restored = resumed.state.flight!;
+    expect(stationPopulationObjects(restored).find((object) => object.id === id)).toEqual(wreck);
+    restored.player = { x: wreck.x - CONTENT.tuning.talkRange / 2, y: wreck.y };
+    resumed.step(0.001, idle);
+
+    // A closer legacy disabled actor must not steal the recovery from the scanned site.
+    const point = { x: restored.player.x - 10, y: restored.player.y };
+    const decoyId = "legacy-unrelated-frigate";
+    const decoy: SpaceObject = {
+      ...structuredClone(wreck),
+      ...point,
+      enemy: { ...structuredClone(wreck.enemy!), disabled: true, home: point, id: decoyId },
+      id: decoyId,
+    };
+    restored.objects.push(decoy);
+    const existing = new Set(restored.objects.map(({ id }) => id));
+    expect(resumed.contextAction).toBe("scan");
+    expect(resumed.useTarget).toEqual({ action: "scan", id: candidate.id });
+    resumed.interact();
+    expect(restored.objects.find((object) => object.id === id)?.enemy?.salvaged).toBe(true);
+    expect(decoy.enemy?.salvaged).toBeFalsy();
+    expect(resumed.state.dialogue).toBeNull();
+    const outcomes = resumed.drainScanOutcomes();
+    expect(outcomes).toHaveLength(1);
+    expect(outcomes[0]).toMatchObject({
+      source: "scan",
+      targetId: candidate.id,
+      wreckRecovered: true,
+    });
+    expect(scanOutcomeLines(outcomes[0]!)).toEqual([
+      { speaker: "astra", text: "I recovered supplies from the wreck." },
+    ]);
+    expect(resumed.state.progress[5].explorationSites?.[candidate.id]).toEqual({
+      kind: "salvage",
+      scanned: true,
+    });
+    const stardust = () =>
+      restored.objects.filter(
+        ({ id, kind, role }) => kind === "pickup" && role === "stardust" && !existing.has(id),
+      );
+    const drops = structuredClone(stardust());
+    expect(drops.reduce((total, pickup) => total + (pickup.amount ?? 0), 0)).toBe(
+      Math.floor(enemyStardust({ id, seed: restored.seed }, "frigate") / 2),
     );
-  const drops = stardust();
-  expect(drops.reduce((total, pickup) => total + (pickup.amount ?? 0), 0)).toBe(
-    Math.floor(enemyStardust({ id, seed: restored.seed }, "frigate") / 2),
-  );
-  resumed.choose("continue");
-  expect(resumed.contextAction).not.toBe("salvage");
-  resumed.interact();
-  expect(stardust()).toEqual(drops);
-});
+
+    expect(resumed.contextAction).toBe("use");
+    resumed.interact();
+    expect(resumed.state.notice).toContain("We've already scanned");
+    expect(resumed.drainScanOutcomes()).toEqual([]);
+    expect(stardust()).toEqual(drops);
+
+    restored.objects.splice(restored.objects.indexOf(decoy), 1);
+    const continued = resume(resumed.save());
+    expect(
+      stationPopulationObjects(continued.state.flight!).find((object) => object.id === id),
+    ).toMatchObject({ enemy: { salvaged: true } });
+    expect(continued.contextAction).toBe("use");
+    const afterRestore = structuredClone(continued.state.flight!.objects);
+    continued.interact();
+    expect(continued.state.notice).toContain("We've already scanned");
+    expect(continued.state.flight!.objects).toEqual(afterRestore);
+    expect(continued.drainScanOutcomes()).toEqual([]);
+  },
+);
 
 function pilotAt(model: GameModel, flight: FlightState, point: Vec) {
   const grid = periodicWorldGrid(flightWorldContext(flight), CONTENT.tuning.chunkSize);

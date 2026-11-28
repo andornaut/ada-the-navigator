@@ -3,7 +3,7 @@ import type { JobType } from "../data/jobs.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 
 export interface ScanActionLead {
-  readonly kind: "salvage" | "patrol";
+  readonly kind: "patrol";
   readonly targetId: string;
 }
 
