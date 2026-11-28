@@ -1,4 +1,5 @@
 import type { CapitalBossHud } from "../data/capitalBosses.ts";
+import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import type { Vec } from "../data/types.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import { flightWorldContext } from "./flightTopology.ts";
@@ -50,13 +51,16 @@ export function encounterBossHud(
     return null;
   }
   const definition = enemyEquipmentDefinition(flight.galaxy, enemy);
+  const surrendered =
+    flight.galaxy === 6 && identity.id === PHANTOM_FLAGSHIP && enemy.surrendered === true;
   if (
-    enemy.disabled
+    !surrendered &&
+    (enemy.disabled
       ? !canSalvage(object)
       : !enemy.engaged ||
         enemy.returning ||
         enemy.fleeing ||
-        worldDistance(flightWorldContext(flight), object, flight.player) > definition.perception
+        worldDistance(flightWorldContext(flight), object, flight.player) > definition.perception)
   ) {
     return null;
   }
@@ -67,5 +71,6 @@ export function encounterBossHud(
     id: identity.id,
     maxHull: definition.hp,
     ship: identity.ship,
+    ...(surrendered ? { surrendered: true } : {}),
   };
 }

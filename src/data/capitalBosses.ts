@@ -9,6 +9,7 @@ export interface CapitalBossHud {
   readonly hull: number;
   readonly maxHull: number;
   readonly disabled: boolean;
+  readonly surrendered?: true;
 }
 
 export const SUNFLOWER_CAPITAL_BOSS = {

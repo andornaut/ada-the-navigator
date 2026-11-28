@@ -166,6 +166,14 @@ describe("Phantom full route under test-only chapter admission, not production r
         { id: PHANTOM_FLAGSHIP, type: "enemySurrendered" },
       ]);
       expect(flagship.enemy).toMatchObject({ hp: 16, surrendered: true });
+      const surrenderHud = {
+        captain: "Admiral Archie",
+        hull: 16,
+        id: PHANTOM_FLAGSHIP,
+        maxHull: 320,
+        surrendered: true,
+      };
+      expect(model.bossHud()).toMatchObject(surrenderHud);
       expect(model.state.economy.stardust).toBe(before + 50);
       expect(model.state.progress[6]).toMatchObject({ holodisk: true, questComplete: true });
       expect(model.state.dialogue).toBeNull();
@@ -184,6 +192,7 @@ describe("Phantom full route under test-only chapter admission, not production r
       model = reload(model);
       const resumed = represented(model, PHANTOM_FLAGSHIP)!;
       expect(resumed.enemy).toMatchObject({ hp: 16, surrendered: true });
+      expect(model.bossHud()).toMatchObject(surrenderHud);
       expect(model.state.economy.stardust).toBe(before + 50);
       hitEnemy(model, resumed, definition.hp * 2);
       expect(resumed.hp).toBe(16);
@@ -198,6 +207,7 @@ describe("Phantom full route under test-only chapter admission, not production r
       expect(model.state.progress[6].phantom!.aftermathComplete).toBeUndefined();
       model.choose("continue");
       expect(model.state.progress[6].phantom!.aftermathComplete).toBe(true);
+      expect(model.bossHud()).toBeNull();
       model = reload(model);
       expect(model.state.economy.stardust).toBe(before + 50);
       expect(model.state.dialogue).toBeNull();

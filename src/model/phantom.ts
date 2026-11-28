@@ -165,7 +165,15 @@ export function phantomBossHud(
   context: ChapterContext,
   canSalvage: (object: SpaceObject) => boolean,
 ): CapitalBossHud | null {
-  if (!hasActiveFlagship(context)) {
+  const state = stateOf(context);
+  const pendingSurrender =
+    context.flight.galaxy === 6 &&
+    context.progress.phantom?.surrenderAftermathDue === true &&
+    state?.phase === "salvaged" &&
+    state.wave === T.waves &&
+    state.enemyIds.includes(PHANTOM_FLAGSHIP) &&
+    retained(context, PHANTOM_FLAGSHIP)?.enemy?.surrendered === true;
+  if (!hasActiveFlagship(context) && !pendingSurrender) {
     return null;
   }
   return encounterBossHud(
