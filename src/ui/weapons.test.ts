@@ -173,6 +173,18 @@ describe("HUD weapon buttons", () => {
     ).toBeUndefined();
   });
 
+  it("adds the semantic outer ring only to the equipped weapon HUD disc", () => {
+    const equipped = ".ada-controls .ada-weapon-group > button.ada-weapon[data-state=selected]";
+    const ringRules = WEAPON_STYLE.split("}").filter((rule) => rule.includes("box-shadow:"));
+    expect(ringRules.filter((rule) => rule.includes("#65c9bf"))).toEqual([
+      `\n${equipped} .ada-disc{\n  box-shadow:0 0 0 ${units(1)} #65c9bf\n`,
+    ]);
+    expect(WEAPON_STYLE).toContain(
+      `${equipped} .ada-disc{\n    box-shadow:none;\n    outline:${units(1)} solid ButtonText`,
+    );
+    expect(hudDiscStyle(".shared-button", ".disc")).not.toContain("#65c9bf");
+  });
+
   it("keeps muted inactive glyph colours opaque for contrast on solid faces", () => {
     const icon = WEAPON_STYLE.split("}").find((part) =>
       part.includes(".ada-controls .ada-weapon-group > button.ada-weapon .ui-hud-disc-icon{"),

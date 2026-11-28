@@ -1,6 +1,7 @@
 import { createActionGroup } from "@andornaut/game-kit/runtime/web/ui/dom/actionGroup";
 import { createHudDisc } from "@andornaut/game-kit/runtime/web/ui/dom/hudDisc";
 
+import { TASK_COLORS } from "../data/taskCategories.ts";
 import type { Weapon } from "../data/types.ts";
 import { UPGRADE_TIER_COLOURS } from "../data/upgradeTiers.ts";
 import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
@@ -332,6 +333,9 @@ ${(Object.keys(WEAPON_FILLS) as Weapon[])
   color:${HUD_DISC_STATES.selected.glyph};
   --disc-edge:${units(HUD_DISC_STATES.selected.edge)}
 }
+.ada-controls .ada-weapon-group > button.ada-weapon[data-state=selected] .ada-disc{
+  box-shadow:0 0 0 ${units(1)} ${TASK_COLORS.story}
+}
 .ada-controls .ada-weapon[data-state=selected]:not(:focus-visible) .ada-disc{
   background:${HUD_DISC_STATES.selected.face}
 }
@@ -354,6 +358,10 @@ ${PRESSED_WEAPON}{
   --disc-focus-glyph:var(--ui-button-focus-text,HighlightText)
 }
 @media (forced-colors:active){
+  .ada-controls .ada-weapon-group > button.ada-weapon[data-state=selected] .ada-disc{
+    box-shadow:none;
+    outline:${units(1)} solid ButtonText
+  }
   .ada-controls .ada-weapon-group > .ada-weapon:focus-visible:not(:active,[data-weapon-pressed]) .ada-disc{
     forced-color-adjust:none;
     background:Highlight;
