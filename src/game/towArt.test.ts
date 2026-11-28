@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 import {
   craftFrame,
   craftHeading,
+  keylineWidth,
+  LIGHT_FIELD,
   readStrandedCraft,
   readTowLine,
   STRANDED_CRAFT,
@@ -18,7 +20,6 @@ import {
 import { JOB_POOL, JOB_TUNING } from "../data/jobs.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { ART_MANIFEST, GALAXY_MANIFESTS } from "../testing/publicArt.ts";
-import { keylineWidth, LIGHT_FIELD } from "./lightField.ts";
 
 const json = (path: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../public${path}`, import.meta.url), "utf8"));

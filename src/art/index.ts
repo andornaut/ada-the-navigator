@@ -187,6 +187,21 @@ export {
   readMapArea,
 } from "./jobArt.ts";
 export {
+  alphaTopRow,
+  blastEdges,
+  foregroundEdge,
+  inkEdges,
+  joinsJets,
+  KEYLINE_ALPHA,
+  keylineOffsets,
+  keylineWidth,
+  LIGHT_FIELD,
+  lightGalaxy,
+  readLightField,
+  readLightGalaxies,
+  thresholdSilhouette,
+} from "./lightField.ts";
+export {
   type AllyJump,
   type AllyJumpStep,
   allyJumpStep,

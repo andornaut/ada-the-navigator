@@ -4,7 +4,7 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { expect, it } from "vitest";
 
-import { joinsJets, LIGHT_FIELD } from "./lightField.ts";
+import { joinsJets, LIGHT_FIELD } from "../art/index.ts";
 
 it("draws no keyline round Ada's plumes unless the light field joins her jets", () => {
   const source = ts.createSourceFile(

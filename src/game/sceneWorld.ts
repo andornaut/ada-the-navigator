@@ -19,6 +19,7 @@ import {
   hubBuoyKey,
   hubStoryKey,
   type JobFrame,
+  LIGHT_FIELD,
   nebulaTint,
   nurseryFrame,
   partKey,
@@ -42,7 +43,6 @@ import { CARTWHEEL_STORY_SHIPS, STORY_SHIP_CRAFT } from "../data/storyShips.ts";
 import { currentsNear, flowFraction } from "../model/currents.ts";
 import { drawnHeading, hubBay, storyShips } from "../model/storyShips.ts";
 import type { FlightState, Vec } from "../model/types.ts";
-import { LIGHT_FIELD } from "./lightField.ts";
 import type { GameScene } from "./scene.ts";
 import { drawAndromedaLaneCourier } from "./sceneAndromeda.ts";
 import { drawCraftJets, keylineEdges, keylineSprite } from "./sceneHud.ts";

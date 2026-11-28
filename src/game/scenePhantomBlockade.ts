@@ -1,11 +1,10 @@
-import type { SpacePalette } from "../art/index.ts";
+import { LIGHT_FIELD, type SpacePalette } from "../art/index.ts";
 import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
 import { SCREEN } from "../data/screen.ts";
 import { flightWorldContext } from "../model/flightTopology.ts";
 import { phantomBlockadeSignal, type PhantomContext } from "../model/phantom.ts";
 import type { Vec } from "../model/types.ts";
 import { worldPoint } from "../model/worldContacts.ts";
-import { LIGHT_FIELD } from "./lightField.ts";
 
 interface EncounterOverlay {
   readonly overlay: {

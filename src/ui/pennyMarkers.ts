@@ -2,10 +2,10 @@ import { opaqueBoundsOfRgba } from "@andornaut/game-kit/runtime/opaqueBounds";
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 
+import { LIGHT_FIELD } from "../art/index.ts";
 import { EDGE_MARKER_GLYPHS } from "../data/edgeMarkers.ts";
 import { TASK_COLORS } from "../data/taskCategories.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { LIGHT_FIELD } from "../game/lightField.ts";
 import type { PennyMarker } from "../model/pennyMarkers.ts";
 import type { Vec } from "../model/types.ts";
 import {

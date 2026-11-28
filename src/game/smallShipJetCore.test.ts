@@ -2,9 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import mainArt from "../../public/art/ship-jets.json";
 import reverseArt from "../../public/art/ship-retro-jets.json";
-import { jetPlumes, layerColor, readEngineJets, staticShipJets, travelJets } from "../art/index.ts";
+import {
+  jetPlumes,
+  layerColor,
+  LIGHT_FIELD,
+  readEngineJets,
+  staticShipJets,
+  travelJets,
+} from "../art/index.ts";
 import { drawShipJets } from "../ui/shipJetCanvas.ts";
-import { LIGHT_FIELD } from "./lightField.ts";
 
 const main = readEngineJets(mainArt)!;
 const reverse = readEngineJets(reverseArt)!;

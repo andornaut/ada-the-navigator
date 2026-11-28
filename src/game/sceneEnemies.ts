@@ -13,7 +13,9 @@ import {
   enemyJetTriangles,
   enemyPhaser,
   type EnemyWeaponsView,
+  keylineOffsets,
   lance,
+  LIGHT_FIELD,
   mine,
   mineSolid,
   type PartPose,
@@ -36,7 +38,6 @@ import { enemyEquipmentDefinition } from "../model/enemyEquipment.ts";
 import { activeEnemyBeams, activeRingEmissions, type EnemyBeam } from "../model/flight.ts";
 import { hullOffset } from "../model/shipPhysics.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
-import { keylineOffsets, LIGHT_FIELD } from "./lightField.ts";
 import type { GameScene } from "./scene.ts";
 import { familyArt, filterTexture } from "./sceneAssets.ts";
 import { drawCraftJets, keylineSilhouette, keylineSprite } from "./sceneHud.ts";

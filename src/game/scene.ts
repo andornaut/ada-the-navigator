@@ -10,6 +10,7 @@ import {
   type BackdropRules,
   backdropTint,
   beam,
+  blastEdges,
   type BlinkArt,
   boxWith,
   type CacheArt,
@@ -34,6 +35,7 @@ import {
   FALLBACK_SPACE_PALETTE,
   fanVolley,
   fileFilter,
+  foregroundEdge,
   type GalaxyBackdrop,
   galaxyLoadsAtOnce,
   type GalaxyManifest,
@@ -49,13 +51,17 @@ import {
   HitFlashes,
   type HubArt,
   impactEffect,
+  inkEdges,
   type JetDisplay,
   jetOccluderRegions,
   jetsInFront,
   type JetTriangle,
   jetTriangles,
   type JobArt,
+  joinsJets,
   laserBolt,
+  LIGHT_FIELD,
+  lightGalaxy,
   type LoopArt,
   missileFlame,
   missileFrame,
@@ -148,14 +154,6 @@ import {
   type ForwardFlightJets,
   readForwardFlightJets,
 } from "./forwardFlightJets.ts";
-import {
-  blastEdges,
-  foregroundEdge,
-  inkEdges,
-  joinsJets,
-  LIGHT_FIELD,
-  lightGalaxy,
-} from "./lightField.ts";
 import { cameraWorldView, parentFit, sceneFit, viewShift } from "./playCamera.ts";
 import { setRendering } from "./renderLoop.ts";
 import { drawAndromeda } from "./sceneAndromeda.ts";

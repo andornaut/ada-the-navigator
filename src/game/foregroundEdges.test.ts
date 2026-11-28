@@ -4,7 +4,7 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
-import { inkEdges, LIGHT_FIELD } from "./lightField.ts";
+import { inkEdges, LIGHT_FIELD } from "../art/index.ts";
 
 const hudSource = ts.createSourceFile(
   "sceneHud.ts",

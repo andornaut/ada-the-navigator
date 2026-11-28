@@ -3,25 +3,23 @@
 import { GameObjects, Math as PhaserMath, ScaleModes, type Scene, Scenes, Textures } from "phaser";
 
 import {
+  alphaTopRow,
   type EffectShape,
   type FeedbackPulse,
-  type JetTriangle,
-  USE_CALLOUT_DEPTH,
-} from "../art/index.ts";
-import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
-import { SCREEN } from "../data/screen.ts";
-import type { FlightState, Vec } from "../model/types.ts";
-import { USE_CALLOUT_FADE_MS, useCalloutAlpha, useCalloutLift } from "../ui/touchChrome.ts";
-import {
-  alphaTopRow,
   inkEdges,
+  type JetTriangle,
   joinsJets,
   KEYLINE_ALPHA,
   keylineOffsets,
   keylineWidth,
   LIGHT_FIELD,
   thresholdSilhouette,
-} from "./lightField.ts";
+  USE_CALLOUT_DEPTH,
+} from "../art/index.ts";
+import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
+import { SCREEN } from "../data/screen.ts";
+import type { FlightState, Vec } from "../model/types.ts";
+import { USE_CALLOUT_FADE_MS, useCalloutAlpha, useCalloutLift } from "../ui/touchChrome.ts";
 import type { GameScene } from "./scene.ts";
 import { filterTexture } from "./sceneAssets.ts";
 import { createUseCallout } from "./touchChrome.ts";

@@ -25,7 +25,10 @@ import {
   holodiskWaypoint,
   hubBayKey,
   hubLayers,
+  inkEdges,
   isDiscoveryCache,
+  keylineOffsets,
+  LIGHT_FIELD,
   loopPhase,
   type OutpostPart,
   outpostParts,
@@ -81,7 +84,6 @@ import { hubBay, hubWorn } from "../model/storyShips.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
 import { shipTuning } from "../model/upgrades.ts";
 import { worldDelta } from "../model/worldContacts.ts";
-import { inkEdges, keylineOffsets, LIGHT_FIELD } from "./lightField.ts";
 import type { GameScene } from "./scene.ts";
 import {
   enemyArtKey,

@@ -6,13 +6,13 @@ import {
   glintFrame,
   glintPing,
   type JobFrame,
+  LIGHT_FIELD,
   nebulaTint,
   readJobArt,
   readMapArea,
 } from "../art/index.ts";
 import { HUNT_GLINT } from "../model/pickupBody.ts";
 import { CORE_MANIFEST, publicJson } from "../testing/publicArt.ts";
-import { LIGHT_FIELD } from "./lightField.ts";
 
 const FILE = publicJson("/art/jobs.json") as Record<string, unknown>;
 const assets = CORE_MANIFEST.assets as unknown as JobFrame[];

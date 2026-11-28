@@ -1,4 +1,4 @@
-import type { SpacePalette } from "../art/index.ts";
+import { LIGHT_FIELD, type SpacePalette } from "../art/index.ts";
 import { SUNFLOWER_CAPITAL_BOSS, WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { andromedaCourierMarkers } from "../model/andromeda.ts";
@@ -11,7 +11,6 @@ import { flightWorldContext } from "../model/flightTopology.ts";
 import { requiredFrigateEscortId } from "../model/frigateEscorts.ts";
 import type { FlightState, Vec } from "../model/types.ts";
 import { worldDistance, worldPoint } from "../model/worldContacts.ts";
-import { LIGHT_FIELD } from "./lightField.ts";
 import { drawEncounterRoute, visibleDistances } from "./scenePhantomBlockade.ts";
 
 interface Segment {

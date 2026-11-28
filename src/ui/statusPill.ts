@@ -1,9 +1,9 @@
 import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 
+import { LIGHT_FIELD } from "../art/index.ts";
 import type { StatusAboardKind } from "../data/hudIconBearings.ts";
 import { HUD_TICK_TIMING } from "../data/noticeTiming.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { LIGHT_FIELD } from "../game/lightField.ts";
 import {
   ADA_ACTION_HOLD_MS,
   assertAdaActionBindings,

@@ -19,6 +19,8 @@ import {
   HIT_FLASH_DEPTH,
   HIT_SHAKE_SHARE,
   HOLODISK_FRAMES,
+  LIGHT_FIELD,
+  lightGalaxy,
   markerHue,
   RASTER_SCALE_EVENT,
   readBeaconArt,
@@ -27,6 +29,7 @@ import {
   readEnemyWeaponsArt,
   readGalaxyFields,
   readGalaxyManifest,
+  readLightGalaxies,
   readLoopArt,
   readOutpostArt,
   readProjectArt,
@@ -119,7 +122,6 @@ import { markerFootprints } from "../ui/markerFootprints.ts";
 import { navigationEntry } from "../ui/navigationEntry.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
 import { readTitleScreen, type TitleScreenArt } from "../ui/titleScreen.ts";
-import { LIGHT_FIELD, lightGalaxy, readLightGalaxies } from "./lightField.ts";
 import { fitPlayCamera, sceneFit, shakeIntensity } from "./playCamera.ts";
 import { readQuantumJump } from "./quantumJump.ts";
 import type { GameScene } from "./scene.ts";

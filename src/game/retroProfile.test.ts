@@ -10,8 +10,14 @@ import {
 import { jetLength as artJetLength, plumePolygon } from "../../art/tools/ship-plume.ts";
 import mainArt from "../../public/art/ship-jets.json";
 import reverseArt from "../../public/art/ship-retro-jets.json";
-import { jetPlumes, layerColor, readEngineJets, type ShipJets, travelJets } from "../art/index.ts";
-import { LIGHT_FIELD } from "./lightField.ts";
+import {
+  jetPlumes,
+  layerColor,
+  LIGHT_FIELD,
+  readEngineJets,
+  type ShipJets,
+  travelJets,
+} from "../art/index.ts";
 
 const main = readEngineJets(mainArt)!;
 const reverse = readEngineJets(reverseArt)!;

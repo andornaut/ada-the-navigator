@@ -4,8 +4,8 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
+import { LIGHT_FIELD } from "../art/index.ts";
 import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
-import { LIGHT_FIELD } from "./lightField.ts";
 
 const source = ts.createSourceFile(
   "sceneHud.ts",
