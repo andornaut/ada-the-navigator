@@ -106,7 +106,7 @@ import { settlementsNear } from "./andromedaPlaces.ts";
 import { selectCartwheelClaimField } from "./cartwheelClaimField.ts";
 import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
-import { blastCoversAda, pickupTouched, touchesAda } from "./flight/adaContactQueries.ts";
+import { pickupTouched, touchesAda } from "./flight/adaContactQueries.ts";
 import { beamPoint, outlineBeamStrike, rayCircle, sceneryEntry } from "./flight/beamContact.ts";
 import { crossbowAttack, crossbowFrame } from "./flight/crossbow.ts";
 import { inBattle, inDanger } from "./flight/danger.ts";
@@ -158,7 +158,7 @@ import {
   type Loadout,
 } from "./flight/lifecycle.ts";
 import { planMantaEscorts } from "./flight/mantaEscorts.ts";
-import { armed, layMine, stepMines, strikeMines } from "./flight/mines.ts";
+import { armed, layMine, stepMines } from "./flight/mines.ts";
 import {
   flightChunkKey,
   type FreshTravel,
@@ -170,6 +170,7 @@ import {
   projectileSceneryContact,
   shotRadius,
 } from "./flight/projectileContact.ts";
+import { createProjectileStep } from "./flight/projectileStep.ts";
 import { recordRingEmission, stepRingEmissions } from "./flight/ringEmissions.ts";
 import { blastCoversRock } from "./flight/rockBlastCoverage.ts";
 import {
@@ -275,7 +276,7 @@ import {
 import { segmentDistance, worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 
 export { activateRouteEncounter, syncFlightRegion } from "./geography.ts";
-import { outlineContact, type Parts, partsReach, worldParts } from "./convex.ts";
+import { type Parts, partsReach, worldParts } from "./convex.ts";
 import { debrisSilhouette } from "./debrisBody.ts";
 import { carriesStardust } from "./drops.ts";
 import { enemyHull, enemyPartOutline, enemyPhysicalBody } from "./enemyBody.ts";
@@ -298,7 +299,6 @@ import {
   worldOreFieldsNear,
 } from "./oreFields.ts";
 import { pickupOutline, stardustPickupReach } from "./pickupBody.ts";
-import { impactSurface } from "./projectileImpact.ts";
 import { SceneryFrames } from "./sceneryFrames.ts";
 import { sceneryImpact } from "./sceneryImpact.ts";
 import { rechargeShield } from "./shieldRecharge.ts";
@@ -4123,120 +4123,7 @@ function enemies(
   return withheld;
 }
 
-/** A shot's strike against a mine's drawn silhouette: a 6 px square about the shot. */
-const SHOT_PARTS: Parts = [
-  [
-    { x: -3, y: -3 },
-    { x: 3, y: -3 },
-    { x: 3, y: 3 },
-    { x: -3, y: 3 },
-  ],
-];
-
-const mineStrike = { blast, shotParts: SHOT_PARTS, shotRadius };
-
-function shots(
-  content: GameContent,
-  dt: number,
-  flight: FlightState,
-  events: FlightEvent[],
-  shotDelays: ReadonlyMap<string, number>,
-): void {
-  for (const shot of flight.shots) {
-    const elapsed = Math.max(0, dt - (shotDelays.get(shot.id) ?? 0));
-    if (elapsed === 0) {
-      continue;
-    }
-    const travelTime = Math.min(elapsed, Math.max(0, shot.life));
-    const steps = Math.max(1, Math.ceil((length(shot.velocity) * travelTime) / 5));
-    for (let i = 0; i < steps && shot.life > 0; i++) {
-      const from = { x: shot.x, y: shot.y };
-      const radius = shotRadius(shot);
-      const next = {
-        x: shot.x + (shot.velocity.x * travelTime) / steps,
-        y: shot.y + (shot.velocity.y * travelTime) / steps,
-      };
-      shot.x = next.x;
-      shot.y = next.y;
-      canonicalPosition(flight, shot);
-      if (shot.enemy) {
-        const struck = touchesAda(flight, shot, radius);
-        if (struck && adaProtected(flight)) {
-          shot.life = 0;
-          continue;
-        }
-        const blocked = flight.objects.find(
-          (object) =>
-            SCENERY.includes(object.kind) &&
-            object.hp > 0 &&
-            projectileSceneryContact(projectileScenery, flight, object, shot, radius),
-        );
-        if (!struck && !blocked) {
-          continue;
-        }
-        const bodyContact = outlineContact(shipBody(flight.facing), flight.player, shot, radius);
-        const point = blocked
-          ? projectileContact(projectileScenery, flight, blocked, shot, radius, from)
-          : bodyContact
-            ? impactSurface({ contact: bodyContact, projected: false, radius }, shot)
-            : shot;
-        shot.x = point.x;
-        shot.y = point.y;
-        shot.life = 0;
-        enemyImpact(shot, struck, flight);
-        continue;
-      }
-      if (shot.damage === undefined) {
-        shot.life = 0;
-        continue;
-      }
-      if (strikeMines(mineStrike, content, shot, flight, events)) {
-        continue;
-      }
-      strike(content, shot, flight, events, from);
-    }
-    // A missile still flying at the end of its reach explodes where it is.
-    const reachEnd = shot.life > 0 && shot.life <= elapsed;
-    shot.life = Math.max(0, shot.life - elapsed);
-    if (reachEnd && shot.blast !== undefined) {
-      if (shot.enemy) {
-        enemyImpact(shot, false, flight);
-      } else {
-        blast(content, shot.damage, shot.blast, shot, null, flight, events);
-      }
-    }
-  }
-  flight.shots = flight.shots.filter((s) => s.life > 0);
-  for (const object of flight.objects) {
-    if (object.hp <= 0) {
-      worldRecordObjectRemoval(flightWorldContext(flight), content, object, flight);
-    }
-  }
-  flight.objects = flight.objects.filter((o) => o.hp > 0);
-}
-
-/**
- * An enemy shot spent on Ada, an obstacle or the end of its reach: a missile's blast shows and
- * damages Ada within its radius, and a direct hit damages her; either way, once.
- */
-function enemyImpact(shot: Shot, struck: boolean, flight: FlightState): void {
-  if (shot.blast === undefined && shot.effectFamily && shot.life <= 0) {
-    recordProjectileImpact(flight, {
-      ...shot,
-      age: 0,
-      direction: { ...shot.velocity },
-      family: shot.effectFamily,
-      id: shot.id,
-      targetId: "",
-    });
-  }
-  if (shot.blast !== undefined) {
-    recordBlastFlash(flight, { age: 0, radius: shot.blast, x: shot.x, y: shot.y });
-  }
-  if (struck || (shot.blast !== undefined && blastCoversAda(flight, shot, shot.blast))) {
-    damage(shot.damage, flight);
-  }
-}
+const shots = createProjectileStep({ blast, damage, scenery: sceneryResolution, strike });
 
 /**
  * Ada's shot strikes every enemy and obstacle it touches at its position that it has not struck,
