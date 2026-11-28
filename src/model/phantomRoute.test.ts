@@ -4,22 +4,18 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { BUILT, GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
-import {
-  PHANTOM_DESTINATIONS,
-  PHANTOM_FLAGSHIP,
-  PHANTOM_TUNING,
-} from "../data/phantom.ts";
+import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../data/phantom.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import { clearPhantomTraffic } from "../testing/phantomTraffic.ts";
 import { outlineContact, worldParts } from "./convex.ts";
 import { enemyHull } from "./enemyBody.ts";
-import { ensureDestination, ensureStation } from "./flight.ts";
+import { ensureDestination, ensureStation, stepFlight } from "./flight.ts";
 import { GameModel, newGameState } from "./game.ts";
 import { activateFlightRegion } from "./geography.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
-import type { SpaceObject, Vec } from "./types.ts";
+import type { FlightState, SpaceObject, Vec } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
@@ -40,9 +36,8 @@ function represented(model: GameModel, id: string): SpaceObject | null | undefin
 }
 
 /** Hit a point inside a drawn hull part through the actual projectile step. */
-function hitEnemy(model: GameModel, target: SpaceObject, damage: number): void {
+function queueHullHit(flight: FlightState, target: SpaceObject, damage: number): void {
   const { id } = target;
-  const flight = model.state.flight!;
   const hull = enemyHull(target.enemy!, ROUTE_POSITION[6])!;
   const polygon = worldParts(hull)[0]!;
   const point = polygon.reduce(
@@ -65,6 +60,10 @@ function hitEnemy(model: GameModel, target: SpaceObject, damage: number): void {
     velocity: { x: 0, y: 0 },
     ...point,
   });
+}
+
+function hitEnemy(model: GameModel, target: SpaceObject, damage: number): void {
+  queueHullHit(model.state.flight!, target, damage);
   model.step(0.000001, idle);
 }
 
@@ -161,6 +160,22 @@ describe("Phantom full route under test-only chapter admission, not production r
       expect(flagship.hp).toBe(definition.hp - 1);
       expect(flagship.enemy!.hardpoints.map(({ hp }) => hp)).toEqual(mounts);
       const before = model.state.economy.stardust;
+      // Save immediately after physics latches surrender, before the model can consume its event.
+      const pending = reload(model);
+      const pendingFlight = pending.state.flight!;
+      const pendingFlagship = represented(pending, PHANTOM_FLAGSHIP)!;
+      queueHullHit(pendingFlight, pendingFlagship, definition.hp * 2);
+      const events = stepFlight(CONTENT, 0.000001, idle, pendingFlight);
+      expect(events).toContainEqual({ id: PHANTOM_FLAGSHIP, type: "enemySurrendered" });
+      expect(pending.state.progress[6].holodisk).toBe(false);
+      expect(pending.state.economy.stardust).toBe(before);
+      const restoredLatch = reload(pending);
+      expect(restoredLatch.flightEvents).toEqual([]);
+      expect(restoredLatch.state.progress[6]).toMatchObject({ holodisk: true, questComplete: true });
+      expect(restoredLatch.state.economy.stardust).toBe(before + 50);
+      expect(restoredLatch.state.dialogue).toBeNull();
+      expect(reload(restoredLatch).state.economy.stardust).toBe(before + 50);
+
       hitEnemy(model, flagship, definition.hp * 2);
       expect(model.flightEvents.filter(({ type }) => type === "enemySurrendered")).toEqual([
         { id: PHANTOM_FLAGSHIP, type: "enemySurrendered" },
