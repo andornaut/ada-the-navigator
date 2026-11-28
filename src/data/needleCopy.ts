@@ -40,11 +40,12 @@ export const NEEDLE_COPY: Readonly<Record<string, InteractionCopy>> = {
         speaker: "loom",
         text: "Welcome to Needle, young pilot. Our channels are narrow, and they cannot be rushed.",
       },
-      { speaker: "ada", text: "I'm looking for a shining disk." },
+      { id: "lookingForDisk", speaker: "ada", text: "I'm looking for a shining disk." },
       { speaker: "loom", text: "It drifted into the Eye, our narrowest channel." },
       { speaker: "ada", text: "How do I reach it?" },
     ],
     party: "loom",
+    topicExit: { label: "Ask about the disk", target: "lookingForDisk" },
     topics: [
       {
         label: "Who flies here?",

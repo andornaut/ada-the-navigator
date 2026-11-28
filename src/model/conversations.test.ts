@@ -1466,6 +1466,74 @@ describe("Use conversation paging", () => {
     expect(panel.choices).toHaveLength(2);
   });
 
+  it("uses the declared main line after a topic without applying an outcome", () => {
+    const run = new InteractionConversation();
+    run.show(
+      {
+        ...copy,
+        lines: [
+          { ...copy.lines[0]!, id: "opening" },
+          { id: "unrelated", speaker: "Ada", text: "Different continuation" },
+          { ...copy.lines[1]!, id: "answer" },
+        ],
+        topicExit: { label: "Ask about the answer", target: "answer" },
+      },
+      panel,
+    );
+    run.advance();
+    run.topic(0);
+    run.advance();
+    expect(run.completedTopic(0)).toBe(true);
+    expect(run.topicExitLabel).toBe("Ask about the answer");
+    run.leaveTopics();
+    expect(run.line?.id).toBe("answer");
+    expect(run.choices).toEqual(panel.choices);
+    run.previous();
+    expect(run.completedTopic(0)).toBe(true);
+    expect(run.topicExitLabel).toBe("Ask about the answer");
+  });
+
+  it.each([
+    { label: "Missing target", target: "absent" },
+    { label: "Opening would loop", target: "opening" },
+    { label: "Duplicate target", target: "duplicate" },
+    { label: " ", target: "end" },
+  ])("keeps the legacy continuation for an invalid edge: $label", (topicExit) => {
+    const run = new InteractionConversation();
+    run.show(
+      {
+        ...copy,
+        lines: [
+          { ...copy.lines[0]!, id: "opening" },
+          { ...copy.lines[1]!, id: "duplicate" },
+          { id: "duplicate", speaker: "Ada", text: "Another line" },
+          { id: "end", speaker: "Ada", text: "Done" },
+        ],
+        topicExit,
+      },
+      panel,
+    );
+    run.advance();
+    expect(run.topicExitLabel).toBe("Resume conversation");
+    run.leaveTopics();
+    expect(run.line?.text).toBe("Last");
+    expect(run.nextAction).toBe("page");
+  });
+
+  it("keeps a one-line optional exchange escapable at its existing outcome", () => {
+    const run = new InteractionConversation();
+    const linear = { ...panel, choices: [{ id: "continue", label: "Continue" }] };
+    run.show({ ...copy, lines: [copy.lines[0]!] }, linear);
+    run.advance();
+    expect(run.topicExitLabel).toBe("Resume conversation");
+    expect(run.canSkip).toBe(false);
+    run.leaveTopics();
+    expect(run.line?.text).toBe("First");
+    expect(run.nextAction).toBe("continue");
+    run.previous();
+    expect(run.topics).toEqual(copy.topics);
+  });
+
   it("retains completion across station screens and clears it on undock or standalone close", () => {
     const run = new InteractionConversation();
     run.setDocked("station:1,2");

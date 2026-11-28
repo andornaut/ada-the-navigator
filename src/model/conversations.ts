@@ -1312,6 +1312,20 @@ function interactionNextAction(frame: InteractionFrame): "page" | "continue" | u
   return interactionAtOutcome(frame) ? linearDialogueContinuation(frame.panel.choices) : undefined;
 }
 
+/** Validate the authored edge before displaying or dispatching it. */
+function interactionTopicExit(copy: InteractionCopy): { index: number; label: string } {
+  const edge = copy.topicExit;
+  if (edge?.label.trim() && edge.target.trim()) {
+    const index = copy.lines.findIndex(({ id }) => id === edge.target);
+    if (index > 0 && copy.lines.findLastIndex(({ id }) => id === edge.target) === index) {
+      return { index, label: edge.label };
+    }
+  }
+  // Older copy still needs a way out. For a one-line opening, index 1 reuses
+  // the opening text at the outcome without returning to the topic menu.
+  return { index: 1, label: "Resume conversation" };
+}
+
 /** Traverses presentation pages and remembers the continuation of outcomes already applied. */
 export class InteractionConversation {
   private live: InteractionFrame["panel"] | null = null;
@@ -1449,13 +1463,11 @@ export class InteractionConversation {
   }
 
   get topicExitLabel(): string | undefined {
-    if (this.page.kind === "topics") {
-      return (
-        this.copy?.topicExit?.label ??
-        (this.panel?.context === "needle.arrival" ? "Ask about the disk" : "Resume conversation")
-      );
-    }
-    return undefined;
+    return this.currentTopicExit?.label;
+  }
+
+  private get currentTopicExit() {
+    return this.page.kind === "topics" && this.copy ? interactionTopicExit(this.copy) : undefined;
   }
 
   get hasPrevious(): boolean {
@@ -1494,13 +1506,9 @@ export class InteractionConversation {
   }
 
   leaveTopics(): void {
-    if (this.page.kind !== "topics" || !this.copy) {
-      return;
-    }
-    const { lines, topicExit } = this.copy;
-    const index = topicExit ? lines.findIndex(({ id }) => id === topicExit.target) : 1;
-    if (index >= 0) {
-      this.showPage({ index, kind: "main" });
+    const exit = this.currentTopicExit;
+    if (exit) {
+      this.showPage({ index: exit.index, kind: "main" });
     }
   }
 
