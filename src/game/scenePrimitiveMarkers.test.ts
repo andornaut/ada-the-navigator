@@ -6,7 +6,7 @@ import { createContext, runInContext } from "node:vm";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
-import { isDiscoveryCache } from "../art/index.ts";
+import { drawCompactHullHud, hasCompactHullHud, isDiscoveryCache } from "../art/index.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
@@ -22,7 +22,6 @@ import { discoveryCacheGroup } from "../model/stardustPlacement.ts";
 import type { SpaceObject, Vec } from "../model/types.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import { drawCompactHullHud, hasCompactHullHud } from "./enemyHullHud.ts";
 import {
   acknowledgeCachePrimitive,
   acknowledgeCacheSprite,

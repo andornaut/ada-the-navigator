@@ -133,6 +133,7 @@ export {
   type Sidecars,
   turretMuzzles,
 } from "./enemyArt.ts";
+export { drawCompactHullHud, hasCompactHullHud } from "./enemyHullHud.ts";
 export { readEnemyJets, selectEnemyJetPalette } from "./enemyJetPalette.ts";
 export {
   enemyBolt,

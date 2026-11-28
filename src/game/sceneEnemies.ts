@@ -6,6 +6,7 @@ import { Math as PhaserMath, type Scene, TintModes } from "phaser";
 import {
   bannerOffset,
   composeEnemy,
+  drawCompactHullHud,
   type EffectShape,
   type EnemyArt,
   type EnemyEffect,
@@ -13,6 +14,7 @@ import {
   enemyJetTriangles,
   enemyPhaser,
   type EnemyWeaponsView,
+  hasCompactHullHud,
   keylineOffsets,
   lance,
   LIGHT_FIELD,
@@ -38,7 +40,6 @@ import { enemyEquipmentDefinition } from "../model/enemyEquipment.ts";
 import { activeEnemyBeams, activeRingEmissions, type EnemyBeam } from "../model/flight.ts";
 import { hullOffset } from "../model/shipPhysics.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
-import { drawCompactHullHud, hasCompactHullHud } from "./enemyHullHud.ts";
 import type { GameScene } from "./scene.ts";
 import { familyArt, filterTexture } from "./sceneAssets.ts";
 import { drawCraftJets, keylineSilhouette, keylineSprite } from "./sceneHud.ts";
