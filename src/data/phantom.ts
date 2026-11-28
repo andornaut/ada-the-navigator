@@ -4,6 +4,7 @@ import type {
   InteractionTopicReturn,
   Mood,
 } from "./conversations.ts";
+import { PREMISE } from "./premiseCopy.ts";
 import type { ChapterContent, PremiseLine } from "./types.ts";
 export const PHANTOM_DESTINATIONS = [
   "phantomSettlement1",
@@ -12,6 +13,7 @@ export const PHANTOM_DESTINATIONS = [
 ] as const;
 export const PHANTOM_FLAGSHIP = "phantomFlagship";
 export const PHANTOM_SURRENDER_CHATTER = ["flagshipStandDown", "flagshipSurrender"] as const;
+export const PHANTOM_FINALE_CHATTER = [...PHANTOM_SURRENDER_CHATTER, "flagshipMemory"] as const;
 export const PHANTOM_TUNING = {
   allies: 8,
   // Preserve the ally response previously borrowed from Ada's old engine curve.
@@ -154,6 +156,7 @@ export const PHANTOM_COPY: Readonly<Record<string, PhantomCopy>> = {
   },
   flagshipDisabled: { lines: [line("archie", "Enough! Take it. Take the last disk.")] },
   flagshipHardpoint: { lines: [PHANTOM_FIRST_HARDPOINT_LINE] },
+  flagshipMemory: { lines: [line("astra", PREMISE.holodisk.memories[5]!)] },
   flagshipSalvage: {
     lines: [
       line("astra", "The last holodisk is here. I can bring it aboard."),

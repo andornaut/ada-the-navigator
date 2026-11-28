@@ -47,8 +47,8 @@ import { NEEDLE_COURSE_COPY, NEEDLE_LEARNING } from "../data/needleCopy.ts";
 import { visualNoticeTiming } from "../data/noticeTiming.ts";
 import {
   PHANTOM_DESTINATIONS,
+  PHANTOM_FINALE_CHATTER,
   PHANTOM_FLAGSHIP,
-  PHANTOM_SURRENDER_CHATTER,
   PHANTOM_TUNING,
 } from "../data/phantom.ts";
 import {
@@ -4235,7 +4235,7 @@ export class GameModel {
     // Apply durable outcomes from the entire physics step before a depletion can end the flight.
     if (
       context &&
-      events.some(({ id, type }) => type === "enemySurrendered" && id === PHANTOM_FLAGSHIP)
+      events.some((event) => event.type === "enemySurrendered" && event.id === PHANTOM_FLAGSHIP)
     ) {
       this.resolvePhantomSurrender(context);
     }
@@ -4506,7 +4506,7 @@ export class GameModel {
       }
       if (f.phantom) {
         if (this.current.phantom?.surrenderAftermathDue) {
-          for (const key of PHANTOM_SURRENDER_CHATTER) {
+          for (const key of PHANTOM_FINALE_CHATTER) {
             if (
               !f.phantom.chatter.includes(key) &&
               !this.state.seenConversations.includes(`chapter:phantom:${key}`)
@@ -4649,7 +4649,7 @@ export class GameModel {
       !this.state.dialogue &&
       !this.state.docked &&
       !this.suspendedInteraction &&
-      PHANTOM_SURRENDER_CHATTER.every((key) => {
+      PHANTOM_FINALE_CHATTER.every((key) => {
         const id = `chapter:phantom:${key}`;
         return this.state.seenConversations.includes(id) && !this.talk.pending(id);
       })

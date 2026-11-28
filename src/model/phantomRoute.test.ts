@@ -190,6 +190,8 @@ describe("Phantom full route under test-only chapter admission, not production r
       expect(model.flightEvents.some(({ type }) => type === "enemySurrendered")).toBe(false);
       hear("archie", "All right. Take the disk.");
       expect(model.state.dialogue).toBeNull();
+      hear("astra", CONTENT.premise.holodisk.memories[5]!);
+      expect(model.state.dialogue).toBeNull();
       model.dismissConversation();
       model.step(0.000001, idle);
       expect(model.state.dialogue?.context).toBe("phantom.aftermath");

@@ -5,8 +5,8 @@ import { encounterTable, type EnemyArchetype } from "../data/enemyCatalog.ts";
 import {
   PHANTOM_COPY,
   PHANTOM_DESTINATIONS,
+  PHANTOM_FINALE_CHATTER,
   PHANTOM_FLAGSHIP,
-  PHANTOM_SURRENDER_CHATTER,
   PHANTOM_TUNING as T,
 } from "../data/phantom.ts";
 import { encounterBossHud } from "./capitalBossEncounter.ts";
@@ -62,7 +62,7 @@ const PHANTOM_CHATTER = [
   "flagshipAttack",
   "flagshipHardpoint",
   "flagshipDisabled",
-  ...PHANTOM_SURRENDER_CHATTER,
+  ...PHANTOM_FINALE_CHATTER,
 ] as const;
 export type PhantomChatter = (typeof PHANTOM_CHATTER)[number];
 
@@ -155,7 +155,7 @@ export function settlePhantomSurrender(context: ChapterContext): boolean {
   state.allies = [];
   if (!context.progress.holodisk) {
     progressOf(context).surrenderAftermathDue = true;
-    state.chatter = [...PHANTOM_SURRENDER_CHATTER];
+    state.chatter = [...PHANTOM_FINALE_CHATTER];
   }
   return true;
 }

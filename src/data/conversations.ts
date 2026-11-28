@@ -3,7 +3,7 @@ import { GALAXY_NUMBERS } from "./galaxies.ts";
 import { JOB_LORE } from "./jobs.ts";
 import { LANDMARK_SCAN_COPY } from "./landmarkScanCopy.ts";
 import { NEEDLE_COPY } from "./needleCopy.ts";
-import { PHANTOM_COPY, PHANTOM_SURRENDER_CHATTER } from "./phantom.ts";
+import { PHANTOM_COPY, PHANTOM_FINALE_CHATTER } from "./phantom.ts";
 import { TARGET_MARKER_RANGE } from "./targetMarkers.ts";
 import type { GalaxyNumber } from "./types.ts";
 
@@ -228,7 +228,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
       "flagshipAttack",
       "flagshipHardpoint",
       "flagshipDisabled",
-      ...PHANTOM_SURRENDER_CHATTER,
+      ...PHANTOM_FINALE_CHATTER,
     ] as const
   ).map((id): Conversation => ({
     id: `chapter:phantom:${id}`,
@@ -237,7 +237,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
       speaker: line.speaker as Speaker,
     })),
     priority: "warning",
-    repeat: id === "flagshipStandDown" || id === "flagshipSurrender" ? "never" : "flight",
+    repeat: PHANTOM_FINALE_CHATTER.some((key) => key === id) ? "never" : "flight",
     trigger: { galaxy: 6, id, kind: "chapter" },
   })),
   {
