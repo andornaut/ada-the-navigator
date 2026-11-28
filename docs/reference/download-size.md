@@ -19,6 +19,15 @@ browser transfers. Repository storage, initial navigation, incremental updates a
 browser cache reuse are separate measurements. Keep the build revision,
 compression settings and source fingerprints with comparisons.
 
-No precompressed sidecars are emitted. HTTP content encoding remains the serving
-platform's responsibility. PNGs, SVGs, fonts, game code and offline coverage are
-unchanged by JSON compaction.
+## Install and update archives
+
+Game Kit serves gzip group archives independently of HTTP content encoding.
+Count the archive requests the browser makes, the encoded body bytes, and the
+complete deployable file inventory separately. The deployable inventory also
+includes decoded copies used by older installed clients.
+
+The deferred game loads Phaser and the authored geometry in separate groups.
+Both groups are reusable across updates if their contents stay the same.
+In a matched update where the geometry was unchanged, separating it reduced
+the changed compressed group bodies from 1,077,979 to 481,405 bytes.
+The split introduces one additional archive request on a fresh install.
