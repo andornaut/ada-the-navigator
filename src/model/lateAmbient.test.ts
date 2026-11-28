@@ -10,6 +10,9 @@ import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { settlementsNear } from "./andromedaPlaces.ts";
 import { ConversationDirector } from "./conversations.ts";
+import { damageEnemy } from "./enemyAi.ts";
+import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
+import { salvageTarget, spawnChapterEnemy } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { lateEncounterCue } from "./lateEncounter.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
@@ -98,6 +101,58 @@ describe("Later chapter first encounters", () => {
     loaded.interact();
     expect(loaded.state.dialogue?.context).toBe("needle.arrival");
     expect(loaded.state.progress[4].needle?.met).toBe(false);
+  });
+
+  it("finishes the queued Loom Talk without consuming a newly eligible salvage action", () => {
+    const model = launch(4);
+    const flight = model.state.flight!;
+    const loom = flight.objects.find(({ id }) => id === "elderLoom")!;
+    visit(model, { x: loom.x + 75, y: loom.y });
+    expect(model.state.progress[4].known).toContain(loom.id);
+    expect(model.useTarget).toEqual({ action: "talk", id: loom.id });
+    expect(salvageTarget(CONTENT, flight)).toBeUndefined();
+    model.interact();
+    expect(model.state.dialogue).toBeNull();
+
+    // Stage a real disabled heavy in range after the original press. The fixture arranges
+    // its proximity; canonical hardpoint damage and the live Use query admit Salvage.
+    const heavy = spawnChapterEnemy(
+      CONTENT,
+      "frigate",
+      "fixture:loom-arriving-heavy",
+      { x: flight.player.x + CONTENT.tuning.talkRange - 10, y: flight.player.y },
+      flight,
+    )!;
+    const equipment = enemyEquipmentDefinition(4, heavy.enemy!);
+    for (const part of equipment.hardpoints.filter(({ kind }) => kind === "weapon")) {
+      heavy.enemy = damageEnemy(equipment, { amount: part.hp, hardpointId: part.id }, heavy.enemy!);
+    }
+    expect(heavy.enemy?.disabled).toBe(true);
+    expect(salvageTarget(CONTENT, flight)).toBe(heavy);
+    expect(model.useTarget).toEqual({ action: "salvage", id: loom.id });
+
+    const budget = prelude.reduce((sum, conversation) => sum + conversation.lines.length, 0);
+    for (let i = 0; !model.state.dialogue && i <= budget; i++) {
+      expect(model.conversation).not.toBeNull();
+      model.dismissConversation();
+    }
+    expect(model.state.dialogue?.context).toBe("needle.arrival");
+    expect(model.state.progress[4].needle?.met).toBe(false);
+    expect(heavy.enemy?.salvaged).toBe(false);
+
+    model.choose("continue");
+    expect(model.state.dialogue?.context).toBe("needle.practice");
+    model.choose("continue");
+    expect(model.state.dialogue?.context).toBe("needle.learning");
+    model.choose("independent");
+    expect(model.state.dialogue).toBeNull();
+    expect(model.contextAction).toBe("salvage");
+    model.step(0.001, idle);
+    expect(model.state.dialogue).toBeNull();
+    expect(heavy.enemy?.salvaged).toBe(false);
+    model.interact();
+    expect(model.state.dialogue?.context).toBe("salvage");
+    expect(heavy.enemy?.salvaged).toBe(true);
   });
 
   it("does not identify Avi at an arbitrary station or apply a queued Talk after Ada leaves Loom", () => {

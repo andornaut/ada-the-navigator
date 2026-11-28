@@ -1652,7 +1652,11 @@ export class GameModel {
     if (!this.queuedNeedleTalk) {
       return;
     }
-    if (this.state.flight?.galaxy !== 4 || this.nearest() !== "elderLoom") {
+    if (
+      this.state.flight?.galaxy !== 4 ||
+      this.suspendedInteraction ||
+      this.nearest() !== "elderLoom"
+    ) {
       this.queuedNeedleTalk = false;
       return;
     }
@@ -1663,7 +1667,10 @@ export class GameModel {
       !this.state.docked
     ) {
       this.queuedNeedleTalk = false;
-      this.interact();
+      const context = this.chapterContext();
+      if (context) {
+        this.useChapterPlace(context, "elderLoom");
+      }
     }
   }
   private beginConversations(): void {
@@ -5194,25 +5201,8 @@ export class GameModel {
       this.talk.beforeInteraction(NEEDLE_PRELUDE);
       return;
     }
-    if (chapterContext && chapterRuntime(f.galaxy) && placeActivity(f.galaxy, this.current, id)) {
-      this.talkAt(id, id);
+    if (chapterContext && this.useChapterPlace(chapterContext, id)) {
       return;
-    }
-    if (chapterContext && andromedaStationTopic(chapterContext, id) && this.stationSite(f, id)) {
-      this.dock(id, f);
-      return;
-    }
-    if (chapterContext) {
-      const result = chapterRuntime(f.galaxy)?.use?.(chapterContext, id);
-      if (result !== undefined) {
-        if (result.useRefused) {
-          this.refuse(this.objective);
-          this.useRefusalCount++;
-        } else {
-          this.applyChapterResult(result);
-        }
-        return;
-      }
     }
     if (id !== HUB_STATION && this.current.stations.includes(id)) {
       if (this.supplyDue(id)) {
@@ -5328,6 +5318,30 @@ export class GameModel {
     } else {
       this.talkAt(id, id);
     }
+  }
+  /** Dispatches the place already selected by an explicit press. */
+  private useChapterPlace(context: ChapterContext, id: string): boolean {
+    const { flight, progress } = context;
+    const runtime = chapterRuntime(flight.galaxy);
+    if (runtime && placeActivity(flight.galaxy, progress, id)) {
+      this.talkAt(id, id);
+      return true;
+    }
+    if (andromedaStationTopic(context, id) && this.stationSite(flight, id)) {
+      this.dock(id, flight);
+      return true;
+    }
+    const result = runtime?.use?.(context, id);
+    if (result === undefined) {
+      return false;
+    }
+    if (result.useRefused) {
+      this.refuse(this.objective);
+      this.useRefusalCount++;
+    } else {
+      this.applyChapterResult(result);
+    }
+    return true;
   }
   /** The current galaxy's held station job. */
   private get held(): HeldJob | undefined {
