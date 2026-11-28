@@ -4,6 +4,9 @@ import {
   type RequiredLoading,
 } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 
+import { TYPE } from "../data/layout.ts";
+import { pixels } from "./layout/css.ts";
+
 interface FontPage {
   readonly document: Pick<Document, "fonts" | "styleSheets">;
   readonly stylesheets?: readonly HTMLLinkElement[];
@@ -74,7 +77,7 @@ export function requireBootFonts(required: RequiredLoading, page: FontPage): () 
               if (!attempt.isCurrent()) {
                 return;
               }
-              const font = `${wanted} 16px AdaUI`;
+              const font = `${wanted} ${pixels(TYPE.body.size)} AdaUI`;
               const loaded = await page.document.fonts.load(font);
               if (!attempt.isCurrent()) {
                 return;
