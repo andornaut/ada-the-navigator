@@ -54,6 +54,7 @@ export interface PhantomProgress {
   freed: string[];
   flagshipKnown: boolean;
   aftermathComplete?: true;
+  surrenderAftermathDue?: true;
 }
 const PHANTOM_CHATTER = [
   "battleAllies",
@@ -136,6 +137,27 @@ function hasActiveFlagship(context: ChapterContext): boolean {
     state?.phase === "flagship" &&
     state.enemyIds.includes(PHANTOM_FLAGSHIP)
   );
+}
+
+/** Consume only the combat owner's persisted latch at the admitted finale. */
+export function settlePhantomSurrender(context: ChapterContext): boolean {
+  const state = stateOf(context);
+  if (
+    !state ||
+    !hasActiveFlagship(context) ||
+    state.wave !== T.waves ||
+    retained(context, PHANTOM_FLAGSHIP)?.enemy?.surrendered !== true
+  ) {
+    return false;
+  }
+  departAllies(state);
+  state.phase = "salvaged";
+  state.allies = [];
+  if (!context.progress.holodisk) {
+    progressOf(context).surrenderAftermathDue = true;
+    state.chatter = [...PHANTOM_SURRENDER_CHATTER];
+  }
+  return true;
 }
 
 /** Project the live flagship into the shared HUD without changing the chapter state. */
@@ -853,6 +875,10 @@ export function validPhantomProgress(value: unknown): value is PhantomProgress {
     ids(state.broken) &&
     ids(state.freed) &&
     state.freed.every((id) => state.broken.includes(id)) &&
+    (state.surrenderAftermathDue === undefined ||
+      (state.surrenderAftermathDue === true &&
+        state.aftermathComplete === undefined &&
+        state.flagshipKnown)) &&
     (state.aftermathComplete === undefined ||
       (state.aftermathComplete === true &&
         state.flagshipKnown &&

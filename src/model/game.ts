@@ -45,7 +45,12 @@ import { canAffordMapJump, MAP_JUMP_COST, travelState } from "../data/mapJump.ts
 import { isNeedleCourseStart, NEEDLE } from "../data/needle.ts";
 import { NEEDLE_COURSE_COPY, NEEDLE_LEARNING } from "../data/needleCopy.ts";
 import { visualNoticeTiming } from "../data/noticeTiming.ts";
-import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP } from "../data/phantom.ts";
+import {
+  PHANTOM_DESTINATIONS,
+  PHANTOM_FLAGSHIP,
+  PHANTOM_SURRENDER_CHATTER,
+  PHANTOM_TUNING,
+} from "../data/phantom.ts";
 import {
   poiAmbientLine,
   type PoiApproachKind,
@@ -296,6 +301,7 @@ import {
   phantomBossHud,
   type PhantomContext,
   phantomWaypoint,
+  settlePhantomSurrender,
 } from "./phantom.ts";
 import { phantomAllyRoster, type PhantomAllySpec } from "./phantomAllies.ts";
 import { queuePhantomBlockadeCue } from "./phantomBlockadeCue.ts";
@@ -4013,6 +4019,23 @@ export class GameModel {
       this.holodiskMoment();
     }
   }
+  private resolvePhantomSurrender(context: ChapterContext): void {
+    if (!settlePhantomSurrender(context)) {
+      return;
+    }
+    if (this.takeHolodisk()) {
+      this.state.economy.stardust += PHANTOM_TUNING.salvageStardust;
+    }
+    this.complete();
+  }
+
+  private showPhantomAftermath(): void {
+    const copy = INTERACTION_COPY["6.phantom.aftermath"];
+    if (copy) {
+      this.panel("phantom.aftermath", copy.lines[0]!.text, copy.party);
+    }
+  }
+
   private whirlpoolDiskPickupId(flight: FlightState): string {
     return `chapter:3:holodisk:pickup:${flightEncounterSeed(flight)}`;
   }
@@ -4210,6 +4233,12 @@ export class GameModel {
       cue: { id, kind: "storyPlace" },
     }));
     // Apply durable outcomes from the entire physics step before a depletion can end the flight.
+    if (
+      context &&
+      events.some(({ id, type }) => type === "enemySurrendered" && id === PHANTOM_FLAGSHIP)
+    ) {
+      this.resolvePhantomSurrender(context);
+    }
     if (sounderFighting) {
       if (
         events.some(
@@ -4476,6 +4505,16 @@ export class GameModel {
         });
       }
       if (f.phantom) {
+        if (this.current.phantom?.surrenderAftermathDue) {
+          for (const key of PHANTOM_SURRENDER_CHATTER) {
+            if (
+              !f.phantom.chatter.includes(key) &&
+              !this.state.seenConversations.includes(`chapter:phantom:${key}`)
+            ) {
+              f.phantom.chatter.push(key);
+            }
+          }
+        }
         this.talk.queuePhantomChatter(f.phantom.chatter);
       }
     }
@@ -4601,6 +4640,22 @@ export class GameModel {
         .map(({ id }) => id),
     });
     this.flushNeedleTalk();
+    if (
+      f.galaxy === 6 &&
+      this.current.phantom?.surrenderAftermathDue &&
+      this.current.holodisk &&
+      this.current.questComplete &&
+      this.screen === "space" &&
+      !this.state.dialogue &&
+      !this.state.docked &&
+      !this.suspendedInteraction &&
+      PHANTOM_SURRENDER_CHATTER.every((key) => {
+        const id = `chapter:phantom:${key}`;
+        return this.state.seenConversations.includes(id) && !this.talk.pending(id);
+      })
+    ) {
+      this.showPhantomAftermath();
+    }
     const sensed = this.talk.takeSensed();
     recordSensed(this.state.achievements, sensed);
     const prefix = `penny:${f.galaxy}:`;
@@ -5970,6 +6025,7 @@ export class GameModel {
       this.current.phantom
     ) {
       this.current.phantom.aftermathComplete = true;
+      delete this.current.phantom.surrenderAftermathDue;
       this.state.dialogue = null;
       return;
     }
@@ -6069,6 +6125,9 @@ export class GameModel {
           reserveAndromedaRelaySite(chapter.flight, this.current.redact.relay);
         }
         chapterRuntime(chapter.flight.galaxy)?.init?.(chapter);
+        if (chapter.flight.galaxy === 6) {
+          this.resolvePhantomSurrender(chapter);
+        }
       }
       if (flight) {
         this.restoreCourierPosition(flight);
@@ -6510,10 +6569,7 @@ export class GameModel {
           this.current.holodisk &&
           this.current.questComplete
         ) {
-          const copy = INTERACTION_COPY["6.phantom.aftermath"];
-          if (copy) {
-            this.panel("phantom.aftermath", copy.lines[0]!.text, copy.party);
-          }
+          this.showPhantomAftermath();
         }
       }
     } else {

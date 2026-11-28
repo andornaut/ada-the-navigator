@@ -237,7 +237,7 @@ export const CONVERSATIONS: readonly Conversation[] = [
       speaker: line.speaker as Speaker,
     })),
     priority: "warning",
-    repeat: "flight",
+    repeat: id === "flagshipStandDown" || id === "flagshipSurrender" ? "never" : "flight",
     trigger: { galaxy: 6, id, kind: "chapter" },
   })),
   {
