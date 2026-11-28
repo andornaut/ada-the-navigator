@@ -378,11 +378,13 @@ it("rejects an unbound overnight generation and keeps its surface semantic only 
   const bind = actionBinding.bindAdaAction;
   const registrations = vi
     .spyOn(actionBinding, "bindAdaAction")
-    .mockImplementation((action, element) =>
-      element.dataset.action === "story-sleep"
-        ? { activate: () => false, dispose() {}, update() {} }
-        : bind(action, element),
-    );
+    .mockImplementation((action, element) => {
+      if (element !== (background as unknown as HTMLElement)) {
+        return bind(action, element);
+      }
+      expect(background.dataset.action).toBeUndefined();
+      return { activate: () => false, dispose() {}, update() {} };
+    });
   const sleep = { ...page, canSkip: false, sleep: true };
   try {
     expect(background.dataset.action).toBeUndefined();

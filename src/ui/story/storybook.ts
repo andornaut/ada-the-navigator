@@ -1335,6 +1335,25 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
       throw error;
     }
   };
+  const registerSleepAction = (page: StoryPageView) => {
+    sleepAction = bindAdaAction(
+      {
+        click: {
+          availability: () =>
+            rendered === page && !background.closest("[hidden], [inert]")
+              ? { kind: "available" }
+              : { kind: "omitted" },
+          run: () => options.onNext(),
+        },
+        current: () => !disposed && rendered === page && background.isConnected,
+        slopPx: () => SCROLL.dragThreshold * readViewUnit(background),
+      },
+      background,
+    );
+    // This non-button surface is semantic only for the current sleep generation.
+    background.dataset.action = "story-sleep";
+    assertAdaActionBindings(background);
+  };
   const navigationButtons = [skip, previous, next];
   const render = (
     page: StoryPageView | null,
@@ -1349,24 +1368,8 @@ export function createStorybook(root: HTMLElement, options: StoryOptions) {
     rendered = page;
     forgetSleep();
     if (page?.sleep) {
-      // This non-button surface is semantic only for the current sleep generation.
-      background.dataset.action = "story-sleep";
       try {
-        sleepAction = bindAdaAction(
-          {
-            click: {
-              availability: () =>
-                rendered === page && !background.closest("[hidden], [inert]")
-                  ? { kind: "available" }
-                  : { kind: "omitted" },
-              run: () => options.onNext(),
-            },
-            current: () => !disposed && rendered === page && background.isConnected,
-            slopPx: () => SCROLL.dragThreshold * readViewUnit(background),
-          },
-          background,
-        );
-        assertAdaActionBindings(background);
+        registerSleepAction(page);
       } catch (error) {
         rejectPage();
         throw error;
