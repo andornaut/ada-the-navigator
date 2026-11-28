@@ -14,10 +14,6 @@ export const ANDROMEDA_REDACT_CUES = {
     speaker: "captainRedact",
     text: "That beacon's lit again. All patrols, move away from the light.",
   },
-  hardpoint: {
-    speaker: "astra",
-    text: "One mount's down. I'm recording where the patrols are heading.",
-  },
   resolved: {
     speaker: "astra",
     text: "Their flight log points to a hidden relay. I've added it to the map.",

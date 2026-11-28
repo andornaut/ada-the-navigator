@@ -115,10 +115,6 @@ export const NEEDLE_CADENCE_CUES = {
     speaker: "captainCadence",
     text: "Hold at the channel mouth. Fire when they come through.",
   },
-  hardpoint: {
-    speaker: "ada",
-    text: "There's a pause between shots. I can use that.",
-  },
   resolved: {
     speaker: "astra",
     text: "I picked up a transmission. I've saved it to our flight log.",

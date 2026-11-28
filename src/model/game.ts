@@ -2188,9 +2188,6 @@ export class GameModel {
       this.talk.authoredCue(`${id}:resolved`, NEEDLE_CADENCE_CUES.resolved);
     } else if (boss?.phase === "active" && this.bossHud()) {
       this.talk.authoredCue(`${id}:approach`, NEEDLE_CADENCE_CUES.approach);
-      if (boss.firstHardpointLost) {
-        this.talk.authoredCue(`${id}:hardpoint`, NEEDLE_CADENCE_CUES.hardpoint);
-      }
     }
   }
 
@@ -2263,9 +2260,6 @@ export class GameModel {
       this.talk.authoredCue(`${id}:resolved`, ANDROMEDA_REDACT_CUES.resolved);
     } else if (boss?.phase === "active" && this.bossHud()) {
       this.talk.authoredCue(`${id}:approach`, ANDROMEDA_REDACT_CUES.approach);
-      if (boss.firstHardpointLost) {
-        this.talk.authoredCue(`${id}:hardpoint`, ANDROMEDA_REDACT_CUES.hardpoint);
-      }
     }
   }
 
@@ -4255,31 +4249,17 @@ export class GameModel {
       }
     }
     if (f.galaxy === 4 && this.current.capitalBoss?.phase === "active") {
-      const boss = this.current.capitalBoss;
       if (
         events.some((event) => event.type === "enemyDestroyed" && event.id === NEEDLE_CADENCE.id)
       ) {
         this.resolveNeedleBoss("defeated");
-      } else if (
-        events.some(
-          (event) => event.type === "enemyFirstHardpointLost" && event.id === NEEDLE_CADENCE.id,
-        )
-      ) {
-        this.current.capitalBoss = { ...boss, firstHardpointLost: true };
       }
     }
     if (f.galaxy === 5 && this.current.redact?.phase === "active") {
-      const boss = this.current.redact;
       if (
         events.some((event) => event.type === "enemyDestroyed" && event.id === ANDROMEDA_REDACT.id)
       ) {
         this.resolveRedact(f, "defeated");
-      } else if (
-        events.some(
-          (event) => event.type === "enemyFirstHardpointLost" && event.id === ANDROMEDA_REDACT.id,
-        )
-      ) {
-        this.current.redact = { ...boss, firstHardpointLost: true };
       }
     }
     if (f.galaxy === 2 && this.current.claim?.phase === "active") {
