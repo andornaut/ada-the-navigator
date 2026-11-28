@@ -306,14 +306,14 @@ import {
   needleTrackedObjective,
 } from "./needle/runtime.ts";
 import type { MarkerDetails, PennyMarker, PennyPoint } from "./pennyMarkers.ts";
+import { phantomAllyRoster, type PhantomAllySpec } from "./phantom/allies/index.ts";
 import {
   phantomBlockadeAdmits,
   type PhantomContext,
   phantomWaypoint,
+  queuePhantomBlockadeCue,
   settlePhantomSurrender,
-} from "./phantom.ts";
-import { phantomAllyRoster, type PhantomAllySpec } from "./phantomAllies.ts";
-import { queuePhantomBlockadeCue } from "./phantomBlockadeCue.ts";
+} from "./phantom/index.ts";
 import { HUNT_GLINT } from "./pickupBody.ts";
 import { ambientSecondThread } from "./poiDiscourse.ts";
 import {

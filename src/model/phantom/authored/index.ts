@@ -1,4 +1,4 @@
-import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
+import { PHANTOM_DESTINATIONS } from "../../../data/phantom.ts";
 
 /** Copy follows liberation order; the destination id remains the actual outcome target. */
 export function phantomSettlementCopy(freed: readonly string[], id: string): string | null {

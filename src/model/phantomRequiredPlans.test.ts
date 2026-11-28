@@ -11,14 +11,14 @@ import { createFrigateEscorts, requiredFrigateEscortId } from "./frigateEscorts.
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
 import { escortPackId } from "./geography.ts";
-import type { PhantomFlight } from "./phantom.ts";
+import type { PhantomFlight } from "./phantom/index.ts";
 import {
   type PendingPhantomEncounter,
   readPendingPhantomEncounter,
   storePendingPhantomEncounter,
   takePendingPhantomEncounter,
   validPendingPhantomEncounter,
-} from "./phantomRequiredPlans.ts";
+} from "./phantom/pending/index.ts";
 import type { SpaceObject } from "./types.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "./world/index.ts";
 

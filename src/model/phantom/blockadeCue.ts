@@ -1,10 +1,10 @@
-import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
-import type { ConversationDirector } from "./conversations.ts";
+import { PHANTOM_DESTINATIONS } from "../../data/phantom.ts";
+import type { ConversationDirector } from "../conversations.ts";
 import {
   acknowledgePhantomBlockadeRecovery,
   phantomBlockadeSignal,
   type PhantomContext,
-} from "./phantom.ts";
+} from "./chapter.ts";
 
 const recoveryLine = {
   speaker: "astra",

@@ -28,7 +28,7 @@ import {
   speakerName,
 } from "./conversations.ts";
 import { GameModel } from "./game.ts";
-import type { PhantomChatter } from "./phantom.ts";
+import type { PhantomChatter } from "./phantom/index.ts";
 import type { SpaceObject } from "./types.ts";
 import { collectWeapon } from "./weapons.ts";
 

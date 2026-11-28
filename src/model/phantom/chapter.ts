@@ -1,18 +1,18 @@
-import jumpData from "../../public/art/quantum-jump.json" with { type: "json" };
-import type { CapitalBossHud } from "../data/capitalBosses.ts";
-import { ARCHIE_NAMED } from "../data/conversations.ts";
-import { encounterTable, type EnemyArchetype } from "../data/enemyCatalog.ts";
+import jumpData from "../../../public/art/quantum-jump.json" with { type: "json" };
+import type { CapitalBossHud } from "../../data/capitalBosses.ts";
+import { ARCHIE_NAMED } from "../../data/conversations.ts";
+import { encounterTable, type EnemyArchetype } from "../../data/enemyCatalog.ts";
 import {
   PHANTOM_COPY,
   PHANTOM_DESTINATIONS,
   PHANTOM_FINALE_CHATTER,
   PHANTOM_FLAGSHIP,
   PHANTOM_TUNING as T,
-} from "../data/phantom.ts";
-import { encounterBossHud } from "./capitalBossEncounter.ts";
-import type { ChapterContext, ChapterResult } from "./chapterProtocol.ts";
-import { dropRandom } from "./drops.ts";
-import { exclusionZoneRadius } from "./exclusionZones.ts";
+} from "../../data/phantom.ts";
+import { encounterBossHud } from "../capitalBossEncounter.ts";
+import type { ChapterContext, ChapterResult } from "../chapterProtocol.ts";
+import { dropRandom } from "../drops.ts";
+import { exclusionZoneRadius } from "../exclusionZones.ts";
 import {
   activateRouteEncounter,
   ensureDestination,
@@ -22,27 +22,10 @@ import {
   salvageTarget,
   spawnChapterEnemy,
   syncFlightRegion,
-} from "./flight.ts";
-import { rayCircle } from "./flight/beamContact.ts";
-import { stationPopulationObjects } from "./hostileStations/index.ts";
-import { type PhantomAllySpec, rotatePhantomAllies } from "./phantomAllies.ts";
-import { placePhantomEncounter } from "./phantomEncounterPlacement/index.ts";
-import { phantomFutureFlagshipGeometry } from "./phantomRequiredOccupants.ts";
-import {
-  type PendingPhantomEncounter,
-  readPendingPhantomEncounter,
-  storePendingPhantomEncounter,
-  takePendingPhantomEncounter,
-} from "./phantomRequiredPlans.ts";
-import { phantomSettlementCopy } from "./phantomSettlementCopy.ts";
-import {
-  blockadeFrigate,
-  blockadeSite,
-  type PhantomFlight,
-  type PhantomProgress,
-  type PhantomSettlement,
-} from "./phantomState.ts";
-import { stationFormationClear } from "./stations/formation/index.ts";
+} from "../flight.ts";
+import { rayCircle } from "../flight/beamContact.ts";
+import { stationPopulationObjects } from "../hostileStations/index.ts";
+import { stationFormationClear } from "../stations/formation/index.ts";
 import type {
   DialogueState,
   FlightEvent,
@@ -50,8 +33,25 @@ import type {
   GalaxyProgress,
   SpaceObject,
   Vec,
-} from "./types.ts";
-import { flightWorldContext, worldDelta, worldPoint, wrapPoint } from "./world/index.ts";
+} from "../types.ts";
+import { flightWorldContext, worldDelta, worldPoint, wrapPoint } from "../world/index.ts";
+import { type PhantomAllySpec, rotatePhantomAllies } from "./allies/index.ts";
+import { phantomSettlementCopy } from "./authored/index.ts";
+import {
+  type PendingPhantomEncounter,
+  readPendingPhantomEncounter,
+  storePendingPhantomEncounter,
+  takePendingPhantomEncounter,
+} from "./pending/index.ts";
+import { placePhantomEncounter } from "./placement/index.ts";
+import { phantomFutureFlagshipGeometry } from "./reservations/index.ts";
+import {
+  blockadeFrigate,
+  blockadeSite,
+  type PhantomFlight,
+  type PhantomProgress,
+  type PhantomSettlement,
+} from "./state/index.ts";
 
 export {
   type PhantomBlockadePhase,
@@ -61,7 +61,7 @@ export {
   type PhantomProgress,
   validPhantomFlight,
   validPhantomProgress,
-} from "./phantomState.ts";
+} from "./state/index.ts";
 
 /** Emitted by the hit owner only on the first hardpoint loss, unless that hit resolves the fight. */
 export interface PhantomHardpointEvent {

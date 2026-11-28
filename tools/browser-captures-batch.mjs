@@ -60,7 +60,7 @@ const [
   import(new URL("../src/model/guideBeacons.ts", import.meta.url)),
   import(new URL("../src/model/needle/index.ts", import.meta.url)),
   import(new URL("../src/model/needle/contact.ts", import.meta.url)),
-  import(new URL("../src/model/phantomAllies.ts", import.meta.url)),
+  import(new URL("../src/model/phantom/allies/index.ts", import.meta.url)),
   import(new URL("../src/model/shipBody.ts", import.meta.url)),
   import(new URL("../src/model/currents.ts", import.meta.url)),
   import(new URL("../src/data/jobs.ts", import.meta.url)),

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { phantomSettlementCopy } from "./phantomSettlementCopy.ts";
+import { phantomSettlementCopy } from "./phantom/authored/index.ts";
 
 describe("Phantom settlement copy order", () => {
   it("uses the first exchange even when the third destination is visited first", () => {

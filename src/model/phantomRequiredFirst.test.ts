@@ -7,9 +7,9 @@ import { supportEntropy } from "../testing/launchSeeds.ts";
 import { createUnpopulatedFlight, populateRequiredChapterFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
-import { initPhantom } from "./phantom.ts";
-import { phantomRequiredActors } from "./phantomRequiredOccupants.ts";
-import { readPendingPhantomEncounter } from "./phantomRequiredPlans.ts";
+import { initPhantom } from "./phantom/index.ts";
+import { readPendingPhantomEncounter } from "./phantom/pending/index.ts";
+import { phantomRequiredActors } from "./phantom/reservations/index.ts";
 
 it("activates initial Phantom blockades and reserves the next hidden wave before optional chunks", () => {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);

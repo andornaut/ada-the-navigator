@@ -16,7 +16,7 @@ import {
   phantomBlockadeAdmits,
   phantomBlockadeSignal,
   validPhantomFlight,
-} from "./phantom.ts";
+} from "./phantom/index.ts";
 import type { GalaxyProgress } from "./types.ts";
 import { flightWorldContext } from "./world/index.ts";
 

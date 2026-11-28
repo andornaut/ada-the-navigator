@@ -1,7 +1,7 @@
 import { LIGHT_FIELD, type SpacePalette } from "../art/index.ts";
 import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
 import { SCREEN } from "../data/screen.ts";
-import { phantomBlockadeSignal, type PhantomContext } from "../model/phantom.ts";
+import { phantomBlockadeSignal, type PhantomContext } from "../model/phantom/index.ts";
 import type { Vec } from "../model/types.ts";
 import { flightWorldContext, worldPoint } from "../model/world/index.ts";
 

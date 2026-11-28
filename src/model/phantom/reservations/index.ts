@@ -1,11 +1,11 @@
-import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
-import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
-import type { GameContent } from "../data/types.ts";
-import { createEnemy } from "./ai/index.ts";
-import { liveEnemy } from "./geography.ts";
-import { readPendingPhantomEncounter } from "./phantomRequiredPlans.ts";
-import { requiredWorldOccupantsPopulation } from "./requiredWorldReservations.ts";
-import type { FlightState, SpaceObject } from "./types.ts";
+import { enemyActorDefinition } from "../../../data/enemyActorDefinition.ts";
+import { PHANTOM_FLAGSHIP } from "../../../data/phantom.ts";
+import type { GameContent } from "../../../data/types.ts";
+import { createEnemy } from "../../ai/index.ts";
+import { liveEnemy } from "../../geography.ts";
+import { requiredWorldOccupantsPopulation } from "../../requiredWorldReservations.ts";
+import type { FlightState, SpaceObject } from "../../types.ts";
+import { readPendingPhantomEncounter } from "../pending/index.ts";
 
 /** Current authored membership and its installed followers share one full-state geometry view. */
 export function phantomRequiredActors(flight: FlightState): readonly SpaceObject[] {

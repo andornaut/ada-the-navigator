@@ -1,5 +1,5 @@
-import { grown, inside, type Parts, partsReach, worldParts } from "../convex.ts";
-import type { Vec } from "../types.ts";
+import { grown, inside, type Parts, partsReach, worldParts } from "../../convex.ts";
+import type { Vec } from "../../types.ts";
 
 /** Zero-margin placement needs union membership, not a penetration depth or exit normal. */
 export function placementOutlinesOverlap(

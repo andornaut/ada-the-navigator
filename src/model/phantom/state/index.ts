@@ -1,16 +1,13 @@
-import jumpData from "../../public/art/quantum-jump.json" with { type: "json" };
+import jumpData from "../../../../public/art/quantum-jump.json" with { type: "json" };
 import {
   PHANTOM_DESTINATIONS,
   PHANTOM_FINALE_CHATTER,
   PHANTOM_FLAGSHIP,
   PHANTOM_TUNING as T,
-} from "../data/phantom.ts";
-import type { PhantomAlly } from "./phantomAllies.ts";
-import {
-  type PendingPhantomEncounter,
-  validPendingPhantomEncounter,
-} from "./phantomRequiredPlans.ts";
-import type { Vec } from "./types.ts";
+} from "../../../data/phantom.ts";
+import type { Vec } from "../../types.ts";
+import type { PhantomAlly } from "../allies/index.ts";
+import { type PendingPhantomEncounter, validPendingPhantomEncounter } from "../pending/index.ts";
 
 export interface PhantomProgress {
   broken: string[];

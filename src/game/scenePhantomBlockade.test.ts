@@ -9,7 +9,7 @@ import { enemyEquipmentDefinition } from "../model/enemyEquipment.ts";
 import { GameModel } from "../model/game.ts";
 import { worldSyncFlightRegion } from "../model/geography.ts";
 import { stationPopulationObjects } from "../model/hostileStations/index.ts";
-import { phantomBlockadeAdmits, phantomBlockadeSignal } from "../model/phantom.ts";
+import { phantomBlockadeAdmits, phantomBlockadeSignal } from "../model/phantom/index.ts";
 import type { FlightInput, Vec } from "../model/types.ts";
 import { flightWorldContext, worldPoint } from "../model/world/index.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";

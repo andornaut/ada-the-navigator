@@ -36,8 +36,8 @@ import {
   type PoiLoreCue,
 } from "../data/poiDiscoveryLore.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import type { PhantomChatter } from "./phantom.ts";
-import { phantomSettlementCopy } from "./phantomSettlementCopy.ts";
+import { phantomSettlementCopy } from "./phantom/authored/index.ts";
+import type { PhantomChatter } from "./phantom/index.ts";
 import type { ScanOutcome } from "./scanOutcomes.ts";
 import { scanOutcomeLines } from "./scanOutcomeSpeech.ts";
 import type { DialogueChoice, FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";

@@ -4,7 +4,7 @@ import { enemyAssetKey } from "../data/enemyIdentity.ts";
 import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { partsReach, toScreen, worldParts } from "../model/convex.ts";
 import { enemyPhysicalBody } from "../model/enemyBody.ts";
-import { type PhantomSong, phantomSongSpeed } from "../model/phantomAllies.ts";
+import { type PhantomSong, phantomSongSpeed } from "../model/phantom/allies/index.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
 import type { ObjectsContext } from "./sceneObjects.ts";
 

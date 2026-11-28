@@ -12,7 +12,7 @@ import { createFlight, inDanger, routeBlocked, spawnChapterEnemy, stepFlight } f
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
-import { phantomBlockadeAdmits } from "./phantom.ts";
+import { phantomBlockadeAdmits } from "./phantom/index.ts";
 import { newProgress } from "./progress.ts";
 import type { FlightInput, FlightState, SpaceObject } from "./types.ts";
 import {

@@ -200,13 +200,13 @@ import {
 } from "./hostileStations/placement.ts";
 import { queueHostileStationReward } from "./hostileStations/reward.ts";
 import type { NeedleCadencePlacement } from "./needle/routePlan.ts";
-import { activePhantomSong, phantomSongSpeed, stepPhantomAllies } from "./phantomAllies.ts";
+import { activePhantomSong, phantomSongSpeed, stepPhantomAllies } from "./phantom/allies/index.ts";
+import { readPendingPhantomEncounter } from "./phantom/pending/index.ts";
 import {
   nextPhantomBatchReserved,
   phantomFutureFlagshipGeometry,
   phantomRequiredActors,
-} from "./phantomRequiredOccupants.ts";
-import { readPendingPhantomEncounter } from "./phantomRequiredPlans.ts";
+} from "./phantom/reservations/index.ts";
 import type { PlayerWeaponCoverageContext } from "./playerWeaponCoverage.ts";
 import {
   questGuardAnchor,

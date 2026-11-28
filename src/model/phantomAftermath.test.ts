@@ -6,7 +6,7 @@ import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { createUnpopulatedFlight, populateFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { validPhantomProgress } from "./phantom.ts";
+import { validPhantomProgress } from "./phantom/index.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "./world/index.ts";
 
 function aftermath() {

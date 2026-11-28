@@ -23,7 +23,7 @@ import {
   phantomObjective,
   phantomObjectiveIndex,
   usePhantom,
-} from "./phantom.ts";
+} from "./phantom/index.ts";
 
 /** Authored chapter modules share the model's home, outcome, save and flight machinery. */
 const RUNTIMES: Readonly<Partial<Record<GalaxyNumber, ChapterRuntime>>> = {

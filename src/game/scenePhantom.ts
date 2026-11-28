@@ -14,14 +14,14 @@ import {
 import { CONTENT } from "../data/content.ts";
 import { GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { PHANTOM_DESTINATIONS, PHANTOM_FLAGSHIP } from "../data/phantom.ts";
-import type { PhantomDeparture, PhantomFlight } from "../model/phantom.ts";
 import {
   activePhantomSong,
   type PhantomAlly,
   type PhantomAllySpec,
   phantomSongSpeed,
   phantomWhaleKind,
-} from "../model/phantomAllies.ts";
+} from "../model/phantom/allies/index.ts";
+import type { PhantomDeparture, PhantomFlight } from "../model/phantom/index.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
 import { familyArt, loadEnemyParts } from "./sceneAssets.ts";
 import { drawEnemySprite } from "./sceneEnemies.ts";

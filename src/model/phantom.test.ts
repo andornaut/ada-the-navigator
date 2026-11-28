@@ -17,6 +17,17 @@ import {
 } from "./flight.ts";
 import { hit } from "./flight/hitResolution.ts";
 import {
+  activePhantomSong,
+  phantomAllyRoster,
+  phantomEscortSlot,
+  phantomSongSpeed,
+  phantomWhaleKind,
+  phantomWhaleOffsets,
+  phantomWhaleReach,
+  rotatePhantomAllies,
+  stepPhantomAllies,
+} from "./phantom/allies/index.ts";
+import {
   afterStepPhantom,
   beforeStepPhantom,
   choosePhantom,
@@ -31,19 +42,8 @@ import {
   usePhantom,
   validPhantomFlight,
   validPhantomProgress,
-} from "./phantom.ts";
-import {
-  activePhantomSong,
-  phantomAllyRoster,
-  phantomEscortSlot,
-  phantomSongSpeed,
-  phantomWhaleKind,
-  phantomWhaleOffsets,
-  phantomWhaleReach,
-  rotatePhantomAllies,
-  stepPhantomAllies,
-} from "./phantomAllies.ts";
-import { readPendingPhantomEncounter } from "./phantomRequiredPlans.ts";
+} from "./phantom/index.ts";
+import { readPendingPhantomEncounter } from "./phantom/pending/index.ts";
 import { stationFormationClear } from "./stations/formation/index.ts";
 import type { FlightEvent, FlightState, GalaxyProgress } from "./types.ts";
 function fixture(): PhantomContext {

@@ -12,7 +12,7 @@ import { createEnemy } from "./ai/index.ts";
 import { activeEnemyBeams } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
-import { validPhantomFlight, validPhantomProgress } from "./phantom.ts";
+import { validPhantomFlight, validPhantomProgress } from "./phantom/index.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
 
 const productionRoster = [...BUILT];

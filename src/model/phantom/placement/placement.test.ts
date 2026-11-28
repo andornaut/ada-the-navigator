@@ -1,19 +1,19 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { CONTENT } from "../../data/content.ts";
-import { enemyActorDefinition } from "../../data/enemyActorDefinition.ts";
-import type { EnemyArchetype } from "../../data/enemyCatalog.ts";
-import { ROUTE_POSITION } from "../../data/galaxies.ts";
-import { PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../../data/phantom.ts";
-import { GALAXY_SIDE } from "../../data/world.ts";
-import { createEnemy } from "../ai/index.ts";
-import { ASTEROID_SHAPES } from "../asteroids.ts";
-import { partsReach, worldParts } from "../convex.ts";
-import { enemyPhysicalBody } from "../enemyBody.ts";
-import { createUnpopulatedFlight } from "../flight.ts";
-import * as placement from "../stations/formation/index.ts";
-import type { SpaceObject, Vec } from "../types.ts";
-import { flightWorldContext, worldDelta, worldDistance, wrapPoint } from "../world/index.ts";
+import { CONTENT } from "../../../data/content.ts";
+import { enemyActorDefinition } from "../../../data/enemyActorDefinition.ts";
+import type { EnemyArchetype } from "../../../data/enemyCatalog.ts";
+import { ROUTE_POSITION } from "../../../data/galaxies.ts";
+import { PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../../../data/phantom.ts";
+import { GALAXY_SIDE } from "../../../data/world.ts";
+import { createEnemy } from "../../ai/index.ts";
+import { ASTEROID_SHAPES } from "../../asteroids.ts";
+import { partsReach, worldParts } from "../../convex.ts";
+import { enemyPhysicalBody } from "../../enemyBody.ts";
+import { createUnpopulatedFlight } from "../../flight.ts";
+import * as placement from "../../stations/formation/index.ts";
+import type { SpaceObject, Vec } from "../../types.ts";
+import { flightWorldContext, worldDelta, worldDistance, wrapPoint } from "../../world/index.ts";
 import { type PhantomEncounterPlacementContext, placePhantomEncounter } from "./index.ts";
 
 const waypoint = { x: 10000, y: 10000 };

@@ -8,7 +8,7 @@ import {
 } from "../../data/capitalBosses.ts";
 import { encounterBossHud } from "../capitalBossEncounter.ts";
 import type { ChapterContext } from "../chapterProtocol.ts";
-import { phantomBossHud } from "../phantom.ts";
+import { phantomBossHud } from "../phantom/index.ts";
 
 /** Select the chapter's visible boss from the active flight without paging its actor. */
 export function projectCapitalBossHud(context: ChapterContext): CapitalBossHud | null {
