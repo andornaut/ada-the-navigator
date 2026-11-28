@@ -869,14 +869,17 @@ it.each([
   );
 });
 
-const returnedButtonSource = readFileSync(new URL("../ui/station.ts", import.meta.url), "utf8");
-const returnedButtonFixture = "src/ui/returnedButtonFixture.ts";
+const returnedButtonSource = readFileSync(
+  new URL("../ui/station/station.ts", import.meta.url),
+  "utf8",
+);
+const returnedButtonFixture = "src/ui/station/returnedButtonFixture.ts";
 const returnedButtonFinding = expect.objectContaining({
   kind: "unbound-discrete",
   source: expect.stringContaining("createButton(document,"),
 });
 
-it.each(["src/ui/station.ts", returnedButtonFixture])(
+it.each(["src/ui/station/station.ts", returnedButtonFixture])(
   "proves the same registered button is returned with deferred cleanup in %s",
   (path) => {
     expect(constructionFindings(path, returnedButtonSource)).not.toContainEqual(

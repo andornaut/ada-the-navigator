@@ -10,7 +10,7 @@ import STATION_JOB_BRIEFS from "../data/station-job-briefs.json" with { type: "j
 import type { GalaxyNumber } from "../data/types.ts";
 import type { JobRow } from "../model/game.ts";
 import { fill } from "../model/shop.ts";
-import type { StationJob } from "../ui/station.ts";
+import type { StationJob } from "../ui/station/index.ts";
 
 const source = ts.createSourceFile(
   "sceneUi.ts",

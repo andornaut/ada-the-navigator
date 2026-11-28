@@ -1,6 +1,6 @@
-import type { Weapon } from "../data/types.ts";
-import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
+import type { Weapon } from "../../data/types.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
+import { weaponGlyphPath } from "../../data/weaponGlyphs.ts";
 
 export type ItemGlyph =
   | { readonly kind: "stateVector"; readonly key: string }

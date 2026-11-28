@@ -7,47 +7,41 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 import ts from "typescript";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { CONTENT } from "../data/content.ts";
-import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
-import { TASK_COLORS } from "../data/taskCategories.ts";
-import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { fill } from "../model/shop.ts";
-import type { StationServices } from "../model/stationServices.ts";
-import type { DialogueState } from "../model/types.ts";
+import { CONTENT } from "../../data/content.ts";
+import { EXCHANGE_COPY } from "../../data/exchangeCopy.ts";
+import { TASK_COLORS } from "../../data/taskCategories.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
+import { fill } from "../../model/shop.ts";
+import type { StationServices } from "../../model/stationServices.ts";
+import type { DialogueState } from "../../model/types.ts";
 import {
   ADA_ACTION_HOLD_MS,
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
   resolveAdaHoldAction,
-} from "./actionBinding.ts";
-import { registerAdaActionRoot } from "./actionRegistry.ts";
-import { itemDetailName, itemDetailProse, renderItemDetailHeader } from "./itemDetailContent.ts";
-import { SCROLL } from "./layout/contentCard.ts";
-import { units } from "./layout/css.ts";
-import { CONFIRM_ITEM } from "./layout/shopCard.ts";
-import { BUTTON_GAP } from "./layout/tokens.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
-import { isTap } from "./modal.ts";
-import { createStandardCloseAction } from "./modalClose.ts";
-import { createModalLayer } from "./modalLayer.ts";
-import { currentView, inCurrentView, rootPressGuard } from "./pressScope.ts";
-import { createStandardTextAction } from "./standardTextAction.ts";
+} from "../actionBinding.ts";
+import { registerAdaActionRoot } from "../actionRegistry.ts";
+import { itemDetailName, itemDetailProse, renderItemDetailHeader } from "../itemDetailContent.ts";
+import { SCROLL } from "../layout/contentCard.ts";
+import { units } from "../layout/css.ts";
+import { CONFIRM_ITEM } from "../layout/shopCard.ts";
+import { STATION_STYLE } from "../layout/stationStyle.ts";
+import { BUTTON_GAP } from "../layout/tokens.ts";
+import { readViewUnit } from "../layout/viewScale.ts";
+import { isTap } from "../modal.ts";
+import { createStandardCloseAction } from "../modalClose.ts";
+import { createModalLayer } from "../modalLayer.ts";
+import { currentView, inCurrentView, rootPressGuard } from "../pressScope.ts";
+import { createStandardTextAction } from "../standardTextAction.ts";
+import { buttonProperty } from "../uiSkin.ts";
 import * as stationSource from "./station.ts";
-import {
-  jobAction,
-  rowAction,
-  STATION_STYLE,
-  stationBack,
-  stationJobsRows,
-  stationJobsShown,
-  weaponItemGlyph,
-} from "./station.ts";
+import { jobAction, rowAction, stationBack, stationJobsRows, stationJobsShown } from "./station.ts";
+import { weaponItemGlyph } from "./stationItemIcon.ts";
 import { stationJobRowTree } from "./stationJobsTree.ts";
 import { stationMenuTree } from "./stationMenuTree.ts";
 import { stationShopRowTree } from "./stationShopTree.ts";
 import { createStationTalk, type StationTalkVisit } from "./stationTalk.ts";
-import { buttonProperty } from "./uiSkin.ts";
 
 describe("station card back steps", () => {
   it("returns from the shop and the job board to the station card and undocks only from it", () => {
@@ -203,7 +197,7 @@ describe("shop style", () => {
       for (const suffix of ["", "-disabled"]) {
         expect(
           existsSync(
-            new URL(`../../public${uiIconUrl(`icon-job-${type}${suffix}`)}`, import.meta.url),
+            new URL(`../../../public${uiIconUrl(`icon-job-${type}${suffix}`)}`, import.meta.url),
           ),
         ).toBe(true);
       }

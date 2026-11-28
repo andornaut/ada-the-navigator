@@ -1,17 +1,17 @@
 import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 
-import { CONTENT } from "../data/content.ts";
+import { CONTENT } from "../../data/content.ts";
 import {
   type InteractionContext,
   InteractionConversation,
   interactionCopy,
-} from "../model/conversations.ts";
-import type { DialogueState } from "../model/types.ts";
-import { showDialogueChoiceStatus } from "./dialogueChoice.ts";
-import type { createDialoguePanel } from "./dialoguePanel.ts";
-import { invalidatePressScope } from "./pressScope.ts";
-import { createStandardTextAction } from "./standardTextAction.ts";
+} from "../../model/conversations.ts";
+import type { DialogueState } from "../../model/types.ts";
+import { showDialogueChoiceStatus } from "../dialogueChoice.ts";
+import type { createDialoguePanel } from "../dialoguePanel.ts";
+import { invalidatePressScope } from "../pressScope.ts";
+import { createStandardTextAction } from "../standardTextAction.ts";
 
 /** The caller supplies the eligible conversation and accepts only the current panel's choice. */
 export interface StationTalkVisit {

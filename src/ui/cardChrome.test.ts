@@ -3,10 +3,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { INTERACTION_STYLE } from "./conversation.ts";
 import { FOCUS_RING } from "./layout/controls.ts";
 import { units } from "./layout/css.ts";
+import { STATION_STYLE } from "./layout/stationStyle.ts";
 import { BUTTON_GAP, STACK_BUTTON_GAP } from "./layout/tokens.ts";
 import { MAP_SCREEN_STYLE } from "./map/mapScreen.ts";
 import { createCard, MODAL_STYLE, UI_SCOPE } from "./modal.ts";
-import { STATION_STYLE } from "./station.ts";
 
 class Element {
   readonly attributes = new Map<string, string>();

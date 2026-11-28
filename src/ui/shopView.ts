@@ -13,7 +13,7 @@ import {
   weaponName,
 } from "../model/shop.ts";
 import type { ItemDetail } from "./itemDetailContent.ts";
-import { type ItemGlyph, type StationRow, weaponItemGlyph } from "./station.ts";
+import { type ItemGlyph, type StationRow, weaponItemGlyph } from "./station/index.ts";
 
 // Maps the model's shop rows to the station view's rows (art/shop.md, art/shop-icons.md).
 

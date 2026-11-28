@@ -19,7 +19,7 @@ export { createRestartCard } from "./restart/index.ts";
 export { createScanFeedbackView } from "./scanFeedbackView.ts";
 export { aboardLabel, type ShipView } from "./ship/index.ts";
 export { shopItemDetail, stationRow } from "./shopView.ts";
-export { createStationView } from "./station.ts";
+export { createStationView } from "./station/index.ts";
 export { stardustCount } from "./statusPill.ts";
 export {
   aboardGalaxy,

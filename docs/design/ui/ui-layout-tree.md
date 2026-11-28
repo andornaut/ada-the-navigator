@@ -7,7 +7,7 @@ expressions or implement another renderer. Action registries, current availabili
 modal lifecycle and return context stay outside tree data.
 
 `stationDropTree` and `mountStationDropDetails` in
-[src/ui/stationDropDetails.ts](../../../src/ui/stationDropDetails.ts) serve the station's
+[src/ui/station/stationDropDetails.ts](../../../src/ui/station/stationDropDetails.ts) serve the station's
 job/activity Drop confirmation and the isolated component fixture. The confirmation preserves its
 small card, authored labels, secondary Cancel and primary Drop actions.
 
@@ -34,8 +34,8 @@ and prose ports; consumers can also supply their own native component ports.
 
 | Consumer                                                                                              | Typed composition                                                                                            | Native or caller-owned boundary                                                                         |
 | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| [Station](../../../src/ui/station.ts)                                                                 | `stationMenuTree`, `stationShopTree`, `stationShopRowTree`, `stationJobsTree`, `stationJobRowTree`           | Card shells, item icons, selection, purchasing and job policy, confirmation and Back callbacks          |
-| [Drop](../../../src/ui/stationDropDetails.ts), [Restart](../../../src/ui/restart/index.ts)            | `stationDropTree`, `restartTree` card and footer                                                             | Original confirmation actions, availability, focus and modal lifecycle                                  |
+| [Station](../../../src/ui/station/station.ts)                                                         | `stationMenuTree`, `stationShopTree`, `stationShopRowTree`, `stationJobsTree`, `stationJobRowTree`           | Card shells, item icons, selection, purchasing and job policy, confirmation and Back callbacks          |
+| [Drop](../../../src/ui/station/stationDropDetails.ts), [Restart](../../../src/ui/restart/index.ts)    | `stationDropTree`, `restartTree` card and footer                                                             | Original confirmation actions, availability, focus and modal lifecycle                                  |
 | [Resource](../../../src/ui/resource/index.ts), [Weapon detail](../../../src/ui/weaponDetail/index.ts) | `resourceTree`, `weaponDetailTree` content and footer ports                                                  | Existing card/header nodes, icons, quantity and level formatting, original actions and foreground scope |
 | [Update](../../../src/ui/updateDialog.ts)                                                             | `updateTree` native card and ordered footer                                                                  | Offer subscription, accept/defer policy, outside-tap guard, focus and modal lifecycle                   |
 | [Settings](../../../src/ui/settings/index.ts)                                                         | `settingsTree` columns, device rows, divider, conditional install row, build and actions                     | Stateful widgets, install guide, preferences and callbacks                                              |
@@ -89,7 +89,7 @@ report; it cannot establish fit by hiding excess content. Physical reports and
 rendered artifacts are both required for visual review.
 
 Shop offer rows and purchase-detail headers share `createStationItemIcon` from
-[src/ui/stationItemIcon.ts](../../../src/ui/stationItemIcon.ts). The caller's existing
+[src/ui/station/stationItemIcon.ts](../../../src/ui/station/stationItemIcon.ts). The caller's existing
 item descriptor selects the canonical sprite, weapon upgrade composite or paint
 swatch. Header icons are decorative and preserve the visible item name. Rendering
 an additional header icon does not move or replace the row's icon.

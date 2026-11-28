@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { ARCHIE_NAMED } from "../data/conversations.ts";
-import type { StationGreeting } from "../model/keepers.ts";
+import { ARCHIE_NAMED } from "../../data/conversations.ts";
+import type { StationGreeting } from "../../model/keepers.ts";
 import { stationWelcome } from "./station.ts";
 
 describe("station welcome speaker contract", () => {

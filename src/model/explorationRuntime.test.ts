@@ -10,7 +10,7 @@ import { GALAXY_SIDE } from "../data/world.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { chipFace } from "../ui/map/mapScreen.ts";
-import { stationJobsRows, type StationRow } from "../ui/station.ts";
+import { stationJobsRows, type StationRow } from "../ui/station/index.ts";
 import { dropRandom, enemyStardust } from "./drops.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { ROUTE_OPPORTUNITY_SECONDS } from "./explorationPacing.ts";

@@ -3,37 +3,38 @@ import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayo
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { CONTENT } from "../data/content.ts";
-import type { UpgradeWeapon } from "../data/economy.ts";
-import { EXCHANGE_COPY } from "../data/exchangeCopy.ts";
-import { TASK_COLORS } from "../data/taskCategories.ts";
-import type { StationGreeting } from "../model/keepers.ts";
-import { fill } from "../model/shop.ts";
-import type { StationServices } from "../model/stationServices.ts";
+import { CONTENT } from "../../data/content.ts";
+import type { UpgradeWeapon } from "../../data/economy.ts";
+import { EXCHANGE_COPY } from "../../data/exchangeCopy.ts";
+import { TASK_COLORS } from "../../data/taskCategories.ts";
+import type { StationGreeting } from "../../model/keepers.ts";
+import { fill } from "../../model/shop.ts";
+import type { StationServices } from "../../model/stationServices.ts";
 import {
   ADA_ACTION_HOLD_MS,
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
-} from "./actionBinding.ts";
-import { createDialoguePanel, type DialogueSpeaker } from "./dialoguePanel.ts";
-import { createExchangeView, type ExchangePort } from "./exchange/index.ts";
+} from "../actionBinding.ts";
+import { createDialoguePanel, type DialogueSpeaker } from "../dialoguePanel.ts";
+import { createExchangeView, type ExchangePort } from "../exchange/index.ts";
 import {
   type ItemDetail,
   itemDetailName,
   itemDetailProse,
   renderItemDetailHeader,
-} from "./itemDetailContent.ts";
-import { keeperName } from "./keeperBlock.ts";
-import { SCROLL } from "./layout/contentCard.ts";
-import { CONFIRM_ITEM } from "./layout/shopCard.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
-import { createActions, createCard, isTap } from "./modal.ts";
-import { createStandardCloseAction } from "./modalClose.ts";
-import { createModalLayer } from "./modalLayer.ts";
-import { inCurrentView } from "./pressScope.ts";
-import { refuse } from "./refusal.ts";
-import { createStandardTextAction } from "./standardTextAction.ts";
+} from "../itemDetailContent.ts";
+import { keeperName } from "../keeperBlock.ts";
+import { SCROLL } from "../layout/contentCard.ts";
+import { CONFIRM_ITEM } from "../layout/shopCard.ts";
+import { readViewUnit } from "../layout/viewScale.ts";
+import { createActions, createCard, isTap } from "../modal.ts";
+import { createStandardCloseAction } from "../modalClose.ts";
+import { createModalLayer } from "../modalLayer.ts";
+import { inCurrentView } from "../pressScope.ts";
+import { refuse } from "../refusal.ts";
+import { createStandardTextAction } from "../standardTextAction.ts";
+import { applyButtonSkin } from "../uiSkin.ts";
 import { mountStationDropDetails } from "./stationDropDetails.ts";
 import { createStationItemIcon, type ItemGlyph } from "./stationItemIcon.ts";
 import { type StationJobRowSchema, stationJobRowTree } from "./stationJobsTree.ts";
@@ -44,15 +45,10 @@ import {
 } from "./stationMenuTree.ts";
 import { type StationShopRowSchema, stationShopRowTree } from "./stationShopTree.ts";
 import { createStationTalk, type StationTalkVisit } from "./stationTalk.ts";
-import { applyButtonSkin } from "./uiSkin.ts";
 
 // The station card, the shop, the job board and their confirms (art/shop.md,
 // gameplay/quests.md "Job board") on the shared card builder; every size comes from src/ui/layout
 // (layout.md "Shop item row").
-
-export { STATION_STYLE } from "./layout/stationStyle.ts";
-export type { ItemGlyph } from "./stationItemIcon.ts";
-export { weaponItemGlyph } from "./stationItemIcon.ts";
 
 export interface StationLabels {
   readonly close: string;
