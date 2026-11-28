@@ -404,6 +404,15 @@ it("retains the attached paint buttons, selection guard and focus transfer", () 
   try {
     card.open();
     const [classic, cobalt] = root.querySelectorAll('[data-action="apply-ship-paint"]');
+    const stack = root.querySelector(".ada-ship-paint-grid")!.children[0]!;
+    const [row] = stack.children;
+    expect(stack.matches(".ui-layout-stack")).toBe(true);
+    expect(row!.getAttribute("data-ui-layout-sizing")).toBe("equal");
+    expect(row!.children.map((tile) => tile.dataset.paint)).toEqual([
+      "classic",
+      "cobalt",
+      undefined,
+    ]);
     expect(classic!.textContent).toBe("In use");
     expect(classic!.matches(":disabled")).toBe(true);
     classic!.click();
@@ -423,7 +432,7 @@ it("retains the attached paint buttons, selection guard and focus transfer", () 
   }
 });
 
-it("rejects a paint button missing its binding before attaching that tile", () => {
+it("rejects a paint button missing its binding before publishing the grid", () => {
   const { card, root, select } = shipPaintFixture();
   const grid = root.querySelector(".ada-ship-paint-grid")!;
   const append = vi.spyOn(grid, "append");
@@ -437,7 +446,7 @@ it("rejects a paint button missing its binding before attaching that tile", () =
     .mockImplementationOnce(() => ({ activate: () => false, dispose() {}, update() {} }));
   try {
     expect(() => card.open()).toThrow("no registered action binding");
-    expect(append.mock.calls.flat().map((tile) => tile.dataset.paint)).toEqual(["classic"]);
+    expect(append).not.toHaveBeenCalled();
     expect(grid.children).toEqual([]);
     expect(card.isOpen()).toBe(false);
     expect(registered).toHaveLength(1);

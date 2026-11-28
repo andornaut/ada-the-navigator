@@ -1,23 +1,53 @@
+import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+import { type MountedLayout, mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { SCROLL } from "./layout/contentCard.ts";
+import { SPACING } from "./layout/tokens.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 import { createActions, createCard, setFooterAction } from "./modal.ts";
 import { createStandardCloseAction } from "./modalClose.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { createStandardTextAction } from "./standardTextAction.ts";
 
+interface ShipPaintScheme {
+  readonly id: string;
+  readonly name: string;
+  readonly swatch?: string;
+}
+
+type PaintLayout = { tile: { props: ShipPaintScheme; slots: never } };
+const PAINT_COLUMNS = 3;
+
+function paintTree(schemes: readonly ShipPaintScheme[]): LayoutNode<PaintLayout> {
+  return {
+    children: Array.from({ length: Math.ceil(schemes.length / PAINT_COLUMNS) }, (_, row) => ({
+      children: Array.from({ length: PAINT_COLUMNS }, (_, column): LayoutNode<PaintLayout> => {
+        const scheme = schemes[row * PAINT_COLUMNS + column];
+        return scheme
+          ? { component: "tile", key: scheme.id, kind: "component", props: scheme }
+          : { children: [], gap: 0, key: `empty:${column}`, kind: "stack", padding: 0 };
+      }),
+      gap: SPACING.gap,
+      key: `row:${row}`,
+      kind: "columns",
+      padding: 0,
+      sizing: { mode: "equal" },
+    })),
+    gap: SPACING.gap,
+    key: "paints",
+    kind: "stack",
+    padding: 0,
+  };
+}
+
 export interface ShipPaintOptions {
   readonly applyLabel: string;
   readonly current: () => string;
   readonly inUseLabel: string;
-  readonly schemes: () => readonly {
-    readonly id: string;
-    readonly name: string;
-    readonly swatch?: string;
-  }[];
+  readonly schemes: () => readonly ShipPaintScheme[];
   readonly select: (id: string) => void;
   readonly title: string;
 }
@@ -62,6 +92,7 @@ export function createShipPaintCard(
   assertAdaActionMetadata(modal);
   root.append(modal);
   const layer = createModalLayer(modal);
+  let mounted: MountedLayout<PaintLayout> | undefined;
   const actions = new Map<string, ReturnType<typeof createStandardTextAction>>();
 
   function hide(): void {
@@ -72,7 +103,8 @@ export function createShipPaintCard(
       action.dispose();
     }
     actions.clear();
-    grid.replaceChildren();
+    mounted?.dispose();
+    mounted = undefined;
   }
 
   function close(): void {
@@ -119,6 +151,39 @@ export function createShipPaintCard(
     return button;
   };
 
+  const mountPaints = () =>
+    mountLayout<PaintLayout>(
+      {
+        components: {
+          tile: {
+            create({ id, name, swatch }) {
+              const tile = document.createElement("div");
+              tile.className = "ada-ship-paint-tile";
+              tile.dataset.paint = id;
+              const heading = document.createElement("div");
+              heading.className = "ada-ship-paint-name";
+              if (swatch) {
+                const image = document.createElement("img");
+                image.className = "ada-ship-paint-swatch";
+                image.alt = "";
+                image.src = swatch;
+                heading.append(image);
+              }
+              const label = document.createElement("span");
+              label.id = `ada-ship-paint-name-${id}`;
+              label.textContent = name;
+              heading.append(label);
+              tile.append(heading, createApplyButton(id, label.id));
+              return { dispose() {}, element: tile, slots: {}, update() {} };
+            },
+            slots: [],
+          },
+        },
+        host: grid,
+      },
+      paintTree(options.schemes()),
+    );
+
   return {
     close,
     dispose() {
@@ -137,26 +202,7 @@ export function createShipPaintCard(
       }
       selected = options.current();
       try {
-        for (const { id, name, swatch } of options.schemes()) {
-          const tile = document.createElement("div");
-          tile.className = "ada-ship-paint-tile";
-          tile.dataset.paint = id;
-          const heading = document.createElement("div");
-          heading.className = "ada-ship-paint-name";
-          if (swatch) {
-            const image = document.createElement("img");
-            image.className = "ada-ship-paint-swatch";
-            image.alt = "";
-            image.src = swatch;
-            heading.append(image);
-          }
-          const label = document.createElement("span");
-          label.id = `ada-ship-paint-name-${id}`;
-          label.textContent = name;
-          heading.append(label);
-          tile.append(heading, createApplyButton(id, label.id));
-          grid.append(tile);
-        }
+        mounted = mountPaints();
         assertAdaActionBindings(modal);
         modal.hidden = false;
         parts.fit();

@@ -116,10 +116,13 @@ ${UI_SCOPE} .ada-ship-ammo{
   line-height:${units(SHIP_CARD.row)}
 }
 ${UI_SCOPE} .ada-ship-paint-grid{
-  width:100%;
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:${units(SPACING.gap)}
+  width:100%
+}
+${UI_SCOPE} .ada-ship-paint-grid > .ui-layout-stack{
+  grid-template-columns:minmax(0,1fr)
+}
+${UI_SCOPE} .ada-ship-paint-grid > .ui-layout-stack > .ui-layout-columns{
+  align-items:stretch
 }
 ${UI_SCOPE} .ada-ship-paint-tile{
   display:flex;
