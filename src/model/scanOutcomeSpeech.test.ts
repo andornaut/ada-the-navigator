@@ -70,6 +70,25 @@ it("formats exactly one ordinary or remembered intro using safe literal target s
   ]);
 });
 
+it("speaks the committed wreck recovery once and keeps repeat Scan feedback", () => {
+  const { talk } = director();
+  const recovery = immutableScanOutcome({
+    ...outcome(),
+    wreckRecovered: true,
+  });
+  talk.scanOutcome(recovery);
+  talk.scanOutcome(recovery);
+  expect(talk.showing?.line).toEqual({
+    speaker: "astra",
+    text: "I recovered supplies from the wreck.",
+  });
+  talk.advance();
+  step(talk);
+  expect(talk.showing).toBeNull();
+  talk.scanOutcome(outcome("remembered"));
+  expect(talk.showing?.line.text).toBe("We've already scanned Veil $& {quest}.");
+});
+
 it("keeps real task and full quest completions distinct and in committed event order", () => {
   const lines = scanOutcomeLines(
     outcome("remembered", [

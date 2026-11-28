@@ -5,6 +5,7 @@ export const LANDMARK_SCAN_COPY = {
   outcomeLead: "A job is waiting at {station}. Look for its marker on the map.",
   outcomePatrol: "Drones are patrolling nearby. Give them room.",
   outcomeQuest: "Quest complete: {quest}.",
+  outcomeRecoveredWreck: "I recovered supplies from the wreck.",
   outcomeRemembered: "We've already scanned {target}.",
   outcomeSalvage: "There's a disabled ship here. Get close and use Salvage.",
   outcomeScan: "Scan complete: {target}.",

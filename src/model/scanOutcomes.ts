@@ -27,6 +27,7 @@ export interface ScanOutcome {
   readonly completions: readonly ScanCompletion[];
   readonly leadStation?: string;
   readonly actionLead?: ScanActionLead;
+  readonly wreckRecovered?: true;
 }
 
 /** Outcome facts are detached from mutable quest state before the once-only presentation drain. */

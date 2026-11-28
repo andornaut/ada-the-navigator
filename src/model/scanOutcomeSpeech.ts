@@ -5,10 +5,13 @@ import { fill } from "./shop.ts";
 
 /** Speech uses committed outcome snapshots, never the current target or quest selection. */
 export function scanOutcomeLines(outcome: ScanOutcome): readonly ConversationLine[] {
+  const recoveredWreck = outcome.source === "scan" && outcome.wreckRecovered === true;
   const intro =
-    outcome.source === "scan"
-      ? LANDMARK_SCAN_COPY.outcomeScan
-      : LANDMARK_SCAN_COPY.outcomeRemembered;
+    outcome.source === "remembered"
+      ? LANDMARK_SCAN_COPY.outcomeRemembered
+      : recoveredWreck
+        ? LANDMARK_SCAN_COPY.outcomeRecoveredWreck
+        : LANDMARK_SCAN_COPY.outcomeScan;
   const lead =
     outcome.actionLead?.kind === "salvage"
       ? LANDMARK_SCAN_COPY.outcomeSalvage
@@ -19,7 +22,7 @@ export function scanOutcomeLines(outcome: ScanOutcome): readonly ConversationLin
           : undefined;
   return [
     fill(intro, { target: outcome.target.name }),
-    ...(lead === undefined ? [] : [lead]),
+    ...(recoveredWreck || lead === undefined ? [] : [lead]),
     ...outcome.completions.map((completion) =>
       completion.kind === "task"
         ? fill(LANDMARK_SCAN_COPY.outcomeTask, { task: completion.task.text })
