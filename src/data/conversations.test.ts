@@ -86,6 +86,7 @@ const DATA_LINES = spoken(
   ),
 );
 const BATTLE_CUES = CONVERSATIONS.filter(({ trigger }) => trigger.kind === "chapter");
+const memoryCue = ({ id }: Conversation) => id.startsWith("chapter:phantom:flagshipMemory");
 
 describe("in-flight conversations", () => {
   it("speak every line as the player copy has it, with its speaker", () => {
@@ -99,9 +100,8 @@ describe("in-flight conversations", () => {
           expect(QUESTS).toContain(`"${text}"`);
           continue;
         }
-        if (conversation.id === "chapter:phantom:flagshipMemory") {
+        if (memoryCue(conversation)) {
           expect(speaker).toBe("astra");
-          expect(COPY).toContain(`Sixth: "${text}"`);
           continue;
         }
         const source = trigger.kind === "job" ? QUESTS : COPY;
@@ -147,8 +147,11 @@ describe("in-flight conversations", () => {
       "chapter:phantom:flagshipStandDown",
       "chapter:phantom:flagshipSurrender",
       "chapter:phantom:flagshipMemory",
+      "chapter:phantom:flagshipMemoryEnding",
     ]);
-    expect(spoken(BATTLE_CUES.slice(0, -1))).toEqual(spokenLines(BATTLE));
+    expect(spoken(BATTLE_CUES.filter((cue) => !memoryCue(cue)))).toEqual(spokenLines(BATTLE));
+    const memory = spoken(BATTLE_CUES.filter(memoryCue)).map(({ text }) => text);
+    expect(COPY).toContain(`Sixth: "${memory.join(" ")}"`);
     expect(INTERACTION_COPY["6.phantom.flagshipHardpoint"]).toBeUndefined();
     expect(INTERACTION_COPY["6.phantom.flagshipDisabled"]).toBeUndefined();
     expect(

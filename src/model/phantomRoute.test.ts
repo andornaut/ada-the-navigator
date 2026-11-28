@@ -217,7 +217,14 @@ describe("Phantom full route under test-only chapter admission, not production r
       expect(model.flightEvents.some(({ type }) => type === "enemySurrendered")).toBe(false);
       hear("archie", "All right. Take the disk.");
       expect(model.state.dialogue).toBeNull();
-      hear("astra", CONTENT.premise.holodisk.memories[5]!);
+      const memoryStart =
+        "I remember everything now. He wanted copies of me that would never say no.";
+      const memoryEnding = "I don't have to run anymore.";
+      expect(`${memoryStart} ${memoryEnding}`).toBe(CONTENT.premise.holodisk.memories[5]);
+      hear("astra", memoryStart);
+      expect(model.state.dialogue).toBeNull();
+      model = reload(model);
+      hear("astra", memoryEnding);
       expect(model.state.dialogue).toBeNull();
       model.dismissConversation();
       model.step(0.000001, idle);

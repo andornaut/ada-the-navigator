@@ -6,7 +6,7 @@ import { WHIRLPOOL_CAPITAL_BOSS } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATION_TUNING, CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { GALAXY_NUMBERS } from "../data/galaxies.ts";
+import { GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import { LANDMARK_KINDS } from "../data/jobs.ts";
 import { poiAmbientLine, poiApproachPool, poiDiscoveryPool } from "../data/poiDiscoveryLore.ts";
 import deck from "../data/poiFlavourCopy.json";
@@ -19,9 +19,9 @@ import {
   pennyInstance,
   pennyPoints,
 } from "./conversations.ts";
+import { outlineContact, worldParts } from "./convex.ts";
 import { GAME_AREA, gameAreaPoint, inGameArea } from "./edgeMarkers.ts";
-import { damageEnemy } from "./enemyAi.ts";
-import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
+import { enemyHull } from "./enemyBody.ts";
 import { ensureDestination, ensureStation } from "./flight.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
@@ -329,17 +329,31 @@ it("queues Whirlpool holodisk lore only for the loaded body without recovering i
   const sounder = stationPopulationObjects(flight).find(
     ({ id }) => id === WHIRLPOOL_CAPITAL_BOSS.id,
   )!;
-  const definition = enemyEquipmentDefinition(3, sounder.enemy!);
-  for (const part of definition.hardpoints.filter(({ kind }) => kind === "weapon")) {
-    sounder.enemy = damageEnemy(
-      definition,
-      { amount: part.hp, hardpointId: part.id },
-      sounder.enemy!,
-    );
-  }
-  expect(sounder.enemy?.disabled).toBe(true);
-  model.step(0.05, idle);
-  expect(progress.sounder).toEqual({ outcome: "disabled", phase: "resolved" });
+  const hull = enemyHull(sounder.enemy!, ROUTE_POSITION[3])!;
+  const polygon = worldParts(hull)[0]!;
+  const impact = polygon.reduce(
+    (point, vertex) => ({
+      x: point.x + vertex.x / polygon.length,
+      y: point.y + vertex.y / polygon.length,
+    }),
+    { x: sounder.x, y: sounder.y },
+  );
+  expect(outlineContact(hull, sounder, impact, 0)).not.toBeNull();
+  flight.shots.push({
+    damage: sounder.hp,
+    enemy: false,
+    hitIds: [...flight.objects, ...flight.mines]
+      .filter(({ id }) => id !== sounder.id)
+      .map(({ id }) => id),
+    id: "sounder-lore-hull-hit",
+    life: 1,
+    piercing: false,
+    velocity: { x: 0, y: 0 },
+    ...impact,
+  });
+  model.step(0.000001, idle);
+  expect(model.flightEvents).toContainEqual({ id: sounder.id, type: "enemyDestroyed" });
+  expect(progress.sounder).toEqual({ outcome: "defeated", phase: "resolved" });
   const disk = flight.objects.find(({ id }) => id === "holodisk");
   expect(disk).toMatchObject({ ...site, kind: "destination" });
   model.markerTargetDisplayed("holodisk");

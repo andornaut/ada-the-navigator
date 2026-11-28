@@ -6,8 +6,10 @@ import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { activateRequiredRoute, ensureDestination } from "./flight.ts";
+import { hit } from "./flight/hitResolution.ts";
 import { GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
+import type { FlightEvent } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 it("shares one actual immutable scan receipt with the UI drain and preserves it under an authored modal", () => {
@@ -33,7 +35,9 @@ it("shares one actual immutable scan receipt with the UI drain and preserves it 
   if (entered.status !== "created" && entered.status !== "existing") {
     throw new Error(entered.status);
   }
-  entered.guard.enemy!.disabled = true;
+  const events: FlightEvent[] = [];
+  hit(CONTENT, entered.guard.hp, null, entered.guard, flight, events);
+  expect(events).toContainEqual({ id: entered.guard.id, type: "enemyDestroyed" });
   const growers = ensureDestination(CONTENT, "growers", flight);
   flight.player = { x: growers.x, y: growers.y };
   model.step(SIMULATION_STEP_SECONDS, idle);
