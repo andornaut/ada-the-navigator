@@ -4,7 +4,11 @@ import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 import { focusTargets } from "@andornaut/game-kit/runtime/web/ui/dom/modalLayer";
 
 import { SCREEN } from "../data/screen.ts";
-import { type AchievementsLayoutSchema, achievementsTree } from "./achievementsTree.ts";
+import {
+  ACHIEVEMENT_COLUMNS,
+  type AchievementsLayoutSchema,
+  achievementsTree,
+} from "./achievementsTree.ts";
 import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
 import { COMPLETION_INDICATOR, createCompletionIndicator } from "./completionIndicator.ts";
 import { registerForegroundSurface } from "./foregroundInput.ts";
@@ -55,10 +59,8 @@ export interface AchievementsLabels {
 export const ACHIEVEMENTS_CARD = {
   badge: COMPLETION_INDICATOR.size,
   badgeGap: SPACING.gap,
-  columnGap: SPACING.panelPadding,
-  columns: 2,
   conditionLines: 2,
-  rowGap: SPACING.gap,
+  ...ACHIEVEMENT_COLUMNS,
 } as const;
 
 const { badge, badgeGap, columnGap, columns, conditionLines, rowGap } = ACHIEVEMENTS_CARD;
@@ -118,13 +120,10 @@ export function fillPage(template: string, page: number, pages: number): string 
 const LARGE_COLUMN_WIDTH = achievementColumnWidth(CARD_WIDTH_CAPS.large);
 
 export const ACHIEVEMENTS_STYLE = `
-${UI_SCOPE} .ada-achievement-list{
-  display:grid;
-  grid-template-columns:repeat(${columns},var(--ada-achievement-column,${units(LARGE_COLUMN_WIDTH)}));
+${UI_SCOPE} .ada-achievement-list > .ui-layout-columns > .ui-layout-stack{
+  grid-template-columns:minmax(0,1fr);
   grid-template-rows:repeat(var(--ada-achievement-rows,1),${units(ENTRY_HEIGHT)});
-  grid-auto-flow:column;
-  column-gap:${units(columnGap)};
-  row-gap:${units(rowGap)}
+  align-items:stretch
 }
 ${UI_SCOPE} .ada-achievement{
   display:grid;
@@ -171,9 +170,10 @@ ${UI_SCOPE} .ada-achievement-pager > p{
 function entryNode(
   labels: AchievementsLabels,
   entry: AchievementEntry,
-  node: HTMLElement = document.createElement("li"),
+  node: HTMLElement = document.createElement("div"),
 ): HTMLElement {
   node.className = "ada-achievement";
+  node.setAttribute("role", "listitem");
   node.dataset.unlocked = String(entry.unlocked);
   const badge = createCompletionIndicator(entry.name, entry.unlocked);
   const name = document.createElement("span");
@@ -240,6 +240,7 @@ export function createAchievementsCard(
     }
   };
   const initialTree = achievementsTree({
+    columnWidth: LARGE_COLUMN_WIDTH,
     entries: [],
     entryOffset: 0,
     labels,
@@ -247,6 +248,7 @@ export function createAchievementsCard(
     pageText: fillPage(labels.page, 1, 1),
     pagerHidden: true,
     previousHidden: true,
+    rows: 0,
   });
   const { closeAction, closeLabel, size, title } = initialTree.props.card;
   const headerClose = createStandardCloseAction(root, closeAction, closeLabel, {
@@ -258,12 +260,10 @@ export function createAchievementsCard(
   bindings.push(headerClose);
   const card = createCard({ close: headerClose.element, size, title });
   card.card.dataset.dialog = "achievements";
-  const list = document.createElement("ul");
+  const list = document.createElement("div");
   list.className = "ada-achievement-list";
+  list.setAttribute("role", "list");
   list.dataset.inkTop = "0";
-  list.style.margin = "0";
-  list.style.padding = "0";
-  list.style.listStyle = "none";
   const pager = document.createElement("div");
   pager.className = "ada-achievement-pager";
   pager.dataset.inkTop = "0";
@@ -356,6 +356,7 @@ export function createAchievementsCard(
   let entries: readonly AchievementEntry[] = [];
   let page = 0;
   let perPage = ACHIEVEMENTS_PER_PAGE;
+  let columnWidth = LARGE_COLUMN_WIDTH;
   // The page safe rect, measured as the card measures it: the columns narrow to its width and
   // the rows fit its height, every page keeping the first page's rows.
   const measure = () => {
@@ -364,7 +365,7 @@ export function createAchievementsCard(
     const across = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
     const down = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
     const width = (modal.clientWidth - across) / unit;
-    list.style.setProperty("--ada-achievement-column", units(achievementColumnWidth(width)));
+    columnWidth = Math.max(0, achievementColumnWidth(width));
     perPage = columns * achievementRows((modal.clientHeight - down) / unit);
   };
   const render = () => {
@@ -377,12 +378,11 @@ export function createAchievementsCard(
     }
     const pages = achievementPages(entries.length, perPage);
     page = Math.min(page, pages - 1);
-    list.style.setProperty(
-      "--ada-achievement-rows",
-      String(Math.ceil(Math.min(perPage, entries.length) / columns)),
-    );
+    const rows = Math.ceil(Math.min(perPage, entries.length) / columns);
+    list.style.setProperty("--ada-achievement-rows", String(rows));
     mounted.update(
       achievementsTree({
+        columnWidth,
         entries: achievementPage(entries, page, perPage),
         entryOffset: page * perPage,
         labels,
@@ -390,6 +390,7 @@ export function createAchievementsCard(
         pageText: fillPage(labels.page, page + 1, pages),
         pagerHidden: pages === 1,
         previousHidden: page === 0,
+        rows,
       }),
     );
     try {

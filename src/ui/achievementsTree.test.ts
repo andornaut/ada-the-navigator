@@ -21,13 +21,15 @@ const entry = {
 describe("production Achievements configuration", () => {
   it("arranges native entries and Previous/count/Next without deriving progress or page size", () => {
     const tree = achievementsTree({
-      entries: [entry],
+      columnWidth: 293,
+      entries: [entry, { ...entry, name: "Second" }, { ...entry, name: "Third" }],
       entryOffset: 6,
       labels,
       nextHidden: true,
       pageText: "2/2",
       pagerHidden: false,
       previousHidden: false,
+      rows: 2,
     });
     validateLayoutTree(
       { achievements: ["entries", "pager"], entry: [], pageCount: [], pagerAction: [] },
@@ -43,10 +45,30 @@ describe("production Achievements configuration", () => {
       },
       pagerHidden: false,
     });
-    expect(tree.slots!.entries).toEqual([
-      { component: "entry", key: "entry:6", kind: "component", props: { entry, labels } },
+    const group = tree.slots!.entries![0]!;
+    if (group.kind !== "columns") {
+      throw new Error("Expected structural columns");
+    }
+    expect(group.gap).toBe(16);
+    expect(group.sizing).toEqual({
+      mode: "tracks",
+      tracks: [
+        { kind: "fixed", size: 293 },
+        { kind: "fixed", size: 293 },
+      ],
+    });
+    const stacks = group.children.map((column) => {
+      if (column.kind !== "stack") {
+        throw new Error("Expected a structural column stack");
+      }
+      expect(column.gap).toBe(8);
+      return column.children;
+    });
+    expect(stacks.map((stack) => stack.map((node) => node.key))).toEqual([
+      ["entry:6", "entry:7"],
+      ["entry:8"],
     ]);
-    const item = tree.slots!.entries![0]!;
+    const item = stacks[0]![0]!;
     if (item.kind !== "component" || item.component !== "entry") {
       throw new Error("Expected native entry");
     }
@@ -69,6 +91,7 @@ describe("production Achievements configuration", () => {
   });
   it("retains pager nodes and labels even for empty/single-page content", () => {
     const tree = achievementsTree({
+      columnWidth: 320,
       entries: [],
       entryOffset: 0,
       labels,
@@ -76,6 +99,7 @@ describe("production Achievements configuration", () => {
       pageText: "1/1",
       pagerHidden: true,
       previousHidden: true,
+      rows: 0,
     });
     expect(tree.slots!.entries).toEqual([]);
     expect(tree.props.pagerHidden).toBe(true);

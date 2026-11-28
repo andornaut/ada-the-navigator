@@ -114,7 +114,7 @@ class Element {
       child.remove();
     }
     this.append(...nodes);
-    if (this.tagName === "LI" && corruption.row) {
+    if (this.getAttribute("role") === "listitem" && corruption.row) {
       const unbound = new Element("button");
       unbound.hidden = true;
       unbound.disabled = true;
