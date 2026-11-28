@@ -2549,12 +2549,24 @@ function minerInput(
   if (!minerNeedsPick(ENEMY_KEEP_MOVING, edge !== undefined, state)) {
     return edge ? { edge } : {};
   }
-  const blocked = (point: Vec): boolean =>
-    needleChannelContains({ radius: object.radius }, flight, point) ||
-    flight.objects.some((other) => {
-      const radius = exclusionZoneRadius(content, other);
-      return radius !== null && worldDistance(world, point, other) <= radius + object.radius;
-    });
+  let zones: { other: SpaceObject; radius: number }[] | undefined;
+  const blocked = (point: Vec): boolean => {
+    if (needleChannelContains({ radius: object.radius }, flight, point)) {
+      return true;
+    }
+    if (zones === undefined) {
+      zones = [];
+      for (const other of flight.objects) {
+        const radius = exclusionZoneRadius(content, other);
+        if (radius !== null) {
+          zones.push({ other, radius });
+        }
+      }
+    }
+    return zones.some(({ other, radius }) =>
+      worldDistance(world, point, other) <= radius + object.radius,
+    );
+  };
   const candidates = asteroids()(INDUSTRIAL_HOME_RADIUS, state.home).filter((rock) => {
     const actual = flight.objects.find((other) => other.id === rock.id);
     const loop = rock.physicalReach + offset;
