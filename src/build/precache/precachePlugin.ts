@@ -25,6 +25,10 @@ const UPDATE_ART_BUCKETS: Readonly<Record<string, number>> = {
 
 // Keep build outputs in stable groups when only their content hashes change.
 function updateGroup(url: string): string {
+  // The Play page names its hashed bootstrap, so a new bootstrap also changes the page.
+  if (url === "/play/" || /^\/assets\/play-[A-Za-z0-9_-]{8}\.js$/u.test(url)) {
+    return "play-entry";
+  }
   if (url.startsWith("/assets/art/app-icon/")) {
     return "app-icons";
   }

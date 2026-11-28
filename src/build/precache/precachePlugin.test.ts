@@ -26,11 +26,13 @@ it("forwards the build identity, boot files and grouped first install to the kit
   expect(options.packs).toBeUndefined();
   expect(options.wholeBuild).toBeUndefined();
   expect(options.emitUpdateGroupRecipes).toBeUndefined();
+  expect(options.omitDecodedGroupCopies).toBeUndefined();
   const archiveOnly = options.groupedFirstInstall!.archiveOnly;
   expect(archiveOnly("/art/manifest.json")).toBe(true);
   expect(archiveOnly("/art/previews/card-sunflower.png")).toBe(true);
   for (const direct of [
     "/play/",
+    "/assets/play-Abc012_-.js",
     "/sw.js",
     "/site.css",
     "/art/portraits/ada.png",
@@ -41,6 +43,19 @@ it("forwards the build identity, boot files and grouped first install to the kit
     expect(archiveOnly(direct)).toBe(false);
   }
   const updateGroup = options.updateGroup!;
+  const playGroup = updateGroup("/play/");
+  expect(updateGroup("/assets/play-Abc012_-.js")).toBe(playGroup);
+  expect(updateGroup("/assets/play-wxy98745.js")).toBe(playGroup);
+  for (const separate of [
+    "/",
+    "/assets/play.js",
+    "/assets/play-Abc012_-.css",
+    "/assets/play-feature-Abc012_-.js",
+    "/assets/launch-Abc012_-.js",
+    "/assets/main-Abc012_-.js",
+  ]) {
+    expect(updateGroup(separate)).not.toBe(playGroup);
+  }
   expect(updateGroup("/assets/main-Abc012_-.js")).toBe(updateGroup("/assets/main-wxy98745.js"));
   expect(updateGroup("/assets/launch-Abc012_-.js")).not.toBe(
     updateGroup("/assets/main-Abc012_-.js"),
