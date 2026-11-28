@@ -31,7 +31,6 @@ import { EXCHANGE_RATES } from "../data/exchange.ts";
 import {
   BUILT,
   GALAXY_COUNT,
-  GALAXY_ID,
   GALAXY_NUMBERS,
   galaxyAt,
   ROUTE,
@@ -55,7 +54,6 @@ import {
 import { holodiskInsertion } from "../data/premiseCopy.ts";
 import { galaxyProjects, PROJECT_THANKS } from "../data/projects.ts";
 import { SCREEN } from "../data/screen.ts";
-import { STATION_KEEPER_COPY } from "../data/stationCopy.ts";
 import { galaxyCard, OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
@@ -206,6 +204,14 @@ import { jobIndicator, jobMapTarget, type JobNavigationContext } from "./game/jo
 import { type HeldFlight, saveSnapshot } from "./game/saveSnapshot.ts";
 import { aboard, shipItemFacts } from "./game/shipCargo.ts";
 import {
+  compactStationGreeting,
+  keeperStationName,
+  projectStationGreeting,
+  projectStationWelcome,
+  resolveStationGreeting,
+  type StationGreetingVisit,
+} from "./game/stationGreeting.ts";
+import {
   floatingHolodisk,
   holodiskTouched,
   holodiskWaypoint,
@@ -241,13 +247,7 @@ import {
   rerollBoards,
   stationBoard,
 } from "./jobs.ts";
-import {
-  greetingLines,
-  type KeeperKey,
-  type StationGreeting,
-  stationKeeperPersonalName,
-  worldStationKeeper,
-} from "./keepers.ts";
+import type { StationGreeting } from "./keepers.ts";
 import {
   flightLandmarkSites,
   landmarkById,
@@ -337,7 +337,6 @@ import {
   type ShopTab,
 } from "./shop.ts";
 import { discoveryCacheGroup } from "./stardustPlacement.ts";
-import { stationDisplayName } from "./stationIdentity.ts";
 import { advanceStationRestock, newStationRestock } from "./stationRestock.ts";
 import {
   flightStationContext,
@@ -585,12 +584,7 @@ export class GameModel {
   /** Whether Ada has docked this flight, which marks the dock lesson done. */
   private dockedThisFlight = false;
   // The docked station keeper's greeting: the keeper, this docking's lines and the one on show.
-  private greeting: {
-    index: number;
-    readonly keeper: KeeperKey;
-    readonly displayName: string;
-    readonly lines: readonly string[];
-  } | null = null;
+  private greeting: StationGreetingVisit | null = null;
   /** Achievements unlocked whose notice has not shown yet; notices show in flight. */
   private achievementNotices: string[] = [];
   private previousSeed = 0;
@@ -3286,22 +3280,6 @@ export class GameModel {
    * A docking's keeper greeting (gameplay/rules.md "Species and greeters"): the full greeting the
    * first time, then one later line in turn. The docking counts as greeted at once.
    */
-  private keeperAt(galaxy: GalaxyNumber, id: string) {
-    const { flight } = this.state;
-    const progress = this.state.progress[galaxy];
-    return worldStationKeeper(
-      {
-        ...(flight && flight.galaxy === galaxy ? flightStationContext(flight) : {}),
-        phantomComplete:
-          progress.phantom?.aftermathComplete === true &&
-          progress.questComplete &&
-          progress.holodisk,
-      },
-      ECONOMY,
-      galaxy,
-      id,
-    );
-  }
   private greet(galaxy: GalaxyNumber, id: string): void {
     const greetings = this.state.progress[galaxy].greetings;
     const docked = greetings[id] ?? 0;
@@ -3311,60 +3289,29 @@ export class GameModel {
     }
   }
   private restoreGreeting(galaxy: GalaxyNumber, id: string, docked: number): void {
-    const keeper = this.keeperAt(galaxy, id);
-    if (!keeper) {
-      this.greeting = null;
-      return;
-    }
-    const specialty = stationSpecialty(galaxy, id);
-    const station = this.keeperStationName(galaxy, id);
-    const name = stationKeeperPersonalName(galaxy, id);
-    const displayName = id === HUB_STATION ? name : `${name} of ${station}`;
-    const lines =
-      id === HUB_STATION
-        ? greetingLines(keeper.greetings, docked)
-        : docked === 0
-          ? [
-              STATION_KEEPER_COPY.intro,
-              STATION_KEEPER_COPY.flavor[galaxy],
-              STATION_KEEPER_COPY.services[specialty ?? "exchange"],
-            ]
-          : [STATION_KEEPER_COPY.returning[(docked - 1) % STATION_KEEPER_COPY.returning.length]!];
-    this.greeting = { displayName, index: 0, keeper: keeper.key, lines };
+    this.greeting = resolveStationGreeting(this.state, galaxy, id, docked);
   }
   /** The docked station keeper's line on show; null where the generic welcome shows. */
   get stationGreeting(): StationGreeting | null {
     const greeting = this.greeting;
-    return this.state.docked && greeting
-      ? {
-          count: greeting.lines.length,
-          displayName: greeting.displayName,
-          index: greeting.index,
-          keeper: greeting.keeper,
-          line: greeting.lines[greeting.index]!,
-        }
-      : null;
+    return projectStationGreeting(this.state.docked, greeting);
   }
   /** The compact Dock tab uses the personal name without changing the greeting text. */
   dockGreeting(): StationGreeting | null {
     const greeting = this.stationGreeting;
-    const { docked, flight } = this.state;
-    return greeting && docked && flight
-      ? { ...greeting, displayName: stationKeeperPersonalName(flight.galaxy, docked) }
-      : greeting;
+    return compactStationGreeting(this.state, greeting);
   }
   /** The ordinary Station welcome retains the selected keeper and all authored sentences. */
   dockWelcome(): StationGreeting | null {
     const greeting = this.dockGreeting();
-    return greeting && this.greeting ? { ...greeting, line: this.greeting.lines.join(" ") } : null;
+    return greeting ? projectStationWelcome(this.greeting, greeting) : null;
   }
   get dockedStationName(): string | undefined {
     const { docked, flight } = this.state;
     return docked && flight ? this.keeperStationName(flight.galaxy, docked) : undefined;
   }
   private keeperStationName(galaxy: GalaxyNumber, id: string): string {
-    const name = GALAXY_ID[galaxy];
-    return stationDisplayName(name[0]!.toUpperCase() + name.slice(1), id);
+    return keeperStationName(galaxy, id);
   }
   /** A tap on the keeper block: the greeting's next line, the last staying on show. */
   advanceGreeting(): void {
