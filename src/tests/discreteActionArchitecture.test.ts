@@ -3076,3 +3076,66 @@ it.each([
     }),
   );
 });
+
+const switchSource = readFileSync(new URL("../ui/modal.ts", import.meta.url), "utf8");
+const viewScaleSource = readFileSync(new URL("../ui/layout/viewScale.ts", import.meta.url), "utf8");
+const switchConstructor = expect.objectContaining({
+  kind: "unbound-discrete",
+  source: expect.stringContaining("createButton(document,"),
+});
+
+function switchFindings(text: string, path = "src/ui/modal.ts") {
+  return scanDiscreteActionProject([
+    canonicalRegistry,
+    { path, text },
+    { path: "src/ui/layout/viewScale.ts", text: viewScaleSource },
+  ]).findings.filter((finding) => finding.path === path);
+}
+
+it("proves a detached switch from the Kit element through binding, presentation and disposal", () => {
+  expect(switchFindings(switchSource)).not.toContainEqual(switchConstructor);
+  const renamed = switchSource
+    .replace("createSwitchRow(", "makeToggle(")
+    .replace("setControlPlacement }", "setControlPlacement as placeControl }")
+    .replaceAll("setControlPlacement(", "placeControl(");
+  expect(switchFindings(renamed, "src/ui/switchFixture.ts")).not.toContainEqual(switchConstructor);
+});
+
+it.each([
+  ["missing owner", "const action = bindAdaAction(", "const action = anotherBind("],
+  ["foreign element", "    },\n    row,\n", "    },\n    other,\n"],
+  [
+    "early publication",
+    "  const action = bindAdaAction(",
+    "  publish(row);\n  const action = bindAdaAction(",
+  ],
+  [
+    "early disposal",
+    '  row.className = "ada-row";',
+    '  row.className = "ada-row";\n  action.dispose();',
+  ],
+  ["wrong disposal", "      kit.dispose();", "      other.dispose();"],
+  [
+    "second native owner",
+    '  row.className = "ada-row";',
+    '  row.className = "ada-row";\n  row.addEventListener("click", options.run);',
+  ],
+  [
+    "second canonical owner",
+    '  row.className = "ada-row";',
+    '  row.className = "ada-row";\n  bindAdaAction(anotherOptions, row);',
+  ],
+  [
+    "deferred second owner",
+    'row.setAttribute("aria-checked", state.ariaChecked);',
+    "this.row.onclick = options.run;",
+  ],
+  ["slop callback leak", "readViewUnit(row),", "otherRead(row),"],
+] as const)("keeps a detached switch finding for %s", (_case, original, replacement) => {
+  const start = switchSource.indexOf("export function createSwitchRow(");
+  expect(start).toBeGreaterThanOrEqual(0);
+  const tail = switchSource.slice(start);
+  const mutated = tail.replace(original, replacement);
+  expect(mutated).not.toBe(tail);
+  expect(switchFindings(switchSource.slice(0, start) + mutated)).toContainEqual(switchConstructor);
+});

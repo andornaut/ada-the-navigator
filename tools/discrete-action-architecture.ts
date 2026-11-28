@@ -3449,6 +3449,51 @@ function scanSource(context: ScanContext, path: string, text: string) {
     return { handle, alias, block, following };
   };
 
+  // A local scale reader can observe the element only through the native computed style API.
+  const readsComputedStyle = (callee: ts.Expression): boolean => {
+    const imported = ts.isIdentifier(callee) && localValueImport(context, callee);
+    const reader =
+      imported &&
+      imported.target.statements.find(
+        (item): item is ts.FunctionDeclaration =>
+          ts.isFunctionDeclaration(item) &&
+          item.name?.text === imported.name &&
+          item.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword) ===
+            true,
+      );
+    if (!reader || !reader.body || reader.parameters.length !== 1 || !synchronousCallable(reader)) {
+      return false;
+    }
+    const parameter = reader.parameters[0]!;
+    if (!ts.isIdentifier(parameter.name) || parameter.initializer || parameter.dotDotDotToken) {
+      return false;
+    }
+    let reads = 0;
+    const escapes = (node: ts.Node): true | undefined => {
+      if (ts.isIdentifier(node)) {
+        if (["arguments", "eval"].includes(node.text)) {
+          return true;
+        }
+        if (node !== parameter.name && lexicalIdentity(node, parameter)) {
+          const call = node.parent;
+          if (
+            !ts.isCallExpression(call) ||
+            call.arguments.length !== 1 ||
+            call.arguments[0] !== node ||
+            !ts.isIdentifier(call.expression) ||
+            call.expression.text !== "getComputedStyle" ||
+            context.lexicalDeclarations(call.expression)?.length
+          ) {
+            return true;
+          }
+          reads++;
+        }
+      }
+      return ts.forEachChild(node, escapes);
+    };
+    return !escapes(reader.body) && reads === 1;
+  };
+
   // Prove first publication within the construction block, independently of when it runs.
   const registeredKitElement = (call: ts.CallExpression): boolean => {
     const construction = privateKitElement(call);
@@ -3749,9 +3794,26 @@ function scanSource(context: ScanContext, path: string, text: string) {
       detachedClick?.binding === binding
         ? detachedListenerSetup(alias, tail.slice(0, -1), detachedClick.click)
         : undefined;
+    const presentedSwitch =
+      native &&
+      !state &&
+      !listeners &&
+      !rootResolution &&
+      literal(content?.get("kind"), "icon") &&
+      tail.slice(0, -1).some((statement) => {
+        const edit = callStatement(statement);
+        return (
+          edit &&
+          dot(edit.expression, "setAttribute") &&
+          lexicalIdentity(edit.expression.expression, alias) &&
+          edit.arguments.length === 2 &&
+          literal(edit.arguments[0], "role") &&
+          literal(edit.arguments[1], "switch")
+        );
+      });
     const value =
       result && ts.isReturnStatement(result) && result.expression
-        ? tail.length === 1 || listeners
+        ? tail.length === 1 || listeners || presentedSwitch
           ? result.expression
           : record && isConst(record) && lexicalIdentity(result.expression, record)
             ? record.initializer
@@ -3781,10 +3843,102 @@ function scanSource(context: ScanContext, path: string, text: string) {
             declaration(property.name) === alias,
       );
       const dispose = namedProperty(value, "dispose");
+      // Check uses of the private element and both handles, not the surrounding face markup.
+      const presentation =
+        presentedSwitch &&
+        elements.length === 1 &&
+        dispose &&
+        ts.isMethodDeclaration(dispose) &&
+        (() => {
+          const method = value.properties.find(
+            (property): property is ts.MethodDeclaration =>
+              property !== dispose &&
+              ts.isMethodDeclaration(property) &&
+              synchronousCallable(property),
+          );
+          if (!method) {
+            return undefined;
+          }
+          const slop = fields(action)?.get("slopPx");
+          const allowed = new Set<ts.Node | undefined>([
+            alias.name,
+            handle.name,
+            binding.name,
+            registration.arguments[1],
+            ts.isPropertyAssignment(elements[0]!) ? elements[0].initializer : elements[0]!.name,
+            getAction && ts.isArrowFunction(getAction) ? getAction.body : undefined,
+            dot(alias.initializer, "element") ? alias.initializer.expression : undefined,
+          ]);
+          for (const step of dispose.body?.statements ?? []) {
+            const cleanup = callStatement(step);
+            if (cleanup && dot(cleanup.expression, "dispose")) {
+              allowed.add(cleanup.expression.expression);
+            }
+          }
+          const decorates = (node: ts.Identifier): boolean => {
+            const member = node.parent;
+            if (ts.isCallExpression(member)) {
+              return (
+                (member.arguments.length === 2 &&
+                  member.arguments[1] === node &&
+                  kitDomImport("setControlPlacement", "buttonLayout", member.expression)) ||
+                Boolean(
+                  slop &&
+                  member.pos >= slop.pos &&
+                  member.end <= slop.end &&
+                  member.arguments.length === 1 &&
+                  readsComputedStyle(member.expression),
+                )
+              );
+            }
+            if (!ts.isPropertyAccessExpression(member) || member.expression !== node) {
+              return false;
+            }
+            const edit = member.parent;
+            return (
+              (dot(member, "className") &&
+                ts.isBinaryExpression(edit) &&
+                edit.left === member &&
+                edit.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+                ts.isStringLiteral(edit.right)) ||
+              (ts.isCallExpression(edit) &&
+                edit.expression === member &&
+                !edit.questionDotToken &&
+                (dot(member, "replaceChildren") ||
+                  (dot(member, "setAttribute") &&
+                    edit.arguments.length === 2 &&
+                    ["role", "aria-describedby", "aria-checked"].some((name) =>
+                      literal(edit.arguments[0], name),
+                    ))))
+            );
+          };
+          const escapes = (node: ts.Node): true | undefined => {
+            if (
+              node.kind === ts.SyntaxKind.ThisKeyword ||
+              node.kind === ts.SyntaxKind.SuperKeyword
+            ) {
+              return true;
+            }
+            if (ts.isIdentifier(node) && !allowed.has(node)) {
+              const local = reads(node);
+              if (
+                ["arguments", "eval"].includes(node.text) ||
+                local === handle ||
+                local === binding ||
+                (local === alias && !decorates(node))
+              ) {
+                return true;
+              }
+            }
+            return ts.forEachChild(node, escapes);
+          };
+          return escapes(block) ? undefined : method;
+        })();
       const names = value.properties.map((property) =>
         property.name && ts.isIdentifier(property.name) ? property.name.text : undefined,
       );
       if (
+        (!presentedSwitch || presentation) &&
         names.every((name) => name !== undefined && name !== "__proto__") &&
         new Set(names).size === names.length &&
         elements.length === 1 &&
@@ -3824,6 +3978,7 @@ function scanSource(context: ScanContext, path: string, text: string) {
           (property) =>
             property === elements[0] ||
             property === dispose ||
+            property === presentation ||
             (ts.isShorthandPropertyAssignment(property) &&
               !property.objectAssignmentInitializer &&
               owner.parameters.some((parameter) => declaration(property.name) === parameter)),
