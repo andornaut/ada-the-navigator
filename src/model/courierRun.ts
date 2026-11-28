@@ -5,13 +5,17 @@ import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
 import type { GameContent } from "../data/types.ts";
 import { type ActivityTerms, stepCourier } from "./activities.ts";
 import { ensureDestinationAt, placeHuntingPack } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { packMemberId, worldDiscardNotable, worldPrunePackState } from "./geography.ts";
 import { retainedSettlementsNear } from "./legacySettlements.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
 import type { FlightState, HeldActivity, Vec } from "./types.ts";
-import { type WorldContext, worldDelta, worldDistance } from "./worldContacts.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import {
+  flightWorldContext,
+  type WorldContext,
+  worldDelta,
+  worldDistance,
+  wrapPoint,
+} from "./world/index.ts";
 
 const PATROL = "courier:patrol";
 const PATROL_SIZE = HUNTING_PACKS.count[0];

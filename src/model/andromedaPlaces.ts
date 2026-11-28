@@ -2,7 +2,7 @@ import type { EconomyCatalog } from "../data/economy.ts";
 import { settlementsNear } from "./legacySettlements.ts";
 import { type StationPlacementContext, type StationSite, worldStationsNear } from "./stations.ts";
 import type { Vec } from "./types.ts";
-import { worldDistance } from "./worldContacts.ts";
+import { worldDistance } from "./world/index.ts";
 export { settlementById, settlementsNear } from "./legacySettlements.ts";
 
 function nearest(

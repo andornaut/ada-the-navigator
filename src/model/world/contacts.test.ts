@@ -7,10 +7,10 @@ import {
   worldSceneryBlocksSegment,
   worldSceneryBodyContact,
   worldSceneryContact,
-} from "./asteroids.ts";
-import type { Parts } from "./convex.ts";
-import type { SpaceObject } from "./types.ts";
-import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
+} from "../asteroids.ts";
+import type { Parts } from "../convex.ts";
+import type { SpaceObject } from "../types.ts";
+import { worldDelta, worldDistance, worldPoint } from "./index.ts";
 
 const torus = { worldSide: 1000 };
 const square: Parts = [

@@ -23,7 +23,6 @@ import { outlineContact, worldParts } from "./convex.ts";
 import { GAME_AREA, gameAreaPoint, inGameArea } from "./edgeMarkers.ts";
 import { enemyHull } from "./enemyBody.ts";
 import { ensureDestination, ensureStation } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { galaxyRoute, GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
@@ -33,6 +32,7 @@ import { ambientSecondThread } from "./poiDiscourse.ts";
 import { retainedLandmarkSites } from "./retainedLandmarks.ts";
 import { discoveryStardustId } from "./stardustPlacement.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
+import { flightWorldContext } from "./world/index.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 

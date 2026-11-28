@@ -46,7 +46,6 @@ import {
   teleport,
 } from "./flight.ts";
 import { hit as resolveHit } from "./flight/hitResolution.ts";
-import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
 import { playerWeaponCoverage } from "./playerWeaponCoverage.ts";
 import { shipBody, shipCircleContact } from "./shipBody.ts";
 import { direction as unit } from "./shipPhysics.ts";
@@ -58,6 +57,7 @@ import type {
   SpaceObject,
   Vec,
 } from "./types.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "./world/index.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const progress: GalaxyProgress = {

@@ -12,7 +12,7 @@ import {
 } from "../../../data/layout.ts";
 import { TASK_COLORS } from "../../../data/taskCategories.ts";
 import { CHARTING_ORIGIN, CHARTING_RADIUS } from "../../../model/map.ts";
-import { wrapPoint } from "../../../model/worldGeometry.ts";
+import { wrapPoint } from "../../../model/world/index.ts";
 import {
   BUTTON_GAP,
   CARD_CLOSE,

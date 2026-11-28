@@ -3,10 +3,9 @@ import type { Rect } from "@andornaut/game-kit/runtime/rect";
 import { enemyActorAvailable } from "../../data/enemyActors.ts";
 import type { GameContent } from "../../data/types.ts";
 import { spawnPlannedHostileStation, syncFlightRegion } from "../flight.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import { readPendingPhantomEncounter } from "../phantomRequiredPlans.ts";
 import type { FlightState, GalaxyProgress } from "../types.ts";
-import { periodicWorldGrid, worldCellOrigin } from "../worldCells.ts";
+import { flightWorldContext, periodicWorldGrid, worldCellOrigin } from "../world/index.ts";
 import {
   hostileStationEncounterIds,
   registerHostileStationEncounter,

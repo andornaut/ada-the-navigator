@@ -5,11 +5,10 @@ import { SPAWNER_POLICIES } from "../../data/spawnerCatalog.ts";
 import type { GameContent } from "../../data/types.ts";
 import { partsReach, worldParts } from "../convex.ts";
 import { enemyPhysicalBody } from "../enemyBody.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import { escortPackId, liveEnemy } from "../geography.ts";
 import { type SpawnerContext, worldFitsHostileStation, worldSpawnerStage } from "../spawner.ts";
 import type { FlightState, SpaceObject, Vec } from "../types.ts";
-import { worldDistance } from "../worldContacts.ts";
+import { flightWorldContext, worldDistance } from "../world/index.ts";
 import { hostileStationPack, stationPopulationObjects } from "./population.ts";
 
 export interface PlannedActor {

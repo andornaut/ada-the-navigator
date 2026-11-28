@@ -1,10 +1,9 @@
 import type { Vec } from "../../data/types.ts";
 import { BEAM } from "../../data/weaponCatalog.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import { nosePoint } from "../nose.ts";
 import type { FlightState } from "../types.ts";
 import type { ImpactFamily, WeaponImpact } from "../weaponImpacts.ts";
-import { worldPoint } from "../worldContacts.ts";
+import { flightWorldContext, worldPoint } from "../world/index.ts";
 
 /**
  * A hitscan beam's visible flash, view-only and never saved: `from` and `to` are the fire-time

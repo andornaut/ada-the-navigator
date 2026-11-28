@@ -2,9 +2,8 @@ import type { CapitalBossHud } from "../data/capitalBosses.ts";
 import { PHANTOM_FLAGSHIP } from "../data/phantom.ts";
 import type { Vec } from "../data/types.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
-import { worldDistance } from "./worldContacts.ts";
+import { flightWorldContext, worldDistance } from "./world/index.ts";
 
 /** The active flight owns its actor; between flights the progress record owns it. */
 export type CapitalBossProgress = {

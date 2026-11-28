@@ -15,10 +15,9 @@ import {
 } from "../earlyEncounterRuntime.ts";
 import { enemyFireLine, type FireIntent } from "../enemyAi.ts";
 import { enemyEquipmentDefinition } from "../enemyEquipment.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import { shipBody } from "../shipBody.ts";
 import type { FlightState, SpaceObject, Vec } from "../types.ts";
-import { worldDelta, worldPoint } from "../worldContacts.ts";
+import { flightWorldContext, worldDelta, worldPoint } from "../world/index.ts";
 import { beamPoint, outlineBeamStrike, sampleBeam } from "./beamContact.ts";
 
 /**

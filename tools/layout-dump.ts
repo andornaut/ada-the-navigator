@@ -9,7 +9,7 @@ import { pathToFileURL } from "node:url";
 
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
-import { CURRENT_FLIGHT_TOPOLOGY } from "../src/model/flightTopology.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "../src/model/world/index.ts";
 import * as cardFrame from "../src/ui/layout/cardFrame.ts";
 import * as contentCard from "../src/ui/layout/contentCard.ts";
 import * as controls from "../src/ui/layout/controls.ts";

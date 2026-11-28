@@ -57,7 +57,7 @@ import {
   type RetaliatorNavigationContext,
 } from "./retaliatorNavigation.ts";
 import { direction, hullOffset, speedFraction, stepShipMotion, turnToward } from "./shipPhysics.ts";
-import { type WorldContext, worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
+import { type WorldContext, worldDelta, worldDistance, worldPoint } from "./world/index.ts";
 
 export interface HardpointState {
   /** Smoothed weapon aim; null until the weapon first has a target direction. */

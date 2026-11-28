@@ -3,9 +3,8 @@ import type { GameContent } from "../../data/types.ts";
 import { enemyDefeated } from "../enemyAi.ts";
 import { enemyHull } from "../enemyBody.ts";
 import { exclusionZoneRadius } from "../exclusionZones.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import type { FlightState, SpaceObject, Vec } from "../types.ts";
-import { worldDelta, worldDistance } from "../worldContacts.ts";
+import { flightWorldContext, worldDelta, worldDistance } from "../world/index.ts";
 
 /**
  * A capital that holds the spacing between capitals: live, not destroyed and not salvaged. A

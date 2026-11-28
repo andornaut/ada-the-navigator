@@ -9,7 +9,6 @@ import { outlinesContact } from "./convex.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
 import { createUnpopulatedFlight, spawnPlannedHostileStation } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { worldRecordObjectRemoval } from "./geography.ts";
 import { hostileStationSites } from "./hostileStations/index.ts";
 import type { PlannedHostileStation } from "./hostileStations/placement.ts";
@@ -19,7 +18,7 @@ import {
   scheduleHostileStations,
 } from "./hostileStations/schedule.ts";
 import { worldSpawnerStage } from "./spawner.ts";
-import { worldPoint } from "./worldContacts.ts";
+import { flightWorldContext, worldPoint } from "./world/index.ts";
 
 const identities = {
   bodyId: "authoritative-body",

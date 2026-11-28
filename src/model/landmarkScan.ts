@@ -1,6 +1,6 @@
 import type { LandmarkSite } from "./landmarks.ts";
 import type { Vec } from "./types.ts";
-import { type WorldContext, worldDistance } from "./worldContacts.ts";
+import { type WorldContext, worldDistance } from "./world/index.ts";
 
 /** One uncharted landmark within the current ship's shared station interaction range. */
 export function landmarkScanTarget(

@@ -1,6 +1,6 @@
 import type { EnemyDefinition, EnemyNavigation, Point } from "../data/enemyCatalog.ts";
 import { type EnemyIdentity, retaliatorVariant } from "../data/enemyIdentity.ts";
-import type { WorldContext } from "./worldContacts.ts";
+import type { WorldContext } from "./world/index.ts";
 
 /** Peaceful industrial routes keep their existing extent independently of combat pursuit. */
 export const INDUSTRIAL_HOME_RADIUS = 2000;

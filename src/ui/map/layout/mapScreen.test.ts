@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { FALLBACK_SPACE_PALETTE, readGalaxyFields } from "../../../art/spacePalette.ts";
 import type { GalaxyNumber } from "../../../data/types.ts";
 import { uiIconUrl } from "../../../data/uiIconUrl.ts";
-import { CURRENT_FLIGHT_TOPOLOGY } from "../../../model/flightTopology.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "../../../model/world/index.ts";
 import { CARD_CLOSE } from "../../layout/cardFrame.ts";
 import { logicalView, NO_INSETS, safeInsets, safeRect, viewScale } from "../../layout/playView.ts";
 import { SPACING } from "../../layout/tokens.ts";

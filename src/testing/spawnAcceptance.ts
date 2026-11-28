@@ -9,7 +9,7 @@ import {
   worldSpawnExclusions,
   worldSpawnSites,
 } from "../model/spawnTargets.ts";
-import { periodicWorldGrid, worldCellAt } from "../model/worldCells.ts";
+import { periodicWorldGrid, worldCellAt } from "../model/world/index.ts";
 
 /** A target passes when this share of sampled areas delivers this share of its requests. */
 export const ACCEPTANCE = { areaShare: 0.9, deliveredShare: 0.9 } as const;

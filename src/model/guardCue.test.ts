@@ -17,13 +17,18 @@ import {
   syncFlightRegion,
 } from "./flight.ts";
 import { hit } from "./flight/hitResolution.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
 import { newProgress } from "./progress.ts";
 import { questGuardAnchor, questGuardHomePorts } from "./questGuardPlacement.ts";
 import type { FlightInput, FlightState, SpaceObject } from "./types.ts";
-import { worldCellKey, worldCellsNear, worldGrid } from "./worldCells.ts";
-import { worldDistance, worldPoint } from "./worldContacts.ts";
+import {
+  flightWorldContext,
+  worldCellKey,
+  worldCellsNear,
+  worldDistance,
+  worldGrid,
+  worldPoint,
+} from "./world/index.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const cue = { id: "quest", type: "guardCue" } as const;

@@ -10,7 +10,6 @@ import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createUnpopulatedFlight, stepFlight } from "./flight.ts";
-import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { ambientPackId, escortPackId, packMemberId, worldSyncFlightRegion } from "./geography.ts";
 import { planRegion, type SpawnSeeds } from "./spawnPlanner.ts";
@@ -23,7 +22,13 @@ import {
   worldSpawnSites,
 } from "./spawnTargets.ts";
 import type { SpaceObject, Vec } from "./types.ts";
-import { periodicWorldGrid, worldCellAt, worldCellCenter, worldCellOrigin } from "./worldCells.ts";
+import {
+  CURRENT_FLIGHT_TOPOLOGY,
+  periodicWorldGrid,
+  worldCellAt,
+  worldCellCenter,
+  worldCellOrigin,
+} from "./world/index.ts";
 
 /** A planned object as flight shows it: kind, archetype and position. */
 interface Seen extends Vec {

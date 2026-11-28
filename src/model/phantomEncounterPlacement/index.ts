@@ -2,11 +2,9 @@ import { ROUTE_POSITION } from "../../data/galaxies.ts";
 import { PHANTOM_TUNING } from "../../data/phantom.ts";
 import { type Parts, partsReach, worldParts } from "../convex.ts";
 import { enemyPhysicalBody } from "../enemyBody.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import { stationFormationClear, type StationPlacementContext } from "../stationPlacement.ts";
 import type { SpaceObject, Vec } from "../types.ts";
-import { worldDelta, worldDistance } from "../worldContacts.ts";
-import { wrapPoint } from "../worldGeometry.ts";
+import { flightWorldContext, worldDelta, worldDistance, wrapPoint } from "../world/index.ts";
 import { placementOutlinesOverlap } from "./overlap.ts";
 
 export interface PhantomEncounterPlacementContext extends StationPlacementContext {

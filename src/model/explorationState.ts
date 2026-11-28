@@ -2,8 +2,7 @@ import type { GalaxyNumber } from "../data/types.ts";
 import { type ExplorationPacing, ROUTE_OPPORTUNITY_SECONDS } from "./explorationPacing.ts";
 import type { ExplorationRenewal } from "./explorationRenewal.ts";
 import { type ProceduralPoi, proceduralPoiById } from "./proceduralPois.ts";
-import { periodicWorldGrid } from "./worldCells.ts";
-import { canonicalCell } from "./worldGeometry.ts";
+import { canonicalCell, periodicWorldGrid } from "./world/index.ts";
 
 export interface ExplorationState {
   version: 1;

@@ -41,7 +41,7 @@ import { phantomSettlementCopy } from "./phantomSettlementCopy.ts";
 import type { ScanOutcome } from "./scanOutcomes.ts";
 import { scanOutcomeLines } from "./scanOutcomeSpeech.ts";
 import type { DialogueChoice, FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
-import { nearestImage } from "./worldGeometry.ts";
+import { nearestImage } from "./world/index.ts";
 
 // The in-flight conversation box's schedule (gameplay/rules.md "Astra and Penny in flight"):
 // one conversation at a time, chosen by priority (BOX_PRIORITIES). A higher one interrupts a lower

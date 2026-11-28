@@ -9,8 +9,8 @@ import {
   type WorldCellContext,
   worldCellOrigin,
   worldCellsNear,
-} from "./worldCells.ts";
-import { wrappedDistance } from "./worldGeometry.ts";
+  wrappedDistance,
+} from "./world/index.ts";
 const distance = (context: WorldCellContext, a: Vec, b: Vec): number =>
   context.worldSide === undefined
     ? Math.hypot(a.x - b.x, a.y - b.y)

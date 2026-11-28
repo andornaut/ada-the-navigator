@@ -15,13 +15,13 @@ import {
   routeBlocked,
   routeGuardPlanResult,
 } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { shipTouches } from "./shipBody.ts";
 import type { FlightState, GalaxyProgress } from "./types.ts";
 import { noLevels, shipTuning } from "./upgrades.ts";
+import { flightWorldContext } from "./world/index.ts";
 
 /** Test support: admit the saved required encounter, then disable its actual noncombat-fixture guard. */
 function disableStoryGuard(content: GameContent, flight: FlightState, id: string): void {

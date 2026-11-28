@@ -7,7 +7,6 @@ import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createUnpopulatedFlight } from "./flight.ts";
-import { CURRENT_FLIGHT_TOPOLOGY, flightEncounterSeed } from "./flightTopology.ts";
 import { createFrigateEscorts, requiredFrigateEscortId } from "./frigateEscorts.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
@@ -20,6 +19,7 @@ import {
   takeRequiredRolePlan,
 } from "./requiredRolePlans.ts";
 import type { RequiredRoleEncounterPlan, SpaceObject } from "./types.ts";
+import { CURRENT_FLIGHT_TOPOLOGY, flightEncounterSeed } from "./world/index.ts";
 
 function fixture(id: "whale" | "family" | "holodisk" | "hub") {
   const galaxy = id === "hub" ? 2 : 3;

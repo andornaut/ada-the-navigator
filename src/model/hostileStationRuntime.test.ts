@@ -4,13 +4,13 @@ import { CONTENT } from "../data/content.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { createUnpopulatedFlight } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval } from "./geography.ts";
 import { hostileStationSites, stationPopulationObjects } from "./hostileStations/index.ts";
 import { materializeHostileStationRegion } from "./hostileStations/materialization.ts";
 import { resolveHostileStationEncounter } from "./hostileStations/persistence.ts";
+import { flightWorldContext } from "./world/index.ts";
 
 function fixture() {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);

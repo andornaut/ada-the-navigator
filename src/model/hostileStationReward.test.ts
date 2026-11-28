@@ -9,7 +9,6 @@ import { fromScreen } from "./convex.ts";
 import { enemyStardust, rollHeavyDefeatUpgrade } from "./drops.ts";
 import { enemyHull } from "./enemyBody.ts";
 import { createUnpopulatedFlight, spawnPlannedHostileStation, stepFlight } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
 import { hostileStationSites } from "./hostileStations/index.ts";
@@ -21,6 +20,7 @@ import {
 import { queueHostileStationReward } from "./hostileStations/reward.ts";
 import { planHostileStationFormation } from "./hostileStations/schedule.ts";
 import type { FlightEvent } from "./types.ts";
+import { flightWorldContext } from "./world/index.ts";
 
 function fixture() {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);

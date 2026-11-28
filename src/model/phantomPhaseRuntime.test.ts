@@ -12,14 +12,12 @@ import { outlinesContact } from "./convex.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
 import { spawnChapterEnemy } from "./flight.ts";
 import { hit } from "./flight/hitResolution.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { ACTIVE_CHUNK_RADIUS, worldActivateFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import * as pendingPlans from "./phantomRequiredPlans.ts";
 import { shipTuning } from "./upgrades.ts";
-import { periodicWorldGrid } from "./worldCells.ts";
-import { worldPoint } from "./worldContacts.ts";
+import { flightWorldContext, periodicWorldGrid, worldPoint } from "./world/index.ts";
 
 const originallyBuilt = BUILT.has(6);
 afterEach(() => {

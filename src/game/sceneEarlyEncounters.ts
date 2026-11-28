@@ -7,10 +7,9 @@ import { toScreen } from "../model/convex.ts";
 import { mantaEscortPhase } from "../model/earlyEncounterPatterns.ts";
 import { enemyPartOutline } from "../model/enemyBody.ts";
 import { activeCrossbowSector, activeEnemyBeams } from "../model/flight.ts";
-import { flightWorldContext } from "../model/flightTopology.ts";
 import { requiredFrigateEscortId } from "../model/frigateEscorts.ts";
 import type { FlightState, Vec } from "../model/types.ts";
-import { worldDistance, worldPoint } from "../model/worldContacts.ts";
+import { flightWorldContext, worldDistance, worldPoint } from "../model/world/index.ts";
 import { drawEncounterRoute, visibleDistances } from "./scenePhantomBlockade.ts";
 
 interface Segment {

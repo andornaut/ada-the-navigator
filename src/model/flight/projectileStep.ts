@@ -1,10 +1,10 @@
 import type { GameContent } from "../../data/types.ts";
 import { outlineContact, type Parts } from "../convex.ts";
-import { canonicalPosition, flightWorldContext } from "../flightTopology.ts";
 import { worldRecordObjectRemoval } from "../geography.ts";
 import { impactSurface } from "../projectileImpact.ts";
 import { shipBody } from "../shipBody.ts";
 import type { FlightEvent, FlightState, Shot, Vec } from "../types.ts";
+import { canonicalPosition, flightWorldContext } from "../world/index.ts";
 import { blastCoversAda, touchesAda } from "./adaContactQueries.ts";
 import { recordBlastFlash, recordProjectileImpact } from "./impactFeedback.ts";
 import { arrivalGraceActive as adaProtected } from "./lifecycle.ts";

@@ -19,7 +19,6 @@ import type { EarlyEncounterState } from "./earlyEncounterRuntime.ts";
 import type { EnemyState } from "./enemyAi.ts";
 import type { ExplorationSites, ExplorationState } from "./explorationState.ts";
 import type { EnemyBeam } from "./flight/enemyBeams.ts";
-import type { FlightTopology } from "./flightTopology.ts";
 import type { NeedleChapterProgress, NeedleFlight } from "./needleState.ts";
 import type { PhantomFlight, PhantomProgress } from "./phantomState.ts";
 import type { ProjectileFade } from "./playerProjectiles.ts";
@@ -27,6 +26,7 @@ import type { StationRestockState } from "./stationRestock.ts";
 import type { StoryCursor } from "./storyCursor.ts";
 import type { StorySceneState } from "./storyShips.ts";
 import type { TargetKnowledgeRecord } from "./targetMarkers.ts";
+import type { FlightTopology } from "./world/index.ts";
 
 /** What Use does here: the disc's symbol, and its name the disc's accessible name. */
 export type UseAction =

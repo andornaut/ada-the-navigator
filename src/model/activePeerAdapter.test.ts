@@ -7,10 +7,10 @@ import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import * as enemyAi from "./enemyAi.ts";
 import { stepFlight } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval } from "./geography.ts";
 import type { SpaceObject } from "./types.ts";
+import { flightWorldContext } from "./world/index.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 afterEach(() => vi.restoreAllMocks());

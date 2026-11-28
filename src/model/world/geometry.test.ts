@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { CONTENT } from "../data/content.ts";
-import { ECONOMY } from "../data/economy.ts";
-import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
-import { GALAXY_SIDE } from "../data/world.ts";
+import { CONTENT } from "../../data/content.ts";
+import { ECONOMY } from "../../data/economy.ts";
+import { ORE_FIELDS } from "../../data/galaxyFeatures.ts";
+import { GALAXY_SIDE } from "../../data/world.ts";
 import {
   canonicalCell,
   canonicalCellKey,
@@ -13,7 +13,7 @@ import {
   wrappedDistance,
   wrappedDistanceSquared,
   wrapPoint,
-} from "./worldGeometry.ts";
+} from "./index.ts";
 
 describe("finite torus coordinates", () => {
   it("uses the approved extent without coupling density or active budgets to its area", () => {

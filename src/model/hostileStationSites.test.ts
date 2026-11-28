@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { GALAXY_SIDE } from "../data/world.ts";
 import { hostileStationSites, type HostileStationSitesContext } from "./hostileStations/index.ts";
-import { wrappedDistance } from "./worldGeometry.ts";
+import { wrappedDistance } from "./world/index.ts";
 
 const context: HostileStationSitesContext = {
   galaxy: 5,

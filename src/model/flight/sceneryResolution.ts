@@ -1,7 +1,7 @@
 import { type Silhouette, worldSceneryBlocksSegment } from "../asteroids.ts";
 import type { Contact } from "../convex.ts";
 import type { FlightState, SpaceObject, Vec } from "../types.ts";
-import type { WorldContext } from "../worldContacts.ts";
+import type { WorldContext } from "../world/index.ts";
 
 export interface SceneryResolution {
   readonly kinds: readonly string[];

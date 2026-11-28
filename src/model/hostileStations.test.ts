@@ -25,7 +25,6 @@ import { fromScreen, partsReach, worldParts } from "./convex.ts";
 import { createEnemy, damageEnemy, stepEnemy } from "./enemyAi.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
 import { createFlight, spawnPlannedHostileStation } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import {
   worldActivateFlightRegion,
   worldRecordObjectRemoval,
@@ -35,6 +34,7 @@ import { hostileStationContext, type PlannedHostileStation } from "./hostileStat
 import { drawnIndex } from "./muzzles.ts";
 import { worldRegionalEngagementAdmissions, worldSpawnerStage } from "./spawner.ts";
 import type { FlightState } from "./types.ts";
+import { flightWorldContext } from "./world/index.ts";
 
 const plan: PlannedHostileStation = {
   defenders: [

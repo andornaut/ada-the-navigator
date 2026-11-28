@@ -11,11 +11,11 @@ import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { routeBlocked } from "./flight.ts";
 import { hit } from "./flight/hitResolution.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { escortPackId, worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { readRequiredPlan } from "./requiredEncounterPlans.ts";
+import { flightWorldContext } from "./world/index.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function launch() {

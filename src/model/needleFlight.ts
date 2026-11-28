@@ -1,6 +1,5 @@
 import type { GameContent } from "../data/types.ts";
 import { closestOnSegment, type Contact, outlinesContact, type Parts, toScreen } from "./convex.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
 import {
   activeNeedleCourses,
@@ -11,8 +10,7 @@ import {
   needleRimParts,
 } from "./needle.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
-import { type WorldContext, worldPoint } from "./worldContacts.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import { flightWorldContext, type WorldContext, worldPoint, wrapPoint } from "./world/index.ts";
 
 const rims = new WeakMap<NeedleCourse, readonly SpaceObject[]>();
 const shapes = new WeakMap<SpaceObject, Parts>();

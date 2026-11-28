@@ -8,8 +8,8 @@ import {
   worldCellKey,
   worldCellOrigin,
   worldCellsNear,
-} from "./worldCells.ts";
-import { wrappedDistance } from "./worldGeometry.ts";
+  wrappedDistance,
+} from "./world/index.ts";
 
 export const stationDistance = (context: WorldCellContext, a: Vec, b: Vec): number =>
   context.worldSide === undefined

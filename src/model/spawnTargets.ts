@@ -50,8 +50,7 @@ import {
 } from "./spawnPlanner.ts";
 import { worldStationsNear } from "./stations.ts";
 import type { Vec } from "./types.ts";
-import type { WorldCellContext } from "./worldCells.ts";
-import { wrappedDistance } from "./worldGeometry.ts";
+import { type WorldCellContext, wrappedDistance } from "./world/index.ts";
 
 const MOVING_KIND = "moving-rock";
 /**

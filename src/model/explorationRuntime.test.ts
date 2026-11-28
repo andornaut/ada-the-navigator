@@ -15,7 +15,6 @@ import { dropRandom, enemyStardust } from "./drops.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { ROUTE_OPPORTUNITY_SECONDS } from "./explorationPacing.ts";
 import { ensureStation } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { jobHostiles, rerollBoards } from "./jobs.ts";
@@ -24,8 +23,13 @@ import { scanOutcomeLines } from "./scanOutcomeSpeech.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
 import { stationSpecialty } from "./stationServices.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
-import { periodicWorldGrid, worldCellAt, worldCellKey } from "./worldCells.ts";
-import { worldDistance } from "./worldContacts.ts";
+import {
+  flightWorldContext,
+  periodicWorldGrid,
+  worldCellAt,
+  worldCellKey,
+  worldDistance,
+} from "./world/index.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const pilot = { ...idle, move: { x: 1, y: 0 }, throttle: 0.25 };

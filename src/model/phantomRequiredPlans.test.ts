@@ -7,7 +7,6 @@ import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createUnpopulatedFlight } from "./flight.ts";
-import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
 import { createFrigateEscorts, requiredFrigateEscortId } from "./frigateEscorts.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
@@ -21,6 +20,7 @@ import {
   validPendingPhantomEncounter,
 } from "./phantomRequiredPlans.ts";
 import type { SpaceObject } from "./types.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "./world/index.ts";
 
 function actor(
   id: string,

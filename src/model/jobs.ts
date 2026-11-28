@@ -23,8 +23,7 @@ import type {
   SpaceObject,
   Vec,
 } from "./types.ts";
-import { type WorldContext, worldDistance } from "./worldContacts.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import { type WorldContext, worldDistance, wrapPoint } from "./world/index.ts";
 
 // Station job boards (gameplay/quests.md "Station jobs"): each station's three offers, the held
 // job and how it comes along. A held job fills the galaxy's one optional task slot, which other

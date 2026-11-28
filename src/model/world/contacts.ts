@@ -1,5 +1,5 @@
-import type { Vec } from "./types.ts";
-import { nearestImage, wrappedDelta, wrappedDistance } from "./worldGeometry.ts";
+import type { Vec } from "../types.ts";
+import { nearestImage, wrappedDelta, wrappedDistance } from "./geometry.ts";
 
 /** Only the flight owner supplies a side; omitted topology preserves legacy Euclidean operands. */
 export interface WorldContext {

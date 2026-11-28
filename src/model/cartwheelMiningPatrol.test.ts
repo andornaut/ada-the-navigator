@@ -22,15 +22,19 @@ import {
   populateFlight,
   stepFlight,
 } from "./flight.ts";
-import { CURRENT_FLIGHT_TOPOLOGY, flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { worldOreFieldInCell } from "./oreFields.ts";
 import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
 import type { FlightInput, Vec } from "./types.ts";
 import { shipTuning } from "./upgrades.ts";
-import { worldDistance, worldPoint } from "./worldContacts.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import {
+  CURRENT_FLIGHT_TOPOLOGY,
+  flightWorldContext,
+  worldDistance,
+  worldPoint,
+  wrapPoint,
+} from "./world/index.ts";
 
 const field = { guard: null, id: "field", x: 0, y: 0 } as const;
 // Use the ordinary leash and a projected firing envelope supplied by the integration port.

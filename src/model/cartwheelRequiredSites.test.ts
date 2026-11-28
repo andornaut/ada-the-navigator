@@ -4,7 +4,7 @@ import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
 import { gameAreaPoint } from "./edgeMarkers.ts";
-import { worldDelta, worldPoint } from "./worldContacts.ts";
+import { worldDelta, worldPoint } from "./world/index.ts";
 
 const selected = ["miner", "visitors"] as const;
 const hub = { x: 10000, y: 20000 };

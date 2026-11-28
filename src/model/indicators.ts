@@ -4,7 +4,7 @@ import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { worldStationIndicatorTarget } from "./stations.ts";
 import type { FlightState, GalaxyProgress } from "./types.ts";
-import { nearestImage } from "./worldGeometry.ts";
+import { nearestImage } from "./world/index.ts";
 
 // Direction indicators (gameplay/rules.md "Space encounters and feedback"): rare arrows that
 // mark only the current objective's destination, where a carried quest item goes, the holodisk

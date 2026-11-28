@@ -11,7 +11,6 @@ import { fromScreen } from "./convex.ts";
 import { enemyStardust } from "./drops.ts";
 import { enemyHull } from "./enemyBody.ts";
 import { createUnpopulatedFlight, populateFlight, spawnPlannedHostileStation } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval } from "./geography.ts";
@@ -21,6 +20,7 @@ import { hostileStationEncounterIds } from "./hostileStations/persistence.ts";
 import { planHostileStationFormation } from "./hostileStations/schedule.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
 import type { FlightState } from "./types.ts";
+import { flightWorldContext } from "./world/index.ts";
 
 const originallyBuilt = BUILT.has(5);
 afterEach(() => {

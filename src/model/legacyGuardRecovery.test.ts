@@ -5,7 +5,6 @@ import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import { questGuardPlacementContext, spawnChapterEnemy, stepFlight } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import {
   ACTIVE_CHUNK_RADIUS,
@@ -16,7 +15,7 @@ import {
 import { recoverLegacyQuestGuards } from "./legacyGuardRecovery.ts";
 import { questGuardHomePorts } from "./questGuardPlacement.ts";
 import type { SpaceObject } from "./types.ts";
-import { worldDistance } from "./worldContacts.ts";
+import { flightWorldContext, worldDistance } from "./world/index.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function fixture(retained = false) {

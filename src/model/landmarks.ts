@@ -10,14 +10,13 @@ import {
 import type { GalaxyNumber } from "../data/types.ts";
 import { flightDestinationSites } from "./destinationContext.ts";
 import { dropRandom } from "./drops.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { settlementsNear } from "./legacySettlements.ts";
 import { worldOreFieldsNear } from "./oreFields.ts";
 import { LANDMARK_SEEDS, type LandmarkSite, retainedLandmarkSites } from "./retainedLandmarks.ts";
 import { identityWords } from "./stationIdentity.ts";
 import { stationsNear } from "./stations.ts";
 import type { FlightState, GalaxyProgress, Vec } from "./types.ts";
-import { worldDistance } from "./worldContacts.ts";
+import { flightWorldContext, worldDistance } from "./world/index.ts";
 export type { LandmarkSite } from "./retainedLandmarks.ts";
 
 const sites = new Map<GalaxyNumber, readonly LandmarkSite[]>();

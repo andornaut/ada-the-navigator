@@ -13,11 +13,11 @@ import {
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { activateRequiredRoute, ensureDestination, ensureStation } from "./flight.ts";
 import { hit } from "./flight/hitResolution.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval } from "./geography.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
 import type { FlightState } from "./types.ts";
+import { flightWorldContext } from "./world/index.ts";
 
 /** Clears the actual required guard so the fixture can reach the story choice. */
 function defeatStoryGuard(content: GameContent, flight: FlightState, id: string): void {

@@ -1,7 +1,6 @@
 import type { GameContent } from "../../data/types.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import type { FlightState } from "../types.ts";
-import { worldDelta } from "../worldContacts.ts";
+import { flightWorldContext, worldDelta } from "../world/index.ts";
 
 /**
  * Whether Ada is in battle: an enemy chasing or attacking her is inside the battle square,

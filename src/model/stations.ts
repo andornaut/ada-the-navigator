@@ -3,7 +3,6 @@ import { LANDMARK_TUNING } from "../data/jobs.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { flightDestinationSites } from "./destinationContext.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { retainedSettlementWithin } from "./legacySettlements.ts";
 import {
   GALAXY_SEEDS,
@@ -21,14 +20,15 @@ import {
 import { retainedLandmarkSites as landmarkSites } from "./retainedLandmarks.ts";
 import type { FlightState, Vec } from "./types.ts";
 import {
+  flightWorldContext,
   periodicWorldGrid,
   worldCell,
   type WorldCellContext,
   worldCellKey,
   worldCellOrigin,
   worldCellsNear,
-} from "./worldCells.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+  wrapPoint,
+} from "./world/index.ts";
 export { HUB_STATION, type StationSite } from "./legacyStations.ts";
 
 export interface StationPlacementContext extends WorldCellContext {

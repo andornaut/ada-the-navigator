@@ -10,8 +10,13 @@ import {
 import type { AsteroidSize, CrystalFlag } from "../data/asteroidCatalog.ts";
 import { cappedAsteroidVelocity, type PlacedCrystals, placedRockCrystals } from "./asteroids.ts";
 import type { Vec } from "./types.ts";
-import { periodicWorldGrid, worldCellKey, type WorldGrid } from "./worldCells.ts";
-import { nearestImage, wrappedDelta } from "./worldGeometry.ts";
+import {
+  nearestImage,
+  periodicWorldGrid,
+  worldCellKey,
+  type WorldGrid,
+  wrappedDelta,
+} from "./world/index.ts";
 
 /**
  * What an exclusion zone keeps out: static rocks, rocks chosen to move, enemy ships, or the

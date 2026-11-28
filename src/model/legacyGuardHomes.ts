@@ -1,7 +1,6 @@
-import { flightWorldContext } from "./flightTopology.ts";
 import { liveEnemy } from "./geography.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
-import type { WorldContext } from "./worldContacts.ts";
+import { flightWorldContext, type WorldContext } from "./world/index.ts";
 
 /** Canonical placement supplies site authority and geometry; recovery supplies no fallback. */
 export interface LegacyGuardHomePorts {

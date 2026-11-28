@@ -18,7 +18,6 @@ import {
   rollSalvageDrop,
   splitResourcePickup,
 } from "../drops.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import { orePickupSize, stardustPickupReach, stardustPickupSize } from "../pickupBody.ts";
 import { proceduralPoiById } from "../proceduralPois.ts";
 import { MOVING_ROCK_PREFIX } from "../rockRicochet.ts";
@@ -29,7 +28,7 @@ import {
   stardustDropOffsets,
 } from "../stardustPlacement.ts";
 import type { FlightState, PickupRelease, SpaceObject } from "../types.ts";
-import { worldDistance } from "../worldContacts.ts";
+import { flightWorldContext, worldDistance } from "../world/index.ts";
 
 const rockDropId = (id: string): string =>
   id.startsWith(MOVING_ROCK_PREFIX) ? id.slice(MOVING_ROCK_PREFIX.length) : id;

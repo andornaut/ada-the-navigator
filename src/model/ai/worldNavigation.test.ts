@@ -8,7 +8,7 @@ import { type Contact, grown, outlinesContact, type Parts, worldParts } from "..
 import { createEnemy } from "../enemyAi.ts";
 import { enemyHull } from "../enemyBody.ts";
 import type { SpaceObject } from "../types.ts";
-import { worldPoint } from "../worldContacts.ts";
+import { worldPoint } from "../world/index.ts";
 import { navigationLookAhead } from "./prediction.ts";
 import { worldNavigationQuery } from "./worldNavigation.ts";
 

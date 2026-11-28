@@ -13,11 +13,11 @@ import {
 } from "./andromedaRedact.ts";
 import type { ChapterContext } from "./chapterProtocol.ts";
 import { createUnpopulatedFlight, ensureDestinationAt } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { localMap, NO_LANDMARKS } from "./map.ts";
 import { newProgress } from "./progress.ts";
 import { requiredWorldOccupantsPlacementClear } from "./requiredWorldReservations.ts";
 import { flightStationContext } from "./stations.ts";
+import { flightWorldContext } from "./world/index.ts";
 
 function repaired(): ChapterContext {
   const content = CONTENT;

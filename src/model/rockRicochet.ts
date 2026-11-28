@@ -8,9 +8,15 @@ import {
 } from "./asteroids.ts";
 import type { Contact } from "./convex.ts";
 import type { SpaceObject, Vec } from "./types.ts";
-import { periodicWorldGrid, worldCellAt, worldCellKey, worldCellsNear } from "./worldCells.ts";
-import { type WorldContext, worldDistance } from "./worldContacts.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import {
+  periodicWorldGrid,
+  worldCellAt,
+  worldCellKey,
+  worldCellsNear,
+  type WorldContext,
+  worldDistance,
+  wrapPoint,
+} from "./world/index.ts";
 
 /** Flight ids of planned moving rocks, which arrival disks also absorb. */
 export const MOVING_ROCK_PREFIX = "moving:";

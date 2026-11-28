@@ -1,7 +1,6 @@
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { Vec } from "./types.ts";
-import type { WorldContext } from "./worldContacts.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import { type WorldContext, wrapPoint } from "./world/index.ts";
 
 export type CartwheelRequiredSiteId = keyof typeof CARTWHEEL_STORY_SHIPS.destinations;
 

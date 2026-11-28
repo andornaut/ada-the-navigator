@@ -6,7 +6,6 @@ import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createUnpopulatedFlight } from "./flight.ts";
-import { CURRENT_FLIGHT_TOPOLOGY, flightEncounterSeed } from "./flightTopology.ts";
 import { createFrigateEscorts, requiredFrigateEscortId } from "./frigateEscorts.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
@@ -18,6 +17,7 @@ import {
   takeRequiredPlan,
 } from "./requiredEncounterPlans.ts";
 import type { RequiredEncounterPlan, SpaceObject } from "./types.ts";
+import { CURRENT_FLIGHT_TOPOLOGY, flightEncounterSeed } from "./world/index.ts";
 
 function fixture(supportCount = 0) {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);

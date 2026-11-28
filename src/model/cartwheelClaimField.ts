@@ -7,7 +7,7 @@ import { closestOnSegment } from "./convex.ts";
 import { ORE_FIELD_CLEAR_RADIUS, type OreField, worldOreFieldsNear } from "./oreFields.ts";
 import { type StationPlacementContext, worldStationsNear } from "./stations.ts";
 import type { Vec } from "./types.ts";
-import { worldDistance, worldPoint } from "./worldContacts.ts";
+import { worldDistance, worldPoint } from "./world/index.ts";
 
 // Search one ore-grid cell beyond the ordinary cue range when the nearby fields cannot fit.
 export const CARTWHEEL_CLAIM_SEARCH_RADIUS = TARGET_MARKER_RANGE + ORE_FIELDS.cellSize;

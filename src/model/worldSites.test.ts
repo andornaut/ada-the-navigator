@@ -16,7 +16,7 @@ import {
   worldStationIndicatorTarget,
   worldStationsNear,
 } from "./stations.ts";
-import { wrappedDistance } from "./worldGeometry.ts";
+import { wrappedDistance } from "./world/index.ts";
 
 const context = { worldSide: 1152000 };
 describe("explicit periodic station and ore placement", () => {

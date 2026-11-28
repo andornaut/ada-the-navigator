@@ -4,7 +4,7 @@ import type { GalaxyNumber, GameContent } from "../data/types.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
-import { worldDistance } from "./worldContacts.ts";
+import { worldDistance } from "./world/index.ts";
 
 /** Transient outputs of the authoritative required-site planner, never discovery records. */
 export interface RequiredWorldReservation {

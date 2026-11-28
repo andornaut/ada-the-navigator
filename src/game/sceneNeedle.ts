@@ -1,7 +1,6 @@
 import { driftChipsFromBounds, playDepth } from "../art/index.ts";
 import { NEEDLE } from "../data/needle.ts";
 import { toScreen } from "../model/convex.ts";
-import { flightWorldContext } from "../model/flightTopology.ts";
 import {
   activeNeedleCourses,
   type NeedleCourse,
@@ -13,7 +12,7 @@ import {
   unfinishedNeedleCourse,
 } from "../model/needle.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
-import { type WorldContext, worldPoint } from "../model/worldContacts.ts";
+import { flightWorldContext, type WorldContext, worldPoint } from "../model/world/index.ts";
 import { COLOURS, UNLISTED_COLOURS } from "../ui/layout/index.ts";
 
 /** A course uses one local world image for every gate, stitch and lamp. */

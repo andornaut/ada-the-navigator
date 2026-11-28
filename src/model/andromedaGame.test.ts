@@ -35,14 +35,13 @@ import { damageEnemy } from "./enemyAi.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import { ensureStation, questGuardPlacementContext } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { flightLandmarkSites } from "./landmarks.ts";
 import { stationDisplayName } from "./stationIdentity.ts";
 import { flightStationContext, worldStationById } from "./stations.ts";
-import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
+import { flightWorldContext, worldDelta, worldDistance, worldPoint } from "./world/index.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 

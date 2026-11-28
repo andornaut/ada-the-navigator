@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { CONTENT } from "../data/content.ts";
-import { GALAXY_SIDE } from "../data/world.ts";
-import { restoreSave, SAVE_RESTORE, SAVE_VERSION } from "../saving/index.ts";
-import { supportEntropy } from "../testing/launchSeeds.ts";
-import { flightWorldContext, validFlightTopology } from "./flightTopology.ts";
-import { GameModel } from "./game.ts";
-import type { FlightState } from "./types.ts";
+import { CONTENT } from "../../data/content.ts";
+import { GALAXY_SIDE } from "../../data/world.ts";
+import { restoreSave, SAVE_RESTORE, SAVE_VERSION } from "../../saving/index.ts";
+import { supportEntropy } from "../../testing/launchSeeds.ts";
+import { GameModel } from "../game.ts";
+import type { FlightState } from "../types.ts";
+import { flightWorldContext, validFlightTopology } from "./index.ts";
 
 describe("explicit flight geometry context", () => {
   it("keeps absent metadata legacy regardless of large coordinates or seed", () => {

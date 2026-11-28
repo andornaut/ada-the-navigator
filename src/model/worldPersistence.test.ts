@@ -7,9 +7,9 @@ import { restoreSave, SAVE_RESTORE, SAVE_VERSION } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./enemyAi.ts";
-import { flightEncounterSeed } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import type { SpaceObject } from "./types.ts";
+import { flightEncounterSeed } from "./world/index.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function model() {

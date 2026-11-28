@@ -14,8 +14,7 @@ import {
   spawnSalvagePoisNear,
 } from "./proceduralPois.ts";
 import { retainedLandmarkSites as landmarkSites } from "./retainedLandmarks.ts";
-import { periodicWorldGrid } from "./worldCells.ts";
-import { nearestImage, wrappedDistance } from "./worldGeometry.ts";
+import { nearestImage, periodicWorldGrid, wrappedDistance } from "./world/index.ts";
 
 const context = { worldSide: GALAXY_SIDE };
 const far = { x: 300000, y: -200000 };

@@ -2,7 +2,7 @@ import type { Point } from "../../data/enemyCatalog.ts";
 import type { EnemyKeepMoving } from "../../data/enemyNavigation.ts";
 import { closestOnSegment, inside, type Parts } from "../convex.ts";
 import { direction } from "../shipPhysics.ts";
-import { type WorldContext, worldDistance } from "../worldContacts.ts";
+import { type WorldContext, worldDistance } from "../world/index.ts";
 import { seeded } from "./course.ts";
 
 /** A miner's saved tracing: the rock it traces, its arrival there, its picks and their count. */

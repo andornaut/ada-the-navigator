@@ -14,8 +14,9 @@ import {
   worldCellOrigin,
   worldCellsNear,
   type WorldGrid,
-} from "./worldCells.ts";
-import { wrappedDistanceSquared, wrapPoint } from "./worldGeometry.ts";
+  wrappedDistanceSquared,
+  wrapPoint,
+} from "./world/index.ts";
 
 export interface ProceduralPoiContext {
   /** Absent for legacy flights. Callers extract this only from explicit torus metadata. */

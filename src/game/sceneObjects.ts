@@ -75,7 +75,6 @@ import { debrisPieceIndex } from "../model/debrisBody.ts";
 import { carriesStardust } from "../model/drops.ts";
 import { enemyHull } from "../model/enemyBody.ts";
 import { seededRockOre } from "../model/flight/destruction.ts";
-import { flightWorldContext } from "../model/flightTopology.ts";
 import { ORE_FIELD_ROLE } from "../model/oreFields.ts";
 import { orePickupFrameSize, stardustPickupFrameSize } from "../model/pickupBody.ts";
 import { MOVING_ROCK_PREFIX } from "../model/rockRicochet.ts";
@@ -83,7 +82,7 @@ import { discoveryCacheGroup } from "../model/stardustPlacement.ts";
 import { hubBay, hubWorn } from "../model/storyShips.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
 import { shipTuning } from "../model/upgrades.ts";
-import { worldDelta } from "../model/worldContacts.ts";
+import { flightWorldContext, worldDelta } from "../model/world/index.ts";
 import type { GameScene } from "./scene.ts";
 import {
   enemyArtKey,

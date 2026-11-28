@@ -10,11 +10,10 @@ import {
   planRequiredCartwheelRoute,
   populateRequiredChapterFlight,
 } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { readRequiredRolePlan } from "./requiredRolePlans.ts";
-import { worldDistance } from "./worldContacts.ts";
+import { flightWorldContext, worldDistance } from "./world/index.ts";
 
 it("reserves the hub capital and held buoy geometry before optional chunks without exposing future actors", () => {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);

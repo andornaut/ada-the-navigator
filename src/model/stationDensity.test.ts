@@ -19,8 +19,7 @@ import {
   worldStationInCell,
   worldStationsNear,
 } from "./stations.ts";
-import { periodicWorldGrid, worldCellAt, worldCellCenter } from "./worldCells.ts";
-import { wrappedDistance } from "./worldGeometry.ts";
+import { periodicWorldGrid, worldCellAt, worldCellCenter, wrappedDistance } from "./world/index.ts";
 
 describe("additive station density", () => {
   it.each([1, 2, 3, 4, 5, 6] as const)(

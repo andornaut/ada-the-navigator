@@ -1,7 +1,7 @@
-import { GALAXY_SIDE } from "../data/world.ts";
-import type { FlightState, Vec } from "./types.ts";
-import type { WorldContext } from "./worldContacts.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import { GALAXY_SIDE } from "../../data/world.ts";
+import type { FlightState, Vec } from "../types.ts";
+import type { WorldContext } from "./contacts.ts";
+import { wrapPoint } from "./geometry.ts";
 
 /** Explicit metadata selects periodic geometry; absence always means a legacy chart. */
 export interface FlightTopology {

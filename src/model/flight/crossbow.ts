@@ -5,12 +5,12 @@ import { crossbowAllowsAttack, crossbowSector } from "../earlyEncounterPatterns.
 import { EARLY_LANCE_SECONDS } from "../earlyEncounterRuntime.ts";
 import type { EnemyAttackOpportunity } from "../enemyAi.ts";
 import { enemyBeamReach, planEnemyProjectile } from "../enemyProjectiles.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import { needleCourses } from "../needle.ts";
 import { fanHeading } from "../playerProjectiles.ts";
 import type { PlayerWeaponCoverageContext } from "../playerWeaponCoverage.ts";
 import { direction } from "../shipPhysics.ts";
 import type { FlightState, SpaceObject } from "../types.ts";
+import { flightWorldContext } from "../world/index.ts";
 import { BEAM_TIMING, projectedLength } from "./enemyBeams.ts";
 import { shotRadius } from "./projectileContact.ts";
 

@@ -21,13 +21,13 @@ import { outlineContact, worldParts } from "./convex.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import { ensureStation, openCartwheelClaimField } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { flightLandmarkSites } from "./landmarks.ts";
 import { ORE_FIELD_ROLE, worldOreFieldsNear } from "./oreFields.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
+import { flightWorldContext } from "./world/index.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const { id } = CARTWHEEL_CLAIM;

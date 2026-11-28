@@ -6,7 +6,6 @@ import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { createEnemy } from "./enemyAi.ts";
-import { flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval } from "./geography.ts";
 import { markerKnowledgeStore } from "./markerBindings.ts";
@@ -17,6 +16,7 @@ import {
   type TargetResolution,
 } from "./targetMarkers.ts";
 import type { SpaceObject } from "./types.ts";
+import { flightEncounterSeed, flightWorldContext } from "./world/index.ts";
 
 function fixture() {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);

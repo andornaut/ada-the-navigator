@@ -6,11 +6,6 @@ import { supportEntropy } from "../testing/launchSeeds.ts";
 import { enemyStardust } from "./drops.ts";
 import { createUnpopulatedFlight, spawnPlannedHostileStation } from "./flight.ts";
 import { hit } from "./flight/hitResolution.ts";
-import {
-  CURRENT_FLIGHT_TOPOLOGY,
-  flightEncounterSeed,
-  flightWorldContext,
-} from "./flightTopology.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
@@ -25,6 +20,7 @@ import {
 } from "./hostileStations/persistence.ts";
 import { planHostileStationFormation } from "./hostileStations/schedule.ts";
 import type { FlightEvent } from "./types.ts";
+import { CURRENT_FLIGHT_TOPOLOGY, flightEncounterSeed, flightWorldContext } from "./world/index.ts";
 
 function fixture() {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);

@@ -1,7 +1,7 @@
 import { carriesStardust } from "./drops.ts";
-import { flightEncounterSeed } from "./flightTopology.ts";
 import type { TargetKnowledgeRecord } from "./targetMarkers.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
+import { flightEncounterSeed } from "./world/index.ts";
 
 export function validTargetKnowledge(value: unknown): value is TargetKnowledgeRecord {
   return (

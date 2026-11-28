@@ -12,8 +12,7 @@ import {
   rocksContact,
 } from "./rockRicochet.ts";
 import type { FlightInput, FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
-import { worldDelta } from "./worldContacts.ts";
-import { wrapCoordinate } from "./worldGeometry.ts";
+import { worldDelta, wrapCoordinate } from "./world/index.ts";
 
 const RULES = CONTENT.tuning.flight.rockRicochet;
 const context: RicochetContext = {

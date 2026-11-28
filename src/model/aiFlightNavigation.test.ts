@@ -18,13 +18,17 @@ import {
   spawnQuestFrigateAt,
   stepFlight,
 } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
 import { newProgress } from "./progress.ts";
 import { questGuardAnchor } from "./questGuardPlacement.ts";
 import type { SpaceObject } from "./types.ts";
-import { worldCellKey, worldCellsNear, worldGrid } from "./worldCells.ts";
-import { worldDistance } from "./worldContacts.ts";
+import {
+  flightWorldContext,
+  worldCellKey,
+  worldCellsNear,
+  worldDistance,
+  worldGrid,
+} from "./world/index.ts";
 
 it.each([false, true])(
   "patrols a marked site-local frigate past an asteroid with hull clearance (turning=%s)",

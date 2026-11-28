@@ -1,4 +1,4 @@
-import type { Vec } from "./types.ts";
+import type { Vec } from "../types.ts";
 
 export interface WorldImage {
   /** World-unit translation added to the original point, not a count of periods. */

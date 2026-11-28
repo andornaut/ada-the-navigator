@@ -9,11 +9,16 @@ import { fromScreen, type Parts, screenOutlineContact } from "./convex.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { enemyHull, enemyPartOutline } from "./enemyBody.ts";
 import { activeBlastFlashes, createFlight, stepFlight } from "./flight.ts";
-import { CURRENT_FLIGHT_TOPOLOGY, flightWorldContext } from "./flightTopology.ts";
 import { shipTouchesScreenCircle } from "./shipBody.ts";
 import type { FlightState, GalaxyProgress, Shot, SpaceObject, Vec } from "./types.ts";
-import { periodicWorldGrid, worldCellKey, worldCellsNear } from "./worldCells.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import {
+  CURRENT_FLIGHT_TOPOLOGY,
+  flightWorldContext,
+  periodicWorldGrid,
+  worldCellKey,
+  worldCellsNear,
+  wrapPoint,
+} from "./world/index.ts";
 
 // gameplay/rules.md "Missiles": a blast is a circle on screen of radius 30 (Rapid) or 60 (Heavy)
 // that deals full damage to every target whose drawn shape it overlaps.

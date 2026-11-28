@@ -3,11 +3,10 @@ import { MISSILE_HIT_RADIUS } from "../../data/weaponCatalog.ts";
 import { type Silhouette, worldSceneryContact } from "../asteroids.ts";
 import { outlineContact } from "../convex.ts";
 import { enemyHull, enemyPartOutline } from "../enemyBody.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import { impactEntry, impactSurface } from "../projectileImpact.ts";
 import { direction } from "../shipPhysics.ts";
 import type { FlightState, Shot, SpaceObject, Vec } from "../types.ts";
-import { worldPoint } from "../worldContacts.ts";
+import { flightWorldContext, worldPoint } from "../world/index.ts";
 
 export const shotRadius = (shot: Pick<Shot, "projectile">) =>
   shot.projectile === "missile" ? MISSILE_HIT_RADIUS : 3;

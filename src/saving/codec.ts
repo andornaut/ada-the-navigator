@@ -42,7 +42,6 @@ import { EARLY_LANCE_SECONDS, earlyEncounterKind } from "../model/earlyEncounter
 import { enemyDefeated } from "../model/enemyAi.ts";
 import { validExplorationSites, validExplorationState } from "../model/explorationState.ts";
 import { BEAM_TIMING } from "../model/flight/enemyBeams.ts";
-import { flightWorldContext, validFlightTopology } from "../model/flightTopology.ts";
 import { validGalaxyGeography } from "../model/galaxyGeography.ts";
 import {
   ACTIVE_CHUNK_RADIUS,
@@ -96,7 +95,12 @@ import type {
 import { shipTuning } from "../model/upgrades.ts";
 import { chunkCoordinates, validVisitedPages } from "../model/visited.ts";
 import { clampAmmo, UPGRADE_WEAPONS } from "../model/weapons.ts";
-import { periodicWorldGrid, worldCellKey } from "../model/worldCells.ts";
+import {
+  flightWorldContext,
+  periodicWorldGrid,
+  validFlightTopology,
+  worldCellKey,
+} from "../model/world/index.ts";
 
 function validEarthChoices(content: GameContent, galaxy: GalaxyNumber, value: unknown): boolean {
   if (value === undefined) {

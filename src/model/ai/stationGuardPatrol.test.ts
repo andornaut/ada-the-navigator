@@ -10,8 +10,7 @@ import { partsReach, worldParts } from "../convex.ts";
 import { createEnemy } from "../enemyAi.ts";
 import { enemyHull } from "../enemyBody.ts";
 import { stepShipMotion, turnToward } from "../shipPhysics.ts";
-import { worldDelta, worldDistance } from "../worldContacts.ts";
-import { wrapPoint } from "../worldGeometry.ts";
+import { worldDelta, worldDistance, wrapPoint } from "../world/index.ts";
 import { stationGuardPatrol } from "./stationGuardPatrol.ts";
 
 it.each([undefined, GALAXY_SIDE])(

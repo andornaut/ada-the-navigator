@@ -1,13 +1,17 @@
 import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
 import { MOVING_ROCKS } from "../data/spawnTargets.ts";
 import { closestOnSegment } from "./convex.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { ORE_FIELD_CLEAR_RADIUS, type OreField } from "./oreFields.ts";
 import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
 import { SPAWN_GAP } from "./spawner.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
-import { type WorldContext, worldDelta, worldDistance } from "./worldContacts.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import {
+  flightWorldContext,
+  type WorldContext,
+  worldDelta,
+  worldDistance,
+  wrapPoint,
+} from "./world/index.ts";
 
 export const CARTWHEEL_MINING_PATROL = {
   bypassWidth: 220,

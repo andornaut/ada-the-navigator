@@ -5,14 +5,12 @@ import { partsReach, toScreen, worldParts } from "./convex.ts";
 import { dropRandom } from "./drops.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
 import { questGuardPlacementContext, spawnChapterEnemy } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { worldRecordObjectRemoval } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { inNeedleChannel, needleCourses } from "./needle.ts";
 import { stationFormationClear } from "./stationPlacement.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
-import { worldDistance, worldPoint } from "./worldContacts.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import { flightWorldContext, worldDistance, worldPoint, wrapPoint } from "./world/index.ts";
 
 export const NEEDLE_ACTIVITY_TARGET = "needle:activity:course";
 const PATROL_SHIPS = ["swarm", "fighter", "interceptor"] as const;

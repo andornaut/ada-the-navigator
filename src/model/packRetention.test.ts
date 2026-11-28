@@ -16,11 +16,16 @@ import {
   stepFlight,
   syncFlightRegion,
 } from "./flight.ts";
-import { CURRENT_FLIGHT_TOPOLOGY, flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { ambientPackId, escortPackId, packMemberId } from "./geography.ts";
 import type { GalaxyProgress, SpaceObject, Vec } from "./types.ts";
-import { periodicWorldGrid, worldCellAt, worldCellKey } from "./worldCells.ts";
+import {
+  CURRENT_FLIGHT_TOPOLOGY,
+  flightWorldContext,
+  periodicWorldGrid,
+  worldCellAt,
+  worldCellKey,
+} from "./world/index.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const progress: GalaxyProgress = {

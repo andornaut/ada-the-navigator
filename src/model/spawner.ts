@@ -10,8 +10,7 @@ import {
   spawnerStageAtDistance,
 } from "../data/spawnerCatalog.ts";
 import type { SpaceObject, Vec } from "./types.ts";
-import type { WorldCellContext } from "./worldCells.ts";
-import { wrappedDistance } from "./worldGeometry.ts";
+import { type WorldCellContext, wrappedDistance } from "./world/index.ts";
 
 /** Station hostility is authoritative caller context, never inferred from a friendly station. */
 export interface SpawnerContext extends WorldCellContext {

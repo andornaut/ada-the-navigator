@@ -7,7 +7,7 @@ import type { TaskCategory } from "../data/taskCategories.ts";
 import { gameAreaPoint } from "./edgeMarkers.ts";
 import { recordTargetKnowledge } from "./targetKnowledgeStore.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
-import { worldPoint } from "./worldContacts.ts";
+import { worldPoint } from "./world/index.ts";
 
 export type TargetKnowledge = "sensed" | "identified";
 /** Galaxy-scoped knowledge; positions and existence are reconstructed from world authority. */

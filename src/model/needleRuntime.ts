@@ -6,7 +6,6 @@ import { NEEDLE_COPY, NEEDLE_COURSE_COPY, NEEDLE_LEARNING } from "../data/needle
 import type { CapitalBossProgress } from "./capitalBossEncounter.ts";
 import type { ChapterContext, ChapterResult } from "./chapterProtocol.ts";
 import { ensureDestination, ensureDestinationAt, spawnChapterEnemy } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { worldActivateFlightRegion } from "./geography.ts";
 import {
   type NeedleCourse,
@@ -28,8 +27,7 @@ import {
 } from "./needleState.ts";
 import type { DialogueChoice, DialogueState, UseAction, Vec } from "./types.ts";
 import { shipTuning } from "./upgrades.ts";
-import { worldDistance, worldPoint } from "./worldContacts.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import { flightWorldContext, worldDistance, worldPoint, wrapPoint } from "./world/index.ts";
 const progressOf = (context: ChapterContext): NeedleChapterProgress =>
   (context.progress.needle ??= {
     briefed: false,

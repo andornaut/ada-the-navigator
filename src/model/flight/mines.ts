@@ -3,13 +3,12 @@ import type { GameContent } from "../../data/types.ts";
 import { MISSILE_HIT_RADIUS } from "../../data/weaponCatalog.ts";
 import { outlineContact, type Parts } from "../convex.ts";
 import type { FireIntent } from "../enemyAi.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import { MINE_PARTS, MINE_REACH, mineTouches } from "../mineShape.ts";
 import { needleChannelContains } from "../needleFlight.ts";
 import { impactSurface } from "../projectileImpact.ts";
 import { shipBody } from "../shipBody.ts";
 import type { FlightEvent, FlightState, Mine, Shot, Vec } from "../types.ts";
-import { worldPoint } from "../worldContacts.ts";
+import { flightWorldContext, worldPoint } from "../world/index.ts";
 
 interface MineStrike {
   readonly blast: (

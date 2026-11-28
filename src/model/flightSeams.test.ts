@@ -21,12 +21,17 @@ import {
   pickupTouched,
   stepFlight,
 } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { pickupOutline } from "./pickupBody.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
 import type { FlightInput, SpaceObject, Vec } from "./types.ts";
-import { periodicWorldGrid, worldCellKey, worldCellsNear } from "./worldCells.ts";
-import { wrappedDelta, wrappedDistance } from "./worldGeometry.ts";
+import {
+  flightWorldContext,
+  periodicWorldGrid,
+  worldCellKey,
+  worldCellsNear,
+  wrappedDelta,
+  wrappedDistance,
+} from "./world/index.ts";
 
 const half = GALAXY_SIDE / 2;
 const idle: FlightInput = {

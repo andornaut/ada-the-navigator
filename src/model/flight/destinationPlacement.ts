@@ -4,14 +4,13 @@ import { LANDMARK_TUNING } from "../../data/jobs.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../../data/storyShips.ts";
 import type { GameContent } from "../../data/types.ts";
 import { worldInCurrent } from "../currents.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import { landmarkSites } from "../landmarks.ts";
 import { readRequiredPlan } from "../requiredEncounterPlans.ts";
 import { readRequiredRolePlan } from "../requiredRolePlans.ts";
 import { direction } from "../shipPhysics.ts";
 import { flightStationContext, worldStationsNear } from "../stations.ts";
 import type { FlightState, SpaceObject, Vec } from "../types.ts";
-import { worldDistance } from "../worldContacts.ts";
+import { flightWorldContext, worldDistance } from "../world/index.ts";
 
 interface DestinationPlacementContext {
   readonly activateRequiredRoute: (content: GameContent, id: string, flight: FlightState) => void;

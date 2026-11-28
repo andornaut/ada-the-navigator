@@ -13,11 +13,11 @@ import {
   ensureRouteEncounter,
   populateRequiredChapterFlight,
 } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { storeRequiredRolePlan } from "./requiredRolePlans.ts";
+import { flightWorldContext } from "./world/index.ts";
 
 function launch(reunited: boolean) {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);

@@ -6,7 +6,7 @@ import { ROUTE_POSITION } from "../../data/galaxies.ts";
 import { HOSTILE_STATION_POLICY } from "../../data/hostileStationPolicy.ts";
 import { SPAWNER_POLICIES } from "../../data/spawnerCatalog.ts";
 import { memberPosition } from "../spawner.ts";
-import { wrapPoint } from "../worldGeometry.ts";
+import { wrapPoint } from "../world/index.ts";
 import type { PlannedHostileStation, StationMaterialization } from "./placement.ts";
 import {
   type HostileStationSite,

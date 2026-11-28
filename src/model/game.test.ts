@@ -31,7 +31,6 @@ import {
   syncFlightRegion,
 } from "./flight.ts";
 import { hit } from "./flight/hitResolution.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
@@ -41,6 +40,7 @@ import { readRequiredRolePlan } from "./requiredRolePlans.ts";
 import { flightStationContext } from "./stations.ts";
 import type { FlightState } from "./types.ts";
 import { collectWeapon } from "./weapons.ts";
+import { flightWorldContext } from "./world/index.ts";
 
 /** Test support: admit the saved required encounter and defeat its actual guard. */
 function defeatStoryGuard(content: GameContent, flight: FlightState, id: string): void {

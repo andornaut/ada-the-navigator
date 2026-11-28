@@ -11,7 +11,6 @@ import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { enemyStardust } from "./drops.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { createUnpopulatedFlight } from "./flight.ts";
-import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
 import { freshGalaxyGeography } from "./galaxyGeography.ts";
 import { GameModel } from "./game.ts";
 import { escortPackId, worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
@@ -30,7 +29,7 @@ import {
 } from "./hostileStations/persistence.ts";
 import { hostileStationPack } from "./hostileStations/population.ts";
 import type { SpaceObject } from "./types.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import { CURRENT_FLIGHT_TOPOLOGY, wrapPoint } from "./world/index.ts";
 
 function fixture(galaxy: GalaxyNumber = 2) {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);

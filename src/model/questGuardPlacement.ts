@@ -4,7 +4,6 @@ import type { StationGuardAnchor } from "./ai/stationGuardPatrol.ts";
 import { partsReach, worldParts } from "./convex.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { frigateEscortStation } from "./frigateEscorts.ts";
 import { liveEnemy } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
@@ -12,7 +11,7 @@ import type { LegacyGuardHomePorts } from "./legacyGuardHomes.ts";
 import { stationGuardSite } from "./stationGuardSite.ts";
 import { stationFormationClear, type StationPlacementContext } from "./stationPlacement.ts";
 import type { SpaceObject, Vec } from "./types.ts";
-import { worldDelta, worldDistance } from "./worldContacts.ts";
+import { flightWorldContext, worldDelta, worldDistance } from "./world/index.ts";
 
 /** A read-only projection of surviving actors onto their existing formation stations. */
 export function questGuardFormationAt(

@@ -8,13 +8,18 @@ import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { createUnpopulatedFlight, stepFlight } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
 import { worldOreFieldInCell, worldOreFieldsNear } from "./oreFields.ts";
 import { retaliatorAsteroidQuery } from "./retaliatorAsteroids.ts";
 import { worldStationsNear } from "./stations.ts";
 import type { SpaceObject, Vec } from "./types.ts";
-import { periodicWorldGrid, worldCellAt, worldCellKey, worldCellsNear } from "./worldCells.ts";
+import {
+  flightWorldContext,
+  periodicWorldGrid,
+  worldCellAt,
+  worldCellKey,
+  worldCellsNear,
+} from "./world/index.ts";
 
 vi.mock("../data/world.ts", () => ({ GALAXY_SIDE: 240_000 }));
 

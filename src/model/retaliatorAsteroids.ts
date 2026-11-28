@@ -1,8 +1,14 @@
 import { placementRadius, sceneryShape } from "./asteroids.ts";
 import type { RetaliatorAsteroid } from "./retaliatorNavigation.ts";
 import type { SpaceObject, Vec } from "./types.ts";
-import { periodicWorldGrid, worldCellAt, worldCellKey, worldCellsNear } from "./worldCells.ts";
-import { type WorldContext, worldDistance } from "./worldContacts.ts";
+import {
+  periodicWorldGrid,
+  worldCellAt,
+  worldCellKey,
+  worldCellsNear,
+  type WorldContext,
+  worldDistance,
+} from "./world/index.ts";
 
 /** A slice-local index of real loaded asteroids, shared by every industrial ship's idle input. */
 export function retaliatorAsteroidQuery(

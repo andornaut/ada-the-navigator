@@ -9,13 +9,18 @@ import {
 import { pointOnCurrent, worldCurrentInCell, worldCurrentsNear } from "../currents.ts";
 import { stepDebris } from "../enemyAi.ts";
 import { exclusionZoneRadius } from "../exclusionZones.ts";
-import { canonicalPosition, flightWorldContext } from "../flightTopology.ts";
 import { ACTIVE_CHUNK_RADIUS } from "../geography.ts";
 import { MOVING_ROCK_PREFIX, ricochetRocks } from "../rockRicochet.ts";
 import { SHIP_REACH, shipBody, shipNearSegment } from "../shipBody.ts";
 import type { FlightEvent, FlightState, SpaceObject, Vec } from "../types.ts";
-import { periodicWorldGrid } from "../worldCells.ts";
-import { segmentDistance, type WorldContext, worldPoint } from "../worldContacts.ts";
+import {
+  canonicalPosition,
+  flightWorldContext,
+  periodicWorldGrid,
+  segmentDistance,
+  type WorldContext,
+  worldPoint,
+} from "../world/index.ts";
 
 interface DebrisMotion {
   readonly arrivalPoints: (flight: FlightState) => readonly Vec[];

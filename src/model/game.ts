@@ -194,11 +194,6 @@ import {
   undockFlight,
   whirlpoolSounderActor,
 } from "./flight.ts";
-import {
-  CURRENT_FLIGHT_TOPOLOGY,
-  flightEncounterSeed,
-  flightWorldContext,
-} from "./flightTopology.ts";
 import { initializeGalaxyGeography } from "./galaxyGeography.ts";
 import { projectCapitalBossHud } from "./game/bossHud.ts";
 import { earlyRequiredDestination, galaxyRoute, newGameState } from "./game/campaignState.ts";
@@ -446,9 +441,18 @@ import {
   UPGRADE_WEAPONS,
   type WeaponChoice,
 } from "./weapons.ts";
-import { periodicWorldGrid, worldCellAt, worldCellKey } from "./worldCells.ts";
-import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import {
+  CURRENT_FLIGHT_TOPOLOGY,
+  flightEncounterSeed,
+  flightWorldContext,
+  periodicWorldGrid,
+  worldCellAt,
+  worldCellKey,
+  worldDelta,
+  worldDistance,
+  worldPoint,
+  wrapPoint,
+} from "./world/index.ts";
 
 export type { AchievementView } from "./achievements.ts";
 export { galaxyRoute, newGameState } from "./game/campaignState.ts";

@@ -1,5 +1,5 @@
 import type { EnemyNavigation, Point } from "../../data/enemyCatalog.ts";
-import { type WorldContext, worldDelta } from "../worldContacts.ts";
+import { type WorldContext, worldDelta } from "../world/index.ts";
 import { rotate, seeded } from "./course.ts";
 
 /** Samples along the shared ellipse for its arc length. */

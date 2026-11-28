@@ -9,14 +9,16 @@ import {
 import type { GalaxyNumber } from "../../data/types.ts";
 import type { Vec } from "../types.ts";
 import {
+  nearestImage,
   periodicWorldGrid,
   worldCellKey,
   worldCellOrigin,
   worldCellsNear,
+  type WorldContext,
+  worldDistance,
   worldGrid,
-} from "../worldCells.ts";
-import { type WorldContext, worldDistance } from "../worldContacts.ts";
-import { nearestImage, wrapPoint } from "../worldGeometry.ts";
+  wrapPoint,
+} from "../world/index.ts";
 
 export interface HostileStationSite extends Readonly<Vec> {
   readonly id: string;

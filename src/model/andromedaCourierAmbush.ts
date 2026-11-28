@@ -18,7 +18,6 @@ import { ASTEROID_SHAPES, placementRadius, silhouetteWorldReach } from "./astero
 import { closestOnSegment } from "./convex.ts";
 import { createEnemy } from "./enemyAi.ts";
 import { rollEnemyWeaponLevel } from "./enemyEquipment.ts";
-import { flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { hostileStationContext } from "./hostileStations/placement.ts";
 import { settlementById } from "./legacySettlements.ts";
@@ -27,9 +26,18 @@ import type { ExclusionZone } from "./spawnPlanner.ts";
 import { stationFormationClear, type StationPlacementContext } from "./stationPlacement.ts";
 import { flightStationContext, worldStationById } from "./stations.ts";
 import type { FlightState, GalaxyProgress, SpaceObject } from "./types.ts";
-import { periodicWorldGrid, worldCellKey, worldCellsNear } from "./worldCells.ts";
-import { type WorldContext, worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import {
+  flightEncounterSeed,
+  flightWorldContext,
+  periodicWorldGrid,
+  worldCellKey,
+  worldCellsNear,
+  type WorldContext,
+  worldDelta,
+  worldDistance,
+  worldPoint,
+  wrapPoint,
+} from "./world/index.ts";
 
 const WARNING_OFFSET = 525;
 const WARNING_HALF_WIDTH = 180;

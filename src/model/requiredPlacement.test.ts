@@ -8,10 +8,9 @@ import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { worldInCurrent } from "./currents.ts";
 import { createUnpopulatedFlight, planRequiredWhirlpoolRoutes } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { readRequiredRolePlan } from "./requiredRolePlans.ts";
-import { worldDistance } from "./worldContacts.ts";
+import { flightWorldContext, worldDistance } from "./world/index.ts";
 
 const ids = ["whale", "family", "holodisk"] as const;
 

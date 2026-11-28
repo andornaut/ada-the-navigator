@@ -32,7 +32,6 @@ import {
   ensureStation,
   questGuardPlacementContext,
 } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
@@ -42,8 +41,13 @@ import { isNeedleRim, needleRimContact } from "./needleFlight.ts";
 import { NEEDLE_CADENCE, needleTrackedObjective } from "./needleRuntime.ts";
 import { shipBody } from "./shipBody.ts";
 import { stationsNear } from "./stations.ts";
-import { worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import {
+  flightWorldContext,
+  worldDelta,
+  worldDistance,
+  worldPoint,
+  wrapPoint,
+} from "./world/index.ts";
 
 const built = BUILT as Set<GalaxyNumber>;
 const present = built.has(4);

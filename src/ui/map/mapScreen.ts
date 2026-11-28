@@ -17,11 +17,10 @@ import { BALANCE, HUD_BUTTON } from "../../data/layout.ts";
 import { canAffordMapJump, MAP_JUMP_COST, travelState } from "../../data/mapJump.ts";
 import { TASK_COLORS } from "../../data/taskCategories.ts";
 import { uiIconUrl } from "../../data/uiIconUrl.ts";
-import { CURRENT_FLIGHT_TOPOLOGY } from "../../model/flightTopology.ts";
 import { type LocalMap, type MapPlace, type MapPlaceType, placeType } from "../../model/map.ts";
 import { shipHeading } from "../../model/nose.ts";
 import type { Vec } from "../../model/types.ts";
-import { nearestImage } from "../../model/worldGeometry.ts";
+import { CURRENT_FLIGHT_TOPOLOGY, nearestImage } from "../../model/world/index.ts";
 import {
   ADA_ACTION_HOLD_MS,
   type AdaActionOptions,

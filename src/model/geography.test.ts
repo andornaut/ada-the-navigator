@@ -17,7 +17,6 @@ import {
   syncFlightRegion,
   teleport,
 } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import {
   activateFlightRegion,
@@ -30,6 +29,7 @@ import {
 } from "./geography.ts";
 import { flightStationContext, stationById, worldStationById } from "./stations.ts";
 import type { FlightState, GalaxyProgress, SpaceObject } from "./types.ts";
+import { flightWorldContext } from "./world/index.ts";
 
 const progress: GalaxyProgress = {
   charted: [],

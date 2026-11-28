@@ -1,10 +1,9 @@
 import { BEAM } from "../../data/weaponCatalog.ts";
 import { sceneryBound, type Silhouette, worldSceneryContact } from "../asteroids.ts";
 import { outlineContact, type Parts, partsReach, worldParts } from "../convex.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import { impactSurface } from "../projectileImpact.ts";
 import type { FlightState, SpaceObject, Vec } from "../types.ts";
-import { worldPoint } from "../worldContacts.ts";
+import { flightWorldContext, worldPoint } from "../world/index.ts";
 
 export function beamPoint(origin: Vec, direction: Vec, at: number): Vec {
   return { x: origin.x + direction.x * at, y: origin.y + direction.y * at };

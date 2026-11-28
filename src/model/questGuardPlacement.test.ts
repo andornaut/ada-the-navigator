@@ -13,12 +13,11 @@ import {
   spawnChapterEnemy,
   spawnQuestFrigateAt,
 } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { worldActivateFlightRegion, worldSyncFlightRegion } from "./geography.ts";
 import { legacyGuardHomeUpdates } from "./legacyGuardHomes.ts";
 import { questGuardAnchor, questGuardHomePorts } from "./questGuardPlacement.ts";
 import type { SpaceObject } from "./types.ts";
-import { worldDistance } from "./worldContacts.ts";
+import { flightWorldContext, worldDistance } from "./world/index.ts";
 
 function fixture() {
   const flight = createFlight(CONTENT, 1, 173, { known: [] });

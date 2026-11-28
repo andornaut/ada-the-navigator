@@ -2,14 +2,19 @@ import { ECONOMY } from "../../data/economy.ts";
 import type { GameContent } from "../../data/types.ts";
 import { reflectDirection } from "../asteroids.ts";
 import { worldFlowAt } from "../currents.ts";
-import { canonicalPosition, flightWorldContext } from "../flightTopology.ts";
 import { needleRims } from "../needleFlight.ts";
 import { stepShipMotion, turnToward } from "../shipPhysics.ts";
 import type { FlightEvent, FlightInput, FlightState, SpaceObject, Vec } from "../types.ts";
 import { shipTuning } from "../upgrades.ts";
 import { markVisited, visitedChunk } from "../visited.ts";
-import { periodicWorldGrid, worldCellAt, worldCellKey } from "../worldCells.ts";
-import { worldDistance } from "../worldContacts.ts";
+import {
+  canonicalPosition,
+  flightWorldContext,
+  periodicWorldGrid,
+  worldCellAt,
+  worldCellKey,
+  worldDistance,
+} from "../world/index.ts";
 import { movementSpeedFraction, towing } from "./handling.ts";
 import { resolveScenery, type SceneryContactOf } from "./sceneryResolution.ts";
 

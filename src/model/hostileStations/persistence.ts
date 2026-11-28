@@ -17,7 +17,7 @@ import type {
   SpaceObject,
   Vec,
 } from "../types.ts";
-import { wrappedDistance, wrapPoint } from "../worldGeometry.ts";
+import { wrappedDistance, wrapPoint } from "../world/index.ts";
 import { hostileStationPack } from "./population.ts";
 
 export interface HostileStationSite {

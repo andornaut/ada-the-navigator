@@ -1,5 +1,5 @@
 import type { SpaceObject, Vec } from "./types.ts";
-import { type WorldContext, worldDelta, worldPoint } from "./worldContacts.ts";
+import { type WorldContext, worldDelta, worldPoint } from "./world/index.ts";
 
 export interface GuardObstacle extends Vec {
   readonly radius: number;

@@ -41,7 +41,6 @@ import {
 import { createEnemy } from "./enemyAi.ts";
 import { createFlight, pickupTouched, stepFlight, wreckId } from "./flight.ts";
 import { dropFromRock, seededRockOre } from "./flight/destruction.ts";
-import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { nosePoint } from "./nose.ts";
 import { HUNT_GLINT, orePickupSize, pickupOutline, stardustPickupSize } from "./pickupBody.ts";
@@ -71,6 +70,7 @@ import type {
 } from "./types.ts";
 import { newEconomy, noLevels, shipTuning } from "./upgrades.ts";
 import { collectWeapon, noAmmo, UPGRADE_WEAPONS } from "./weapons.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "./world/index.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 const length = (v: { x: number; y: number }) => Math.hypot(v.x, v.y);

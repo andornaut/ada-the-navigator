@@ -6,11 +6,11 @@ import { SIMULATION_STEP_SECONDS } from "../data/simulation.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { ensureRouteEncounter, routeBlocked, routeGuardPlanResult } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval } from "./geography.ts";
 import { rememberRequiredSite } from "./requiredEncounterPlans.ts";
 import type { Vec } from "./types.ts";
+import { flightWorldContext } from "./world/index.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function fixture(point?: Vec) {

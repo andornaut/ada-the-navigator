@@ -16,8 +16,7 @@ import {
 import { worldEngagementAdmissions, worldFitsEncounter } from "./spawner.ts";
 import { worldStationsNear } from "./stations.ts";
 import type { SpaceObject } from "./types.ts";
-import { periodicWorldGrid, worldCellChance } from "./worldCells.ts";
-import { wrappedDistance } from "./worldGeometry.ts";
+import { periodicWorldGrid, worldCellChance, wrappedDistance } from "./world/index.ts";
 const context = { worldSide: 1152000 };
 describe("explicit periodic currents and encounter budgets", () => {
   it("uses uniform 338-cell density and one continuous path through alias cells", () => {

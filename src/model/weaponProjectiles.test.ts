@@ -17,13 +17,12 @@ import {
   drawnBeamFlash,
   stepFlight,
 } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { noseOffset, nosePoint } from "./nose.ts";
 import { projectileOpacity } from "./playerProjectiles.ts";
 import { playerWeaponCoverage } from "./playerWeaponCoverage.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
-import { worldDistance } from "./worldContacts.ts";
+import { flightWorldContext, worldDistance } from "./world/index.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function launched(weapon: Weapon) {

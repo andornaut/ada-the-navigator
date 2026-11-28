@@ -10,7 +10,7 @@ import {
   worldStationsNear,
 } from "./stations.ts";
 import type { Vec } from "./types.ts";
-import { periodicWorldGrid, worldCellOrigin, worldCellsNear } from "./worldCells.ts";
+import { periodicWorldGrid, worldCellOrigin, worldCellsNear } from "./world/index.ts";
 
 function exhaustive(
   context: StationPlacementContext,

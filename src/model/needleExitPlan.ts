@@ -5,7 +5,7 @@ import { dropRandom } from "./drops.ts";
 import { rollEncounter } from "./encounterRoll.ts";
 import { inNeedleChannel, type needleCourses } from "./needle.ts";
 import type { Vec } from "./types.ts";
-import { type WorldContext, worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
+import { type WorldContext, worldDelta, worldDistance, worldPoint } from "./world/index.ts";
 
 /** Authored spawn descriptors are neither active actors nor discovery/quest associations. */
 export interface NeedleExitSpawn {

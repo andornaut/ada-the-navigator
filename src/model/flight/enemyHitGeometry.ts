@@ -4,9 +4,8 @@ import { outlineContact, screenOutlineContact, toScreen } from "../convex.ts";
 import { hardpointOffset } from "../enemyAi.ts";
 import { enemyHull, enemyPartOutline } from "../enemyBody.ts";
 import { enemyEquipmentDefinition } from "../enemyEquipment.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import type { FlightState, SpaceObject } from "../types.ts";
-import { worldDistance, worldPoint } from "../worldContacts.ts";
+import { flightWorldContext, worldDistance, worldPoint } from "../world/index.ts";
 
 /** Screen px between world points `from` and `to`, through the nearest world image of `to`. */
 export function screenGap(flight: FlightState, from: Vec, to: Vec): number {

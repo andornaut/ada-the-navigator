@@ -3,7 +3,7 @@ import { byPosition } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { AsteroidShape } from "./asteroids.ts";
 import type { Vec } from "./types.ts";
-import { periodicWorldGrid, worldCell, worldCellOrigin, type WorldGrid } from "./worldCells.ts";
+import { periodicWorldGrid, worldCell, worldCellOrigin, type WorldGrid } from "./world/index.ts";
 
 export interface ChunkCacheOptions {
   /** The galaxy's asteroid field and the asteroid variants its feature quadrant reads. */

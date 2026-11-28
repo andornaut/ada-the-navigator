@@ -7,10 +7,9 @@ import {
   type MantaEscortIndex,
   type MantaEscortState,
 } from "../earlyEncounterPatterns.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import { direction } from "../shipPhysics.ts";
 import type { FlightState, SpaceObject, Vec } from "../types.ts";
-import { worldDelta } from "../worldContacts.ts";
+import { flightWorldContext, worldDelta } from "../world/index.ts";
 import { sceneryBlocksFlightSegment, type SceneryResolution } from "./sceneryResolution.ts";
 
 /** Use existing escort berth and hull distances for the two opposite crossing paths. */

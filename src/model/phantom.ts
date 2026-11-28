@@ -24,7 +24,6 @@ import {
   syncFlightRegion,
 } from "./flight.ts";
 import { rayCircle } from "./flight/beamContact.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { type PhantomAllySpec, rotatePhantomAllies } from "./phantomAllies.ts";
 import { placePhantomEncounter } from "./phantomEncounterPlacement/index.ts";
@@ -52,8 +51,7 @@ import type {
   SpaceObject,
   Vec,
 } from "./types.ts";
-import { worldDelta, worldPoint } from "./worldContacts.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import { flightWorldContext, worldDelta, worldPoint, wrapPoint } from "./world/index.ts";
 
 export {
   type PhantomBlockadePhase,

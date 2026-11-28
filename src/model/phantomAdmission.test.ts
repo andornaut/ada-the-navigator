@@ -9,14 +9,18 @@ import { clearPhantomTraffic } from "../testing/phantomTraffic.ts";
 import { damageEnemy } from "./enemyAi.ts";
 import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
 import { createFlight, inDanger, routeBlocked, spawnChapterEnemy, stepFlight } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { phantomBlockadeAdmits } from "./phantom.ts";
 import { newProgress } from "./progress.ts";
 import type { FlightInput, FlightState, SpaceObject } from "./types.ts";
-import { periodicWorldGrid, worldCellKey, worldCellsNear } from "./worldCells.ts";
+import {
+  flightWorldContext,
+  periodicWorldGrid,
+  worldCellKey,
+  worldCellsNear,
+} from "./world/index.ts";
 
 const siteId = PHANTOM_DESTINATIONS[0];
 const cue = { id: siteId, type: "guardCue" };

@@ -4,11 +4,10 @@ import { type Silhouette, worldSceneryBodyContact } from "./asteroids.ts";
 import { outlineContact, outlinesContact, type Parts, partsReach, worldParts } from "./convex.ts";
 import { enemyPhysicalBody } from "./enemyBody.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { shipBody } from "./shipBody.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
-import { worldDistance, worldPoint } from "./worldContacts.ts";
+import { flightWorldContext, worldDistance, worldPoint } from "./world/index.ts";
 
 export interface StationPlacementContext {
   readonly checkPlayer?: boolean;

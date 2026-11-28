@@ -2,7 +2,7 @@ import { LANCE_TELL } from "../data/enemyCatalog.ts";
 import { HEAVY_SIGNATURES } from "../data/enemySignatures.ts";
 import { toScreen } from "./convex.ts";
 import type { Vec } from "./types.ts";
-import { type WorldContext, worldDelta } from "./worldContacts.ts";
+import { type WorldContext, worldDelta } from "./world/index.ts";
 
 export type HammerTutorialPhase = "ready" | "telling" | "complete";
 

@@ -48,8 +48,7 @@ import {
 } from "./stations.ts";
 import type { FlightState, HeldJob, Vec } from "./types.ts";
 import { noLevels, shipTuning } from "./upgrades.ts";
-import { worldDistance } from "./worldContacts.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import { worldDistance, wrapPoint } from "./world/index.ts";
 
 /**
  * The same held target is absent beyond TARGET_MARKER_RANGE and present just inside it, without

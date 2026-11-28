@@ -6,7 +6,6 @@ import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { createFlight } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
@@ -19,6 +18,7 @@ import {
   validPhantomFlight,
 } from "./phantom.ts";
 import type { GalaxyProgress } from "./types.ts";
+import { flightWorldContext } from "./world/index.ts";
 
 const settlement = PHANTOM_DESTINATIONS[0];
 

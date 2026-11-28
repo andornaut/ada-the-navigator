@@ -20,7 +20,7 @@ import {
 import type { EnemyState } from "../enemyAi.ts";
 import { enemyHull } from "../enemyBody.ts";
 import type { SpaceObject, Vec } from "../types.ts";
-import { type WorldContext, worldDistance, worldPoint } from "../worldContacts.ts";
+import { type WorldContext, worldDistance, worldPoint } from "../world/index.ts";
 import type { NavigationPose, NavigationQuery } from "./navigationQuery.ts";
 import { navigationLookAhead } from "./prediction.ts";
 

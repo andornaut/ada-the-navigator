@@ -1,9 +1,8 @@
 import type { GameContent } from "../../data/types.ts";
 import { outlinesContact, type Parts } from "../convex.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import { shipBody, shipTouches, shipTouchesScreenCircle } from "../shipBody.ts";
 import type { FlightState, Vec } from "../types.ts";
-import { worldPoint } from "../worldContacts.ts";
+import { flightWorldContext, worldPoint } from "../world/index.ts";
 
 export function touchesAda(flight: FlightState, point: Vec, radius: number): boolean {
   return shipTouches(

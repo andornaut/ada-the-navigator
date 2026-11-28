@@ -1,9 +1,8 @@
 import { CONTENT } from "../data/content.ts";
 import { type EdgeMarker, GAME_AREA, gameAreaPoint, inGameArea } from "../model/edgeMarkers.ts";
-import { flightWorldContext } from "../model/flightTopology.ts";
 import { GameModel } from "../model/game.ts";
 import type { FlightState } from "../model/types.ts";
-import { worldPoint } from "../model/worldContacts.ts";
+import { flightWorldContext, worldPoint } from "../model/world/index.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "./launchSeeds.ts";
 

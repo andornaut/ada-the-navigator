@@ -2,8 +2,12 @@ import { encounterQuiet } from "../data/enemyCatalog.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
 import type { Vec } from "./types.ts";
-import { periodicWorldGrid, worldCellAt, type WorldCellContext } from "./worldCells.ts";
-import { wrappedDelta } from "./worldGeometry.ts";
+import {
+  periodicWorldGrid,
+  worldCellAt,
+  type WorldCellContext,
+  wrappedDelta,
+} from "./world/index.ts";
 
 /** Retained after the final ordinary member disappears, until actual departure. */
 export interface ExplorationRenewal {

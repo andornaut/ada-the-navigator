@@ -1,11 +1,10 @@
 import type { GameContent } from "../../data/types.ts";
 import { worldFlowAt } from "../currents.ts";
 import { carriesStardust } from "../drops.ts";
-import { canonicalPosition, flightWorldContext } from "../flightTopology.ts";
 import { pickupOutline } from "../pickupBody.ts";
 import type { FlightEvent, FlightState, SpaceObject, Vec } from "../types.ts";
 import type { ShipTuning } from "../upgrades.ts";
-import { worldDelta } from "../worldContacts.ts";
+import { canonicalPosition, flightWorldContext, worldDelta } from "../world/index.ts";
 import { pickupTouched } from "./adaContactQueries.ts";
 
 type TractorTuning = Pick<ShipTuning, "tractorRadius" | "tractorSpeed">;

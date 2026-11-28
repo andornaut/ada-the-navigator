@@ -70,7 +70,7 @@ const [
   import(new URL("../src/model/oreFields.ts", import.meta.url)),
   import("./browser-support.mjs"),
   import(new URL("../src/data/uiIconUrl.ts", import.meta.url)),
-  import(new URL("../src/model/flightTopology.ts", import.meta.url)),
+  import(new URL("../src/model/world/index.ts", import.meta.url)),
   import(new URL("../src/model/edgeMarkers.ts", import.meta.url)),
   import(new URL("../src/data/phantom.ts", import.meta.url)),
 ]);

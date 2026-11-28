@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { flightEncounterSeed } from "./flightTopology.ts";
 import {
   freshGalaxyGeography,
   initializeGalaxyGeography,
   validGalaxyGeography,
 } from "./galaxyGeography.ts";
 import { newProgress } from "./progress.ts";
+import { flightEncounterSeed } from "./world/index.ts";
 
 describe("persistent galaxy seed contract", () => {
   it("initializes an absent legacy home seed only once without changing its site policy", () => {

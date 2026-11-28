@@ -1,8 +1,7 @@
 import { scenerySilhouette } from "../asteroids.ts";
 import { inside, toScreen } from "../convex.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import type { FlightState, SpaceObject, Vec } from "../types.ts";
-import { segmentDistance, worldDelta } from "../worldContacts.ts";
+import { flightWorldContext, segmentDistance, worldDelta } from "../world/index.ts";
 
 /** Circle-to-frame coverage, including exact edge contact after projection and wrapping. */
 export function blastCoversRock(

@@ -1,14 +1,13 @@
 import { ECONOMY } from "../../data/economy.ts";
 import { JOB_TUNING } from "../../data/jobs.ts";
 import { heldActivity } from "../activities.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import type { IndicatorTarget } from "../indicators.ts";
 import { nearestWorldSafePlace } from "../jobs.ts";
 import { landmarkById, type LandmarkSite } from "../landmarks.ts";
 import type { MapContext } from "../map.ts";
 import { flightStationContext, worldStationById } from "../stations.ts";
 import type { FlightState, GameState, HeldJob, JobTarget, Vec } from "../types.ts";
-import { worldDistance } from "../worldContacts.ts";
+import { flightWorldContext, worldDistance } from "../world/index.ts";
 
 // Read these at the point each projection needs them, including after the model replaces its state.
 export interface JobNavigationContext {

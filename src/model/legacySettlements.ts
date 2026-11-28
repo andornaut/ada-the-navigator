@@ -8,8 +8,7 @@ import {
 } from "./legacyStations.ts";
 import { retainedLandmarkSites as landmarkSites } from "./retainedLandmarks.ts";
 import type { Vec } from "./types.ts";
-import type { WorldCellContext } from "./worldCells.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import { type WorldCellContext, wrapPoint } from "./world/index.ts";
 
 /** Settlements use the seeded habitat grid, shifted half a cell and clear of real stations. */
 export function worldSettlementById(

@@ -1,5 +1,5 @@
-import type { Vec } from "./types.ts";
-import { canonicalCell, wrapCoordinate, wrapPoint } from "./worldGeometry.ts";
+import type { Vec } from "../types.ts";
+import { canonicalCell, wrapCoordinate, wrapPoint } from "./geometry.ts";
 
 /** Absence explicitly preserves a legacy flight's unbounded placement grids. */
 export interface WorldCellContext {

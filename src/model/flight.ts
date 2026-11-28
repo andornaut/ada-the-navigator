@@ -166,7 +166,6 @@ import {
   reserveWhirlpoolDiskSite,
   restoreWhirlpoolSounder as restoreSounder,
 } from "./flight/whirlpoolSounder.ts";
-import { canonicalPosition, flightEncounterSeed, flightWorldContext } from "./flightTopology.ts";
 import {
   createFrigateEscorts,
   FRIGATE_ESCORT_ROLE,
@@ -240,15 +239,21 @@ import { discoveryStardustId } from "./stardustPlacement.ts";
 import { stationFormationClear, type StationPlacementContext } from "./stationPlacement.ts";
 import { impactFamily } from "./weaponImpacts.ts";
 import {
+  canonicalPosition,
+  flightEncounterSeed,
+  flightWorldContext,
   periodicWorldGrid,
+  segmentDistance,
   worldCell,
   worldCellAt,
   worldCellCenter,
   worldCellKey,
   worldCellsNear,
+  worldDelta,
+  worldDistance,
   type WorldGrid,
-} from "./worldCells.ts";
-import { segmentDistance, worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
+  worldPoint,
+} from "./world/index.ts";
 
 export { activateRouteEncounter, syncFlightRegion } from "./geography.ts";
 import { partsReach, worldParts } from "./convex.ts";

@@ -3,7 +3,6 @@ import { DESTINATIONS } from "../../data/destinations.ts";
 import { BUILT, GALAXY_NUMBERS } from "../../data/galaxies.ts";
 import { isNeedleCourseStart } from "../../data/needle.ts";
 import type { GalaxyNumber } from "../../data/types.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import { flightLandmarkSites, landmarkById, landmarkLabel } from "../landmarks.ts";
 import {
   type QuestDetailContext,
@@ -19,7 +18,7 @@ import {
 } from "../questObjectLinks.ts";
 import { fill } from "../shop.ts";
 import type { FlightState, GameState } from "../types.ts";
-import { worldDistance } from "../worldContacts.ts";
+import { flightWorldContext, worldDistance } from "../world/index.ts";
 import { galaxyRoute } from "./campaignState.ts";
 
 export type QuestTextContext = Pick<

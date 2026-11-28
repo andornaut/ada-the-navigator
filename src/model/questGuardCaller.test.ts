@@ -10,11 +10,15 @@ import {
   spawnChapterEnemy,
   stepFlight,
 } from "./flight.ts";
-import { CURRENT_FLIGHT_TOPOLOGY, flightWorldContext } from "./flightTopology.ts";
 import * as placement from "./questGuardPlacement.ts";
 import type { SpaceObject } from "./types.ts";
-import { worldDistance, worldPoint } from "./worldContacts.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import {
+  CURRENT_FLIGHT_TOPOLOGY,
+  flightWorldContext,
+  worldDistance,
+  worldPoint,
+  wrapPoint,
+} from "./world/index.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 

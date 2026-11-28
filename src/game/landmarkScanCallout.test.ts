@@ -6,8 +6,7 @@ import { expect, it, vi } from "vitest";
 
 import needleManifest from "../../public/art/needle/manifest.json";
 import { craftArt, selectEnemyFrame, storyCraftSets } from "../art/index.ts";
-import { flightWorldContext } from "../model/flightTopology.ts";
-import { worldDelta } from "../model/worldContacts.ts";
+import { flightWorldContext, worldDelta } from "../model/world/index.ts";
 import { USE_CALLOUT_FADE_MS, useCalloutAlpha, useCalloutLift } from "../ui/touchChrome.ts";
 import type { Asset } from "./sceneShared.ts";
 

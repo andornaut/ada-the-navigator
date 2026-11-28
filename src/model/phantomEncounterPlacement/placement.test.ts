@@ -11,11 +11,9 @@ import { partsReach, worldParts } from "../convex.ts";
 import { createEnemy } from "../enemyAi.ts";
 import { enemyPhysicalBody } from "../enemyBody.ts";
 import { createUnpopulatedFlight } from "../flight.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import * as placement from "../stationPlacement.ts";
 import type { SpaceObject, Vec } from "../types.ts";
-import { worldDelta, worldDistance } from "../worldContacts.ts";
-import { wrapPoint } from "../worldGeometry.ts";
+import { flightWorldContext, worldDelta, worldDistance, wrapPoint } from "../world/index.ts";
 import { type PhantomEncounterPlacementContext, placePhantomEncounter } from "./index.ts";
 
 const waypoint = { x: 10000, y: 10000 };

@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../../data/content.ts";
 import type { GalaxyNumber } from "../../data/types.ts";
-import { CURRENT_FLIGHT_TOPOLOGY } from "../../model/flightTopology.ts";
 import { GameModel } from "../../model/game.ts";
 import { landmarkSites } from "../../model/landmarks.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "../../model/world/index.ts";
 import { SAVE_RESTORE } from "../../saving/index.ts";
 import { playOpening, supportEntropy } from "../../testing/launch.ts";
 import { NO_INSETS } from "../layout/playView.ts";

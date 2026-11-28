@@ -6,7 +6,7 @@ import ts from "typescript";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { canAffordMapJump, MAP_JUMP_COST } from "../../data/mapJump.ts";
-import { CURRENT_FLIGHT_TOPOLOGY } from "../../model/flightTopology.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "../../model/world/index.ts";
 import { bindAdaAction, resolveAdaHoldAction } from "../actionBinding.ts";
 import { registerForegroundSurface } from "../foregroundInput.ts";
 import { bindAdaActionRoot, bindAdaHoldActions } from "../holdActionsAdapter.ts";

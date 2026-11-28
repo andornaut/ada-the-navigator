@@ -13,7 +13,6 @@ import {
 import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { SCREEN } from "../data/screen.ts";
 import { pointOnCurrent } from "../model/currents.ts";
-import { flightWorldContext } from "../model/flightTopology.ts";
 import {
   guideBeaconCell,
   guideBeaconCellKey,
@@ -22,6 +21,7 @@ import {
 } from "../model/guideBeacons.ts";
 import { type NeedleCourse, needleCourses } from "../model/needle.ts";
 import type { FlightState, Vec } from "../model/types.ts";
+import { flightWorldContext } from "../model/world/index.ts";
 import { keylineSprite } from "./sceneHud.ts";
 import { needleCourseOffset } from "./sceneNeedle.ts";
 import type { ObjectsContext } from "./sceneObjects.ts";

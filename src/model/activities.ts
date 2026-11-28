@@ -21,8 +21,7 @@ import type {
   JobTarget,
   Vec,
 } from "./types.ts";
-import { type WorldContext, worldDelta, worldDistance } from "./worldContacts.ts";
-import { wrapPoint } from "./worldGeometry.ts";
+import { type WorldContext, worldDelta, worldDistance, wrapPoint } from "./world/index.ts";
 
 // Repeatable activities (gameplay/quests.md "Repeatable activities"): once a galaxy's chapter is
 // complete, its story places offer its activity through Talk. An accepted activity takes the

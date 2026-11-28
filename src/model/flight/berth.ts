@@ -1,8 +1,7 @@
 import type { GameContent } from "../../data/types.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import { HUB_STATION } from "../stations.ts";
 import type { FlightState } from "../types.ts";
-import { worldDistance } from "../worldContacts.ts";
+import { flightWorldContext, worldDistance } from "../world/index.ts";
 import { beginArrivalGrace } from "./lifecycle.ts";
 import { clearPilotHeading } from "./pilotMovement.ts";
 

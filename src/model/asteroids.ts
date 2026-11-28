@@ -22,7 +22,7 @@ import {
   worldParts,
 } from "./convex.ts";
 import type { SpaceObject } from "./types.ts";
-import { type WorldContext, worldPoint } from "./worldContacts.ts";
+import { type WorldContext, worldPoint } from "./world/index.ts";
 
 export type { Contact } from "./convex.ts";
 

@@ -33,8 +33,13 @@ import {
 } from "./spawnTargets.ts";
 import { worldStationsNear } from "./stations.ts";
 import type { Vec } from "./types.ts";
-import { periodicWorldGrid, worldCellAt, worldCellCenter, worldCellKey } from "./worldCells.ts";
-import { wrappedDelta } from "./worldGeometry.ts";
+import {
+  periodicWorldGrid,
+  worldCellAt,
+  worldCellCenter,
+  worldCellKey,
+  wrappedDelta,
+} from "./world/index.ts";
 
 /**
  * Spawn targets the planner does not deliver, by kind, as `galaxy:band`. Each runs as an

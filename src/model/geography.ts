@@ -15,8 +15,8 @@ import {
   worldCellKey,
   worldCellsNear,
   type WorldGrid,
-} from "./worldCells.ts";
-import { wrappedDelta } from "./worldGeometry.ts";
+  wrappedDelta,
+} from "./world/index.ts";
 
 export interface GeographyContext extends WorldCellContext {
   readonly retainedEncounters?: ReadonlySet<string>;

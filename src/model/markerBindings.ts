@@ -1,8 +1,8 @@
-import { flightEncounterSeed } from "./flightTopology.ts";
 import { markerActorTracked, validMarkerActors } from "./markerKnowledge.ts";
 import { scopedTargetKnowledge } from "./targetKnowledgeStore.ts";
 import type { TargetKnowledgeStore } from "./targetMarkers.ts";
 import type { FlightState, GalaxyProgress } from "./types.ts";
+import { flightEncounterSeed } from "./world/index.ts";
 
 const scopes = new WeakMap<FlightState, WeakMap<GalaxyProgress, object>>();
 

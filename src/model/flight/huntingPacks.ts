@@ -1,9 +1,8 @@
 import { HUNTING_PACKS } from "../../data/galaxyFeatures.ts";
 import type { GameContent } from "../../data/types.ts";
-import { flightWorldContext } from "../flightTopology.ts";
 import { worldActivateFlightRegion } from "../geography.ts";
 import type { FlightState, SpaceObject, Vec } from "../types.ts";
-import { worldDistance } from "../worldContacts.ts";
+import { flightWorldContext, worldDistance } from "../world/index.ts";
 
 interface HuntingPackContext {
   combat: (flight: FlightState) => NonNullable<FlightState["combat"]>;

@@ -4,11 +4,11 @@ import { CONTENT } from "../data/content.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { stepFlight } from "./flight.ts";
-import { flightEncounterSeed } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import { markerObjectTracked } from "./markerKnowledge.ts";
 import type { SpaceObject } from "./types.ts";
+import { flightEncounterSeed } from "./world/index.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function fixture() {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { CURRENT_FLIGHT_TOPOLOGY } from "../../model/flightTopology.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "../../model/world/index.ts";
 import { fogReveal, mapProjection, toScreen } from "./layout/mapScreen.ts";
 import { drawMapFog } from "./mapFog.ts";
 

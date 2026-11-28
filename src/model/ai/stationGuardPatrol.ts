@@ -1,7 +1,7 @@
 import { ENEMY_AVOIDANCE } from "../../data/enemyNavigation.ts";
 import { direction } from "../shipPhysics.ts";
 import type { Vec } from "../types.ts";
-import { type WorldContext, worldDelta, worldDistance } from "../worldContacts.ts";
+import { type WorldContext, worldDelta, worldDistance } from "../world/index.ts";
 
 export interface StationGuardAnchor {
   readonly center: Vec;

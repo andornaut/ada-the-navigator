@@ -5,6 +5,7 @@ import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
 import { worldStationsNear } from "./stations.ts";
 import type { Vec } from "./types.ts";
 import {
+  nearestImage,
   periodicWorldGrid,
   worldCell,
   worldCellAt,
@@ -13,8 +14,8 @@ import {
   worldCellOrigin,
   worldCellsNear,
   type WorldGrid,
-} from "./worldCells.ts";
-import { nearestImage, wrappedDistance } from "./worldGeometry.ts";
+  wrappedDistance,
+} from "./world/index.ts";
 const distance = (context: WorldCellContext, a: Vec, b: Vec): number =>
   context.worldSide === undefined
     ? Math.hypot(a.x - b.x, a.y - b.y)

@@ -7,10 +7,10 @@ import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { nearestSettlement, worldNearestSettlerStation } from "./andromedaPlaces.ts";
 import { chapterRuntime } from "./chapters.ts";
-import { CURRENT_FLIGHT_TOPOLOGY } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import type { SpaceObject } from "./types.ts";
+import { CURRENT_FLIGHT_TOPOLOGY } from "./world/index.ts";
 
 function prepared() {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);

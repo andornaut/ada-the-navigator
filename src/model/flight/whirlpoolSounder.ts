@@ -2,7 +2,6 @@ import { WHIRLPOOL_CAPITAL_BOSS } from "../../data/capitalBosses.ts";
 import { FRIGATE_ESCORT_COUNT } from "../../data/enemyCatalog.ts";
 import { HOLODISKS } from "../../data/holodisks.ts";
 import type { GameContent } from "../../data/types.ts";
-import { flightEncounterSeed, flightWorldContext } from "../flightTopology.ts";
 import { createFrigateEscorts, requiredFrigateEscortId } from "../frigateEscorts.ts";
 import {
   escortPackId,
@@ -20,7 +19,12 @@ import type {
   SpaceObject,
   Vec,
 } from "../types.ts";
-import { worldDelta, worldDistance } from "../worldContacts.ts";
+import {
+  flightEncounterSeed,
+  flightWorldContext,
+  worldDelta,
+  worldDistance,
+} from "../world/index.ts";
 import { wreckId } from "./destruction.ts";
 import { guardPack } from "./routeGuards.ts";
 

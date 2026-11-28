@@ -41,11 +41,11 @@ import {
   ensureStation,
   questGuardPlacementContext,
 } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { LATE_CHAPTER_ROUTES } from "./game/campaignState.ts";
 import { guideBeaconSlotAt, storyGuideBeaconSlot } from "./guideBeacons.ts";
 import { flightStationContext, worldStationById } from "./stations.ts";
 import type { DialogueState, FlightState, GalaxyProgress, UseAction, Vec } from "./types.ts";
+import { flightWorldContext } from "./world/index.ts";
 
 export const ANDROMEDA_PARTS = "beaconParts";
 

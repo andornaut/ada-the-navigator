@@ -10,14 +10,13 @@ import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { consumeContextQuestUse } from "../ui/contextQuestUse.ts";
 import { createFlight } from "./flight.ts";
-import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { flightLandmarkSites, landmarkLabel } from "./landmarks.ts";
 import type { QuestEntry } from "./questDetails.ts";
 import { questsForObject, taskMarkerCategory } from "./questObjectLinks.ts";
 import { flightStationContext, HUB_STATION, worldStationsNear } from "./stations.ts";
 import type { HeldJob } from "./types.ts";
-import { worldDistance } from "./worldContacts.ts";
+import { flightWorldContext, worldDistance } from "./world/index.ts";
 
 function job(target: string, station = "issuer"): HeldJob {
   return {

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { CONTENT } from "../data/content.ts";
-import { ECONOMY } from "../data/economy.ts";
-import { CURRENTS, ORE_FIELDS } from "../data/galaxyFeatures.ts";
-import { GALAXY_SIDE } from "../data/world.ts";
+import { CONTENT } from "../../data/content.ts";
+import { ECONOMY } from "../../data/economy.ts";
+import { CURRENTS, ORE_FIELDS } from "../../data/galaxyFeatures.ts";
+import { GALAXY_SIDE } from "../../data/world.ts";
 import {
   periodicWorldGrid,
   worldCell,
@@ -14,7 +14,7 @@ import {
   worldCellsNear,
   type WorldGrid,
   worldGrid,
-} from "./worldCells.ts";
+} from "./index.ts";
 
 const exactGridSide = 1_152_000;
 const keyAt = (grid: WorldGrid, x: number, y: number) =>
