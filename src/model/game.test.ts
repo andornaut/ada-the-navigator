@@ -4,7 +4,7 @@ import { SUNFLOWER_BOSS_CUES, SUNFLOWER_CAPITAL_BOSS } from "../data/capitalBoss
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATIONS } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { enemyCatalog, enemyDefinition } from "../data/enemyCatalog.ts";
+import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { HOLODISKS } from "../data/holodisks.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
@@ -30,6 +30,7 @@ import {
   routeGuardPlanResult,
   syncFlightRegion,
 } from "./flight.ts";
+import { hit } from "./flight/hitResolution.ts";
 import { flightWorldContext } from "./flightTopology.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
@@ -41,8 +42,8 @@ import { flightStationContext } from "./stations.ts";
 import type { FlightState } from "./types.ts";
 import { collectWeapon } from "./weapons.ts";
 
-/** Test support: admit the saved required encounter, then disable its actual noncombat-fixture guard. */
-function disableStoryGuard(content: GameContent, flight: FlightState, id: string): void {
+/** Test support: admit the saved required encounter and defeat its actual guard. */
+function defeatStoryGuard(content: GameContent, flight: FlightState, id: string): void {
   const encounter = activateRequiredRoute(content, id, flight);
   if (encounter.status === "resolved") {
     return;
@@ -54,7 +55,7 @@ function disableStoryGuard(content: GameContent, flight: FlightState, id: string
   if (guard.routeId !== id || guard.enemy?.archetype !== "frigate") {
     throw new Error(`Expected the actual required frigate for ${id}`);
   }
-  guard.enemy.disabled = true;
+  hit(content, guard.enemy.hp, null, guard, flight, []);
 }
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
@@ -129,21 +130,14 @@ function arrive(model: GameModel, id: string) {
   if (f.galaxy === 2 || f.galaxy === 3) {
     const guard = stationPopulationObjects(f).find((actor) => actor.routeId === id);
     if (guard?.enemy) {
-      const definition = enemyEquipmentDefinition(f.galaxy, guard.enemy);
-      for (const part of definition.hardpoints.filter((part) => part.kind === "weapon")) {
-        guard.enemy = damageEnemy(
-          definition,
-          { amount: part.hp, hardpointId: part.id },
-          guard.enemy,
-        );
-      }
+      hit(CONTENT, guard.enemy.hp, null, guard, f, []);
     }
   }
   if (
     f.galaxy === 1 &&
     (f.requiredPlans?.[id] || routeGuardPlanResult(f, id).status !== "unknown")
   ) {
-    disableStoryGuard(CONTENT, f, id);
+    defeatStoryGuard(CONTENT, f, id);
   }
   if (!model.state.progress[f.galaxy].known.includes(id)) {
     model.state.progress[f.galaxy].known.push(id);
@@ -1025,7 +1019,7 @@ it("discovers a cleared required approach at its fixed canonical site", () => {
   const pending = ensureDestination(content, "growers", flight);
   const guard = ensureRouteEncounter(content, "growers", flight);
   expect(guard?.enemy).toBeDefined();
-  guard!.enemy!.disabled = true;
+  hit(content, guard!.enemy!.hp, null, guard!, flight, []);
   const point = { x: pending.x, y: pending.y };
   expect(model.state.progress[1].requiredSites?.growers).toEqual(point);
   flight.player = { x: point.x + content.tuning.chunkSize * 2, y: point.y };
@@ -1138,20 +1132,11 @@ describe("Use at an outpost", () => {
     expect(model.contextAction).toBeUndefined();
   });
 
-  it("offers Talk once the guard is disabled, its hull still standing nearby", () => {
+  it("offers Talk after the route guard's hull is destroyed", () => {
     const { flight, model } = besideGrowers();
     const guard = ensureRouteEncounter(CONTENT, "growers", flight)!;
-    // Its weapons go: every weapon hardpoint destroyed disables it.
-    const weapons = new Set(
-      enemyCatalog.frigate.hardpoints.filter((part) => part.kind === "weapon").map(({ id }) => id),
-    );
-    for (const hardpoint of guard.enemy!.hardpoints) {
-      if (weapons.has(hardpoint.id)) {
-        hardpoint.hp = 0;
-      }
-    }
-    guard.enemy!.disabled = true;
-    expect(guard.hp).toBeGreaterThan(0);
+    hit(CONTENT, guard.enemy!.hp, null, guard, flight, []);
+    expect(guard.hp).toBe(0);
     model.step(0.05, idle);
     model.state.dialogue = null;
     expect(model.state.progress[1].known).toContain("growers");
