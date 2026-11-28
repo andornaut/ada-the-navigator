@@ -144,12 +144,28 @@ export function interactionHudRow(): {
 }
 
 const INTERACTION_ROW = interactionHudRow();
+const closeHudOffsets = {
+  right: -(INTERACTION_ROW.close.x + INTERACTION_ROW.close.width),
+  top: INTERACTION_ROW.close.y,
+};
 const deviceEdge = (side: string) => `var(--ada-interaction-inset-${side})`;
-const interactionHudEdge = (side: "top" | "right", offset: number) =>
-  `calc(max(var(${VIEW_PROPERTIES.hud(side)}), ${deviceEdge(side)}) + ${units(offset)})`;
+// Keep the outboard Close hit area within the inset, and move the whole row and panel cap together.
+const interactionHudEdge = (
+  side: "top" | "right",
+  offset: number,
+  reserve = -closeHudOffsets[side],
+) => {
+  const safeAnchor = `calc(${deviceEdge(side)} + ${units(reserve)})`;
+  return `calc(max(var(${VIEW_PROPERTIES.hud(side)}), ${safeAnchor}) + ${units(offset)})`;
+};
 const areaBottom = `calc(var(${VIEW_PROPERTIES.areaBottom}) + ${units(SPACING.pageInset)})`;
 const areaRight = `calc(100% - ${fromAreaLeft(SCREEN.width - SPACING.pageInset)})`;
 const interactionBottom = `max(${areaBottom}, ${safeEdge("bottom", SPACING.pageInset)}, ${deviceEdge("bottom")})`;
+const interactionHeight = (top: string) => `calc(100% - ${top} - ${interactionBottom})`;
+// Without Skip, keep the default panel cap unless the Close target and its gap need more room.
+const closeClearance = closeHudOffsets.top + INTERACTION_ROW.close.height + SPACING.gap;
+const originalPanelTop = interactionHudEdge("top", STORY_PANEL_TOP, 0);
+const panelTopWithoutSkip = `max(${originalPanelTop}, ${interactionHudEdge("top", closeClearance)})`;
 
 // Only the full-screen interaction positions its controls against the HUD.
 export const INTERACTION_STYLE = `${DIALOGUE_PANEL_STYLE}
@@ -176,8 +192,11 @@ export const INTERACTION_STYLE = `${DIALOGUE_PANEL_STYLE}
   right:max(${areaRight}, ${safeEdge("right", SPACING.pageInset)}, ${deviceEdge("right")});
   bottom:${interactionBottom};
   width:auto;
-  max-height:calc(100% - ${interactionHudEdge("top", STORY_PANEL_TOP)} - ${interactionBottom});
+  max-height:${interactionHeight(interactionHudEdge("top", STORY_PANEL_TOP))};
   transform:none
+}
+.ada-controls .ada-interaction-modal > .ada-dialogue-frame:has(> .ada-story-skip[hidden]) > .ada-dialogue-panel{
+  max-height:${interactionHeight(panelTopWithoutSkip)}
 }
 .ada-controls .ada-interaction-modal .ada-dialogue-panel[data-choice-page]
   :is(.ada-story-choice-column,.ada-story-choices,.ada-dialogue-controls){
@@ -188,8 +207,8 @@ export const INTERACTION_STYLE = `${DIALOGUE_PANEL_STYLE}
   padding-bottom:${units(SPACING.rowGap)}
 }
 .ada-controls .ada-interaction-modal > .ada-dialogue-frame > .ada-close{
-  top:${interactionHudEdge("top", INTERACTION_ROW.close.y)};
-  right:${interactionHudEdge("right", -(INTERACTION_ROW.close.x + INTERACTION_ROW.close.width))};
+  top:${interactionHudEdge("top", closeHudOffsets.top)};
+  right:${interactionHudEdge("right", closeHudOffsets.right)};
   width:${units(INTERACTION_ROW.close.width)};
   height:${units(INTERACTION_ROW.close.height)}
 }

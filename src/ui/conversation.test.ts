@@ -11,7 +11,7 @@ import { CAST, castPortrait, SPEAKER_CAST } from "../data/cast.ts";
 import { SPEAKERS } from "../data/conversations.ts";
 import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import { GALAXY_ID } from "../data/galaxies.ts";
-import { TEXT_BUTTON } from "../data/layout.ts";
+import { SPACING, TEXT_BUTTON } from "../data/layout.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_MANIFESTS } from "../testing/publicArt.ts";
 import {
@@ -397,16 +397,30 @@ describe("Interaction card HUD row", () => {
     expect(Math.max(skip[2]!, inView(hud, close)[3]!)).toBeLessThanOrEqual(hud.y + STORY_PANEL_TOP);
   });
 
-  it("positions the interaction X and Skip against the HUD and device insets", () => {
+  it("reserves the outboard Close offset in the shared safe-area anchor", () => {
     const { close, skipRight } = interactionHudRow();
-    const edge = (side: "top" | "right", offset: number) =>
-      `calc(max(var(--ada-hud-${side}), var(--ada-interaction-inset-${side})) + ${units(offset)})`;
+    const offsets = { right: -(close.x + close.width), top: close.y };
+    const edge = (side: "top" | "right", offset: number, reserve = -offsets[side]) => {
+      const safeAnchor = `calc(var(--ada-interaction-inset-${side}) + ${units(reserve)})`;
+      return `calc(max(var(--ada-hud-${side}), ${safeAnchor}) + ${units(offset)})`;
+    };
     expect(INTERACTION_STYLE).not.toMatch(/\[data-station\][^{]*\.ada-close/u);
     expect(INTERACTION_STYLE).not.toContain(".ada-controls .ada-dialogue-frame > .ada-close");
     expect(INTERACTION_STYLE).toContain(
+      `max-height:calc(100% - ${edge("top", STORY_PANEL_TOP)} - `,
+    );
+    const unshiftedTop = edge("top", STORY_PANEL_TOP, 0);
+    const closeClearance = edge("top", close.y + close.height + SPACING.gap);
+    const noSkip = rules(INTERACTION_STYLE).get(
+      ".ada-controls .ada-interaction-modal > .ada-dialogue-frame:has(> .ada-story-skip[hidden]) > .ada-dialogue-panel",
+    );
+    expect(noSkip).toContain(
+      squash(`max-height:calc(100% - max(${unshiftedTop}, ${closeClearance}) - `),
+    );
+    expect(INTERACTION_STYLE).toContain(
       `.ada-interaction-modal > .ada-dialogue-frame > .ada-close{
   top:${edge("top", close.y)};
-  right:${edge("right", -(close.x + close.width))};
+  right:${edge("right", offsets.right)};
   width:${units(close.width)};
   height:${units(close.height)}
 }`,
