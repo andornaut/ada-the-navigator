@@ -7,7 +7,7 @@ export const PATH_HALF_WIDTH = 100;
 export const FIRST_RELEASE = 3;
 export const LAST_PURSUIT = FIRST_RELEASE + 12;
 
-interface Pair {
+export interface CourierAmbushPair {
   readonly centre: Vec;
   readonly members: readonly [Vec, Vec];
 }
@@ -16,7 +16,7 @@ export interface CourierAmbushPlan {
   readonly forward: Vec;
   readonly warning: Vec;
   readonly escape: { readonly from: Vec; readonly to: Vec; readonly halfWidth: number };
-  readonly pairs: readonly [Pair, Pair];
+  readonly pairs: readonly [CourierAmbushPair, CourierAmbushPair];
 }
 
 export type CourierAmbushState =

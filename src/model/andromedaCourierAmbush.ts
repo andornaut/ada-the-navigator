@@ -6,6 +6,7 @@ import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
 import type { Vec } from "../data/types.ts";
 import {
   type CourierAmbushAttempt,
+  type CourierAmbushPair,
   type CourierAmbushPlan,
   type CourierAmbushState,
   FIRST_RELEASE,
@@ -66,7 +67,7 @@ export function planCourierAmbush(
     return context.worldSide === undefined ? point : wrapPoint(context.worldSide, point);
   };
   const halfGap = Math.max(MEMBER_SPACING, spacing) / 2;
-  const pair = (lateral: number): Pair => ({
+  const pair = (lateral: number): CourierAmbushPair => ({
     centre: at(PAIR_FORWARD, lateral),
     members: [at(PAIR_FORWARD - halfGap, lateral), at(PAIR_FORWARD + halfGap, lateral)],
   });
@@ -193,7 +194,7 @@ export type CourierAmbushAllocation =
 
 function makePair(
   { content, flight }: StationPlacementContext,
-  members: Pair["members"],
+  members: CourierAmbushPair["members"],
   pair: 0 | 1,
 ): [SpaceObject, SpaceObject] {
   const make = (index: 0 | 1): SpaceObject => {
