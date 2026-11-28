@@ -6,10 +6,10 @@ import { ECONOMY } from "../data/economy.ts";
 import {
   ANDROMEDA_REDACT,
   type AndromedaRedactPlacementPort,
-  andromedaRelayWaypoint,
   reserveAndromedaRedact,
   resolveAndromedaRedact,
 } from "./andromeda/redact.ts";
+import { andromedaRelayWaypoint } from "./andromeda/relay.ts";
 import { ensureAndromedaWorld } from "./andromeda/runtime.ts";
 import type { ChapterContext } from "./chapterProtocol.ts";
 import { createUnpopulatedFlight, ensureDestinationAt } from "./flight.ts";
