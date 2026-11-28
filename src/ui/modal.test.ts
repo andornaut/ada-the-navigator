@@ -315,12 +315,10 @@ describe("modal buttons", () => {
     vi.unstubAllGlobals();
   });
 
-  it("keeps Cheats in two columns and grants in equal side-by-side tracks", () => {
-    for (const group of [".ada-cheat-items", ".ada-cheat-grants"]) {
-      expect(rule(`${UI_SCOPE} ${group}`)).toContain(
-        "grid-template-columns:repeat(2,minmax(0,1fr))",
-      );
-    }
+  it("keeps the two main Cheats columns equal", () => {
+    expect(rule(`${UI_SCOPE} .ada-cheat-items`)).toContain(
+      "grid-template-columns:repeat(2,minmax(0,1fr))",
+    );
     expect(rule(`${UI_SCOPE} .ada-cheats-card > .ada-card-body`)).toContain("overflow:visible");
   });
 

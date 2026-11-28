@@ -1999,11 +1999,13 @@ try {
             ids: [...column.querySelectorAll("[data-cheat]")].map((node) => node.dataset.cheat),
             rows: [...column.querySelectorAll(".ada-cheat-rows > *")].map(box),
           })),
-          grants: [...dialog.querySelectorAll(".ada-cheat-grants button")].map((node) => ({
-            box: box(node),
-            label: node.getAttribute("aria-label"),
-            text: node.textContent,
-          })),
+          grants: [...list.querySelectorAll(".ada-cheat-rows > .ui-layout-columns > button")].map(
+            (node) => ({
+              box: box(node),
+              label: node.getAttribute("aria-label"),
+              text: node.textContent,
+            }),
+          ),
           list: box(list),
           scrolls: body.scrollHeight > body.clientHeight + 1,
         };

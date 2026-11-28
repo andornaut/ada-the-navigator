@@ -677,11 +677,6 @@ ${UI_SCOPE} .ada-cheat-rows{
   grid-auto-rows:minmax(${units(TEXT_BUTTON.height)},auto);
   gap:${units(SPACING.rowGap)}
 }
-${UI_SCOPE} .ada-cheat-grants{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:${units(SPACING.columnGap)}
-}
 ${UI_SCOPE} .ada-cheat-rows .ada-button,
 ${UI_SCOPE} .ada-cheat-rows > .ada-row{
   width:100%

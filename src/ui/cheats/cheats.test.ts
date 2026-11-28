@@ -128,6 +128,7 @@ class Element extends EventTarget {
   readonly properties = new Map<string, string>();
   readonly style = {
     backgroundImage: "",
+    getPropertyValue: (name: string) => this.properties.get(name) ?? "",
     removeProperty: (name: string) => this.properties.delete(name),
     setProperty: (name: string, value: string) => this.properties.set(name, value),
   };
@@ -347,6 +348,9 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
     "selectiveReset",
   ]);
   const [grants, maximizeButton, selectiveButton] = right!.children[0]!.children;
+  expect(grants!.matches(".ui-layout-columns")).toBe(true);
+  expect(grants!.getAttribute("data-ui-layout-sizing")).toBe("equal");
+  expect(grants!.properties.get("--ui-layout-columns")).toBe("2");
   const [dustButton, addButton] = grants!.children;
   const unlockButton = left!.children[0]!.children[0]!;
   for (const [button, resource, label] of [
@@ -400,6 +404,21 @@ it("builds the two columns in keyboard order and keeps selective reset separate 
   f.cheats.dispose();
   addButton!.dispatchEvent(new Event("click"));
   expect(ore.run).toHaveBeenCalledTimes(2);
+});
+
+it("keeps a lone grant in the leading track and omits the row when there are no grants", () => {
+  const single = setup([action("addOre")]);
+  const row = descendants(single.root).find((node) => node.matches(".ui-layout-columns"))!;
+  const [ore, empty] = row.children;
+  expect(row.properties.get("--ui-layout-columns")).toBe("2");
+  expect(ore!.dataset.cheat).toBe("addOre");
+  expect(empty!.matches(".ui-layout-stack")).toBe(true);
+  expect(empty!.children).toEqual([]);
+  single.cheats.dispose();
+
+  const none = setup([action("selectiveReset")]);
+  expect(descendants(none.root).some((node) => node.matches(".ui-layout-columns"))).toBe(false);
+  none.cheats.dispose();
 });
 
 it("uses Back and X on the same guarded return path", () => {

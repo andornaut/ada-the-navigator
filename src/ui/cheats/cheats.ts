@@ -168,14 +168,6 @@ export function createCheats(parent: HTMLElement, options: CheatOptions) {
           },
           slots: [],
         },
-        grants: {
-          create() {
-            const element = document.createElement("div");
-            element.className = "ada-cheat-grants";
-            return { dispose() {}, element, slots: { buttons: element }, update() {} };
-          },
-          slots: ["buttons"],
-        },
         layout: {
           create() {
             body.append(items);

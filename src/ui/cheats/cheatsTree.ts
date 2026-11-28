@@ -1,12 +1,13 @@
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
+import { SPACING } from "../layout/index.ts";
+
 /** One actionable row supplied by the game. */
 export type CheatRowData = { readonly id: string; readonly label: string };
 
 export type CheatsSchema = {
   layout: { props: Record<string, never>; slots: "columns" | "footer" };
   column: { props: Record<string, never>; slots: "rows" };
-  grants: { props: Record<string, never>; slots: "buttons" };
   footer: { props: { readonly label: string }; slots: never };
   action: { props: { readonly id: string; readonly label: string }; slots: never };
 };
@@ -27,6 +28,10 @@ export function cheatsTree(
       : [];
   };
   const buttons = grantIds.flatMap(row);
+  // A lone grant still occupies the leading half of the row.
+  if (buttons.length === 1) {
+    buttons.push({ children: [], gap: 0, key: "empty", kind: "stack", padding: 0 });
+  }
   return {
     component: "layout",
     key: "cheats",
@@ -51,11 +56,12 @@ export function cheatsTree(
               ...(buttons.length
                 ? [
                     {
-                      component: "grants",
+                      children: buttons,
+                      gap: SPACING.columnGap,
                       key: "grants",
-                      kind: "component",
-                      props: {},
-                      slots: { buttons },
+                      kind: "columns",
+                      padding: 0,
+                      sizing: { mode: "equal" },
                     } as const,
                   ]
                 : []),

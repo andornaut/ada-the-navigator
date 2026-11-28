@@ -3,7 +3,7 @@ import { expect, it } from "vitest";
 
 import { cheatsTree } from "./cheatsTree.ts";
 
-it("builds separate typed slots for the equal grant pair and footer", () => {
+it("builds the grant pair as equal columns and keeps the footer in its own slot", () => {
   const tree = cheatsTree("Back", [
     { id: "selectiveReset", label: "Selective" },
     { id: "maxWeaponLevels", label: "Maximize weapon levels" },
@@ -18,7 +18,6 @@ it("builds separate typed slots for the equal grant pair and footer", () => {
       action: [],
       column: ["rows"],
       footer: [],
-      grants: ["buttons"],
       layout: ["columns", "footer"],
     },
     tree,
@@ -44,8 +43,12 @@ it("builds separate typed slots for the equal grant pair and footer", () => {
           slots: {
             rows: [
               {
-                component: "grants",
-                slots: { buttons: [{ key: "addStardust" }, { key: "addOre" }] },
+                children: [{ key: "addStardust" }, { key: "addOre" }],
+                gap: 8,
+                key: "grants",
+                kind: "columns",
+                padding: 0,
+                sizing: { mode: "equal" },
               },
               { component: "action", key: "maxWeaponLevels" },
               { component: "action", key: "selectiveReset" },
