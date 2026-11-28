@@ -12,7 +12,8 @@ a clearly visible change to the face fill, label or icon colour. Keep that cue
 visible in forced-colors mode, including when focus coincides with a press,
 selection or an unavailable action. Keep ordinary borders present in every
 state. Added state outlines, border rings and ring-shaped shadows are
-excluded. Existing pressed movement can supplement the colour cue. Preserve
+excluded, with the equipped flight weapon HUD ring as the exception.
+Existing pressed movement can supplement the colour cue. Preserve
 native focus, tab order, keyboard activation, focus restoration and a
 distinct disabled state.
 
@@ -630,16 +631,19 @@ The weapon selector buttons follow Chibi's skill buttons (`chibis-way-home`
 `art/style-guide.md` "Skills and room rewards", `src/scenes/skillButton.ts`):
 a smooth 33px disc centred in the 48 target, with the 20px `weapon-<id>.svg`
 glyph centred on it. Sizes and placement are `HUD_BUTTON` and `HUD_ROW` in
-[Layout](layout.md#hud-and-overlays): the rightmost disc's drawn edge and
-every disc's drawn top sit `HUD_EDGE` (12) in from the game area, mirroring
-the pause disc on the left. Settings opens from the Pause or Menu card.
+[Layout](layout.md#hud-and-overlays): the rightmost base disc's edge and
+every base disc's top sit `HUD_EDGE` (12) in from the game area, mirroring
+the pause disc on the left. The equipped ring extends 1 logical px beyond
+the base disc on every side. Settings opens from the Pause or Menu card.
 The retained trophy and gear nav-disc art is documented in [Achievements](achievements-icon.md#states).
 
 Every selected weapon has an opaque navy `#262b44` face on every field.
 Inactive weapons use these distinct opaque dark faces. Selection changes
 the glyph to cream and the face to navy (Laser already has a navy face).
-Keep the common annulus and tier pips as ordinary disc art. The glyph
-provides the selection cue on every weapon.
+Keep the common annulus and tier pips as ordinary disc art. The equipped
+weapon also has a 1 logical px outer ring in teal `#65c9bf`. In forced
+colors it uses a 1 logical px `ButtonText` outline. The ring follows the
+equipped weapon, including the automatic fallback to Laser.
 
 | Weapon        | Face                 |
 | ------------- | -------------------- |
@@ -658,8 +662,9 @@ provides the selection cue on every weapon.
 | Empty        | Muted lavender, or the level's tier | `#75748c`, full opacity            | 3.07:1                             |
 | Disabled     | `#75748c`                           | `#75748c`, full opacity            | 3.07:1                             |
 
-- Every state and level has the same visible outer diameter, 33 logical px
-  including ink. The 4 px annulus contains an outer 1 px ink fringe, a 2 px
+- Every state and level uses the same 33 logical px base disc diameter,
+  including ink. The equipped ring brings the visible diameter to 35 logical
+  px. The 4 px annulus contains an outer 1 px ink fringe, a 2 px
   coloured band and an inner 1 px ink fringe. Its centre has the weapon's
   solid face when inactive and navy `#262b44` when selected.
 - The current selected band is cream. Idle and empty glyphs are muted by their
@@ -749,7 +754,7 @@ Draw the chrome in CSS at logical units so it stays sharp at any scale
 
 | Part        | CSS                                                                                                                                                                                                                                                                                                                                     |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Disc        | `width` and `height` `calc(u * 33)`, `border-radius: 50%`, the weapon's solid face; weapon-only normal disc shadow is none                                                                                                                                                                                                              |
+| Disc        | `width` and `height` `calc(u * 33)`, `border-radius: 50%`, the weapon's solid face; the equipped disc adds a 1 logical px outer shadow in `#65c9bf`, or a `ButtonText` outline in forced colors                                                                                                                                         |
 | Weapon ring | A pseudo-element inset `calc(u * 1)`, a 2 px coloured border, a 1 px outer ink shadow and a 1 px inset ink shadow; selected border cream, inactive centres filled with their weapon face, selected centre navy                                                                                                                          |
 | Level band  | Levels 2 and 3 set the contained border colour to the tier; no exterior halo or outline                                                                                                                                                                                                                                                 |
 | Pips        | A child of the button: `position: absolute`, centred at `top: calc(u * 38.5)` (14.5 below the disc centre at 24), `left: 50%`; each pip `calc(u * 4)` round in the pip colour with `box-shadow: 0 0 0 calc(u * 1)` ink, `gap: calc(u * 3)`, `pointer-events: none`                                                                      |
