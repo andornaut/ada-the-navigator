@@ -10,7 +10,7 @@ import {
   needleGateReadiness,
   type NeedleProgress,
   unfinishedNeedleCourse,
-} from "../model/needle.ts";
+} from "../model/needle/index.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
 import { flightWorldContext, type WorldContext, worldPoint } from "../model/world/index.ts";
 import { COLOURS, UNLISTED_COLOURS } from "../ui/layout/index.ts";

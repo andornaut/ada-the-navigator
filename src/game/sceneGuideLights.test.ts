@@ -5,7 +5,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { settlementsNear } from "../model/andromedaPlaces.ts";
 import { guideBeaconSlots } from "../model/guideBeacons.ts";
-import { needleCourses } from "../model/needle.ts";
+import { needleCourses } from "../model/needle/index.ts";
 import type { FlightState, GalaxyProgress, Vec } from "../model/types.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "../model/world/index.ts";
 import { GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";

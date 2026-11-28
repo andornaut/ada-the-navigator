@@ -13,7 +13,7 @@ import {
   type NeedleCourse,
   needleDebris,
   setNeedleActivity,
-} from "../model/needle.ts";
+} from "../model/needle/index.ts";
 import type { SpaceObject } from "../model/types.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";

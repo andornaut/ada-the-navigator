@@ -19,7 +19,7 @@ import {
   guideBeaconSlotAt,
   spareGuideBeacon,
 } from "../model/guideBeacons.ts";
-import { type NeedleCourse, needleCourses } from "../model/needle.ts";
+import { type NeedleCourse, needleCourses } from "../model/needle/index.ts";
 import type { FlightState, Vec } from "../model/types.ts";
 import { flightWorldContext } from "../model/world/index.ts";
 import { keylineSprite } from "./sceneHud.ts";
