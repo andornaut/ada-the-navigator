@@ -88,13 +88,27 @@ it.each([
         });
         endArrivalGrace(flight);
         const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
-        model.step(1 / 60, idle);
+        const frame = 1 / 60;
+        model.step(frame, idle);
         const pending = activeEnemyBeams(flight).find((beam) => beam.ownerId === id);
         expect(pending).toMatchObject({ fired: false, kind });
+        // Start both branches two frames before the real firing boundary. The tell was
+        // committed by the enemy above; the full windup is covered by the combat tests.
+        pending!.age = tellSeconds - 2 * frame;
         const shield = flight.shield;
         const document = model.saveDocument();
         const saved = model.save();
         expect(restoreSave(saved)?.flight?.enemyBeams).toEqual([pending]);
+        expect(
+          restoreSave({
+            ...document,
+            flight: {
+              ...document.flight,
+              enemyBeams: [{ ...document.flight!.enemyBeams![0], fired: true }],
+            },
+          }),
+        ).toBeNull();
+
         const resumed = relaunch(CONTENT, saved);
         const continued = resumed.state.flight!;
         expect(continued).not.toBe(flight);
@@ -105,33 +119,23 @@ it.each([
         expect(restoreSave(legacy)).not.toBeNull();
         expect(activeEnemyBeams(relaunch(CONTENT, legacy).state.flight!)).toEqual([]);
 
-        const nearFire = tellSeconds - pending!.age - 1 / 60;
-        model.step(nearFire, idle);
-        resumed.step(nearFire, idle);
+        model.step(frame, idle);
+        resumed.step(frame, idle);
         expect(flight.shield).toBe(shield);
         expect(continued.shield).toBe(shield);
 
-        model.step(2 / 60, idle);
-        resumed.step(2 / 60, idle);
+        model.step(2 * frame, idle);
+        resumed.step(2 * frame, idle);
         expect(flight.shield).toBeCloseTo(shield - pending!.damage);
         expect(continued.shield).toBeCloseTo(flight.shield);
         expect(activeEnemyBeams(continued)).toEqual(activeEnemyBeams(flight));
 
-        model.step(1 / 60, idle);
-        resumed.step(1 / 60, idle);
+        model.step(frame, idle);
+        resumed.step(frame, idle);
         expect(flight.shield).toBeCloseTo(shield - pending!.damage);
         expect(continued.shield).toBeCloseTo(flight.shield);
         expect(resumed.saveDocument().flight).not.toHaveProperty("enemyBeams");
         expect(document.flight?.enemyBeams?.[0]?.fired).toBe(false);
-        expect(
-          restoreSave({
-            ...document,
-            flight: {
-              ...document.flight,
-              enemyBeams: [{ ...document.flight!.enemyBeams![0], fired: true }],
-            },
-          }),
-        ).toBeNull();
       },
       () => 173,
     );
