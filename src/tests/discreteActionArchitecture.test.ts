@@ -649,6 +649,57 @@ function constructionFindings(path: string, text: string) {
   );
 }
 
+const standardTextSource = readFileSync(
+  new URL("../ui/standardTextAction.ts", import.meta.url),
+  "utf8",
+);
+const standardTextFixture = "src/ui/standardTextFixture.ts";
+const standardTextConstructor = expect.objectContaining({
+  kind: "unbound-discrete",
+  source: expect.stringContaining("createButton(root.ownerDocument,"),
+});
+
+it("proves the guarded text producer in place and by renamed import and constructor", () => {
+  expect(constructionFindings("src/ui/standardTextAction.ts", standardTextSource)).toEqual([]);
+  const renamed = standardTextSource
+    .replace("resolveAdaHoldAction }", "resolveAdaHoldAction as resolveOwned }")
+    .replace("resolveAdaHoldAction(root, button)", "resolveOwned(root, button)")
+    .replace("createStandardTextAction(", "makeTextAction(");
+  expect(renamed).not.toBe(standardTextSource);
+  expect(constructionFindings(standardTextFixture, renamed)).toEqual([]);
+});
+
+it.each([
+  ["unregistered button", "const registered = bindAdaAction(", "const registered = anotherBind("],
+  ["wrong root", "resolveAdaHoldAction(root, button)", "resolveAdaHoldAction(other, button)"],
+  ["registry click owner", 'nativeClickOwner: "factory"', 'nativeClickOwner: "registry"'],
+  [
+    "eager presentation",
+    "      if (!ready)",
+    "      options.availability(button);\n      if (!ready)",
+  ],
+  ["writable cold state", "  let ready = false;", "  let ready = true;"],
+  ["eager registration escape", "run: options.run,", "run: publish(button),"],
+  [
+    "eager construction escape",
+    "const registered = bindAdaAction(",
+    "root.append(button); const registered = bindAdaAction(",
+  ],
+  ["foreign refusal", "resolve(button)?.activate()", "resolve(other)?.activate()"],
+  ["override through spread", "{ reason: options.reason }", "{ getAction: options.reason }"],
+  ["stale binding disposal", "    registered.dispose();", "    other.dispose();"],
+  [
+    "early refresh",
+    "    ready = true;\n    kit.refresh();",
+    "    kit.refresh();\n    ready = true;",
+  ],
+  ["foreign return", "element: button,", "element: other,"],
+] as const)("retains the text constructor finding for %s", (_case, original, replacement) => {
+  const source = standardTextSource.replace(original, replacement);
+  expect(source).not.toBe(standardTextSource);
+  expect(constructionFindings(standardTextFixture, source)).toContainEqual(standardTextConstructor);
+});
+
 const mountedRootSource = readFileSync(new URL("../ui/pauseButton.ts", import.meta.url), "utf8");
 const mountedRootFixture = "src/ui/mountedRootFixture.ts";
 const mountedRootConstructor = expect.objectContaining({

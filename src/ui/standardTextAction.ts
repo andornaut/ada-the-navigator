@@ -2,6 +2,7 @@ import type { ControlAvailability } from "@andornaut/game-kit/runtime/ui/control
 import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 
 import { ADA_ACTION_HOLD_MS, bindAdaAction, resolveAdaHoldAction } from "./actionBinding.ts";
+import { adaActionOwnedBy, adaActionRootAllows } from "./actionRegistry.ts";
 import { SCROLL } from "./layout/contentCard.ts";
 import { readViewUnit } from "./layout/viewScale.ts";
 
@@ -24,14 +25,15 @@ export function createStandardTextAction(
   label: string,
   options: StandardTextActionOptions,
 ) {
+  let ready = false;
+  const resolve = (button: HTMLButtonElement) => {
+    const action = resolveAdaHoldAction(root, button);
+    return action?.available() ? action : null;
+  };
   const tryRefusal = () => {
     // Kit can report an unavailable click even when getAction returned null.
-    if (options.availability(kit.element).kind !== "unavailable") {
-      return;
-    }
-    const action = resolveAdaHoldAction(root, kit.element);
-    if (action?.available()) {
-      action.activate();
+    if (options.availability(button).kind === "unavailable") {
+      resolve(button)?.activate();
     }
   };
   const kit = createButton(root.ownerDocument, {
@@ -42,11 +44,12 @@ export function createStandardTextAction(
       layout: "caller",
     },
     content: { kind: "text", label },
-    getAction: () => {
-      const action = resolveAdaHoldAction(root, kit.element);
-      return action?.available() ? action : null;
-    },
+    getAction: resolve,
     getState: (button) => {
+      // Kit presents once during construction, before the button can be registered.
+      if (!ready) {
+        return {};
+      }
       const availability = options.availability(button);
       return {
         availability:
@@ -64,17 +67,26 @@ export function createStandardTextAction(
     ...(options.reason ? { reason: options.reason } : {}),
     rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: SCROLL.dragThreshold },
   });
+  const button = kit.element;
   const registered = bindAdaAction(
     {
       click: {
         availability: () => {
-          const state = options.availability(kit.element);
-          return state.kind === "disabled" ? { kind: "omitted" } : state;
+          const state = options.availability(button);
+          // A caller can synchronously close or replace the action while reading its state.
+          const current =
+            ready &&
+            button.isConnected &&
+            button.closest("[hidden], [inert]") === null &&
+            adaActionOwnedBy(root, button) &&
+            adaActionRootAllows(button) &&
+            options.current();
+          return current && ready && state.kind !== "disabled" ? state : { kind: "omitted" };
         },
         run: options.run,
         ...(options.refuse ? { refuse: options.refuse } : {}),
       },
-      current: options.current,
+      current: () => ready && options.current() && ready,
       nativeClickOwner: "factory",
       ...(options.refuse ? { ownAriaDisabled: "refusal-feedback" as const } : {}),
       ...(options.refuse && options.pointerRefusal
@@ -83,7 +95,7 @@ export function createStandardTextAction(
               // A pointer-only refusal keeps the boundary button out of pointer focus.
               if (
                 event.type === "pointerdown" &&
-                options.availability(kit.element).kind === "unavailable"
+                options.availability(button).kind === "unavailable"
               ) {
                 event.preventDefault();
               }
@@ -91,16 +103,25 @@ export function createStandardTextAction(
             },
           }
         : {}),
-      slopPx: () => SCROLL.dragThreshold * readViewUnit(kit.element),
+      slopPx: () => SCROLL.dragThreshold * readViewUnit(button),
     },
-    kit.element,
+    button,
   );
+  const dispose = () => {
+    ready = false;
+    registered.dispose();
+    kit.dispose();
+  };
+  try {
+    ready = true;
+    kit.refresh();
+  } catch (error) {
+    dispose();
+    throw error;
+  }
   return {
-    dispose() {
-      registered.dispose();
-      kit.dispose();
-    },
-    element: kit.element,
+    dispose,
+    element: button,
     refresh: kit.refresh,
     setLabel: (text: string) => kit.setContent({ kind: "text", label: text }),
   };

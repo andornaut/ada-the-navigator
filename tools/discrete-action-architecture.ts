@@ -3018,11 +3018,406 @@ function scanSource(context: ScanContext, path: string, text: string) {
     }
     return !handlers.size && listeners.includes(click.listener) ? listeners : undefined;
   };
-  const registeredFactoryMetadata = new Set<ts.BinaryExpression>();
+  // Conditional literal options may add only the named ports. Both branches are inspected.
+  const fieldsWithOptionalPorts = (
+    node: ts.Expression | undefined,
+    ports: ReadonlySet<string>,
+  ): Map<string, ts.Expression> | undefined => {
+    if (!node || !ts.isObjectLiteralExpression(node)) {
+      return undefined;
+    }
+    const values = new Map<string, ts.Expression>();
+    const condition = (value: ts.Expression): boolean =>
+      (ts.isPropertyAccessExpression(value) && ts.isIdentifier(value.expression)) ||
+      (ts.isBinaryExpression(value) &&
+        value.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken &&
+        condition(value.left) &&
+        condition(value.right));
+    for (const property of node.properties) {
+      if (ts.isSpreadAssignment(property)) {
+        const branch = ts.isParenthesizedExpression(property.expression)
+          ? property.expression.expression
+          : property.expression;
+        if (!ts.isConditionalExpression(branch) || !condition(branch.condition)) {
+          return undefined;
+        }
+        for (const choice of [branch.whenTrue, branch.whenFalse]) {
+          const entries = fieldsWithOptionalPorts(choice, ports);
+          if (!entries) {
+            return undefined;
+          }
+          for (const [key, value] of entries) {
+            if (!ports.has(key) || values.has(key)) {
+              return undefined;
+            }
+            values.set(key, value);
+          }
+        }
+      } else if (
+        ts.isPropertyAssignment(property) &&
+        ts.isIdentifier(property.name) &&
+        property.name.text !== "__proto__" &&
+        !values.has(property.name.text)
+      ) {
+        values.set(property.name.text, property.initializer);
+      } else if (
+        ts.isShorthandPropertyAssignment(property) &&
+        !property.objectAssignmentInitializer &&
+        !values.has(property.name.text) &&
+        property.name.text !== "__proto__"
+      ) {
+        values.set(property.name.text, property.name);
+      } else {
+        return undefined;
+      }
+    }
+    return values;
+  };
 
-  // Prove first publication within the construction block, independently of when it runs.
-  // The Kit caller-layout icon factory calls getState with the fresh element while creating it.
-  const registeredKitElement = (call: ts.CallExpression): boolean => {
+  // Kit eagerly presents a new button. Prove caller presentation stays closed until the
+  // canonical binding exists, then check the refresh, rollback and returned Kit ports.
+  const registeredDeferredText = (
+    call: ts.CallExpression,
+    handle: ts.VariableDeclaration,
+    alias: ts.VariableDeclaration,
+    block: ts.Block,
+    following: readonly ts.Statement[],
+  ): boolean => {
+    const document = call.arguments[0]!;
+    const owner = block.parent;
+    if (!ts.isFunctionDeclaration(owner) || !synchronousCallable(owner)) {
+      return false;
+    }
+    const options = fieldsWithOptionalPorts(
+      call.arguments[1],
+      new Set(["onUnavailable", "onPointerRefusal", "reason"]),
+    );
+    const appearance = fieldsWithOptionalPorts(options?.get("appearance"), new Set(["face"]));
+    const content = fieldsWithOptionalPorts(options?.get("content"), new Set());
+    const getAction = options?.get("getAction");
+    const resolver = getAction && lexicalDeclaration(getAction);
+    const state = options?.get("getState");
+    const first =
+      state && ts.isArrowFunction(state) && ts.isBlock(state.body) && state.body.statements[0];
+    const guard = first && ts.isIfStatement(first) && first;
+    if (
+      !options ||
+      [...options.keys()].some(
+        (key) =>
+          ![
+            "appearance",
+            "content",
+            "getAction",
+            "getState",
+            "onUnavailable",
+            "onPointerRefusal",
+            "reason",
+            "rule",
+          ].includes(key),
+      ) ||
+      !literal(appearance?.get("layout"), "caller") ||
+      content?.size !== 2 ||
+      !literal(content.get("kind"), "text") ||
+      !resolver ||
+      !ts.isVariableDeclaration(resolver) ||
+      !isConst(resolver) ||
+      !resolvesFactoryRoot(resolver.initializer, document) ||
+      !state ||
+      !ts.isArrowFunction(state) ||
+      !synchronousCallable(state) ||
+      state.parameters.length !== 1 ||
+      !ts.isIdentifier(state.parameters[0]!.name) ||
+      state.parameters[0]!.initializer ||
+      state.parameters[0]!.dotDotDotToken ||
+      !guard ||
+      guard.elseStatement ||
+      !ts.isPrefixUnaryExpression(guard.expression) ||
+      guard.expression.operator !== ts.SyntaxKind.ExclamationToken ||
+      !ts.isBlock(guard.thenStatement) ||
+      guard.thenStatement.statements.length !== 1
+    ) {
+      return false;
+    }
+    const cold = guard.thenStatement.statements[0]!;
+    const ready = lexicalDeclaration(guard.expression.operand);
+    if (
+      !ts.isReturnStatement(cold) ||
+      fields(cold.expression)?.size !== 0 ||
+      !ready ||
+      !ts.isVariableDeclaration(ready) ||
+      !(ready.parent.flags & ts.NodeFlags.Let) ||
+      ready.initializer?.kind !== ts.SyntaxKind.FalseKeyword
+    ) {
+      return false;
+    }
+    const hasRefusal = options.has("onUnavailable") || options.has("onPointerRefusal");
+    const refusal = options.get("onUnavailable") ?? options.get("onPointerRefusal");
+    const refusalLocal = refusal && lexicalDeclaration(refusal);
+    const prefix = block.statements.slice(
+      0,
+      block.statements.indexOf(handle.parent.parent as ts.Statement),
+    );
+    const locals = hasRefusal ? [ready, resolver, refusalLocal] : [ready, resolver];
+    if (
+      prefix.length !== locals.length ||
+      prefix.some((statement, index) => singleLocal(statement) !== locals[index])
+    ) {
+      return false;
+    }
+    const [, bind, cleanup, initialize, returned] = following;
+    const binding = bind && singleLocal(bind);
+    const registration = binding?.initializer;
+    const action =
+      registration &&
+      ts.isCallExpression(registration) &&
+      fieldsWithOptionalPorts(
+        registration.arguments[0],
+        new Set(["ownAriaDisabled", "resolvePointerTarget"]),
+      );
+    const dispose = cleanup && singleLocal(cleanup);
+    const disposer = dispose?.initializer;
+    const record = returned && ts.isReturnStatement(returned) && returned.expression;
+    if (
+      following.length !== 5 ||
+      !binding ||
+      !isConst(binding) ||
+      !registration ||
+      !ts.isCallExpression(registration) ||
+      !canonicalBindingCall(registration) ||
+      registration.arguments.length !== 2 ||
+      !lexicalIdentity(registration.arguments[1]!, alias) ||
+      !action ||
+      !literal(action.get("nativeClickOwner"), "factory") ||
+      !dispose ||
+      !isConst(dispose) ||
+      !disposer ||
+      !ts.isArrowFunction(disposer) ||
+      !synchronousCallable(disposer) ||
+      disposer.parameters.length ||
+      !ts.isBlock(disposer.body) ||
+      disposer.body.statements.length !== 3 ||
+      !initialize ||
+      !ts.isTryStatement(initialize) ||
+      initialize.finallyBlock ||
+      initialize.tryBlock.statements.length !== 2 ||
+      !record ||
+      !ts.isObjectLiteralExpression(record)
+    ) {
+      return false;
+    }
+    const callOn = (
+      statement: ts.Statement | undefined,
+      method: string,
+      receiver: ts.Declaration,
+    ) => {
+      const invoke = callStatement(statement);
+      return (
+        invoke &&
+        !invoke.questionDotToken &&
+        !invoke.arguments.length &&
+        dot(invoke.expression, method) &&
+        unwritten(invoke.expression) &&
+        lexicalIdentity(invoke.expression.expression, receiver)
+      );
+    };
+    const setReady = (statement: ts.Statement, value: ts.SyntaxKind) => {
+      const assignment = captureCall(statement);
+      return assignment &&
+        lexicalIdentity(assignment.left, ready) &&
+        assignment.right.kind === value
+        ? assignment.left
+        : undefined;
+    };
+    const off = setReady(disposer.body.statements[0]!, ts.SyntaxKind.FalseKeyword);
+    const on = setReady(initialize.tryBlock.statements[0]!, ts.SyntaxKind.TrueKeyword);
+    const rollback = initialize.catchClause?.block.statements;
+    const release = callStatement(rollback?.[0]);
+    if (
+      !off ||
+      !on ||
+      !callOn(disposer.body.statements[1], "dispose", binding) ||
+      !callOn(disposer.body.statements[2], "dispose", handle) ||
+      !callOn(initialize.tryBlock.statements[1], "refresh", handle) ||
+      rollback?.length !== 2 ||
+      !release ||
+      !lexicalIdentity(release.expression, dispose) ||
+      !failureCleanup(release, dispose)
+    ) {
+      return false;
+    }
+    const eagerPrivate = (node: ts.Node): true | undefined => {
+      if (
+        ts.isArrowFunction(node) &&
+        ts.isPropertyAssignment(node.parent) &&
+        node.parent.initializer === node
+      ) {
+        return undefined;
+      }
+      if (
+        ts.isCallExpression(node) ||
+        ts.isNewExpression(node) ||
+        ts.isTaggedTemplateExpression(node)
+      ) {
+        return true;
+      }
+      if (ts.isIdentifier(node)) {
+        const local = lexicalDeclaration(node);
+        if (local && [handle, alias, refusalLocal, resolver].includes(local)) {
+          return true;
+        }
+      }
+      return ts.forEachChild(node, eagerPrivate);
+    };
+    if (eagerPrivate(registration.arguments[0]!)) {
+      return false;
+    }
+    const unexpectedReadyUse = (node: ts.Node): true | undefined => {
+      if (ts.isIdentifier(node)) {
+        const parent = node.parent;
+        if (
+          node.text === "eval" ||
+          (lexicalIdentity(node, ready) &&
+            node !== ready.name &&
+            node !== on &&
+            node !== off &&
+            !(
+              ts.isPrefixUnaryExpression(parent) &&
+              parent.operator === ts.SyntaxKind.ExclamationToken
+            ) &&
+            !(
+              ts.isBinaryExpression(parent) &&
+              parent.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken
+            ))
+        ) {
+          return true;
+        }
+      }
+      return ts.forEachChild(node, unexpectedReadyUse);
+    };
+    if (unexpectedReadyUse(block)) {
+      return false;
+    }
+    if (hasRefusal) {
+      const callback =
+        refusalLocal &&
+        ts.isVariableDeclaration(refusalLocal) &&
+        isConst(refusalLocal) &&
+        refusalLocal.initializer;
+      const check =
+        callback &&
+        ts.isArrowFunction(callback) &&
+        synchronousCallable(callback) &&
+        !callback.parameters.length &&
+        ts.isBlock(callback.body) &&
+        callback.body.statements.length === 1 &&
+        callback.body.statements[0];
+      const invoke =
+        check &&
+        ts.isIfStatement(check) &&
+        !check.elseStatement &&
+        ts.isBlock(check.thenStatement) &&
+        check.thenStatement.statements.length === 1 &&
+        callStatement(check.thenStatement.statements[0]);
+      const target =
+        invoke &&
+        ts.isPropertyAccessExpression(invoke.expression) &&
+        invoke.expression.questionDotToken &&
+        invoke.expression.name.text === "activate" &&
+        invoke.expression.expression;
+      const condition = check && ts.isIfStatement(check) && check.expression;
+      const availability =
+        condition &&
+        ts.isBinaryExpression(condition) &&
+        condition.operatorToken.kind === ts.SyntaxKind.EqualsEqualsEqualsToken &&
+        literal(condition.right, "unavailable") &&
+        dot(condition.left, "kind") &&
+        condition.left.expression;
+      if (
+        !refusalLocal ||
+        ["onUnavailable", "onPointerRefusal"].some((name) => {
+          const port = options.get(name);
+          return port && !lexicalIdentity(port, refusalLocal);
+        }) ||
+        !availability ||
+        !ts.isCallExpression(availability) ||
+        availability.questionDotToken ||
+        !dot(availability.expression, "availability") ||
+        !owner.parameters.some((parameter) =>
+          lexicalIdentity(
+            (availability.expression as ts.PropertyAccessExpression).expression,
+            parameter,
+          ),
+        ) ||
+        availability.arguments.length !== 1 ||
+        !lexicalIdentity(availability.arguments[0]!, alias) ||
+        !invoke ||
+        invoke.questionDotToken ||
+        invoke.arguments.length ||
+        !target ||
+        !ts.isCallExpression(target) ||
+        target.questionDotToken ||
+        !lexicalIdentity(target.expression, resolver) ||
+        target.arguments.length !== 1 ||
+        !lexicalIdentity(target.arguments[0]!, alias)
+      ) {
+        return false;
+      }
+    }
+    const names = record.properties.map((property) => property.name?.getText());
+    return (
+      names.length === 4 &&
+      new Set(names).size === names.length &&
+      record.properties.every((property) => {
+        if (ts.isShorthandPropertyAssignment(property)) {
+          return (
+            property.name.text === "dispose" &&
+            !property.objectAssignmentInitializer &&
+            declaration(property.name) === dispose
+          );
+        }
+        if (!ts.isPropertyAssignment(property) || !ts.isIdentifier(property.name)) {
+          return false;
+        }
+        const value = property.initializer;
+        if (property.name.text === "element") {
+          return lexicalIdentity(value, alias);
+        }
+        if (property.name.text === "refresh") {
+          return (
+            dot(value, "refresh") && unwritten(value) && lexicalIdentity(value.expression, handle)
+          );
+        }
+        if (
+          property.name.text !== "setLabel" ||
+          !ts.isArrowFunction(value) ||
+          !synchronousCallable(value) ||
+          value.parameters.length !== 1 ||
+          !ts.isIdentifier(value.parameters[0]!.name) ||
+          value.parameters[0]!.initializer ||
+          !ts.isCallExpression(value.body) ||
+          value.body.questionDotToken ||
+          !dot(value.body.expression, "setContent") ||
+          !unwritten(value.body.expression) ||
+          !lexicalIdentity(value.body.expression.expression, handle) ||
+          value.body.arguments.length !== 1
+        ) {
+          return false;
+        }
+        const label = fields(value.body.arguments[0]);
+        return (
+          label?.size === 2 &&
+          literal(label.get("kind"), "text") &&
+          label.has("label") &&
+          lexicalIdentity(label.get("label")!, value.parameters[0]!)
+        );
+      })
+    );
+  };
+
+  const registeredFactoryMetadata = new Set<ts.BinaryExpression>();
+  const deferredTextElements = new Set<ts.CallExpression>();
+
+  const privateKitElement = (call: ts.CallExpression) => {
     const handle = call.parent;
     if (
       !ts.isVariableDeclaration(handle) ||
@@ -3031,11 +3426,11 @@ function scanSource(context: ScanContext, path: string, text: string) {
       call.arguments.length !== 2 ||
       !clean(`${reference(call.arguments[0]!)}.createElement`, false, writesOnly)
     ) {
-      return false;
+      return undefined;
     }
     const creation = handle.parent.parent;
     if (singleLocal(creation) !== handle || !ts.isBlock(creation.parent)) {
-      return false;
+      return undefined;
     }
     const block = creation.parent;
     const following = block.statements.slice(block.statements.indexOf(creation) + 1);
@@ -3049,7 +3444,20 @@ function scanSource(context: ScanContext, path: string, text: string) {
       !lexicalIdentity(alias.initializer.expression, handle) ||
       !unwritten(alias.initializer)
     ) {
+      return undefined;
+    }
+    return { handle, alias, block, following };
+  };
+
+  // Prove first publication within the construction block, independently of when it runs.
+  const registeredKitElement = (call: ts.CallExpression): boolean => {
+    const construction = privateKitElement(call);
+    if (!construction) {
       return false;
+    }
+    const { alias, block, following, handle } = construction;
+    if (deferredTextElements.has(call)) {
+      return true;
     }
     if (capturedKitFactory(alias, block)?.call === call && capturedEnd(alias) >= 0) {
       return true;
@@ -4126,6 +4534,36 @@ function scanSource(context: ScanContext, path: string, text: string) {
       !statement.body.statements.length ||
       !ts.isReturnStatement(statement.body.statements.at(-1)!)
     ) {
+      continue;
+    }
+    const deferred = statement.body.statements.some((step) => {
+      const call = singleLocal(step)?.initializer;
+      if (
+        !call ||
+        !ts.isCallExpression(call) ||
+        !kitDomImport("createButton", "button", call.expression) ||
+        !unwritten(call.expression)
+      ) {
+        return false;
+      }
+      const construction = privateKitElement(call);
+      if (!construction) {
+        return false;
+      }
+      const { alias, block, following, handle } = construction;
+      if (!registeredDeferredText(call, handle, alias, block, following)) {
+        return false;
+      }
+      deferredTextElements.add(call);
+      return true;
+    });
+    if (deferred) {
+      factoryAssociations.push({
+        exportName: statement.name.text,
+        line: source.getLineAndCharacterOfPosition(statement.getStart(source)).line + 1,
+        members: ["element"],
+        path,
+      });
       continue;
     }
     const guaranteed = new Map<string, number>();
