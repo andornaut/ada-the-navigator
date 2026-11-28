@@ -17,7 +17,7 @@ import {
   planHostileStationFormation,
   scheduleHostileStations,
 } from "./hostileStations/schedule.ts";
-import { worldSpawnerStage } from "./spawner.ts";
+import { worldSpawnerStage } from "./spawn/encounters/index.ts";
 import { flightWorldContext, worldPoint } from "./world/index.ts";
 
 const identities = {

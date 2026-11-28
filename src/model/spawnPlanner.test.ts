@@ -14,7 +14,7 @@ import {
   type SpawnRegion,
   type SpawnRules,
   type SpawnSeeds,
-} from "./spawnPlanner.ts";
+} from "./spawn/planner/index.ts";
 
 const CLUSTER = { radius: 300, share: 0.5, size: [1, 3] } as const;
 /** Tries per spawn for every fixture target. */

@@ -12,8 +12,8 @@ import { createFlight, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { ORE_FIELD_ROLE, oreFieldInCell } from "./oreFields.ts";
 import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
-import { planRegion, type SpawnPlacement } from "./spawnPlanner.ts";
-import { chunkSpawnRegion, spawnRules } from "./spawnTargets.ts";
+import { planRegion, type SpawnPlacement } from "./spawn/planner/index.ts";
+import { chunkSpawnRegion, spawnRules } from "./spawn/targets/index.ts";
 import { stationsNear } from "./stations/index.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
 

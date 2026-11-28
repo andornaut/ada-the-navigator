@@ -19,8 +19,8 @@ import {
   worldFitsEncounter,
   worldRegionalEngagementAdmissions,
   worldSpawnerStage,
-} from "./spawner.ts";
-import { spawnRules } from "./spawnTargets.ts";
+} from "./spawn/encounters/index.ts";
+import { spawnRules } from "./spawn/targets/index.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 
 function occupant(

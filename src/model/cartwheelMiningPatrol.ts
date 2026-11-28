@@ -3,7 +3,7 @@ import { MOVING_ROCKS } from "../data/spawnTargets.ts";
 import { closestOnSegment } from "./convex.ts";
 import { ORE_FIELD_CLEAR_RADIUS, type OreField } from "./oreFields.ts";
 import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
-import { SPAWN_GAP } from "./spawner.ts";
+import { SPAWN_GAP } from "./spawn/encounters/index.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 import {
   flightWorldContext,

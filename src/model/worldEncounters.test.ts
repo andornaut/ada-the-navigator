@@ -13,7 +13,7 @@ import {
   worldFlowAt,
   worldNearestOnCurrent,
 } from "./currents.ts";
-import { worldEngagementAdmissions, worldFitsEncounter } from "./spawner.ts";
+import { worldEngagementAdmissions, worldFitsEncounter } from "./spawn/encounters/index.ts";
 import { worldStationsNear } from "./stations/index.ts";
 import type { SpaceObject } from "./types.ts";
 import { periodicWorldGrid, worldCellChance, wrappedDistance } from "./world/index.ts";

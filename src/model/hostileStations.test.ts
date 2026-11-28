@@ -32,7 +32,7 @@ import {
 } from "./geography.ts";
 import { hostileStationContext, type PlannedHostileStation } from "./hostileStations/placement.ts";
 import { drawnIndex } from "./muzzles.ts";
-import { worldRegionalEngagementAdmissions, worldSpawnerStage } from "./spawner.ts";
+import { worldRegionalEngagementAdmissions, worldSpawnerStage } from "./spawn/encounters/index.ts";
 import type { FlightState } from "./types.ts";
 import { flightWorldContext } from "./world/index.ts";
 

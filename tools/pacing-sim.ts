@@ -63,7 +63,11 @@ import {
 } from "../src/model/jobs.ts";
 import { chartLandmarks, landmarkById } from "../src/model/landmarks.ts";
 import { stardustPickupReach } from "../src/model/pickupBody.ts";
-import { planRegion, type SpawnPlacement, type SpawnRules } from "../src/model/spawnPlanner.ts";
+import {
+  planRegion,
+  type SpawnPlacement,
+  type SpawnRules,
+} from "../src/model/spawn/planner/index.ts";
 import {
   chunkSpawnReach,
   chunkSpawnRegion,
@@ -71,7 +75,7 @@ import {
   spawnRules,
   worldSpawnExclusions,
   worldSpawnSites,
-} from "../src/model/spawnTargets.ts";
+} from "../src/model/spawn/targets/index.ts";
 import { discoveryStardustId } from "../src/model/stardustPlacement.ts";
 import { stationById, type StationSite, stationsNear } from "../src/model/stations/index.ts";
 import type { FlightState, JobTarget } from "../src/model/types.ts";

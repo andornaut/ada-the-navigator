@@ -22,7 +22,7 @@ import {
 } from "../testing/spawnAcceptance.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { hostileStationSites } from "./hostileStations/index.ts";
-import { type ExclusionZone, planRegion, type SpawnCategory } from "./spawnPlanner.ts";
+import { type ExclusionZone, planRegion, type SpawnCategory } from "./spawn/planner/index.ts";
 import {
   chunkSpawnReach,
   chunkSpawnRegion,
@@ -30,7 +30,7 @@ import {
   spawnRules,
   worldSpawnExclusions,
   worldSpawnSites,
-} from "./spawnTargets.ts";
+} from "./spawn/targets/index.ts";
 import { worldStationsNear } from "./stations/index.ts";
 import type { Vec } from "./types.ts";
 import {

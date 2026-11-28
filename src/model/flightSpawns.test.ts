@@ -12,7 +12,7 @@ import { createEnemy } from "./ai/index.ts";
 import { createUnpopulatedFlight, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { ambientPackId, escortPackId, packMemberId, worldSyncFlightRegion } from "./geography.ts";
-import { planRegion, type SpawnSeeds } from "./spawnPlanner.ts";
+import { planRegion, type SpawnSeeds } from "./spawn/planner/index.ts";
 import {
   chunkSpawnReach,
   chunkSpawnRegion,
@@ -20,7 +20,7 @@ import {
   spawnRules,
   worldSpawnExclusions,
   worldSpawnSites,
-} from "./spawnTargets.ts";
+} from "./spawn/targets/index.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 import {
   CURRENT_FLIGHT_TOPOLOGY,

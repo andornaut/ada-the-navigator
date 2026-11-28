@@ -7,16 +7,20 @@ import {
   weightedPick,
 } from "@andornaut/game-kit/runtime/random";
 
-import type { AsteroidSize, CrystalFlag } from "../data/asteroidCatalog.ts";
-import { cappedAsteroidVelocity, type PlacedCrystals, placedRockCrystals } from "./asteroids.ts";
-import type { Vec } from "./types.ts";
+import type { AsteroidSize, CrystalFlag } from "../../../data/asteroidCatalog.ts";
+import {
+  cappedAsteroidVelocity,
+  type PlacedCrystals,
+  placedRockCrystals,
+} from "../../asteroids.ts";
+import type { Vec } from "../../types.ts";
 import {
   nearestImage,
   periodicWorldGrid,
   worldCellKey,
   type WorldGrid,
   wrappedDelta,
-} from "./world/index.ts";
+} from "../../world/index.ts";
 
 /**
  * What an exclusion zone keeps out: static rocks, rocks chosen to move, enemy ships, or the

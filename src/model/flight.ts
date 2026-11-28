@@ -279,13 +279,13 @@ import {
   worldFitsEncounter,
   worldRegionalEngagementAdmissions,
   worldSpawnerStage,
-} from "./spawner.ts";
+} from "./spawn/encounters/index.ts";
 import {
   type ExclusionZone,
   planRegion,
   type SpawnPlacement,
   type SpawnRules,
-} from "./spawnPlanner.ts";
+} from "./spawn/planner/index.ts";
 import {
   chunkSpawnReach,
   chunkSpawnRegion,
@@ -293,7 +293,7 @@ import {
   spawnRules,
   worldSpawnExclusions,
   worldSpawnSites,
-} from "./spawnTargets.ts";
+} from "./spawn/targets/index.ts";
 import { flightStationContext, worldStationById, worldStationsNear } from "./stations/index.ts";
 import type {
   FlightEvent,

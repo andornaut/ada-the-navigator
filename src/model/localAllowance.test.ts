@@ -5,7 +5,11 @@ import { ROUTE_POSITION } from "../data/galaxies.ts";
 import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { createEnemy } from "./ai/index.ts";
-import { worldEngagementAdmissions, worldFitsEncounter, worldLocalCap } from "./spawner.ts";
+import {
+  worldEngagementAdmissions,
+  worldFitsEncounter,
+  worldLocalCap,
+} from "./spawn/encounters/index.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 
 const policy = SPAWNER_POLICIES[6];

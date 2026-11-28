@@ -14,7 +14,7 @@ import {
   requiredWorldPlacementClear,
   requiredWorldPopulation,
 } from "./requiredWorldReservations.ts";
-import { worldFitsEncounter } from "./spawner.ts";
+import { worldFitsEncounter } from "./spawn/encounters/index.ts";
 import type { SpaceObject } from "./types.ts";
 
 const context = { content: CONTENT, galaxy: 1 as const };

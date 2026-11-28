@@ -1,16 +1,20 @@
-import { CONTENT } from "../data/content.ts";
-import type { EnemyActorKind } from "../data/enemyActors.ts";
-import { type EncounterEntry, type EnemyArchetype, escortTuning } from "../data/enemyCatalog.ts";
-import { classSpacingRadius } from "../data/enemySpacing.ts";
-import type { RoutePosition } from "../data/galaxies.ts";
+import { CONTENT } from "../../../data/content.ts";
+import type { EnemyActorKind } from "../../../data/enemyActors.ts";
+import {
+  type EncounterEntry,
+  type EnemyArchetype,
+  escortTuning,
+} from "../../../data/enemyCatalog.ts";
+import { classSpacingRadius } from "../../../data/enemySpacing.ts";
+import type { RoutePosition } from "../../../data/galaxies.ts";
 import {
   HOSTILE_LOCAL_ALLOWANCE,
   type SpawnerPolicy,
   type SpawnerStage,
   spawnerStageAtDistance,
-} from "../data/spawnerCatalog.ts";
-import type { SpaceObject, Vec } from "./types.ts";
-import { type WorldCellContext, wrappedDistance } from "./world/index.ts";
+} from "../../../data/spawnerCatalog.ts";
+import type { SpaceObject, Vec } from "../../types.ts";
+import { type WorldCellContext, wrappedDistance } from "../../world/index.ts";
 
 /** Station hostility is authoritative caller context, never inferred from a friendly station. */
 export interface SpawnerContext extends WorldCellContext {

@@ -25,7 +25,7 @@ import {
   requiredWorldPlacementClear,
   type RequiredWorldReservation,
 } from "./requiredWorldReservations.ts";
-import { worldFitsEncounter, worldSpawnerStage } from "./spawner.ts";
+import { worldFitsEncounter, worldSpawnerStage } from "./spawn/encounters/index.ts";
 import type { SpaceObject } from "./types.ts";
 
 function siteFlight(x: number) {

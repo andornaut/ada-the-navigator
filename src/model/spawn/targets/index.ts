@@ -1,24 +1,24 @@
-import { ASTEROID_ART, type AsteroidSize } from "../data/asteroidCatalog.ts";
-import { ASTEROID_FIELDS } from "../data/chunkCatalog.ts";
-import { CONTENT } from "../data/content.ts";
-import { ECONOMY } from "../data/economy.ts";
+import { ASTEROID_ART, type AsteroidSize } from "../../../data/asteroidCatalog.ts";
+import { ASTEROID_FIELDS } from "../../../data/chunkCatalog.ts";
+import { CONTENT } from "../../../data/content.ts";
+import { ECONOMY } from "../../../data/economy.ts";
 import {
   encounterRate,
   enemyEncounterTuning,
   escortTuning,
   FRIGATE_ESCORT_COUNT,
-} from "../data/enemyCatalog.ts";
-import { classSpacingRadius, spacingRadius } from "../data/enemySpacing.ts";
-import { byPosition, ROUTE_POSITION } from "../data/galaxies.ts";
-import { ORE_FIELDS } from "../data/galaxyFeatures.ts";
-import { LANDMARK_TUNING } from "../data/jobs.ts";
-import { PROCEDURAL_POIS } from "../data/proceduralPois.ts";
+} from "../../../data/enemyCatalog.ts";
+import { classSpacingRadius, spacingRadius } from "../../../data/enemySpacing.ts";
+import { byPosition, ROUTE_POSITION } from "../../../data/galaxies.ts";
+import { ORE_FIELDS } from "../../../data/galaxyFeatures.ts";
+import { LANDMARK_TUNING } from "../../../data/jobs.ts";
+import { PROCEDURAL_POIS } from "../../../data/proceduralPois.ts";
 import {
   FIGHTER_GROUP_TARGET,
   HOSTILE_LOCAL_ALLOWANCE,
   SPAWNER_POLICIES,
   SWARM_GROUP_MINIMUM,
-} from "../data/spawnerCatalog.ts";
+} from "../../../data/spawnerCatalog.ts";
 import {
   ENEMY_DENSITY_FACTORS,
   type EnemyGroupTargets,
@@ -29,16 +29,19 @@ import {
   SPAWN_AREA_CHUNKS,
   SPAWN_BLEND_WIDTH,
   SPAWN_TARGETS,
-} from "../data/spawnTargets.ts";
-import type { GalaxyNumber } from "../data/types.ts";
-import { ASTEROID_SHAPES, galaxyCrystals, placementRadius } from "./asteroids.ts";
-import { worldCurrentsNear } from "./currents.ts";
-import { ambientPackId, packMemberId } from "./geography.ts";
-import { hostileStationSites } from "./hostileStations/index.ts";
-import { landmarkSites } from "./landmarks.ts";
-import { ORE_FIELD_CLEAR_RADIUS, worldOreFieldsNear } from "./oreFields.ts";
-import { spawnSalvagePoisNear } from "./proceduralPois.ts";
-import { SPAWN_GAP, worldFitsEncounter } from "./spawner.ts";
+} from "../../../data/spawnTargets.ts";
+import type { GalaxyNumber } from "../../../data/types.ts";
+import { ASTEROID_SHAPES, galaxyCrystals, placementRadius } from "../../asteroids.ts";
+import { worldCurrentsNear } from "../../currents.ts";
+import { ambientPackId, packMemberId } from "../../geography.ts";
+import { hostileStationSites } from "../../hostileStations/index.ts";
+import { landmarkSites } from "../../landmarks.ts";
+import { ORE_FIELD_CLEAR_RADIUS, worldOreFieldsNear } from "../../oreFields.ts";
+import { spawnSalvagePoisNear } from "../../proceduralPois.ts";
+import { worldStationsNear } from "../../stations/index.ts";
+import type { Vec } from "../../types.ts";
+import { type WorldCellContext, wrappedDistance } from "../../world/index.ts";
+import { SPAWN_GAP, worldFitsEncounter } from "../encounters/index.ts";
 import {
   enemyGroupReach,
   type EnemyTarget,
@@ -47,10 +50,7 @@ import {
   type SpawnRegion,
   type SpawnRules,
   type SpawnShape,
-} from "./spawnPlanner.ts";
-import { worldStationsNear } from "./stations/index.ts";
-import type { Vec } from "./types.ts";
-import { type WorldCellContext, wrappedDistance } from "./world/index.ts";
+} from "../planner/index.ts";
 
 const MOVING_KIND = "moving-rock";
 /**

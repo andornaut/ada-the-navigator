@@ -2,13 +2,13 @@ import { randomStream } from "@andornaut/game-kit/runtime/random";
 
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
-import { planRegion } from "../model/spawnPlanner.ts";
+import { planRegion } from "../model/spawn/planner/index.ts";
 import {
   spawnGatherReach,
   spawnRules,
   worldSpawnExclusions,
   worldSpawnSites,
-} from "../model/spawnTargets.ts";
+} from "../model/spawn/targets/index.ts";
 import { periodicWorldGrid, worldCellAt } from "../model/world/index.ts";
 
 /** A target passes when this share of sampled areas delivers this share of its requests. */

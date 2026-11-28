@@ -23,7 +23,7 @@ import {
   hardpointOffset,
   stepEnemy,
 } from "./ai/index.ts";
-import { encounterLatticeSpacing } from "./spawnTargets.ts";
+import { encounterLatticeSpacing } from "./spawn/targets/index.ts";
 
 const dt = 1 / 60;
 /** `vector` turned by `angle` radians, as a ship's aim drift turns its line of fire. */
