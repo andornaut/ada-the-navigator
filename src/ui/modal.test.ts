@@ -29,7 +29,7 @@ import {
   UI_SCOPE,
 } from "./modal.ts";
 import { mapCloseStyle } from "./modalClose.ts";
-import { SETTINGS_STYLE } from "./settings.ts";
+import { SETTINGS_STYLE } from "./settings/index.ts";
 import { buttonProperty } from "./uiSkin.ts";
 
 const json = (path: string): unknown =>

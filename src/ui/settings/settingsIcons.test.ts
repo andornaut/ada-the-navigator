@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it, vi } from "vitest";
 
-import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { units } from "./layout/css.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
+import { units } from "../layout/css.ts";
 import { SETTING_ICON_INK_TOP, SETTING_ICONS, showIcon, STEPS_GLYPHS } from "./settingsIcons.ts";
 
 describe("install steps glyphs", () => {
@@ -29,7 +29,7 @@ describe("Settings icons", () => {
   ]);
 
   it.each([...keys])("draws the approved %s vector in the existing 16-pixel frame", (key) => {
-    const svg = readFileSync(new URL(`../../public${uiIconUrl(key)}`, import.meta.url), "utf8");
+    const svg = readFileSync(new URL(`../../../public${uiIconUrl(key)}`, import.meta.url), "utf8");
     expect(svg).toMatch(/<svg\b[^>]*\bwidth="16"[^>]*\bheight="16"/u);
     const icon = { dataset: {}, style: { setProperty: vi.fn() } };
     showIcon(icon as unknown as HTMLElement, key);

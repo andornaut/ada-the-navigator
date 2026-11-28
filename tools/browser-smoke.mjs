@@ -2142,7 +2142,7 @@ try {
   );
   const fpsSwitch = page.getByRole("switch", { name: FPS_COUNTER_LABEL, exact: true });
   const { SETTING_ICON_INK_TOP } = await import(
-    new URL("../src/ui/settingsIcons.ts", import.meta.url)
+    new URL("../src/ui/settings/settingsIcons.ts", import.meta.url)
   );
   await proofsAt("settings-fps-ink", async (_insets, _view, name) => {
     const fpsInk = await fpsSwitch.evaluate((row, iconInkTop) => {

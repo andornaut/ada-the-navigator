@@ -82,7 +82,7 @@ import {
   type FeedbackSettings,
   type SettingsLabels,
   type SettingsOptions,
-} from "../ui/settings.ts";
+} from "../ui/settings/index.ts";
 import { shieldDetails } from "../ui/shieldDetails.ts";
 import { createStatusPill, pillCount, type StatusView } from "../ui/statusPill.ts";
 import { STICK_DEPTHS, stickViews } from "../ui/sticks.ts";

@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 import { fixtureActionRoot } from "../ui/actionRootFixture.ts";
 import { createNavigationButton } from "../ui/navigationButton.ts";
 import { createHudNavigationButton } from "../ui/pauseButton.ts";
-import { EXIT_SHOWN_ATTRIBUTE } from "../ui/settings.ts";
+import { EXIT_SHOWN_ATTRIBUTE } from "../ui/settings/index.ts";
 
 const source = ts.createSourceFile(
   "controls.ts",

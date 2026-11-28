@@ -197,7 +197,9 @@ describe("DOM UI sizes", () => {
 
   it("allow only the listed files and rules", () => {
     expect(rawPixelFindings("layout/bootSplash.css", "#boot-splash img{width:4px}")).toEqual([]);
-    expect(rawPixelFindings("settings.ts", "`.ada-controls button{gap:4px}`")).toHaveLength(1);
+    expect(
+      rawPixelFindings("settings/settings.ts", "`.ada-controls button{gap:4px}`"),
+    ).toHaveLength(1);
     expect(rawPixelFindings("../style.css", "button{min-height:44px}")).toHaveLength(1);
     expect(rawPixelFindings("station.ts", "`.ada-controls .ada-shop-row{gap:4px}`")).toHaveLength(
       1,

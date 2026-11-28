@@ -12,7 +12,7 @@ import { SCROLL } from "../ui/layout/contentCard.ts";
 import { readViewUnit } from "../ui/layout/viewScale.ts";
 import { createHudNavigationButton } from "../ui/pauseButton.ts";
 import { enterPressView, inCurrentView, rootPressGuard } from "../ui/pressScope.ts";
-import { EXIT_SHOWN_ATTRIBUTE } from "../ui/settings.ts";
+import { EXIT_SHOWN_ATTRIBUTE } from "../ui/settings/index.ts";
 import { isMenuExitKey } from "./desktop.ts";
 
 const { assertAdaActionBindings, bindAdaAction: bindAction, resolveAdaHoldAction } = actionBinding;

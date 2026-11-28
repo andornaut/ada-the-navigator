@@ -2,12 +2,12 @@ import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayo
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { CONTENT } from "../data/content.ts";
-import { FPS_COUNTER_LABEL, SETTINGS_STATE_LABELS } from "../data/settingsCopy.ts";
-import { uiIconUrl } from "../data/uiIconUrl.ts";
-import type { InstallStepsKind } from "../pwa/index.ts";
-import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
-import { applyAdaControlTheme, createAdaPageDivider } from "./buttonPresentation.ts";
+import { CONTENT } from "../../data/content.ts";
+import { FPS_COUNTER_LABEL, SETTINGS_STATE_LABELS } from "../../data/settingsCopy.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
+import type { InstallStepsKind } from "../../pwa/index.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "../actionBinding.ts";
+import { applyAdaControlTheme, createAdaPageDivider } from "../buttonPresentation.ts";
 import {
   type ControlVisibility,
   type DeviceSetting,
@@ -15,19 +15,19 @@ import {
   prefersReducedMotion,
   readDeviceSettings,
   writeSetting,
-} from "./deviceSettings.ts";
-import { type InstallPort, startInstall, watchInstallRow } from "./installRow.ts";
-import { UNLISTED_COLOURS } from "./layout/colours.ts";
-import { CARD_CONTENT, SCROLL } from "./layout/contentCard.ts";
-import { CONTROL_ROW, WHOLE_PX_EDGES } from "./layout/controls.ts";
-import { font, fromHudEdge, units, viewStyle } from "./layout/css.ts";
-import { frameSize } from "./layout/frameBox.ts";
-import { NAVIGATION_DISCS } from "./layout/navigationButton.ts";
-import { hudButtonTarget, startNavOrder } from "./layout/playView.ts";
-import { SETTINGS_TITLE_INK_TOP, settingsColumns } from "./layout/settings.ts";
-import { SPACING, TYPE } from "./layout/tokens.ts";
-import { TOUCH_STICK, USE_DISC } from "./layout/touchControls.ts";
-import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
+} from "../deviceSettings.ts";
+import { type InstallPort, startInstall, watchInstallRow } from "../installRow.ts";
+import { UNLISTED_COLOURS } from "../layout/colours.ts";
+import { CARD_CONTENT, SCROLL } from "../layout/contentCard.ts";
+import { CONTROL_ROW, WHOLE_PX_EDGES } from "../layout/controls.ts";
+import { font, fromHudEdge, units, viewStyle } from "../layout/css.ts";
+import { frameSize } from "../layout/frameBox.ts";
+import { NAVIGATION_DISCS } from "../layout/navigationButton.ts";
+import { hudButtonTarget, startNavOrder } from "../layout/playView.ts";
+import { SETTINGS_TITLE_INK_TOP, settingsColumns } from "../layout/settings.ts";
+import { SPACING, TYPE } from "../layout/tokens.ts";
+import { TOUCH_STICK, USE_DISC } from "../layout/touchControls.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "../layout/viewScale.ts";
 import {
   BUTTON_FACE,
   type ButtonRole,
@@ -42,16 +42,16 @@ import {
   SETTINGS_INSTALL_BUTTON,
   STANDARD_CARD_TEXT_BUTTON,
   TEXT_TOKENS,
-} from "./modal.ts";
-import { createStandardCloseAction } from "./modalClose.ts";
-import { createModalLayer } from "./modalLayer.ts";
+} from "../modal.ts";
+import { createStandardCloseAction } from "../modalClose.ts";
+import { createModalLayer } from "../modalLayer.ts";
+import { createStandardTextAction } from "../standardTextAction.ts";
+import { alignSwitchRowIcons, createInkMeasure } from "../switchRowInk.ts";
+import { applyButtonSkin } from "../uiSkin.ts";
 import { SETTING_ICONS, settingsIcon, showIcon, STEPS_GLYPHS } from "./settingsIcons.ts";
 import { type SettingsLayoutSchema, type SettingsNative, settingsTree } from "./settingsTree.ts";
-import { createStandardTextAction } from "./standardTextAction.ts";
-import { alignSwitchRowIcons, createInkMeasure } from "./switchRowInk.ts";
-import { applyButtonSkin } from "./uiSkin.ts";
 
-export type { ControlVisibility } from "./deviceSettings.ts";
+export type { ControlVisibility } from "../deviceSettings.ts";
 
 export const FONT_ROLES = { body: "font-body", heading: "font-title" } as const;
 

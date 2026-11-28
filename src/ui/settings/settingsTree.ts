@@ -1,7 +1,7 @@
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
-import type { DeviceSetting } from "./deviceSettings.ts";
-import { settingsColumnArrangement } from "./layout/settings.ts";
+import type { DeviceSetting } from "../deviceSettings.ts";
+import { settingsColumnArrangement } from "../layout/settings.ts";
 
 export type SettingsSwitch = DeviceSetting;
 export type SettingsNative = SettingsSwitch | "actions" | "build" | "divider" | "install";

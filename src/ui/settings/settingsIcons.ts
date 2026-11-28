@@ -1,6 +1,6 @@
-import { uiIconUrl } from "../data/uiIconUrl.ts";
-import type { InstallStepsKind } from "../pwa/index.ts";
-import { units } from "./layout/css.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
+import type { InstallStepsKind } from "../../pwa/index.ts";
+import { units } from "../layout/css.ts";
 import type { SettingsSwitch } from "./settingsTree.ts";
 
 // Art's Settings icons use 16 by 16 frames, drawn at their own size in each row.

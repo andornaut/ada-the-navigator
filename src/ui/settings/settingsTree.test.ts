@@ -1,8 +1,8 @@
 import { type LayoutNode, validateLayoutTree } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import { expect, it } from "vitest";
 
-import { CARD_CONTENT } from "./layout/contentCard.ts";
-import { SETTINGS_COLUMN_GAP } from "./layout/settings.ts";
+import { CARD_CONTENT } from "../layout/contentCard.ts";
+import { SETTINGS_COLUMN_GAP } from "../layout/settings.ts";
 import { type SettingsLayoutSchema, settingsTree } from "./settingsTree.ts";
 
 function body(columns: 1 | 2, install: boolean) {

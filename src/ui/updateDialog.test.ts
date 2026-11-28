@@ -228,7 +228,7 @@ afterEach(() => {
   fixture.card.title.children = [];
 });
 
-vi.mock("./settings.ts", () => ({ FONT_ROLES: { heading: "heading" } }));
+vi.mock("./settings/index.ts", () => ({ FONT_ROLES: { heading: "heading" } }));
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/modalLayer", () => ({
   createModalLayer: () => ({
     back: vi.fn(),

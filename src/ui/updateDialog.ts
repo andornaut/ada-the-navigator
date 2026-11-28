@@ -16,7 +16,7 @@ import { createCard } from "./modal.ts";
 import { createStandardCloseAction } from "./modalClose.ts";
 import { createModalLayer } from "./modalLayer.ts";
 import { inCurrentView } from "./pressScope.ts";
-import { FONT_ROLES } from "./settings.ts";
+import { FONT_ROLES } from "./settings/index.ts";
 import { type UpdateAction, type UpdateSchema, updateTree } from "./updateTree.ts";
 
 export interface UpdateLabels {
