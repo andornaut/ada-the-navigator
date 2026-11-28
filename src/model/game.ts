@@ -204,6 +204,7 @@ import { projectCapitalBossHud } from "./game/bossHud.ts";
 import { earlyRequiredDestination, galaxyRoute, newGameState } from "./game/campaignState.ts";
 import { dockedShopGroups, dockedShopOffers, dockedShopSupply } from "./game/dockedShop.ts";
 import { encounterCues, stationsInRange } from "./game/encounterCues.ts";
+import { projectFlightLog } from "./game/flightLog.ts";
 import { dockedJobRows, type JobRow } from "./game/jobBoard.ts";
 import { jobIndicator, jobMapTarget, type JobNavigationContext } from "./game/jobNavigation.ts";
 import { projectJobText, projectPlaceLabel } from "./game/jobText.ts";
@@ -293,7 +294,6 @@ import {
   NEEDLE_CADENCE,
   NEEDLE_CADENCE_CUES,
   needleCadenceSite,
-  needleCadenceTransmission,
   type NeedleTrackedObjective,
   needleTrackedObjective,
 } from "./needleRuntime.ts";
@@ -2241,24 +2241,13 @@ export class GameModel {
 
   /** Intercepted entries retain their identity as their disclosed attribution changes. */
   get flightLog(): readonly FlightLogEntry[] {
-    const needle = this.state.progress[4];
     const memoryPending =
       this.state.selectedGalaxy === 4 &&
       (this.story?.scene.id === "holodisk" ||
         this.heldStory?.position.scene.id === "holodisk" ||
         this.state.dialogue?.context === HOLODISK_MOMENT ||
         this.heldFlight?.dialogue?.context === HOLODISK_MOMENT);
-    // Older saves have no completion field. The saved holodisk story cursor still gates them.
-    const archieRevealed =
-      needle.holodisk &&
-      holodisksHeld(this.state.progress) >= ARCHIE_NAMED.holodisks &&
-      (needle.needleMemoryRead ?? !memoryPending);
-    const transmission = needleCadenceTransmission(needle.capitalBoss, archieRevealed);
-    const relay = andromedaRelayWaypoint(this.state.progress[5].redact);
-    return [
-      ...(transmission ? [transmission] : []),
-      ...(relay ? [{ id: relay.id, text: ANDROMEDA_REDACT.relayLabel, waypoint: relay }] : []),
-    ];
+    return projectFlightLog(memoryPending, this.state.progress);
   }
 
   private prepareWhirlpoolDisk(flight: FlightState): void {
