@@ -238,7 +238,7 @@ import { INDUSTRIAL_HOME_RADIUS } from "./retaliatorNavigation.ts";
 import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
 import { routeGuardEvidence } from "./routeGuardEvidence.ts";
 import { discoveryStardustId } from "./stardustPlacement.ts";
-import { stationFormationClear, type StationPlacementContext } from "./stationPlacement.ts";
+import { stationFormationClear, type StationPlacementContext } from "./stations/formation/index.ts";
 import { impactFamily } from "./weaponImpacts.ts";
 import {
   canonicalPosition,
@@ -294,7 +294,7 @@ import {
   worldSpawnExclusions,
   worldSpawnSites,
 } from "./spawnTargets.ts";
-import { flightStationContext, worldStationById, worldStationsNear } from "./stations.ts";
+import { flightStationContext, worldStationById, worldStationsNear } from "./stations/index.ts";
 import type {
   FlightEvent,
   FlightInput,

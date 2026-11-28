@@ -9,7 +9,7 @@ import {
   worldLegacyStationsNear,
   worldStationById,
   worldStationsNear,
-} from "./stations.ts";
+} from "./stations/index.ts";
 
 // Which keeper greets at a station (gameplay/rules.md "Species and greeters"): a station's rank by
 // distance from its galaxy's origin picks one of the galaxy's three keepers in turn, so the nearest

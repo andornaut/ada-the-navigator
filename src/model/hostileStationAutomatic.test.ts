@@ -18,7 +18,7 @@ import { hostileStationSites, stationPopulationObjects } from "./hostileStations
 import { materializeGeneratedHostileStations } from "./hostileStations/materialization.ts";
 import { hostileStationEncounterIds } from "./hostileStations/persistence.ts";
 import { planHostileStationFormation } from "./hostileStations/schedule.ts";
-import { flightStationContext, worldStationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 import type { FlightState } from "./types.ts";
 import { flightWorldContext } from "./world/index.ts";
 

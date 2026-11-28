@@ -8,7 +8,7 @@ import { landmarkSites } from "../landmarks.ts";
 import { readRequiredPlan } from "../requiredEncounterPlans.ts";
 import { readRequiredRolePlan } from "../requiredRolePlans.ts";
 import { direction } from "../shipPhysics.ts";
-import { flightStationContext, worldStationsNear } from "../stations.ts";
+import { flightStationContext, worldStationsNear } from "../stations/index.ts";
 import type { FlightState, SpaceObject, Vec } from "../types.ts";
 import { flightWorldContext, worldDistance } from "../world/index.ts";
 

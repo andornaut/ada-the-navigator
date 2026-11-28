@@ -13,7 +13,7 @@ import {
   objectiveDestination,
   questItemDestination,
 } from "./indicators.ts";
-import { stationIndicatorTarget, stationsNear, worldStationInCell } from "./stations.ts";
+import { stationIndicatorTarget, stationsNear, worldStationInCell } from "./stations/index.ts";
 import type { SpaceObject } from "./types.ts";
 
 const object = (id: string, kind: SpaceObject["kind"], x: number, extra = {}): SpaceObject => ({

@@ -8,8 +8,8 @@ import { frigateEscortStation } from "./frigateEscorts.ts";
 import { liveEnemy } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import type { LegacyGuardHomePorts } from "./legacyGuardHomes.ts";
-import { stationGuardSite } from "./stationGuardSite.ts";
-import { stationFormationClear, type StationPlacementContext } from "./stationPlacement.ts";
+import { stationFormationClear, type StationPlacementContext } from "./stations/formation/index.ts";
+import { stationGuardSite } from "./stations/index.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 import { flightWorldContext, worldDelta, worldDistance } from "./world/index.ts";
 

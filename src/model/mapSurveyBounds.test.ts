@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { CHARTING_RADIUS, localMap, type MapContext, withinChartingRadius } from "./map.ts";
-import { stationsNear } from "./stations.ts";
+import { stationsNear } from "./stations/index.ts";
 
 const near = { id: "near", kind: "beacon" as const, label: "near", x: 1000, y: 0 };
 const far = { id: "far", kind: "beacon" as const, label: "far", x: 80000, y: 0 };

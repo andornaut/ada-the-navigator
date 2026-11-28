@@ -9,7 +9,7 @@ import { GAME_AREA } from "./edgeMarkers.ts";
 import { createFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
-import { stationsNear } from "./stations.ts";
+import { stationsNear } from "./stations/index.ts";
 import type { HeldJob } from "./types.ts";
 
 function model() {

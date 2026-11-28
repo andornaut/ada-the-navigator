@@ -16,7 +16,7 @@ import { createUnpopulatedFlight, ensureDestinationAt } from "./flight.ts";
 import { localMap, NO_LANDMARKS } from "./map.ts";
 import { newProgress } from "./progress.ts";
 import { requiredWorldOccupantsPlacementClear } from "./requiredWorldReservations.ts";
-import { flightStationContext } from "./stations.ts";
+import { flightStationContext } from "./stations/index.ts";
 import { flightWorldContext } from "./world/index.ts";
 
 function repaired(): ChapterContext {

@@ -6,7 +6,7 @@ import {
   readStationStockEntry,
   setStationStockEntry,
   type StationRestockState,
-} from "./stationRestock.ts";
+} from "./stations/commerce/index.ts";
 
 describe("station restock state", () => {
   it("round-trips active flight time and snapshots independently by galaxy, station and slot", () => {

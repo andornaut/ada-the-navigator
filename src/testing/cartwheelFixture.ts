@@ -2,7 +2,7 @@ import type { GameContent } from "../data/types.ts";
 import { hit } from "../model/flight/hitResolution.ts";
 import type { GameModel } from "../model/game.ts";
 import { stationPopulationObjects } from "../model/hostileStations/index.ts";
-import { HUB_STATION } from "../model/stations.ts";
+import { HUB_STATION } from "../model/stations/index.ts";
 import type { SpaceObject } from "../model/types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

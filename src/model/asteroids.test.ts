@@ -31,7 +31,7 @@ import {
 import { GameModel } from "./game.ts";
 import { SHIP_HEADINGS } from "./nose.ts";
 import { shipBody } from "./shipBody.ts";
-import { stationsNear } from "./stations.ts";
+import { stationsNear } from "./stations/index.ts";
 import type { GalaxyProgress, SpaceObject, Vec } from "./types.ts";
 
 const progress: GalaxyProgress = {

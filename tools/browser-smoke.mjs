@@ -2992,7 +2992,7 @@ try {
   // column, and selecting its target pans the chip clear of the panel's rendered height.
   const { ECONOMY } = await import(new URL("../src/data/economy.ts", import.meta.url));
   const { flightStationContext, worldStationsNear } = await import(
-    new URL("../src/model/stations.ts", import.meta.url)
+    new URL("../src/model/stations/index.ts", import.meta.url)
   );
   const jobInput = relaunch(CONTENT, safeSerialized);
   const issuer = worldStationsNear(flightStationContext(jobInput.state.flight), ECONOMY, 1, 25000, {

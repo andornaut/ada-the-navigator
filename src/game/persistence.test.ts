@@ -9,7 +9,7 @@ import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import type { GameContent } from "../data/types.ts";
 import { activateRequiredRoute, ensureDestination } from "../model/flight.ts";
 import { GameModel } from "../model/game.ts";
-import { stationsNear } from "../model/stations.ts";
+import { stationsNear } from "../model/stations/index.ts";
 import type { FlightState } from "../model/types.ts";
 import { collectWeapon } from "../model/weapons.ts";
 import {

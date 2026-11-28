@@ -11,7 +11,12 @@ import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { greetingLines, stationKeeper, stationRank, worldStationKeeper } from "./keepers.ts";
-import { flightStationContext, HUB_STATION, namesStation, worldStationsNear } from "./stations.ts";
+import {
+  flightStationContext,
+  HUB_STATION,
+  namesStation,
+  worldStationsNear,
+} from "./stations/index.ts";
 import type { FlightState } from "./types.ts";
 
 const COPY = readFileSync(new URL("../../gameplay/player-copy.md", import.meta.url), "utf8");

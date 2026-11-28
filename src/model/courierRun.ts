@@ -6,8 +6,11 @@ import type { GameContent } from "../data/types.ts";
 import { type ActivityTerms, stepCourier } from "./activities.ts";
 import { ensureDestinationAt, placeHuntingPack } from "./flight.ts";
 import { packMemberId, worldDiscardNotable, worldPrunePackState } from "./geography.ts";
-import { retainedSettlementsNear } from "./legacySettlements.ts";
-import { flightStationContext, worldStationsNear } from "./stations.ts";
+import {
+  flightStationContext,
+  retainedSettlementsNear,
+  worldStationsNear,
+} from "./stations/index.ts";
 import type { FlightState, HeldActivity, Vec } from "./types.ts";
 import {
   flightWorldContext,

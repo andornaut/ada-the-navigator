@@ -3,7 +3,7 @@ import { ECONOMY } from "../../data/economy.ts";
 import { SCREEN } from "../../data/screen.ts";
 import { onScreen } from "../conversations.ts";
 import { lateEncounterCue } from "../lateEncounter.ts";
-import { HUB_STATION } from "../stations.ts";
+import { HUB_STATION } from "../stations/index.ts";
 import type { FlightState, SpaceObject } from "../types.ts";
 
 /** Stations, the hub among them, within station discovery range of Ada. */

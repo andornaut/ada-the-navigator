@@ -25,7 +25,7 @@ import { GameModel } from "./game.ts";
 import { worldSyncFlightRegion } from "./geography.ts";
 import { flightLandmarkSites } from "./landmarks.ts";
 import { ORE_FIELD_ROLE, worldOreFieldsNear } from "./oreFields.ts";
-import { flightStationContext, worldStationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 import { flightWorldContext } from "./world/index.ts";
 

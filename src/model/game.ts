@@ -360,15 +360,19 @@ import {
   type ShopTab,
 } from "./shop.ts";
 import { discoveryCacheGroup } from "./stardustPlacement.ts";
-import { advanceStationRestock, newStationRestock } from "./stationRestock.ts";
+import {
+  advanceStationRestock,
+  newStationRestock,
+  type StationServices,
+  stationSpecialty,
+} from "./stations/commerce/index.ts";
 import {
   flightStationContext,
   HUB_STATION,
   stationById,
   type StationSite,
   worldStationById,
-} from "./stations.ts";
-import { type StationServices, stationSpecialty } from "./stationServices.ts";
+} from "./stations/index.ts";
 import {
   advance,
   atRunEnd,

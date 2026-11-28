@@ -73,7 +73,7 @@ import {
   worldSpawnSites,
 } from "../src/model/spawnTargets.ts";
 import { discoveryStardustId } from "../src/model/stardustPlacement.ts";
-import { stationById, type StationSite, stationsNear } from "../src/model/stations.ts";
+import { stationById, type StationSite, stationsNear } from "../src/model/stations/index.ts";
 import type { FlightState, JobTarget } from "../src/model/types.ts";
 import {
   applyUpgrade,

@@ -4,7 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyDefinition } from "../data/enemyCatalog.ts";
 import { createEnemy } from "./ai/index.ts";
-import { stationGuardSite } from "./stationGuardSite.ts";
+import { stationGuardSite } from "./stations/index.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
 
 function fixture() {

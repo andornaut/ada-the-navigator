@@ -1,4 +1,4 @@
-import { STATION_NAME_WORDS } from "../data/stationCopy.ts";
+import { STATION_NAME_WORDS } from "../../data/stationCopy.ts";
 
 const zigzag = (value: bigint): bigint => (value < 0n ? -2n * value - 1n : 2n * value);
 const pair = (left: bigint, right: bigint): bigint =>

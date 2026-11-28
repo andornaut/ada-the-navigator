@@ -72,9 +72,10 @@ import {
   STATION_RESTOCK_SECONDS,
   type StationOffer,
   type StationRestockState,
-} from "../model/stationRestock.ts";
-import { HUB_STATION, namesSavedStation } from "../model/stations.ts";
-import { stationShopCategories, stationSpecialty } from "../model/stationServices.ts";
+  stationShopCategories,
+  stationSpecialty,
+} from "../model/stations/commerce/index.ts";
+import { HUB_STATION, namesSavedStation } from "../model/stations/index.ts";
 import { currentPage, openingScene, resolutionScene } from "../model/storybook.ts";
 import { readStoryCursor } from "../model/storyCursor.ts";
 import { canReplayEarthChapter, resolveStoryScene } from "../model/storyScenes.ts";

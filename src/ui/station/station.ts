@@ -9,7 +9,7 @@ import { EXCHANGE_COPY } from "../../data/exchangeCopy.ts";
 import { TASK_COLORS } from "../../data/taskCategories.ts";
 import type { StationGreeting } from "../../model/keepers.ts";
 import { fill } from "../../model/shop.ts";
-import type { StationServices } from "../../model/stationServices.ts";
+import type { StationServices } from "../../model/stations/commerce/index.ts";
 import {
   ADA_ACTION_HOLD_MS,
   assertAdaActionBindings,

@@ -29,7 +29,7 @@ import { calfRouteMidpoint, calfStart, crossesCurrent } from "./calf.ts";
 import { activateRequiredRoute, ensureDestination, ensureStation } from "./flight.ts";
 import { hit } from "./flight/hitResolution.ts";
 import { GameModel } from "./game.ts";
-import { flightStationContext, worldStationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 import type { FlightState, GameState, HeldActivity, Vec } from "./types.ts";
 
 /** Test support: admit the saved required encounter and defeat its actual guard. */

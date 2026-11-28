@@ -44,7 +44,7 @@ import {
   stepPhantomAllies,
 } from "./phantomAllies.ts";
 import { readPendingPhantomEncounter } from "./phantomRequiredPlans.ts";
-import { stationFormationClear } from "./stationPlacement.ts";
+import { stationFormationClear } from "./stations/formation/index.ts";
 import type { FlightEvent, FlightState, GalaxyProgress } from "./types.ts";
 function fixture(): PhantomContext {
   const progress: GalaxyProgress = {

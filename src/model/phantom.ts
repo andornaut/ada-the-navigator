@@ -42,7 +42,7 @@ import {
   type PhantomProgress,
   type PhantomSettlement,
 } from "./phantomState.ts";
-import { stationFormationClear } from "./stationPlacement.ts";
+import { stationFormationClear } from "./stations/formation/index.ts";
 import type {
   DialogueState,
   FlightEvent,

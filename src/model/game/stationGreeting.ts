@@ -9,9 +9,8 @@ import {
   stationKeeperPersonalName,
   worldStationKeeper,
 } from "../keepers.ts";
-import { stationDisplayName } from "../stationIdentity.ts";
-import { flightStationContext, HUB_STATION } from "../stations.ts";
-import { stationSpecialty } from "../stationServices.ts";
+import { stationSpecialty } from "../stations/commerce/index.ts";
+import { flightStationContext, HUB_STATION, stationDisplayName } from "../stations/index.ts";
 import type { GameState } from "../types.ts";
 
 export interface StationGreetingVisit {

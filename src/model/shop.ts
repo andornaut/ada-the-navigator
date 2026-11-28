@@ -12,10 +12,11 @@ import {
   STATION_RESTOCK_SECONDS,
   type StationOffer,
   type StationRestockVisit,
+  stationShopSeed,
+  type StationStockCategory,
   type StationStockEntry,
   type StationStockSlot,
-} from "./stationRestock.ts";
-import { stationShopSeed, type StationStockCategory } from "./stationServices.ts";
+} from "./stations/commerce/index.ts";
 import type { EconomyState } from "./types.ts";
 import { addPacks, addWeaponGrant, UPGRADE_WEAPONS } from "./weapons.ts";
 

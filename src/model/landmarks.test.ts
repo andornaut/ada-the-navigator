@@ -4,7 +4,7 @@ import { CONTENT } from "../data/content.ts";
 import { LANDMARK_GALAXIES } from "../data/jobs.ts";
 import { landmarkById, landmarkLabel, landmarkSites } from "./landmarks.ts";
 import { retainedLandmarkSites } from "./retainedLandmarks.ts";
-import { identityWords, stationWords } from "./stationIdentity.ts";
+import { identityWords, stationWords } from "./stations/index.ts";
 
 const label = (key: string) => CONTENT.labels[key] ?? "";
 

@@ -14,7 +14,7 @@ import {
   worldNearestOnCurrent,
 } from "./currents.ts";
 import { worldEngagementAdmissions, worldFitsEncounter } from "./spawner.ts";
-import { worldStationsNear } from "./stations.ts";
+import { worldStationsNear } from "./stations/index.ts";
 import type { SpaceObject } from "./types.ts";
 import { periodicWorldGrid, worldCellChance, wrappedDistance } from "./world/index.ts";
 const context = { worldSide: 1152000 };

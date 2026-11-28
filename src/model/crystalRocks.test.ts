@@ -14,7 +14,7 @@ import { ORE_FIELD_ROLE, oreFieldInCell } from "./oreFields.ts";
 import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
 import { planRegion, type SpawnPlacement } from "./spawnPlanner.ts";
 import { chunkSpawnRegion, spawnRules } from "./spawnTargets.ts";
-import { stationsNear } from "./stations.ts";
+import { stationsNear } from "./stations/index.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
 
 const SELECTION = ASTEROID_ART.crystals.selection;

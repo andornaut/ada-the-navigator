@@ -27,7 +27,7 @@ import {
   worldRecordObjectRemoval,
   worldSyncFlightRegion,
 } from "./geography.ts";
-import { flightStationContext, stationById, worldStationById } from "./stations.ts";
+import { flightStationContext, stationById, worldStationById } from "./stations/index.ts";
 import type { FlightState, GalaxyProgress, SpaceObject } from "./types.ts";
 import { flightWorldContext } from "./world/index.ts";
 

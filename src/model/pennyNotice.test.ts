@@ -10,7 +10,7 @@ import { ConversationDirector, type ConversationFacts, pennyPoints } from "./con
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { createFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { flightStationContext, worldStationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 
 const facts: ConversationFacts = {
   aimed: false,

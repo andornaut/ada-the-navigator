@@ -15,7 +15,7 @@ import {
   advanceStationRestock,
   newStationRestock,
   type StationRestockState,
-} from "./stationRestock.ts";
+} from "./stations/commerce/index.ts";
 
 function shop() {
   const { economy } = newGameState();

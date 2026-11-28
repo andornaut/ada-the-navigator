@@ -43,7 +43,7 @@ import {
 } from "./flight.ts";
 import { LATE_CHAPTER_ROUTES } from "./game/campaignState.ts";
 import { guideBeaconSlotAt, storyGuideBeaconSlot } from "./guideBeacons.ts";
-import { flightStationContext, worldStationById } from "./stations.ts";
+import { flightStationContext, worldStationById } from "./stations/index.ts";
 import type { DialogueState, FlightState, GalaxyProgress, UseAction, Vec } from "./types.ts";
 import { flightWorldContext } from "./world/index.ts";
 

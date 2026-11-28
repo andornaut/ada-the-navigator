@@ -45,7 +45,7 @@ import {
   stationsNear,
   worldStationById,
   worldStationsNear,
-} from "./stations.ts";
+} from "./stations/index.ts";
 import type { FlightState, HeldJob, Vec } from "./types.ts";
 import { noLevels, shipTuning } from "./upgrades.ts";
 import { worldDistance, wrapPoint } from "./world/index.ts";

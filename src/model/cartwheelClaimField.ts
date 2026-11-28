@@ -5,7 +5,7 @@ import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
 import { closestOnSegment } from "./convex.ts";
 import { ORE_FIELD_CLEAR_RADIUS, type OreField, worldOreFieldsNear } from "./oreFields.ts";
-import { type StationPlacementContext, worldStationsNear } from "./stations.ts";
+import { type StationPlacementContext, worldStationsNear } from "./stations/index.ts";
 import type { Vec } from "./types.ts";
 import { worldDistance, worldPoint } from "./world/index.ts";
 

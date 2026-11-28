@@ -14,7 +14,7 @@ import { enemyHull } from "./enemyBody.ts";
 import { ensureDestination, ensureStation, stepFlight } from "./flight.ts";
 import { GameModel, newGameState } from "./game.ts";
 import { activateFlightRegion } from "./geography.ts";
-import { flightStationContext, worldStationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

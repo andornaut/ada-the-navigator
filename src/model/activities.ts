@@ -11,8 +11,7 @@ import { NEEDLE } from "../data/needle.ts";
 import { questReward } from "../data/questRewards.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
-import { settlementById } from "./legacySettlements.ts";
-import { stationById, type StationSite } from "./stations.ts";
+import { settlementById, stationById, type StationSite } from "./stations/index.ts";
 import type {
   CourierApproach,
   GalaxyProgress,

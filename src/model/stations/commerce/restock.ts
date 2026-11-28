@@ -1,6 +1,6 @@
-import type { GalaxyNumber } from "../data/types.ts";
-import type { ShopItem, ShopRow } from "./shop.ts";
-import type { StationStockCategory } from "./stationServices.ts";
+import type { GalaxyNumber } from "../../../data/types.ts";
+import type { ShopItem, ShopRow } from "../../shop.ts";
+import type { StationStockCategory } from "./services.ts";
 
 export const STATION_RESTOCK_SECONDS = 300;
 

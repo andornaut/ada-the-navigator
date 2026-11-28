@@ -12,7 +12,7 @@ import { createFlight, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { oreFieldInCell } from "./oreFields.ts";
-import { stationsNear } from "./stations.ts";
+import { stationsNear } from "./stations/index.ts";
 import type { SpaceObject } from "./types.ts";
 
 const PLACEHOLDERS = [4, 5, 6] as const satisfies readonly GalaxyNumber[];

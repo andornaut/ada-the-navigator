@@ -13,7 +13,7 @@ import { questReward } from "../data/questRewards.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { dropRandom } from "./drops.ts";
 import { type LandmarkSite, landmarkSites } from "./landmarks.ts";
-import { stationById, type StationSite } from "./stations.ts";
+import { stationById, type StationSite } from "./stations/index.ts";
 import type {
   GalaxyProgress,
   GameState,

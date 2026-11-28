@@ -11,7 +11,7 @@ import { createUnpopulatedFlight, stepFlight } from "./flight.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
 import { worldOreFieldInCell, worldOreFieldsNear } from "./oreFields.ts";
 import { retaliatorAsteroidQuery } from "./retaliatorAsteroids.ts";
-import { worldStationsNear } from "./stations.ts";
+import { worldStationsNear } from "./stations/index.ts";
 import type { SpaceObject, Vec } from "./types.ts";
 import {
   flightWorldContext,

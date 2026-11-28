@@ -14,7 +14,7 @@ import { GameModel } from "./game.ts";
 import { flightLandmarkSites, landmarkLabel } from "./landmarks.ts";
 import type { QuestEntry } from "./questDetails.ts";
 import { questsForObject, taskMarkerCategory } from "./questObjectLinks.ts";
-import { flightStationContext, HUB_STATION, worldStationsNear } from "./stations.ts";
+import { flightStationContext, HUB_STATION, worldStationsNear } from "./stations/index.ts";
 import type { HeldJob } from "./types.ts";
 import { flightWorldContext, worldDistance } from "./world/index.ts";
 

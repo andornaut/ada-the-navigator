@@ -8,8 +8,8 @@ import { dropRandom, enemyStardust, rollEnemyDrop } from "./drops.ts";
 import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { type BoardContext, type JobBook, rerollBoards, stationBoard } from "./jobs.ts";
-import { flightStationContext, stationsNear, worldStationsNear } from "./stations.ts";
-import { stationSpecialty } from "./stationServices.ts";
+import { stationSpecialty } from "./stations/commerce/index.ts";
+import { flightStationContext, stationsNear, worldStationsNear } from "./stations/index.ts";
 import type { JobOffer } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

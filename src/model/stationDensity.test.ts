@@ -8,9 +8,9 @@ import { supportEntropy } from "../testing/launchSeeds.ts";
 import { settlementById, settlementsNear } from "./andromedaPlaces.ts";
 import { ensureDestination, ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { retainedSettlementWithin } from "./legacySettlements.ts";
 import {
   flightStationContext,
+  retainedSettlementWithin,
   stationById,
   stationsNear,
   worldInfillStationInCell,
@@ -18,7 +18,7 @@ import {
   worldStationById,
   worldStationInCell,
   worldStationsNear,
-} from "./stations.ts";
+} from "./stations/index.ts";
 import { periodicWorldGrid, worldCellAt, worldCellCenter, wrappedDistance } from "./world/index.ts";
 
 describe("additive station density", () => {

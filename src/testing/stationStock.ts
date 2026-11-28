@@ -6,8 +6,8 @@ import type { GalaxyNumber } from "../data/types.ts";
 import { createUnpopulatedFlight } from "../model/flight.ts";
 import { freshGalaxyGeography } from "../model/galaxyGeography.ts";
 import { GameModel } from "../model/game.ts";
-import { stationsNear } from "../model/stations.ts";
-import { type StationService, stationSpecialty } from "../model/stationServices.ts";
+import { type StationService, stationSpecialty } from "../model/stations/commerce/index.ts";
+import { stationsNear } from "../model/stations/index.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "./launchSeeds.ts";
 export function dockedStock(galaxy: GalaxyNumber = 1, specialty: StationService = "weaponsAmmo") {

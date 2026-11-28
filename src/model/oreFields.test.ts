@@ -21,7 +21,7 @@ import {
   oreFieldsNear,
   worldOreFieldInCell,
 } from "./oreFields.ts";
-import { stationsNear } from "./stations.ts";
+import { stationsNear } from "./stations/index.ts";
 
 const grid = (galaxy: 1 | 2 | 3, span: number): OreField[] => {
   const fields: OreField[] = [];

@@ -8,7 +8,7 @@ import { relaunch, supportEntropy } from "../testing/launch.ts";
 import type { ExchangePreview, ExchangeQuote } from "./exchange.ts";
 import { ensureDestination, ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { flightStationContext, worldStationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 
 function quote(preview: ExchangePreview): ExchangeQuote {
   expect(preview.kind).toBe("quote");

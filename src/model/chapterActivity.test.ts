@@ -10,7 +10,7 @@ import { courierScoutTarget } from "./courierRun.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { ensureDestination } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { retainedSettlementsNear } from "./legacySettlements.ts";
+import { retainedSettlementsNear } from "./stations/index.ts";
 import type { HeldActivity, Vec } from "./types.ts";
 import { flightWorldContext, worldDelta, worldDistance } from "./world/index.ts";
 

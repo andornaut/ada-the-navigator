@@ -17,7 +17,7 @@ import {
   type StationSite,
   stationsNear,
   worldStationById,
-} from "./stations.ts";
+} from "./stations/index.ts";
 import type { FlightInput, FlightState, Vec } from "./types.ts";
 
 const idle: FlightInput = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

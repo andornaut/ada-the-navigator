@@ -10,7 +10,7 @@ import { CARTWHEEL_CLAIM_SEARCH_RADIUS, selectCartwheelClaimField } from "./cart
 import { GameModel } from "./game.ts";
 import { ORE_FIELD_ROLE, worldOreFieldsNear } from "./oreFields.ts";
 import { readRequiredRolePlan } from "./requiredRolePlans.ts";
-import { flightStationContext, worldStationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 import { worldDistance } from "./world/index.ts";
 
 function launchCartwheel(hubPoint?: { x: number; y: number }) {

@@ -9,7 +9,7 @@ import { visitCartwheelHubFixture } from "../testing/cartwheelFixture.ts";
 import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
 import { ensureDestination } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { HUB_STATION } from "./stations.ts";
+import { HUB_STATION } from "./stations/index.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 

@@ -4,7 +4,7 @@ import type { Vec } from "../data/types.ts";
 import type { CapitalBossProgress } from "./capitalBossEncounter.ts";
 import type { ChapterContext } from "./chapterProtocol.ts";
 import { questGuardPlacementContext } from "./flight.ts";
-import type { StationPlacementContext } from "./stationPlacement.ts";
+import type { StationPlacementContext } from "./stations/formation/index.ts";
 import type { FlightEvent } from "./types.ts";
 
 export { ANDROMEDA_REDACT };

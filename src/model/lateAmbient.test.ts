@@ -13,7 +13,7 @@ import { ConversationDirector } from "./conversations.ts";
 import { GameModel } from "./game.ts";
 import { flightLandmarkSites } from "./landmarks.ts";
 import { lateEncounterCue } from "./lateEncounter.ts";
-import { flightStationContext, worldStationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 import type { Vec } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

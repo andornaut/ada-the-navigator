@@ -9,8 +9,8 @@ import { completeCartwheelHubIntroductionFixture } from "../testing/cartwheelFix
 import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
 import { beginArrivalGrace, ensureDestination, stepFlight } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { stationsNear } from "./stations.ts";
-import { stationSpecialty } from "./stationServices.ts";
+import { stationSpecialty } from "./stations/commerce/index.ts";
+import { stationsNear } from "./stations/index.ts";
 import type { FlightState } from "./types.ts";
 import { collectWeapon } from "./weapons.ts";
 

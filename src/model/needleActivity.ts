@@ -8,7 +8,7 @@ import { questGuardPlacementContext, spawnChapterEnemy } from "./flight.ts";
 import { worldRecordObjectRemoval } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { inNeedleChannel, needleCourses } from "./needle.ts";
-import { stationFormationClear } from "./stationPlacement.ts";
+import { stationFormationClear } from "./stations/formation/index.ts";
 import type { FlightState, SpaceObject } from "./types.ts";
 import { flightWorldContext, worldDistance, worldPoint, wrapPoint } from "./world/index.ts";
 

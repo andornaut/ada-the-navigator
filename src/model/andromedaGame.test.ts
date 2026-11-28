@@ -39,8 +39,7 @@ import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { flightLandmarkSites } from "./landmarks.ts";
-import { stationDisplayName } from "./stationIdentity.ts";
-import { flightStationContext, worldStationById } from "./stations.ts";
+import { flightStationContext, stationDisplayName, worldStationById } from "./stations/index.ts";
 import { flightWorldContext, worldDelta, worldDistance, worldPoint } from "./world/index.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

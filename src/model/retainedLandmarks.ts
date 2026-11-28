@@ -8,7 +8,7 @@ import {
 } from "../data/jobs.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { dropRandom } from "./drops.ts";
-import { worldLegacyStationsNear } from "./legacyStations.ts";
+import { worldLegacyStationsNear } from "./stations/primary/index.ts";
 import type { Vec } from "./types.ts";
 
 // Each galaxy's landmarks (gameplay/quests.md "Landmarks"): nebulae, wrecks and beacons placed by

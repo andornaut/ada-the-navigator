@@ -9,7 +9,7 @@ import { completeActivity, validActivity } from "./activities.ts";
 import { GameModel } from "./game.ts";
 import { type BoardContext, completeJob, stationBoard } from "./jobs.ts";
 import { landmarkSites } from "./landmarks.ts";
-import { stationsNear } from "./stations.ts";
+import { stationsNear } from "./stations/index.ts";
 import type { HeldJob } from "./types.ts";
 
 const context: BoardContext = {

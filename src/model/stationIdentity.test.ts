@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { stationDisplayName, stationWords } from "./stationIdentity.ts";
+import { stationDisplayName, stationWords } from "./stations/index.ts";
 
 describe("procedural station identity labels", () => {
   it.each([

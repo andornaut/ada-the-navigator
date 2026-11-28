@@ -1,5 +1,5 @@
 import type { GameContent } from "../../data/types.ts";
-import { HUB_STATION } from "../stations.ts";
+import { HUB_STATION } from "../stations/index.ts";
 import type { FlightState } from "../types.ts";
 import { flightWorldContext, worldDistance } from "../world/index.ts";
 import { beginArrivalGrace } from "./lifecycle.ts";

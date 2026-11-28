@@ -2,7 +2,7 @@ import type { EncounterCue } from "../data/conversations.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
 import { settlementsNear } from "./andromedaPlaces.ts";
 import { onScreen } from "./conversations.ts";
-import { flightStationContext, worldStationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 import type { FlightState } from "./types.ts";
 
 /** Only the visible teacher, a mounted station or a verified settlement identifies its people. */

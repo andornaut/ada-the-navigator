@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
-import { stationDistance } from "./legacyStations.ts";
 import {
   type StationPlacementContext,
   worldInfillStationInCell,
   worldLegacyStationsNear,
   worldStationsNear,
-} from "./stations.ts";
+} from "./stations/index.ts";
+import { stationDistance } from "./stations/primary/index.ts";
 import type { Vec } from "./types.ts";
 import { periodicWorldGrid, worldCellOrigin, worldCellsNear } from "./world/index.ts";
 

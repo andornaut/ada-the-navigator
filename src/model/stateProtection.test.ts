@@ -26,7 +26,7 @@ import { worldRecordObjectRemoval, worldSyncFlightRegion } from "./geography.ts"
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { readRequiredPlan } from "./requiredEncounterPlans.ts";
 import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
-import { flightStationContext, type StationSite, worldStationInCell } from "./stations.ts";
+import { flightStationContext, type StationSite, worldStationInCell } from "./stations/index.ts";
 import type { FlightInput, FlightState, SpaceObject, Vec } from "./types.ts";
 import { flightWorldContext } from "./world/index.ts";
 

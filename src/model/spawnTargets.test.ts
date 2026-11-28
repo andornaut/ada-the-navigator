@@ -31,7 +31,7 @@ import {
   worldSpawnExclusions,
   worldSpawnSites,
 } from "./spawnTargets.ts";
-import { worldStationsNear } from "./stations.ts";
+import { worldStationsNear } from "./stations/index.ts";
 import type { Vec } from "./types.ts";
 import {
   periodicWorldGrid,

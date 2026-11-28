@@ -9,7 +9,7 @@ import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy, stepDebris, stepEnemy } from "./ai/index.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { GameModel } from "./game.ts";
-import { stationsNear } from "./stations.ts";
+import { stationsNear } from "./stations/index.ts";
 import type { FlightState, GameState, PickupRelease, SpaceObject } from "./types.ts";
 
 describe("save boundary", () => {

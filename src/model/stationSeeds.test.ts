@@ -8,8 +8,8 @@ import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { flightStationContext, worldStationsNear } from "./stations.ts";
-import { stationSpecialty } from "./stationServices.ts";
+import { stationSpecialty } from "./stations/commerce/index.ts";
+import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 
 /** A flight docked at the nearest seeded station offering jobs. */
 function dockedIn(galaxy: GalaxyNumber): GameModel {

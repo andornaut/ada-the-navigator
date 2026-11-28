@@ -2,7 +2,7 @@ import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { worldStationIndicatorTarget } from "./stations.ts";
+import { worldStationIndicatorTarget } from "./stations/index.ts";
 import type { FlightState, GalaxyProgress } from "./types.ts";
 import { nearestImage } from "./world/index.ts";
 

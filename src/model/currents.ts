@@ -2,7 +2,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { CURRENTS } from "../data/galaxyFeatures.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
-import { worldStationsNear } from "./stations.ts";
+import { worldStationsNear } from "./stations/index.ts";
 import type { Vec } from "./types.ts";
 import {
   nearestImage,

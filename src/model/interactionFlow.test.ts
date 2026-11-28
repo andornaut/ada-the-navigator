@@ -15,7 +15,7 @@ import { activateRequiredRoute, ensureDestination, ensureStation } from "./fligh
 import { hit } from "./flight/hitResolution.ts";
 import { GameModel } from "./game.ts";
 import { worldRecordObjectRemoval } from "./geography.ts";
-import { flightStationContext, worldStationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 import type { FlightState } from "./types.ts";
 import { flightWorldContext } from "./world/index.ts";
 

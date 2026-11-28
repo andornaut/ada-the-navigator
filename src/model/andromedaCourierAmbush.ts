@@ -20,11 +20,10 @@ import { closestOnSegment } from "./convex.ts";
 import { rollEnemyWeaponLevel } from "./enemyEquipment.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { hostileStationContext } from "./hostileStations/placement.ts";
-import { settlementById } from "./legacySettlements.ts";
 import { SPAWN_GAP, worldFitsEncounter, worldSpawnerStage } from "./spawner.ts";
 import type { ExclusionZone } from "./spawnPlanner.ts";
-import { stationFormationClear, type StationPlacementContext } from "./stationPlacement.ts";
-import { flightStationContext, worldStationById } from "./stations.ts";
+import { stationFormationClear, type StationPlacementContext } from "./stations/formation/index.ts";
+import { flightStationContext, settlementById, worldStationById } from "./stations/index.ts";
 import type { FlightState, GalaxyProgress, SpaceObject } from "./types.ts";
 import {
   flightEncounterSeed,

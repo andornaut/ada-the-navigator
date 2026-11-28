@@ -2,7 +2,10 @@ import { ROUTE_POSITION } from "../../data/galaxies.ts";
 import { PHANTOM_TUNING } from "../../data/phantom.ts";
 import { type Parts, partsReach, worldParts } from "../convex.ts";
 import { enemyPhysicalBody } from "../enemyBody.ts";
-import { stationFormationClear, type StationPlacementContext } from "../stationPlacement.ts";
+import {
+  stationFormationClear,
+  type StationPlacementContext,
+} from "../stations/formation/index.ts";
 import type { SpaceObject, Vec } from "../types.ts";
 import { flightWorldContext, worldDelta, worldDistance, wrapPoint } from "../world/index.ts";
 import { placementOutlinesOverlap } from "./overlap.ts";

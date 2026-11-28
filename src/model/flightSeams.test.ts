@@ -22,7 +22,7 @@ import {
   stepFlight,
 } from "./flight.ts";
 import { pickupOutline } from "./pickupBody.ts";
-import { flightStationContext, worldStationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 import type { FlightInput, SpaceObject, Vec } from "./types.ts";
 import {
   flightWorldContext,

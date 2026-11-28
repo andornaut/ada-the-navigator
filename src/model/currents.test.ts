@@ -16,7 +16,7 @@ import {
   streakFrame,
 } from "./currents.ts";
 import { createFlight, ensureDestination, stepFlight } from "./flight.ts";
-import { stationsNear } from "./stations.ts";
+import { stationsNear } from "./stations/index.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };

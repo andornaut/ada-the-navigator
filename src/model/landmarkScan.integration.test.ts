@@ -7,8 +7,8 @@ import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { GameModel } from "./game.ts";
 import { landmarkSites } from "./landmarks.ts";
-import { flightStationContext, worldStationsNear } from "./stations.ts";
-import { stationSpecialty } from "./stationServices.ts";
+import { stationSpecialty } from "./stations/commerce/index.ts";
+import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 function fixture() {

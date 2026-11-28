@@ -48,7 +48,7 @@ import {
   type SpawnRules,
   type SpawnShape,
 } from "./spawnPlanner.ts";
-import { worldStationsNear } from "./stations.ts";
+import { worldStationsNear } from "./stations/index.ts";
 import type { Vec } from "./types.ts";
 import { type WorldCellContext, wrappedDistance } from "./world/index.ts";
 

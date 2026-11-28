@@ -4,7 +4,11 @@ import type { JobType, LandmarkKind } from "../data/jobs.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import type { TaskCategory } from "../data/taskCategories.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { type StationPlacementContext, worldStationById, worldStationsNear } from "./stations.ts";
+import {
+  type StationPlacementContext,
+  worldStationById,
+  worldStationsNear,
+} from "./stations/index.ts";
 import type { FlightState, Vec } from "./types.ts";
 import { chunkCoordinates } from "./visited.ts";
 

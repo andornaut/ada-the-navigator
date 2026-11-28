@@ -5,7 +5,7 @@ import type { IndicatorTarget } from "../indicators.ts";
 import { nearestWorldSafePlace } from "../jobs.ts";
 import { landmarkById, type LandmarkSite } from "../landmarks.ts";
 import type { MapContext } from "../map.ts";
-import { flightStationContext, worldStationById } from "../stations.ts";
+import { flightStationContext, worldStationById } from "../stations/index.ts";
 import type { FlightState, GameState, HeldJob, JobTarget, Vec } from "../types.ts";
 import { flightWorldContext, worldDistance } from "../world/index.ts";
 

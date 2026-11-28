@@ -1,14 +1,14 @@
-import type { EconomyCatalog } from "../data/economy.ts";
-import { LANDMARK_TUNING } from "../data/jobs.ts";
+import type { EconomyCatalog } from "../../data/economy.ts";
+import { LANDMARK_TUNING } from "../../data/jobs.ts";
+import { retainedLandmarkSites as landmarkSites } from "../retainedLandmarks.ts";
+import type { Vec } from "../types.ts";
+import { type WorldCellContext, wrapPoint } from "../world/index.ts";
 import {
   stationDistance as distance,
   type StationSite,
   worldLegacyStationById,
   worldLegacyStationsNear,
-} from "./legacyStations.ts";
-import { retainedLandmarkSites as landmarkSites } from "./retainedLandmarks.ts";
-import type { Vec } from "./types.ts";
-import { type WorldCellContext, wrapPoint } from "./world/index.ts";
+} from "./primary/index.ts";
 
 /** Settlements use the seeded habitat grid, shifted half a cell and clear of real stations. */
 export function worldSettlementById(

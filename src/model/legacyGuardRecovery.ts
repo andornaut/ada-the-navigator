@@ -2,7 +2,7 @@ import { liveEnemy, retainQuestGuardRecovery } from "./geography.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { legacyGuardHomeUpdates } from "./legacyGuardHomes.ts";
 import { questGuardHomePorts } from "./questGuardPlacement.ts";
-import type { StationPlacementContext } from "./stationPlacement.ts";
+import type { StationPlacementContext } from "./stations/formation/index.ts";
 import { flightWorldContext } from "./world/index.ts";
 
 /** Repair existing homes and activate only their surviving authoritative formation members. */

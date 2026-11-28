@@ -9,8 +9,8 @@ import { relaunch, supportEntropy } from "../testing/launch.ts";
 import { ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { landmarkById, landmarkLabel, landmarkSites } from "./landmarks.ts";
-import { flightStationContext, worldStationsNear } from "./stations.ts";
-import { stationSpecialty } from "./stationServices.ts";
+import { stationSpecialty } from "./stations/commerce/index.ts";
+import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 
 function fixture() {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);

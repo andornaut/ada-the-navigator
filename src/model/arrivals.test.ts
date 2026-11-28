@@ -9,7 +9,7 @@ import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { createEnemy } from "./ai/index.ts";
 import { createFlight, ensureDestination, ensureStation, stepFlight, teleport } from "./flight.ts";
 import { GameModel } from "./game.ts";
-import { stationsNear } from "./stations.ts";
+import { stationsNear } from "./stations/index.ts";
 import type { FlightState, GalaxyProgress, SpaceObject, Vec } from "./types.ts";
 
 const calm = CONTENT.tuning.flight.arrivalCalm;

@@ -9,7 +9,7 @@ import {
   settlementsNear,
 } from "./andromedaPlaces.ts";
 import { landmarkSites } from "./landmarks.ts";
-import { stationById, stationsNear } from "./stations.ts";
+import { stationById, stationsNear } from "./stations/index.ts";
 
 const distance = (a: { x: number; y: number }, b: { x: number; y: number }) =>
   Math.hypot(a.x - b.x, a.y - b.y);

@@ -22,8 +22,8 @@ import {
   revealWorldChange,
   worldChanges,
 } from "./projects.ts";
-import { flightStationContext, worldStationsNear } from "./stations.ts";
-import { stationSpecialty } from "./stationServices.ts";
+import { stationSpecialty } from "./stations/commerce/index.ts";
+import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 
 // Gameplay's economy doc, with its line wrapping undone.
 const ECONOMY_DOC = readFileSync(new URL("../../gameplay/economy.md", import.meta.url), "utf8");

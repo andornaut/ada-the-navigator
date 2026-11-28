@@ -1,7 +1,6 @@
 import { ECONOMY } from "../data/economy.ts";
 import type { Vec } from "../data/types.ts";
-import { settlementById } from "./legacySettlements.ts";
-import { namesSavedStation } from "./stations.ts";
+import { namesSavedStation, settlementById } from "./stations/index.ts";
 
 export const PATH_HALF_WIDTH = 100;
 export const FIRST_RELEASE = 3;

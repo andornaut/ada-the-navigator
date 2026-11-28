@@ -1,6 +1,6 @@
-import type { EconomyCatalog } from "../data/economy.ts";
-import type { GalaxyNumber } from "../data/types.ts";
-import type { Vec } from "./types.ts";
+import type { EconomyCatalog } from "../../../data/economy.ts";
+import type { GalaxyNumber } from "../../../data/types.ts";
+import type { Vec } from "../../types.ts";
 import {
   periodicWorldGrid,
   worldCell,
@@ -9,7 +9,7 @@ import {
   worldCellOrigin,
   worldCellsNear,
   wrappedDistance,
-} from "./world/index.ts";
+} from "../../world/index.ts";
 
 export const stationDistance = (context: WorldCellContext, a: Vec, b: Vec): number =>
   context.worldSide === undefined

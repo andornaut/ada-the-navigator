@@ -15,7 +15,7 @@ import {
   worldStationInCell,
   worldStationIndicatorTarget,
   worldStationsNear,
-} from "./stations.ts";
+} from "./stations/index.ts";
 import { wrappedDistance } from "./world/index.ts";
 
 const context = { worldSide: 1152000 };

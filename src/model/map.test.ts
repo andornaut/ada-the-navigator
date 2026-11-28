@@ -32,7 +32,7 @@ import {
   stationsNear,
   worldStationById,
   worldStationInCell,
-} from "./stations.ts";
+} from "./stations/index.ts";
 import type { GameState } from "./types.ts";
 
 // A first flight in galaxy one with nothing discovered.

@@ -9,8 +9,8 @@ import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { supportEntropy } from "../testing/launch.ts";
 import { GameModel } from "./game.ts";
 import { type ShopItem, shopRowState } from "./shop.ts";
-import { flightStationContext, type StationSite, worldStationsNear } from "./stations.ts";
-import { stationSpecialty } from "./stationServices.ts";
+import { stationSpecialty } from "./stations/commerce/index.ts";
+import { flightStationContext, type StationSite, worldStationsNear } from "./stations/index.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 

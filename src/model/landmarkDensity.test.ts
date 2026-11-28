@@ -20,10 +20,9 @@ import {
   landmarkLabel,
   landmarkSites,
 } from "./landmarks.ts";
-import { settlementsNear } from "./legacySettlements.ts";
 import { worldOreFieldsNear } from "./oreFields.ts";
 import { retainedLandmarkSites } from "./retainedLandmarks.ts";
-import { stationById, stationsNear } from "./stations.ts";
+import { settlementsNear, stationById, stationsNear } from "./stations/index.ts";
 import type { SpaceObject } from "./types.ts";
 
 const label = (key: string) => CONTENT.labels[key] ?? "";

@@ -40,7 +40,7 @@ import { NEEDLE_ACTIVITY_TARGET } from "./needleActivity.ts";
 import { isNeedleRim, needleRimContact } from "./needleFlight.ts";
 import { NEEDLE_CADENCE, needleTrackedObjective } from "./needleRuntime.ts";
 import { shipBody } from "./shipBody.ts";
-import { stationsNear } from "./stations.ts";
+import { stationsNear } from "./stations/index.ts";
 import {
   flightWorldContext,
   worldDelta,

@@ -37,7 +37,7 @@ import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { needleCourses } from "./needle.ts";
 import { rememberRequiredSite } from "./requiredEncounterPlans.ts";
 import { readRequiredRolePlan } from "./requiredRolePlans.ts";
-import { flightStationContext } from "./stations.ts";
+import { flightStationContext } from "./stations/index.ts";
 import type { FlightState } from "./types.ts";
 import { collectWeapon } from "./weapons.ts";
 import { flightWorldContext } from "./world/index.ts";

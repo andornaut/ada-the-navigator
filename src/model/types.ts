@@ -22,7 +22,7 @@ import type { EnemyBeam } from "./flight/enemyBeams.ts";
 import type { NeedleChapterProgress, NeedleFlight } from "./needleState.ts";
 import type { PhantomFlight, PhantomProgress } from "./phantomState.ts";
 import type { ProjectileFade } from "./playerProjectiles.ts";
-import type { StationRestockState } from "./stationRestock.ts";
+import type { StationRestockState } from "./stations/commerce/index.ts";
 import type { StoryCursor } from "./storyCursor.ts";
 import type { StorySceneState } from "./storyShips.ts";
 import type { TargetKnowledgeRecord } from "./targetMarkers.ts";

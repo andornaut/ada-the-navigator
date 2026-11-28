@@ -20,8 +20,8 @@ import { stationPopulationObjects } from "./hostileStations/index.ts";
 import { jobHostiles, rerollBoards } from "./jobs.ts";
 import { proceduralPoisNear } from "./proceduralPois.ts";
 import { scanOutcomeLines } from "./scanOutcomeSpeech.ts";
-import { flightStationContext, worldStationsNear } from "./stations.ts";
-import { stationSpecialty } from "./stationServices.ts";
+import { stationSpecialty } from "./stations/commerce/index.ts";
+import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 import type { FlightState, SpaceObject, Vec } from "./types.ts";
 import {
   flightWorldContext,

@@ -1,6 +1,6 @@
-import type { GameContent } from "../data/types.ts";
-import { exclusionZoneRadius } from "./exclusionZones.ts";
-import type { FlightState, SpaceObject, Vec } from "./types.ts";
+import type { GameContent } from "../../data/types.ts";
+import { exclusionZoneRadius } from "../exclusionZones.ts";
+import type { FlightState, SpaceObject, Vec } from "../types.ts";
 
 export type StationGuardSite =
   | { readonly status: "removed" | "unresolved" }

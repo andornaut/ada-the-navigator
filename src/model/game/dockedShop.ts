@@ -8,12 +8,12 @@ import {
   stationStock,
   stationStocks,
 } from "../shop.ts";
-import { HUB_STATION } from "../stations.ts";
 import {
   type StationServices,
   stationShopCategories,
   type StationStockCategory,
-} from "../stationServices.ts";
+} from "../stations/commerce/index.ts";
+import { HUB_STATION } from "../stations/index.ts";
 import type { EconomyState, GameState } from "../types.ts";
 
 type DockedShopState = Readonly<

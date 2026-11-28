@@ -31,7 +31,7 @@ import { stardustPickupReach } from "./pickupBody.ts";
 import { ambientSecondThread } from "./poiDiscourse.ts";
 import { retainedLandmarkSites } from "./retainedLandmarks.ts";
 import { discoveryStardustId } from "./stardustPlacement.ts";
-import { flightStationContext, worldStationsNear } from "./stations.ts";
+import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 import { flightWorldContext } from "./world/index.ts";
 
 const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
