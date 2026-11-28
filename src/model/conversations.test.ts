@@ -163,6 +163,53 @@ describe("Phantom flight chatter", () => {
 });
 
 describe("conversation schedule", () => {
+  it("starts chapter arrival ahead of interrupted lore after a refusal, a warning, and a scan", () => {
+    const heard: string[] = [];
+    const talk = new ConversationDirector([], heard, inOrder);
+    talk.beginFlight(5);
+    const line = { speaker: "astra", text: "Ordinary station lore." } as const;
+    talk.poiArrival("station", line, {});
+    run(talk, 0.05);
+    expect(talk.showing?.line).toEqual(line);
+
+    const site = { id: "guide", name: "Guide Light", symbol: "beacon" } as const;
+    talk.scanOutcome({
+      completions: [],
+      galaxy: 5,
+      source: "scan",
+      target: site,
+      targetId: site.id,
+    });
+    run(talk, 0.1);
+    const receipt = talk.showing;
+    expect(receipt?.line.text).toBe("Scan complete: Guide Light.");
+    const onceId = "chapter:andromeda:arrival:approach";
+    const arrival = { speaker: "settler", text: "Wick's arrival guidance." } as const;
+    talk.poiArrival("station", arrival, { chapterArrival: true, onceId });
+    talk.encounterCue("courier", { speaker: "astra", text: "Fighters ahead." }, () => true);
+
+    talk.step(0.05, "refusal", calm);
+    expect(talk.showsOver("refusal")).toBe(false);
+    expect(talk.showing?.elapsed).toBe(receipt?.elapsed);
+    expect(heard).not.toContain(onceId);
+    run(talk, 0.05);
+    expect(talk.showing?.line.text).toBe("Fighters ahead.");
+    expect(talk.warningShowing).toBe(true);
+    expect(heard).not.toContain(onceId);
+    talk.skip();
+    run(talk, 0.05);
+    expect(talk.showing).toMatchObject({ elapsed: receipt!.elapsed + 0.05, line: receipt!.line });
+
+    talk.skip();
+    run(talk, 0.05);
+    expect(talk.showing?.line).toEqual(arrival);
+    expect(talk.warningShowing).toBe(false);
+    expect(heard.filter((id) => id === onceId)).toHaveLength(1);
+    talk.skip();
+    run(talk, 0.05);
+    expect(talk.showing?.line).toEqual(line);
+  });
+
   it("dwells and fades a one-line discovery on the same flight clock", () => {
     const mapped = CONVERSATIONS.find(({ trigger }) => trigger.kind === "mapped")!;
     const single = { ...mapped, lines: mapped.lines.slice(0, 1) };

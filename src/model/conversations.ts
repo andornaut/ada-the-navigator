@@ -161,7 +161,7 @@ interface Request {
   readonly onFirstShowing?: () => void;
   /** Penny's point of interest; one waits at a time. */
   readonly point?: string;
-  readonly optional?: "reaction" | "approach" | "ambient";
+  readonly optional?: "reaction" | "approach" | "ambient" | "chapterArrival";
   readonly relevant?: () => boolean;
   /** Where an interrupted conversation resumes. */
   readonly resume?: { readonly elapsed: number; readonly exposed: boolean; readonly line: number };
@@ -180,6 +180,9 @@ interface Active extends Request {
 
 /** A request's place in BOX_PRIORITIES, highest first. */
 const rank = (request: Pick<Request, "conversation" | "notice" | "optional" | "timedWarning">) => {
+  if (request.optional === "chapterArrival") {
+    return BOX_PRIORITIES.indexOf("notice") + 0.5;
+  }
   const base = BOX_PRIORITIES.indexOf(request.notice ? "notice" : request.conversation.priority);
   const optional =
     request.optional === "approach" ? 0.25 : request.optional === "ambient" ? 0.5 : 0;
@@ -691,16 +694,22 @@ export class ConversationDirector {
     return true;
   }
 
-  /** An arrival is lore. A supplied onceId is saved only when the line first shows. */
+  /**
+   * A supplied onceId is saved only when the line first shows. Explicit chapter guidance
+   * waits for notices and warnings, then speaks ahead of other chatter without a cooldown.
+   */
   poiArrival(
     instance: string,
     line: ConversationLine,
     {
+      chapterArrival,
       onceId,
       ...presentation
-    }: Pick<Request, "onFirstShowing" | "relevant"> & {
-      readonly onceId?: string;
-    },
+    }: Pick<Request, "onFirstShowing" | "relevant"> &
+      (
+        | { readonly chapterArrival?: never; readonly onceId?: string }
+        | { readonly chapterArrival: true; readonly onceId: string }
+      ),
   ): void {
     if (this.galaxy === null) {
       return;
@@ -716,7 +725,7 @@ export class ConversationDirector {
       },
       holds: always,
       instance: id,
-      optional: "approach",
+      optional: chapterArrival ? "chapterArrival" : "approach",
       ...presentation,
     });
   }
@@ -1119,8 +1128,8 @@ export class ConversationDirector {
 
   /**
    * The highest waiting request interrupts a lower one showing, which waits to resume. With
-   * nothing showing, an interrupted one resumes at once, a warning starts at once, and any other
-   * waits out the cooldown.
+   * nothing showing, an interrupted line, a warning, a notice or chapter arrival guidance can
+   * start without waiting for ordinary chatter's cooldown.
    */
   private schedule(facts: ConversationFacts): void {
     this.queue = this.queue.filter((request) => this.valid(facts, request));
@@ -1141,6 +1150,7 @@ export class ConversationDirector {
     if (
       next.resume !== undefined ||
       next.optional === "reaction" ||
+      next.optional === "chapterArrival" ||
       rank(next) <= BOX_PRIORITIES.indexOf("notice") ||
       this.cooldown <= EPSILON
     ) {

@@ -4468,6 +4468,7 @@ export class GameModel {
       const arrival = runtime?.afterStep?.(context, dt, previousChapterPosition, events);
       if (arrival) {
         this.talk.poiArrival(arrival.place, arrival.line, {
+          chapterArrival: true,
           onFirstShowing: () => this.coverPoiArrival(f, arrival.place),
           onceId: arrival.id,
           relevant: () =>
