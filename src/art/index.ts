@@ -23,8 +23,8 @@ export {
   playDepth,
   rockArt,
 } from "./asteroidArt.ts";
-export { BAND_AREA, paintBand, readBackdropBand } from "./backdropBand.ts";
-export { type BackdropHaze, readBackdropHaze } from "./backdropHaze.ts";
+export { BAND_AREA, paintBand, readBackdropBand } from "./background/backdropBand.ts";
+export { type BackdropHaze, readBackdropHaze } from "./background/backdropHaze.ts";
 export {
   type BackdropRules,
   clusterReach,
@@ -44,7 +44,9 @@ export {
   viewPlates,
   viewStars,
   viewStreaks,
-} from "./backdropLayers.ts";
+} from "./background/backdropLayers.ts";
+export { decorationRasterSize, viewDecorations } from "./background/rareDecorations.ts";
+export { SPECK_RADIUS, speckField } from "./background/speckField.ts";
 export {
   type CartwheelAsset,
   craftArt,
@@ -266,7 +268,6 @@ export {
   tunnelScale,
   warpPoseSize,
 } from "./quantumJump.ts";
-export { decorationRasterSize, viewDecorations } from "./rareDecorations.ts";
 export { RockFrames } from "./rockFrames.ts";
 export {
   type GalaxyMapArt,
@@ -327,7 +328,6 @@ export {
   spaceObjectColor,
   type SpacePalette,
 } from "./spacePalette.ts";
-export { SPECK_RADIUS, speckField } from "./speckField.ts";
 export {
   BEACON_SUFFIX,
   FLASH_SUFFIX,

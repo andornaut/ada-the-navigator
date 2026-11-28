@@ -1,7 +1,7 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
-import { SCREEN } from "../data/screen.ts";
-import type { Vec } from "../model/types.ts";
+import { SCREEN } from "../../data/screen.ts";
+import type { Vec } from "../../model/types.ts";
 
 /** A dust speck's drawn radius, in logical px. */
 export const SPECK_RADIUS = 1;

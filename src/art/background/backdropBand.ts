@@ -1,4 +1,4 @@
-import { SCREEN } from "../data/screen.ts";
+import { SCREEN } from "../../data/screen.ts";
 
 // Needle's edge-on band (art/needle.md "Flat band"): one thin line across the sky at a fixed
 // angle through a fixed point of the play view, drawn from data rather than a texture: two flat

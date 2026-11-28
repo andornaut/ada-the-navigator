@@ -1,5 +1,5 @@
-import { SCREEN } from "../data/screen.ts";
-import { type BackdropRockRule, unit } from "./asteroidArt.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { type BackdropRockRule, unit } from "../asteroidArt.ts";
 import {
   checkerItems,
   chunkItems,

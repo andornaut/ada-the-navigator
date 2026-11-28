@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { readGalaxyBackdrop } from "../art/backdropLayers.ts";
 import {
   chromeAtlasGrid,
+  decorationRasterSize,
   fileFilter,
   needsRaster,
   RASTER_CAP,
   rasterScale,
+  readGalaxyBackdrop,
   vectorRaster,
 } from "../art/index.ts";
-import { decorationRasterSize } from "../art/rareDecorations.ts";
 import { ART_MANIFEST, GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
 import { TOUCH_CHROME_FRAME, USE_DISC_POSES, USE_SYMBOLS } from "../ui/touchChrome.ts";
 import { parentFit } from "./playCamera.ts";

@@ -1,13 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  BAND_AREA,
-  bandAlpha,
-  bandLine,
-  bandStars,
-  readBackdropBand,
-} from "../art/backdropBand.ts";
-import { GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
+import { GALAXY_MANIFESTS, publicJson } from "../../testing/publicArt.ts";
+import { BAND_AREA, bandAlpha, bandLine, bandStars, readBackdropBand } from "./backdropBand.ts";
 
 const needle = GALAXY_MANIFESTS.get(4)!;
 const file = publicJson(needle.links.needleBand!);

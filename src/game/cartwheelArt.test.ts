@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { readGalaxyBackdrop } from "../art/backdropLayers.ts";
 import {
   type CartwheelAsset,
   craftArt,
@@ -13,6 +12,7 @@ import {
   hubLayers,
   readBuoyArt,
   readCraftNose,
+  readGalaxyBackdrop,
   readHubArt,
   readSidecars,
   storyCraftSets,

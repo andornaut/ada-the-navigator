@@ -1,8 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
-import * as asteroid from "../art/asteroidArt.ts";
-import { unit } from "../art/asteroidArt.ts";
-import { layerOrigin, viewRect, type Xy } from "../art/backdropField.ts";
+import { GALAXY_NUMBERS } from "../../data/galaxies.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { CORE_MANIFEST, GALAXY_MANIFESTS, publicJson } from "../../testing/publicArt.ts";
+import * as asteroid from "../asteroidArt.ts";
+import { unit } from "../asteroidArt.ts";
+import { layerOrigin, viewRect, type Xy } from "./backdropField.ts";
 import {
   type BackdropRules,
   type GalaxyBackdrop,
@@ -12,10 +15,7 @@ import {
   VIEW_MARGIN,
   type ViewStar,
   viewStars,
-} from "../art/backdropLayers.ts";
-import { GALAXY_NUMBERS } from "../data/galaxies.ts";
-import { SCREEN } from "../data/screen.ts";
-import { CORE_MANIFEST, GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
+} from "./backdropLayers.ts";
 
 const VIEW: Xy = [SCREEN.width, SCREEN.height];
 const toView = (origin: Xy, [u, v]: Xy): Xy => [

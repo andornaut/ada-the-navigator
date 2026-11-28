@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { unit } from "../art/asteroidArt.ts";
-import { chunkItems, layerOrigin, type Xy } from "../art/backdropField.ts";
-import { readGalaxyBackdrop } from "../art/backdropLayers.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { publicJson } from "../../testing/publicArt.ts";
+import { unit } from "../asteroidArt.ts";
+import { chunkItems, layerOrigin, type Xy } from "./backdropField.ts";
+import { readGalaxyBackdrop } from "./backdropLayers.ts";
 import {
   decorationBodyPolygons,
   type DecorationLayer,
@@ -11,9 +13,7 @@ import {
   decorationVisible,
   readDecorations,
   viewDecorations,
-} from "../art/rareDecorations.ts";
-import { SCREEN } from "../data/screen.ts";
-import { publicJson } from "../testing/publicArt.ts";
+} from "./rareDecorations.ts";
 const recipe: DecorationLayer = {
   chance: 0.35,
   chunk: [4200, 3000],

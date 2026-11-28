@@ -13,7 +13,7 @@ import {
   rockArt,
   unit,
 } from "../art/asteroidArt.ts";
-import { readBackdropRules } from "../art/backdropLayers.ts";
+import { readBackdropRules } from "../art/index.ts";
 import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import type { Vec } from "../model/types.ts";
 import { CORE_MANIFEST, publicJson } from "../testing/publicArt.ts";

@@ -5,8 +5,8 @@ import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
 import { backdropRock, backdropTint, hexNumber } from "../art/asteroidArt.ts";
-import { readBackdropRules } from "../art/backdropLayers.ts";
 import { BACKDROP_DEPTH, backdropRockDepth } from "../art/drawOrder.ts";
+import { readBackdropRules } from "../art/index.ts";
 import { ASTEROID_ART } from "../data/asteroidCatalog.ts";
 import { SCREEN } from "../data/screen.ts";
 import { CORE_MANIFEST, publicJson } from "../testing/publicArt.ts";

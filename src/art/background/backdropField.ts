@@ -1,4 +1,4 @@
-import { unit } from "./asteroidArt.ts";
+import { unit } from "../asteroidArt.ts";
 
 // The layered backdrop's seeded placement (art/backdrop.md, Generation and Motif field), the same
 // rules as Art's generator (art/tools/backdrop-field.ts), so the game draws the sky Art's

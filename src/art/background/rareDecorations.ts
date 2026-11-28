@@ -1,5 +1,5 @@
-import { SCREEN } from "../data/screen.ts";
-import { unit } from "./asteroidArt.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { unit } from "../asteroidArt.ts";
 import { chunkItems, layerOrigin, viewRect, type Xy } from "./backdropField.ts";
 export interface DecorationPolygon {
   readonly outer: readonly Xy[];
