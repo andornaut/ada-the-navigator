@@ -33,6 +33,7 @@ import {
   readLoopArt,
   readOutpostArt,
   readProjectArt,
+  readQuantumJump,
   readRouteArt,
   readRouteMarkers,
   readSpacePalette,
@@ -123,7 +124,6 @@ import { navigationEntry } from "../ui/navigationEntry.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
 import { readTitleScreen, type TitleScreenArt } from "../ui/titleScreen.ts";
 import { fitPlayCamera, sceneFit, shakeIntensity } from "./playCamera.ts";
-import { readQuantumJump } from "./quantumJump.ts";
 import type { GameScene } from "./scene.ts";
 import {
   arrivalLoads,

@@ -1,10 +1,10 @@
-import { jetLayerPass, jetsInFront, type ShipJets } from "../art/index.ts";
-import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import {
   canvasFit,
   emergencyGlow,
   emergencyStartMs,
   irisRadius,
+  jetLayerPass,
+  jetsInFront,
   type JumpFrame,
   type JumpStep,
   jumpStepAt,
@@ -12,11 +12,13 @@ import {
   type QuantumJump,
   reducedShipWeights,
   reducedWeights,
+  type ShipJets,
   spriteHeading,
   switchMs,
   tunnelScale,
   warpPoseSize,
-} from "../game/quantumJump.ts";
+} from "../art/index.ts";
+import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import { SHIP_HEADINGS } from "../model/nose.ts";
 import type { Vec } from "../model/types.ts";
 import { COLOURS } from "./layout/colours.ts";

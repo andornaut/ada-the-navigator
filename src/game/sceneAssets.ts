@@ -46,6 +46,7 @@ import {
   readHubArt,
   readJobArt,
   readMarloArt,
+  readQuantumJump,
   readShardPalettePack,
   readShards,
   readShipJets,
@@ -87,7 +88,6 @@ import { SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
 import { worldDelta } from "../model/worldContacts.ts";
 import { sceneFit } from "./playCamera.ts";
-import { readQuantumJump } from "./quantumJump.ts";
 import type { GameScene } from "./scene.ts";
 import type { Asset } from "./sceneShared.ts";
 

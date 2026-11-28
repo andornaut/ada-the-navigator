@@ -7,20 +7,17 @@ import data from "../../public/art/quantum-jump.json";
 import jetData from "../../public/art/ship-jets.json";
 import {
   AUTHORED_JET_LENGTH,
-  engineJets,
-  jetPlumes,
-  jetShapePolygons,
-  jetsInFront,
-  readEngineJets,
-} from "../art/index.ts";
-import { createJumpOverlay, type SheetArt, sheetFrame } from "../ui/jumpOverlay.ts";
-import {
   canvasFit,
   emergencyGlow,
   emergencyStartMs,
+  engineJets,
   irisRadius,
+  jetPlumes,
+  jetShapePolygons,
+  jetsInFront,
   jumpStepAt,
   posePaths,
+  readEngineJets,
   readQuantumJump,
   reducedShipWeights,
   reducedWeights,
@@ -28,7 +25,8 @@ import {
   switchMs,
   tunnelScale,
   warpPoseSize,
-} from "./quantumJump.ts";
+} from "../art/index.ts";
+import { createJumpOverlay, type SheetArt, sheetFrame } from "../ui/jumpOverlay.ts";
 
 const jump = readQuantumJump(data)!;
 const sheet = (id: string): SheetArt => {

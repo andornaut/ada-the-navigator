@@ -235,6 +235,24 @@ export {
   revealAlpha,
   type WorldProjectArt,
 } from "./projectArt.ts";
+export {
+  canvasFit,
+  emergencyGlow,
+  emergencyStartMs,
+  irisRadius,
+  type JumpFrame,
+  type JumpStep,
+  jumpStepAt,
+  posePaths,
+  type QuantumJump,
+  readQuantumJump,
+  reducedShipWeights,
+  reducedWeights,
+  spriteHeading,
+  switchMs,
+  tunnelScale,
+  warpPoseSize,
+} from "./quantumJump.ts";
 export { decorationRasterSize, viewDecorations } from "./rareDecorations.ts";
 export { RockFrames } from "./rockFrames.ts";
 export {
