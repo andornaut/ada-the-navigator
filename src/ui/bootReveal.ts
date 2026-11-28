@@ -5,13 +5,9 @@ import {
   revealWhenDecoded,
 } from "@andornaut/game-kit/runtime/web/ui/dom/imageReady";
 
-import { requireBootFonts } from "./requiredFonts.ts";
-import { requireBootUi, type RequiredUi } from "./requiredUi.ts";
-
-export interface RequiredBootResources {
-  readonly stopFonts: () => void;
-  readonly ui: RequiredUi;
-}
+import type { RequiredBootResources } from "../loading/required.ts";
+import { requireBootFonts } from "../loading/requiredFonts.ts";
+import { requireBootUi } from "../loading/requiredUi.ts";
 
 interface BootPage {
   readonly document: Document;

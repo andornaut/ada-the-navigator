@@ -1,5 +1,12 @@
 import { createRequiredLoading } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 
+import type { RequiredUi } from "./requiredUi.ts";
+
+export interface RequiredBootResources {
+  readonly stopFonts: () => void;
+  readonly ui: RequiredUi;
+}
+
 export type RequiredReady = () => boolean;
 
 /** The page's required resources, including imports, fonts and UI artwork. */

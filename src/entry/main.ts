@@ -22,9 +22,8 @@ import { Core, Game, Scale, Scenes, WEBGL } from "phaser";
 import { SCREEN } from "../data/screen.ts";
 import { GameScene } from "../game/scene.ts";
 import { flushScene, refreshScene } from "../game/sceneUi.ts";
-import { prepareBootReveal, type RequiredBootResources } from "../loading/bootReveal.ts";
 import { EntryReloadRequired } from "../loading/entryRecovery.ts";
-import { requiredLoading, requiredReady } from "../loading/required.ts";
+import { type RequiredBootResources, requiredLoading, requiredReady } from "../loading/required.ts";
 import { requireBootJets, validateBootCore } from "../loading/requiredCore.ts";
 import { requireSceneFiles } from "../loading/requiredFiles.ts";
 import { startupFence } from "../loading/startup.ts";
@@ -35,6 +34,7 @@ import {
   setupPhoneApp,
 } from "../pwa/index.ts";
 import { saves } from "../saving/index.ts";
+import { prepareBootReveal } from "../ui/bootReveal.ts";
 import { CRASH_SCREEN } from "../ui/crashScreen.ts";
 import { registerForegroundSurface } from "../ui/foregroundInput.ts";
 import { bindAdaActionRoot } from "../ui/holdActionsAdapter.ts";

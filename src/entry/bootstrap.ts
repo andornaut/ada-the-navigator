@@ -4,9 +4,8 @@ import "@andornaut/game-kit/runtime/web/progress/dom/progressBar.css";
 
 import type { LaunchResult } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 
-import type { RequiredBootResources } from "../loading/bootReveal.ts";
 import { EntryReloadRequired } from "../loading/entryRecovery.ts";
-import { requiredLoading } from "../loading/required.ts";
+import { type RequiredBootResources, requiredLoading } from "../loading/required.ts";
 import { requireBootFonts } from "../loading/requiredFonts.ts";
 import { requireBootUi } from "../loading/requiredUi.ts";
 import { startLoading } from "../loading/startup.ts";

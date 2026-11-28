@@ -138,7 +138,7 @@ vi.mock("../pwa/index.ts", () => ({
   setupPhoneApp: vi.fn(),
 }));
 vi.mock("../loading/startup.ts", () => ({ startupFence: boot.startup }));
-vi.mock("../loading/bootReveal.ts", () => ({ prepareBootReveal: () => boot.reveal }));
+vi.mock("../ui/bootReveal.ts", () => ({ prepareBootReveal: () => boot.reveal }));
 vi.mock("./lifecycle.ts", () => ({ followPageVisibility: () => boot.stopVisibility }));
 vi.mock("@andornaut/game-kit/runtime/web/view/dom/watchFrameTurn", async (importOriginal) => {
   const actual =
