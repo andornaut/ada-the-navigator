@@ -1,9 +1,16 @@
 import { SCREEN } from "../data/screen.ts";
 import type { Vec } from "../model/types.ts";
-import { COLOURS, UNLISTED_COLOURS } from "./layout/colours.ts";
-import { COMPACT_VIEWPORT, font, fromAreaLeft, fromAreaTop, units } from "./layout/css.ts";
-import { COMPACT_DISABLED_BANNER } from "./layout/playView.ts";
-import { TYPE } from "./layout/tokens.ts";
+import {
+  COLOURS,
+  COMPACT_DISABLED_BANNER,
+  COMPACT_VIEWPORT,
+  font,
+  fromAreaLeft,
+  fromAreaTop,
+  TYPE,
+  units,
+  UNLISTED_COLOURS,
+} from "./layout/index.ts";
 
 // The Disabled banner over each disabled heavy (art/heavies.md "Disabled banner"): an HTML
 // element in the overlay layer over the canvas, placed each frame on the heavy's projected banner

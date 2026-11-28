@@ -5,8 +5,7 @@ import {
   stickVector,
 } from "../input/index.ts";
 import type { ControlVisibility } from "./deviceSettings.ts";
-import type { Insets } from "./layout/playView.ts";
-import { stickRestCentres } from "./layout/touchControls.ts";
+import { type Insets, stickRestCentres } from "./layout/index.ts";
 import {
   MOVE_KNOB_REACH,
   type Point,

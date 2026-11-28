@@ -8,7 +8,7 @@ import {
   vectorSheetSource,
 } from "../../art/index.ts";
 import { type Background, BACKGROUND_ART } from "../../data/storybook.ts";
-import { STORY_BACKGROUND, type SubjectBand } from "../layout/storyPage.ts";
+import { STORY_BACKGROUND, type SubjectBand } from "../layout/index.ts";
 import { readStoryCompositionAssets, validStorySourceRect } from "./storyCompositions.ts";
 
 export type { CanvasBox, StoryOverlay, StorySourceRect } from "../../art/index.ts";

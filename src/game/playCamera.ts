@@ -8,7 +8,7 @@ import {
 import type { Cameras, Scene } from "phaser";
 
 import { SCREEN } from "../data/screen.ts";
-import { playView, type Size } from "../ui/layout/playView.ts";
+import { playView, type Size } from "../ui/layout/index.ts";
 
 // The canvas's backing is in device pixels: followFrameTurn's deviceResolution sizes the game to
 // the canvas's CSS size times r = min(devicePixelRatio, 2) and zooms the scale manager by 1 / r.

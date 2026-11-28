@@ -1,7 +1,6 @@
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { CARD_CONTENT } from "./layout/contentCard.ts";
-import { BUTTON_GAP } from "./layout/tokens.ts";
+import { BUTTON_GAP, CARD_CONTENT } from "./layout/index.ts";
 import { createCard, setFooterAction } from "./modal.ts";
 import { createProse } from "./prose.ts";
 

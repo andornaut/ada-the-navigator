@@ -9,9 +9,9 @@ import {
   setPageDivider,
 } from "@andornaut/game-kit/runtime/web/ui/dom/controlPresentation";
 
-import { PAGE_DIVIDER_STYLE } from "./layout/controlPresentation.ts";
-import { BUTTON_METRICS, TEXT_BUTTON } from "./layout/controls.ts";
-export { PAGE_DIVIDER_STYLE } from "./layout/controlPresentation.ts";
+import { BUTTON_METRICS, TEXT_BUTTON } from "./layout/dom.ts";
+import { PAGE_DIVIDER_STYLE } from "./layout/index.ts";
+export { PAGE_DIVIDER_STYLE } from "./layout/index.ts";
 import type { AdaButtonPresentation, AdaButtonProps } from "./layoutTree.ts";
 
 /** Apply once on the shared page/modal root used by production and mocks. */

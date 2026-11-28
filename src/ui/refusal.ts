@@ -4,7 +4,7 @@ import {
   refuse as playRefusal,
 } from "@andornaut/game-kit/runtime/web/ui/dom/refusalCue";
 
-import { COLOURS } from "./layout/colours.ts";
+import { COLOURS } from "./layout/index.ts";
 
 export const REFUSAL = {
   color: COLOURS.refusalRed,

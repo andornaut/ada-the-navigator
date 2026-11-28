@@ -6,12 +6,17 @@ import { tierColour } from "../data/upgradeTiers.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import type { ItemGain } from "../model/itemGains.ts";
 import { fill, weaponName } from "../model/shop.ts";
-import { COLOURS } from "./layout/colours.ts";
-import { font, fromHudEdge, units } from "./layout/css.ts";
-import { ITEM_NOTICE, noticeIconLayout } from "./layout/itemNotice.ts";
-import { statusCargoInset } from "./layout/playView.ts";
-import { TYPE } from "./layout/tokens.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
+import { readViewUnit } from "./layout/dom.ts";
+import {
+  COLOURS,
+  font,
+  fromHudEdge,
+  ITEM_NOTICE,
+  noticeIconLayout,
+  statusCargoInset,
+  TYPE,
+  units,
+} from "./layout/index.ts";
 import { spriteIconPath } from "./spriteIconPath.ts";
 import { STATUS_COLOURS } from "./statusPill.ts";
 

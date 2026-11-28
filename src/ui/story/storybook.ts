@@ -40,25 +40,38 @@ import {
   TAB_COLOURS,
 } from "../dialoguePortraits.ts";
 import { registerForegroundSurface } from "../foregroundInput.ts";
-import { COLOURS } from "../layout/colours.ts";
-import { SCROLL } from "../layout/contentCard.ts";
-import { BUTTON_SLICE } from "../layout/controls.ts";
-import { CONVERSATION_BOX } from "../layout/conversationBox.ts";
-import { font, fromHudEdge, safeEdge, slice, units, VIEW_PROPERTIES } from "../layout/css.ts";
-import { frameBoxIn, frameSize } from "../layout/frameBox.ts";
-import { STORY_PANEL_TOP, STORY_ROOM_PANEL_TOP, STORY_SKIP } from "../layout/playView.ts";
 import {
+  BUTTON_SLICE,
+  frameBoxIn,
+  frameSize,
+  readViewUnit,
+  VIEW_SCALE_EVENT,
+} from "../layout/dom.ts";
+import {
+  COLOURS,
+  CONVERSATION_BOX,
+  font,
+  fromHudEdge,
+  safeEdge,
+  SCROLL,
+  slice,
+  SMALL_BUTTON_GAP,
+  SPACING,
   STORY_BACKGROUND,
   STORY_CHOICE_GAP,
   STORY_PANEL,
+  STORY_PANEL_TOP,
+  STORY_ROOM_PANEL_TOP,
+  STORY_SKIP,
   STORY_TOPIC_PREVIOUS_MIN,
   STORY_TOPIC_PREVIOUS_SHARE,
   storyBackgroundTop,
   storyHalfArtOffset,
   type SubjectBand,
-} from "../layout/storyPage.ts";
-import { SMALL_BUTTON_GAP, SPACING, TYPE } from "../layout/tokens.ts";
-import { readViewUnit, VIEW_SCALE_EVENT } from "../layout/viewScale.ts";
+  TYPE,
+  units,
+  VIEW_PROPERTIES,
+} from "../layout/index.ts";
 import { FOCUS_STYLE, TEXT_TOKENS } from "../modal.ts";
 import { createStandardTextAction } from "../standardTextAction.ts";
 import type { TitleScreenArt } from "../titleScreen.ts";

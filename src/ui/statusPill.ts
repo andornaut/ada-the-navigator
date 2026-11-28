@@ -10,22 +10,26 @@ import {
   assertAdaActionMetadata,
   bindAdaAction,
 } from "./actionBinding.ts";
-import { COLOURS, translucentInk } from "./layout/colours.ts";
-import { SCROLL } from "./layout/contentCard.ts";
-import { font, fromHudEdge, hudCentreX, pixels, units } from "./layout/css.ts";
-import { frameGridOrigin } from "./layout/frameBox.ts";
+import { frameGridOrigin, readViewUnit, VIEW_SCALE_EVENT } from "./layout/dom.ts";
 import {
+  COLOURS,
   countSlot,
+  font,
+  fromHudEdge,
+  hudCentreX,
+  pixels,
+  SCROLL,
   SHIELD_PILL,
   shieldBarWidth,
   shieldFillWidth,
   shieldPillWidth,
+  shieldRasterGeometry,
   STATUS_PILL,
   statusEndPadding,
-} from "./layout/playView.ts";
-import { shieldRasterGeometry } from "./layout/shieldGeometry.ts";
-import { TYPE } from "./layout/tokens.ts";
-import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
+  translucentInk,
+  TYPE,
+  units,
+} from "./layout/index.ts";
 import { createShieldDrawing } from "./shieldDrawing.ts";
 
 // The HUD status pill (art/layout.md "Status pill", art/controls.md "Status pill"): one ink pill

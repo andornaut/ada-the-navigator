@@ -14,7 +14,7 @@ import {
 } from "../model/needle.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
 import { type WorldContext, worldPoint } from "../model/worldContacts.ts";
-import { COLOURS, UNLISTED_COLOURS } from "../ui/layout/colours.ts";
+import { COLOURS, UNLISTED_COLOURS } from "../ui/layout/index.ts";
 
 /** A course uses one local world image for every gate, stitch and lamp. */
 export function needleCourseOffset(

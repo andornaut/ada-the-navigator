@@ -1,4 +1,4 @@
-import { STORY_BACKGROUND } from "../layout/storyPage.ts";
+import { STORY_BACKGROUND } from "../layout/index.ts";
 import type { ArtAsset, StoryOverlay, StorySourceRect } from "./storyArt.ts";
 
 interface CompositionAsset extends ArtAsset {

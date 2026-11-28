@@ -1,9 +1,9 @@
 import type { LayoutColumnSizing } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
+import { CONTROL_ROW } from "../../data/layout.ts";
 import { capTop, lineInkTop } from "./cardFrame.ts";
 import { CARD_CONTENT, CARD_WIDTH_CAPS } from "./contentCard.ts";
-import { PAGE_DIVIDER_STYLE } from "./controlPresentation.ts";
-import { CONTROL_ROW } from "./controls.ts";
+import { PAGE_DIVIDER_STYLE } from "./pageDivider.ts";
 import { SPACING, TYPE } from "./tokens.ts";
 
 export const SETTINGS_OUTER_PADDING = SPACING.panelPadding;

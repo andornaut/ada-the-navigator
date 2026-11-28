@@ -1,6 +1,6 @@
 import type { ComponentNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
-import { STACK_BUTTON_GAP } from "../layout/tokens.ts";
+import { STACK_BUTTON_GAP } from "../layout/index.ts";
 import type { AdaCardProps, AdaLayoutSchema } from "../layoutTree.ts";
 
 export type MenuAction = "achievements" | "backToTitle" | "cheats" | "settings";

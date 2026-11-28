@@ -1,7 +1,12 @@
-import { COLOURS } from "./layout/colours.ts";
-import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
-import { font, fromHudEdge, units, VIEW_PROPERTIES } from "./layout/css.ts";
-import { SAFE_MARGIN } from "./layout/playView.ts";
+import {
+  COLOURS,
+  CONVERSATION_BOX,
+  font,
+  fromHudEdge,
+  SAFE_MARGIN,
+  units,
+  VIEW_PROPERTIES,
+} from "./layout/index.ts";
 
 // Notices: the game's status line (#game-status) and the save status (#save-status). Each shows in
 // the conversation box's slot and style (layout/conversationBox.ts) without a portrait or tab, up

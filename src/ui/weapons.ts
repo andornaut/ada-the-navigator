@@ -14,20 +14,23 @@ import {
   resolveAdaHoldAction,
 } from "./actionBinding.ts";
 import { AmmoFeedbackQueue } from "./ammoFeedback.ts";
-import { COLOURS } from "./layout/colours.ts";
-import { SCROLL } from "./layout/contentCard.ts";
-import { EXPANDED_VIEWPORT, font, fromHudEdge, units } from "./layout/css.ts";
+import { readViewUnit } from "./layout/dom.ts";
 import {
+  COLOURS,
   EQUIPPED_WEAPON_RING_WIDTH,
   EXPANDED_RAPID_DISC_INK_OFFSET,
+  EXPANDED_VIEWPORT,
+  font,
+  fromHudEdge,
   HUD_AMMO_COUNT,
   HUD_BUTTON,
   HUD_DISC_ICON_CENTER_OFFSET,
   HUD_ROW,
   HUD_WEAPON_LEVEL,
-} from "./layout/playView.ts";
-import { TYPE } from "./layout/tokens.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
+  SCROLL,
+  TYPE,
+  units,
+} from "./layout/index.ts";
 import { invalidatePressScope } from "./pressScope.ts";
 import { refuse } from "./refusal.ts";
 

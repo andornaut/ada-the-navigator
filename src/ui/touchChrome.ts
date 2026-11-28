@@ -9,7 +9,7 @@ import { clamp01 } from "@andornaut/game-kit/runtime/numbers";
 
 import { TOUCH_CHROME_FRAME, type TouchChromeKind } from "../data/layout.ts";
 import type { UseAction } from "../model/types.ts";
-import { COLOURS } from "./layout/colours.ts";
+import { COLOURS } from "./layout/index.ts";
 
 export { TOUCH_CHROME_FRAME, TOUCH_KNOB_FRAME } from "../data/layout.ts";
 

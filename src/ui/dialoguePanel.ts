@@ -7,10 +7,8 @@ import {
   dialoguePanelTree,
 } from "./dialoguePanelTree.ts";
 import { portraitBackground, selectPortraitCrop, storySpeakerName } from "./dialoguePortraits.ts";
-import { font, units } from "./layout/css.ts";
-import { STORY_PANEL } from "./layout/storyPage.ts";
-import { BUTTON_GAP, SPACING, TYPE } from "./layout/tokens.ts";
-import { VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
+import { VIEW_SCALE_EVENT } from "./layout/dom.ts";
+import { BUTTON_GAP, font, SPACING, STORY_PANEL, TYPE, units } from "./layout/index.ts";
 import {
   STORY_PORTRAITS,
   storyPortrait,

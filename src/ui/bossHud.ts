@@ -2,10 +2,17 @@ import type { CapitalBossHud } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { CONVERSATION_BOX, SHIELD_PILL } from "../data/layout.ts";
 import { TAB_COLOURS } from "./dialoguePortraits.ts";
-import { COLOURS } from "./layout/colours.ts";
-import { font, fromHudEdge, hudCentreX, pixels, units } from "./layout/css.ts";
-import { SPACING, TYPE } from "./layout/tokens.ts";
-import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/dom.ts";
+import {
+  COLOURS,
+  font,
+  fromHudEdge,
+  hudCentreX,
+  pixels,
+  SPACING,
+  TYPE,
+  units,
+} from "./layout/index.ts";
 import { STATUS_COLOURS } from "./statusPill.ts";
 
 const { bar, bars } = SHIELD_PILL;

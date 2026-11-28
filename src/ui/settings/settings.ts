@@ -17,17 +17,31 @@ import {
   writeSetting,
 } from "../deviceSettings.ts";
 import { type InstallPort, startInstall, watchInstallRow } from "../installRow.ts";
-import { UNLISTED_COLOURS } from "../layout/colours.ts";
-import { CARD_CONTENT, SCROLL } from "../layout/contentCard.ts";
-import { CONTROL_ROW, WHOLE_PX_EDGES } from "../layout/controls.ts";
-import { font, fromHudEdge, units, viewStyle } from "../layout/css.ts";
-import { frameSize } from "../layout/frameBox.ts";
-import { NAVIGATION_DISCS } from "../layout/navigationButton.ts";
-import { hudButtonTarget, startNavOrder } from "../layout/playView.ts";
-import { SETTINGS_TITLE_INK_TOP, settingsColumns } from "../layout/settings.ts";
-import { SPACING, TYPE } from "../layout/tokens.ts";
-import { TOUCH_STICK, USE_DISC } from "../layout/touchControls.ts";
-import { readViewUnit, VIEW_SCALE_EVENT } from "../layout/viewScale.ts";
+import {
+  CONTROL_ROW,
+  frameSize,
+  readViewUnit,
+  VIEW_SCALE_EVENT,
+  WHOLE_PX_EDGES,
+} from "../layout/dom.ts";
+import {
+  CARD_CONTENT,
+  font,
+  fromHudEdge,
+  hudButtonTarget,
+  NAVIGATION_DISCS,
+  SCROLL,
+  SETTINGS_TITLE_INK_TOP,
+  settingsColumns,
+  SPACING,
+  startNavOrder,
+  TOUCH_STICK,
+  TYPE,
+  units,
+  UNLISTED_COLOURS,
+  USE_DISC,
+  viewStyle,
+} from "../layout/index.ts";
 import {
   BUTTON_FACE,
   type ButtonRole,

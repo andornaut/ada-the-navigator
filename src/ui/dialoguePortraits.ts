@@ -2,8 +2,7 @@ import { CAPITAL_CAPTAINS } from "../data/capitalCaptains.ts";
 import { CAST, castFrames, type CastPortraitSheet, SPEAKER_CAST } from "../data/cast.ts";
 import type { Mood } from "../data/conversations.ts";
 import type { ConversationLineView } from "./conversation.ts";
-import { COLOURS } from "./layout/colours.ts";
-import { units } from "./layout/css.ts";
+import { COLOURS, units } from "./layout/index.ts";
 
 export const COMPACT_PORTRAITS = {
   ada: { frames: 2, moods: { happy: 0, neutral: 1 }, url: "/art/portraits/ada-compact.png" },

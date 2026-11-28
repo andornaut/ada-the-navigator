@@ -1,5 +1,4 @@
-import { SHOP_ROW, SPACING } from "../../data/layout.ts";
-import { FOCUS_RING } from "./controls.ts";
+import { FOCUS_RING, SHOP_ROW, SPACING } from "../../data/layout.ts";
 export { BALANCE, CONFIRM_ITEM, SHOP_ROW } from "../../data/layout.ts";
 
 // The shop item row and the buy confirm's well and price (art/layout.md "Shop item row"), in

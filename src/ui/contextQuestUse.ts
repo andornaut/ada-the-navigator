@@ -1,7 +1,7 @@
 import { SHOP_GLYPH } from "../data/layout.ts";
 import type { ControlSample } from "../input/index.ts";
 import type { ContextQuestDetails } from "../model/questObjectLinks.ts";
-import { units } from "./layout/css.ts";
+import { units } from "./layout/index.ts";
 import { TOUCH_CHROME_CENTRE } from "./touchChrome.ts";
 
 /** Read the canonical getter only when an accepted Use sample is consumed. */

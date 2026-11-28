@@ -1,6 +1,5 @@
 import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { units } from "./layout/css.ts";
-import { STORY_CHOICE_QUEST_ICON_SIZE } from "./layout/storyPage.ts";
+import { STORY_CHOICE_QUEST_ICON_SIZE, units } from "./layout/index.ts";
 
 function questMarker(): HTMLImageElement {
   const image = document.createElement("img");

@@ -43,19 +43,21 @@ export {
   TAB_COLOURS,
 } from "./dialoguePortraits.ts";
 import { controlHelpText, createControlHelp } from "./controlHelp.ts";
-import { CARD_CLOSE } from "./layout/cardFrame.ts";
-import { SCROLL } from "./layout/contentCard.ts";
-import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
+import { readViewUnit } from "./layout/dom.ts";
 import {
+  CARD_CLOSE,
+  CONVERSATION_BOX,
   font,
   fromAreaLeft,
+  hudButtonTarget,
   safeEdge,
+  SCROLL,
+  STORY_PANEL_TOP,
+  STORY_SKIP,
   units,
   VIEW_HOST_ID,
   VIEW_PROPERTIES,
-} from "./layout/css.ts";
-import { hudButtonTarget, STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
+} from "./layout/index.ts";
 import { TEXT_TOKENS } from "./modal.ts";
 import { CONVERSATION_SLOT, FLIGHT_PANEL_BACKGROUND } from "./notice.ts";
 import { invalidatePressScope } from "./pressScope.ts";

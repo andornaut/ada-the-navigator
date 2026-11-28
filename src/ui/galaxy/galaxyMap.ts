@@ -20,21 +20,14 @@ import {
   bindAdaAction,
 } from "../actionBinding.ts";
 import { registerForegroundSurface } from "../foregroundInput.ts";
-import { COLOURS, UNLISTED_COLOURS } from "../layout/colours.ts";
-import { SCROLL } from "../layout/contentCard.ts";
-import { BUTTON_SLICE, CARD_SLICE } from "../layout/controls.ts";
+import { BUTTON_SLICE, CARD_SLICE, readViewUnit } from "../layout/dom.ts";
 import {
+  COLOURS,
   COMPACT_VIEWPORT,
+  easeInOutSine,
   font,
   fromAreaLeft,
   fromAreaTop,
-  pixels,
-  safeEdge,
-  slice,
-  units,
-} from "../layout/css.ts";
-import {
-  easeInOutSine,
   GALAXY_MAP,
   GALAXY_MAP_ACTIONS,
   GALAXY_MAP_LEGS,
@@ -43,17 +36,23 @@ import {
   GALAXY_MAP_SKY,
   GALAXY_MAP_SKY_LEFT,
   pathStamps,
+  pixels,
   type Point,
   restingTangent,
   routeDistance,
   routeHeading,
   routePoint,
+  SAFE_MARGIN,
+  safeEdge,
+  SCROLL,
+  slice,
+  SPACING,
   type Stamp,
+  TYPE,
+  units,
+  UNLISTED_COLOURS,
   unlockFlightSeconds,
-} from "../layout/galaxyMap.ts";
-import { SAFE_MARGIN } from "../layout/playView.ts";
-import { SPACING, TYPE } from "../layout/tokens.ts";
-import { readViewUnit } from "../layout/viewScale.ts";
+} from "../layout/index.ts";
 import { mapCloseActionStyle } from "../mapCloseAction.ts";
 import { BUTTON_FACE, MODAL_LAYER, TEXT_TOKENS } from "../modal.ts";
 import { createStandardCloseAction } from "../modalClose.ts";

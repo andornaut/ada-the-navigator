@@ -30,22 +30,34 @@ import {
   bindAdaAction,
 } from "../actionBinding.ts";
 import { registerForegroundSurface } from "../foregroundInput.ts";
-import { CARD_CLOSE } from "../layout/cardFrame.ts";
-import { COLOURS, translucentInk, UNLISTED_COLOURS } from "../layout/colours.ts";
-import { BUTTON_SLICE, CARD_SLICE } from "../layout/controls.ts";
 import {
+  BUTTON_SLICE,
+  CARD_SLICE,
+  frameBoxIn,
+  framePoint,
+  frameSize,
+  readViewUnit,
+  turnOf,
+  VIEW_SCALE_EVENT,
+} from "../layout/dom.ts";
+import {
+  BUTTON_GAP,
+  CARD_CLOSE,
+  COLOURS,
   COMPACT_VIEWPORT,
   font,
   pixels,
+  SAFE_MARGIN,
   safeEdge,
+  safeRect,
   slice,
+  SPACING,
+  translucentInk,
+  TYPE,
   units,
+  UNLISTED_COLOURS,
   VIEW_PROPERTIES,
-} from "../layout/css.ts";
-import { frameBoxIn, framePoint, frameSize, turnOf } from "../layout/frameBox.ts";
-import { SAFE_MARGIN, safeRect } from "../layout/playView.ts";
-import { BUTTON_GAP, SPACING, TYPE } from "../layout/tokens.ts";
-import { readViewUnit, VIEW_SCALE_EVENT } from "../layout/viewScale.ts";
+} from "../layout/index.ts";
 import { BUTTON_FACE, MODAL_LAYER, TEXT_TOKENS } from "../modal.ts";
 import { createStandardCloseAction } from "../modalClose.ts";
 import { galaxiesAvailable, mapShowsEmpty } from "../pause.ts";

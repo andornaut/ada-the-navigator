@@ -5,12 +5,18 @@ import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import type { ScanOutcome } from "../model/scanOutcomes.ts";
 import { createCompletionIndicator } from "./completionIndicator.ts";
-import { font, fromHudEdge, pixels, units, VIEW_PROPERTIES } from "./layout/css.ts";
-import { measureFrame } from "./layout/frameBox.ts";
-import { ITEM_NOTICE } from "./layout/itemNotice.ts";
-import { shortNoticeWidth } from "./layout/scanFeedback.ts";
-import { SPACING, TYPE } from "./layout/tokens.ts";
-import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
+import { measureFrame, readViewUnit, VIEW_SCALE_EVENT } from "./layout/dom.ts";
+import {
+  font,
+  fromHudEdge,
+  ITEM_NOTICE,
+  pixels,
+  shortNoticeWidth,
+  SPACING,
+  TYPE,
+  units,
+  VIEW_PROPERTIES,
+} from "./layout/index.ts";
 import { TEXT_TOKENS } from "./modal.ts";
 import {
   type ScanFeedbackContent,

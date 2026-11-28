@@ -8,9 +8,7 @@ import {
   portraitFrame,
   TAB_COLOURS,
 } from "./dialoguePortraits.ts";
-import { CONVERSATION_BOX } from "./layout/conversationBox.ts";
-import { font, units } from "./layout/css.ts";
-import { KEEPER_BLOCK } from "./layout/stationCard.ts";
+import { CONVERSATION_BOX, font, KEEPER_BLOCK, units } from "./layout/index.ts";
 import { FOCUS_STYLE, TEXT_TOKENS } from "./modal.ts";
 import { PANEL_BACKGROUND } from "./notice.ts";
 

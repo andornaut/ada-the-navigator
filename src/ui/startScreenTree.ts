@@ -1,7 +1,6 @@
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
-import type { StartAction } from "./layout/startScreen.ts";
-import { BUTTON_GAP } from "./layout/tokens.ts";
+import { BUTTON_GAP, type StartAction } from "./layout/index.ts";
 
 export interface StartActionData {
   readonly action: StartAction;

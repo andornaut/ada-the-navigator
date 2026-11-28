@@ -4,9 +4,8 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 import { type MountedLayout, mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { assertAdaActionBindings, assertAdaActionMetadata } from "../actionBinding.ts";
-import { SCROLL } from "../layout/contentCard.ts";
-import { SPACING } from "../layout/tokens.ts";
-import { readViewUnit } from "../layout/viewScale.ts";
+import { readViewUnit } from "../layout/dom.ts";
+import { SCROLL, SPACING } from "../layout/index.ts";
 import { createActions, createCard, setFooterAction } from "../modal.ts";
 import { createStandardCloseAction } from "../modalClose.ts";
 import { createModalLayer } from "../modalLayer.ts";

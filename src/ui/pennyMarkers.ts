@@ -14,17 +14,18 @@ import {
   assertAdaActionMetadata,
   bindAdaAction,
 } from "./actionBinding.ts";
-import { SCROLL } from "./layout/contentCard.ts";
-import { pixels, units, VIEW_PROPERTIES } from "./layout/css.ts";
-import { frameDeviceOrigin, frameRect, turnOf } from "./layout/frameBox.ts";
-import { PENNY_MARKER } from "./layout/pennyMarkers.ts";
+import { frameDeviceOrigin, frameRect, readViewUnit, turnOf } from "./layout/dom.ts";
 import {
   layoutTargetMarkers,
+  PENNY_MARKER,
+  pixels,
   type PresentedTargetMarker,
+  SCROLL,
+  SPACING,
   type TargetMarkerExtent,
-} from "./layout/targetMarkers.ts";
-import { SPACING } from "./layout/tokens.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
+  units,
+  VIEW_PROPERTIES,
+} from "./layout/index.ts";
 import { chipGlyph, MAP_COLORS, MAP_FACES, MAP_SYMBOL } from "./map/index.ts";
 const { question: BODY_QUESTION, size: SIZE } = PENNY_MARKER;
 /** The enemy markers, each a filled threat disc; a hostile station draws the heavy disc. */

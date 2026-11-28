@@ -1,7 +1,5 @@
-import { lineInkTop, UI_FONT_FACE } from "./layout/cardFrame.ts";
-import { pixels } from "./layout/css.ts";
-import { frameBoxIn, frameGridOrigin } from "./layout/frameBox.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
+import { frameBoxIn, frameGridOrigin, readViewUnit } from "./layout/dom.ts";
+import { lineInkTop, pixels, UI_FONT_FACE } from "./layout/index.ts";
 
 /** The canvas text measure switch rows read their label ink from, or undefined without canvas. */
 export function createInkMeasure(): CanvasRenderingContext2D | null | undefined {

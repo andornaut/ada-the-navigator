@@ -32,7 +32,7 @@ import type { AsteroidArtCatalog } from "../data/asteroidCatalog.ts";
 import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import type { FlightState } from "../model/types.ts";
-import { storyBackdropRect } from "../ui/layout/storyPage.ts";
+import { storyBackdropRect } from "../ui/layout/index.ts";
 import { canvasSize, sceneFit } from "./playCamera.ts";
 import type { GameScene } from "./scene.ts";
 import { bakeScale, bakeTexture, rockTexture } from "./sceneAssets.ts";

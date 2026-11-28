@@ -1,14 +1,8 @@
 import controlPresentationCss from "@andornaut/game-kit/runtime/web/ui/dom/controlPresentation.css?raw";
 import controlsCss from "@andornaut/game-kit/runtime/web/ui/dom/controls.css?raw";
 
-import { STORY_PANEL } from "../../data/layout.ts";
 import { font, kitUnits, units } from "./css.ts";
 import { SPACING, TEXT_TOKENS, TYPE } from "./tokens.ts";
-
-export const PAGE_DIVIDER_STYLE = {
-  colour: Number.parseInt(STORY_PANEL.rule.colour.slice(1), 16),
-  thickness: STORY_PANEL.rule.width,
-};
 
 export const ADA_CONTROL_PRESENTATION_STYLE = `${controlsCss}\n${controlPresentationCss}
 .ada-button-presentation{

@@ -45,20 +45,23 @@ import type { DeviceStorage } from "../ui/deviceSettings.ts";
 import { registerForegroundSurface, registerGameEscape } from "../ui/foregroundInput.ts";
 import { bindAdaActionRoot, foregroundPressGuard } from "../ui/holdActionsAdapter.ts";
 import { createItemNotices, type NoticePlaces, type PaintSwatch } from "../ui/itemNotice.ts";
-import { SCROLL } from "../ui/layout/contentCard.ts";
-import { units, VIEW_HOST_ID } from "../ui/layout/css.ts";
+import { createViewScaleBridge, type PlayLayout, readViewUnit } from "../ui/layout/dom.ts";
 import {
   HUD_BUTTON,
   HUD_ROW,
   hudButtonTarget,
   hudRect,
+  SCROLL,
   shieldIconCentre,
   STATUS_PILL,
   statusCargoInset,
   statusPillWidth,
-} from "../ui/layout/playView.ts";
-import { stickTargets, useDiscLayout, usePressed } from "../ui/layout/touchControls.ts";
-import { createViewScaleBridge, type PlayLayout, readViewUnit } from "../ui/layout/viewScale.ts";
+  stickTargets,
+  units,
+  useDiscLayout,
+  usePressed,
+  VIEW_HOST_ID,
+} from "../ui/layout/index.ts";
 import { createMenuCard } from "../ui/menu/index.ts";
 import { activateNavigation, createNavigationButton } from "../ui/navigationButton.ts";
 import {

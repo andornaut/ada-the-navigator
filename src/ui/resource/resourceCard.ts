@@ -6,8 +6,8 @@ import { assertAdaActionBindings, assertAdaActionMetadata } from "../actionBindi
 import { createDetailCardFrame } from "../detailCardFrame.ts";
 import { detailCount, renderDetailQuantity } from "../detailQuantity.ts";
 import { renderItemDetailDescription, renderItemDetailHeader } from "../itemDetailContent.ts";
-import { SCROLL } from "../layout/contentCard.ts";
-import { readViewUnit } from "../layout/viewScale.ts";
+import { readViewUnit } from "../layout/dom.ts";
+import { SCROLL } from "../layout/index.ts";
 import { createAdaLayoutPorts } from "../layoutTree.ts";
 import { createStandardCloseAction } from "../modalClose.ts";
 import { createModalLayer } from "../modalLayer.ts";

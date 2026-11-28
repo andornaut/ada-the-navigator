@@ -120,8 +120,7 @@ import {
   storyPageView,
 } from "../ui/index.ts";
 import { itemDetailName } from "../ui/itemDetailContent.ts";
-import { VIEW_HOST_ID } from "../ui/layout/css.ts";
-import { safeGameArea } from "../ui/layout/playView.ts";
+import { safeGameArea, VIEW_HOST_ID } from "../ui/layout/index.ts";
 import { markerFootprints } from "../ui/markerFootprints.ts";
 import { navigationEntry } from "../ui/navigationEntry.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";

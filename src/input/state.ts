@@ -3,7 +3,7 @@ import {
   type ModalInputScope,
 } from "@andornaut/game-kit/runtime/input/modalInput";
 
-import { TOUCH_STICK } from "../ui/layout/touchControls.ts";
+import { TOUCH_STICK } from "../ui/layout/index.ts";
 
 export interface Vector {
   readonly x: number;

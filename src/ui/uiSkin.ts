@@ -3,9 +3,9 @@ import {
   createButtonSkin,
 } from "@andornaut/game-kit/runtime/web/ui/dom/buttonSkin";
 
-import { BUTTON_SHEETS, type ButtonTag } from "./layout/controls.ts";
+import { BUTTON_SHEETS, type ButtonTag } from "./layout/dom.ts";
 
-export { BUTTON_SHEETS, buttonProperty } from "./layout/controls.ts";
+export { BUTTON_SHEETS, buttonProperty } from "./layout/dom.ts";
 
 const BUTTON_TAGS: readonly ButtonTag[] = ["normal", "pressed", "disabled"];
 const UI_ROOT = "/art/ui/";

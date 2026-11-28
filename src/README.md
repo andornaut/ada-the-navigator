@@ -45,8 +45,12 @@ describes their implementation.
   and the controls that wire them to the scene and the interface (`controls.ts`).
 - **UI:** [`src/ui/`](ui/) holds the HTML interface drawn over the canvas: the
   start screen, cards, storybook, station, map, settings, HUD and touch sticks.
-  [`src/ui/layout/`](ui/layout/) computes every position, size and press area,
-  with the spacing and type tokens in `tokens.ts`.
+  [`src/ui/layout/index.ts`](ui/layout/index.ts) exposes shared geometry and
+  layout tokens. [`src/ui/layout/dom.ts`](ui/layout/dom.ts) adds browser
+  measurements and button skin helpers for the loaded game. Crash and startup
+  paths keep their direct imports so they can load before the game. Vite
+  reads stylesheet modules directly to keep raw CSS and stylesheet-only code
+  out of the layout entries.
 - **Page:** [`src/loading/`](loading/) drives the kit's DOM progress bar,
   and [`src/pwa/`](pwa/) holds cache policy and install and update flows.
 - **Build:** [`src/build/`](build/) holds the Node-only code the Vite build runs:

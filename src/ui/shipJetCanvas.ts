@@ -1,6 +1,6 @@
 import { type JetDisplay, jetOccluderRegions, jetPlumes, type ShipJets } from "../art/index.ts";
 import type { Vec } from "../model/types.ts";
-import { COLOURS } from "./layout/colours.ts";
+import { COLOURS } from "./layout/index.ts";
 
 /** Draws the shared projected plumes in logical canvas coordinates at the caller-selected hull order. */
 export function drawShipJets(

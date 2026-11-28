@@ -2,9 +2,16 @@ import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayo
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { assertAdaActionBindings } from "./actionBinding.ts";
-import { font, fromAreaLeft, fromAreaTop, units } from "./layout/css.ts";
-import { START_SCREEN, type StartAction } from "./layout/startScreen.ts";
-import { BUTTON_GAP, TYPE } from "./layout/tokens.ts";
+import {
+  BUTTON_GAP,
+  font,
+  fromAreaLeft,
+  fromAreaTop,
+  START_SCREEN,
+  type StartAction,
+  TYPE,
+  units,
+} from "./layout/index.ts";
 import { TEXT_TOKENS } from "./modal.ts";
 import { createStandardTextAction } from "./standardTextAction.ts";
 import { type StartScreenSchema, startScreenTree } from "./startScreenTree.ts";

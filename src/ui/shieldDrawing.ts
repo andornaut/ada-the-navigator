@@ -1,5 +1,4 @@
-import { pixels } from "./layout/css.ts";
-import type { shieldRasterGeometry } from "./layout/shieldGeometry.ts";
+import { pixels, type shieldRasterGeometry } from "./layout/index.ts";
 import type { ShieldBarView, STATUS_COLOURS } from "./statusPill.ts";
 
 /** One opaque dark rectangle behind both bars; borders are hollow internal outlines. */

@@ -1,5 +1,4 @@
-import { fromAreaLeft, fromAreaTop, units } from "./layout/css.ts";
-import { START_SCREEN } from "./layout/startScreen.ts";
+import { fromAreaLeft, fromAreaTop, START_SCREEN, units } from "./layout/index.ts";
 import { createShipTailView } from "./shipTailView.ts";
 import { jetPolygons, type TitleScreenArt, titleShip } from "./titleScreen.ts";
 

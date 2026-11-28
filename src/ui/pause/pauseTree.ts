@@ -1,6 +1,6 @@
 import type { ComponentNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
-import { BUTTON_GAP, STACK_BUTTON_GAP } from "../layout/tokens.ts";
+import { BUTTON_GAP, STACK_BUTTON_GAP } from "../layout/index.ts";
 import { PAUSE_RIGHT_ACTIONS, type PauseActionView } from "../pause.ts";
 
 export interface PauseTreeAction extends PauseActionView {

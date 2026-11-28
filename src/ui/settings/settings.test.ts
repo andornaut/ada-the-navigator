@@ -6,7 +6,7 @@ import * as actionBinding from "../actionBinding.ts";
 import { resolveAdaHoldAction } from "../actionBinding.ts";
 import { fixtureActionRoot } from "../actionRootFixture.ts";
 import { DEVICE_STORAGE_KEYS } from "../deviceSettings.ts";
-import { PAGE_DIVIDER_STYLE } from "../layout/controlPresentation.ts";
+import { PAGE_DIVIDER_STYLE } from "../layout/pageDivider.ts";
 import * as modal from "../modal.ts";
 import { currentView, rootPressGuard } from "../pressScope.ts";
 import { createSettings, SETTINGS_STYLE, type SettingsLabels } from "./settings.ts";
