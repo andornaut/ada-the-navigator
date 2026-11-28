@@ -612,7 +612,7 @@ describe("shared Earth and space dialogue presentation", () => {
     expect(skip.hidden).toBe(true);
     interaction.dispose();
   });
-  it("uses Next to enter Loom's topics and Previous to restore the greeting without an outcome", () => {
+  it("uses a named Loom topic choice to return to the greeting without an outcome", () => {
     setup();
     const parent = connectedParent();
     fixtureActionRoot(parent);
@@ -644,7 +644,9 @@ describe("shared Earth and space dialogue presentation", () => {
     expect(button("How do pilots learn?")).toBeDefined();
     expect(button("Next")).toBeUndefined();
     expect(skip.hidden).toBe(true);
-    button("Previous")!.click();
+    expect(button("Previous")).toBeUndefined();
+    expect(button("Ask more")).toBeUndefined();
+    button("Back to the greeting")!.click();
     expect(paragraph()).toBe(greeting);
     expect(button("Previous")).toBeUndefined();
     expect(button("Who flies here?")).toBeUndefined();
@@ -659,6 +661,15 @@ describe("shared Earth and space dialogue presentation", () => {
       .find((node) => node.getAttribute("aria-label") === "Who flies here?, Topic completed");
     expect(completed).toBeDefined();
     expect(button("How do pilots learn?")).toBeDefined();
+    button("Back to the greeting")!.click();
+    expect(paragraph()).toBe(greeting);
+    expect(button("Previous")).toBeUndefined();
+    button("Next")!.click();
+    expect(
+      parent
+        .all()
+        .find((node) => node.getAttribute("aria-label") === "Who flies here?, Topic completed"),
+    ).toBeDefined();
     button("Ask about the disk")!.click();
     expect(paragraph()).toBe("I'm looking for a shining disk.");
     expect(choose).not.toHaveBeenCalled();

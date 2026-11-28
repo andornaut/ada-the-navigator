@@ -46,6 +46,7 @@ export const NEEDLE_COPY: Readonly<Record<string, InteractionCopy>> = {
     ],
     party: "loom",
     topicExit: { label: "Ask about the disk", target: "looking-for-disk" },
+    topicGreetingReturn: "Back to the greeting",
     topics: [
       {
         id: "avi-pilots",

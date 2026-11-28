@@ -839,6 +839,7 @@ export interface InteractionCopy {
   readonly party: string;
   readonly lines: readonly InteractionLine[];
   readonly topicExit?: { readonly label: string; readonly target: string };
+  readonly topicGreetingReturn?: string;
   readonly topics: readonly InteractionTopic[];
 }
 /** The explicitly offered disk exchange uses the resolved outpost giver. */

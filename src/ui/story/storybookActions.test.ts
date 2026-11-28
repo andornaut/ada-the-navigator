@@ -14,7 +14,7 @@ import { NO_INSETS } from "../layout/playView.ts";
 import { useDiscLayout, usePressed } from "../layout/touchControls.ts";
 import { readViewUnit } from "../layout/viewScale.ts";
 import { enterPressView, rootPressGuard } from "../pressScope.ts";
-import { createStorybook, type StoryPageView } from "./storybook.ts";
+import { createStorybook, type StoryPageView, storyPageView } from "./storybook.ts";
 
 vi.mock("./storyArt.ts", async (original) => ({
   ...(await original<typeof import("./storyArt.ts")>()),
@@ -434,6 +434,53 @@ it("registers native navigation with default holds and current callbacks", () =>
     f.unregister();
   }
 });
+it("offers only authored actions on the Earth topic page and restores linear navigation", () => {
+  const f = setup();
+  try {
+    const questions = [{ label: "Can Penny come?", next: "answer" }];
+    f.story.show(
+      storyPageView(
+        {
+          action: "Take the seat",
+          background: "aboard",
+          id: "questions",
+          questions,
+          showActionWithChoices: true,
+          text: "Ask Astra",
+        },
+        questions,
+        true,
+        true,
+      ),
+    );
+    const previous = f.button("story-previous");
+    const next = f.button("story-next");
+    const skip = f.button("story-skip");
+    expect(previous.hidden).toBe(true);
+    expect(skip.hidden).toBe(true);
+    expect(next.hidden).toBe(false);
+    expect(next.textContent).toBe("Take the seat");
+    expect(
+      f.host
+        .all()
+        .filter((node) => node.tag === "button" && node.textContent === questions[0]!.label),
+    ).toHaveLength(1);
+    previous.dispatchEvent(new Event("click"));
+    expect(f.options.onPrevious).not.toHaveBeenCalled();
+    next.dispatchEvent(new Event("click"));
+    expect(f.options.onNext).toHaveBeenCalledOnce();
+
+    f.story.show(page);
+    expect(previous.hidden).toBe(false);
+    expect(next.textContent).toBe("Next");
+    previous.dispatchEvent(new Event("click"));
+    expect(f.options.onPrevious).toHaveBeenCalledOnce();
+  } finally {
+    f.story.dispose();
+    f.unregister();
+  }
+});
+
 it("keeps the standard navigation buttons when their labels and availability change", () => {
   const f = setup();
   try {

@@ -1499,6 +1499,27 @@ export class InteractionConversation {
     return [];
   }
 
+  get topicReturn(): { label: string; run: () => void } | undefined {
+    const frame = this.frame;
+    if (frame?.page.kind !== "topics" || !frame.copy.topicGreetingReturn) {
+      return undefined;
+    }
+    const index = this.history.findLastIndex(
+      ({ page, panel }) => panel === frame.panel && page.kind === "main" && page.index === 0,
+    );
+    const greeting = this.history[index];
+    if (!greeting) {
+      return undefined;
+    }
+    return {
+      label: frame.copy.topicGreetingReturn,
+      run: this.onCurrentPage(() => {
+        this.history.length = index;
+        this.frame = { ...greeting };
+      }),
+    };
+  }
+
   get topicExitLabel(): string | undefined {
     return this.currentTopicExit?.label;
   }

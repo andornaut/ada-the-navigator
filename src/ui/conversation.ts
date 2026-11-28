@@ -610,7 +610,8 @@ export function createInteractionCard(
       (choice ? choices : controls).push(button);
     };
     try {
-      if (state.hasPrevious) {
+      const topicReturn = state.topicReturn;
+      if (state.hasPrevious && !topicReturn) {
         add(CONTENT.labels.previous ?? "", () => state.previous());
       }
       for (const topic of state.topics) {
@@ -621,6 +622,9 @@ export function createInteractionCard(
           false,
           state.completedTopic(topic.id) ? "completed" : undefined,
         );
+      }
+      if (topicReturn) {
+        add(topicReturn.label, topicReturn.run, true);
       }
       if (state.topicExitLabel) {
         add(state.topicExitLabel, state.topicExitAction(), true, true);
