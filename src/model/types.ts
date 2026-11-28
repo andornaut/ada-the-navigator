@@ -18,6 +18,7 @@ import type { CartwheelMiningPatrol } from "./cartwheelMiningPatrol.ts";
 import type { EarlyEncounterState } from "./earlyEncounterRuntime.ts";
 import type { EnemyState } from "./enemyAi.ts";
 import type { ExplorationSites, ExplorationState } from "./explorationState.ts";
+import type { EnemyBeam } from "./flight/enemyBeams.ts";
 import type { FlightTopology } from "./flightTopology.ts";
 import type { NeedleChapterProgress, NeedleFlight } from "./needleRuntime.ts";
 import type { PhantomFlight, PhantomProgress } from "./phantom.ts";
@@ -255,6 +256,8 @@ export interface FlightState {
   objects: SpaceObject[];
   shots: Shot[];
   pendingPellets?: PendingPellet[];
+  /** Live enemy tells and beams. Saves keep only pending ordinary attacks here. */
+  enemyBeams?: EnemyBeam[];
   chunks: string[];
   freshChunk: string | null;
   freshDistance: number;

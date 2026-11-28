@@ -455,6 +455,7 @@ describe("Captain Tally in Sunflower", () => {
     expect(locked.age).toBeGreaterThan(0.7);
     expect(locked.fired).toBe(false);
     expect(flight.shots).toHaveLength(before);
+    expect(model.saveDocument().flight?.enemyBeams).toBeUndefined();
     model = relaunch(CONTENT, model.save());
     expect(actorOf(model).enemy?.earlyEncounter).toMatchObject({
       kind: "hammer",
@@ -468,9 +469,9 @@ describe("Captain Tally in Sunflower", () => {
     expect(actorOf(model).enemy?.earlyEncounter).toEqual({ kind: "hammer", phase: "complete" });
     expect(
       activeEnemyBeams(flightOf(model)).filter(
-        ({ authored, ownerId }) => ownerId === id && authored,
+        ({ kind, ownerId }) => ownerId === id && kind === "lance",
       ),
-    ).toHaveLength(1);
+    ).toEqual([beam()]);
   });
 
   it("salvages via Use, marks a normal-flight route and allows exactly one Ore claim across flights", () => {

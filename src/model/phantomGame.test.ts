@@ -1,11 +1,15 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
+import { enemyDefinition, LANCE_TELL, PHASER_AIM_SECONDS } from "../data/enemyCatalog.ts";
 import { BUILT, GALAXY_NUMBERS } from "../data/galaxies.ts";
 import { PHANTOM_DESTINATIONS } from "../data/phantom.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
+import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
+import { createEnemy } from "./enemyAi.ts";
+import { activeEnemyBeams } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { ACTIVE_CHUNK_RADIUS } from "./geography.ts";
 import { validPhantomFlight, validPhantomProgress } from "./phantom.ts";
@@ -15,12 +19,12 @@ const productionRoster = [...BUILT];
 afterEach(() => expect([...BUILT]).toEqual(productionRoster));
 
 /** Test-only admission exercises the prepared adapter without publishing it in the roster. */
-function withPhantom(check: (model: GameModel) => void): void {
+function withPhantom(check: (model: GameModel) => void, entropy = supportEntropy): void {
   const built = BUILT as Set<GalaxyNumber>;
   const admitted = built.has(6);
   built.add(6);
   try {
-    const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);
+    const model = new GameModel(CONTENT, entropy, SAVE_RESTORE);
     model.state.started = true;
     model.state.prologueSeen = true;
     model.state.unlocked = [...GALAXY_NUMBERS];
@@ -43,6 +47,96 @@ function represented(flight: FlightState): SpaceObject[] {
     ),
   ];
 }
+
+it.each([
+  { archetype: "interceptor", kind: "phaser", tellSeconds: PHASER_AIM_SECONDS },
+  {
+    archetype: "capital",
+    kind: "lance",
+    tellSeconds: LANCE_TELL.trackSeconds + LANCE_TELL.lockSeconds,
+  },
+] as const)(
+  "resumes an ordinary Phantom $kind at the same fire time",
+  ({ archetype, kind, tellSeconds }) => {
+    withPhantom(
+      (model) => {
+        const flight = model.state.flight!;
+        const weapon = kind === "phaser" ? "phaser" : "chargedLance";
+        const id = `${kind}-proof`;
+        const definition = enemyDefinition(6, archetype, id);
+        const point = { x: flight.player.x + 220, y: flight.player.y };
+        const enemy = createEnemy(definition, { archetype, id, packId: null, phase: 0 }, point);
+        if (kind === "lance") {
+          const mount = definition.hardpoints.find(
+            (part) => part.kind === "weapon" && part.fire.weapon === weapon,
+          );
+          expect(mount).toBeDefined();
+          for (const part of enemy.hardpoints) {
+            part.cooldown = part.id === mount!.id ? 0 : 999;
+          }
+        }
+        // Start with an engaged opponent so regional admission does not decide this test.
+        enemy.facing = { x: -1, y: 0 };
+        enemy.engaged = true;
+        flight.objects.push({
+          ...point,
+          enemy,
+          hp: enemy.hp,
+          id,
+          kind: "enemy",
+          radius: definition.sizeRatio * CONTENT.tuning.flight.shipRadius,
+        });
+        endArrivalGrace(flight);
+        const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
+        model.step(1 / 60, idle);
+        const pending = activeEnemyBeams(flight).find((beam) => beam.ownerId === id);
+        expect(pending).toMatchObject({ fired: false, kind });
+        const shield = flight.shield;
+        const document = model.saveDocument();
+        const saved = model.save();
+        expect(restoreSave(saved)?.flight?.enemyBeams).toEqual([pending]);
+        const resumed = relaunch(CONTENT, saved);
+        const continued = resumed.state.flight!;
+        expect(continued).not.toBe(flight);
+        expect(activeEnemyBeams(continued)).toEqual([pending]);
+
+        const legacy = structuredClone(document);
+        delete legacy.flight!.enemyBeams;
+        expect(restoreSave(legacy)).not.toBeNull();
+        expect(activeEnemyBeams(relaunch(CONTENT, legacy).state.flight!)).toEqual([]);
+
+        const nearFire = tellSeconds - pending!.age - 1 / 60;
+        model.step(nearFire, idle);
+        resumed.step(nearFire, idle);
+        expect(flight.shield).toBe(shield);
+        expect(continued.shield).toBe(shield);
+
+        model.step(2 / 60, idle);
+        resumed.step(2 / 60, idle);
+        expect(flight.shield).toBeCloseTo(shield - pending!.damage);
+        expect(continued.shield).toBeCloseTo(flight.shield);
+        expect(activeEnemyBeams(continued)).toEqual(activeEnemyBeams(flight));
+
+        model.step(1 / 60, idle);
+        resumed.step(1 / 60, idle);
+        expect(flight.shield).toBeCloseTo(shield - pending!.damage);
+        expect(continued.shield).toBeCloseTo(flight.shield);
+        expect(resumed.saveDocument().flight).not.toHaveProperty("enemyBeams");
+        expect(document.flight?.enemyBeams?.[0]?.fired).toBe(false);
+        expect(
+          restoreSave({
+            ...document,
+            flight: {
+              ...document.flight,
+              enemyBeams: [{ ...document.flight!.enemyBeams![0], fired: true }],
+            },
+          }),
+        ).toBeNull();
+      },
+      () => 173,
+    );
+  },
+);
 
 describe("Phantom GameModel initialization under test-only chapter admission", () => {
   it("accepts the immediate first save without advancing physics or relaxing the active window", () => {

@@ -35,6 +35,7 @@ import { holodisksHeld } from "../model/conversations.ts";
 import { EARLY_LANCE_SECONDS, earlyEncounterKind } from "../model/earlyEncounterRuntime.ts";
 import { enemyDefeated } from "../model/enemyAi.ts";
 import { validExplorationSites, validExplorationState } from "../model/explorationState.ts";
+import { BEAM_TIMING } from "../model/flight/enemyBeams.ts";
 import { flightWorldContext, validFlightTopology } from "../model/flightTopology.ts";
 import { validGalaxyGeography } from "../model/galaxyGeography.ts";
 import {
@@ -129,6 +130,39 @@ function vector(value: unknown): boolean {
     Math.abs(value.y) <= Number.MAX_SAFE_INTEGER / 2
   );
 }
+function pendingEnemyBeam(value: unknown): boolean {
+  if (
+    !record(value) ||
+    (value.kind !== "phaser" && value.kind !== "lance") ||
+    !finite(value.age) ||
+    value.age >= BEAM_TIMING[value.kind].fires ||
+    !finite(value.damage) ||
+    value.damage <= 0 ||
+    !finite(value.range) ||
+    value.range < 0 ||
+    (value.kind === "phaser" && value.range === 0) ||
+    !vector(value.direction) ||
+    !vector(value.end) ||
+    !vector(value.muzzle) ||
+    !vector(value.offset) ||
+    (typeof value.hardpointId !== "string" &&
+      !(value.kind === "phaser" && value.hardpointId === null)) ||
+    typeof value.ownerId !== "string" ||
+    !finite(value.volley) ||
+    !Number.isSafeInteger(value.volley) ||
+    value.volley < 0 ||
+    typeof value.stopped !== "boolean" ||
+    value.fired !== false ||
+    value.drawn !== null ||
+    value.impact !== undefined ||
+    value.authored !== undefined
+  ) {
+    return false;
+  }
+  const direction = value.direction as Vec;
+  return Math.abs(Math.hypot(direction.x, direction.y) - 1) < 1e-9;
+}
+
 function strings(value: unknown): boolean {
   return Array.isArray(value) && Array.from(value).every((v) => typeof v === "string");
 }
@@ -1742,6 +1776,12 @@ export function restoreGameSave(content: GameContent, saved: unknown): GameState
                 nonnegative(mine.end.age) &&
                 ["fizzle", "pop"].includes(String(mine.end.kind)))),
         )
+      ) {
+        return null;
+      }
+      if (
+        f.enemyBeams !== undefined &&
+        !(Array.isArray(f.enemyBeams) && Array.from(f.enemyBeams).every(pendingEnemyBeam))
       ) {
         return null;
       }

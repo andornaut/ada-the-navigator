@@ -25,7 +25,7 @@ import { beamPoint, outlineBeamStrike, sampleBeam } from "./beamContact.ts";
  * An enemy Phaser or charged lance shot and its tell: a Phaser's aim line is fixed where it
  * started; a lance's line follows its ship and tracks Ada, then holds still. The beam fires
  * along the line. Only the lance can stop early. A Phaser keeps its impact separate.
- * Ordinary enemy beams are transient. Named encounter tells restore from their actor state.
+ * Pending ordinary attacks resume from the flight queue. Authored tells restore from actor state.
  */
 export interface EnemyBeam {
   /** Seconds since the tell appeared. */
@@ -69,7 +69,6 @@ export const BEAM_TIMING = {
 export function projectedLength(heading: Vec): number {
   return Math.hypot(heading.x - heading.y, (heading.x + heading.y) / 2);
 }
-const enemyBeams = new WeakMap<FlightState, EnemyBeam[]>();
 
 export function rememberEarlyLance(
   owner: SpaceObject,
@@ -108,7 +107,7 @@ export function restoreEarlyLance(flight: FlightState, owner: SpaceObject | unde
   if (!owner || !tell) {
     return;
   }
-  const beams = enemyBeams.get(flight) ?? [];
+  const beams = flight.enemyBeams ?? [];
   if (!beams.some((beam) => beam.ownerId === owner.id && beam.authored && !beam.fired)) {
     beams.push({
       ...tell,
@@ -122,12 +121,12 @@ export function restoreEarlyLance(flight: FlightState, owner: SpaceObject | unde
       range: 0,
       stopped: false,
     });
-    enemyBeams.set(flight, beams);
+    flight.enemyBeams = beams;
   }
 }
 
 export function activeEnemyBeams(flight: FlightState): readonly EnemyBeam[] {
-  return enemyBeams.get(flight) ?? [];
+  return flight.enemyBeams ?? [];
 }
 
 interface EnemyBeamContact {
@@ -164,7 +163,7 @@ export function chargeEnemyBeam(
   if (!span || (kind === "phaser" && range <= 0)) {
     return undefined;
   }
-  const beams = enemyBeams.get(flight) ?? [];
+  const beams = flight.enemyBeams ?? [];
   const beam: EnemyBeam = {
     age: -fire.delay,
     damage,
@@ -182,7 +181,7 @@ export function chargeEnemyBeam(
     volley: fire.volley,
   };
   beams.push(beam);
-  enemyBeams.set(flight, beams);
+  flight.enemyBeams = beams;
   return beam;
 }
 
@@ -243,7 +242,7 @@ export function stepEnemyBeams(
   viewportWidth: number,
   flight: FlightState,
 ): void {
-  const beams = enemyBeams.get(flight);
+  const beams = flight.enemyBeams;
   if (!beams) {
     return;
   }
@@ -363,11 +362,13 @@ export function stepEnemyBeams(
       }
     }
   }
-  enemyBeams.set(
-    flight,
-    beams.filter(
-      (beam) =>
-        !out.has(beam) && beam.age < BEAM_TIMING[beam.kind].fires + BEAM_TIMING[beam.kind].shows,
-    ),
+  const remaining = beams.filter(
+    (beam) =>
+      !out.has(beam) && beam.age < BEAM_TIMING[beam.kind].fires + BEAM_TIMING[beam.kind].shows,
   );
+  if (remaining.length) {
+    flight.enemyBeams = remaining;
+  } else {
+    delete flight.enemyBeams;
+  }
 }
