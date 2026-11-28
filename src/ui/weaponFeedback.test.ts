@@ -38,7 +38,13 @@ class Element extends EventTarget {
   };
   readonly dataset: Record<string, string> = {};
   hidden = false;
-  readonly style = { opacity: "", setProperty: vi.fn() };
+  private readonly properties = new Map<string, string>();
+  readonly style = {
+    getPropertyValue: (name: string) => this.properties.get(name) ?? "",
+    opacity: "",
+    removeProperty: (name: string) => this.properties.delete(name),
+    setProperty: (name: string, value: string) => this.properties.set(name, value),
+  };
   textContent = "";
   append(...nodes: Element[]) {
     for (const node of nodes) {
@@ -113,7 +119,7 @@ describe("weapon refill presentation", () => {
         { ammo: 10, id: "rapidMissile", level: 1, selected: true },
       ]);
       selector.setEnabled(true);
-      const buttons = host.children[0]!.children;
+      const buttons = host.children[0]!.children[0]!.children;
       const gain = buttons[0]!.querySelector(".ada-ammo-gain")!;
       const other = buttons[1]!.querySelector(".ada-ammo-gain")!;
       selector.showAmmoGain("phaser", 1);

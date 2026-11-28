@@ -1,3 +1,5 @@
+import actionGroupCss from "@andornaut/game-kit/runtime/web/ui/dom/actionGroup.css?raw";
+import hudDiscCss from "@andornaut/game-kit/runtime/web/ui/dom/hudDisc.css?raw";
 import layoutTreeCss from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree.css?raw";
 
 import { ACHIEVEMENTS_STYLE } from "./achievementsCard.ts";
@@ -39,6 +41,8 @@ const PAGE_STYLE = `:root{color:${UNLISTED_COLOURS.pageText};background:${UNLIST
 // then the cards that refine them, the storybook after the shared card styles it refines.
 export const UI_STYLESHEET = [
   layoutTreeCss,
+  actionGroupCss,
+  hudDiscCss,
   PAGE_STYLE,
   COMPLETION_INDICATOR_STYLE,
   LOADING_STYLE,

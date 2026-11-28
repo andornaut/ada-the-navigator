@@ -62,7 +62,13 @@ class Element extends EventTarget {
   };
   readonly dataset: Record<string, string> = {};
   hidden = false;
-  readonly style = { opacity: "", removeProperty: vi.fn(), setProperty: vi.fn() };
+  private readonly properties = new Map<string, string>();
+  readonly style = {
+    getPropertyValue: (name: string) => this.properties.get(name) ?? "",
+    opacity: "",
+    removeProperty: (name: string) => this.properties.delete(name),
+    setProperty: (name: string, value: string) => this.properties.set(name, value),
+  };
   textContent = "";
   append(...nodes: Element[]) {
     for (const node of nodes) {
@@ -165,7 +171,7 @@ function setup(withOverride = true) {
   const before = JSON.stringify(choices);
   selector.setWeapons(choices);
   selector.setEnabled(true);
-  const button = host.children[0]!.children[0]!;
+  const button = host.children[0]!.children[0]!.children[0]!;
   const event = (type: string, extra = {}) => {
     const result = new Event(type, { cancelable: true });
     for (const [key, value] of Object.entries({
@@ -347,7 +353,7 @@ it("removes a newly constructed weapon when its action root has been retired", (
       { ammo: 10, id: "rapidMissile", level: 1, selected: false },
     ]),
   ).toThrow("Discrete action control has no live action root");
-  expect(f.host.children[0]!.children).toEqual([f.button]);
+  expect(f.host.children[0]!.children[0]!.children).toEqual([f.button]);
   expect(f.onHold).not.toHaveBeenCalled();
   expect(f.onSelect).not.toHaveBeenCalled();
   f.selector.dispose();
@@ -364,14 +370,16 @@ it("gives the factory one native action and disposes a running refusal with the 
   expect(f.button.classList.contains("ui-standard-button")).toBe(true);
   const disc = f.button.querySelector(".ada-disc")!;
   expect(disc.classList.contains("ui-button-face")).toBe(true);
-  const slot = disc.querySelector(".ada-weapon-content")!;
+  const slot = disc.querySelector(".ui-hud-disc-icon")!;
   expect(slot.getAttribute("aria-hidden")).toBe("true");
-  expect(slot.children).toHaveLength(0);
-  expect(slot.textContent).toBe("");
+  expect(slot.children[0]?.classList.contains("ada-weapon-glyph")).toBe(true);
 
-  const row = f.button.parentElement!;
+  const group = f.button.parentElement!;
+  expect(group.classList.contains("ui-action-group")).toBe(true);
+  expect(f.button.style.getPropertyValue("--ui-action-width")).toBe("66");
+  expect(f.button.style.getPropertyValue("--ui-action-outset-left")).toBe("15");
   const click = f.event("click");
-  row.dispatchEvent(click);
+  group.parentElement!.dispatchEvent(click);
   expect(click.cancelBubble).toBe(true);
   expect(f.onSelect).not.toHaveBeenCalled();
 

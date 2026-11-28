@@ -174,18 +174,11 @@ describe("HUD weapon buttons", () => {
   });
 
   it("keeps muted inactive glyph colours opaque for contrast on solid faces", () => {
-    for (const [state, opacity] of [
-      ["selected", 1],
-      ["idle", 1],
-      ["empty", 1],
-    ] as const) {
-      const selector = `.ada-controls .ada-weapon[data-state=${state}] .ada-disc::before`;
-      const rule = WEAPON_STYLE.split("}").find((part) => part.includes(`${selector}{`));
-      expect(rule).toContain(`opacity:${opacity}`);
-    }
-    expect(WEAPON_STYLE).toContain(
-      ".ada-controls .ada-weapon[data-ui-refusal-red] .ada-disc::before{\n  opacity:1",
+    const icon = WEAPON_STYLE.split("}").find((part) =>
+      part.includes(".ada-controls .ada-weapon-group > button.ada-weapon .ui-hud-disc-icon{"),
     );
+    expect(icon).toContain("opacity:1");
+    expect(icon).toContain("color:var(--disc-focus-glyph,currentColor)");
     const pill = WEAPON_STYLE.split("}").find((part) => part.includes(".ada-controls .ada-ammo{"));
     const pips = WEAPON_STYLE.split("}").find((part) =>
       part.includes(".ada-controls .ada-pips > span{"),
@@ -276,11 +269,12 @@ describe("HUD weapon buttons", () => {
     expect(ammo).toContain(`border-radius:${units(HUD_AMMO_COUNT.radius)}`);
   });
 
-  it("removes only the unused weapon content slot from the disc grid", () => {
-    expect(WEAPON_STYLE).toContain(
-      ".ada-controls .ada-weapon .ada-disc > .ada-weapon-content:empty{\n  display:none\n}",
+  it("keeps the flight glyph in the Kit icon slot and out of Local Map styling", () => {
+    const glyph = WEAPON_STYLE.split("}").find((part) =>
+      part.includes(".ada-controls .ada-weapon-glyph{"),
     );
-    expect(hudDiscStyle(".shared-button", ".disc")).not.toContain("ada-weapon-content");
+    expect(glyph).toContain("mask:var(--glyph) center / 100% 100% no-repeat");
+    expect(hudDiscStyle(".shared-button", ".disc")).not.toContain("ada-weapon-glyph");
   });
 
   it("shows focus on the disc face without adding an outline or shadow", () => {

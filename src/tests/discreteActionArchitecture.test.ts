@@ -3033,3 +3033,27 @@ it("removes only the actual weapon Kit constructor from the local census", () =>
     { kind: "gesture-review", source: 'button.addEventListener("keydown", cancelOnKeyDown)' },
   ]);
 });
+
+it.each([
+  ["a foreign group", "row.append(button);", "root.append(button);"],
+  [
+    "a foreign action root",
+    "resolveAdaHoldAction(parent, button)",
+    "resolveAdaHoldAction(root, button)",
+  ],
+  [
+    "early mount",
+    "const binding = bindAdaAction(",
+    "row.append(button); const binding = bindAdaAction(",
+  ],
+] as const)("keeps the mounted HUD disc finding for %s", (_case, before, after) => {
+  const text = readFileSync(new URL("../ui/weapons.ts", import.meta.url), "utf8");
+  const changed = text.replace(before, after);
+  expect(changed).not.toBe(text);
+  expect(constructionFindings("src/ui/hudDiscFixture.ts", changed)).toContainEqual(
+    expect.objectContaining({
+      kind: "unbound-discrete",
+      source: expect.stringContaining("createHudDisc(document,"),
+    }),
+  );
+});

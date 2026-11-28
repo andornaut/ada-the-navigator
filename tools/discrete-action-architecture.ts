@@ -3462,10 +3462,31 @@ function scanSource(context: ScanContext, path: string, text: string) {
     if (capturedKitFactory(alias, block)?.call === call && capturedEnd(alias) >= 0) {
       return true;
     }
+    const hudDisc = kitDomImport("createHudDisc", "hudDisc", call.expression);
     const options = fields(call.arguments[1]);
     const content = fields(options?.get("content"));
     const state = options?.get("getState");
     const native = nativeDocument(call.arguments[0]!);
+    const document = lexicalDeclaration(call.arguments[0]!);
+    const icon = options?.get("icon");
+    const glyph = icon && lexicalDeclaration(icon);
+    const hudDiscShape =
+      hudDisc &&
+      native &&
+      document &&
+      ts.isVariableDeclaration(document) &&
+      document.initializer &&
+      options?.size === 8 &&
+      options.has("className") &&
+      options.has("name") &&
+      options.has("size") &&
+      options.has("sizes") &&
+      options.has("rule") &&
+      glyph &&
+      ts.isVariableDeclaration(glyph) &&
+      isConst(glyph) &&
+      createsNative(glyph.initializer, "span") &&
+      resolvesFactoryRoot(options.get("getAction"), document.initializer);
     const rootResolution =
       literal(content?.get("kind"), "icon") &&
       resolvesFactoryRoot(options?.get("getAction"), call.arguments[0]!) &&
@@ -3480,9 +3501,11 @@ function scanSource(context: ScanContext, path: string, text: string) {
       content?.size === 2 &&
       readsButtonAvailability(state);
     if (
-      !literal(fields(options?.get("appearance"))?.get("layout"), "caller") ||
-      (!textButton && !literal(content?.get("kind"), "icon")) ||
-      content?.has("icon") ||
+      (hudDisc
+        ? !hudDiscShape || !stateWithoutElement || !state
+        : !literal(fields(options?.get("appearance"))?.get("layout"), "caller") ||
+          (!textButton && !literal(content?.get("kind"), "icon")) ||
+          content?.has("icon")) ||
       (!native && !detachedClick && !rootResolution && !createdHostDocument(call.arguments[0]!)) ||
       (!stateWithoutElement && !rootResolution && !readsButtonAvailability(state))
     ) {
@@ -3608,6 +3631,14 @@ function scanSource(context: ScanContext, path: string, text: string) {
       const { expression: target, name } = method;
       const args = invocation.arguments;
       switch (name.text) {
+        case "add":
+          return (
+            hudDisc &&
+            dot(target, "classList") &&
+            face(target.expression) &&
+            args.length === 1 &&
+            ts.isStringLiteral(args[0]!)
+          );
         case "append":
           return lexicalIdentity(target, alias) && args.every(localChild);
         case "replaceChildren":
@@ -3942,14 +3973,35 @@ function scanSource(context: ScanContext, path: string, text: string) {
     ) {
       return false;
     }
+    const group =
+      hudDisc &&
+      host &&
+      ts.isVariableDeclaration(host) &&
+      isConst(host) &&
+      dot(host.initializer, "element") &&
+      unwritten(host.initializer) &&
+      lexicalDeclaration(host.initializer.expression);
+    const groupFactory =
+      group && ts.isVariableDeclaration(group) && isConst(group) && group.initializer;
+    const mountsActionGroup =
+      groupFactory &&
+      ts.isCallExpression(groupFactory) &&
+      !groupFactory.questionDotToken &&
+      kitDomImport("createActionGroup", "actionGroup", groupFactory.expression) &&
+      unwritten(groupFactory.expression) &&
+      groupFactory.arguments.length === 2 &&
+      document &&
+      lexicalIdentity(groupFactory.arguments[0]!, document);
     if (
-      !domHost(mount.expression.expression) &&
-      !(
-        host &&
-        ts.isVariableDeclaration(host) &&
-        isConst(host) &&
-        createsNative(host.initializer, "div")
-      )
+      hudDisc
+        ? !mountsActionGroup
+        : !domHost(mount.expression.expression) &&
+          !(
+            host &&
+            ts.isVariableDeclaration(host) &&
+            isConst(host) &&
+            createsNative(host.initializer, "div")
+          )
     ) {
       return false;
     }
@@ -5861,7 +5913,9 @@ function scanSource(context: ScanContext, path: string, text: string) {
       if (dot(callee, "setAttribute") && literal(node.arguments[0], "class") && node.arguments[1]) {
         checkStandardButtonClass(node, callee.expression, [node.arguments[1]]);
       }
-      const kitButton = kitDomImport("createButton", "button", callee);
+      const kitButton =
+        kitDomImport("createButton", "button", callee) ||
+        kitDomImport("createHudDisc", "hudDisc", callee);
       if (kitButton || createsButton(node)) {
         const target =
           ts.isVariableDeclaration(node.parent) && ts.isIdentifier(node.parent.name)

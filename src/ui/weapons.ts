@@ -1,4 +1,5 @@
-import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
+import { createActionGroup } from "@andornaut/game-kit/runtime/web/ui/dom/actionGroup";
+import { createHudDisc } from "@andornaut/game-kit/runtime/web/ui/dom/hudDisc";
 
 import type { Weapon } from "../data/types.ts";
 import { UPGRADE_TIER_COLOURS } from "../data/upgradeTiers.ts";
@@ -140,8 +141,8 @@ export const LEVEL_PIPS = {
 } as const;
 
 // One HUD disc button's chrome: a target that is its press area, a smooth disc centred in it, and
-// a glyph centred on the disc, drawn in CSS at logical units so it stays sharp at any scale. The
-// start screen's Settings shares it.
+// a glyph centred on the disc, drawn in CSS at logical units. Local Map tools and the
+// decorative Weapon Details icon retain this style.
 export function hudDiscStyle(button: string, disc: string): string {
   return `
 ${button}{
@@ -212,43 +213,72 @@ ${button} ${disc}::before{
 // tint it; selection, lock and refusal never resize the disc or glyph.
 const rapidDiscInkOffset = units(EXPANDED_RAPID_DISC_INK_OFFSET);
 
+// Kit's integer action-group ports use half units to preserve the symmetric 7.5-unit outsets.
+const GROUP_SCALE = 2;
+const weaponFace = { height: HUD_BUTTON.disc * GROUP_SCALE, width: HUD_BUTTON.disc * GROUP_SCALE };
+const weaponPress = { margin: HUD_ROW.reach * GROUP_SCALE };
+const weaponGap = (HUD_BUTTON.gap + 2 * HUD_ROW.reach) * GROUP_SCALE;
+const weaponSizes = { weapon: { face: HUD_BUTTON.disc, icon: HUD_BUTTON.glyph } };
+
 export const WEAPON_STYLE = `
 .ada-controls .ada-weapon-selector{
   position:absolute;
   right:${fromHudEdge("right", -HUD_ROW.reach)};
   top:${fromHudEdge("top", -HUD_ROW.reach)};
-  display:flex;
-  gap:${units(HUD_BUTTON.gap)}
+  box-sizing:border-box;
+  display:grid;
+  height:${units(HUD_BUTTON.target)};
+  padding:${units(HUD_ROW.reach)}
 }
-${hudDiscStyle(".ada-controls .ada-weapon", ".ada-disc")}
-/* An unused Kit slot must not add a grid row beside the masked glyph. */
-.ada-controls .ada-weapon .ada-disc > .ada-weapon-content:empty{
+.ada-controls .ada-weapon-selector[hidden]{
   display:none
 }
-/* The scaled mask's asymmetric ink bearings leave the darts left of the disc centre. */
-@media ${EXPANDED_VIEWPORT}{
-  .ada-controls .ada-weapon[data-weapon="rapidMissile"] .ada-disc::before{translate:${rapidDiscInkOffset} 0}
+.ada-controls .ada-weapon-group{
+  --ui-unit:calc(var(--ada-unit,1) / ${GROUP_SCALE})
 }
+${hudDiscStyle(".ada-controls span.ada-weapon", ".ada-disc")}
 .ada-controls .ada-weapon{
   position:relative
 }
+.ada-controls .ada-weapon-group > .ada-weapon{
+  --ui-action-length:inherit;
+  --ui-unit:var(--ada-unit,1);
+  position:absolute;
+  color:${HUD_DISC_STATES.idle.glyph};
+  overflow:visible
+}
+.ada-controls .ada-weapon-group > .ada-weapon .ada-disc{
+  color:inherit;
+  pointer-events:none
+}
+.ada-controls .ada-weapon-group > button.ada-weapon .ui-hud-disc-icon{
+  /* Kit centres on a whole unit. Retain the original half-unit centring of the glyph. */
+  translate:${units(0.5)} ${units(0.5)};
+  color:var(--disc-focus-glyph,currentColor);
+  opacity:1
+}
+.ada-controls .ada-weapon-glyph{
+  background:currentColor;
+  -webkit-mask:var(--glyph) center / 100% 100% no-repeat;
+  mask:var(--glyph) center / 100% 100% no-repeat
+}
+.ada-controls .ada-weapon-group > .ada-weapon:focus-visible .ada-disc{
+  background:${HUD_DISC_STATES.selected.glyph};
+  --disc-focus-glyph:${INK}
+}
+/* The scaled mask's asymmetric ink bearings leave the darts left of the disc centre. */
+@media ${EXPANDED_VIEWPORT}{
+  .ada-controls .ada-weapon[data-weapon="rapidMissile"] .ada-weapon-glyph,
+  .ada-controls span.ada-weapon[data-weapon="rapidMissile"] .ada-disc::before{
+    translate:${rapidDiscInkOffset} 0
+  }
+}
 .ada-controls .ada-weapon .ada-disc{
-  position:relative;
   background:var(--weapon-face, ${HUD_DISC_STATES.idle.face});
   box-shadow:none
 }
-.ada-controls .ada-weapon[data-state=idle] .ada-disc::before{
-  opacity:1
-}
-.ada-controls .ada-weapon[data-state=empty] .ada-disc::before{
-  opacity:1
-}
-.ada-controls .ada-weapon[data-state=selected] .ada-disc::before{
-  opacity:1
-}
-/* The shared refusal attribute keeps the red glyph at full strength. */
-.ada-controls .ada-weapon[data-ui-refusal-red] .ada-disc::before{
-  opacity:1
+.ada-controls span.ada-weapon .ada-disc{
+  position:relative
 }
 /* Dark faces keep the same readable state glyph colours on every field. */
 ${(Object.keys(WEAPON_FILLS) as Weapon[])
@@ -261,7 +291,7 @@ ${(Object.keys(WEAPON_FILLS) as Weapon[])
 .ada-controls .ada-ammo{
   position:absolute;
   left:50%;
-  top:${units(HUD_AMMO_COUNT.top)};
+  top:${units(HUD_AMMO_COUNT.top - HUD_ROW.reach)};
   transform:translateX(-50%);
   box-sizing:border-box;
   height:${units(HUD_AMMO_COUNT.height)};
@@ -277,7 +307,7 @@ ${(Object.keys(WEAPON_FILLS) as Weapon[])
 .ada-controls .ada-ammo-gain{
   position:absolute;
   left:50%;
-  top:${units(HUD_AMMO_COUNT.top + HUD_AMMO_COUNT.height + 4)};
+  top:${units(HUD_AMMO_COUNT.top - HUD_ROW.reach + HUD_AMMO_COUNT.height + 4)};
   transform:translateX(-50%);
   padding:0 ${units(HUD_AMMO_COUNT.padding)};
   border-radius:${units(HUD_AMMO_COUNT.radius)};
@@ -317,6 +347,26 @@ ${PRESSED_WEAPON}{
 .ada-controls .ada-weapon[data-ui-refusal-red]:is(:focus-visible,:active,[data-weapon-pressed]) .ada-disc{
   --disc-focus-glyph:currentColor
 }
+/* A focused refusal keeps the existing focus text colour on the filled disc. */
+.ada-controls .ada-weapon-group > .ada-weapon[data-ui-refusal-red]:focus-visible .ada-disc{
+  --disc-focus-glyph:var(--ui-button-focus-text,HighlightText)
+}
+@media (forced-colors:active){
+  .ada-controls .ada-weapon-group > .ada-weapon:focus-visible:not(:active,[data-weapon-pressed]) .ada-disc{
+    forced-color-adjust:none;
+    background:Highlight;
+    --disc-focus-glyph:HighlightText
+  }
+  .ada-controls .ada-weapon-group > .ada-weapon:focus-visible:not(:active,[data-weapon-pressed]) .ada-disc::after{
+    forced-color-adjust:none;
+    border-color:HighlightText;
+    box-shadow:none
+  }
+  .ada-controls .ada-weapon-glyph{
+    forced-color-adjust:none;
+    background:var(--disc-focus-glyph,ButtonText)
+  }
+}
 /* Every weapon uses one annulus inside the canonical disc, with ink on both edges. */
 .ada-controls .ada-weapon .ada-disc::after{
   content:"";
@@ -351,6 +401,9 @@ ${PRESSED_WEAPON}{
   gap:${units(pip.pitch - pip.size)};
   pointer-events:none
 }
+.ada-controls .ada-weapon-group .ada-pips{
+  top:${units(HUD_BUTTON.disc / 2 + HUD_WEAPON_LEVEL.below)}
+}
 .ada-controls .ada-pips > span{
   width:${units(pip.size)};
   height:${units(pip.size)};
@@ -380,6 +433,9 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
     }
   };
   root.addEventListener("click", stopWeaponClick);
+  const group = createActionGroup(document, { className: "ada-weapon-group" });
+  const row = group.element;
+  root.append(row);
   parent.append(root);
   const buttons = new Map<Weapon, HTMLButtonElement>();
   let choices: readonly WeaponChoice[] = [];
@@ -394,26 +450,24 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
   const render = (): void => {
     root.hidden = !(shown ?? enabled) || choices.length === 0;
     const ids = new Set(choices.map((choice) => choice.id));
+    let layoutChanged = false;
     for (const [id, entry] of buttons) {
       if (!ids.has(id)) {
         buttonDisposers.get(id)?.();
         buttonDisposers.delete(id);
         entry.remove();
         buttons.delete(id);
+        layoutChanged = true;
       }
     }
     for (const choice of choices) {
       let entry = buttons.get(choice.id);
       if (!entry) {
         const current = () => choices.find((item) => item.id === choice.id);
-        const kit = createButton(document, {
-          appearance: {
-            className: "ada-weapon",
-            contentClassName: "ada-weapon-content",
-            face: { className: "ada-disc" },
-            layout: "caller",
-          },
-          content: { kind: "icon", name: weaponButtonLabel(options.labels, choice) },
+        const glyph = document.createElement("span");
+        glyph.className = "ada-weapon-glyph";
+        const kit = createHudDisc(document, {
+          className: "ada-weapon",
           getAction: (button) => {
             const action = resolveAdaHoldAction(parent, button);
             return action?.available() ? action : null;
@@ -422,10 +476,15 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
             availability: enabled ? { kind: "available" } : { kind: "disabled" },
             toggled: current()?.selected ?? false,
           }),
+          icon: glyph,
+          name: weaponButtonLabel(options.labels, choice),
           rule: { holdMs: ADA_ACTION_HOLD_MS, slopPx: SCROLL.dragThreshold },
+          size: "weapon",
+          sizes: weaponSizes,
         });
         const button = kit.element;
         button.dataset.weapon = choice.id;
+        kit.face.classList.add("ada-disc");
         kit.face.style.setProperty("--glyph", `url('${weaponGlyphPath(choice.id)}')`);
         kit.face.setAttribute("aria-hidden", "true");
         const pips = document.createElement("span");
@@ -491,7 +550,7 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
         };
         try {
           assertAdaActionMetadata(button);
-          root.append(button);
+          row.append(button);
           assertAdaActionBindings(button);
         } catch (error) {
           disposeButton();
@@ -501,6 +560,7 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
         buttonDisposers.set(choice.id, disposeButton);
         entry = button;
         buttons.set(choice.id, entry);
+        layoutChanged = true;
       }
       const name = options.labels.names[choice.id];
       const count = entry.querySelector(".ada-ammo");
@@ -522,6 +582,17 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
       }
       entry.title = name;
       entry.disabled = !enabled;
+    }
+    if (layoutChanged) {
+      group.arrange(
+        {
+          axis: "row",
+          gap: { name: "weapon-hud", row: weaponGap, stack: weaponGap },
+          press: weaponPress,
+          width: buttons.size * weaponFace.width + Math.max(0, buttons.size - 1) * weaponGap,
+        },
+        [...buttons.values()].map((element) => ({ element, role: "secondary", size: weaponFace })),
+      );
     }
   };
   return {
@@ -553,6 +624,7 @@ export function createWeaponSelector(parent: HTMLElement, options: WeaponSelecto
         disposeButton();
       }
       buttonDisposers.clear();
+      group.dispose();
       root.removeEventListener("click", stopWeaponClick);
       root.remove();
     },

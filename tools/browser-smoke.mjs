@@ -3905,9 +3905,7 @@ try {
   const weaponImages = await page.locator(".ada-weapon-selector .ada-disc").evaluateAll((glyphs) =>
     glyphs.map((glyph) => ({
       decorative: glyph.getAttribute("aria-hidden") === "true",
-      mask:
-        getComputedStyle(glyph, "::before").maskImage ||
-        getComputedStyle(glyph, "::before").webkitMaskImage,
+      mask: getComputedStyle(glyph.querySelector(".ada-weapon-glyph")).maskImage,
       state: glyph.closest(".ada-weapon").dataset.state,
       weapon: glyph.closest(".ada-weapon").dataset.weapon,
     })),
