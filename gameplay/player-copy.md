@@ -829,8 +829,7 @@ conversation box.
 
 - Approach, Captain Claim: "This field is under fleet claim. Miners, clear the
   area."
-
-Claim's resolution line is pending approved copy.
+- Resolved, Astra: "The carrier’s gone. The miners can get back to work."
 
 ## Chapter six: the garden party
 
@@ -947,9 +946,11 @@ Objectives, in order:
 2. Break the drone blockades.
 3. Talk with the freed Blurbs.
 4. Fly to Archie's flagship.
-5. Bring Archie's flagship to surrender so he hands over the last holodisk
-   (exact objective wording pending).
-6. Go home to Earth when ready.
+5. Force Archie’s flagship to surrender.
+6. Receive the last holodisk from Archie.
+7. Go home to Earth when ready.
+
+Objective 6 completes automatically.
 
 ## Repeated mechanical Use briefs
 
@@ -1017,7 +1018,17 @@ Drones arrive:
 - Astra: "Incoming drones." Penny: "Grr..." (upset)
 - Astra: "Here they come." Ada: "We can handle this."
 
-Frigate and capital sighting variants need approved copy for hull-only combat.
+Frigate sighted:
+
+- Astra: "A frigate. Aim for the hull." Ada: "I see it."
+- Ada: "That one’s bigger than a drone." Astra: "A frigate. Give it some room."
+- Astra: "Frigate ahead. Watch its fire." Ada: "Got it."
+
+Capital ship sighted:
+
+- Ada: "That ship is huge!" Astra: "Keep moving. It has a lot of guns."
+- Ada: "Look at the size of that!" Astra: "Stay clear of its fire."
+- Astra: "A capital ship. Its hull can take a lot of damage." Ada: "Then I’ll keep moving."
 
 Penny senses a point of interest (Penny's line is always the same, so players
 learn it). The displayed notice identifies the exact target for the direction
@@ -1087,8 +1098,8 @@ A guard still blocks the destination Ada reached, one variant in turn:
   Penny."
 - Astra: "We can't visit yet. A guard ship is watching." Ada: "Then let's deal
   with it."
-
-The route-guard variant that referred to weapon damage needs approved copy.
+- Astra: "A guard is blocking the way in. We’ll have to take it out first."
+  Ada: "Okay. I'm ready."
 
 Sunflower:
 
