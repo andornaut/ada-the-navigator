@@ -66,7 +66,10 @@ export const LAYERS: readonly Layer[] = [
   },
   {
     band: "Engine and views",
-    holds: (path) => path.startsWith("src/game/") || path === "src/input/controls.ts",
+    holds: (path) =>
+      path.startsWith("src/game/") ||
+      path === "src/input/controls.ts" ||
+      path === "src/input/desktopDom.ts",
     name: "scene",
   },
   { band: "Entries", holds: (path) => path.startsWith("src/entry/"), name: "entry" },

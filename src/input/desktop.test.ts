@@ -1,13 +1,13 @@
 import { describe, expect, it, onTestFinished, vi } from "vitest";
 
 import {
-  bindDesktopInput,
   DESKTOP_FLIGHT_BINDINGS,
   DESKTOP_MENU_BINDINGS,
   DesktopControlState,
   indexDesktopBindings,
   isMenuExitKey,
 } from "./desktop.ts";
+import { bindDesktopInput } from "./desktopDom.ts";
 import { ControlState } from "./state.ts";
 
 const frame = { ship: { x: 310, y: 170 } };

@@ -91,12 +91,8 @@ import { createUpdateDialog, type UpdateLabels } from "../ui/updateDialog.ts";
 import { createWeaponDetailCard } from "../ui/weaponDetailCard.ts";
 import { createWeaponSelector, type WeaponChoice, type WeaponLabels } from "../ui/weapons.ts";
 import { coarsePointer, touchControlsActive, useDiscShown } from "./coarsePointer.ts";
-import {
-  bindDesktopInput,
-  DesktopControlState,
-  type DesktopFrame,
-  isMenuExitKey,
-} from "./desktop.ts";
+import { DesktopControlState, type DesktopFrame, isMenuExitKey } from "./desktop.ts";
+import { bindDesktopInput } from "./desktopDom.ts";
 import { type ControlSample, ControlState } from "./state.ts";
 
 export interface ControlsOptions {
