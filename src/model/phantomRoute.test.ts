@@ -171,7 +171,10 @@ describe("Phantom full route under test-only chapter admission, not production r
       expect(pending.state.economy.stardust).toBe(before);
       const restoredLatch = reload(pending);
       expect(restoredLatch.flightEvents).toEqual([]);
-      expect(restoredLatch.state.progress[6]).toMatchObject({ holodisk: true, questComplete: true });
+      expect(restoredLatch.state.progress[6]).toMatchObject({
+        holodisk: true,
+        questComplete: true,
+      });
       expect(restoredLatch.state.economy.stardust).toBe(before + 50);
       expect(restoredLatch.state.dialogue).toBeNull();
       expect(reload(restoredLatch).state.economy.stardust).toBe(before + 50);
