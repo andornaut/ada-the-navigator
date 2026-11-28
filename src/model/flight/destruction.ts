@@ -20,6 +20,7 @@ import {
 } from "../drops.ts";
 import { flightWorldContext } from "../flightTopology.ts";
 import { orePickupSize, stardustPickupReach, stardustPickupSize } from "../pickupBody.ts";
+import { proceduralPoiById } from "../proceduralPois.ts";
 import { MOVING_ROCK_PREFIX } from "../rockRicochet.ts";
 import {
   type PickupObstacle,
@@ -242,7 +243,59 @@ export function salvageTarget(content: GameContent, flight: FlightState): SpaceO
  * and rolls for a heavy upgrade, then powers down, spared. Returns whether one was.
  */
 export function salvage(content: GameContent, flight: FlightState): boolean {
-  const object = salvageTarget(content, flight);
+  return claimSalvage(content, flight, salvageTarget(content, flight));
+}
+
+const EXPLORATION_WRECK_SUFFIX = ":salvage";
+
+/** Recognizes the procedural site's disabled frigate at its original home. */
+export function isExplorationWreck(flight: FlightState, wreck: SpaceObject): boolean {
+  const enemy = wreck.enemy;
+  if (
+    wreck.kind !== "enemy" ||
+    wreck.hp <= 0 ||
+    !enemy?.disabled ||
+    enemy.archetype !== "frigate" ||
+    enemy.hp <= 0 ||
+    enemy.id !== wreck.id ||
+    enemy.surrendered ||
+    !wreck.id.startsWith("poi:") ||
+    !wreck.id.endsWith(EXPLORATION_WRECK_SUFFIX)
+  ) {
+    return false;
+  }
+  const world = flightWorldContext(flight);
+  const site = proceduralPoiById(
+    { ...world, opportunityEligibility: { resources: false } },
+    flight.galaxy,
+    flight.seed,
+    wreck.id.slice(0, -EXPLORATION_WRECK_SUFFIX.length),
+  );
+  return site?.opportunity.kind === "salvage" && worldDistance(world, site, enemy.home) === 0;
+}
+
+/** Recovers only the loaded frigate for the caller's admitted exploration site. */
+export function recoverExplorationWreck(
+  content: GameContent,
+  flight: FlightState,
+  siteId: string,
+): boolean {
+  const id = `${siteId}${EXPLORATION_WRECK_SUFFIX}`;
+  const wreck = flight.objects.find((object) => object.id === id);
+  return Boolean(
+    wreck &&
+    !wreck.enemy?.salvaged &&
+    isExplorationWreck(flight, wreck) &&
+    worldDistance(flightWorldContext(flight), flight.player, wreck) <= content.tuning.talkRange &&
+    claimSalvage(content, flight, wreck),
+  );
+}
+
+function claimSalvage(
+  content: GameContent,
+  flight: FlightState,
+  object: SpaceObject | undefined,
+): boolean {
   const enemy = object?.enemy;
   if (!object || !enemy || enemy.archetype === "hostileStation") {
     return false;

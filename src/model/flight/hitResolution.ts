@@ -7,7 +7,7 @@ import { enemyEquipmentDefinition } from "../enemyEquipment.ts";
 import { queueHostileStationReward } from "../hostileStationReward.ts";
 import { MOVING_ROCK_PREFIX } from "../rockRicochet.ts";
 import type { FlightEvent, FlightState, Shot, SpaceObject, Vec } from "../types.ts";
-import { destroyEnemy, dropFromRock, markBlasted } from "./destruction.ts";
+import { destroyEnemy, dropFromRock, isExplorationWreck, markBlasted } from "./destruction.ts";
 import { blastCover, enemyTouched, hitPart, partReach, screenGap } from "./enemyHitGeometry.ts";
 import { recordBlastFlash, recordProjectileImpact } from "./impactFeedback.ts";
 import { armed } from "./mines.ts";
@@ -27,6 +27,9 @@ export function hit(
     return;
   }
   if (object.kind === "enemy" && object.enemy) {
+    if (isExplorationWreck(flight, object)) {
+      return;
+    }
     const before = object.enemy;
     const definition = enemyEquipmentDefinition(flight.galaxy, before);
     const after = damageEnemy(definition, { amount, hardpointId: part }, before);

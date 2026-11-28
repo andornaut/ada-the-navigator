@@ -118,7 +118,7 @@ import {
   isHeld,
   placeDestinationAhead as placeFlightDestinationAhead,
 } from "./flight/destinationPlacement.ts";
-import { destroyEnemy, stepWrecks, wreckId } from "./flight/destruction.ts";
+import { destroyEnemy, isExplorationWreck, stepWrecks, wreckId } from "./flight/destruction.ts";
 import {
   chargeEnemyBeam,
   rememberEarlyLance,
@@ -320,7 +320,7 @@ import { markVisited, visitedChunk } from "./visited.ts";
 export { wreckId };
 export { pickupTouched } from "./flight/adaContactQueries.ts";
 export { dockFlight, undockFlight } from "./flight/berth.ts";
-export { salvage, salvageTarget } from "./flight/destruction.ts";
+export { recoverExplorationWreck, salvage, salvageTarget } from "./flight/destruction.ts";
 export { activeEnemyBeams, type EnemyBeam } from "./flight/enemyBeams.ts";
 export {
   arrivalGraceActive,
@@ -3530,9 +3530,13 @@ function enemies(
     }
   }
   const aimVelocity = averageAimVelocity(dt, flight);
-  // A salvaged heavy is powered down: it neither moves nor fires, and nothing collides with it.
+  // Powered-down hulks and exploration wrecks stay clear of combat steering and fire.
   const objects = flight.objects.filter(
-    (object) => object.kind === "enemy" && object.hp > 0 && !object.enemy?.salvaged,
+    (object) =>
+      object.kind === "enemy" &&
+      object.hp > 0 &&
+      !object.enemy?.salvaged &&
+      !isExplorationWreck(flight, object),
   );
   let withheld: Set<SpaceObject> | undefined;
   for (const object of objects) {
