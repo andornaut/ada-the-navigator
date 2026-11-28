@@ -256,11 +256,6 @@ export const ANDROMEDA_PLACES = {
 } as const;
 
 /** Captured destinations remain stable through Continue and subsequent chapter visits. */
-export interface AndromedaProgress {
-  station?: string;
-  settlement?: string;
-}
-
 /** The model and full-card renderer share the same approved conditional conversation. */
 export function andromedaConversation(
   progress: { readonly stage: number },

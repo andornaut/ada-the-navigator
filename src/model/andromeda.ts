@@ -5,7 +5,6 @@ import {
   ANDROMEDA_PLACES,
   andromedaConversation,
   type AndromedaConversationId,
-  type AndromedaProgress,
 } from "../data/andromeda.ts";
 import type { Speaker } from "../data/conversations.ts";
 import { ECONOMY } from "../data/economy.ts";
@@ -13,18 +12,15 @@ import {
   admitCourierAmbush,
   advanceCourierAmbush,
   courierAmbushActor,
-  type CourierAmbushAttempt,
   type CourierAmbushLeg,
   courierAmbushLeg,
   courierAmbushMarkers,
-  type CourierAmbushPlan,
   courierAmbushRepresented,
   courierAmbushTerrainCovered,
   courierAmbushWarningActive,
   planCourierAmbush,
   setCourierSpawnReservation,
   stepCourierAmbush,
-  validCourierAmbushAttempt,
 } from "./andromedaCourierAmbush.ts";
 import {
   nearestSettlement,
@@ -32,6 +28,7 @@ import {
   settlementsNear,
   worldNearestSettlerStation,
 } from "./andromedaPlaces.ts";
+import type { CourierAmbushAttempt, CourierAmbushPlan } from "./andromedaState.ts";
 import type {
   ChapterArrivalCue,
   ChapterContext,
@@ -47,37 +44,14 @@ import {
 import { flightWorldContext } from "./flightTopology.ts";
 import { LATE_CHAPTER_ROUTES } from "./game/campaignState.ts";
 import { guideBeaconSlotAt, storyGuideBeaconSlot } from "./guideBeacons.ts";
-import { flightStationContext, namesSavedStation, worldStationById } from "./stations.ts";
+import { flightStationContext, worldStationById } from "./stations.ts";
 import type { DialogueState, FlightState, GalaxyProgress, UseAction, Vec } from "./types.ts";
 
 export const ANDROMEDA_PARTS = "beaconParts";
 
-type AndromedaChapterProgress = AndromedaProgress & { courierAmbush?: CourierAmbushAttempt };
-type Progress = GalaxyProgress & { andromeda?: AndromedaChapterProgress };
-const memory = (progress: GalaxyProgress) => (progress as Progress).andromeda;
-const remember = (progress: GalaxyProgress) => ((progress as Progress).andromeda ??= {});
+const memory = (progress: GalaxyProgress) => progress.andromeda;
+const remember = (progress: GalaxyProgress) => (progress.andromeda ??= {});
 const distance = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
-
-/** Only real seeded destination ids enter saved story targets. */
-export function validAndromedaProgress(value: unknown): value is AndromedaChapterProgress {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return false;
-  }
-  const state = value as Record<string, unknown>;
-  return (
-    Object.keys(state).every(
-      (key) => key === "station" || key === "settlement" || key === "courierAmbush",
-    ) &&
-    (state.courierAmbush === undefined ||
-      (validCourierAmbushAttempt(state.courierAmbush) &&
-        state.courierAmbush.station === state.station &&
-        state.courierAmbush.settlement === state.settlement)) &&
-    (state.station === undefined ||
-      (typeof state.station === "string" && namesSavedStation(ECONOMY, 5, state.station))) &&
-    (state.settlement === undefined ||
-      (typeof state.settlement === "string" && settlementById(ECONOMY, state.settlement) !== null))
-  );
-}
 
 /** One index per approved objective, with the handover distinct from the return to Earth. */
 export function andromedaObjectiveIndex(progress: GalaxyProgress): number {

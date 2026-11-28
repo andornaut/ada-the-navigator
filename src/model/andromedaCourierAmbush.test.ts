@@ -9,13 +9,12 @@ import {
   courierAmbushActor,
   courierAmbushLeg,
   courierAmbushMarkers,
-  type CourierAmbushState,
   planCourierAmbush,
   releasedCourierPairs,
   stepCourierAmbush,
-  validCourierAmbushAttempt,
 } from "./andromedaCourierAmbush.ts";
 import { nearestSettlerStation } from "./andromedaPlaces.ts";
+import { type CourierAmbushState, validCourierAmbushAttempt } from "./andromedaState.ts";
 import { createUnpopulatedFlight, questGuardPlacementContext } from "./flight.ts";
 import { newProgress } from "./progress.ts";
 import type { SpaceObject } from "./types.ts";

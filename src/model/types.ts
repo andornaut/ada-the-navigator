@@ -1,5 +1,4 @@
 import type { ActivityId } from "../data/activities.ts";
-import type { AndromedaProgress } from "../data/andromeda.ts";
 import type { CrystalFlag } from "../data/asteroidCatalog.ts";
 import type { UpgradeWeapon } from "../data/economy.ts";
 import type { EnemyArchetype } from "../data/enemyCatalog.ts";
@@ -9,6 +8,7 @@ import type { StorySceneId } from "../data/storyShips.ts";
 import type { GalaxyNumber, Vec, Weapon } from "../data/types.ts";
 import type { AchievementState } from "./achievements.ts";
 import type { AndromedaRedactProgress } from "./andromedaRedact.ts";
+import type { AndromedaProgress } from "./andromedaState.ts";
 import type {
   CapitalBossProgress,
   CartwheelClaimProgress,

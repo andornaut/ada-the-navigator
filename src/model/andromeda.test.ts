@@ -16,9 +16,9 @@ import {
   pageAndromedaWorld,
   stepAndromeda,
   useAndromeda,
-  validAndromedaProgress,
 } from "./andromeda.ts";
 import { nearestSettlement, nearestSettlerStation } from "./andromedaPlaces.ts";
+import { validAndromedaProgress } from "./andromedaState.ts";
 import type { ChapterContext, ChapterResult } from "./chapterProtocol.ts";
 import { createFlight, ensureStation } from "./flight.ts";
 import { newProgress } from "./progress.ts";
