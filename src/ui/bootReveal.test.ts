@@ -1,6 +1,6 @@
 import { createRequiredLoading } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import { afterEach, expect, it, vi } from "vitest";
-vi.mock("../loading/requiredFonts.ts", () => ({ requireBootFonts: () => () => {} }));
+vi.mock("./requiredFonts.ts", () => ({ requireBootFonts: () => () => {} }));
 import { requireBootUi } from "../loading/requiredUi.ts";
 import { prepareBootReveal } from "./bootReveal.ts";
 async function settle() {

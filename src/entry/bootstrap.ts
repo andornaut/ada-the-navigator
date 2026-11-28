@@ -6,7 +6,6 @@ import type { LaunchResult } from "@andornaut/game-kit/runtime/web/pwa/buildCont
 
 import {
   EntryReloadRequired,
-  requireBootFonts,
   requireBootUi,
   type RequiredBootResources,
   requiredLoading,
@@ -16,6 +15,7 @@ import { preparePhoneLaunch } from "../pwa/index.ts";
 import { CRASH_SCREEN } from "../ui/crashScreen.ts";
 import { mountLoading } from "../ui/loadingBar.ts";
 import { loadingFailureChrome, mountStartupFailure } from "../ui/loadingFailure.ts";
+import { requireBootFonts } from "../ui/requiredFonts.ts";
 
 const app = document.getElementById("app");
 if (!app) {

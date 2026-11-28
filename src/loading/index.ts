@@ -6,7 +6,6 @@ export {
   type RequiredReady,
   requiredReady,
 } from "./required.ts";
-export { requireBootFonts } from "./requiredFonts.ts";
 export { requireBootUi } from "./requiredUi.ts";
 export { type MountStartupFailure, startLoading, startupFence } from "./startup.ts";
 
