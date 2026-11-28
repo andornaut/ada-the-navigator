@@ -10,12 +10,7 @@ import {
   WHIRLPOOL_CAPITAL_BOSS,
 } from "../data/capitalBosses.ts";
 import { ASTEROID_FIELDS, CHUNK_CATALOG } from "../data/chunkCatalog.ts";
-import {
-  SCENERY_IMPACT_SECONDS,
-  sceneryImpactDamage,
-  SHIP_IMPACT_DAMAGE,
-} from "../data/collisionDamage.ts";
-import { CONTENT } from "../data/content.ts";
+import { SHIP_IMPACT_DAMAGE } from "../data/collisionDamage.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { enemyActorDefinition } from "../data/enemyActorDefinition.ts";
 import type { EnemyActorKind } from "../data/enemyActors.ts";
@@ -141,12 +136,7 @@ import {
 import { planMantaEscorts } from "./flight/mantaEscorts.ts";
 import { layMine, stepMines } from "./flight/mines.ts";
 import { stepPickup } from "./flight/pickups.ts";
-import {
-  flightChunkKey,
-  type FreshTravel,
-  movePilot,
-  reflectPilotHeading,
-} from "./flight/pilotMovement.ts";
+import { flightChunkKey, type FreshTravel, movePilot } from "./flight/pilotMovement.ts";
 import { fireBeam } from "./flight/playerBeam.ts";
 import { createProjectileStep } from "./flight/projectileStep.ts";
 import { recordRingEmission, stepRingEmissions } from "./flight/ringEmissions.ts";
@@ -156,12 +146,14 @@ import {
   type RouteGuardPlanResult,
   routeGuardPlanResult,
 } from "./flight/routeGuards.ts";
+import { resolveScenery, sceneryBlocksFlightSegment } from "./flight/sceneryResolution.ts";
 import {
-  resolveScenery,
-  sceneryBlocksFlightSegment,
-  type SceneryContactOf,
-} from "./flight/sceneryResolution.ts";
-import { bounceShipContact } from "./flight/shipContact.ts";
+  adaContact,
+  adaSceneryContact,
+  bounceShips as bounceAdaShips,
+  bumpAda,
+  settleAda,
+} from "./flight/shipContact.ts";
 import {
   firePlayerWeapon,
   releaseFriendlyVolley,
@@ -264,14 +256,7 @@ import { enemyHull, enemyPhysicalBody } from "./enemyBody.ts";
 import { enemyBeamReach, planEnemyProjectile } from "./enemyProjectiles.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { activeNeedleCourses } from "./needle.ts";
-import {
-  clearNeedleEnemies,
-  ensureNeedleDebris,
-  isNeedleRim,
-  needleChannelContains,
-  needleRimContact,
-  needleRims,
-} from "./needleFlight.ts";
+import { clearNeedleEnemies, ensureNeedleDebris, needleChannelContains } from "./needleFlight.ts";
 import {
   ORE_FIELD_CLEAR_RADIUS,
   ORE_FIELD_ROLE,
@@ -280,9 +265,7 @@ import {
 } from "./oreFields.ts";
 import { stardustPickupReach } from "./pickupBody.ts";
 import { SceneryFrames } from "./sceneryFrames.ts";
-import { sceneryImpact } from "./sceneryImpact.ts";
 import { rechargeShield } from "./shieldRecharge.ts";
-import { shipBody } from "./shipBody.ts";
 import { direction, turnToward } from "./shipPhysics.ts";
 import {
   worldFitsEncounter,
@@ -330,6 +313,7 @@ export {
 } from "./flight/lifecycle.ts";
 export { carryPickup } from "./flight/pickups.ts";
 export { activeRingEmissions, type RingEmission } from "./flight/ringEmissions.ts";
+export { BUMP_DAMAGE } from "./flight/shipContact.ts";
 export { routeBlocked, type RouteGuardPlanResult, routeGuardPlanResult };
 export {
   retireLegacyWhirlpoolDiskGuard,
@@ -513,6 +497,7 @@ function clearOfLandmarks(object: SpaceObject, flight: FlightState): boolean {
 }
 const SCENERY = ["rock", "debris"];
 const sceneryResolution = { ...projectileScenery, kinds: SCENERY };
+export const bounceShips = bounceAdaShips.bind(undefined, sceneryResolution);
 const { blast, strike } = createHitResolution(sceneryResolution);
 const weaponReleaseContact = {
   fireBeam: fireBeam.bind(undefined, { hit, scenery: sceneryResolution }),
@@ -524,70 +509,6 @@ const pilotScenery = {
   resolution: sceneryResolution,
 };
 const ASTEROID_SHAPE_LIST = [...ASTEROID_SHAPES.values()];
-/**
- * Push a circle out of overlapping scenery along each contact normal and report every contact
- * once, with the obstacle's own velocity, so movers bounce and never stay embedded.
- */
-/** Seconds between scenery bumps that deal damage, and the damage each deals (rules.md). */
-export const BUMP_DAMAGE = {
-  amount: sceneryImpactDamage(CONTENT.tuning.flight),
-  seconds: SCENERY_IMPACT_SECONDS,
-} as const;
-
-/**
- * Scenery reflects Ada's velocity and smoothed heading together, so recoil carries momentum. A
- * bump in flight deals 1 damage, at most once per 0.5 seconds, and counts as a hit for the
- * shield's recharge delay; settling Ada out of scenery she was placed in deals none.
- */
-function adaSceneryContact(
-  content: GameContent,
-  events: FlightEvent[] | null,
-  flight: FlightState,
-): (normal: Vec, surface: Vec, object: SpaceObject) => void {
-  const { sceneryRecoil, sceneryRestitution } = content.tuning.flight;
-  return (normal, surface, object) => {
-    if (events && !isNeedleRim(object)) {
-      bumpAda(content, flight, events, object);
-    }
-    flight.velocity = bounce(sceneryRestitution, sceneryRecoil, normal, surface, flight.velocity);
-    reflectPilotHeading(flight, normal);
-  };
-}
-
-/** One admitted bump damages Ada and its destructible obstacle through the normal hit path. */
-function bumpAda(
-  content: GameContent,
-  flight: FlightState,
-  events: FlightEvent[],
-  object: SpaceObject,
-): void {
-  const impact = sceneryImpact(content.tuning.flight, flight, object);
-  if (!impact) {
-    return;
-  }
-  flight.lastBump = flight.time;
-  if (!adaProtected(flight)) {
-    flight.shield = Math.max(0, flight.shield - impact.amount);
-    flight.sinceDamage = 0;
-  }
-  if (impact.damageObstacle) {
-    hit(content, impact.amount, null, object, flight, events);
-  }
-}
-
-/** Resolves ship contact, then settles Ada against any scenery reached by the push-out. */
-export function bounceShips(
-  content: GameContent,
-  flight: FlightState,
-  object: SpaceObject,
-): boolean {
-  const closing = bounceShipContact(reflectPilotHeading, content.tuning.flight, flight, object);
-  if (closing === null) {
-    return false;
-  }
-  settleAda(content, flight);
-  return closing;
-}
 
 function canonicalObject(flight: FlightState, object: SpaceObject): void {
   canonicalPosition(flight, object);
@@ -602,28 +523,6 @@ function canonicalObject(flight: FlightState, object: SpaceObject): void {
     }
   }
 }
-/** Ada's drawn ship against scenery at her current facing. */
-function adaContact(flight: FlightState): SceneryContactOf {
-  const world = flightWorldContext(flight);
-  return (object, position, frame, drawn) =>
-    isNeedleRim(object)
-      ? needleRimContact({ body: shipBody(flight.facing), position, world }, object)
-      : worldSceneryBodyContact(world, object, position, shipBody(flight.facing), frame, 0, drawn);
-}
-
-/** Pushes Ada's drawn ship out of scenery and bounces her off what she touched. */
-function settleAda(content: GameContent, flight: FlightState): void {
-  resolveScenery(
-    sceneryResolution,
-    flight,
-    adaContact(flight),
-    adaSceneryContact(content, null, flight),
-    flight.player,
-    undefined,
-    needleRims(flight),
-  );
-}
-
 /** Station sites within the active region become persistent station objects. */
 function ensureStations(content: GameContent, point: Vec, flight: FlightState): void {
   const grid = periodicWorldGrid(flightWorldContext(flight), content.tuning.chunkSize);
@@ -4116,7 +4015,7 @@ export function stepFlight(
     const aiming = length(input.aim) > 0.01;
     if (aiming) {
       flight.facing = turnToward(slice, ship.physics.aimTurnSeconds, input.aim, flight.facing);
-      settleAda(content, flight);
+      settleAda(sceneryResolution, content, flight);
     }
     ageFlashes(slice, flight);
     flight.fireCooldown = Math.max(0, flight.fireCooldown - slice);
@@ -4128,7 +4027,7 @@ export function stepFlight(
         { x: -facing.y * input.turn, y: facing.x * input.turn },
         facing,
       );
-      settleAda(content, flight);
+      settleAda(sceneryResolution, content, flight);
     }
     if ((input.fire ?? aiming) && flight.fireCooldown <= 0) {
       firePlayerWeapon(
