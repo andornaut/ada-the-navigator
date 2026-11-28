@@ -183,6 +183,7 @@ export interface Controls {
   registerBack(layer: BackLayer): () => void;
   dispose(): void;
   openSettings(): void;
+  openContextQuests(context: ContextQuestDetails): boolean;
   openMarkerDetails(
     details: ContextQuestDetails | { readonly title: string; readonly description: string },
     origin: HTMLElement,
@@ -531,6 +532,13 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     status.setShown(enabled && !pause.mapOpen());
     options.onPauseChange?.(open);
   }
+  const openContextQuests = (details: ContextQuestDetails) =>
+    !disposed &&
+    requiredReady() &&
+    !document.hidden &&
+    state.accepts() &&
+    !modalOpen() &&
+    pause.openContextQuests(details);
   const weapons = createWeaponSelector(settings.root, {
     labels: options.weaponLabels,
     onHold: (choice, origin) => {
@@ -1091,6 +1099,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
     layout: () => layout,
     navigationCovered,
     openAchievements: () => achievements.open(),
+    openContextQuests,
     openMarkerDetails(details, origin) {
       if (!state.accepts() || modalOpen()) {
         return;
@@ -1129,7 +1138,7 @@ export function createControls(scene: Scene, options: ControlsOptions): Controls
           : touch;
       return consumeContextQuestUse(
         () => options.contextQuestDetails?.() ?? null,
-        (context) => pause.openContextQuests(context),
+        openContextQuests,
         sample,
       );
     },

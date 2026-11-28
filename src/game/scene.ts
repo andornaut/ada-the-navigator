@@ -823,10 +823,12 @@ export class GameScene extends Scene {
         viewportHeight: this.cameras.main.height / this.cameras.main.zoom,
         viewportWidth: this.cameras.main.width / this.cameras.main.zoom,
       };
-      // Use can open a quest modal while this frame consumes its input.
+      // Sampling handles current Quest Details. Use can find a new winner after flight moves.
       if (!this.settingsOpen) {
         const previousWeapon = flight.weapon;
-        this.model.step(Math.min(milliseconds / 1000, 0.05), input);
+        this.model.step(Math.min(milliseconds / 1000, 0.05), input, (details) =>
+          this.controls.openContextQuests(details),
+        );
         observeWeaponEquip(this, flight, previousWeapon);
       }
       observeFeedback(this);

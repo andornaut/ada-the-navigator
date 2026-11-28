@@ -2449,7 +2449,7 @@ export class GameModel {
       return { action: job, id };
     }
     if (this.salvageable()) {
-      return { action: "salvage", id };
+      return { action: "salvage" };
     }
     const scan = this.nearestScan(id);
     if (scan) {
@@ -2601,8 +2601,15 @@ export class GameModel {
     if (this.availableContextOffer(place).action !== undefined) {
       return null;
     }
-    const hint = this.useHintTarget(place);
-    return place !== undefined && hint === undefined
+    return this.questDetailsFallback(flight, place, this.useHintTarget(place));
+  }
+
+  private questDetailsFallback(
+    flight: FlightState,
+    place: string | undefined,
+    hint: string | undefined,
+  ): ContextQuestDetails | null {
+    return this.screen !== "space" || (place !== undefined && hint === undefined)
       ? null
       : this.inRangeQuestDetails(flight, hint);
   }
@@ -4074,7 +4081,11 @@ export class GameModel {
       });
   }
 
-  step(dt: number, input: FlightInput): void {
+  step(
+    dt: number,
+    input: FlightInput,
+    openQuestDetails?: (details: ContextQuestDetails) => void,
+  ): void {
     this.flightEvents = [];
     const f = this.state.flight;
     if (
@@ -4612,7 +4623,7 @@ export class GameModel {
     }
     if (runtime) {
       if (input.use && !this.state.dialogue) {
-        this.interact();
+        this.interact(openQuestDetails);
       }
       return;
     }
@@ -4666,7 +4677,7 @@ export class GameModel {
       delete this.current.replayScene;
     }
     if (input.use) {
-      this.interact();
+      this.interact(openQuestDetails);
     }
   }
   /** The places the direction indicators mark (indicators.ts). */
@@ -5069,7 +5080,7 @@ export class GameModel {
     this.state.dialogue = pending.dialogue;
     return true;
   }
-  interact(): void {
+  interact(openQuestDetails?: (details: ContextQuestDetails) => void): void {
     if (
       this.state.mode !== "space" ||
       !this.state.flight ||
@@ -5158,7 +5169,10 @@ export class GameModel {
     const action = id === undefined ? undefined : this.availablePlaceAction(id);
     if (!id || action === undefined) {
       const hint = this.useHintTarget(id);
-      if (hint !== undefined && !this.inRangeQuestDetails(f, hint)) {
+      const details = this.questDetailsFallback(f, id, hint);
+      if (details) {
+        openQuestDetails?.(details);
+      } else if (hint !== undefined) {
         this.showUseHint(hint);
       }
       return;
