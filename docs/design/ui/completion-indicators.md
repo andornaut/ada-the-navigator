@@ -6,7 +6,7 @@ box. The shared stylesheet and size apply identically to every consumer.
 
 Achievements use `AchievementEntry.unlocked` in `src/ui/achievements/achievementsCard.ts`.
 Quest requirements, including job objectives, use `requirement.checked` in
-`src/ui/questsScreen.ts`.
+`src/ui/quests/questsScreen.ts`.
 
 Quest requirements without a boolean completion state retain their existing text
 or counts. Station held, owned and selected states, galaxy selection and unlock

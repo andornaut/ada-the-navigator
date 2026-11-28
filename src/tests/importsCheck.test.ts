@@ -152,15 +152,19 @@ describe("layers", () => {
     add(
       "src/ui/pause/pauseCard.ts",
       [
+        'import { createQuestsScreen } from "../quests/index.ts";',
+        'import type { QuestFlightLogEntry } from "../quests/questsBodyTree.ts";',
         'import { paint } from "../ship/index.ts";',
         'import type { ShipView } from "../ship/shipCard.ts";',
         'export { shade } from "./pauseStyles.ts";',
       ].join("\n"),
     );
+    add("src/ui/quests/questsScreen.ts", 'import { questsBodyTree } from "./questsBodyTree.ts";');
     add("src/game/scene.ts", 'const art = import("../art/shipJets.ts");');
     add("src/ui/modal.test.ts", 'import { paint } from "./ship/shipCard.ts";');
 
     expect(layerFindings(graph)).toEqual([
+      "src/ui/pause/pauseCard.ts imports src/ui/quests/questsBodyTree.ts directly. Use src/ui/quests/index.ts",
       "src/ui/pause/pauseCard.ts imports src/ui/ship/shipCard.ts directly. Use src/ui/ship/index.ts",
       "src/game/scene.ts imports src/art/shipJets.ts directly. Use src/art/index.ts",
     ]);

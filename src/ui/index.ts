@@ -14,7 +14,7 @@ export { fogColor, mapDistance, type MapField, mapScreenLabels } from "./map/ind
 export { createCoveredPaint } from "./modalScenePaint.ts";
 export { BOX_OCCUPANT, type BoxOccupant, boxOccupant } from "./notice.ts";
 export { createPennyMarkerLayer, markerName } from "./pennyMarkers.ts";
-export { questContextIcon } from "./questsScreen.ts";
+export { questContextIcon } from "./quests/index.ts";
 export { createRestartCard } from "./restart/index.ts";
 export { createScanFeedbackView } from "./scanFeedbackView.ts";
 export { aboardLabel, type ShipView } from "./ship/index.ts";

@@ -36,6 +36,7 @@ const ENCAPSULATED_AREAS = [
   "src/ui/galaxy/",
   "src/ui/menu/",
   "src/ui/pause/",
+  "src/ui/quests/",
   "src/ui/resource/",
   "src/ui/restart/",
   "src/ui/settings/",

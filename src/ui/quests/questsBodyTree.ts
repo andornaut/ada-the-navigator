@@ -1,6 +1,6 @@
 import type { ComponentNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
-import type { QuestEntry, QuestObjective } from "../model/questDetails.ts";
+import type { QuestEntry, QuestObjective } from "../../model/questDetails.ts";
 import type { questRoute } from "./questsScreen.ts";
 
 export interface QuestEndpointBody {

@@ -10,7 +10,7 @@ import {
   visitCartwheelHubFixture,
 } from "../testing/cartwheelFixture.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import { questRoute } from "../ui/questsScreen.ts";
+import { questRoute } from "../ui/quests/questsScreen.ts";
 import { ensureDestination } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import { fill } from "./shop.ts";

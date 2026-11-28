@@ -2853,7 +2853,7 @@ try {
     tabOrder,
     `Tab moves through the tools, the places, Quests, Galaxies and back to Close: ${tabbed}`,
   );
-  // Quests: the shared Quests list over the map (src/ui/questsScreen.ts). Opened from the map, its
+  // Quests: the shared Quests list over the map (src/ui/quests/questsScreen.ts). Opened from the map, its
   // footer's primary is Back to the map and takes focus; Escape returns to the map as Back does.
   const questsCard = page.locator(".ada-quests-screen");
   await mapScreen.locator('[data-action="map-quests"]').click();

@@ -3,21 +3,25 @@ import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModalit
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 import { REFUSAL_ATTRIBUTES } from "@andornaut/game-kit/runtime/web/ui/dom/refusalCue";
 
-import type { MapSymbol } from "../data/destinations.ts";
-import { TASK_COLORS, type TaskCategory } from "../data/taskCategories.ts";
-import type { GalaxyNumber } from "../data/types.ts";
-import { uiIconUrl } from "../data/uiIconUrl.ts";
-import type { MapPlace } from "../model/map.ts";
-import type { QuestEntry, QuestObjective } from "../model/questDetails.ts";
-import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
-import { createCompletionIndicator } from "./completionIndicator.ts";
-import { readViewUnit } from "./layout/dom.ts";
-import { COLOURS, QUEST_LIST_PAGE_SIZE, QUEST_ROUTE_ARROW, SCROLL } from "./layout/index.ts";
-import { chipFace, chipGlyph, type MapScreenLabels } from "./map/index.ts";
-import { createCard, setFooterAction, setScrollGroup } from "./modal.ts";
-import { createStandardCloseAction } from "./modalClose.ts";
-import { createModalLayer } from "./modalLayer.ts";
-import { inCurrentView } from "./pressScope.ts";
+import type { MapSymbol } from "../../data/destinations.ts";
+import { TASK_COLORS, type TaskCategory } from "../../data/taskCategories.ts";
+import type { GalaxyNumber } from "../../data/types.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
+import type { MapPlace } from "../../model/map.ts";
+import type { QuestEntry, QuestObjective } from "../../model/questDetails.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "../actionBinding.ts";
+import { createCompletionIndicator } from "../completionIndicator.ts";
+import { readViewUnit } from "../layout/dom.ts";
+import { COLOURS, QUEST_LIST_PAGE_SIZE, QUEST_ROUTE_ARROW, SCROLL } from "../layout/index.ts";
+import { chipFace, chipGlyph, type MapScreenLabels } from "../map/index.ts";
+import { createCard, setFooterAction, setScrollGroup } from "../modal.ts";
+import { createStandardCloseAction } from "../modalClose.ts";
+import { createModalLayer } from "../modalLayer.ts";
+import { inCurrentView } from "../pressScope.ts";
+import { refuse } from "../refusal.ts";
+import { spriteIconPath } from "../spriteIconPath.ts";
+import { createStandardTextAction } from "../standardTextAction.ts";
+import { CARGO_ICONS } from "../statusPill.ts";
 import {
   type QuestFlightLogEntry,
   type QuestsBodyData,
@@ -30,10 +34,6 @@ import {
   type QuestsFooterSchema,
   questsTree,
 } from "./questsTree.ts";
-import { refuse } from "./refusal.ts";
-import { spriteIconPath } from "./spriteIconPath.ts";
-import { createStandardTextAction } from "./standardTextAction.ts";
-import { CARGO_ICONS } from "./statusPill.ts";
 
 export type QuestOrigin = "flight" | "list" | "ship";
 const FLIGHT_LOG_LABEL = "Flight log";

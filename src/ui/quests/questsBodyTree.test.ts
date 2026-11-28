@@ -1,7 +1,7 @@
 import { validateLayoutTree } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import { describe, expect, it } from "vitest";
 
-import type { QuestEntry } from "../model/questDetails.ts";
+import type { QuestEntry } from "../../model/questDetails.ts";
 import { type QuestsBodyData, questsBodyTree } from "./questsBodyTree.ts";
 
 const entry: QuestEntry = {

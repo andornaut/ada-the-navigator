@@ -261,7 +261,7 @@ export interface MapScreenOptions {
   readonly shipFrame?: (heading: number) => string | undefined;
   /** Caller-owned dismissal label; standalone maps retain Close. */
   readonly closeLabel?: string;
-  /** Quests: the caller opens the shared Quests list (questsScreen.ts) over the map. */
+  /** Quests: the caller opens the shared Quests list (quests/questsScreen.ts) over the map. */
   readonly onQuests: () => void;
   readonly onPlaceQuest?: (place: MapPlace) => void;
   readonly labels: MapScreenLabels;

@@ -1,17 +1,17 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { CONTENT } from "../data/content.ts";
-import { BUTTON_SLICE } from "../data/layout.ts";
-import { uiIconUrl } from "../data/uiIconUrl.ts";
-import type { MapPlace } from "../model/map.ts";
-import type { QuestEntry } from "../model/questDetails.ts";
-import * as actionBinding from "./actionBinding.ts";
-import { fixtureActionRoot } from "./actionRootFixture.ts";
-import { slice, units } from "./layout/css.ts";
-import { QUEST_ICON, QUESTS_SCREEN_STYLE } from "./layout/questsScreen.ts";
-import { BUTTON_GAP } from "./layout/tokens.ts";
-import { MAP_SCREEN } from "./map/layout/mapScreen.ts";
-import { mapScreenLabels } from "./map/mapScreen.ts";
+import { CONTENT } from "../../data/content.ts";
+import { BUTTON_SLICE } from "../../data/layout.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
+import type { MapPlace } from "../../model/map.ts";
+import type { QuestEntry } from "../../model/questDetails.ts";
+import * as actionBinding from "../actionBinding.ts";
+import { fixtureActionRoot } from "../actionRootFixture.ts";
+import { slice, units } from "../layout/css.ts";
+import { QUEST_ICON, QUESTS_SCREEN_STYLE } from "../layout/questsScreen.ts";
+import { BUTTON_GAP } from "../layout/tokens.ts";
+import { MAP_SCREEN } from "../map/layout/mapScreen.ts";
+import { mapScreenLabels } from "../map/mapScreen.ts";
 import { createQuestsScreen, questRoute } from "./questsScreen.ts";
 
 const entry: QuestEntry = {
@@ -79,7 +79,7 @@ describe("quest objective presentation", () => {
 
   it("retains supplied completion and quantities and uses the same canonical identity icons", async () => {
     const { questChecklist, questObjectiveIcon } = await import("./questsScreen.ts");
-    const { CARGO_ICONS } = await import("./statusPill.ts");
+    const { CARGO_ICONS } = await import("../statusPill.ts");
     const objectives = [
       { checked: true, itemKind: "ore" as const, label: "Collect Ore" },
       { checked: false, count: "35 / 100", itemKind: "ore" as const, label: "Deliver Ore" },
@@ -281,8 +281,8 @@ const producer = vi.hoisted(() => ({
   reveal: vi.fn(),
   scroll: vi.fn<(card: { readonly body: QuestNode }, group: QuestNode) => void>(),
 }));
-vi.mock("./modal.ts", async (load) => ({
-  ...(await load<typeof import("./modal.ts")>()),
+vi.mock("../modal.ts", async (load) => ({
+  ...(await load<typeof import("../modal.ts")>()),
   createButton: (label: string) => Object.assign(new QuestNode("button"), { textContent: label }),
   createCard: ({ close }: { close: QuestNode }) => {
     const frame = new QuestNode();
@@ -295,7 +295,7 @@ vi.mock("./modal.ts", async (load) => ({
   },
   setScrollGroup: producer.scroll,
 }));
-vi.mock("./modalLayer.ts", () => ({
+vi.mock("../modalLayer.ts", () => ({
   createModalLayer: () => ({ dispose() {}, open: producer.reveal.mockReturnValue(() => {}) }),
 }));
 

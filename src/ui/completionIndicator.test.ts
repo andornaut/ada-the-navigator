@@ -37,7 +37,7 @@ describe("shared completion indicator", () => {
   it("routes both true completion consumers through the shared renderer and stylesheet", () => {
     for (const [file, sharedRenderer] of [
       ["achievements/achievementsCard.ts", "../completionIndicator.ts"],
-      ["questsScreen.ts", "./completionIndicator.ts"],
+      ["quests/questsScreen.ts", "../completionIndicator.ts"],
     ] as const) {
       const source = readFileSync(new URL(file, import.meta.url), "utf8");
       expect(source).toContain(`from "${sharedRenderer}"`);
