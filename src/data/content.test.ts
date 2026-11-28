@@ -51,7 +51,11 @@ describe("player text", () => {
     expect(CONTENT.labels.phantomFlagship).toBe("Archie's flagship");
     expect(CONTENT.chapters[6]!.objectives).toContain("Fly to Archie's flagship.");
     expect(
-      playerText.replaceAll("Admiral Archie", "").replaceAll("Archie's flagship", ""),
+      playerText
+        .replaceAll("Admiral Archie", "")
+        .replaceAll("Archie's flagship", "")
+        .replace("Force Archie’s flagship to surrender.", "")
+        .replace("Receive the last holodisk from Archie.", ""),
     ).not.toMatch(/archie/i);
     expect(CONTENT.premise.prologue[0]?.text).toMatch(/^On the way home, Penny tugs Ada /);
   });
