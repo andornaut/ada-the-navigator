@@ -75,7 +75,7 @@ import {
   subscribePressScope,
 } from "../ui/pressScope.ts";
 import { refusalPose } from "../ui/refusal.ts";
-import { createResourceCard } from "../ui/resourceCard.ts";
+import { createResourceCard } from "../ui/resource/index.ts";
 import {
   createSettings,
   EXIT_SHOWN_ATTRIBUTE,
@@ -88,7 +88,7 @@ import { createStatusPill, pillCount, type StatusView } from "../ui/statusPill.t
 import { STICK_DEPTHS, stickViews } from "../ui/sticks.ts";
 import { USE_PRESS_MS } from "../ui/touchChrome.ts";
 import { createUpdateDialog, type UpdateLabels } from "../ui/updateDialog.ts";
-import { createWeaponDetailCard } from "../ui/weaponDetailCard.ts";
+import { createWeaponDetailCard } from "../ui/weaponDetail/index.ts";
 import { createWeaponSelector, type WeaponChoice, type WeaponLabels } from "../ui/weapons.ts";
 import { bindDesktopInput } from "./desktopDom.ts";
 import {

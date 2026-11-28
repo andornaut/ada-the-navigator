@@ -1,6 +1,6 @@
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
-import type { AdaLayoutSchema } from "./layoutTree.ts";
+import type { AdaLayoutSchema } from "../layoutTree.ts";
 
 export type WeaponDetailAction = "close-weapon-detail" | "dismiss-weapon-detail";
 

@@ -1,10 +1,10 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import { bindAdaAction, resolveAdaHoldAction } from "./actionBinding.ts";
-import { registerAdaActionRoot } from "./actionRegistry.ts";
-import { fixtureActionRoot } from "./actionRootFixture.ts";
-import { SCROLL } from "./layout/contentCard.ts";
-import { currentView, enterPressView, inCurrentView, rootPressGuard } from "./pressScope.ts";
+import { bindAdaAction, resolveAdaHoldAction } from "../actionBinding.ts";
+import { registerAdaActionRoot } from "../actionRegistry.ts";
+import { fixtureActionRoot } from "../actionRootFixture.ts";
+import { SCROLL } from "../layout/contentCard.ts";
+import { currentView, enterPressView, inCurrentView, rootPressGuard } from "../pressScope.ts";
 import { createResourceCard } from "./resourceCard.ts";
 
 const fixture = vi.hoisted(() => {
@@ -215,8 +215,8 @@ const fixture = vi.hoisted(() => {
   };
   return { Node, card };
 });
-vi.mock("./modal.ts", async (original) => ({
-  ...(await original<typeof import("./modal.ts")>()),
+vi.mock("../modal.ts", async (original) => ({
+  ...(await original<typeof import("../modal.ts")>()),
   createActions: (actions: { button: InstanceType<typeof fixture.Node>; role: string }[]) => {
     const row = new fixture.Node();
     row.append(...actions.map(({ button }) => button));
@@ -239,7 +239,7 @@ vi.mock("./modal.ts", async (original) => ({
     row.dataset.footerAction = action;
   },
 }));
-vi.mock("./layout/viewScale.ts", () => ({ readViewUnit: () => 1 }));
+vi.mock("../layout/viewScale.ts", () => ({ readViewUnit: () => 1 }));
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", async (original) => ({
   ...(await original<typeof import("@andornaut/game-kit/runtime/web/ui/dom/focusModality")>()),
   focusTarget: (node: { focus(): void }) => node.focus(),

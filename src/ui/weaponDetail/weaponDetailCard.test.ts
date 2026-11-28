@@ -1,12 +1,12 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { WEAPON_DETAIL_LABELS, weaponDetailLines } from "../data/weaponDetails.ts";
-import { resolveAdaHoldAction } from "./actionBinding.ts";
-import { registerAdaActionRoot } from "./actionRegistry.ts";
-import { fixtureActionRoot } from "./actionRootFixture.ts";
-import { compactLevelName } from "./compactLevelName.ts";
-import { enterPressView, rootPressGuard } from "./pressScope.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
+import { WEAPON_DETAIL_LABELS, weaponDetailLines } from "../../data/weaponDetails.ts";
+import { resolveAdaHoldAction } from "../actionBinding.ts";
+import { registerAdaActionRoot } from "../actionRegistry.ts";
+import { fixtureActionRoot } from "../actionRootFixture.ts";
+import { compactLevelName } from "../compactLevelName.ts";
+import { enterPressView, rootPressGuard } from "../pressScope.ts";
 import { createWeaponDetailCard } from "./weaponDetailCard.ts";
 
 const fixture = vi.hoisted(() => {
@@ -218,8 +218,8 @@ const fixture = vi.hoisted(() => {
   };
   return { Node, card };
 });
-vi.mock("./modal.ts", async (original) => ({
-  ...(await original<typeof import("./modal.ts")>()),
+vi.mock("../modal.ts", async (original) => ({
+  ...(await original<typeof import("../modal.ts")>()),
   createActions: (actions: { button: InstanceType<typeof fixture.Node>; role: string }[]) => {
     const row = new fixture.Node();
     row.append(...actions.map(({ button }) => button));
@@ -242,7 +242,7 @@ vi.mock("./modal.ts", async (original) => ({
     row.dataset.footerAction = action;
   },
 }));
-vi.mock("./layout/viewScale.ts", () => ({ readViewUnit: () => 1 }));
+vi.mock("../layout/viewScale.ts", () => ({ readViewUnit: () => 1 }));
 vi.mock("@andornaut/game-kit/runtime/web/ui/dom/focusModality", () => ({
   focusTarget: (node: { focus(): void }) => node.focus(),
 }));

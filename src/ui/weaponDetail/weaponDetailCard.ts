@@ -2,20 +2,20 @@ import type { ControlAvailability } from "@andornaut/game-kit/runtime/ui/control
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import type { Weapon } from "../data/types.ts";
-import { WEAPON_DETAIL_LABELS } from "../data/weaponDetails.ts";
-import { ammoGlyphPath, weaponGlyphPath } from "../data/weaponGlyphs.ts";
-import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
-import { compactLevelName } from "./compactLevelName.ts";
-import { createDetailCardFrame } from "./detailCardFrame.ts";
-import { detailCount, renderDetailQuantity } from "./detailQuantity.ts";
-import { renderItemDetailDescription, renderItemDetailHeader } from "./itemDetailContent.ts";
-import { SCROLL } from "./layout/contentCard.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
-import { createAdaLayoutPorts } from "./layoutTree.ts";
-import { createStandardCloseAction } from "./modalClose.ts";
-import { createModalLayer } from "./modalLayer.ts";
-import { inCurrentView } from "./pressScope.ts";
+import type { Weapon } from "../../data/types.ts";
+import { WEAPON_DETAIL_LABELS } from "../../data/weaponDetails.ts";
+import { ammoGlyphPath, weaponGlyphPath } from "../../data/weaponGlyphs.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "../actionBinding.ts";
+import { compactLevelName } from "../compactLevelName.ts";
+import { createDetailCardFrame } from "../detailCardFrame.ts";
+import { detailCount, renderDetailQuantity } from "../detailQuantity.ts";
+import { renderItemDetailDescription, renderItemDetailHeader } from "../itemDetailContent.ts";
+import { SCROLL } from "../layout/contentCard.ts";
+import { readViewUnit } from "../layout/viewScale.ts";
+import { createAdaLayoutPorts } from "../layoutTree.ts";
+import { createStandardCloseAction } from "../modalClose.ts";
+import { createModalLayer } from "../modalLayer.ts";
+import { inCurrentView } from "../pressScope.ts";
 import {
   type WeaponDetailAction,
   type WeaponDetailData,

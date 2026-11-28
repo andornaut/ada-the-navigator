@@ -1,7 +1,7 @@
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
-import { CONTENT } from "../data/content.ts";
-import type { AdaLayoutSchema } from "./layoutTree.ts";
+import { CONTENT } from "../../data/content.ts";
+import type { AdaLayoutSchema } from "../layoutTree.ts";
 
 export type ResourceAction = "close-resource" | "resource-quests" | "dismiss-resource";
 

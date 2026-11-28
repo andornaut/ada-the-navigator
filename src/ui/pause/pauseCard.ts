@@ -23,7 +23,7 @@ import { type PauseAction, pauseActions, type PausePlace } from "../pause.ts";
 import type { QuestFlightLogEntry } from "../questsBodyTree.ts";
 import { createQuestsScreen, type QuestOrigin } from "../questsScreen.ts";
 import { refuse } from "../refusal.ts";
-import { createResourceCard } from "../resourceCard.ts";
+import { createResourceCard } from "../resource/index.ts";
 import { shieldDetails } from "../shieldDetails.ts";
 import {
   disposeShipSections,
@@ -35,7 +35,7 @@ import {
 } from "../shipCard.ts";
 import { createShipPaintCard, type ShipPaintOptions } from "../shipPaintCard.ts";
 import { createStandardTextAction } from "../standardTextAction.ts";
-import { createWeaponDetailCard } from "../weaponDetailCard.ts";
+import { createWeaponDetailCard } from "../weaponDetail/index.ts";
 import { type PauseLayoutSchema, pauseTree, type PauseTreeAction } from "./pauseTree.ts";
 
 export interface PauseLabels {
