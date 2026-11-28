@@ -5,6 +5,8 @@ import { closestOnSegment, type Contact, partContact, toScreen } from "./convex.
 import { dropRandom } from "./drops.ts";
 import type { NeedleProgress } from "./needleState.ts";
 import type { Vec } from "./types.ts";
+export { type NeedleProgress, unfinishedNeedleCourse } from "./needleState.ts";
+
 export interface NeedleGate {
   readonly point: Vec;
   /** Unit travel direction through the plane, in world coordinates. */
