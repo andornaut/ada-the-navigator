@@ -37,7 +37,7 @@ export {
 
 // The logical view, its scale and the safe-margin clamp (art/layout.md "Coordinates and scale"
 // and "Page bounds"), and the HUD's anchors ("HUD and overlays"). The canvas draws the logical
-// view at device pixels (src/game/playCamera.ts); the DOM overlay carries the same scale s as
+// view at device pixels (src/game/camera/index.ts); the DOM overlay carries the same scale s as
 // --ada-unit (viewScale.ts).
 
 export const COMPACT_DISABLED_BANNER = { sideInsetReduction: 0.75, top: 2 } as const;

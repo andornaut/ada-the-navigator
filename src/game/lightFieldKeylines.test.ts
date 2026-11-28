@@ -12,7 +12,7 @@ vi.mock("phaser", () => ({
   Textures: {},
 }));
 vi.mock("./sceneAssets.ts", () => ({ filterTexture: vi.fn() }));
-vi.mock("./touchChrome.ts", () => ({ createUseCallout: vi.fn() }));
+vi.mock("./chrome/index.ts", () => ({ createUseCallout: vi.fn() }));
 
 /** A Graphics stand-in that records its depth and every fill. */
 class Graphics {

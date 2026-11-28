@@ -15,7 +15,9 @@ const SOURCE_FILES = ["src/**/*.ts"];
 // The modules that draw with Phaser, under src/: the scene and the modules it delegates to.
 // src/input/controls.ts builds the touch chrome as Phaser objects beside its input handling.
 const PHASER_MODULES = [
-  "game/playCamera",
+  "game/camera/index",
+  "game/chrome/index",
+  "game/index",
   "game/scene",
   "game/sceneAndromeda",
   "game/sceneAssets",
@@ -34,7 +36,6 @@ const PHASER_MODULES = [
   "game/sceneSprites",
   "game/sceneUi",
   "game/sceneWorld",
-  "game/touchChrome",
   "input/controls",
 ];
 const PHASER_MESSAGE =

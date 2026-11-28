@@ -10,7 +10,7 @@ import {
   sceneFit,
   shakeIntensity,
   viewShift,
-} from "./playCamera.ts";
+} from "./camera/index.ts";
 
 // A scale manager as followFrameTurn's deviceResolution leaves it for a canvas css big at r
 // device pixels per CSS pixel: the game size is the backing and the zoom is 1 / r.

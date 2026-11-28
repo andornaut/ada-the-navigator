@@ -12,7 +12,7 @@ import {
 } from "../art/index.ts";
 import { ART_MANIFEST, GALAXY_MANIFESTS, publicJson } from "../testing/publicArt.ts";
 import { TOUCH_CHROME_FRAME, USE_DISC_POSES, USE_SYMBOLS } from "../ui/touchChrome.ts";
-import { parentFit } from "./playCamera.ts";
+import { parentFit } from "./camera/index.ts";
 
 describe("texture filters", () => {
   it("samples SVGs linear and sheets nearest, and leaves other files alone", () => {

@@ -3,7 +3,7 @@
 import { SCREEN } from "../data/screen.ts";
 import { shipHeading } from "../model/nose.ts";
 import type { JumpScene } from "../ui/jumpOverlay.ts";
-import { sceneFit, viewShift } from "./playCamera.ts";
+import { sceneFit, viewShift } from "./camera/index.ts";
 import type { GameScene } from "./scene.ts";
 
 /** The scene state and methods this module's functions use. */

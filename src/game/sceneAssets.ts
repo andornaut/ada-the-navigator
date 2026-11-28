@@ -86,7 +86,7 @@ import { scenerySilhouette } from "../model/asteroids.ts";
 import { SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
 import { flightWorldContext, worldDelta } from "../model/world/index.ts";
-import { sceneFit } from "./playCamera.ts";
+import { sceneFit } from "./camera/index.ts";
 import type { GameScene } from "./scene.ts";
 import type { Asset } from "./sceneShared.ts";
 

@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 import { CONTENT } from "../data/content.ts";
 import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
 import { SCREEN } from "../data/screen.ts";
-import { sceneFit, viewShift } from "../game/playCamera.ts";
+import { sceneFit, viewShift } from "../game/camera/index.ts";
 import { requiredReady } from "../loading/required.ts";
 import { GameModel } from "../model/game.ts";
 import { shipHeading } from "../model/nose.ts";

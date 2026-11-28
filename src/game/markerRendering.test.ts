@@ -20,7 +20,7 @@ vi.mock("phaser", () => ({
   Textures: {},
 }));
 vi.mock("./sceneAssets.ts", () => ({ filterTexture: vi.fn() }));
-vi.mock("./touchChrome.ts", () => ({ createUseCallout: vi.fn() }));
+vi.mock("./chrome/index.ts", () => ({ createUseCallout: vi.fn() }));
 
 class Ink {
   calls: unknown[][] = [];

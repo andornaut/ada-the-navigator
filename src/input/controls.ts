@@ -14,7 +14,7 @@ import { RESOURCE_DESCRIPTIONS } from "../data/resourceDescriptions.ts";
 import type { Weapon } from "../data/types.ts";
 import { uiIconUrl } from "../data/uiIconUrl.ts";
 import { weaponDetailLines } from "../data/weaponDetails.ts";
-import { canvasSize, fitCanvasCamera, sceneFit } from "../game/playCamera.ts";
+import { canvasSize, fitCanvasCamera, sceneFit } from "../game/camera/index.ts";
 import {
   createSpeedLine,
   createTouchChrome,
@@ -23,7 +23,7 @@ import {
   showSpeedLine,
   showTouchChrome,
   useDiscFrame,
-} from "../game/touchChrome.ts";
+} from "../game/chrome/index.ts";
 import type { RequiredReady } from "../loading/index.ts";
 import type { ItemGain } from "../model/itemGains.ts";
 import type { ContextQuestDetails } from "../model/questObjectLinks.ts";

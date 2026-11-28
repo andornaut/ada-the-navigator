@@ -125,7 +125,7 @@ import { markerFootprints } from "../ui/markerFootprints.ts";
 import { navigationEntry } from "../ui/navigationEntry.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
 import { readTitleScreen, StoryShell, type TitleScreenArt } from "../ui/start/index.ts";
-import { fitPlayCamera, sceneFit, shakeIntensity } from "./playCamera.ts";
+import { fitPlayCamera, sceneFit, shakeIntensity } from "./camera/index.ts";
 import type { GameScene } from "./scene.ts";
 import {
   arrivalLoads,

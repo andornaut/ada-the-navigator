@@ -24,7 +24,7 @@ import { syncFlightRegion } from "../model/geography.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, supportEntropy } from "../testing/launch.ts";
 import { publicJson } from "../testing/publicArt.ts";
-import { shakeIntensity } from "./playCamera.ts";
+import { shakeIntensity } from "./camera/index.ts";
 
 function launched() {
   const model = new GameModel(CONTENT, supportEntropy, SAVE_RESTORE);

@@ -155,7 +155,7 @@ import {
   type WarpPaint,
 } from "../ui/index.ts";
 import { StoryShell } from "../ui/start/index.ts";
-import { cameraWorldView, parentFit, sceneFit, viewShift } from "./playCamera.ts";
+import { cameraWorldView, parentFit, sceneFit, viewShift } from "./camera/index.ts";
 import { setRendering } from "./renderLoop.ts";
 import { drawAndromeda } from "./sceneAndromeda.ts";
 import {
@@ -207,7 +207,7 @@ import {
   renderConversation,
 } from "./sceneUi.ts";
 import { drawCurrents, drawJobs, drawStoryShips, drawWhirlpoolProjects } from "./sceneWorld.ts";
-import { preloadTouchChrome } from "./touchChrome.ts";
+import { preloadTouchChrome } from "./chrome/index.ts";
 
 const ENGINE_ONE_FLIGHT_JET_COLORS = {
   core: [0x64caff, 0x64caff],

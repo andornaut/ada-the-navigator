@@ -7,9 +7,9 @@ import {
 import { setTextureFilters } from "@andornaut/game-kit/runtime/view/phaser/textureFilter";
 import { GameObjects, Scene, Textures } from "phaser";
 
-import { chromeAtlasGrid } from "../art/index.ts";
-import { TOUCH_CHROME_SHEETS, type TouchChromeKind } from "../data/layout.ts";
-import type { UseAction } from "../model/types.ts";
+import { chromeAtlasGrid } from "../../art/index.ts";
+import { TOUCH_CHROME_SHEETS, type TouchChromeKind } from "../../data/layout.ts";
+import type { UseAction } from "../../model/types.ts";
 import {
   isTouchChromePose,
   layerBounds,
@@ -33,7 +33,7 @@ import {
   useCalloutLayers,
   useDiscLayers,
   type UseDiscPose,
-} from "../ui/touchChrome.ts";
+} from "../../ui/touchChrome.ts";
 
 export const UI_MANIFEST_KEY = "ui-manifest";
 const UI_MANIFEST_PATH = "/art/ui/manifest.json";
