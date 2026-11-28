@@ -2290,12 +2290,7 @@ function clearLayoutObjects(keep: (object: SpaceObject) => boolean, flight: Flig
 }
 
 function routePlacementRandom(seed: number, id: string): () => number {
-  let placementSeed = seed;
-  const name = `route-placement:${id}`;
-  for (let index = 0; index < name.length; index++) {
-    placementSeed = hash(placementSeed, name.charCodeAt(index), index);
-  }
-  return random(placementSeed);
+  return randomStream(seed, `route-placement:${id}`);
 }
 
 /** Move only capitals inside the gap of an earlier kept capital; paged-in capitals come last. */
