@@ -1,6 +1,5 @@
 import type { GameContent } from "../data/types.ts";
-import { damageEnemy } from "../model/enemyAi.ts";
-import { enemyEquipmentDefinition } from "../model/enemyEquipment.ts";
+import { hit } from "../model/flight/hitResolution.ts";
 import type { GameModel } from "../model/game.ts";
 import { stationPopulationObjects } from "../model/hostileStations.ts";
 import { HUB_STATION } from "../model/stations.ts";
@@ -27,7 +26,7 @@ export function activateCartwheelHubFixture(content: GameContent, model: GameMod
   return hub;
 }
 
-/** Test support: visit the real hub and disable its real weapons through canonical part damage. */
+/** Test support: visit the real hub and defeat its approach guard through canonical hull damage. */
 export function visitCartwheelHubFixture(content: GameContent, model: GameModel): SpaceObject {
   const hub = activateCartwheelHubFixture(content, model);
   const flight = model.state.flight!;
@@ -38,10 +37,7 @@ export function visitCartwheelHubFixture(content: GameContent, model: GameModel)
   if (!guard?.enemy) {
     throw new Error("Expected the actual Cartwheel approach capital before friendly interaction");
   }
-  const definition = enemyEquipmentDefinition(flight.galaxy, guard.enemy);
-  for (const part of guard.enemy.hardpoints) {
-    guard.enemy = damageEnemy(definition, { amount: part.hp, hardpointId: part.id }, guard.enemy);
-  }
+  hit(content, guard.enemy.hp, null, guard, flight, []);
   model.step(1 / 60, idle);
   return hub;
 }
