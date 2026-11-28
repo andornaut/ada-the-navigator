@@ -1,8 +1,7 @@
 /**
- * Deterministic dump of every computed UI layout result, as canonical JSON: every exported
- * constant of each src/ui/layout module, and every exported layout function over a fixed set
- * of viewports, safe-area insets and state variants. A layout refactor is behaviour-preserving
- * when the dumps from before and after it are byte-identical.
+ * Deterministic dump of UI layout samples as canonical JSON: constants and function results from
+ * the listed layout modules across fixed viewports and state variants. Compare dumps to check
+ * whether those layout results changed.
  *
  * Usage: node tools/layout-dump.ts > layout-dump.json
  */
@@ -26,19 +25,21 @@ import * as storyPage from "../src/ui/layout/storyPage.ts";
 import * as tokens from "../src/ui/layout/tokens.ts";
 import * as touchControls from "../src/ui/layout/touchControls.ts";
 import * as viewScale from "../src/ui/layout/viewScale.ts";
+import * as mapFog from "../src/ui/map/layout/mapFog.ts";
 import * as mapScreen from "../src/ui/map/layout/mapScreen.ts";
 
-/** Every src/ui/layout module by file name; the test checks this against the directory. */
+/** The layout modules sampled by this diagnostic, keyed by file name. */
 export const LAYOUT_MODULES: Readonly<Record<string, Readonly<Record<string, unknown>>>> = {
   "cardFrame.ts": cardFrame,
   "contentCard.ts": contentCard,
   "controls.ts": controls,
   "conversationBox.ts": conversationBox,
   "css.ts": css,
+  "galaxyMap.ts": galaxyMap,
   "itemNotice.ts": itemNotice,
+  "mapFog.ts": mapFog,
   "mapScreen.ts": mapScreen,
   "playView.ts": playView,
-  "galaxyMap.ts": galaxyMap,
   "shopCard.ts": shopCard,
   "startScreen.ts": startScreen,
   "stationCard.ts": stationCard,
@@ -66,6 +67,7 @@ export const VIEWPORTS: readonly playView.Size[] = [
   { height: 400, width: 900 },
   { height: 390, width: 844 },
   { height: 844, width: 390 },
+  { height: 640, width: 320 },
   { height: 375.25, width: 812.5 },
   // Wider than 2:1 (a 2000x899 phone at DPR 2.6, and 2400x1080), 1920x1080 and 4:3.
   { height: 346, width: 769 },
@@ -74,14 +76,8 @@ export const VIEWPORTS: readonly playView.Size[] = [
   { height: 768, width: 1024 },
 ];
 
-/** CSS px safe-area insets: none, and a notched phone held landscape and portrait. */
-export const VIEWPORT_INSETS: Readonly<Record<string, playView.Insets>> = {
-  none: playView.NO_INSETS,
-  "phone landscape": { bottom: 21, left: 47, right: 47, top: 0 },
-  // A one-sided notch: both sides keep the larger inset.
-  "phone notch left": { bottom: 21, left: 47, right: 0, top: 0 },
-  "phone portrait": { bottom: 34, left: 0, right: 0, top: 47 },
-};
+/** The live view bridge supplies zero hardware insets and lays out the whole surface. */
+export const VIEWPORT_INSETS = { none: playView.NO_INSETS };
 
 const SIDES: readonly playView.Side[] = ["top", "right", "bottom", "left"];
 const COUNTS = [0, 1, 2, 3, 4, 5] as const;
@@ -134,105 +130,101 @@ function recorder(cases: Cases) {
 }
 
 function viewportCases(call: ReturnType<typeof recorder>): void {
-  for (const css of VIEWPORTS) {
-    for (const insets of Object.values(VIEWPORT_INSETS)) {
-      const s = call("playView.ts", "viewScale", playView.viewScale, css);
-      const view = call("playView.ts", "logicalView", playView.logicalView, css);
-      const logical = call("playView.ts", "safeInsets", playView.safeInsets, insets, s);
-      const layout = call("viewScale.ts", "playLayout", viewScale.playLayout, css, insets);
-      call("viewScale.ts", "viewProperties", viewScale.viewProperties, layout);
-      for (const cleared of [playView.NO_INSETS, { ...playView.NO_INSETS, top: 20 }, insets]) {
-        call("viewScale.ts", "uncoveredInsets", viewScale.uncoveredInsets, insets, cleared);
-      }
-      for (const margin of Object.values(playView.SAFE_MARGIN)) {
-        call("playView.ts", "safeRect", playView.safeRect, logical, margin, view);
-      }
-      call("playView.ts", "playView", playView.playView, view);
-      call("playView.ts", "safeGameArea", playView.safeGameArea, logical, view);
-      call("playView.ts", "gameAreaGap", playView.gameAreaGap, view);
-      call("playView.ts", "mirroredSideInset", playView.mirroredSideInset, logical);
-      call("playView.ts", "mirroredSide", playView.mirroredSide, logical, playView.HUD_EDGE, view);
-      call("playView.ts", "hudRect", playView.hudRect, logical, view);
-      for (const level of SHIELD_LEVELS) {
-        call("playView.ts", "shieldPillRect", playView.shieldPillRect, logical, view, level);
-        call("playView.ts", "shieldIconCentre", playView.shieldIconCentre, logical, view, level);
-      }
-      call("playView.ts", "controlsBottom", playView.controlsBottom, logical, view);
-      call(
-        "conversationBox.ts",
-        "conversationBoxRect",
-        conversationBox.conversationBoxRect,
-        logical,
-        view,
-      );
-      call(
-        "conversationBox.ts",
-        "conversationShipClearance",
-        conversationBox.conversationShipClearance,
-        logical,
-        view,
-      );
-      call(
-        "conversationBox.ts",
-        "conversationTabTop",
-        conversationBox.conversationTabTop,
-        logical,
-        view,
-      );
-      call("conversationBox.ts", "shipHullTop", conversationBox.shipHullTop, view);
-      call("startScreen.ts", "startScreenRects", startScreen.startScreenRects, view);
-      call("galaxyMap.ts", "galaxyMapRects", galaxyMap.galaxyMapRects, logical, view);
-      call("galaxyMap.ts", "markerCentre", galaxyMap.markerCentre, view, 1);
-      call("storyPage.ts", "storyPanelLayout", storyPage.storyPanelLayout, logical, view);
-      call("storyPage.ts", "storyBackgroundScale", storyPage.storyBackgroundScale, view);
-      // Grandma's garden band under its tallest first-launch panel, and the centred backdrop.
-      for (const [subject, stripTop] of [
-        [{ bottom: 285, top: 199 }, 113],
-        [{ bottom: 298, top: 175 }, 250],
-        [null, null],
-      ] as const) {
-        call(
-          "storyPage.ts",
-          "storyBackgroundTop",
-          storyPage.storyBackgroundTop,
-          view,
-          subject,
-          stripTop,
-        );
-      }
-      call("touchControls.ts", "stickRestCentres", touchControls.stickRestCentres, view, logical);
-      call("touchControls.ts", "stickTargets", touchControls.stickTargets, view, logical);
-      const disc = touchControls.useDiscLayout(view, logical);
-      call("touchControls.ts", "useDiscLayout", touchControls.useDiscLayout, view, logical);
-      // Use's press circle at its centre, its edge, the cut midway to the aim ring, and the aim
-      // ring's centre.
-      for (const point of [
-        disc.centre,
-        { x: disc.centre.x - 99, y: disc.centre.y },
-        {
-          x: (disc.centre.x + disc.awayFrom.x) / 2,
-          y: (disc.centre.y + disc.awayFrom.y) / 2,
-        },
-        disc.awayFrom,
-      ]) {
-        call("touchControls.ts", "usePressed", touchControls.usePressed, disc, point);
-      }
-      // Cards and the shop fit the page safe rect's width.
-      const available = playView.safeRect(logical, playView.SAFE_MARGIN.page, view).width;
-      for (const groups of [[], [200], [400, 120], [900]]) {
-        for (const title of [
-          undefined,
-          { close: true, width: 180 },
-          { close: false, width: 300 },
-        ]) {
-          call("contentCard.ts", "cardWidth", contentCard.cardWidth, available, groups, title);
-        }
-      }
-      for (const rowWidth of [180, 260, 320]) {
-        call("shopCard.ts", "shopColumns", shopCard.shopColumns, available, rowWidth);
-      }
-      call("stationCard.ts", "stationCardRect", stationCard.stationCardRect, logical, view);
+  for (const viewport of VIEWPORTS) {
+    const layout = call("viewScale.ts", "playLayout", viewScale.playLayout, viewport);
+    const { cssInsets, insets, s, view } = layout;
+    call("playView.ts", "viewScale", playView.viewScale, viewport);
+    call("playView.ts", "logicalView", playView.logicalView, viewport);
+    call("playView.ts", "safeInsets", playView.safeInsets, cssInsets, s);
+    call("viewScale.ts", "viewProperties", viewScale.viewProperties, layout);
+    for (const margin of Object.values(playView.SAFE_MARGIN)) {
+      call("playView.ts", "safeRect", playView.safeRect, insets, margin, view);
     }
+    const game = call("playView.ts", "playView", playView.playView, view);
+    call("playView.ts", "safeGameArea", playView.safeGameArea, insets, view);
+    call("playView.ts", "gameAreaGap", playView.gameAreaGap, view);
+    call("playView.ts", "mirroredSideInset", playView.mirroredSideInset, insets);
+    call("playView.ts", "mirroredSide", playView.mirroredSide, insets, playView.HUD_EDGE, view);
+    call("playView.ts", "hudRect", playView.hudRect, insets, view);
+    for (const level of SHIELD_LEVELS) {
+      call("playView.ts", "shieldPillRect", playView.shieldPillRect, insets, view, level);
+      call("playView.ts", "shieldIconCentre", playView.shieldIconCentre, insets, view, level);
+    }
+    call("playView.ts", "controlsBottom", playView.controlsBottom, insets, view);
+    call(
+      "conversationBox.ts",
+      "conversationBoxRect",
+      conversationBox.conversationBoxRect,
+      insets,
+      view,
+    );
+    call(
+      "conversationBox.ts",
+      "conversationShipClearance",
+      conversationBox.conversationShipClearance,
+      insets,
+      view,
+    );
+    call(
+      "conversationBox.ts",
+      "conversationTabTop",
+      conversationBox.conversationTabTop,
+      insets,
+      view,
+    );
+    call("conversationBox.ts", "shipHullTop", conversationBox.shipHullTop, view);
+    call("startScreen.ts", "startScreenRects", startScreen.startScreenRects, view);
+    call("galaxyMap.ts", "galaxyMapRects", galaxyMap.galaxyMapRects, insets, view);
+    call("galaxyMap.ts", "markerCentre", galaxyMap.markerCentre, view, 1);
+    call("storyPage.ts", "storyPanelLayout", storyPage.storyPanelLayout, insets, view);
+    call("storyPage.ts", "storyBackgroundScale", storyPage.storyBackgroundScale, view);
+    // Grandma's garden band under its tallest first-launch panel, and the centred backdrop.
+    for (const [subject, stripTop] of [
+      [{ bottom: 285, top: 199 }, 113],
+      [{ bottom: 298, top: 175 }, 250],
+      [null, null],
+    ] as const) {
+      call(
+        "storyPage.ts",
+        "storyBackgroundTop",
+        storyPage.storyBackgroundTop,
+        view,
+        subject,
+        stripTop,
+      );
+    }
+    call("touchControls.ts", "stickRestCentres", touchControls.stickRestCentres, view, insets);
+    call("touchControls.ts", "stickTargets", touchControls.stickTargets, view, insets);
+    const disc = call(
+      "touchControls.ts",
+      "useDiscLayout",
+      touchControls.useDiscLayout,
+      view,
+      insets,
+    );
+    // Use's press circle at its centre, its edge, the cut midway to the aim ring, and the aim
+    // ring's centre.
+    for (const point of [
+      disc.centre,
+      { x: disc.centre.x - 99, y: disc.centre.y },
+      {
+        x: (disc.centre.x + disc.awayFrom.x) / 2,
+        y: (disc.centre.y + disc.awayFrom.y) / 2,
+      },
+      disc.awayFrom,
+    ]) {
+      call("touchControls.ts", "usePressed", touchControls.usePressed, disc, point);
+    }
+    // Modal widths use the game area; the station shop uses the full page's safe rect.
+    const availableWidth = game.width - 2 * contentCard.MODAL_SCREEN_MARGIN;
+    for (const size of ["small", "medium", "large"] as const) {
+      call("contentCard.ts", "cardWidth", contentCard.cardWidth, { availableWidth, size });
+    }
+    const available = playView.safeRect(insets, playView.SAFE_MARGIN.page, view).width;
+    for (const rowWidth of [180, 260, 320]) {
+      call("shopCard.ts", "shopColumns", shopCard.shopColumns, available, rowWidth);
+    }
+    call("stationCard.ts", "stationCardRect", stationCard.stationCardRect, insets, view);
   }
 }
 
@@ -247,7 +239,7 @@ function stateCases(call: ReturnType<typeof recorder>): void {
     for (const ore of [null, "0", "999m"]) {
       const counts = { ore, stardust };
       call("playView.ts", "statusTickCentres", playView.statusTickCentres, counts);
-      for (const aboard of [false, true]) {
+      for (const aboard of [null, "carrying", "towing"] as const) {
         call("playView.ts", "statusPillWidth", playView.statusPillWidth, counts, aboard);
       }
     }
@@ -376,6 +368,9 @@ function cssCases(call: ReturnType<typeof recorder>): void {
     call("css.ts", "viewProperty slice", css.VIEW_PROPERTIES.slice, edge);
   }
   call("css.ts", "viewStyle", css.viewStyle, controls.WHOLE_PX_EDGES);
+}
+
+function mapCases(call: ReturnType<typeof recorder>): void {
   // The map screen: projections, fit regions, zoom limits and opening fits.
   for (const point of [
     { x: 0, y: 0 },
@@ -392,24 +387,49 @@ function cssCases(call: ReturnType<typeof recorder>): void {
     call("mapScreen.ts", "filledPips", mapScreen.filledPips, percent);
   }
   const side = CURRENT_FLIGHT_TOPOLOGY.side;
-  for (const [view, insets] of [
-    [{ height: 360, width: 720 }, playView.NO_INSETS],
-    [{ height: 405, width: 720 }, playView.NO_INSETS],
-    [
-      { height: 360, width: 779 },
-      { bottom: 19, left: 43, right: 43, top: 0 },
-    ],
-  ] as const) {
-    const fit = call("mapScreen.ts", "fitRegion", mapScreen.fitRegion, insets, view) as Rect;
-    const inner = call("mapScreen.ts", "innerRegion", mapScreen.innerRegion, fit) as Rect;
-    const field = { ...view, x: 0, y: 0 };
-    call("mapScreen.ts", "scaleLimits", mapScreen.scaleLimits, inner, view, side);
+  for (const viewport of [
+    { height: 360, width: 720 },
+    { height: 405, width: 720 },
+    { height: 390, width: 844 },
+  ]) {
+    const { insets, s, view } = viewScale.playLayout(viewport);
+    const fit = call("mapScreen.ts", "fitRegion", mapScreen.fitRegion, insets, view);
+    const inner = call("mapScreen.ts", "innerRegion", mapScreen.innerRegion, fit);
+    const field: Rect = { ...view, x: 0, y: 0 };
+    call("mapScreen.ts", "scaleLimits", mapScreen.scaleLimits, inner, field, side);
     call("mapScreen.ts", "toolColumnLeft", mapScreen.toolColumnLeft, insets, view);
     call("mapScreen.ts", "mapRowTop", mapScreen.mapRowTop, insets, view);
     call("mapScreen.ts", "panelMaxWidth", mapScreen.panelMaxWidth, insets, view);
     call("mapScreen.ts", "mapGalaxiesRect", mapScreen.mapGalaxiesRect, insets, view);
     call("mapScreen.ts", "mapQuestsRect", mapScreen.mapQuestsRect, insets, view);
     call("mapScreen.ts", "mapHeaderCap", mapScreen.mapHeaderCap, insets, view);
+    call("mapScreen.ts", "mapCloseRect", mapScreen.mapCloseRect, insets, view);
+    call("mapScreen.ts", "mapHeaderLeft", mapScreen.mapHeaderLeft, insets, view);
+    const header = call(
+      "mapScreen.ts",
+      "mapHeaderGeometry",
+      mapScreen.mapHeaderGeometry,
+      120,
+      100,
+      346,
+      s,
+    );
+    call(
+      "mapScreen.ts",
+      "mapHeaderWidthForView",
+      mapScreen.mapHeaderWidthForView,
+      insets,
+      view,
+      header.width,
+      s,
+    );
+    call(
+      "mapScreen.ts",
+      "selectedPanelMaxHeight",
+      mapScreen.selectedPanelMaxHeight,
+      fit,
+      view.height - playView.SAFE_MARGIN.page,
+    );
     for (const places of [
       [],
       [{ x: 300, y: 700 }],
@@ -426,15 +446,19 @@ function cssCases(call: ReturnType<typeof recorder>): void {
     }
   }
   {
-    const fit = mapScreen.fitRegion(playView.NO_INSETS, { height: 360, width: 720 });
+    const { insets, view: size } = viewScale.playLayout({ height: 360, width: 720 });
+    const fit = mapScreen.fitRegion(insets, size);
     const inner = mapScreen.innerRegion(fit);
     const places = [
       { x: 2000, y: 300 },
       { x: 400, y: -800 },
     ];
-    const field = { height: 360, width: 720, x: 0, y: 0 };
+    const field = { ...size, x: 0, y: 0 };
     const view = { centre: { x: 0, y: 0 }, scale: 0.02, worldSide: side };
     call("mapScreen.ts", "toScreen", mapScreen.toScreen, inner, view, places[0]!);
+    call("mapScreen.ts", "mapImage", mapScreen.mapImage, view, places[0]!);
+    call("mapScreen.ts", "mapWorldDiamond", mapScreen.mapWorldDiamond, inner, view);
+    call("mapScreen.ts", "mapSurveyEllipse", mapScreen.mapSurveyEllipse, inner, view);
     call("mapScreen.ts", "clampView", mapScreen.clampView, inner, field, {
       centre: { x: 1e6, y: -1e6 },
       scale: 1,
@@ -480,16 +504,17 @@ function cssCases(call: ReturnType<typeof recorder>): void {
     call("mapScreen.ts", "fogBlur", mapScreen.fogBlur, 4.5);
   }
   call("mapScreen.ts", "fogColor", mapScreen.fogColor, 0xc9b98a, 0xbbad74);
-  call("mapScreen.ts", "fogReveal", mapScreen.fogReveal, 0.02);
+  const reveal = call("mapScreen.ts", "fogReveal", mapScreen.fogReveal, 0.02);
+  call("mapFog.ts", "fogStampBounds", mapFog.fogStampBounds, reveal);
+  for (const symbol of ["station", "hostileStation", "job"] as const) {
+    call("mapScreen.ts", "mapGlyphSize", mapScreen.mapGlyphSize, symbol);
+  }
   call("mapScreen.ts", "adaAngle", mapScreen.adaAngle, { x: 0, y: -1 });
 }
 
-/** The route map's legs, travel and timings, which no view changes. */
 function noticeCases(call: ReturnType<typeof recorder>): void {
-  // Art's labels: none, "+ Phaser", "+ Spare parts" and "+ Heavy Missile ammo ×9".
-  for (const label of [0, 62.16, 106.33, 193]) {
-    call("itemNotice.ts", "chipWidth", itemNotice.chipWidth, label);
-  }
+  call("itemNotice.ts", "noticeIconLayout", itemNotice.noticeIconLayout);
+  call("itemNotice.ts", "noticeIconLayout", itemNotice.noticeIconLayout, { left: 1, right: 3 });
   // Centred, clamped at the pill's left, and clamped at the weapons' inset.
   for (const centre of [223.67, 40, 691.5]) {
     call("itemNotice.ts", "chipLeft", itemNotice.chipLeft, centre, 148.33, 50.75, 466.5);
@@ -506,6 +531,7 @@ function noticeCases(call: ReturnType<typeof recorder>): void {
   }
 }
 
+/** The route map's legs, travel and unlock timings. */
 function routeCases(call: ReturnType<typeof recorder>): void {
   for (const angle of [galaxyMap.GALAXY_MAP_ARC.first, 0, galaxyMap.GALAXY_MAP_ARC.step]) {
     call("galaxyMap.ts", "arcPoint", galaxyMap.arcPoint, angle);
@@ -531,7 +557,6 @@ function routeCases(call: ReturnType<typeof recorder>): void {
     call("galaxyMap.ts", "easeInOutSine", galaxyMap.easeInOutSine, t);
   }
   for (const length of [50, 229, 530]) {
-    call("galaxyMap.ts", "selectionSeconds", galaxyMap.selectionSeconds, length);
     call("galaxyMap.ts", "unlockFlightSeconds", galaxyMap.unlockFlightSeconds, length);
   }
   call("galaxyMap.ts", "unlockSeconds", galaxyMap.unlockSeconds, 1, 2);
@@ -552,6 +577,7 @@ export function layoutDump(): unknown {
   viewportCases(call);
   stateCases(call);
   cssCases(call);
+  mapCases(call);
   noticeCases(call);
   routeCases(call);
   const constants = Object.fromEntries(
