@@ -1,3 +1,5 @@
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -5,8 +7,10 @@ import {
   layerFindings,
   layerOf,
   LAYERS,
+  readGraph,
   readImports,
   runtimeCycleFindings,
+  runtimeEdges,
   specifiers,
 } from "../../tools/imports-check.ts";
 
@@ -177,5 +181,34 @@ describe("layers", () => {
         "Use src/ui/conversation/index.ts",
       "src/game/scene.ts imports src/art/shipJets.ts directly. Use src/art/index.ts",
     ]);
+  });
+
+  it("loads save codecs and integrity checks without loading chapter or flight runtimes", () => {
+    const root = fileURLToPath(new URL("../..", import.meta.url));
+    const edges = runtimeEdges(readGraph(root));
+    const reached = new Set<string>();
+    const visit = (path: string): void => {
+      if (reached.has(path)) {
+        return;
+      }
+      reached.add(path);
+      for (const target of edges.get(path) ?? []) {
+        visit(target);
+      }
+    };
+    visit("src/saving/index.ts");
+
+    expect(reached).toContain("src/saving/codec.ts");
+    expect(reached).toContain("src/saving/integrity.ts");
+    const gameplayEntries = [
+      "src/model/andromeda.ts",
+      "src/model/chapters.ts",
+      "src/model/flight.ts",
+      "src/model/game.ts",
+      "src/model/hostileStations/materialization.ts",
+      "src/model/needleRuntime.ts",
+      "src/model/phantom.ts",
+    ];
+    expect(gameplayEntries.filter((path) => reached.has(path))).toEqual([]);
   });
 });

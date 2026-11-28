@@ -33,6 +33,7 @@ export type CourierAmbushAttempt = LegIdentity &
     | { readonly plan: CourierAmbushPlan; readonly state: CourierAmbushState }
   );
 
+/** Captured destinations remain stable through Continue and subsequent chapter visits. */
 export interface AndromedaProgress {
   station?: string;
   settlement?: string;

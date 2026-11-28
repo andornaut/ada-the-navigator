@@ -255,7 +255,6 @@ export const ANDROMEDA_PLACES = {
   settlement: "settlement",
 } as const;
 
-/** Captured destinations remain stable through Continue and subsequent chapter visits. */
 /** The model and full-card renderer share the same approved conditional conversation. */
 export function andromedaConversation(
   progress: { readonly stage: number },
