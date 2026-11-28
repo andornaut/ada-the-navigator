@@ -36,6 +36,9 @@ import {
   fanVolley,
   fileFilter,
   foregroundEdge,
+  FORWARD_FLIGHT_KEY,
+  FORWARD_FLIGHT_PATH,
+  type ForwardFlightJets,
   type GalaxyBackdrop,
   galaxyLoadsAtOnce,
   type GalaxyManifest,
@@ -75,6 +78,7 @@ import {
   playDepth,
   type ProjectArtSet,
   readDestruction,
+  readForwardFlightJets,
   readGalaxyManifest,
   readShards,
   readSidecars,
@@ -132,28 +136,24 @@ import type { StoryNoses } from "../model/storyShips.ts";
 import type { FlightInput, FlightState, GameSave, Vec } from "../model/types.ts";
 import { shipTuning } from "../model/upgrades.ts";
 import { FeedbackSound } from "../platform/index.ts";
-import type {
-  BoxOccupant,
-  ConversationBox,
-  createBannerLayer,
-  createBossHud,
-  createFpsCounter,
-  createGalaxyMap,
-  createJumpOverlay,
-  createRestartCard,
-  createStationView,
-  createStorybook,
-  GalaxyMapView,
-  PlacedBanner,
-  WarpPaint,
+import {
+  aboardGalaxy,
+  type BoxOccupant,
+  type ConversationBox,
+  type createBannerLayer,
+  type createBossHud,
+  type createFpsCounter,
+  type createGalaxyMap,
+  type createJumpOverlay,
+  type createRestartCard,
+  type createStationView,
+  type createStorybook,
+  type GalaxyMapView,
+  type PlacedBanner,
+  storyCoversScene,
+  type WarpPaint,
 } from "../ui/index.ts";
 import { EmergencyReturn, returnedOnDepletion } from "./emergencyReturn.ts";
-import {
-  FORWARD_FLIGHT_KEY,
-  FORWARD_FLIGHT_PATH,
-  type ForwardFlightJets,
-  readForwardFlightJets,
-} from "./forwardFlightJets.ts";
 import { cameraWorldView, parentFit, sceneFit, viewShift } from "./playCamera.ts";
 import { setRendering } from "./renderLoop.ts";
 import { drawAndromeda } from "./sceneAndromeda.ts";
@@ -207,7 +207,6 @@ import {
 } from "./sceneUi.ts";
 import { drawCurrents, drawJobs, drawStoryShips, drawWhirlpoolProjects } from "./sceneWorld.ts";
 import { StoryShell } from "./shell.ts";
-import { aboardGalaxy, storyCoversScene } from "./storyPresentation.ts";
 import { preloadTouchChrome } from "./touchChrome.ts";
 
 const ENGINE_ONE_FLIGHT_JET_COLORS = {

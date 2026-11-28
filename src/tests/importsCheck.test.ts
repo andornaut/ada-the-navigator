@@ -98,8 +98,12 @@ describe("layers", () => {
     expect(layerOf("src/data/galaxies.ts")).toBe(layer("data"));
     expect(layerOf("src/art/index.ts")).toBe(layer("art"));
     expect(layerOf("src/art/shipJets.ts")).toBe(layer("art"));
+    expect(layerOf("src/art/forwardFlightJets.ts")).toBe(layer("art"));
     expect(layerOf("src/saving/index.ts")).toBe(layer("saving"));
     expect(layerOf("src/game/sceneHud.ts")).toBe(layer("scene"));
+    expect(layerOf("src/game/renderLoop.ts")).toBe(layer("scene"));
+    expect(layerOf("src/game/nested/anotherAdapter.ts")).toBe(layer("scene"));
+    expect(layerOf("src/ui/story/storyPresentation.ts")).toBe(layer("ui"));
     expect(layerOf("src/ui/layout/tokens.ts")).toBe(layer("layout and input state"));
     expect(layerOf("src/ui/map/layout/mapScreen.ts")).toBe(layer("layout and input state"));
     expect(layerOf("src/ui/map/mapScreen.ts")).toBe(layer("ui"));
@@ -128,11 +132,13 @@ describe("layers", () => {
       ],
       ["src/data/a.test.ts", [{ target: "src/entry/main.ts", typeOnly: false }]],
       ["src/loading/a.ts", [{ target: "src/entry/bootstrap.ts", typeOnly: false }]],
+      ["src/art/a.ts", [{ target: "src/game/nested/b.ts", typeOnly: true }]],
       ["src/extra.ts", []],
     ]);
     expect(layerFindings(graph)).toEqual([
       "src/data/a.ts (data) imports src/model/b.ts (model)",
       "src/loading/a.ts (platform) imports src/entry/bootstrap.ts (entry)",
+      "src/art/a.ts (art) imports src/game/nested/b.ts (scene)",
       "src/extra.ts is in no layer",
     ]);
   });

@@ -19,4 +19,10 @@ export { createScanFeedbackView } from "./scanFeedbackView.ts";
 export { aboardLabel, type ShipView } from "./shipCard.ts";
 export { createStationView } from "./station.ts";
 export { stardustCount } from "./statusPill.ts";
-export { createStorybook, loadStoryArt, storyPageView } from "./story/index.ts";
+export {
+  aboardGalaxy,
+  createStorybook,
+  loadStoryArt,
+  storyCoversScene,
+  storyPageView,
+} from "./story/index.ts";

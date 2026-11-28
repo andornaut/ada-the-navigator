@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import normal from "../../public/art/ship-jets.json";
-import { readEngineJets, travelJets } from "../art/index.ts";
 import { forwardFlightPlumes, readForwardFlightJets } from "./forwardFlightJets.ts";
+import { readEngineJets, travelJets } from "./shipJets.ts";
 
 const fixture = () => ({
   frame: 96,

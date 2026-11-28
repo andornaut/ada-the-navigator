@@ -1,13 +1,7 @@
-import {
-  type JetDisplay,
-  jetLength,
-  jetShapePolygons,
-  layerAlpha,
-  layerColor,
-  type ShipJets,
-} from "../art/index.ts";
 import { SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
 import type { Vec } from "../model/types.ts";
+import { jetShapePolygons, layerAlpha } from "./jetGeometry.ts";
+import { type JetDisplay, jetLength, layerColor, type ShipJets } from "./shipJets.ts";
 
 export const FORWARD_FLIGHT_PATH = "/art/ship-forward-flight.json";
 export const FORWARD_FLIGHT_KEY = "ship-forward-flight";

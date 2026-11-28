@@ -160,6 +160,16 @@ export {
   shakeCounter,
   TELEPORT_DISTANCE,
 } from "./feedback.ts";
+export {
+  FORWARD_FLIGHT_KEY,
+  FORWARD_FLIGHT_PATH,
+  type ForwardFlightJets,
+  forwardFlightPlumes,
+  forwardFlightPoint,
+  type ForwardHeading,
+  type ForwardPlume,
+  readForwardFlightJets,
+} from "./forwardFlightJets.ts";
 export { SALVAGED, salvagedMatrix, showsBanner, spritesBounds } from "./heavyStates.ts";
 export {
   AUTHORED_JET_LENGTH,

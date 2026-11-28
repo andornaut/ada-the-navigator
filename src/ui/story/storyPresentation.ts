@@ -1,6 +1,6 @@
-import { ROUTE } from "../data/galaxies.ts";
-import type { GalaxyNumber } from "../data/types.ts";
-import type { FlightState, GameState } from "../model/types.ts";
+import { ROUTE } from "../../data/galaxies.ts";
+import type { GalaxyNumber } from "../../data/types.ts";
+import type { FlightState, GameState } from "../../model/types.ts";
 
 type LaunchHistory = Pick<GameState, "started" | "selectedGalaxy"> & {
   readonly flight: Pick<FlightState, "galaxy"> | null;

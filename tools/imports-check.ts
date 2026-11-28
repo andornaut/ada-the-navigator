@@ -15,16 +15,6 @@ export interface Layer {
   readonly holds: (path: string) => boolean;
 }
 
-// The Phaser scene and the src/game/ modules that serve it; the rest of src/game/ is art.
-const SCENE_MODULES = new Set([
-  "emergencyReturn",
-  "playCamera",
-  "renderLoop",
-  "routeArt",
-  "shell",
-  "shopView",
-  "touchChrome",
-]);
 const INPUT_STATE = new Set([
   "src/input/coarsePointer.ts",
   "src/input/desktop.ts",
@@ -34,11 +24,6 @@ const SOURCE = /\.(?:mjs|mts|ts)$/u;
 const TEST = /\.test\.ts$/u;
 
 const uiLayout = (path: string) => /^src\/ui\/(?:map\/)?layout\//u.test(path);
-
-const sceneModule = (path: string) => {
-  const name = /^src\/game\/([^/]+)\.ts$/u.exec(path)?.[1];
-  return name !== undefined && (name.startsWith("scene") || SCENE_MODULES.has(name));
-};
 
 /** The layers, lowest first, each holding paths no other layer holds. */
 export const LAYERS: readonly Layer[] = [
@@ -61,8 +46,7 @@ export const LAYERS: readonly Layer[] = [
   { band: "Saving", holds: (path) => path.startsWith("src/saving/"), name: "saving" },
   {
     band: "Presentation",
-    holds: (path) =>
-      path.startsWith("src/art/") || (path.startsWith("src/game/") && !sceneModule(path)),
+    holds: (path) => path.startsWith("src/art/"),
     name: "art",
   },
   {
@@ -82,7 +66,7 @@ export const LAYERS: readonly Layer[] = [
   },
   {
     band: "Engine and views",
-    holds: (path) => sceneModule(path) || path === "src/input/controls.ts",
+    holds: (path) => path.startsWith("src/game/") || path === "src/input/controls.ts",
     name: "scene",
   },
   { band: "Entries", holds: (path) => path.startsWith("src/entry/"), name: "entry" },

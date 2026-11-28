@@ -40,7 +40,6 @@ describes their implementation.
   enemies, world, HUD, effects, jump and sprites), its cameras and touch chrome.
 - **Art adapters:** [`src/art/index.ts`](art/index.ts) exposes Phaser-free
   helpers for scenery, sprite keys, stations, weapons and other scene art.
-  Some Phaser-free helpers remain in `src/game/`.
 - **Input:** [`src/input/`](input/) holds keyboard and stick state (`state.ts`)
   and the controls that wire them to the scene and the interface (`controls.ts`).
 - **UI:** [`src/ui/`](ui/) holds the HTML interface drawn over the canvas: the
@@ -60,8 +59,8 @@ describes their implementation.
   of `src/game/` are Phaser-free, so they unit-test without a renderer.
 - **Layers:** [ESLint](../eslint.config.mjs) places every
   module of `src/` and `tools/` in a layer of the shared source-structure bands,
-  lowest first: lib and data, model, saving, art (`src/art/` and the Phaser-free
-  `src/game/` modules), layout and input state, platform (loading and PWA),
+  lowest first: lib and data, model, saving, art (`src/art/`), layout and input state,
+  platform (loading and PWA),
   ui, scene, entries, then support (build, tests, tools). Outside tests, imports point down only,
   including type-only imports. The repository lint reports runtime cycles, and
   erased type-only edges may close a cycle within a layer.

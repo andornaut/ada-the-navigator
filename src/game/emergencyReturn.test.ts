@@ -15,9 +15,9 @@ import { SAVE_RESTORE } from "../saving/index.ts";
 import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
 import type { JumpPlay } from "../ui/jumpOverlay.ts";
+import { storyCoversScene } from "../ui/story/index.ts";
 import { EmergencyReturn, returnedOnDepletion } from "./emergencyReturn.ts";
 import { sceneFit, viewShift } from "./playCamera.ts";
-import { storyCoversScene } from "./storyPresentation.ts";
 // Execute the actual scene frame loop against the real model without booting Phaser's renderer.
 const source = ts.createSourceFile(
   "scene.ts",

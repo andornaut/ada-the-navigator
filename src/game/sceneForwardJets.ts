@@ -1,12 +1,13 @@
 import { type GameObjects, Renderer, type Scene, type Textures } from "phaser";
 
-import type { JetDisplay, ShipJets } from "../art/index.ts";
 import {
   forwardFlightPlumes,
   forwardFlightPoint,
   type ForwardHeading,
   type ForwardPlume,
-} from "./forwardFlightJets.ts";
+  type JetDisplay,
+  type ShipJets,
+} from "../art/index.ts";
 
 // Fit the 42 px hull, both plumes and the exterior ink in one reusable target.
 const SIDE = 96;
