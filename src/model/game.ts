@@ -207,6 +207,7 @@ import { dockedJobRows, type JobRow } from "./game/jobBoard.ts";
 import { jobIndicator, jobMapTarget, type JobNavigationContext } from "./game/jobNavigation.ts";
 import { projectJobText, projectPlaceLabel } from "./game/jobText.ts";
 import {
+  projectInRangeQuestDetails,
   projectQuestEntries,
   projectQuestLines,
   projectTaskObjective,
@@ -2614,45 +2615,21 @@ export class GameModel {
   ): ContextQuestDetails | null {
     const progress = this.current;
     const task = this.state.tasks[flight.galaxy];
-    const context = {
-      galaxy: flight.galaxy,
-      knownIds: [...progress.known, ...progress.stations, ...progress.charted],
-      quests: this.quests,
-      storyTargets: [this.objectiveId(flight.galaxy), questItemDestination(progress)].filter(
-        (id): id is string => typeof id === "string",
-      ),
-      ...(task ? { task } : {}),
-    };
-    if (hintTarget !== undefined) {
-      const quests = questsForObject(context, hintTarget);
-      return quests.length ? { quests, targetId: hintTarget } : null;
-    }
-    const world = flightWorldContext(flight);
-    let closest: ContextQuestDetails | null = null;
-    let reach = this.content.tuning.talkRange;
-    const consider = (id: string, gap: number) => {
-      if (
-        !(gap <= reach) ||
-        (gap === reach && closest !== null) ||
-        !context.knownIds.includes(id) ||
-        (flight.galaxy === 4 && isNeedleCourseStart(id)) ||
-        this.protectedUsePlace(flight, id)
-      ) {
-        return;
-      }
-      const quests = questsForObject(context, id);
-      if (quests.length) {
-        closest = { quests, targetId: id };
-        reach = gap;
-      }
-    };
-    for (const object of flight.objects) {
-      consider(object.id, distance(flight.player, object));
-    }
-    for (const site of flightLandmarkSites(flight)) {
-      consider(site.id, worldDistance(world, flight.player, site));
-    }
-    return closest;
+    return projectInRangeQuestDetails(
+      {
+        galaxy: flight.galaxy,
+        knownIds: [...progress.known, ...progress.stations, ...progress.charted],
+        quests: this.quests,
+        storyTargets: [this.objectiveId(flight.galaxy), questItemDestination(progress)].filter(
+          (id): id is string => typeof id === "string",
+        ),
+        ...(task ? { task } : {}),
+        protectedUsePlace: (id) => this.protectedUsePlace(flight, id),
+        range: this.content.tuning.talkRange,
+      },
+      flight,
+      hintTarget,
+    );
   }
   /** The Use action's name, the disc's accessible name. */
   get contextLabel(): string | undefined {

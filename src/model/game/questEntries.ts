@@ -1,8 +1,10 @@
 import { ACTIVITIES, MINING_CONTRACT_DEPOSITS, SUPPLY_ITEMS } from "../../data/activities.ts";
 import { DESTINATIONS } from "../../data/destinations.ts";
 import { BUILT, GALAXY_NUMBERS } from "../../data/galaxies.ts";
+import { isNeedleCourseStart } from "../../data/needle.ts";
 import type { GalaxyNumber } from "../../data/types.ts";
-import { landmarkById, landmarkLabel } from "../landmarks.ts";
+import { flightWorldContext } from "../flightTopology.ts";
+import { flightLandmarkSites, landmarkById, landmarkLabel } from "../landmarks.ts";
 import {
   type QuestDetailContext,
   questDetails,
@@ -10,8 +12,14 @@ import {
   storyQuestId,
   taskQuestId,
 } from "../questDetails.ts";
+import {
+  type ContextQuestDetails,
+  type QuestObjectContext,
+  questsForObject,
+} from "../questObjectLinks.ts";
 import { fill } from "../shop.ts";
-import type { GameState } from "../types.ts";
+import type { FlightState, GameState } from "../types.ts";
+import { worldDistance } from "../worldContacts.ts";
 import { galaxyRoute } from "./campaignState.ts";
 
 export type QuestTextContext = Pick<
@@ -139,4 +147,45 @@ export function projectQuestEntries(
     });
     return lines.map((entry) => ({ ...entry, locations }));
   });
+}
+
+/** Resolve the explicit hint or the nearest eligible linked place without advancing its quest. */
+export function projectInRangeQuestDetails(
+  context: QuestObjectContext & {
+    readonly protectedUsePlace: (id: string) => boolean;
+    readonly range: number;
+  },
+  flight: FlightState,
+  hintTarget?: string,
+): ContextQuestDetails | null {
+  if (hintTarget !== undefined) {
+    const quests = questsForObject(context, hintTarget);
+    return quests.length ? { quests, targetId: hintTarget } : null;
+  }
+  const world = flightWorldContext(flight);
+  let closest: ContextQuestDetails | null = null;
+  let reach = context.range;
+  const consider = (id: string, gap: number) => {
+    if (
+      !(gap <= reach) ||
+      (gap === reach && closest !== null) ||
+      !context.knownIds.includes(id) ||
+      (flight.galaxy === 4 && isNeedleCourseStart(id)) ||
+      context.protectedUsePlace(id)
+    ) {
+      return;
+    }
+    const quests = questsForObject(context, id);
+    if (quests.length) {
+      closest = { quests, targetId: id };
+      reach = gap;
+    }
+  };
+  for (const object of flight.objects) {
+    consider(object.id, Math.hypot(flight.player.x - object.x, flight.player.y - object.y));
+  }
+  for (const site of flightLandmarkSites(flight)) {
+    consider(site.id, worldDistance(world, flight.player, site));
+  }
+  return closest;
 }
