@@ -37,6 +37,7 @@ const ENCAPSULATED_AREAS = [
   "src/ui/cheats/",
   "src/ui/conversation/",
   "src/ui/exchange/",
+  "src/ui/flightFeedback/",
   "src/ui/galaxy/",
   "src/ui/menu/",
   "src/ui/pause/",
