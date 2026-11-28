@@ -161,20 +161,20 @@ describe("world ammunition quantities", () => {
 
 describe("world ammunition odds", () => {
   it.each(["fighter", "swarm", "interceptor", "retaliator"] as const)(
-    "uses a strict 10 percent ammo boundary for the %s",
+    "uses a strict 15 percent ammo boundary for the %s",
     (archetype) => {
-      expect(ECONOMY.ammo.dropChance).toBe(0.1);
-      expect(rollAmmoDrop(ECONOMY, ["phaser"], archetype, () => 0.1 - Number.EPSILON)).toBe(true);
-      expect(rollAmmoDrop(ECONOMY, ["phaser"], archetype, () => 0.1)).toBe(false);
-      expect(rollAmmoDrop(ECONOMY, ["phaser"], archetype, () => 0.1 + Number.EPSILON)).toBe(false);
+      expect(ECONOMY.ammo.dropChance).toBe(0.15);
+      expect(rollAmmoDrop(ECONOMY, ["phaser"], archetype, () => 0.15 - Number.EPSILON)).toBe(true);
+      expect(rollAmmoDrop(ECONOMY, ["phaser"], archetype, () => 0.15)).toBe(false);
+      expect(rollAmmoDrop(ECONOMY, ["phaser"], archetype, () => 0.15 + Number.EPSILON)).toBe(false);
     },
   );
 
   it.each([
     ["small", 0.01],
-    ["medium", 0.02],
-    ["large", 0.04],
-    ["huge", 0.08],
+    ["medium", 0.03],
+    ["large", 0.06],
+    ["huge", 0.09],
   ] as const)("uses the strict %s asteroid boundary at %f", (size, chance) => {
     expect(ECONOMY.ammo.rockDropChance[size]).toBe(chance);
     expect(rollRockAmmoDrop(ECONOMY, ["phaser"], size, () => chance - Number.EPSILON)).toBe(true);
@@ -183,16 +183,15 @@ describe("world ammunition odds", () => {
   });
 
   it("preserves real ownership eligibility, heavy exclusions, weapon weights and upgrade odds", () => {
+    const unexpectedRoll = () => {
+      throw new Error("Ineligible payout consumed an ammo roll");
+    };
     for (const owned of [[], ["laser"]] as const) {
-      expect(rollAmmoDrop(ECONOMY, owned, "fighter", () => 0)).toBe(false);
-      expect(rollRockAmmoDrop(ECONOMY, owned, "huge", () => 0)).toBe(false);
+      expect(rollAmmoDrop(ECONOMY, owned, "fighter", unexpectedRoll)).toBe(false);
+      expect(rollRockAmmoDrop(ECONOMY, owned, "huge", unexpectedRoll)).toBe(false);
     }
     for (const archetype of ["frigate", "platform", "capital", "hostileStation"] as const) {
-      expect(
-        rollAmmoDrop(ECONOMY, ["phaser"], archetype, () => {
-          throw new Error(`Ineligible ${archetype} consumed an ammo roll`);
-        }),
-      ).toBe(false);
+      expect(rollAmmoDrop(ECONOMY, ["phaser"], archetype, unexpectedRoll)).toBe(false);
     }
     expect(ECONOMY.ammo.dropWeights).toEqual({
       heavyMissile: 9,

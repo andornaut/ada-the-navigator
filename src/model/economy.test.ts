@@ -812,16 +812,18 @@ describe("Stardust drops", () => {
         stardust: pickups(value),
       };
     };
-    const winner = ids.find((id) => ammoRoll(id) < 0.1)!;
-    const formerWinner = ids.find((id) => ammoRoll(id) >= 0.1 && ammoRoll(id) < 0.3)!;
+    const winner = ids.find((id) => ammoRoll(id) >= 0.1 && ammoRoll(id) < 0.15)!;
+    const tooHigh = ids.find((id) => ammoRoll(id) >= 0.15 && ammoRoll(id) < 0.3)!;
+    expect(winner).toBeDefined();
+    expect(tooHigh).toBeDefined();
     const owned = destroy(winner, ["multiLaser"]);
     const laserOnly = destroy(winner, []);
     expect(owned.ammo).toMatchObject([{ ammoPack: true, role: "drop" }]);
     expect(laserOnly.ammo).toEqual([]);
     expect(owned.stardust).toEqual(laserOnly.stardust);
-    const rejected = destroy(formerWinner, ["multiLaser"]);
+    const rejected = destroy(tooHigh, ["multiLaser"]);
     expect(rejected.ammo).toEqual([]);
-    expect(total(rejected.stardust)).toBe(enemyStardust({ id: formerWinner, seed }, "fighter"));
+    expect(total(rejected.stardust)).toBe(enemyStardust({ id: tooHigh, seed }, "fighter"));
   });
 
   it("breaks a destroyed enemy apart before it drops, instead of removing it at once", () => {
@@ -992,16 +994,16 @@ describe("Stardust drops", () => {
 
   it.each([
     ["rock", "small", 0, 0.01, 0.02],
-    ["rock", "medium", 0.01, 0.02, 0.04],
-    ["rock", "large", 0.02, 0.04, 0.08],
-    ["rock", "huge", 0.04, 0.08, 0.1],
+    ["rock", "medium", 0.02, 0.03, 0.04],
+    ["rock", "large", 0.04, 0.06, 0.08],
+    ["rock", "huge", 0.08, 0.09, 0.1],
   ] as const)(
     "uses the canonical %s %s shot-destruction cutoff and releases a single outcome",
     (kind, size, previousChance, chance, nextChance) => {
       const seed = 77;
       const shape = [...ASTEROID_SHAPES.values()].find((entry) => entry.size === size)!;
       for (const result of [true, false]) {
-        // Raw seed witnesses distinguish this size from its neighbours without calling the drop rule.
+        // Raw seed witnesses straddle the new cutoff and exercise each increase.
         const id = Array.from({ length: 2000 }, (_, index) => `exclusive:${index}`).find((id) => {
           const roll = dropRandom(seed, `ammo:${id}`)();
           return result

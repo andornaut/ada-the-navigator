@@ -53,7 +53,7 @@ export interface EconomyCatalog {
   /**
    * Ammunition for every upgrade weapon (Laser is unlimited). Shop packs, new weapons, found
    * duplicates, and world pickups each award their own quantities. Eligible destroyed small craft
-   * roll at `dropChance`, and asteroids other than ore field rocks at their size's
+   * roll at `dropChance`, and non-crystal asteroids at their size's
    * `rockDropChance`. Ada must own a weapon other than Laser. The pack's weapon is selected among
    * eligible owned weapons by `dropWeights` on collection, including an upgrade pickup that falls
    * back to ammo.
@@ -200,7 +200,7 @@ export const ECONOMY: EconomyCatalog = {
   ammo: {
     capacity: 9999,
     // Separate ammo roll for destroyed small craft.
-    dropChance: 0.1,
+    dropChance: 0.15,
     // Each weapon about three quarters as likely as the one before it in weapon order.
     dropWeights: { heavyMissile: 9, multiLaser: 16, phaser: 5, rapidMissile: 12, scattershot: 7 },
     duplicate: {
@@ -213,7 +213,7 @@ export const ECONOMY: EconomyCatalog = {
     grant: { heavyMissile: 120, multiLaser: 270, phaser: 120, rapidMissile: 780, scattershot: 180 },
     pack: SHOP_AMMO_PACK,
     packPrice: 25,
-    rockDropChance: { huge: 0.08, large: 0.04, medium: 0.02, small: 0.01 },
+    rockDropChance: { huge: 0.09, large: 0.06, medium: 0.03, small: 0.01 },
     worldPack: {
       heavyMissile: SHOP_AMMO_PACK.heavyMissile / 3,
       multiLaser: SHOP_AMMO_PACK.multiLaser / 3,

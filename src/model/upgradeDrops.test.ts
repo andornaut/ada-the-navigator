@@ -209,24 +209,24 @@ describe("upgrade drop selection", () => {
 describe("ammo pack drops", () => {
   const idle = { aim: { x: 0, y: 0 }, move: { x: 0, y: 0 }, use: false };
 
-  it("drops from a destroyed small craft at 10% while Ada owns a weapon other than Laser", () => {
+  it("drops from a destroyed small craft at 15% while Ada owns a weapon other than Laser", () => {
     const rolls = (owned: readonly Weapon[], archetype: "fighter" | "frigate") =>
       Array.from({ length: 20000 }, (_, index) =>
         rollAmmoDrop(ECONOMY, owned, archetype, dropRandom(9, `ammo:${index}`)),
       ).filter(Boolean).length / 20000;
-    expect(ECONOMY.ammo.dropChance).toBe(0.1);
-    expect(rolls(["scattershot"], "fighter")).toBeCloseTo(0.1, 2);
+    expect(ECONOMY.ammo.dropChance).toBe(0.15);
+    expect(rolls(["scattershot"], "fighter")).toBeCloseTo(0.15, 2);
     expect(rolls([], "fighter")).toBe(0);
     expect(rolls(["laser"], "fighter")).toBe(0);
     expect(rolls(["scattershot"], "frigate")).toBe(0);
   });
 
-  it("uses the seeded 8% huge rock odds while Ada owns an upgrade weapon", () => {
+  it("uses the seeded 9% huge rock odds while Ada owns an upgrade weapon", () => {
     const rolls = (owned: readonly Weapon[]) =>
       Array.from({ length: 100000 }, (_, index) =>
         rollRockAmmoDrop(ECONOMY, owned, "huge", dropRandom(9, `ammo:rock:${index}`)),
       ).filter(Boolean).length / 100000;
-    expect(Math.abs(rolls(["phaser"]) - 0.08)).toBeLessThan(0.0015);
+    expect(Math.abs(rolls(["phaser"]) - 0.09)).toBeLessThan(0.0015);
     expect(rolls([])).toBe(0);
     expect(rolls(["laser"])).toBe(0);
   });
