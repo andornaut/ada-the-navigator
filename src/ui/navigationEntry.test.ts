@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { menuActions } from "./menuCard.ts";
+import { menuActions } from "./menu/index.ts";
 import { type NavigationActivity, navigationEntry } from "./navigationEntry.ts";
 
 const active: NavigationActivity = {

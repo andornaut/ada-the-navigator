@@ -59,7 +59,7 @@ import {
 } from "../ui/layout/playView.ts";
 import { stickTargets, useDiscLayout, usePressed } from "../ui/layout/touchControls.ts";
 import { createViewScaleBridge, type PlayLayout, readViewUnit } from "../ui/layout/viewScale.ts";
-import { createMenuCard } from "../ui/menuCard.ts";
+import { createMenuCard } from "../ui/menu/index.ts";
 import { activateNavigation, createNavigationButton } from "../ui/navigationButton.ts";
 import {
   createPauseCards,

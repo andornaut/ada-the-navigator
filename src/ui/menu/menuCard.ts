@@ -1,12 +1,16 @@
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
-import { CARD_CONTENT, SCROLL } from "./layout/contentCard.ts";
-import { units } from "./layout/css.ts";
-import { SPACING, STACK_BUTTON_GAP } from "./layout/tokens.ts";
-import { readViewUnit, VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import { createAdaLayoutPorts } from "./layoutTree.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "../actionBinding.ts";
+import { CARD_CONTENT, SCROLL } from "../layout/contentCard.ts";
+import { units } from "../layout/css.ts";
+import { SPACING, STACK_BUTTON_GAP } from "../layout/tokens.ts";
+import { readViewUnit, VIEW_SCALE_EVENT } from "../layout/viewScale.ts";
+import { createAdaLayoutPorts } from "../layoutTree.ts";
+import { createCard } from "../modal.ts";
+import { createStandardCloseAction } from "../modalClose.ts";
+import { createModalLayer } from "../modalLayer.ts";
+import { retainModalUnderlay } from "../modalUnderlay.ts";
 import {
   type MenuAction,
   type MenuContext,
@@ -14,10 +18,6 @@ import {
   type MenuLayoutSchema,
   menuTree,
 } from "./menuTree.ts";
-import { createCard } from "./modal.ts";
-import { createStandardCloseAction } from "./modalClose.ts";
-import { createModalLayer } from "./modalLayer.ts";
-import { retainModalUnderlay } from "./modalUnderlay.ts";
 
 export { type MenuAction, menuActions, type MenuContext } from "./menuTree.ts";
 

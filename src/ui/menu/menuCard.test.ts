@@ -4,11 +4,11 @@ import { runInNewContext } from "node:vm";
 import ts from "typescript";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { registerAdaActionRoot } from "./actionRegistry.ts";
-import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
-import { units } from "./layout/css.ts";
-import { VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
-import { enterPressView, rootPressGuard } from "./pressScope.ts";
+import { registerAdaActionRoot } from "../actionRegistry.ts";
+import { bindAdaActionRoot } from "../holdActionsAdapter.ts";
+import { units } from "../layout/css.ts";
+import { VIEW_SCALE_EVENT } from "../layout/viewScale.ts";
+import { enterPressView, rootPressGuard } from "../pressScope.ts";
 
 const fixture = vi.hoisted(() => {
   class Node extends EventTarget {
@@ -204,8 +204,8 @@ const fixture = vi.hoisted(() => {
   const layer = { dispose: vi.fn(), open: vi.fn(() => vi.fn()) };
   return { Node, card, corruptFactory: false, layer, requests: [] as unknown[] };
 });
-vi.mock("./modal.ts", async (original) => ({
-  ...(await original<typeof import("./modal.ts")>()),
+vi.mock("../modal.ts", async (original) => ({
+  ...(await original<typeof import("../modal.ts")>()),
   createButton: (label: string, role = "secondary") =>
     Object.assign(new fixture.Node(), {
       className: role,
@@ -236,9 +236,9 @@ import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   resolveAdaHoldAction,
-} from "./actionBinding.ts";
+} from "../actionBinding.ts";
+import { actionOrder } from "../modal.ts";
 import { createMenuCard } from "./menuCard.ts";
-import { actionOrder } from "./modal.ts";
 
 const menus: ReturnType<typeof createMenuCard>[] = [];
 
@@ -654,7 +654,7 @@ it("invokes Back to title once and keeps Close as the primary dismissal", () => 
 it("forwards the actual controls callback and clears the old Menu return before title navigation", () => {
   const source = ts.createSourceFile(
     "controls.ts",
-    readFileSync(new URL("../input/controls.ts", import.meta.url), "utf8"),
+    readFileSync(new URL("../../input/controls.ts", import.meta.url), "utf8"),
     ts.ScriptTarget.Latest,
     true,
   );

@@ -1,7 +1,7 @@
 import { validateLayoutTree } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import { describe, expect, it } from "vitest";
 
-import { STACK_BUTTON_GAP } from "./layout/tokens.ts";
+import { STACK_BUTTON_GAP } from "../layout/tokens.ts";
 import { menuActions, menuTree } from "./menuTree.ts";
 
 const data = {
