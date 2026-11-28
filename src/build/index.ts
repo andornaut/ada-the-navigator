@@ -1,6 +1,7 @@
 // What vite.config.ts's plugins take from the repository's code, in one module so the kit's
 // gameViteConfig loads it through a single Vite module runner, which resolves @andornaut/game-kit
 // as the app does.
+export { authoredGeometryChunk } from "./authoredGeometry.ts";
 export { homePagePlugin, webManifestPlugin } from "./pages/homePage.ts";
 export { ICONS } from "./pages/icons.ts";
 export { sitePages } from "./pages/sitePages.ts";
