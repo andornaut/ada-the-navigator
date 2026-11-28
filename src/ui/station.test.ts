@@ -1426,10 +1426,7 @@ it("opens eligible Talk on the left and preserves the Wick page, history and rea
     "A traveler! Be careful. One of our guide beacons has gone dark.",
   );
   f.press(f.button("Next"));
-  expect(f.button("Previous")).toBeUndefined();
-  expect(f.button("Next")).toBeUndefined();
   f.press(f.button("What do beacons do?"));
-  expect(f.button("Previous")).toBeDefined();
   f.press(f.button("Next"));
   const completed = f.button("What do beacons do?");
   expect(completed.getAttribute("aria-label")).toBe("What do beacons do?, Topic completed");
@@ -1441,7 +1438,7 @@ it("opens eligible Talk on the left and preserves the Wick page, history and rea
     f.press(completed);
     f.press(talk);
     expect(f.button("What do beacons do?")).toBe(completed);
-    expect(f.button("Previous")).toBeUndefined();
+    expect(f.button("Previous")).toBeDefined();
     expect(completed.getAttribute("aria-label")).toBe("What do beacons do?, Topic completed");
     expect(f.doc.activeElement).toBe(talk);
     expect(choose).not.toHaveBeenCalled();

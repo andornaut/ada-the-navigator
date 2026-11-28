@@ -1459,10 +1459,6 @@ export class InteractionConversation {
     return this.choices.length > 0 && this.linearContinuation === undefined;
   }
 
-  get atChoicePage(): boolean {
-    return this.atChoice || this.topics.length > 0;
-  }
-
   get linearContinuation(): "continue" | undefined {
     return linearDialogueContinuation(this.choices);
   }
@@ -1501,27 +1497,6 @@ export class InteractionConversation {
       return this.page.thread.at(-1)?.topic.choices ?? [];
     }
     return [];
-  }
-
-  get topicReturn(): { label: string; run: () => void } | undefined {
-    const frame = this.frame;
-    if (frame?.page.kind !== "topics" || !frame.copy.topicGreetingReturn) {
-      return undefined;
-    }
-    const index = this.history.findLastIndex(
-      ({ page, panel }) => panel === frame.panel && page.kind === "main" && page.index === 0,
-    );
-    const greeting = this.history[index];
-    if (!greeting) {
-      return undefined;
-    }
-    return {
-      label: frame.copy.topicGreetingReturn,
-      run: this.onCurrentPage(() => {
-        this.history.length = index;
-        this.frame = { ...greeting };
-      }),
-    };
   }
 
   get topicExitLabel(): string | undefined {

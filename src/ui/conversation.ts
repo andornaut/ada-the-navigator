@@ -628,10 +628,8 @@ export function createInteractionCard(
       assertAdaActionMetadata(button);
       (choice ? choices : controls).push(button);
     };
-    const atChoicePage = state.atChoicePage;
     try {
-      const topicReturn = state.topicReturn;
-      if (state.hasPrevious && !atChoicePage) {
+      if (state.hasPrevious) {
         add(CONTENT.labels.previous ?? "", () => state.previous());
       }
       for (const topic of state.topics) {
@@ -642,9 +640,6 @@ export function createInteractionCard(
           false,
           state.completedTopic(topic.id) ? "completed" : undefined,
         );
-      }
-      if (topicReturn) {
-        add(topicReturn.label, topicReturn.run, true);
       }
       if (state.topicExitLabel) {
         add(state.topicExitLabel, state.topicExitAction(), true, true);
@@ -694,7 +689,7 @@ export function createInteractionCard(
       button.hidden = false;
     }
     card.card.toggleAttribute("data-topic-page", state.topicExitLabel !== undefined);
-    card.card.toggleAttribute("data-choice-page", atChoicePage);
+    card.card.toggleAttribute("data-choice-page", state.atChoice || state.topics.length > 0);
     const line = state.line;
     card.showLine(line?.speaker, line?.text ?? "");
     skip.hidden = !state.canSkip;

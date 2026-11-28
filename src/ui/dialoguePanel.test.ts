@@ -551,7 +551,7 @@ describe("shared Earth and space dialogue presentation", () => {
     expect(
       choices.children.slice(0, -1).every((node) => !node.className.includes("ada-primary")),
     ).toBe(true);
-    expect(navigation.children).toHaveLength(0);
+    expect(navigation.children.map((node) => node.textContent)).toEqual([CONTENT.labels.previous]);
     expect(choices.children.at(-1)?.textContent).toBe("Discuss the repairs");
     const skip = buttons().find((node) => node.textContent === CONTENT.labels.skip)!;
     expect(skip.className).toContain("ui-standard-button");
@@ -612,7 +612,7 @@ describe("shared Earth and space dialogue presentation", () => {
     expect(skip.hidden).toBe(true);
     interaction.dispose();
   });
-  it("uses a named Loom topic choice to return to the greeting without an outcome", () => {
+  it("uses Next to enter Loom's topics and Previous to restore the greeting without an outcome", () => {
     setup();
     const parent = connectedParent();
     fixtureActionRoot(parent);
@@ -644,9 +644,7 @@ describe("shared Earth and space dialogue presentation", () => {
     expect(button("How do pilots learn?")).toBeDefined();
     expect(button("Next")).toBeUndefined();
     expect(skip.hidden).toBe(true);
-    expect(button("Previous")).toBeUndefined();
-    expect(button("Ask more")).toBeUndefined();
-    button("Back to the greeting")!.click();
+    button("Previous")!.click();
     expect(paragraph()).toBe(greeting);
     expect(button("Previous")).toBeUndefined();
     expect(button("Who flies here?")).toBeUndefined();
@@ -661,72 +659,9 @@ describe("shared Earth and space dialogue presentation", () => {
       .find((node) => node.getAttribute("aria-label") === "Who flies here?, Topic completed");
     expect(completed).toBeDefined();
     expect(button("How do pilots learn?")).toBeDefined();
-    button("Back to the greeting")!.click();
-    expect(paragraph()).toBe(greeting);
-    expect(button("Previous")).toBeUndefined();
-    button("Next")!.click();
-    expect(
-      parent
-        .all()
-        .find((node) => node.getAttribute("aria-label") === "Who flies here?, Topic completed"),
-    ).toBeDefined();
     button("Ask about the disk")!.click();
     expect(paragraph()).toBe("I'm looking for a shining disk.");
     expect(choose).not.toHaveBeenCalled();
-    interaction.dispose();
-  });
-
-  it("keeps authored options alone on a non-Loom topic list and material fork with history", () => {
-    setup();
-    const parent = connectedParent();
-    fixtureActionRoot(parent);
-    const choose = vi.fn(() => {
-      interaction.show(1, {
-        choices: [
-          { id: "accept", label: "Accept" },
-          { id: "decline", label: "Decline" },
-        ],
-        context: "test-decision",
-        text: "Decision",
-        title: "Rivet",
-      });
-    });
-    const interaction = createInteractionCard(parent as unknown as HTMLElement, {
-      choose,
-      close: vi.fn(),
-      reducedMotion: () => false,
-      skip: vi.fn(),
-    });
-    const button = (label: string) =>
-      parent.all().find((node) => node.tag === "button" && node.textContent === label);
-    const paragraph = () =>
-      parent.all().find((node) => node.className === "ada-story-paragraph")!.textContent;
-    interaction.show(1, {
-      choices: [{ id: "continue", label: CONTENT.labels.continue! }],
-      context: "deliveryComplete",
-      text: "",
-      title: "Rivet",
-    });
-    button("Next")!.click();
-    expect(button("Previous")).toBeUndefined();
-    expect(button("Next")).toBeUndefined();
-    expect(button("Ask more")).toBeUndefined();
-    button("Need another delivery?")!.click();
-    expect(button("Previous")).toBeDefined();
-    button("Previous")!.click();
-    expect(button("Need another delivery?")).toBeDefined();
-    expect(button("Previous")).toBeUndefined();
-    button("Discuss the repairs")!.click();
-    expect(paragraph()).toBe("Now we can repair the growers' equipment.");
-    expect(button("Previous")).toBeDefined();
-    for (let i = 0; i < 3; i++) {
-      button("Next")!.click();
-    }
-    expect(button("Accept")).toBeDefined();
-    expect(button("Decline")).toBeDefined();
-    expect(button("Previous")).toBeUndefined();
-    expect(button("Next")).toBeUndefined();
-    expect(choose).toHaveBeenCalledExactlyOnceWith("continue");
     interaction.dispose();
   });
 

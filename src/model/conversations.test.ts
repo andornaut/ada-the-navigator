@@ -1446,34 +1446,14 @@ describe("Use conversation paging", () => {
       },
       panel,
     );
-    expect(run).toMatchObject({
-      atChoicePage: false,
-      canSkip: false,
-      hasPrevious: false,
-      nextAction: "page",
-    });
+    expect(run).toMatchObject({ canSkip: false, hasPrevious: false, nextAction: "page" });
     run.advance();
-    expect(run).toMatchObject({
-      atChoicePage: true,
-      canSkip: false,
-      hasPrevious: true,
-      nextAction: undefined,
-    });
+    expect(run).toMatchObject({ canSkip: false, hasPrevious: true, nextAction: undefined });
     expect(run.topics.map(({ label }) => label)).toEqual(["Question"]);
     run.topicAction("question")();
-    expect(run).toMatchObject({
-      atChoicePage: false,
-      canSkip: false,
-      hasPrevious: true,
-      nextAction: "page",
-    });
+    expect(run).toMatchObject({ canSkip: false, nextAction: "page" });
     run.advance();
-    expect(run).toMatchObject({
-      atChoicePage: true,
-      canSkip: false,
-      hasPrevious: true,
-      nextAction: undefined,
-    });
+    expect(run).toMatchObject({ canSkip: false, nextAction: undefined });
     expect(run.topics).toEqual([child]);
     run.topicAction("details")();
     expect(run.line?.text).toBe("Nested answer");
@@ -1672,7 +1652,7 @@ describe("Use conversation paging", () => {
     run.advance();
     const apply = vi.fn(() => run.show({ ...intro, lines: [intro.lines[0]!] }, fork));
     run.choose("continue", apply);
-    expect(run).toMatchObject({ atChoice: true, atChoicePage: true, hasPrevious: true });
+    expect(run.atChoice).toBe(true);
     run.previous();
     expect(run.line?.text).toBe("Last");
     expect(run.canSkip).toBe(false);

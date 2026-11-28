@@ -124,10 +124,9 @@ export function storyPageView(
   canGoBack: boolean,
   canSkip: boolean,
 ): StoryPageView {
-  const topicList = Boolean(page.questions?.length && page.showActionWithChoices);
   return {
     background: page.background,
-    canGoBack: canGoBack && !topicList,
+    canGoBack,
     canSkip: canSkip && showsStoryNext(page) && choices.length === 0,
     ...(page.heading ? { heading: page.heading } : {}),
     text: page.text,
@@ -146,7 +145,7 @@ export function storyPageView(
     ...(page.sleep ? { sleep: true } : {}),
     ...(page.holodisk ? { holodisk: true } : {}),
     next: page.showActionWithChoices === true || (!page.choices && choices.length === 0),
-    ...(topicList ? { topicList: true } : {}),
+    ...(page.questions?.length && page.showActionWithChoices ? { topicList: true } : {}),
   };
 }
 
