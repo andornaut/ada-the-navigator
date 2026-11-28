@@ -1,14 +1,7 @@
-import type { AsteroidSize } from "../../data/asteroidCatalog.ts";
-import {
-  ASTEROID_LOOT,
-  ASTEROID_RESOURCE_FLOOR,
-  CRYSTAL_MINIMUM_ORE,
-} from "../../data/asteroidLoot.ts";
 import { ECONOMY } from "../../data/economy.ts";
 import { WRECK_ID_PREFIX } from "../../data/enemyIdentity.ts";
 import { PHANTOM_FLAGSHIP, PHANTOM_TUNING } from "../../data/phantom.ts";
 import type { GameContent, Vec, Weapon } from "../../data/types.ts";
-import { type AsteroidLoot, rollAsteroidLoot } from "../asteroidLoot.ts";
 import { asteroidSize } from "../asteroids.ts";
 import {
   dropRandom,
@@ -20,7 +13,7 @@ import {
 } from "../drops.ts";
 import { orePickupSize, stardustPickupReach, stardustPickupSize } from "../pickupBody.ts";
 import { proceduralPoiById } from "../proceduralPois.ts";
-import { MOVING_ROCK_PREFIX } from "../rockRicochet.ts";
+import { rockDropId, rockLoot } from "../rockLoot.ts";
 import {
   type PickupObstacle,
   pickupRowGap,
@@ -29,36 +22,6 @@ import {
 } from "../stardustPlacement.ts";
 import type { FlightState, PickupRelease, SpaceObject } from "../types.ts";
 import { flightWorldContext, worldDistance } from "../world/index.ts";
-
-const rockDropId = (id: string): string =>
-  id.startsWith(MOVING_ROCK_PREFIX) ? id.slice(MOVING_ROCK_PREFIX.length) : id;
-
-function rockLoot(size: AsteroidSize, crystal: boolean, next: () => number): AsteroidLoot {
-  let { ore, stardust } = rollAsteroidLoot(ASTEROID_LOOT, size, next);
-  if (crystal) {
-    ore = Math.max(CRYSTAL_MINIMUM_ORE, ore);
-    const { minimum, weights } = ASTEROID_LOOT.totals[size];
-    const cap = minimum + weights.length - 1;
-    stardust = Math.min(stardust, cap - ore);
-  }
-  for (let deficit = ASTEROID_RESOURCE_FLOOR[size] - ore - stardust; deficit > 0; deficit--) {
-    if (next() < ASTEROID_LOOT.oreChance) {
-      ore++;
-    } else {
-      stardust++;
-    }
-  }
-  return { ore, stardust };
-}
-
-/** The rock's seeded ore content before any ammo replacement. */
-export function seededRockOre(seed: number, object: SpaceObject): number {
-  return rockLoot(
-    asteroidSize(object),
-    object.crystals !== undefined,
-    dropRandom(seed, rockDropId(object.id)),
-  ).ore;
-}
 
 /**
  * An ammo outcome replaces the destroyed asteroid's combined ore/Stardust payout. A crystal rock

@@ -16,9 +16,9 @@ import { ASTEROID_ART, type AsteroidArt } from "../data/asteroidCatalog.ts";
 import { rockFrame } from "../model/asteroids.ts";
 import { debrisPieceIndex } from "../model/debrisBody.ts";
 import { carriesStardust } from "../model/drops.ts";
-import { seededRockOre } from "../model/flight/destruction.ts";
 import { ORE_FIELD_ROLE } from "../model/oreFields.ts";
 import { orePickupFrameSize } from "../model/pickupBody.ts";
+import { seededRockOre } from "../model/rockLoot.ts";
 import { MOVING_ROCK_PREFIX } from "../model/rockRicochet.ts";
 import type { SpaceObject } from "../model/types.ts";
 

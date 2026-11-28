@@ -40,11 +40,12 @@ import {
   splitResourcePickup,
 } from "./drops.ts";
 import { createFlight, pickupTouched, stepFlight, wreckId } from "./flight.ts";
-import { dropFromRock, seededRockOre } from "./flight/destruction.ts";
+import { dropFromRock } from "./flight/destruction.ts";
 import { GameModel } from "./game.ts";
 import { nosePoint } from "./nose.ts";
 import { HUNT_GLINT, orePickupSize, pickupOutline, stardustPickupSize } from "./pickupBody.ts";
 import { playerWeaponCoverage } from "./playerWeaponCoverage.ts";
+import { seededRockOre } from "./rockLoot.ts";
 import { MOVING_ROCK_PREFIX } from "./rockRicochet.ts";
 import { shipBody } from "./shipBody.ts";
 import {
