@@ -76,6 +76,7 @@ export function vectorSheetSource(
     readonly svgSheetMember?: string;
     readonly width: number;
   },
+  viewBoxOrigin: { readonly x: number; readonly y: number } = { x: 0, y: 0 },
 ): string {
   const root = xml?.documentElement;
   if (root?.localName !== "svg" || root.namespaceURI !== SVG_NAMESPACE) {
@@ -106,8 +107,10 @@ export function vectorSheetSource(
     frame?.localName !== "svg" ||
     frame.namespaceURI !== SVG_NAMESPACE ||
     viewBox?.length !== 4 ||
-    viewBox[0] !== 0 ||
-    viewBox[1] !== 0 ||
+    !Number.isFinite(viewBoxOrigin.x) ||
+    !Number.isFinite(viewBoxOrigin.y) ||
+    viewBox[0] !== viewBoxOrigin.x ||
+    viewBox[1] !== viewBoxOrigin.y ||
     viewBox[2] !== width ||
     viewBox[3] !== height ||
     !sized

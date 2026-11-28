@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ABOARD_HOLODISK_FRAMES,
   galaxyLoadsAtOnce,
   galaxyManifestKey,
   galaxyManifestPaths,
@@ -107,6 +108,16 @@ describe("split art manifest", () => {
       portraitCrop: { height: 32, width: 96, x: 0, y: 33 },
     });
     expect(galaxyLoadsAtOnce(portrait)).toBe(false);
+  });
+
+  it("reserves packed Aboard holodisk members for Storybook without changing loose loading", () => {
+    const frames = CORE_MANIFEST.assets.filter(({ id }) => ABOARD_HOLODISK_FRAMES.has(id));
+    expect(frames).toHaveLength(4);
+    for (const { id, pivot } of frames) {
+      const loose = { id, pivot };
+      expect(galaxyLoadsAtOnce(loose)).toBe(true);
+      expect(galaxyLoadsAtOnce({ ...loose, svgSheet: true })).toBe(false);
+    }
   });
 
   it("keeps every id in exactly one manifest", () => {

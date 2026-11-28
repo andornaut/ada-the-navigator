@@ -1,8 +1,10 @@
-import type {
-  CanvasBox,
-  StoryBackgroundArt,
-  StoryOverlay,
-  StorySourceRect,
+import {
+  ABOARD_HOLODISK_FRAMES,
+  type CanvasBox,
+  type StoryBackgroundArt,
+  type StoryOverlay,
+  type StorySourceRect,
+  vectorSheetSource,
 } from "../../art/index.ts";
 import { type Background, BACKGROUND_ART } from "../../data/storybook.ts";
 import { STORY_BACKGROUND, type SubjectBand } from "../layout/storyPage.ts";
@@ -25,6 +27,7 @@ export interface ArtAsset {
   readonly id: string;
   readonly path: string;
   readonly sourceRect?: StorySourceRect;
+  readonly svgSheet?: true;
   /** An overlay's top-left on the background canvas, in logical px. */
   readonly at?: { readonly x: number; readonly y: number };
   /** A composite background's overlay entries, drawn over its path in order. */
@@ -459,7 +462,11 @@ export function readOvernight(assets: readonly ArtAsset[], data: unknown): Overn
  */
 export function readHolodisk(assets: readonly ArtAsset[], data: unknown): Holodisk | null {
   const record = (data as { holodisk?: unknown } | null)?.holodisk;
-  if (!record || typeof record !== "object") {
+  if (
+    !record ||
+    typeof record !== "object" ||
+    assets.some(({ id, svgSheet }) => svgSheet && ABOARD_HOLODISK_FRAMES.has(id))
+  ) {
     return null;
   }
   const value = record as Record<string, unknown>;
@@ -525,6 +532,85 @@ const fetchJson = async (url: string): Promise<unknown> => {
   return response.json();
 };
 
+// The shipped Aboard overlays use this authored SVG viewport origin, separately from story at.
+const ABOARD_HOLODISK_ORIGIN = { x: 379, y: 133 };
+
+let holodiskSheet: { readonly path: string; readonly xml: Promise<Document> } | undefined;
+
+async function fetchHolodiskSheet(path: string): Promise<Document> {
+  if (holodiskSheet?.path === path) {
+    return holodiskSheet.xml;
+  }
+  const xml = fetch(path).then(async (response) => {
+    if (!response.ok) {
+      throw new Error(`${path}: ${response.status}`);
+    }
+    return new DOMParser().parseFromString(await response.text(), "image/svg+xml");
+  });
+  holodiskSheet = { path, xml };
+  try {
+    return await xml;
+  } catch (error) {
+    if (holodiskSheet?.xml === xml) {
+      holodiskSheet = undefined;
+    }
+    throw error;
+  }
+}
+
+async function loadHolodisk(assets: readonly ArtAsset[], data: unknown): Promise<Holodisk | null> {
+  const frames = assets.filter(({ id }) => ABOARD_HOLODISK_FRAMES.has(id));
+  if (!frames.some(({ svgSheet }) => svgSheet)) {
+    return readHolodisk(assets, data);
+  }
+  const path = frames[0]!.path;
+  if (
+    frames.length !== ABOARD_HOLODISK_FRAMES.size ||
+    new Set(frames.map(({ id }) => id)).size !== ABOARD_HOLODISK_FRAMES.size ||
+    !/^\/art\/[\w/-]+\.svg$/u.test(path) ||
+    frames.some(
+      (frame) => frame.svgSheet !== true || frame.path !== path || frame.sourceRect !== undefined,
+    )
+  ) {
+    return null;
+  }
+  try {
+    const xml = await fetchHolodiskSheet(path);
+    const resolved = new Map(
+      frames.map((frame) => {
+        const { height, width } = frame;
+        if (
+          height === undefined ||
+          width === undefined ||
+          !Number.isFinite(height) ||
+          !Number.isFinite(width) ||
+          height <= 0 ||
+          width <= 0
+        ) {
+          throw new Error(`Invalid Aboard holodisk dimensions: ${frame.id}`);
+        }
+        const member = {
+          ...frame,
+          path: vectorSheetSource(
+            xml,
+            path,
+            { height, id: frame.id, width },
+            ABOARD_HOLODISK_ORIGIN,
+          ),
+        };
+        delete member.svgSheet;
+        return [frame.id, member] as const;
+      }),
+    );
+    return readHolodisk(
+      assets.map((asset) => resolved.get(asset.id) ?? asset),
+      data,
+    );
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Fetches the manifest and its story transition, overnight and holodisk files; no art, no
  * transitions, no overnight sequence or no holodisk moment past a failure.
@@ -548,7 +634,7 @@ export async function loadStoryArt(supplied?: StoryArtManifest): Promise<StoryAr
     backgrounds: storyBackgrounds(assets),
     bases: storyBases(assets),
     composites: storyComposites(assets),
-    holodisk: readHolodisk(assets, holodisk),
+    holodisk: await loadHolodisk(assets, holodisk),
     overnight: readOvernight(assets, overnight),
     subjects: storySubjects(assets),
     transitions: readStoryTransitions(assets, transition),

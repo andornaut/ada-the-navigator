@@ -77,14 +77,31 @@ const LINKS: readonly (keyof GalaxyLinks)[] = [
   "whirlpoolProjects",
 ];
 
+export const ABOARD_HOLODISK_FRAMES: ReadonlySet<string> = new Set([
+  "aboard-holodisk-0",
+  "aboard-holodisk-1",
+  "aboard-holodisk-2",
+  "aboard-holodisk-3",
+]);
+
 /**
  * Whether a galaxy manifest's asset loads with the galaxy's first flight: hull headings, props and
- * sheets do. Hardpoints and whale frames load on demand. DOM portraits load through their reader.
+ * sheets do. Hardpoints and whale frames load on demand. DOM portraits and packed Aboard
+ * holodisk frames load through their own readers.
  */
 export function galaxyLoadsAtOnce(
-  asset: EnemyFrame & { readonly kind?: unknown; readonly portraitCrop?: unknown },
+  asset: EnemyFrame & {
+    readonly kind?: unknown;
+    readonly portraitCrop?: unknown;
+    readonly svgSheet?: true;
+  },
 ): boolean {
-  return asset.portraitCrop === undefined && !enemyPartFrame(asset) && !whaleFrameAsset(asset);
+  return (
+    asset.portraitCrop === undefined &&
+    !(asset.svgSheet && ABOARD_HOLODISK_FRAMES.has(asset.id)) &&
+    !enemyPartFrame(asset) &&
+    !whaleFrameAsset(asset)
+  );
 }
 
 /** The loader's cache key for a galaxy's manifest. */
