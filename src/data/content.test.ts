@@ -28,8 +28,8 @@ describe("player text", () => {
       [4, 3, "Start at the Eye’s green flag and clear its ten rings."],
       [5, 3, "Follow Pip to the settlers’ station."],
       [5, 4, "Follow Pip to the outpost to pick up the beacon parts."],
-      [6, 4, "Destroy the flagship’s weapon hardpoints to disable it."],
-      [6, 5, "Use Salvage at the flagship to recover the last holodisk."],
+      [6, 4, "Force Archie’s flagship to surrender."],
+      [6, 5, "Receive the last holodisk from Archie."],
     ] as const) {
       expect(CONTENT.chapters[galaxy]!.objectives[step]).toBe(label);
     }
