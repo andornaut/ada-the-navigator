@@ -4,7 +4,7 @@ import { CONVERSATION_BOX } from "../data/layout.ts";
 import { visualNoticeTiming } from "../data/noticeTiming.ts";
 import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
 import { immutableScanOutcome, type ScanOutcome } from "../model/scanOutcomes.ts";
-import { CONVERSATION_STYLE } from "./conversation.ts";
+import { CONVERSATION_STYLE } from "./conversation/index.ts";
 import { fromHudEdge, units, VIEW_PROPERTIES } from "./layout/css.ts";
 import { SPACING } from "./layout/tokens.ts";
 import { VIEW_SCALE_EVENT } from "./layout/viewScale.ts";

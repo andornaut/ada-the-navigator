@@ -32,6 +32,7 @@ const ENCAPSULATED_AREAS = [
   "src/saving/",
   "src/ui/achievements/",
   "src/ui/cheats/",
+  "src/ui/conversation/",
   "src/ui/exchange/",
   "src/ui/galaxy/",
   "src/ui/menu/",

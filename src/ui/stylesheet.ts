@@ -6,7 +6,7 @@ import { ACHIEVEMENTS_STYLE } from "./achievements/index.ts";
 import { BOSS_HUD_STYLE } from "./bossHud.ts";
 import { COMPLETION_INDICATOR_STYLE } from "./completionIndicator.ts";
 import { CONTROL_HELP_STYLE } from "./controlHelp.ts";
-import { CONVERSATION_STYLE } from "./conversation.ts";
+import { CONVERSATION_STYLE } from "./conversation/index.ts";
 import { DISABLED_BANNER_STYLE } from "./disabledBanner.ts";
 import { GALAXY_MAP_STYLE } from "./galaxy/index.ts";
 import { ITEM_NOTICE_STYLE } from "./itemNotice.ts";

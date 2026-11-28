@@ -3,23 +3,23 @@ import { existsSync } from "node:fs";
 import { createRequiredLoading } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { CAST, castPortrait } from "../data/cast.ts";
-import { CONTENT } from "../data/content.ts";
-import * as actionBinding from "./actionBinding.ts";
-import { resolveAdaHoldAction } from "./actionBinding.ts";
-import { registerAdaActionRoot } from "./actionRegistry.ts";
-import { fixtureActionRoot } from "./actionRootFixture.ts";
-import { createConversationBox, createInteractionCard } from "./conversation.ts";
-import { createDialoguePanel, DIALOGUE_PANEL_STYLE } from "./dialoguePanel.ts";
-import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
-import { currentView, enterPressView, rootPressGuard } from "./pressScope.ts";
-import * as refusal from "./refusal.ts";
+import { CAST, castPortrait } from "../../data/cast.ts";
+import { CONTENT } from "../../data/content.ts";
+import * as actionBinding from "../actionBinding.ts";
+import { resolveAdaHoldAction } from "../actionBinding.ts";
+import { registerAdaActionRoot } from "../actionRegistry.ts";
+import { fixtureActionRoot } from "../actionRootFixture.ts";
+import { bindAdaActionRoot } from "../holdActionsAdapter.ts";
+import { currentView, enterPressView, rootPressGuard } from "../pressScope.ts";
+import * as refusal from "../refusal.ts";
 import {
   STORY_PORTRAITS,
   storyPortrait,
   storyPortraitFrame,
   storyTabColour,
-} from "./story/index.ts";
+} from "../story/index.ts";
+import { createConversationBox, createInteractionCard } from "./conversation.ts";
+import { createDialoguePanel, DIALOGUE_PANEL_STYLE } from "./dialoguePanel.ts";
 
 it("centers dialogue navigation in one row with a 16 logical pixel gap", () => {
   const row = DIALOGUE_PANEL_STYLE.match(/\.ada-dialogue-controls\{([^}]+)\}/u)?.[1];
@@ -371,7 +371,7 @@ describe("shared Earth and space dialogue presentation", () => {
       );
       expect(
         existsSync(
-          new URL(`../../public${STORY_PORTRAITS[portrait.speaker]!.url}`, import.meta.url),
+          new URL(`../../../public${STORY_PORTRAITS[portrait.speaker]!.url}`, import.meta.url),
         ),
       ).toBe(true);
       expect(storyTabColour(member.name)).toBe(member.tab);
@@ -396,9 +396,9 @@ describe("shared Earth and space dialogue presentation", () => {
       expect(portrait.speaker).toBe(key);
       expect(storyPortraitFrame(true, portrait, 0)).toBe(1);
       expect(STORY_PORTRAITS[key]?.url).toBe(`/art/portraits/${url}.png`);
-      expect(existsSync(new URL(`../../public${STORY_PORTRAITS[key]!.url}`, import.meta.url))).toBe(
-        true,
-      );
+      expect(
+        existsSync(new URL(`../../../public${STORY_PORTRAITS[key]!.url}`, import.meta.url)),
+      ).toBe(true);
     }
   });
 

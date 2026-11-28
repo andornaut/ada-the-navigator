@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { INTERACTION_STYLE } from "./conversation.ts";
+import { INTERACTION_STYLE } from "./conversation/conversation.ts";
 import { FOCUS_RING } from "./layout/controls.ts";
 import { units } from "./layout/css.ts";
 import { STATION_STYLE } from "./layout/stationStyle.ts";

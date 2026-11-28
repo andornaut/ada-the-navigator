@@ -2717,17 +2717,18 @@ it.each([
   );
   expect(result.map(({ kind }) => kind)).toEqual(open ? ["unbound-discrete"] : []);
 });
+const conversationPath = "src/ui/conversation/conversation.ts";
 const conversationScannerSources = [
   canonicalRegistry,
-  ...["conversation", "standardTextAction", "modalClose"].map((name) => ({
-    path: `src/ui/${name}.ts`,
-    text: readFileSync(new URL(`../ui/${name}.ts`, import.meta.url), "utf8"),
+  ...[conversationPath, "src/ui/standardTextAction.ts", "src/ui/modalClose.ts"].map((path) => ({
+    path,
+    text: readFileSync(new URL(`../../${path}`, import.meta.url), "utf8"),
   })),
 ];
 
 it("proves the live conversation box and Skip metadata through their actual bindings", () => {
   const { findings } = scanDiscreteActionProject(conversationScannerSources);
-  expect(findings.filter(({ path }) => path === "src/ui/conversation.ts")).toEqual([
+  expect(findings.filter(({ path }) => path === conversationPath)).toEqual([
     expect.objectContaining({
       classification: "suppressor",
       kind: "non-action",
@@ -2765,7 +2766,7 @@ it.each([
     "availability: publish(button) || button.hidden",
   ],
 ] as const)("keeps Conversation construction open for %s", (_case, original, replacement) => {
-  const path = "src/ui/conversation.ts";
+  const path = conversationPath;
   const mutated = conversationScannerSources.map((entry) =>
     entry.path === path ? { ...entry, text: entry.text.replace(original, replacement) } : entry,
   );

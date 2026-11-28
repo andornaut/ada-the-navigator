@@ -7,7 +7,7 @@ import { CONTENT } from "../../data/content.ts";
 import { ARCHIE_NAMED } from "../../data/conversations.ts";
 import { SCREEN } from "../../data/screen.ts";
 import { openingScene } from "../../model/storybook.ts";
-import { AWAITING_TAB, SPEAKING_FRAME_MS, TAB_COLOURS } from "../conversation.ts";
+import { AWAITING_TAB, SPEAKING_FRAME_MS, TAB_COLOURS } from "../dialoguePortraits.ts";
 import { TEXT_BUTTON } from "../layout/controls.ts";
 import { font, fromHudEdge, safeEdge, units } from "../layout/css.ts";
 import {

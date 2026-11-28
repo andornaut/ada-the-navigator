@@ -1,7 +1,7 @@
 import { CAPITAL_CAPTAINS } from "../data/capitalCaptains.ts";
 import { CAST, castFrames, type CastPortraitSheet, SPEAKER_CAST } from "../data/cast.ts";
 import type { Mood } from "../data/conversations.ts";
-import type { ConversationLineView } from "./conversation.ts";
+import type { ConversationLineView } from "./conversation/index.ts";
 import { COLOURS, units } from "./layout/index.ts";
 
 export const COMPACT_PORTRAITS = {

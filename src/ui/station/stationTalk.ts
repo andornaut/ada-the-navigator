@@ -8,8 +8,8 @@ import {
   interactionCopy,
 } from "../../model/conversations.ts";
 import type { DialogueState } from "../../model/types.ts";
+import type { createDialoguePanel } from "../conversation/index.ts";
 import { showDialogueChoiceStatus } from "../dialogueChoice.ts";
-import type { createDialoguePanel } from "../dialoguePanel.ts";
 import { invalidatePressScope } from "../pressScope.ts";
 import { createStandardTextAction } from "../standardTextAction.ts";
 

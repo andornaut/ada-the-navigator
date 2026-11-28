@@ -3,47 +3,47 @@ import { createButton } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { REFUSAL_ATTRIBUTES } from "@andornaut/game-kit/runtime/web/ui/dom/refusalCue";
 
-import { isCapitalCaptain } from "../data/capitalCaptains.ts";
-import { castPortrait, type CastPortraitSheet, SPEAKER_CAST } from "../data/cast.ts";
-import { CONTENT } from "../data/content.ts";
-import { CONTROL_WORDS } from "../data/controlWords.ts";
-import type { Mood, Speaker } from "../data/conversations.ts";
-import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
-import { SPACING } from "../data/layout.ts";
-import { NOTICE_TIMING } from "../data/noticeTiming.ts";
-import { SCREEN } from "../data/screen.ts";
+import { isCapitalCaptain } from "../../data/capitalCaptains.ts";
+import { castPortrait, type CastPortraitSheet, SPEAKER_CAST } from "../../data/cast.ts";
+import { CONTENT } from "../../data/content.ts";
+import { CONTROL_WORDS } from "../../data/controlWords.ts";
+import type { Mood, Speaker } from "../../data/conversations.ts";
+import { EMERGENCY_RETURN } from "../../data/emergencyReturn.ts";
+import { SPACING } from "../../data/layout.ts";
+import { NOTICE_TIMING } from "../../data/noticeTiming.ts";
+import { SCREEN } from "../../data/screen.ts";
 import {
   type InteractionContext,
   InteractionConversation,
   interactionCopy,
-} from "../model/conversations.ts";
+} from "../../model/conversations.ts";
 import {
   ADA_ACTION_HOLD_MS,
   assertAdaActionBindings,
   assertAdaActionMetadata,
   bindAdaAction,
   resolveAdaForegroundAction,
-} from "./actionBinding.ts";
-import { showDialogueChoiceStatus } from "./dialogueChoice.ts";
-import { createDialoguePanel, DIALOGUE_PANEL_STYLE } from "./dialoguePanel.ts";
+} from "../actionBinding.ts";
+import { showDialogueChoiceStatus } from "../dialogueChoice.ts";
 import {
   COMPACT_PORTRAITS,
   portraitBackground,
   portraitFrame,
   selectPortraitCrop,
   TAB_COLOURS,
-} from "./dialoguePortraits.ts";
-import { createStandardCloseAction } from "./modalClose.ts";
-import { createModalLayer } from "./modalLayer.ts";
+} from "../dialoguePortraits.ts";
+import { createStandardCloseAction } from "../modalClose.ts";
+import { createModalLayer } from "../modalLayer.ts";
+import { createDialoguePanel, DIALOGUE_PANEL_STYLE } from "./dialoguePanel.ts";
 export {
   AWAITING_TAB,
   COMPACT_PORTRAITS,
   portraitFrame,
   SPEAKING_FRAME_MS,
   TAB_COLOURS,
-} from "./dialoguePortraits.ts";
-import { controlHelpText, createControlHelp } from "./controlHelp.ts";
-import { readViewUnit } from "./layout/dom.ts";
+} from "../dialoguePortraits.ts";
+import { controlHelpText, createControlHelp } from "../controlHelp.ts";
+import { readViewUnit } from "../layout/dom.ts";
 import {
   CARD_CLOSE,
   CONVERSATION_BOX,
@@ -57,12 +57,12 @@ import {
   units,
   VIEW_HOST_ID,
   VIEW_PROPERTIES,
-} from "./layout/index.ts";
-import { TEXT_TOKENS } from "./modal.ts";
-import { CONVERSATION_SLOT, FLIGHT_PANEL_BACKGROUND } from "./notice.ts";
-import { invalidatePressScope } from "./pressScope.ts";
-import { refuse } from "./refusal.ts";
-import { createStandardTextAction } from "./standardTextAction.ts";
+} from "../layout/index.ts";
+import { TEXT_TOKENS } from "../modal.ts";
+import { CONVERSATION_SLOT, FLIGHT_PANEL_BACKGROUND } from "../notice.ts";
+import { invalidatePressScope } from "../pressScope.ts";
+import { refuse } from "../refusal.ts";
+import { createStandardTextAction } from "../standardTextAction.ts";
 
 // The in-flight conversation box (layout/conversationBox.ts): one line at a time with the
 // speaker's name tab and portrait, over the play view and under the HUD controls and cards. The
@@ -735,7 +735,10 @@ export function createInteractionCard(
       modal.remove();
     },
     isOpen: () => !modal.hidden,
-    show(nextContext: InteractionContext, panel: import("../model/types.ts").DialogueState | null) {
+    show(
+      nextContext: InteractionContext,
+      panel: import("../../model/types.ts").DialogueState | null,
+    ) {
       if (disposed) {
         return;
       }

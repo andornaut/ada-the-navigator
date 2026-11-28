@@ -6,19 +6,30 @@ import {
   CAPITAL_CAPTAINS,
   type CapitalCaptain,
   isCapitalCaptain,
-} from "../data/capitalCaptains.ts";
-import { CAST, castPortrait, SPEAKER_CAST } from "../data/cast.ts";
-import { SPEAKERS } from "../data/conversations.ts";
-import { EMERGENCY_RETURN } from "../data/emergencyReturn.ts";
-import { GALAXY_ID } from "../data/galaxies.ts";
-import { SPACING, TEXT_BUTTON } from "../data/layout.ts";
-import type { GalaxyNumber } from "../data/types.ts";
-import { GALAXY_MANIFESTS } from "../testing/publicArt.ts";
+} from "../../data/capitalCaptains.ts";
+import { CAST, castPortrait, SPEAKER_CAST } from "../../data/cast.ts";
+import { SPEAKERS } from "../../data/conversations.ts";
+import { EMERGENCY_RETURN } from "../../data/emergencyReturn.ts";
+import { GALAXY_ID } from "../../data/galaxies.ts";
+import { SPACING, TEXT_BUTTON } from "../../data/layout.ts";
+import type { GalaxyNumber } from "../../data/types.ts";
+import { GALAXY_MANIFESTS } from "../../testing/publicArt.ts";
 import {
   assertAdaActionBindings,
   assertAdaActionMetadata,
   resolveAdaHoldAction,
-} from "./actionBinding.ts";
+} from "../actionBinding.ts";
+import { bindAdaActionRoot } from "../holdActionsAdapter.ts";
+import { units, VIEW_HOST_ID } from "../layout/css.ts";
+import {
+  hudRect,
+  logicalView,
+  NO_INSETS,
+  STORY_PANEL_TOP,
+  STORY_SKIP,
+} from "../layout/playView.ts";
+import { BOX_OCCUPANT, boxOccupant, NOTICE_STYLE } from "../notice.ts";
+import { rootPressGuard } from "../pressScope.ts";
 import {
   COMPACT_PORTRAITS,
   CONVERSATION_STYLE,
@@ -29,11 +40,6 @@ import {
   SPEAKING_FRAME_MS,
   TAB_COLOURS,
 } from "./conversation.ts";
-import { bindAdaActionRoot } from "./holdActionsAdapter.ts";
-import { units, VIEW_HOST_ID } from "./layout/css.ts";
-import { hudRect, logicalView, NO_INSETS, STORY_PANEL_TOP, STORY_SKIP } from "./layout/playView.ts";
-import { BOX_OCCUPANT, boxOccupant, NOTICE_STYLE } from "./notice.ts";
-import { rootPressGuard } from "./pressScope.ts";
 
 // The box's rules, by selector, from its stylesheet.
 function rules(css: string): Map<string, string> {
@@ -129,7 +135,7 @@ describe("conversation box style", () => {
   });
 
   it("fills each drawn speaker's tab from Art's table, Astra's teal among them", () => {
-    const table = readFileSync(new URL("../../art/controls.md", import.meta.url), "utf8");
+    const table = readFileSync(new URL("../../../art/controls.md", import.meta.url), "utf8");
     const fill = (token: string) =>
       new RegExp(`^\\| ${token} tab +\\| \`(#[0-9a-f]{6})\``, "mu").exec(table)?.[1];
     expect(TAB_COLOURS.astra).toBe("#8fe0f2");
@@ -202,7 +208,7 @@ describe("conversation box style", () => {
   });
 
   it("tabs each cast speaker in its own colour from Art's table", () => {
-    const controls = readFileSync(new URL("../../art/controls.md", import.meta.url), "utf8");
+    const controls = readFileSync(new URL("../../../art/controls.md", import.meta.url), "utf8");
     for (const [speaker, key] of Object.entries(SPEAKER_CAST)) {
       const { name, tab } = CAST[key];
       const label = name === "Blurbs" ? "Blurb settler" : name;
@@ -214,7 +220,7 @@ describe("conversation box style", () => {
 });
 
 const MANIFEST = JSON.parse(
-  readFileSync(new URL("../../public/art/manifest.json", import.meta.url), "utf8"),
+  readFileSync(new URL("../../../public/art/manifest.json", import.meta.url), "utf8"),
 ) as {
   assets: {
     frameWidth?: number;

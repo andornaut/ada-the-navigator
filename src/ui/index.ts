@@ -4,7 +4,7 @@ export {
   type ConversationBox,
   createConversationBox,
   createInteractionCard,
-} from "./conversation.ts";
+} from "./conversation/index.ts";
 export { createBannerLayer, type PlacedBanner } from "./disabledBanner.ts";
 export { EmergencyReturn, returnedOnDepletion } from "./emergencyReturn.ts";
 export { createFpsCounter } from "./fpsCounter.ts";

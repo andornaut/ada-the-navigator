@@ -16,7 +16,7 @@ import {
   assertAdaActionMetadata,
   bindAdaAction,
 } from "../actionBinding.ts";
-import { createDialoguePanel, type DialogueSpeaker } from "../dialoguePanel.ts";
+import { createDialoguePanel, type DialogueSpeaker } from "../conversation/index.ts";
 import { createExchangeView, type ExchangePort } from "../exchange/index.ts";
 import {
   type ItemDetail,

@@ -160,12 +160,21 @@ describe("layers", () => {
       ].join("\n"),
     );
     add("src/ui/quests/questsScreen.ts", 'import { questsBodyTree } from "./questsBodyTree.ts";');
+    add(
+      "src/ui/station/station.ts",
+      [
+        'import { createDialoguePanel } from "../conversation/index.ts";',
+        'import type { DialogueSpeaker } from "../conversation/dialoguePanel.ts";',
+      ].join("\n"),
+    );
     add("src/game/scene.ts", 'const art = import("../art/shipJets.ts");');
     add("src/ui/modal.test.ts", 'import { paint } from "./ship/shipCard.ts";');
 
     expect(layerFindings(graph)).toEqual([
       "src/ui/pause/pauseCard.ts imports src/ui/quests/questsBodyTree.ts directly. Use src/ui/quests/index.ts",
       "src/ui/pause/pauseCard.ts imports src/ui/ship/shipCard.ts directly. Use src/ui/ship/index.ts",
+      "src/ui/station/station.ts imports src/ui/conversation/dialoguePanel.ts directly. " +
+        "Use src/ui/conversation/index.ts",
       "src/game/scene.ts imports src/art/shipJets.ts directly. Use src/art/index.ts",
     ]);
   });
