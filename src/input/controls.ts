@@ -61,13 +61,13 @@ import { stickTargets, useDiscLayout, usePressed } from "../ui/layout/touchContr
 import { createViewScaleBridge, type PlayLayout, readViewUnit } from "../ui/layout/viewScale.ts";
 import { createMenuCard } from "../ui/menuCard.ts";
 import { activateNavigation, createNavigationButton } from "../ui/navigationButton.ts";
-import { createHudNavigationButton } from "../ui/pauseButton.ts";
 import {
   createPauseCards,
   type PauseLabels,
   type PauseOptions,
   type PauseState,
-} from "../ui/pauseCard.ts";
+} from "../ui/pause/index.ts";
+import { createHudNavigationButton } from "../ui/pauseButton.ts";
 import {
   currentView,
   inCurrentView,

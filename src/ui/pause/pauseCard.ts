@@ -2,30 +2,29 @@ import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayo
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { CONTENT } from "../data/content.ts";
-import { EQUIPMENT_DESCRIPTIONS } from "../data/equipmentDetails.ts";
-import { RESOURCE_DESCRIPTIONS } from "../data/resourceDescriptions.ts";
-import type { GalaxyNumber } from "../data/types.ts";
-import { weaponDetailLines } from "../data/weaponDetails.ts";
-import type { LocalMap, MapPlace } from "../model/map.ts";
-import type { QuestEntry } from "../model/questDetails.ts";
-import type { ContextQuestDetails } from "../model/questObjectLinks.ts";
-import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
-import { compactLevelName } from "./compactLevelName.ts";
-import { SCROLL } from "./layout/contentCard.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
-import { createMapScreen, type MapField, type MapScreenLabels } from "./map/index.ts";
-import { createCard } from "./modal.ts";
-import { createStandardCloseAction } from "./modalClose.ts";
-import { createModalLayer } from "./modalLayer.ts";
-import { retainModalUnderlay } from "./modalUnderlay.ts";
-import { type PauseAction, pauseActions, type PausePlace } from "./pause.ts";
-import { type PauseLayoutSchema, pauseTree, type PauseTreeAction } from "./pauseTree.ts";
-import type { QuestFlightLogEntry } from "./questsBodyTree.ts";
-import { createQuestsScreen, type QuestOrigin } from "./questsScreen.ts";
-import { refuse } from "./refusal.ts";
-import { createResourceCard } from "./resourceCard.ts";
-import { shieldDetails } from "./shieldDetails.ts";
+import { CONTENT } from "../../data/content.ts";
+import { EQUIPMENT_DESCRIPTIONS } from "../../data/equipmentDetails.ts";
+import { RESOURCE_DESCRIPTIONS } from "../../data/resourceDescriptions.ts";
+import type { GalaxyNumber } from "../../data/types.ts";
+import { weaponDetailLines } from "../../data/weaponDetails.ts";
+import type { LocalMap, MapPlace } from "../../model/map.ts";
+import type { QuestEntry } from "../../model/questDetails.ts";
+import type { ContextQuestDetails } from "../../model/questObjectLinks.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "../actionBinding.ts";
+import { compactLevelName } from "../compactLevelName.ts";
+import { SCROLL } from "../layout/contentCard.ts";
+import { readViewUnit } from "../layout/viewScale.ts";
+import { createMapScreen, type MapField, type MapScreenLabels } from "../map/index.ts";
+import { createCard } from "../modal.ts";
+import { createStandardCloseAction } from "../modalClose.ts";
+import { createModalLayer } from "../modalLayer.ts";
+import { retainModalUnderlay } from "../modalUnderlay.ts";
+import { type PauseAction, pauseActions, type PausePlace } from "../pause.ts";
+import type { QuestFlightLogEntry } from "../questsBodyTree.ts";
+import { createQuestsScreen, type QuestOrigin } from "../questsScreen.ts";
+import { refuse } from "../refusal.ts";
+import { createResourceCard } from "../resourceCard.ts";
+import { shieldDetails } from "../shieldDetails.ts";
 import {
   disposeShipSections,
   renderShipSections,
@@ -33,10 +32,11 @@ import {
   type ShipRow,
   shipSections,
   type ShipView,
-} from "./shipCard.ts";
-import { createShipPaintCard, type ShipPaintOptions } from "./shipPaintCard.ts";
-import { createStandardTextAction } from "./standardTextAction.ts";
-import { createWeaponDetailCard } from "./weaponDetailCard.ts";
+} from "../shipCard.ts";
+import { createShipPaintCard, type ShipPaintOptions } from "../shipPaintCard.ts";
+import { createStandardTextAction } from "../standardTextAction.ts";
+import { createWeaponDetailCard } from "../weaponDetailCard.ts";
+import { type PauseLayoutSchema, pauseTree, type PauseTreeAction } from "./pauseTree.ts";
 
 export interface PauseLabels {
   readonly achievements: string;

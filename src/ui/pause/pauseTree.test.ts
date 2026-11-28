@@ -1,8 +1,8 @@
 import { validateLayoutTree } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import { describe, expect, it } from "vitest";
 
-import { BUTTON_GAP, STACK_BUTTON_GAP } from "./layout/tokens.ts";
-import { pauseActions } from "./pause.ts";
+import { BUTTON_GAP, STACK_BUTTON_GAP } from "../layout/tokens.ts";
+import { pauseActions } from "../pause.ts";
 import { pauseTree } from "./pauseTree.ts";
 
 describe("production Pause configuration", () => {

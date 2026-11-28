@@ -1,19 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { CONTENT } from "../data/content.ts";
-import { ControlState } from "../input/state.ts";
-import type { LocalMap, MapPlace } from "../model/map.ts";
-import * as actionBinding from "./actionBinding.ts";
-import { fixtureActionRoot } from "./actionRootFixture.ts";
-import * as mapUI from "./map/index.ts";
-import { mapScreenLabels } from "./map/index.ts";
-import type { MapScreenState } from "./map/mapScreen.ts";
-import * as pauseActions from "./pause.ts";
+import { CONTENT } from "../../data/content.ts";
+import { ControlState } from "../../input/state.ts";
+import type { LocalMap, MapPlace } from "../../model/map.ts";
+import * as actionBinding from "../actionBinding.ts";
+import { fixtureActionRoot } from "../actionRootFixture.ts";
+import * as mapUI from "../map/index.ts";
+import { mapScreenLabels } from "../map/index.ts";
+import type { MapScreenState } from "../map/mapScreen.ts";
+import * as pauseActions from "../pause.ts";
+import { inCurrentView } from "../pressScope.ts";
+import * as refusal from "../refusal.ts";
+import type { ShipView } from "../shipCard.ts";
+import { createShipPaintCard, type ShipPaintOptions } from "../shipPaintCard.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "./pauseCard.ts";
-import { inCurrentView } from "./pressScope.ts";
-import * as refusal from "./refusal.ts";
-import type { ShipView } from "./shipCard.ts";
-import { createShipPaintCard, type ShipPaintOptions } from "./shipPaintCard.ts";
 
 // Every focus() call, latest last, with the options of the latest.
 const focusLog: FakeElement[] = [];

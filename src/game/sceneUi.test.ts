@@ -29,7 +29,7 @@ import { createCoveredPaint } from "../ui/modalScenePaint.ts";
 import { navigationEntry } from "../ui/navigationEntry.ts";
 import { BOX_OCCUPANT, boxOccupant } from "../ui/notice.ts";
 import { galaxiesAvailable } from "../ui/pause.ts";
-import type { PauseState } from "../ui/pauseCard.ts";
+import type { PauseState } from "../ui/pause/index.ts";
 import { ShieldOreSpendCounter, type StatusView } from "../ui/statusPill.ts";
 
 // Execute production UI wiring against the real model without loading Phaser's DOM.
