@@ -6,8 +6,11 @@ import { SPAWNER_POLICIES, spawnerStage } from "../data/spawnerCatalog.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { createEnemy } from "./ai/index.ts";
 import {
+  worldEncounterPopulationRefusal,
   worldEngagementAdmissions,
   worldFitsEncounter,
+  worldFitsHostileStation,
+  worldHostileStationPopulationRefusal,
   worldLocalCap,
 } from "./spawn/encounters/index.ts";
 import type { SpaceObject, Vec } from "./types.ts";
@@ -77,6 +80,41 @@ it("admits the complete capital group within its own allowance, retaining the on
     ),
   ).toBe(false);
   expect(plan.escorts.count).toBe(6);
+});
+
+it("reports the first population refusal in encounter and hostile station admission order", () => {
+  const plan = {
+    archetype: "capital",
+    count: 1,
+    escorts: { archetype: "fighter", count: 6 },
+  } as const;
+  const narrow = { ...stage, maxNearbyArchetypes: 1 };
+  const capital = ship("occupied-capital", "capital");
+  const refusal = (constraints: typeof stage, objects: readonly SpaceObject[]) =>
+    worldEncounterPopulationRefusal(
+      {},
+      policy,
+      constraints,
+      ROUTE_POSITION[6],
+      objects,
+      point,
+      plan,
+    );
+  expect(refusal(stage, [])).toBeUndefined();
+  expect(refusal(narrow, [capital, ship("occupied-fighter")])).toBe("local-cap");
+  expect(refusal(narrow, [capital])).toBe("archetype-cap");
+  expect(refusal(stage, [capital])).toBe("capital-cap");
+
+  const station = { defenders: 8, id: "hostile-station", reach: 10 };
+  const registered = { hostileStationIds: new Set([station.id]) };
+  expect(worldHostileStationPopulationRefusal({}, policy, narrow, [], point, station)).toBe(
+    "unregistered-hostile-station",
+  );
+  expect(worldHostileStationPopulationRefusal(registered, policy, narrow, [], point, station)).toBe(
+    "local-cap",
+  );
+  const emptyStation = { ...station, defenders: 0 };
+  expect(worldFitsHostileStation(registered, policy, narrow, [], point, emptyStation)).toBe(true);
 });
 
 it("shares spawn and engagement budgets around capitals and explicit hostile stations", () => {

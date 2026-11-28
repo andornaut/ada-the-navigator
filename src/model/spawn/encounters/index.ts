@@ -129,7 +129,34 @@ export function worldFitsEncounter(
   plan: EncounterPlan,
   actualReach = 0,
 ): boolean {
-  return fitsPopulation(context, policy, stage, objects, centre, {
+  return (
+    worldEncounterPopulationRefusal(
+      context,
+      policy,
+      stage,
+      position,
+      objects,
+      centre,
+      plan,
+      actualReach,
+    ) === undefined
+  );
+}
+
+export type PopulationRefusal = "local-cap" | "archetype-cap" | "capital-cap";
+
+/** The first failed population limit for the whole formation, if any. */
+export function worldEncounterPopulationRefusal(
+  context: SpawnerContext,
+  policy: SpawnerPolicy,
+  stage: SpawnerStage,
+  position: RoutePosition,
+  objects: readonly SpaceObject[],
+  centre: Vec,
+  plan: EncounterPlan,
+  actualReach = 0,
+): PopulationRefusal | undefined {
+  return populationRefusal(context, policy, stage, objects, centre, {
     archetypes: [plan.archetype, ...(plan.escorts?.count ? [plan.escorts.archetype] : [])],
     capitals:
       (plan.archetype === "capital" ? plan.count : 0) +
@@ -148,14 +175,14 @@ interface PopulationFootprint {
   readonly reach: number;
 }
 
-function fitsPopulation(
+function populationRefusal(
   context: SpawnerContext,
   policy: SpawnerPolicy,
   stage: SpawnerStage,
   objects: readonly SpaceObject[],
   centre: Vec,
   footprint: PopulationFootprint,
-): boolean {
+): PopulationRefusal | undefined {
   const nearby = neighbours(context, policy, footprint.reach, centre, liveOccupants(objects));
   const types = new Set<EnemyActorKind>(
     nearby.map((object) => object.enemy?.archetype ?? "fighter"),
@@ -163,20 +190,23 @@ function fitsPopulation(
   footprint.archetypes.forEach((kind) => types.add(kind));
   const capitals =
     nearby.filter((object) => object.enemy?.archetype === "capital").length + footprint.capitals;
-  return (
-    nearby.length + footprint.count <=
-      worldLocalCap(
-        context,
-        policy,
-        stage,
-        footprint.reach,
-        centre,
-        footprint.includesHostileAnchor,
-        objects,
-      ) &&
-    types.size <= stage.maxNearbyArchetypes &&
-    capitals <= policy.maxNearbyCapitals
+  const count = nearby.length + footprint.count;
+  const localCap = worldLocalCap(
+    context,
+    policy,
+    stage,
+    footprint.reach,
+    centre,
+    footprint.includesHostileAnchor,
+    objects,
   );
+  if (!(count <= localCap)) {
+    return "local-cap";
+  }
+  if (!(types.size <= stage.maxNearbyArchetypes)) {
+    return "archetype-cap";
+  }
+  return capitals <= policy.maxNearbyCapitals ? undefined : "capital-cap";
 }
 
 /** Explicit station plans use the same local population accounting as other formations. */
@@ -188,10 +218,25 @@ export function worldFitsHostileStation(
   centre: Vec,
   plan: { readonly id: string; readonly defenders: number; readonly reach: number },
 ): boolean {
+  return (
+    worldHostileStationPopulationRefusal(context, policy, stage, objects, centre, plan) ===
+    undefined
+  );
+}
+
+/** Registration precedes the same population limits used by ordinary encounters. */
+export function worldHostileStationPopulationRefusal(
+  context: SpawnerContext,
+  policy: SpawnerPolicy,
+  stage: SpawnerStage,
+  objects: readonly SpaceObject[],
+  centre: Vec,
+  plan: Parameters<typeof worldFitsHostileStation>[5],
+): PopulationRefusal | "unregistered-hostile-station" | undefined {
   if (context.hostileStationIds?.has(plan.id) !== true) {
-    return false;
+    return "unregistered-hostile-station";
   }
-  return fitsPopulation(context, policy, stage, objects, centre, {
+  return populationRefusal(context, policy, stage, objects, centre, {
     archetypes: ["hostileStation", ...(plan.defenders > 0 ? ["swarm" as const] : [])],
     capitals: 0,
     count: 1 + plan.defenders,
