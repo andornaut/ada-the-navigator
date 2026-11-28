@@ -47,7 +47,7 @@ import { SPAWNER_POLICIES } from "../data/spawnerCatalog.ts";
 import { CARTWHEEL_STORY_SHIPS } from "../data/storyShips.ts";
 import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import type { GalaxyNumber, GameContent } from "../data/types.ts";
-import { BEAM, weaponAt, type WeaponDefinition } from "../data/weaponCatalog.ts";
+import { BEAM, weaponAt } from "../data/weaponCatalog.ts";
 import { minerNeedsPick, outlineEdge, type TracedEdge } from "./ai/edgeTrace.ts";
 import type { StationGuardAnchor } from "./ai/stationGuardPatrol.ts";
 import { worldNavigationQuery } from "./ai/worldNavigation.ts";
@@ -107,7 +107,7 @@ import { selectCartwheelClaimField } from "./cartwheelClaimField.ts";
 import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
 import { pickupTouched, touchesAda } from "./flight/adaContactQueries.ts";
-import { beamPoint, outlineBeamStrike, rayCircle, sceneryEntry } from "./flight/beamContact.ts";
+import { sceneryEntry } from "./flight/beamContact.ts";
 import { crossbowAttack, crossbowFrame } from "./flight/crossbow.ts";
 import { inBattle, inDanger } from "./flight/danger.ts";
 import { ensureDebrisRivers, moveDebris } from "./flight/debrisMotion.ts";
@@ -136,7 +136,6 @@ import {
   blastCover,
   enemyTouched,
   hitPart,
-  liveParts,
   partReach,
   screenGap,
 } from "./flight/enemyHitGeometry.ts";
@@ -145,12 +144,7 @@ import {
   ensureHuntingPacks as ensureFlightHuntingPacks,
   placeHuntingPack as placeFlightHuntingPack,
 } from "./flight/huntingPacks.ts";
-import {
-  ageFlashes,
-  recordBeamFlash,
-  recordBlastFlash,
-  recordProjectileImpact,
-} from "./flight/impactFeedback.ts";
+import { ageFlashes, recordBlastFlash, recordProjectileImpact } from "./flight/impactFeedback.ts";
 import {
   arrivalGraceActive as adaProtected,
   beginArrivalGrace,
@@ -165,6 +159,7 @@ import {
   movePilot,
   reflectPilotHeading,
 } from "./flight/pilotMovement.ts";
+import { fireBeam } from "./flight/playerBeam.ts";
 import {
   projectileContact,
   projectileSceneryContact,
@@ -230,7 +225,7 @@ import {
   phantomRequiredActors,
 } from "./phantomRequiredOccupants.ts";
 import { readPendingPhantomEncounter } from "./phantomRequiredPlans.ts";
-import { playerWeaponCoverage, type PlayerWeaponCoverageContext } from "./playerWeaponCoverage.ts";
+import type { PlayerWeaponCoverageContext } from "./playerWeaponCoverage.ts";
 import {
   questGuardAnchor,
   questGuardFormationReach,
@@ -276,13 +271,12 @@ import {
 import { segmentDistance, worldDelta, worldDistance, worldPoint } from "./worldContacts.ts";
 
 export { activateRouteEncounter, syncFlightRegion } from "./geography.ts";
-import { type Parts, partsReach, worldParts } from "./convex.ts";
+import { partsReach, worldParts } from "./convex.ts";
 import { debrisSilhouette } from "./debrisBody.ts";
 import { carriesStardust } from "./drops.ts";
-import { enemyHull, enemyPartOutline, enemyPhysicalBody } from "./enemyBody.ts";
+import { enemyHull, enemyPhysicalBody } from "./enemyBody.ts";
 import { enemyBeamReach, planEnemyProjectile } from "./enemyProjectiles.ts";
 import { landmarkSites } from "./landmarks.ts";
-import { MINE_PARTS } from "./mineShape.ts";
 import { activeNeedleCourses } from "./needle.ts";
 import {
   clearNeedleEnemies,
@@ -394,7 +388,6 @@ function frameOf(flight: FlightState, object: SpaceObject): number {
 }
 const projectileScenery = { drawnOf, frameOf };
 const debrisMotion = { ...projectileScenery, arrivalPoints, bumpAda };
-const weaponReleaseContact = { fireBeam, strike };
 
 function hash(seed: number, x: number, y: number): number {
   let n = seed ^ Math.imul(x, 374761393) ^ Math.imul(y, 668265263);
@@ -528,6 +521,10 @@ function clearOfLandmarks(object: SpaceObject, flight: FlightState): boolean {
 }
 const SCENERY = ["rock", "debris"];
 const sceneryResolution = { ...projectileScenery, kinds: SCENERY };
+const weaponReleaseContact = {
+  fireBeam: fireBeam.bind(undefined, { hit, scenery: sceneryResolution }),
+  strike,
+};
 const pilotScenery = {
   contactOf: adaContact,
   onContact: adaSceneryContact,
@@ -4309,101 +4306,6 @@ function blast(
   if (struck) {
     markBlasted(struck, flight);
   }
-}
-
-function fireBeam(
-  coverage: PlayerWeaponCoverageContext,
-  content: GameContent,
-  definition: WeaponDefinition,
-  aim: Vec,
-  origin: Vec,
-  flight: FlightState,
-  events: FlightEvent[],
-): void {
-  const span = length(aim);
-  const range = playerWeaponCoverage(coverage, { direction: aim, origin });
-  if (!span || range <= 0) {
-    return;
-  }
-  const heading = { x: aim.x / span, y: aim.y / span };
-  const world = flightWorldContext(flight);
-  const halfWidth = BEAM.halfWidth;
-  type Contact = { at: number; part: string | null; point: Vec };
-  const line = { halfWidth, heading, origin, range };
-  const outlineStrike = (center: Vec, outline: Parts) =>
-    outlineBeamStrike(line, worldPoint(world, origin, center), outline);
-  const circleStrike = (center: Vec, radius: number) => {
-    const image = worldPoint(world, origin, center);
-    const at = rayCircle(origin, heading, range, image, radius + halfWidth);
-    if (at === null) {
-      return null;
-    }
-    const point = beamPoint(origin, heading, at);
-    const normal = { x: point.x - image.x, y: point.y - image.y };
-    return { at, point: beamPoint(image, length(normal) ? direction(normal) : heading, radius) };
-  };
-  const strikes: (Contact & { object: SpaceObject })[] = [];
-  for (const object of flight.objects) {
-    if (object.hp <= 0) {
-      continue;
-    }
-    if (SCENERY.includes(object.kind)) {
-      const at = sceneryEntry(
-        flight,
-        origin,
-        heading,
-        range,
-        frameOf(flight, object),
-        drawnOf(flight, object),
-        object,
-      );
-      if (at !== null) {
-        const sample = beamPoint(origin, heading, at);
-        const point = projectileContact(projectileScenery, flight, object, sample, halfWidth);
-        strikes.push({ at, object, part: null, point });
-      }
-    } else if (object.kind === "enemy" && object.enemy && !object.enemy.salvaged) {
-      const position = ROUTE_POSITION[flight.galaxy];
-      const hull = enemyHull(object.enemy, position);
-      const body = hull ? outlineStrike(object, hull) : circleStrike(object, object.radius);
-      let first: Contact | null = body && { ...body, part: null };
-      for (const part of liveParts(content, flight.galaxy, object)) {
-        const outline = enemyPartOutline(position, object.enemy, part.id);
-        const strike = outline
-          ? outlineStrike(object, outline)
-          : circleStrike(part, partReach(content));
-        // A live hardpoint wins a tie with its hull, as for the original beam.
-        if (
-          strike &&
-          (!first || strike.at < first.at || (strike.at === first.at && first.part === null))
-        ) {
-          first = { ...strike, part: part.id };
-        }
-      }
-      if (first) {
-        strikes.push({ ...first, object });
-      }
-    }
-  }
-  const impacts = [];
-  for (const mine of flight.mines) {
-    const strike = armed(mine) && outlineStrike(mine, MINE_PARTS);
-    if (strike) {
-      mine.end = { age: 0, kind: "pop" };
-      impacts.push({ ...strike.point, targetId: mine.id });
-    }
-  }
-  const amount = content.tuning.flight.playerShotDamage * definition.damageRatio;
-  for (const strike of strikes.sort((a, b) => a.at - b.at)) {
-    impacts.push({ ...strike.point, targetId: strike.object.id });
-    hit(content, amount, strike.part, strike.object, flight, events);
-  }
-  recordBeamFlash(flight, {
-    age: 0,
-    from: origin,
-    impacts,
-    to: beamPoint(origin, heading, range),
-  });
 }
 
 const offeredEarlyEncounterCue = new WeakSet<FlightState>();
