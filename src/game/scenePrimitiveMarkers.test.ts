@@ -22,6 +22,7 @@ import { discoveryCacheGroup } from "../model/stardustPlacement.ts";
 import type { SpaceObject, Vec } from "../model/types.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
+import { drawCompactHullHud, hasCompactHullHud } from "./enemyHullHud.ts";
 import {
   acknowledgeCachePrimitive,
   acknowledgeCacheSprite,
@@ -113,8 +114,10 @@ function fixture() {
     acknowledgePrimitiveTarget,
     destinationDrawn: () => true,
     discoveryCacheGroup,
+    drawCompactHullHud,
     enemyEquipmentDefinition,
     familyArt: () => undefined,
+    hasCompactHullHud,
     hullOffset,
     isDiscoveryCache,
     loadEnemyParts: vi.fn(),
@@ -551,6 +554,32 @@ describe("emitted primitive marker geometry", () => {
       f.displayed.mock.invocationCallOrder[0]!,
     );
   });
+  it("draws one hull meter and no part meters for a visible engaged fallback platform", () => {
+    const f = fixture();
+    const definition = enemyEquipmentDefinition(1, { archetype: "platform", id: "target" });
+    const enemy = createEnemy(
+      definition,
+      { archetype: "platform", id: "target", packId: null, phase: 0 },
+      { x: 200, y: 100 },
+    );
+    enemy.engaged = true;
+    enemy.hp = definition.hp / 2;
+    const indicatorInk = { fillRect: vi.fn(), fillStyle: vi.fn() };
+    const code = production("./sceneEnemies.ts", ["drawEnemy"], f.globals);
+    code.drawEnemy(
+      { ...f.scene, indicatorInk },
+      { x: 200, y: 100 },
+      {
+        ...f.target,
+        enemy,
+        x: 200,
+        y: 100,
+      },
+    );
+    expect(indicatorInk.fillRect.mock.calls.map(([, , width]) => width)).toEqual([32, 15]);
+    expect(f.ink.lineStyle.mock.calls.some(([width]) => width === 3)).toBe(false);
+  });
+
   it("routes the actual no-state enemy triangle through the same acknowledgment", () => {
     const f = fixture();
     const code = production("./sceneEnemies.ts", ["drawEnemy"], f.globals);

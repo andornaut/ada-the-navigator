@@ -38,6 +38,7 @@ import { enemyEquipmentDefinition } from "../model/enemyEquipment.ts";
 import { activeEnemyBeams, activeRingEmissions, type EnemyBeam } from "../model/flight.ts";
 import { hullOffset } from "../model/shipPhysics.ts";
 import type { FlightState, SpaceObject, Vec } from "../model/types.ts";
+import { drawCompactHullHud, hasCompactHullHud } from "./enemyHullHud.ts";
 import type { GameScene } from "./scene.ts";
 import { familyArt, filterTexture } from "./sceneAssets.ts";
 import { drawCraftJets, keylineSilhouette, keylineSprite } from "./sceneHud.ts";
@@ -237,6 +238,18 @@ export function drawEnemy(scene: EnemiesContext, point: Vec, object: SpaceObject
     scene.ink.lineStyle(1, scene.palette.obstacle);
     scene.ink.strokeCircle(point.x, point.y, 3);
   }
+  if (!scene.warpCover && !scene.model.state.docked && hasCompactHullHud(object.id, enemy)) {
+    const bounds = polygon.reduce(
+      (at, vertex) => ({
+        bottom: Math.max(at.bottom, vertex.y),
+        left: Math.min(at.left, vertex.x),
+        right: Math.max(at.right, vertex.x),
+        top: Math.min(at.top, vertex.y),
+      }),
+      { bottom: -Infinity, left: Infinity, right: -Infinity, top: Infinity },
+    );
+    drawCompactHullHud(scene.indicatorInk, bounds, enemy.hp, definition.hp);
+  }
   for (const part of definition.hardpoints) {
     const at = local(part.offset.x, part.offset.y);
     const hp = enemy.hardpoints.find((value) => value.id === part.id)?.hp ?? 0;
@@ -269,17 +282,6 @@ export function drawEnemy(scene: EnemiesContext, point: Vec, object: SpaceObject
     if (hp <= 0) {
       scene.ink.lineBetween(at.x - size, at.y - size, at.x + size, at.y + size);
       scene.ink.lineBetween(at.x + size, at.y - size, at.x - size, at.y + size);
-    }
-    scene.ink.lineStyle(3, scene.palette.environmentDetail);
-    scene.ink.lineBetween(at.x - size, at.y + size + 5, at.x + size, at.y + size + 5);
-    if (hp > 0) {
-      scene.ink.lineStyle(3, accent);
-      scene.ink.lineBetween(
-        at.x - size,
-        at.y + size + 5,
-        at.x - size + size * 2 * Math.min(1, hp / part.hp),
-        at.y + size + 5,
-      );
     }
   }
 }
@@ -340,10 +342,18 @@ export function drawEnemySprite(
       sprite.setTint(0xffffff).setTintMode(TintModes.FILL);
     }
   });
-  const speed = enemySpeedFraction(
-    enemyEquipmentDefinition(scene.model.state.flight!.galaxy, enemy),
-    enemy,
-  );
+  const definition = enemyEquipmentDefinition(scene.model.state.flight!.galaxy, enemy);
+  if (!scene.warpCover && !scene.model.state.docked && hasCompactHullHud(id, enemy)) {
+    const left = point.x - frame.pivot.x * frame.displayWidth!;
+    const top = point.y - frame.pivot.y * frame.displayHeight!;
+    drawCompactHullHud(
+      scene.indicatorInk,
+      { bottom: top + frame.displayHeight!, left, right: left + frame.displayWidth!, top },
+      enemy.hp,
+      definition.hp,
+    );
+  }
+  const speed = enemySpeedFraction(definition, enemy);
   // A light field swaps in Art's dark enemy jet layers.
   const jets =
     (scene.fieldLight ?? scene.light) && art.jets
