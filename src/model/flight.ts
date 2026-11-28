@@ -106,7 +106,7 @@ import { settlementsNear } from "./andromedaPlaces.ts";
 import { selectCartwheelClaimField } from "./cartwheelClaimField.ts";
 import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";
-import { pickupTouched, touchesAda } from "./flight/adaContactQueries.ts";
+import { touchesAda } from "./flight/adaContactQueries.ts";
 import { sceneryEntry } from "./flight/beamContact.ts";
 import { crossbowAttack, crossbowFrame } from "./flight/crossbow.ts";
 import { inBattle, inDanger } from "./flight/danger.ts";
@@ -153,6 +153,7 @@ import {
 } from "./flight/lifecycle.ts";
 import { planMantaEscorts } from "./flight/mantaEscorts.ts";
 import { armed, layMine, stepMines } from "./flight/mines.ts";
+import { stepPickup } from "./flight/pickups.ts";
 import {
   flightChunkKey,
   type FreshTravel,
@@ -273,7 +274,6 @@ import { segmentDistance, worldDelta, worldDistance, worldPoint } from "./worldC
 export { activateRouteEncounter, syncFlightRegion } from "./geography.ts";
 import { partsReach, worldParts } from "./convex.ts";
 import { debrisSilhouette } from "./debrisBody.ts";
-import { carriesStardust } from "./drops.ts";
 import { enemyHull, enemyPhysicalBody } from "./enemyBody.ts";
 import { enemyBeamReach, planEnemyProjectile } from "./enemyProjectiles.ts";
 import { landmarkSites } from "./landmarks.ts";
@@ -292,7 +292,7 @@ import {
   type OreField,
   worldOreFieldsNear,
 } from "./oreFields.ts";
-import { pickupOutline, stardustPickupReach } from "./pickupBody.ts";
+import { stardustPickupReach } from "./pickupBody.ts";
 import { SceneryFrames } from "./sceneryFrames.ts";
 import { sceneryImpact } from "./sceneryImpact.ts";
 import { rechargeShield } from "./shieldRecharge.ts";
@@ -328,11 +328,11 @@ import type {
   SpaceObject,
   Vec,
 } from "./types.ts";
-import { leveledValue, type ShipTuning, shipTuning } from "./upgrades.ts";
+import { leveledValue, shipTuning } from "./upgrades.ts";
 import { markVisited, visitedChunk } from "./visited.ts";
 
 export { wreckId };
-export { pickupTouched };
+export { pickupTouched } from "./flight/adaContactQueries.ts";
 export { dockFlight, undockFlight } from "./flight/berth.ts";
 export { salvage, salvageTarget } from "./flight/destruction.ts";
 export { activeEnemyBeams, type EnemyBeam } from "./flight/enemyBeams.ts";
@@ -342,6 +342,7 @@ export {
   createUnpopulatedFlight,
   type Loadout,
 } from "./flight/lifecycle.ts";
+export { carryPickup } from "./flight/pickups.ts";
 export { activeRingEmissions, type RingEmission } from "./flight/ringEmissions.ts";
 export { routeBlocked, type RouteGuardPlanResult, routeGuardPlanResult };
 export { inBattle, inDanger, movementSpeedFraction, shipSpeedFraction, towing };
@@ -4359,32 +4360,6 @@ function obstacleStop(
 
 const enemyBeamContact = { crossbowFrame, damage, obstacleStop, touchesAda };
 
-/**
- * A pickup's motion over `dt`, alike for every kind (gameplay/rules.md): a current drifts it
- * until it leaves the current, and the tractor beam draws it toward Ada at its pull speed while
- * its centre lies within the pull radius of hers.
- */
-export function carryPickup(
-  ship: Pick<ShipTuning, "tractorRadius" | "tractorSpeed">,
-  dt: number,
-  flight: FlightState,
-  pickup: Vec,
-): void {
-  const drift = worldFlowAt(flightWorldContext(flight), flight.galaxy, pickup);
-  pickup.x += drift.x * dt;
-  pickup.y += drift.y * dt;
-  canonicalPosition(flight, pickup);
-  const delta = worldDelta(flightWorldContext(flight), pickup, flight.player);
-  const gap = Math.hypot(delta.x, delta.y);
-  if (gap > ship.tractorRadius || gap === 0) {
-    return;
-  }
-  const step = Math.min(gap, ship.tractorSpeed * dt);
-  pickup.x += (delta.x / gap) * step;
-  pickup.y += (delta.y / gap) * step;
-  canonicalPosition(flight, pickup);
-}
-
 export function stepFlight(
   content: GameContent,
   dt: number,
@@ -4533,26 +4508,7 @@ export function stepFlight(
       if (object.kind !== "pickup" || object.hp <= 0) {
         continue;
       }
-      carryPickup(ship, slice, flight, object);
-      if (!pickupTouched(content, flight, object, object.radius, pickupOutline(object))) {
-        continue;
-      }
-      // Collected at contact; the zip into the ship is the view's.
-      events.push({ id: object.id, type: "collected", x: object.x, y: object.y });
-      if (object.role === "cargo") {
-        flight.cargo += object.amount ?? 1;
-        object.hp = 0;
-      } else if (carriesStardust(object)) {
-        events.push({ amount: object.amount ?? 0, type: "stardust" });
-        object.hp = 0;
-      } else if (object.upgrade) {
-        // The game chooses the gift from what Ada can use as she collects it.
-        events.push({ id: object.id, type: "upgradeCollected" });
-        object.hp = 0;
-      } else if (object.ammoPack) {
-        events.push({ id: object.id, type: "ammoCollected" });
-        object.hp = 0;
-      }
+      stepPickup(content, ship, slice, flight, events, object);
     }
     for (const object of flight.objects) {
       if (object.hp <= 0) {
