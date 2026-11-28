@@ -1,6 +1,6 @@
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
-import { SPACING } from "./layout/tokens.ts";
+import { SPACING } from "../layout/tokens.ts";
 import type { ShipItem, ShipRow, ShipSections } from "./shipCard.ts";
 
 export interface ShipHeadings {

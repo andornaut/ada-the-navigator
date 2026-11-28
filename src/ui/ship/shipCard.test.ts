@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { CONTENT } from "../data/content.ts";
-import { uiIconUrl } from "../data/uiIconUrl.ts";
-import * as actionBinding from "./actionBinding.ts";
-import { resolveAdaHoldAction } from "./actionBinding.ts";
-import { fixtureActionRoot } from "./actionRootFixture.ts";
+import { CONTENT } from "../../data/content.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
+import * as actionBinding from "../actionBinding.ts";
+import { resolveAdaHoldAction } from "../actionBinding.ts";
+import { fixtureActionRoot } from "../actionRootFixture.ts";
 import {
   aboardLabel,
   disposeShipSections,

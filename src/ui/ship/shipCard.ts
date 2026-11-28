@@ -4,23 +4,23 @@ import {
   mountLayout,
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { ECONOMY } from "../data/economy.ts";
-import { GALAXY_COUNT } from "../data/galaxies.ts";
-import type { Weapon } from "../data/types.ts";
-import { uiIconUrl } from "../data/uiIconUrl.ts";
-import { WEAPON_LEVEL_COUNT } from "../data/weaponCatalog.ts";
-import { weaponGlyphPath } from "../data/weaponGlyphs.ts";
-import { fill, weaponName } from "../model/shop.ts";
-import type { Aboard, ShipItemFact } from "../model/types.ts";
-import { ADA_ACTION_HOLD_MS, assertAdaActionMetadata, bindAdaAction } from "./actionBinding.ts";
-import { applyAdaControlTheme, createAdaPageDivider } from "./buttonPresentation.ts";
-import { compactLevelName } from "./compactLevelName.ts";
-import { SCROLL } from "./layout/contentCard.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
-import { TEXT_TOKENS } from "./modal.ts";
+import { ECONOMY } from "../../data/economy.ts";
+import { GALAXY_COUNT } from "../../data/galaxies.ts";
+import type { Weapon } from "../../data/types.ts";
+import { uiIconUrl } from "../../data/uiIconUrl.ts";
+import { WEAPON_LEVEL_COUNT } from "../../data/weaponCatalog.ts";
+import { weaponGlyphPath } from "../../data/weaponGlyphs.ts";
+import { fill, weaponName } from "../../model/shop.ts";
+import type { Aboard, ShipItemFact } from "../../model/types.ts";
+import { ADA_ACTION_HOLD_MS, assertAdaActionMetadata, bindAdaAction } from "../actionBinding.ts";
+import { applyAdaControlTheme, createAdaPageDivider } from "../buttonPresentation.ts";
+import { compactLevelName } from "../compactLevelName.ts";
+import { SCROLL } from "../layout/contentCard.ts";
+import { readViewUnit } from "../layout/viewScale.ts";
+import { TEXT_TOKENS } from "../modal.ts";
+import { spriteIconPath } from "../spriteIconPath.ts";
+import { stardustCount } from "../statusPill.ts";
 import { type ShipHeadings, shipItemKey, type ShipLayoutSchema, shipTree } from "./shipTree.ts";
-import { spriteIconPath } from "./spriteIconPath.ts";
-import { stardustCount } from "./statusPill.ts";
 
 export { shipItemKey } from "./shipTree.ts";
 

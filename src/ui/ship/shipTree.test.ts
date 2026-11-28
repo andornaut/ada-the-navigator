@@ -1,7 +1,7 @@
 import { validateLayoutTree } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import { describe, expect, it } from "vitest";
 
-import { SPACING } from "./layout/tokens.ts";
+import { SPACING } from "../layout/tokens.ts";
 import type { ShipRow, ShipSections } from "./shipCard.ts";
 import { shipItemKey, shipTree } from "./shipTree.ts";
 

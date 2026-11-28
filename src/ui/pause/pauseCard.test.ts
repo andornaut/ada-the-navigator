@@ -11,8 +11,7 @@ import type { MapScreenState } from "../map/mapScreen.ts";
 import * as pauseActions from "../pause.ts";
 import { inCurrentView } from "../pressScope.ts";
 import * as refusal from "../refusal.ts";
-import type { ShipView } from "../shipCard.ts";
-import { createShipPaintCard, type ShipPaintOptions } from "../shipPaintCard.ts";
+import { createShipPaintCard, type ShipPaintOptions, type ShipView } from "../ship/index.ts";
 import { createPauseCards, type PauseLabels, type PauseState } from "./pauseCard.ts";
 
 // Every focus() call, latest last, with the options of the latest.

@@ -1155,9 +1155,10 @@ it("reports a bound raw Close using only the standard icon skin", () => {
   ]);
 });
 
-const shipLayoutSource = readFileSync(new URL("../ui/shipCard.ts", import.meta.url), "utf8");
+const shipLayoutSource = readFileSync(new URL("../ui/ship/shipCard.ts", import.meta.url), "utf8");
 // Scan identical source at an unrelated sibling path to rule out a Ship-specific exemption.
-it.each(["src/ui/shipCard.ts", rawRowPath])(
+const shipLayoutFixture = "src/ui/inventoryFixture/shipRow.ts";
+it.each(["src/ui/ship/shipCard.ts", shipLayoutFixture])(
   "proves the registered LayoutTree button in %s",
   (path) => {
     expect(constructionFindings(path, shipLayoutSource)).toEqual([]);
@@ -1181,7 +1182,7 @@ it.each([
 ] as const)("rejects the LayoutTree button with %s", (_case, original, replacement) => {
   const source = shipLayoutSource.replace(original, replacement);
   expect(source).not.toBe(shipLayoutSource);
-  expect(constructionFindings(rawRowPath, source)).toContainEqual(
+  expect(constructionFindings(shipLayoutFixture, source)).toContainEqual(
     expect.objectContaining({
       kind: "unbound-discrete",
       source: expect.stringContaining("createButton(document"),

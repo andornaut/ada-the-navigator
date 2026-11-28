@@ -17,7 +17,7 @@ export { createPennyMarkerLayer, markerName } from "./pennyMarkers.ts";
 export { questContextIcon } from "./questsScreen.ts";
 export { createRestartCard } from "./restart/index.ts";
 export { createScanFeedbackView } from "./scanFeedbackView.ts";
-export { aboardLabel, type ShipView } from "./shipCard.ts";
+export { aboardLabel, type ShipView } from "./ship/index.ts";
 export { shopItemDetail, stationRow } from "./shopView.ts";
 export { createStationView } from "./station.ts";
 export { stardustCount } from "./statusPill.ts";

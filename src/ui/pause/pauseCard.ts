@@ -26,14 +26,15 @@ import { refuse } from "../refusal.ts";
 import { createResourceCard } from "../resource/index.ts";
 import { shieldDetails } from "../shieldDetails.ts";
 import {
+  createShipPaintCard,
   disposeShipSections,
   renderShipSections,
   shipIconNode,
+  type ShipPaintOptions,
   type ShipRow,
   shipSections,
   type ShipView,
-} from "../shipCard.ts";
-import { createShipPaintCard, type ShipPaintOptions } from "../shipPaintCard.ts";
+} from "../ship/index.ts";
 import { createStandardTextAction } from "../standardTextAction.ts";
 import { createWeaponDetailCard } from "../weaponDetail/index.ts";
 import { type PauseLayoutSchema, pauseTree, type PauseTreeAction } from "./pauseTree.ts";

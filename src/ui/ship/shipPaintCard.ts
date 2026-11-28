@@ -3,14 +3,14 @@ import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayo
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { type MountedLayout, mountLayout } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
-import { assertAdaActionBindings, assertAdaActionMetadata } from "./actionBinding.ts";
-import { SCROLL } from "./layout/contentCard.ts";
-import { SPACING } from "./layout/tokens.ts";
-import { readViewUnit } from "./layout/viewScale.ts";
-import { createActions, createCard, setFooterAction } from "./modal.ts";
-import { createStandardCloseAction } from "./modalClose.ts";
-import { createModalLayer } from "./modalLayer.ts";
-import { createStandardTextAction } from "./standardTextAction.ts";
+import { assertAdaActionBindings, assertAdaActionMetadata } from "../actionBinding.ts";
+import { SCROLL } from "../layout/contentCard.ts";
+import { SPACING } from "../layout/tokens.ts";
+import { readViewUnit } from "../layout/viewScale.ts";
+import { createActions, createCard, setFooterAction } from "../modal.ts";
+import { createStandardCloseAction } from "../modalClose.ts";
+import { createModalLayer } from "../modalLayer.ts";
+import { createStandardTextAction } from "../standardTextAction.ts";
 
 interface ShipPaintScheme {
   readonly id: string;
