@@ -40,6 +40,7 @@ const ENCAPSULATED_AREAS = [
   "src/ui/restart/",
   "src/ui/settings/",
   "src/ui/ship/",
+  "src/ui/station/",
   "src/ui/weaponDetail/",
 ];
 
