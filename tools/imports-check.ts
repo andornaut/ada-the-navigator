@@ -38,7 +38,7 @@ export const LAYERS: readonly Layer[] = [
   },
   {
     band: "Foundation",
-    holds: (path) => path === "src/buildLabel.ts" || path.startsWith("src/view/"),
+    holds: (path) => path === "src/buildLabel.ts",
     name: "lib",
   },
   { band: "Foundation", holds: (path) => path.startsWith("src/data/"), name: "data" },

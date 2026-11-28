@@ -26,7 +26,8 @@ describes their implementation.
 - **Entry:** [`src/entry/`](entry/) contains the landing and play entries, crash
   listener, page lifecycle, and service worker entry. [`bootstrap.ts`](entry/bootstrap.ts)
   starts phone launch and the loading UI before importing [`main.ts`](entry/main.ts),
-  which creates the Phaser game at the 720 × 360 base view in device pixels.
+  which creates the Phaser game at the 720 × 360 base view in device pixels and
+  supplies one live frame-turn reader to Controls.
   [`lifecycle.ts`](entry/lifecycle.ts) sleeps the game loop while the page is hidden.
 - **Model:** [`src/model/`](model/) holds the Phaser-free game state (`GameModel`),
   flight, combat, economy and stories. It defines the save schema and restore
@@ -47,8 +48,7 @@ describes their implementation.
   [`src/ui/layout/`](ui/layout/) computes every position, size and press area,
   with the spacing and type tokens in `tokens.ts`.
 - **Page:** [`src/loading/`](loading/) drives the kit's DOM progress bar,
-  [`src/pwa/`](pwa/) holds cache policy and install and update flows, and
-  [`src/view/`](view/) handles frame turn.
+  and [`src/pwa/`](pwa/) holds cache policy and install and update flows.
 - **Build:** [`src/build/`](build/) holds the Node-only code the Vite build runs:
   the landing page and web manifest, the Phaser build, the stylesheet module, the
   icons, the precache and the security headers. No runtime module imports it.
