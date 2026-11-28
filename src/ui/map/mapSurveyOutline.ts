@@ -1,6 +1,6 @@
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
-import { MAP_COLORS, mapSurveyEllipse, type MapView } from "./layout/mapScreen.ts";
+import { MAP_COLORS, mapSurveyEllipse, type MapView } from "./layout/index.ts";
 
 /** The progress outline uses the full canvas; the separate UI layers occlude only their own ink. */
 export function drawMapSurveyOutline(

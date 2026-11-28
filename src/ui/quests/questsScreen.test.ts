@@ -10,8 +10,8 @@ import { fixtureActionRoot } from "../actions/actionRoot.fixture.ts";
 import { slice, units } from "../layout/css.ts";
 import { QUEST_ICON, QUESTS_SCREEN_STYLE } from "../layout/questsScreen.ts";
 import { BUTTON_GAP } from "../layout/tokens.ts";
-import { MAP_SCREEN } from "../map/layout/mapScreen.ts";
-import { mapScreenLabels } from "../map/mapScreen.ts";
+import { mapScreenLabels } from "../map/index.ts";
+import { MAP_SCREEN } from "../map/layout/index.ts";
 import { createQuestsScreen, questRoute } from "./questsScreen.ts";
 
 const entry: QuestEntry = {

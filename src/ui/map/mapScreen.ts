@@ -96,7 +96,7 @@ import {
   selectedPanelMaxHeight,
   toScreen,
   zoomView,
-} from "./layout/mapScreen.ts";
+} from "./layout/index.ts";
 import {
   type MapChromeGroup,
   type MapChromeLeaf,

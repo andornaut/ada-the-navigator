@@ -25,8 +25,7 @@ import * as storyPage from "../src/ui/layout/storyPage.ts";
 import * as tokens from "../src/ui/layout/tokens.ts";
 import * as touchControls from "../src/ui/layout/touchControls.ts";
 import * as viewScale from "../src/ui/layout/viewScale.ts";
-import * as mapFog from "../src/ui/map/layout/mapFog.ts";
-import * as mapScreen from "../src/ui/map/layout/mapScreen.ts";
+import { mapFog, mapScreen } from "../src/ui/map/layout/index.ts";
 
 /** The layout modules sampled by this diagnostic, keyed by file name. */
 export const LAYOUT_MODULES: Readonly<Record<string, Readonly<Record<string, unknown>>>> = {

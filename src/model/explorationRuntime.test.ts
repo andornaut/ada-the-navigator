@@ -9,7 +9,7 @@ import { TARGET_MARKER_RANGE } from "../data/targetMarkers.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import { chipFace } from "../ui/map/mapScreen.ts";
+import { chipFace } from "../ui/map/index.ts";
 import { stationJobsRows, type StationRow } from "../ui/station/index.ts";
 import { createEnemy } from "./ai/index.ts";
 import { dropRandom, enemyStardust } from "./drops.ts";

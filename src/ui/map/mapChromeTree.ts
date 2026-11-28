@@ -1,6 +1,6 @@
 import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 
-import type { MapTool } from "./layout/mapScreen.ts";
+import type { MapTool } from "./layout/index.ts";
 
 export type MapChromeGroup = "header" | "headerRow" | "tools" | "navigation";
 export type MapChromeLeaf =

@@ -1,0 +1,45 @@
+import * as mapFog from "./mapFog.ts";
+import * as mapScreen from "./mapScreen.ts";
+
+// The layout dump snapshots each module under its original name.
+export { mapFog, mapScreen };
+export { type FogStampBounds, fogStampBounds } from "./mapFog.ts";
+export {
+  chipRect,
+  clampView,
+  COMPACT_MAP_HEADER_TOP,
+  filledPips,
+  fitRegion,
+  fogBlur,
+  fogColor,
+  fogReveal,
+  innerRegion,
+  keepClear,
+  MAP_COLORS,
+  MAP_FACES,
+  MAP_GLYPHS,
+  MAP_JOB_FACE,
+  MAP_PANEL,
+  MAP_SCREEN,
+  MAP_SYMBOL,
+  MAP_TOOLS,
+  mapGlyphSize,
+  mapHeaderCap,
+  mapHeaderGeometry,
+  mapHeaderLeft,
+  mapHeaderWidthForView,
+  mapQuestsRect,
+  mapSurveyEllipse,
+  type MapTool,
+  type MapView,
+  mapWorldDiamond,
+  openingView,
+  panelMaxWidth,
+  panView,
+  type Point,
+  readingOrder,
+  recentreView,
+  selectedPanelMaxHeight,
+  toScreen,
+  zoomView,
+} from "./mapScreen.ts";

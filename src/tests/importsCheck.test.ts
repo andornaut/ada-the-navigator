@@ -195,6 +195,45 @@ describe("layers", () => {
     ]);
   });
 
+  it("enforces separate Local Map UI and layout entries", () => {
+    const graph = new Map<string, ReturnType<typeof readImports>>();
+    const add = (path: string, source: string) => graph.set(path, readImports(path, source));
+    add(
+      "src/ui/pause/pauseCard.ts",
+      [
+        'import { createMapScreen } from "../map/index.ts";',
+        'import { fitRegion } from "../map/layout/index.ts";',
+        'import { createMapScreen } from "../map/mapScreen.ts";',
+        'import { fitRegion } from "../map/layout/mapScreen.ts";',
+      ].join("\n"),
+    );
+    add(
+      "src/ui/map/mapScreen.ts",
+      [
+        'import { mapChromeTrees } from "./mapChromeTree.ts";',
+        'import { fitRegion } from "./layout/index.ts";',
+        'import { fogStampBounds } from "./layout/mapFog.ts";',
+      ].join("\n"),
+    );
+    add(
+      "src/ui/map/layout/index.ts",
+      [
+        'export { fogStampBounds } from "./mapFog.ts";',
+        'export { fitRegion } from "./mapScreen.ts";',
+        'export { createMapScreen } from "../index.ts";',
+      ].join("\n"),
+    );
+
+    expect(layerFindings(graph)).toEqual([
+      "src/ui/pause/pauseCard.ts imports src/ui/map/layout/mapScreen.ts directly. " +
+        "Use src/ui/map/layout/index.ts",
+      "src/ui/pause/pauseCard.ts imports src/ui/map/mapScreen.ts directly. Use src/ui/map/index.ts",
+      "src/ui/map/mapScreen.ts imports src/ui/map/layout/mapFog.ts directly. " +
+        "Use src/ui/map/layout/index.ts",
+      "src/ui/map/layout/index.ts (layout and input state) imports src/ui/map/index.ts (ui)",
+    ]);
+  });
+
   it("loads project Vite plugins through the build entry", () => {
     const source = readFileSync(new URL("../../vite.config.ts", import.meta.url), "utf8");
     expect(readImports("vite.config.ts", source)).toEqual([

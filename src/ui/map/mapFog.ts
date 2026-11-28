@@ -2,8 +2,14 @@ import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import type { LocalMap } from "../../model/map.ts";
 import { UNLISTED_COLOURS } from "../layout/index.ts";
-import { type FogStampBounds, fogStampBounds } from "./layout/mapFog.ts";
-import { fogBlur, fogReveal, type MapView, toScreen } from "./layout/mapScreen.ts";
+import {
+  fogBlur,
+  fogReveal,
+  type FogStampBounds,
+  fogStampBounds,
+  type MapView,
+  toScreen,
+} from "./layout/index.ts";
 
 interface FogStamp {
   readonly canvas: HTMLCanvasElement;
