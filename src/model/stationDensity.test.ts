@@ -5,7 +5,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { GALAXY_SIDE } from "../data/world.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import { settlementById, settlementsNear } from "./andromedaPlaces.ts";
+import { settlementById, settlementsNear } from "./andromeda/places.ts";
 import { ensureDestination, ensureStation } from "./flight.ts";
 import { GameModel } from "./game.ts";
 import {

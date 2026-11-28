@@ -5,7 +5,7 @@ import core from "../../public/art/manifest.json";
 import { selectEnemyFrame, staleSpriteKeys } from "../art/index.ts";
 import { ANDROMEDA_REDACT } from "../data/capitalBosses.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { worldNearestSettlerStation } from "../model/andromedaPlaces.ts";
+import { worldNearestSettlerStation } from "../model/andromeda/places.ts";
 import type { GalaxyProgress, SpaceObject } from "../model/types.ts";
 import { CURRENT_FLIGHT_TOPOLOGY } from "../model/world/index.ts";
 import {

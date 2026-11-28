@@ -97,8 +97,8 @@ import {
   proceduralPoisNear,
 } from "./proceduralPois.ts";
 export { rollEncounter } from "./encounterRoll.ts";
-import { courierSpawnExclusions } from "./andromedaCourierAmbush.ts";
-import { settlementsNear } from "./andromedaPlaces.ts";
+import { courierSpawnExclusions } from "./andromeda/courierAmbush.ts";
+import { settlementsNear } from "./andromeda/places.ts";
 import { selectCartwheelClaimField } from "./cartwheelClaimField.ts";
 import { cartwheelRequiredSites } from "./cartwheelRequiredSites.ts";
 import { exclusionZoneRadius } from "./exclusionZones.ts";

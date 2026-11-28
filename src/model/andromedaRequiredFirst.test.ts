@@ -5,7 +5,7 @@ import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import { nearestSettlement, worldNearestSettlerStation } from "./andromedaPlaces.ts";
+import { nearestSettlement, worldNearestSettlerStation } from "./andromeda/places.ts";
 import { chapterRuntime } from "./chapters.ts";
 import { GameModel } from "./game.ts";
 import { stationPopulationObjects } from "./hostileStations/index.ts";

@@ -3,14 +3,14 @@ import { expect, it } from "vitest";
 import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { ensureAndromedaWorld } from "./andromeda.ts";
 import {
   ANDROMEDA_REDACT,
   type AndromedaRedactPlacementPort,
   andromedaRelayWaypoint,
   reserveAndromedaRedact,
   resolveAndromedaRedact,
-} from "./andromedaRedact.ts";
+} from "./andromeda/redact.ts";
+import { ensureAndromedaWorld } from "./andromeda/runtime.ts";
 import type { ChapterContext } from "./chapterProtocol.ts";
 import { createUnpopulatedFlight, ensureDestinationAt } from "./flight.ts";
 import { localMap, NO_LANDMARKS } from "./map.ts";

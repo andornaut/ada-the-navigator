@@ -4,6 +4,7 @@ import { ANDROMEDA_CHAPTER, ANDROMEDA_CONVERSATIONS, ANDROMEDA_PLACES } from "..
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
 import { carriedItemName } from "../data/itemNames.ts";
+import { nearestSettlement, nearestSettlerStation } from "./andromeda/places.ts";
 import {
   ANDROMEDA_PARTS,
   ANDROMEDA_RUNTIME,
@@ -16,9 +17,8 @@ import {
   pageAndromedaWorld,
   stepAndromeda,
   useAndromeda,
-} from "./andromeda.ts";
-import { nearestSettlement, nearestSettlerStation } from "./andromedaPlaces.ts";
-import { validAndromedaProgress } from "./andromedaState.ts";
+} from "./andromeda/runtime.ts";
+import { validAndromedaProgress } from "./andromeda/state.ts";
 import type { ChapterContext, ChapterResult } from "./chapterProtocol.ts";
 import { createFlight, ensureStation } from "./flight.ts";
 import { newProgress } from "./progress.ts";

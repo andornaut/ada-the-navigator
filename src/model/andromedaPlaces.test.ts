@@ -7,7 +7,7 @@ import {
   nearestSettlerStation,
   settlementById,
   settlementsNear,
-} from "./andromedaPlaces.ts";
+} from "./andromeda/places.ts";
 import { landmarkSites } from "./landmarks.ts";
 import { stationById, stationsNear } from "./stations/index.ts";
 

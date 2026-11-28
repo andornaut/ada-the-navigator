@@ -1,11 +1,11 @@
-import { ANDROMEDA_REDACT } from "../data/capitalBosses.ts";
-import type { ConversationLine } from "../data/conversations.ts";
-import type { Vec } from "../data/types.ts";
-import type { CapitalBossProgress } from "./capitalBossEncounter.ts";
-import type { ChapterContext } from "./chapterProtocol.ts";
-import { questGuardPlacementContext } from "./flight.ts";
-import type { StationPlacementContext } from "./stations/formation/index.ts";
-import type { FlightEvent } from "./types.ts";
+import { ANDROMEDA_REDACT } from "../../data/capitalBosses.ts";
+import type { ConversationLine } from "../../data/conversations.ts";
+import type { Vec } from "../../data/types.ts";
+import type { ChapterContext } from "../chapterProtocol.ts";
+import { questGuardPlacementContext } from "../flight.ts";
+import type { StationPlacementContext } from "../stations/formation/index.ts";
+import type { FlightEvent } from "../types.ts";
+import type { AndromedaRedactProgress, RedactPlacement } from "./relay.ts";
 
 export { ANDROMEDA_REDACT };
 
@@ -20,14 +20,7 @@ export const ANDROMEDA_REDACT_CUES = {
   },
 } as const satisfies Record<string, ConversationLine>;
 
-interface RedactPlacement {
-  readonly site: Vec;
-  readonly relay: Vec;
-}
-
 type RedactOutcome = "defeated" | "salvaged";
-
-export type AndromedaRedactProgress = CapitalBossProgress & RedactPlacement;
 
 /** Plan both sites against the supplied clearance context without changing the live flight. */
 export type AndromedaRedactPlacementPort = (
@@ -52,15 +45,6 @@ export function reserveAndromedaRedact(
   const placement = place(questGuardPlacementContext(content, flight), ANDROMEDA_REDACT);
   return placement
     ? { phase: "active", relay: { ...placement.relay }, site: { ...placement.site } }
-    : undefined;
-}
-
-/** The shared owner publishes this stable destination through normal discovery and Local Map. */
-export function andromedaRelayWaypoint(
-  current: AndromedaRedactProgress | undefined,
-): (Vec & { readonly id: typeof ANDROMEDA_REDACT.relayId }) | undefined {
-  return current?.phase === "resolved"
-    ? { ...current.relay, id: ANDROMEDA_REDACT.relayId }
     : undefined;
 }
 

@@ -2,7 +2,6 @@ import { expect, it, vi } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { chooseAndromeda, useAndromeda } from "./andromeda.ts";
 import {
   admitCourierAmbush,
   advanceCourierAmbush,
@@ -12,9 +11,10 @@ import {
   planCourierAmbush,
   releasedCourierPairs,
   stepCourierAmbush,
-} from "./andromedaCourierAmbush.ts";
-import { nearestSettlerStation } from "./andromedaPlaces.ts";
-import { type CourierAmbushState, validCourierAmbushAttempt } from "./andromedaState.ts";
+} from "./andromeda/courierAmbush.ts";
+import { nearestSettlerStation } from "./andromeda/places.ts";
+import { chooseAndromeda, useAndromeda } from "./andromeda/runtime.ts";
+import { type CourierAmbushState, validCourierAmbushAttempt } from "./andromeda/state.ts";
 import { createUnpopulatedFlight, questGuardPlacementContext } from "./flight.ts";
 import { newProgress } from "./progress.ts";
 import type { SpaceObject } from "./types.ts";

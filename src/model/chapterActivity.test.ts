@@ -6,7 +6,7 @@ import { ECONOMY } from "../data/economy.ts";
 import { questReward } from "../data/questRewards.ts";
 import { restoreSave, SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
-import { courierScoutTarget } from "./courierRun.ts";
+import { courierScoutTarget } from "./andromeda/courierRun.ts";
 import { GAME_AREA } from "./edgeMarkers.ts";
 import { ensureDestination } from "./flight.ts";
 import { GameModel } from "./game.ts";

@@ -13,20 +13,20 @@ import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import { damageEnemy } from "./ai/index.ts";
 import {
-  andromedaCourierActor,
-  andromedaCourierAttempt,
-  andromedaCourierMarkers,
-  takeAndromedaCourierWarning,
-} from "./andromeda.ts";
-import {
   COURIER_AMBUSH_ID,
   courierAmbushLeg,
   courierAmbushTerrainCovered,
   planCourierAmbush,
-} from "./andromedaCourierAmbush.ts";
-import { andromedaLaneCourier } from "./andromedaLane.ts";
-import { nearestSettlement, worldNearestSettlerStation } from "./andromedaPlaces.ts";
-import { ANDROMEDA_REDACT, andromedaRedactEligible } from "./andromedaRedact.ts";
+} from "./andromeda/courierAmbush.ts";
+import { andromedaLaneCourier } from "./andromeda/lane.ts";
+import { nearestSettlement, worldNearestSettlerStation } from "./andromeda/places.ts";
+import { ANDROMEDA_REDACT, andromedaRedactEligible } from "./andromeda/redact.ts";
+import {
+  andromedaCourierActor,
+  andromedaCourierAttempt,
+  andromedaCourierMarkers,
+  takeAndromedaCourierWarning,
+} from "./andromeda/runtime.ts";
 import { placementRadius, worldSceneryBlocksSegment } from "./asteroids.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { interactionCopy } from "./conversations.ts";

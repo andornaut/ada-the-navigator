@@ -8,8 +8,8 @@ import type { StorySceneId } from "../data/storyShips.ts";
 import type { GalaxyNumber, Vec, Weapon } from "../data/types.ts";
 import type { AchievementState } from "./achievements.ts";
 import type { EnemyState } from "./ai/index.ts";
-import type { AndromedaRedactProgress } from "./andromedaRedact.ts";
-import type { AndromedaProgress } from "./andromedaState.ts";
+import type { AndromedaRedactProgress } from "./andromeda/relay.ts";
+import type { AndromedaProgress } from "./andromeda/state.ts";
 import type {
   CapitalBossProgress,
   CartwheelClaimProgress,

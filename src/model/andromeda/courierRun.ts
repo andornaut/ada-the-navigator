@@ -1,24 +1,24 @@
-import { COURIER } from "../data/activities.ts";
-import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
-import { ECONOMY } from "../data/economy.ts";
-import { HUNTING_PACKS } from "../data/galaxyFeatures.ts";
-import type { GameContent } from "../data/types.ts";
-import { type ActivityTerms, stepCourier } from "./activities.ts";
-import { ensureDestinationAt, placeHuntingPack } from "./flight.ts";
-import { packMemberId, worldDiscardNotable, worldPrunePackState } from "./geography.ts";
+import { COURIER } from "../../data/activities.ts";
+import { ANDROMEDA_PLACES } from "../../data/andromeda.ts";
+import { ECONOMY } from "../../data/economy.ts";
+import { HUNTING_PACKS } from "../../data/galaxyFeatures.ts";
+import type { GameContent } from "../../data/types.ts";
+import { type ActivityTerms, stepCourier } from "../activities.ts";
+import { ensureDestinationAt, placeHuntingPack } from "../flight.ts";
+import { packMemberId, worldDiscardNotable, worldPrunePackState } from "../geography.ts";
 import {
   flightStationContext,
   retainedSettlementsNear,
   worldStationsNear,
-} from "./stations/index.ts";
-import type { FlightState, HeldActivity, Vec } from "./types.ts";
+} from "../stations/index.ts";
+import type { FlightState, HeldActivity, Vec } from "../types.ts";
 import {
   flightWorldContext,
   type WorldContext,
   worldDelta,
   worldDistance,
   wrapPoint,
-} from "./world/index.ts";
+} from "../world/index.ts";
 
 const PATROL = "courier:patrol";
 const PATROL_SIZE = HUNTING_PACKS.count[0];

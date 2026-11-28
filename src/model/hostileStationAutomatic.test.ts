@@ -6,7 +6,7 @@ import { BUILT, GALAXY_NUMBERS, ROUTE_POSITION } from "../data/galaxies.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { relaunch, supportEntropy } from "../testing/launch.ts";
-import { settlementsNear } from "./andromedaPlaces.ts";
+import { settlementsNear } from "./andromeda/places.ts";
 import { fromScreen } from "./convex.ts";
 import { enemyStardust } from "./drops.ts";
 import { enemyHull } from "./enemyBody.ts";

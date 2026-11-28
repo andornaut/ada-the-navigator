@@ -8,7 +8,7 @@ import { SCREEN } from "../data/screen.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
-import { settlementsNear } from "./andromedaPlaces.ts";
+import { settlementsNear } from "./andromeda/places.ts";
 import { ConversationDirector } from "./conversations.ts";
 import { GameModel } from "./game.ts";
 import { flightLandmarkSites } from "./landmarks.ts";

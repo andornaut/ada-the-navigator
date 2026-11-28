@@ -1,7 +1,11 @@
 import { BUILT } from "../data/galaxies.ts";
 import { NEEDLE_PLACES } from "../data/needle.ts";
 import type { GalaxyNumber } from "../data/types.ts";
-import { ANDROMEDA_RUNTIME, andromedaAction, andromedaObjectiveIndex } from "./andromeda.ts";
+import {
+  ANDROMEDA_RUNTIME,
+  andromedaAction,
+  andromedaObjectiveIndex,
+} from "./andromeda/runtime.ts";
 import type { ChapterRuntime } from "./chapterProtocol.ts";
 import { LATE_CHAPTER_ROUTES } from "./game/campaignState.ts";
 import {

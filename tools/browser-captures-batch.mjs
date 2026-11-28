@@ -57,7 +57,7 @@ const [
   import(new URL("../src/model/stations/index.ts", import.meta.url)),
   import(new URL("../src/model/stations/index.ts", import.meta.url)),
   import(new URL("../src/model/landmarks.ts", import.meta.url)),
-  import(new URL("../src/model/guideBeacons.ts", import.meta.url)),
+  import(new URL("../src/model/andromeda/guideBeacons.ts", import.meta.url)),
   import(new URL("../src/model/needle/index.ts", import.meta.url)),
   import(new URL("../src/model/needle/contact.ts", import.meta.url)),
   import(new URL("../src/model/phantom/allies/index.ts", import.meta.url)),

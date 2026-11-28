@@ -2,15 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import { CONTENT } from "../data/content.ts";
 import { ECONOMY } from "../data/economy.ts";
-import { ensureAndromedaWorld } from "./andromeda.ts";
-import { settlementById } from "./andromedaPlaces.ts";
-import { createUnpopulatedFlight } from "./flight.ts";
 import {
   guideBeaconSlotAt,
   guideBeaconSlots,
   spareGuideBeacon,
   storyGuideBeaconSlot,
-} from "./guideBeacons.ts";
+} from "./andromeda/guideBeacons.ts";
+import { settlementById } from "./andromeda/places.ts";
+import { ensureAndromedaWorld } from "./andromeda/runtime.ts";
+import { createUnpopulatedFlight } from "./flight.ts";
 import { newProgress } from "./progress.ts";
 
 describe("Andromeda guide route", () => {

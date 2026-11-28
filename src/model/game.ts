@@ -85,20 +85,28 @@ import {
   supplyTerms,
 } from "./activities.ts";
 import {
+  clearCourierPatrol,
+  courierRendezvous,
+  courierScoutTarget,
+  courierTerms,
+  positionCourier,
+  stepCourierRun,
+} from "./andromeda/courierRun.ts";
+import {
+  ANDROMEDA_REDACT,
+  ANDROMEDA_REDACT_CUES,
+  andromedaRedactEligible,
+  reserveAndromedaRedact,
+  resolveAndromedaRedact,
+} from "./andromeda/redact.ts";
+import { andromedaRelayWaypoint } from "./andromeda/relay.ts";
+import {
   andromedaCourierActor,
   andromedaStationTopic,
   chooseAndromeda,
   takeAndromedaCourierWarning,
   useAndromeda,
-} from "./andromeda.ts";
-import {
-  ANDROMEDA_REDACT,
-  ANDROMEDA_REDACT_CUES,
-  andromedaRedactEligible,
-  andromedaRelayWaypoint,
-  reserveAndromedaRedact,
-  resolveAndromedaRedact,
-} from "./andromedaRedact.ts";
+} from "./andromeda/runtime.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { calfHome, calfRouteMidpoint, calfStart, placedCalf, stepCalf } from "./calf.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
@@ -114,14 +122,6 @@ import {
   type PoiConfirmation,
   speakerName,
 } from "./conversations.ts";
-import {
-  clearCourierPatrol,
-  courierRendezvous,
-  courierScoutTarget,
-  courierTerms,
-  positionCourier,
-  stepCourierRun,
-} from "./courierRun.ts";
 import { inCurrent } from "./currents.ts";
 import { carriesStardust, dropRandom } from "./drops.ts";
 import { EARLY_ENCOUNTER_CUES } from "./earlyEncounterRuntime.ts";

@@ -1,9 +1,9 @@
-import { COURIER } from "../data/activities.ts";
-import { ANDROMEDA_PLACES } from "../data/andromeda.ts";
-import { ECONOMY } from "../data/economy.ts";
-import { flightStationContext, worldStationById } from "./stations/index.ts";
-import type { FlightState, GalaxyProgress, Vec } from "./types.ts";
-import { flightWorldContext, worldDelta, worldPoint } from "./world/index.ts";
+import { COURIER } from "../../data/activities.ts";
+import { ANDROMEDA_PLACES } from "../../data/andromeda.ts";
+import { ECONOMY } from "../../data/economy.ts";
+import { flightStationContext, worldStationById } from "../stations/index.ts";
+import type { FlightState, GalaxyProgress, Vec } from "../types.ts";
+import { flightWorldContext, worldDelta, worldPoint } from "../world/index.ts";
 
 interface Lane {
   readonly beacon: Vec;

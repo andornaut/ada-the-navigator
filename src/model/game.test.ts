@@ -13,7 +13,7 @@ import { endArrivalGrace } from "../testing/arrivalGrace.ts";
 import { completeCartwheelHubIntroductionFixture } from "../testing/cartwheelFixture.ts";
 import { playOpening, readStory, relaunch, supportEntropy } from "../testing/launch.ts";
 import { createEnemy, damageEnemy } from "./ai/index.ts";
-import { worldNearestSettlerStation } from "./andromedaPlaces.ts";
+import { worldNearestSettlerStation } from "./andromeda/places.ts";
 import { ASTEROID_SHAPES } from "./asteroids.ts";
 import { capitalBossActor } from "./capitalBossEncounter.ts";
 import { enemyStardust } from "./drops.ts";

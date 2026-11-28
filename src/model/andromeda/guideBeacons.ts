@@ -1,6 +1,6 @@
-import { ECONOMY } from "../data/economy.ts";
-import { settlementsNear } from "./andromedaPlaces.ts";
-import type { Vec } from "./types.ts";
+import { ECONOMY } from "../../data/economy.ts";
+import type { Vec } from "../types.ts";
+import { settlementsNear } from "./places.ts";
 
 const SPACING = 2000;
 const SPARE_OFFSET = 96;

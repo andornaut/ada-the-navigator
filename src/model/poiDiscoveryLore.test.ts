@@ -12,7 +12,7 @@ import { poiAmbientLine, poiApproachPool, poiDiscoveryPool } from "../data/poiDi
 import deck from "../data/poiFlavourCopy.json";
 import { SAVE_RESTORE } from "../saving/index.ts";
 import { playOpening, relaunch, supportEntropy } from "../testing/launch.ts";
-import { worldNearestSettlerStation } from "./andromedaPlaces.ts";
+import { worldNearestSettlerStation } from "./andromeda/places.ts";
 import {
   ConversationDirector,
   type ConversationFacts,

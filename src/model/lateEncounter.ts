@@ -1,6 +1,6 @@
 import type { EncounterCue } from "../data/conversations.ts";
 import type { EconomyCatalog } from "../data/economy.ts";
-import { settlementsNear } from "./andromedaPlaces.ts";
+import { settlementsNear } from "./andromeda/places.ts";
 import { onScreen } from "./conversations.ts";
 import { flightStationContext, worldStationsNear } from "./stations/index.ts";
 import type { FlightState } from "./types.ts";

@@ -12,7 +12,7 @@ import { ANDROMEDA_LANE_COURIER, ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import { ANDROMEDA_REDACT } from "../data/capitalBosses.ts";
 import { CONTENT } from "../data/content.ts";
 import { SCREEN } from "../data/screen.ts";
-import { andromedaLaneCourier } from "../model/andromedaLane.ts";
+import { andromedaLaneCourier } from "../model/andromeda/lane.ts";
 import type { FlightState, SpaceObject } from "../model/types.ts";
 import { keylineSprite } from "./sceneHud.ts";
 import { drawOutpost, type ObjectsContext, placeStationFrame } from "./sceneObjects.ts";
