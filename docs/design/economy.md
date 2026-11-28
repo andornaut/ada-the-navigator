@@ -30,3 +30,4 @@ prices and pacing.
 | ada-0429 | Ship Obsidian and deepen Iris ship paint                                             | [ada-0429.md](../work/ada-0429.md) |
 | ada-0452 | Double asteroid ammunition pack odds                                                 | [ada-0452.md](../work/ada-0452.md) |
 | ada-0453 | Increase heavy salvage and encounter rewards                                         | [ada-0453.md](../work/ada-0453.md) |
+| ada-0463 | Guarantee minimum resource payouts by asteroid size                                  | [ada-0463.md](../work/ada-0463.md) |
