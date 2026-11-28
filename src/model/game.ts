@@ -2,7 +2,7 @@ import { randomStream } from "@andornaut/game-kit/runtime/random";
 import type { Rect } from "@andornaut/game-kit/runtime/rect";
 
 import { ACHIEVEMENTS, PENNY_FIND_RANGE } from "../data/achievements.ts";
-import { ACTIVITIES, MINING_CONTRACT_DEPOSITS, SUPPLY_ITEMS } from "../data/activities.ts";
+import { ACTIVITIES } from "../data/activities.ts";
 import { ANDROMEDA_CHAPTER, ANDROMEDA_LANE_COURIER, ANDROMEDA_PLACES } from "../data/andromeda.ts";
 import {
   type CapitalBossHud,
@@ -201,6 +201,12 @@ import { dockedShopGroups, dockedShopOffers, dockedShopSupply } from "./game/doc
 import { encounterCues, stationsInRange } from "./game/encounterCues.ts";
 import { dockedJobRows, type JobRow } from "./game/jobBoard.ts";
 import { jobIndicator, jobMapTarget, type JobNavigationContext } from "./game/jobNavigation.ts";
+import {
+  projectQuestEntries,
+  projectQuestLines,
+  projectTaskObjective,
+  type QuestTextContext,
+} from "./game/questEntries.ts";
 import { type HeldFlight, saveSnapshot } from "./game/saveSnapshot.ts";
 import { aboard, shipItemFacts } from "./game/shipCargo.ts";
 import {
@@ -5648,102 +5654,40 @@ export class GameModel {
       ? storyQuestId(flight.galaxy, progress.stage)
       : null;
   }
+  private questText(galaxy: GalaxyNumber): QuestTextContext {
+    return {
+      galaxy,
+      jobText: (job) => this.jobTextIn(galaxy, job),
+      label: (key) => this.label(key),
+      placeLabel: (id) => this.placeLabelIn(galaxy, id),
+    };
+  }
   private taskObjective(galaxy: GalaxyNumber): string | null {
-    const task = this.state.tasks[galaxy];
-    if (task?.kind === "job") {
-      return this.jobTextIn(galaxy, task).title;
-    }
-    const activity = task;
-    if (activity?.id === "supplyRun") {
-      return fill(this.label("supplyObjective"), {
-        destination: this.placeLabelIn(galaxy, activity.target?.id ?? ""),
-        item: SUPPLY_ITEMS[activity.place] ?? "",
-      });
-    }
-    if (activity?.id === "miningContract") {
-      return fill(this.label("contractObjective"), {
-        have: activity.deposited ?? 0,
-        need: MINING_CONTRACT_DEPOSITS,
-      });
-    }
-    if (activity?.id === "guideCalf") {
-      return this.label(
-        this.state.flight?.galaxy === galaxy && this.state.flight.calf?.following
-          ? "calfGuide"
-          : "calfFind",
-      );
-    }
-    if (activity?.id === "threadNeedle" || activity?.id === "courierRun") {
-      return this.label(ACTIVITIES[galaxy]?.goal ?? "");
-    }
-    return null;
+    return projectTaskObjective(this.questText(galaxy), this.state);
   }
   private questLines(galaxy: GalaxyNumber): Omit<QuestEntry, "locations">[] {
-    const progress = this.state.progress[galaxy];
-    const task = this.state.tasks[galaxy];
-    const flight = this.state.flight?.galaxy === galaxy ? this.state.flight : undefined;
-    const details = questDetails(
+    return projectQuestLines(
       {
-        galaxy,
-        jobText: (job) => this.jobTextIn(galaxy, job),
-        label: (key) => this.label(key),
+        ...this.questText(galaxy),
         miningMilestones: this.content.tuning.miningMilestones,
-        placeLabel: (id) => this.placeLabelIn(galaxy, id),
+        storyObjective: () => this.objectiveFor(galaxy),
+        taskObjective: () => this.taskObjective(galaxy),
       },
-      { flight: flight ?? { cargo: 0 }, progress, ...(task ? { task } : {}) },
+      this.state,
     );
-    const entries: Omit<QuestEntry, "locations">[] = [];
-    if (BUILT.has(galaxy) && progress.introduced && !progress.resolved) {
-      entries.push({
-        galaxy,
-        id: storyQuestId(galaxy, progress.stage),
-        line: {
-          ...details.storyDetails,
-          kind: "story",
-          target: null,
-          text: this.objectiveFor(galaxy),
-        },
-      });
-    }
-    const text = this.taskObjective(galaxy);
-    if (task && text) {
-      entries.push({
-        galaxy,
-        id: taskQuestId(galaxy, task),
-        ...(task.kind === "job" ? { jobType: task.type } : {}),
-        line: { ...details.jobDetails, kind: "job", target: null, text },
-      });
-    }
-    return entries;
   }
 
   /** All accepted tasks and introduced, unresolved story quests, derived without switching galaxies. */
   get quests(): readonly QuestEntry[] {
-    return GALAXY_NUMBERS.flatMap((galaxy) => {
-      const lines = this.questLines(galaxy);
-      if (!lines.length) {
-        return [];
-      }
-      const progress = this.state.progress[galaxy];
-      const locations = [
-        ...new Set([...progress.known, ...progress.stations, ...progress.charted]),
-      ].map((id) => {
-        const landmark = landmarkById(galaxy, id);
-        const symbol = progress.stations.includes(id)
-          ? ("station" as const)
-          : (landmark?.kind ??
-            DESTINATIONS[id]?.mapKind ??
-            (galaxyRoute(galaxy).includes(id) ? ("destination" as const) : undefined));
-        return {
-          id,
-          label: landmark
-            ? landmarkLabel((key) => this.label(key), landmark)
-            : (this.cartwheelHubName(galaxy, id) ?? this.placeLabelIn(galaxy, id)),
-          ...(symbol ? { symbol } : {}),
-        };
-      });
-      return lines.map((entry) => ({ ...entry, locations }));
-    });
+    return projectQuestEntries(
+      {
+        hubName: (galaxy, id) => this.cartwheelHubName(galaxy, id),
+        label: (key) => this.label(key),
+        placeLabel: (galaxy, id) => this.placeLabelIn(galaxy, id),
+        questLines: (galaxy) => this.questLines(galaxy),
+      },
+      this.state.progress,
+    );
   }
   get aboardQuestId(): string | null {
     if (!this.aboard) {
