@@ -129,7 +129,8 @@ describe("Later chapter first encounters", () => {
     }
     expect(heavy.enemy?.disabled).toBe(true);
     expect(salvageTarget(CONTENT, flight)).toBe(heavy);
-    expect(model.useTarget).toEqual({ action: "salvage", id: loom.id });
+    expect(model.contextAction).toBe("salvage");
+    expect(model.useTarget).toBeUndefined();
 
     const budget = prelude.reduce((sum, conversation) => sum + conversation.lines.length, 0);
     for (let i = 0; !model.state.dialogue && i <= budget; i++) {

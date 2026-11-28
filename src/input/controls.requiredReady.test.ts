@@ -82,6 +82,7 @@ function harness(required?: () => boolean) {
   const text = [
     "let enabled = true;",
     `const ${actual("requiredReady")};`,
+    `const ${actual("openContextQuests")};`,
     `const ${actual("reset")};`,
     `const ${actual("keyDown")};`,
     `const ${actual("keyUp")};`,
