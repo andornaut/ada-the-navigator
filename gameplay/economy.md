@@ -39,8 +39,7 @@ drops. Site and encounter lifetimes follow
 
 Destroyed enemy ships release Stardust as small glinting pickups. Destroyed
 asteroids release either an eligible ammo pack alone or a size-weighted resource
-yield. Small asteroids may release nothing; medium, large and huge asteroids
-guarantee at least one reward, which may be an ammo pack.
+yield. On the resource branch, only small asteroids can yield zero units.
 Ada's ship has a tractor beam, with no visual of its own, that draws every
 pickup (Stardust, ore nuggets, discovery caches, weapons, ammo packs, a floating holodisk and
 a hunt job's lost item) within its pull radius toward her at its pull speed,
@@ -89,16 +88,16 @@ Ore quantity is then reduced by 25% in expectation for every size class, and
 rock ore and rock Stardust are each scaled by 0.8 in every galaxy to hold income
 at the asteroid densities in [Spawn targets](rules.md#spawn-targets). In
 expectation a rock keeps 0.6 of its initial ore units (0.75 times 0.8) and 0.8
-of its initial Stardust units. The size caps, the minimum of one resource for
-medium and larger rocks and the crystal rock ore floor are unchanged. Enemy,
-cache and guard income are unchanged. Expected units per resource outcome are:
+of its initial Stardust units. Enemy, cache and guard income are unchanged.
+The table gives exact expected units per resource outcome after scaling, before
+the crystal ore guarantee and the final combined floor.
 
 | Size   | Ore  | Stardust | Total |
 | ------ | ---- | -------- | ----- |
-| Small  | 0.9  | 0.4      | 1.3   |
-| Medium | 1.35 | 0.6      | 1.95  |
-| Large  | 1.8  | 0.8      | 2.6   |
-| Huge   | 2.25 | 1        | 3.25  |
+| Small  | 0.90 | 0.40     | 1.30  |
+| Medium | 1.35 | 0.60     | 1.95  |
+| Large  | 1.80 | 0.80     | 2.60  |
+| Huge   | 2.25 | 1.00     | 3.25  |
 
 A non-small raw ore-only-one payout stays one. For each size, let Y be the
 expected raw ore and p the probability of that protected payout. Derive the
@@ -110,22 +109,40 @@ ore scales are 3/5, 11/19, 23/39 and 59/99 from small to huge. All non-small
 ore scales exceed one half, so ore-only payouts of at least two cannot round to
 zero.
 
-A non-small rock whose raw ore is at most one always keeps its first Stardust
-unit, so no non-small payout is ever empty. Let S be the expected raw Stardust
-and P the probability that raw ore is at most one with at least one Stardust
-unit (0 for small rocks). Every other Stardust unit is kept at rate
+When a non-small rock rolls Stardust and at most one raw ore, scaling preserves
+its first Stardust unit. Every non-small resource roll keeps at least one unit
+after scaling. Let S be the expected raw Stardust and P the probability that raw
+ore is at most one with at least one Stardust unit (0 for small rocks). The keep
+rate for every other Stardust unit is
 `(0.8 * S - P) / (S - P)`: 4/5 for small rocks and about 0.734, 0.770 and 0.785
 for medium, large and huge, rounded the same way without another random draw.
-Expected units per resource outcome are exactly those in the table above. Size caps and the
-non-small minimum remain unchanged. Five-unit pickups have no selection bias.
-Ammo remains an exclusive outcome under its own rules.
+
+The final resource floor and cap count ore and Stardust together.
+
+After scaling a crystal rock's resource roll, ensure it has at least one ore
+before applying the combined floor. If it has no ore, add one. If Stardust
+already fills the cap, replace one Stardust with one ore instead.
+
+If the resulting total is below the floor, draw each missing unit from the
+same deterministic drop stream with a 75% chance of ore and a 25% chance of
+Stardust. An outcome already at or above the floor stays as is.
+
+Final means are conditional on an ordinary, non-crystal asteroid dropping
+resources instead of ammo. Small and Medium means are exact. Large and Huge
+means are estimates, with each column rounded independently to two decimals.
+
+| Size   | Floor | Cap | Mean ore | Mean Stardust | Mean total |
+| ------ | ----: | --: | -------: | ------------: | ---------: |
+| Small  |     0 |   4 |     0.90 |          0.40 |       1.30 |
+| Medium |     1 |   6 |     1.35 |          0.60 |       1.95 |
+| Large  |     2 |   8 |     1.98 |          0.86 |       2.84 |
+| Huge   |     3 |  10 |     2.65 |          1.13 |       3.79 |
 
 Group the resulting ore into pickups worth 5 ore each, with any remainder as
 one-unit pickups. A five-ore chunk replaces five single ore pickups; it is the
 same fungible ore, collected by normal contact and the tractor beam. The size
-cap counts resource units, not pickup sprites. There is no additive ore bonus
-or extra Stardust burst. Enemy loot, discovery caches and job rewards keep
-their own rules.
+cap counts resource units, not pickup sprites. Five-unit pickups have no
+selection bias. Enemy loot, discovery caches and job rewards keep their own rules.
 
 A drop splits its Stardust into whole-Stardust pickups, as evenly as possible with
 the larger pieces first, so one pickup can carry more than 1 Stardust. The number
@@ -178,12 +195,9 @@ shop pack: 30 Multi-Laser volleys, 60 Rapid Missiles, 25 Heavy Missiles, 40
 Scattershot volleys or 25 Phaser shots. The HUD shows +N by the weapon icon
 using the actual ammunition added.
 
-Every destroyed asteroid uses the size-based yields above when it does not
-release ammunition. An asteroid that drops an ammo pack drops nothing else:
-no ore, Stardust or other loot. The ammo outcome satisfies
-the medium, large and huge asteroid minimum-reward guarantee. Without ammo,
-small asteroids may yield zero resources; the other sizes yield at least one
-combined resource unit, but neither ore nor Stardust is individually guaranteed.
+An asteroid that rolls ammunition drops only the ammo pack. Every other
+destroyed asteroid uses the size-based resource yields and combined floor above.
+Ordinary resource drops can meet the floor with either resource or a mix.
 Loot is released once on destruction, never for an intact or indestructible rock.
 A destroyed asteroid's drops release 240 ms after destruction, spread up to 7.68
 world units from its centre, at every motion setting. This timing is the
@@ -196,8 +210,8 @@ ordinary rocks, which makes Cartwheel richest in ore. A crystal rock shows
 purple ore crystals and is medium or larger: every ore-field rock, and about 1
 in 4 medium-or-larger ordinary asteroids in other galaxies, chosen once per rock
 by its seed so it never changes on Continue. Small asteroids are never crystal
-rocks and keep the ammo roll. A destroyed crystal rock skips the ammo roll and gives at least 1 ore;
-any further ore and Stardust roll as usual. Ore aboard fuels
+rocks and keep the ammo roll. A destroyed crystal rock skips the ammo roll and
+uses the ore guarantee above. Ore aboard fuels
 shield recharge starting 20 seconds after the last hit, at 5% of maximum
 shield capacity per second. Each Ore funds 2% of maximum shield capacity.
 Five Ore funds 10% and 50 Ore funds a full bar. Carried ore stays integer-valued; unused
