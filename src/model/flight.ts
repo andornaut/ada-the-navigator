@@ -2550,22 +2550,28 @@ function minerInput(
     return edge ? { edge } : {};
   }
   let zones: { other: SpaceObject; radius: number }[] | undefined;
+  let nextObject = 0;
   const blocked = (point: Vec): boolean => {
-    if (needleChannelContains({ radius: object.radius }, flight, point)) {
+    if (
+      needleChannelContains({ radius: object.radius }, flight, point) ||
+      zones?.some(
+        ({ other, radius }) => worldDistance(world, point, other) <= radius + object.radius,
+      )
+    ) {
       return true;
     }
-    if (zones === undefined) {
-      zones = [];
-      for (const other of flight.objects) {
-        const radius = exclusionZoneRadius(content, other);
-        if (radius !== null) {
-          zones.push({ other, radius });
+    // Reuse the zones already seen, then resume at the first object not yet needed.
+    while (nextObject < flight.objects.length) {
+      const other = flight.objects[nextObject++]!;
+      const radius = exclusionZoneRadius(content, other);
+      if (radius !== null) {
+        (zones ??= []).push({ other, radius });
+        if (worldDistance(world, point, other) <= radius + object.radius) {
+          return true;
         }
       }
     }
-    return zones.some(({ other, radius }) =>
-      worldDistance(world, point, other) <= radius + object.radius,
-    );
+    return false;
   };
   const candidates = asteroids()(INDUSTRIAL_HOME_RADIUS, state.home).filter((rock) => {
     const actual = flight.objects.find((other) => other.id === rock.id);
