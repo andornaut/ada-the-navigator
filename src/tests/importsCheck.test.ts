@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
@@ -194,6 +195,13 @@ describe("layers", () => {
     ]);
   });
 
+  it("loads project Vite plugins through the build entry", () => {
+    const source = readFileSync(new URL("../../vite.config.ts", import.meta.url), "utf8");
+    expect(readImports("vite.config.ts", source)).toEqual([
+      { target: "src/build/index.ts", typeOnly: true },
+    ]);
+  });
+
   it("loads save codecs and integrity checks without loading chapter or flight runtimes", () => {
     const root = fileURLToPath(new URL("../..", import.meta.url));
     const edges = runtimeEdges(readGraph(root));
@@ -223,7 +231,8 @@ describe("layers", () => {
       "src/model/game.ts",
       "src/model/hostileStations/materialization.ts",
       "src/model/needle/runtime.ts",
-      "src/model/phantom.ts",
+      "src/model/phantom/chapter.ts",
+      "src/model/phantom/index.ts",
     ];
     expect(gameplayEntries.filter((path) => reached.has(path))).toEqual([]);
   });
