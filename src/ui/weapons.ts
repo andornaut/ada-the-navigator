@@ -334,7 +334,7 @@ ${(Object.keys(WEAPON_FILLS) as Weapon[])
   --disc-edge:${units(HUD_DISC_STATES.selected.edge)}
 }
 .ada-controls .ada-weapon-group > button.ada-weapon[data-state=selected] .ada-disc{
-  box-shadow:0 0 0 ${units(1)} ${TASK_COLORS.story}
+  box-shadow:0 0 0 ${units(HUD_BUTTON.selectionOutline)} ${TASK_COLORS.story}
 }
 .ada-controls .ada-weapon[data-state=selected]:not(:focus-visible) .ada-disc{
   background:${HUD_DISC_STATES.selected.face}
@@ -360,7 +360,7 @@ ${PRESSED_WEAPON}{
 @media (forced-colors:active){
   .ada-controls .ada-weapon-group > button.ada-weapon[data-state=selected] .ada-disc{
     box-shadow:none;
-    outline:${units(1)} solid ButtonText
+    outline:${units(HUD_BUTTON.selectionOutline)} solid ButtonText
   }
   .ada-controls .ada-weapon-group > .ada-weapon:focus-visible:not(:active,[data-weapon-pressed]) .ada-disc{
     forced-color-adjust:none;
