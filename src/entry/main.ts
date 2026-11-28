@@ -22,11 +22,14 @@ import { Core, Game, Scale, Scenes, WEBGL } from "phaser";
 import { SCREEN } from "../data/screen.ts";
 import { GameScene } from "../game/scene.ts";
 import { flushScene, refreshScene } from "../game/sceneUi.ts";
-import { EntryReloadRequired } from "../loading/entryRecovery.ts";
-import { type RequiredBootResources, requiredLoading, requiredReady } from "../loading/required.ts";
-import { requireBootJets, validateBootCore } from "../loading/requiredCore.ts";
-import { requireSceneFiles } from "../loading/requiredFiles.ts";
-import { startupFence } from "../loading/startup.ts";
+import { requireBootJets, requireSceneFiles, validateBootCore } from "../loading/game/index.ts";
+import {
+  EntryReloadRequired,
+  type RequiredBootResources,
+  requiredLoading,
+  requiredReady,
+  startupFence,
+} from "../loading/index.ts";
 import {
   disposePlatformBack,
   launchPhoneApp,

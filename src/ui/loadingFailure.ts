@@ -4,7 +4,7 @@ import {
 } from "@andornaut/game-kit/runtime/web/progress/dom/loadingFailure";
 
 import { LOADING_LAYER, SCROLL } from "../data/layout.ts";
-import type { MountStartupFailure } from "../loading/startup.ts";
+import type { MountStartupFailure } from "../loading/index.ts";
 import { createAdaFactoryHoldBinding } from "./actionBinding.ts";
 import { adaForegroundInput } from "./foregroundInput.ts";
 import { bindAdaRecoveryActionRoot } from "./holdActionsAdapter.ts";

@@ -46,7 +46,7 @@ import {
   reportBoot,
   requiredUpdateActivity,
   updateProgressActivity,
-} from "../loading/progress.ts";
+} from "../loading/index.ts";
 import { CACHE_POLICY } from "./cachePolicy.ts";
 import { dispatchPhoneBack } from "./events.ts";
 import { presentInstallationFailure } from "./installationPresentation.ts";

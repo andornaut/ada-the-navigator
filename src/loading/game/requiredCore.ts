@@ -5,9 +5,9 @@ import {
   readQuantumJump,
   readShipMaterialPalettes,
   readShipMaterials,
-} from "../art/index.ts";
-import { ECONOMY } from "../data/economy.ts";
-import { SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
+} from "../../art/index.ts";
+import { ECONOMY } from "../../data/economy.ts";
+import { SHIP_HEADINGS } from "../../model/shipHeadingContract.ts";
 
 /** Decode both required jet files before constructing the first playable scene. */
 export function requireBootJets(cache: { get(key: string): unknown }) {

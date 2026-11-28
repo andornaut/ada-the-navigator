@@ -4,8 +4,8 @@ import {
   type RequiredLoading,
 } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 
-import { TOUCH_CHROME_SHEETS } from "../data/layout.ts";
-import { SHIP_HEADINGS } from "../model/shipHeadingContract.ts";
+import { TOUCH_CHROME_SHEETS } from "../../data/layout.ts";
+import { SHIP_HEADINGS } from "../../model/shipHeadingContract.ts";
 
 const core = new Set([
   "art-manifest",

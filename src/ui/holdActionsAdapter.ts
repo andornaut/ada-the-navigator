@@ -5,7 +5,7 @@ import {
 } from "@andornaut/game-kit/runtime/web/input/dom/holdActions";
 import { guardClicks, type PressGuard } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 
-import type { RequiredReady } from "../loading/required.ts";
+import type { RequiredReady } from "../loading/index.ts";
 import {
   assertAdaActionBindings,
   resolveAdaHoldAction,

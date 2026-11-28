@@ -24,7 +24,7 @@ import {
   showTouchChrome,
   useDiscFrame,
 } from "../game/touchChrome.ts";
-import type { RequiredReady } from "../loading/required.ts";
+import type { RequiredReady } from "../loading/index.ts";
 import type { ItemGain } from "../model/itemGains.ts";
 import type { ContextQuestDetails } from "../model/questObjectLinks.ts";
 import { weaponName } from "../model/shop.ts";

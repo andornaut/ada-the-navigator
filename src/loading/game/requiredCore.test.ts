@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { expect, it } from "vitest";
 
-import manifest from "../../public/art/manifest.json";
+import manifest from "../../../public/art/manifest.json";
 import { validateBootCore } from "./requiredCore.ts";
 
 function fixture() {

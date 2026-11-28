@@ -6,7 +6,7 @@ import {
 
 import { LOADING_LAYER } from "../data/layout.ts";
 import { SCREEN } from "../data/screen.ts";
-import { subscribeLoadingProgress } from "../loading/progress.ts";
+import { subscribeLoadingProgress } from "../loading/index.ts";
 import { pixels } from "./layout/css.ts";
 import { VIEW_SCALE_EVENT } from "./layout/viewScale.ts";
 import { TEXT_TOKENS } from "./modal.ts";

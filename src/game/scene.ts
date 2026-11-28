@@ -117,9 +117,8 @@ import { SCREEN } from "../data/screen.ts";
 import { OVERNIGHT_SLEEP } from "../data/storybook.ts";
 import type { GalaxyNumber } from "../data/types.ts";
 import { createControls } from "../input/controls.ts";
-import { type WaitedLoad, waitedProgress } from "../loading/progress.ts";
-import { requiredReady } from "../loading/required.ts";
-import { requiredSceneFile } from "../loading/requiredFiles.ts";
+import { requiredSceneFile } from "../loading/game/index.ts";
+import { requiredReady, type WaitedLoad, waitedProgress } from "../loading/index.ts";
 import { heldActivity } from "../model/activities.ts";
 import type { Current } from "../model/currents.ts";
 import {

@@ -57,7 +57,7 @@ import STATION_JOB_BRIEFS from "../data/station-job-briefs.json" with { type: "j
 import { galaxyCard } from "../data/storybook.ts";
 import { coarsePointer } from "../input/coarsePointer.ts";
 import { createControls } from "../input/controls.ts";
-import { requiredLoading, requiredReady } from "../loading/required.ts";
+import { requiredLoading, requiredReady } from "../loading/index.ts";
 import { openRewoundCampaign } from "../model/campaignRewind.ts";
 import { CHEAT_IDS, type CheatId } from "../model/cheats.ts";
 import { linearDialogueContinuation } from "../model/conversations.ts";
