@@ -1459,6 +1459,10 @@ export class InteractionConversation {
     return this.choices.length > 0 && this.linearContinuation === undefined;
   }
 
+  get atChoicePage(): boolean {
+    return this.atChoice || this.topics.length > 0;
+  }
+
   get linearContinuation(): "continue" | undefined {
     return linearDialogueContinuation(this.choices);
   }

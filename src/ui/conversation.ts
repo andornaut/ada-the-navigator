@@ -609,9 +609,10 @@ export function createInteractionCard(
       assertAdaActionMetadata(button);
       (choice ? choices : controls).push(button);
     };
+    const atChoicePage = state.atChoicePage;
     try {
       const topicReturn = state.topicReturn;
-      if (state.hasPrevious && !topicReturn) {
+      if (state.hasPrevious && !atChoicePage) {
         add(CONTENT.labels.previous ?? "", () => state.previous());
       }
       for (const topic of state.topics) {
@@ -674,7 +675,7 @@ export function createInteractionCard(
       button.hidden = false;
     }
     card.card.toggleAttribute("data-topic-page", state.topicExitLabel !== undefined);
-    card.card.toggleAttribute("data-choice-page", state.atChoice || state.topics.length > 0);
+    card.card.toggleAttribute("data-choice-page", atChoicePage);
     const line = state.line;
     card.showLine(line?.speaker, line?.text ?? "");
     skip.hidden = !state.canSkip;

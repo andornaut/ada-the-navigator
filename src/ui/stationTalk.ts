@@ -131,7 +131,7 @@ export function createStationTalk(
           }
         }
       });
-    if (state.hasPrevious) {
+    if (state.hasPrevious && !state.atChoicePage) {
       add(CONTENT.labels.previous ?? "", () => state.previous(), "navigation");
     }
     for (const topic of state.topics) {
