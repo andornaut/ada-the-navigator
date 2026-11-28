@@ -10,10 +10,8 @@ import { SAVE_RESTORE } from "../saving/index.ts";
 import { supportEntropy } from "../testing/launchSeeds.ts";
 import { settlementsNear } from "./andromedaPlaces.ts";
 import { ConversationDirector } from "./conversations.ts";
-import { damageEnemy } from "./enemyAi.ts";
-import { enemyEquipmentDefinition } from "./enemyEquipment.ts";
-import { salvageTarget, spawnChapterEnemy } from "./flight.ts";
 import { GameModel } from "./game.ts";
+import { flightLandmarkSites } from "./landmarks.ts";
 import { lateEncounterCue } from "./lateEncounter.ts";
 import { flightStationContext, worldStationsNear } from "./stations.ts";
 import type { Vec } from "./types.ts";
@@ -103,34 +101,24 @@ describe("Later chapter first encounters", () => {
     expect(loaded.state.progress[4].needle?.met).toBe(false);
   });
 
-  it("finishes the queued Loom Talk without consuming a newly eligible salvage action", () => {
+  it("finishes the queued Loom Talk without consuming a newly eligible Scan", () => {
     const model = launch(4);
     const flight = model.state.flight!;
     const loom = flight.objects.find(({ id }) => id === "elderLoom")!;
     visit(model, { x: loom.x + 75, y: loom.y });
     expect(model.state.progress[4].known).toContain(loom.id);
     expect(model.useTarget).toEqual({ action: "talk", id: loom.id });
-    expect(salvageTarget(CONTENT, flight)).toBeUndefined();
     model.interact();
     expect(model.state.dialogue).toBeNull();
 
-    // Stage a real disabled heavy in range after the original press. The fixture arranges
-    // its proximity; canonical hardpoint damage and the live Use query admit Salvage.
-    const heavy = spawnChapterEnemy(
-      CONTENT,
-      "frigate",
-      "fixture:loom-arriving-heavy",
-      { x: flight.player.x + CONTENT.tuning.talkRange - 10, y: flight.player.y },
-      flight,
-    )!;
-    const equipment = enemyEquipmentDefinition(4, heavy.enemy!);
-    for (const part of equipment.hardpoints.filter(({ kind }) => kind === "weapon")) {
-      heavy.enemy = damageEnemy(equipment, { amount: part.hp, hardpointId: part.id }, heavy.enemy!);
-    }
-    expect(heavy.enemy?.disabled).toBe(true);
-    expect(salvageTarget(CONTENT, flight)).toBe(heavy);
-    expect(model.contextAction).toBe("salvage");
-    expect(model.useTarget).toBeUndefined();
+    // Put the queued destination and Ada beside a real landmark after the original press.
+    // The landmark wins fresh Use while Loom remains in range for its queued Talk.
+    const site = flightLandmarkSites(flight)[0]!;
+    const gap = CONTENT.tuning.talkRange / 4;
+    Object.assign(loom, { x: site.x + 3 * gap, y: site.y });
+    flight.player = { x: site.x + gap, y: site.y };
+    expect(model.useTarget).toEqual({ action: "scan", id: site.id });
+    expect(model.state.progress[4].charted).not.toContain(site.id);
 
     const budget = prelude.reduce((sum, conversation) => sum + conversation.lines.length, 0);
     for (let i = 0; !model.state.dialogue && i <= budget; i++) {
@@ -139,7 +127,7 @@ describe("Later chapter first encounters", () => {
     }
     expect(model.state.dialogue?.context).toBe("needle.arrival");
     expect(model.state.progress[4].needle?.met).toBe(false);
-    expect(heavy.enemy?.salvaged).toBe(false);
+    expect(model.state.progress[4].charted).not.toContain(site.id);
 
     model.choose("continue");
     expect(model.state.dialogue?.context).toBe("needle.practice");
@@ -147,13 +135,13 @@ describe("Later chapter first encounters", () => {
     expect(model.state.dialogue?.context).toBe("needle.learning");
     model.choose("independent");
     expect(model.state.dialogue).toBeNull();
-    expect(model.contextAction).toBe("salvage");
+    expect(model.useTarget).toEqual({ action: "scan", id: site.id });
     model.step(0.001, idle);
     expect(model.state.dialogue).toBeNull();
-    expect(heavy.enemy?.salvaged).toBe(false);
+    expect(model.state.progress[4].charted).not.toContain(site.id);
     model.interact();
-    expect(model.state.dialogue?.context).toBe("salvage");
-    expect(heavy.enemy?.salvaged).toBe(true);
+    expect(model.state.progress[4].charted).toContain(site.id);
+    expect(model.drainScanOutcomes()).toHaveLength(1);
   });
 
   it("does not identify Avi at an arbitrary station or apply a queued Talk after Ada leaves Loom", () => {
